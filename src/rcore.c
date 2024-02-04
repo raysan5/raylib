@@ -1946,25 +1946,25 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   256
-
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH 256
+    
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
-    if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
-
-    int size = (int)strlen(fileName);   // Get size in bytes
-
-    for (int i = 0; (i < size) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
+    if (filePath != NULL)
     {
-        if (fileName[i] == '.')
+        strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
+        int size = (int)strlen(fileName); // Get size in bytes
+        for (int i = size; i>0; i--) // Reverse search '.'
         {
-            // NOTE: We break on first '.' found
-            fileName[i] = '\0';
-            break;
+            if (fileName[i] == '.')
+            {
+                // NOTE: We break on first '.' found
+                fileName[i] = '\0';
+                break;
+            }
         }
     }
-
     return fileName;
 }
 
