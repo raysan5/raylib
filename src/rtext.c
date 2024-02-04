@@ -1471,13 +1471,14 @@ float TextToFloat(const char *text)
         text++;
     }
     
-    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
+    int i = 0;
+    for (; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
     
     if (text[i++] != '.') value *= sign;
     else
     {
         float divisor = 10.0f;
-        for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++)
+        for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
         {
             value += ((float)(text[i] - '0'))/divisor;
             divisor = divisor*10.0f;
