@@ -227,6 +227,32 @@ extern void LoadFontDefault(void)
 
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
+    #if defined(PLATFORM_DREAMCAST)
+    Image imFont = {
+        .data = RL_CALLOC(128*128, 4),  // 4 bytes per pixel (rgb + alpha) there are some issues with different format in Dreamcast so to avoid problems for text by now we will use this
+        .width = 128,
+        .height = 128,
+        .mipmaps = 1,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+    };
+
+    // Fill image.data with defaultFontData (convert from bit to pixel!)
+    for (int i = 0, counter = 0; i < imFont.width*imFont.height; i += 32)
+    {
+        for (int j = 31; j >= 0; j--)
+        {
+            if (BIT_CHECK(defaultFontData[counter], j))
+            {
+                // NOTE: We are unreferencing data as short, so,
+                // we must consider data as little-endian order (alpha + gray)
+                ((unsigned int *)imFont.data)[i + j] = 0xffffffff;
+            }
+            else ((unsigned int *)imFont.data)[i + j] = 0x000000ff;
+        }
+
+        counter++;
+    }
+    #else   
     Image imFont = {
         .data = RL_CALLOC(128*128, 2),  // 2 bytes per pixel (gray + alpha)
         .width = 128,
@@ -251,7 +277,7 @@ extern void LoadFontDefault(void)
 
         counter++;
     }
-
+    #endif
     defaultFont.texture = LoadTextureFromImage(imFont);
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, glyphCount
