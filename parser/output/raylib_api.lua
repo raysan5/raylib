@@ -3506,6 +3506,11 @@ return {
       }
     },
     {
+      name = "GetScissorRect",
+      description = "Get active scissor region (or entire render area, if scissor mode not enabled)",
+      returnType = "Rectangle"
+    },
+    {
       name = "EndScissorMode",
       description = "End scissor mode",
       returnType = "void"
