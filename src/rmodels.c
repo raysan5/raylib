@@ -1001,6 +1001,34 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
+    #if defined(PLATFORM_DREAMCAST)
+
+    rlBegin(RL_QUADS);
+    for (int i = -halfSlices; i < halfSlices; i++) {
+        if (i == 0) {
+            rlColor3f(1.0f, 0.5f, 0.5f);
+            rlColor3f(1.0f, 0.5f, 0.5f);
+            rlColor3f(1.0f, 0.5f, 0.5f);
+            rlColor3f(1.0f, 0.5f, 0.5f);
+        } else {
+            rlColor3f(1.0f, 0.75f, 0.75f);
+            rlColor3f(1.0f, 0.75f, 0.75f);
+            rlColor3f(1.0f, 0.75f, 0.75f);
+            rlColor3f(1.0f, 0.75f, 0.75f);
+        }
+
+        float x1 = (float)i * spacing;
+        float x2 = (float)(i + 1) * spacing;
+        float z1 = (float)-halfSlices * spacing;
+        float z2 = (float)halfSlices * spacing;
+
+        // Define the vertices for the quad
+        rlVertex3f(x1, 0.0f, z1);
+        rlVertex3f(x2, 0.0f, z1);
+        rlVertex3f(x2, 0.0f, z2);
+        rlVertex3f(x1, 0.0f, z2);
+    }
+    #else
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
@@ -1025,6 +1053,7 @@ void DrawGrid(int slices, float spacing)
             rlVertex3f((float)-halfSlices*spacing, 0.0f, (float)i*spacing);
             rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
         }
+    #endif
     rlEnd();
 }
 
