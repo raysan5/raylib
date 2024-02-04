@@ -203,7 +203,7 @@ RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
 {
     RenderTexture2D target = { 0 };
 
-    target.id = rlLoadFramebuffer(width, height);   // Load an empty framebuffer
+    target.id = rlLoadFramebuffer(); // Load an empty framebuffer
     target.texture.width = width;
     target.texture.height = height;
 
