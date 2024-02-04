@@ -45,6 +45,7 @@ GetWorldToScreen|Vector2|(Vector3 position, Camera camera);|
 GetCameraMatrix|Matrix|(Camera camera);|
 SetTargetFPS|void|(int fps);|
 GetFPS|int|(void);|
+GetFrameBusyTime|float|(void);|
 GetFrameTime|float|(void);|
 GetTime|double|(void);|
 ColorToInt|int|(Color color);|

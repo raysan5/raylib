@@ -419,6 +419,9 @@
                 <Param name="int fps" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GetFrameBusyTime" func="yes">
+            <Overload retVal="float" descr="Get the time spent actively updating and drawing a frame, excluding sleep time"></Overload>
+        </KeyWord>
         <KeyWord name="GetFrameTime" func="yes">
             <Overload retVal="float" descr="Get time in seconds for last frame drawn (delta time)"></Overload>
         </KeyWord>
@@ -2822,7 +2825,7 @@
                 <Param name="Vector2 size" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
-                <Param name="0ó¿8± " />
+                <Param name="0ï¿½8ï¿½ " />
             </Overload>
         </KeyWord>
 
