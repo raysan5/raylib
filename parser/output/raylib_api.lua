@@ -3655,37 +3655,12 @@ return {
       }
     },
     {
-      name = "GetCameraMatrix",
-      description = "Get camera transform matrix (view matrix)",
-      returnType = "Matrix",
-      params = {
-        {type = "Camera", name = "camera"}
-      }
-    },
-    {
-      name = "GetCameraMatrix2D",
-      description = "Get camera 2d transform matrix",
-      returnType = "Matrix",
-      params = {
-        {type = "Camera2D", name = "camera"}
-      }
-    },
-    {
       name = "GetWorldToScreen",
       description = "Get the screen space position for a 3d world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector3", name = "position"},
         {type = "Camera", name = "camera"}
-      }
-    },
-    {
-      name = "GetScreenToWorld2D",
-      description = "Get the world space position for a 2d camera screen space position",
-      returnType = "Vector2",
-      params = {
-        {type = "Vector2", name = "position"},
-        {type = "Camera2D", name = "camera"}
       }
     },
     {
@@ -3705,6 +3680,31 @@ return {
       returnType = "Vector2",
       params = {
         {type = "Vector2", name = "position"},
+        {type = "Camera2D", name = "camera"}
+      }
+    },
+    {
+      name = "GetScreenToWorld2D",
+      description = "Get the world space position for a 2d camera screen space position",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "position"},
+        {type = "Camera2D", name = "camera"}
+      }
+    },
+    {
+      name = "GetCameraMatrix",
+      description = "Get camera transform matrix (view matrix)",
+      returnType = "Matrix",
+      params = {
+        {type = "Camera", name = "camera"}
+      }
+    },
+    {
+      name = "GetCameraMatrix2D",
+      description = "Get camera 2d transform matrix",
+      returnType = "Matrix",
+      params = {
         {type = "Camera2D", name = "camera"}
       }
     },
