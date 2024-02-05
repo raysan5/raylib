@@ -243,7 +243,7 @@ Vector3 GetCameraRight(Camera *camera)
     Vector3 forward = GetCameraForward(camera);
     Vector3 up = GetCameraUp(camera);
 
-    return Vector3CrossProduct(forward, up);
+    return Vector3Normalize(Vector3CrossProduct(forward, up));
 }
 
 // Moves the camera in its forward direction
