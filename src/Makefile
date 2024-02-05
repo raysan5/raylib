@@ -360,7 +360,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
         CFLAGS += -sASSERTIONS=1 --profiling
     endif
-    CFLAGS += -sGL_ENABLE_GET_PROC_ADDRESS
+    #CFLAGS += -sGL_ENABLE_GET_PROC_ADDRESS
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
