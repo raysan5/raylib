@@ -2522,11 +2522,11 @@ GLFWglproc rlGetProcAddress(const char* procname)
     GLFWglproc procAddress = 0;
 
 #if defined(PLATFORM_DESKTOP_SDL)
-    procAddress = SDL_GL_GetProcAddress;
+    procAddress = SDL_GL_GetProcAddress(procname);
 #elif defined(PLATFORM_ANDROID)
-    procAddress = eglGetProcAddress;
+    procAddress = eglGetProcAddress(procname);
 #else
-    procAddress = glfwGetProcAddress;
+    procAddress = glfwGetProcAddress(procname);
 #endif
 
     return procAddress;
