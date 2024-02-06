@@ -666,6 +666,7 @@ RLAPI void rlglInit(int width, int height);             // Initialize rlgl (buff
 RLAPI void rlglClose(void);                             // De-initialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);              // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                           // Get current OpenGL version
+RLAPI GLFWglproc rlGetProcAddress(const char* procname) // Get current Proc address
 RLAPI void rlSetFramebufferWidth(int width);            // Set current framebuffer width
 RLAPI int rlGetFramebufferWidth(void);                  // Get default framebuffer width
 RLAPI void rlSetFramebufferHeight(int height);          // Set current framebuffer height
@@ -2514,6 +2515,21 @@ int rlGetVersion(void)
 #endif
 
     return glVersion;
+}
+
+GLFWglproc rlGetProcAddress(const char* procname)
+{
+    GLFWglproc procAddress = 0;
+
+#if defined(PLATFORM_DESKTOP_SDL)
+    procAddress = SDL_GL_GetProcAddress;
+#elif defined(PLATFORM_ANDROID)
+    procAddress = eglGetProcAddress;
+#else
+    procAddress = glfwGetProcAddress;
+#endif
+
+    return procAddress;
 }
 
 // Set current framebuffer width
