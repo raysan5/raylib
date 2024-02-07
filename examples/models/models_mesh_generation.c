@@ -61,7 +61,7 @@ int main(void)
     for (int i = 0; i < NUM_MODELS; i++) models[i].materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     // Define the camera to look into our 3d world
-    Camera camera = { { 5.0f, 5.0f, 5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { { 5.0f, 5.0f, 5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0.003f, 0 };
 
     // Model drawing position
     Vector3 position = { 0.0f, 0.0f, 0.0f };

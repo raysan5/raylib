@@ -56,6 +56,7 @@ int main(void)
         .target = (Vector3){ 0.0f, 0.5f, 0.0f },      // Camera looking at point
         .up = (Vector3){ 0.0f, 1.0f, 0.0f },          // Camera up vector (rotation towards target)
         .fovy = 45.0f,                                // Camera field-of-view Y
+        .sensitivity = 0.003f,                        // Camera sensitivity
         .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
     

@@ -31,6 +31,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
+    camera.sensitivity = 0.003f;
     camera.projection = CAMERA_PERSPECTIVE;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second

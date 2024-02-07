@@ -89,6 +89,7 @@ typedef struct Camera {
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
     float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+    float sensitivity;      // Camera sensitivity
     int projection;         // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 } Camera;
 
@@ -181,6 +182,7 @@ int main(void)
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.sensitivity = 0.003f;                            // Camera sensitivity
     camera.fovy = 45.0f;                                // Camera field-of-view Y
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)

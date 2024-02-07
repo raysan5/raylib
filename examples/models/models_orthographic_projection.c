@@ -31,7 +31,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
 
     // Define the camera to look into our 3d world
-    Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, FOVY_PERSPECTIVE, CAMERA_PERSPECTIVE };
+    Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, FOVY_PERSPECTIVE, 0.003f, CAMERA_PERSPECTIVE };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

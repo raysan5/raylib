@@ -26,7 +26,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - box collisions");
 
     // Define the camera to look into our 3d world
-    Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0.003f, 0 };
 
     Vector3 playerPosition = { 0.0f, 1.0f, 2.0f };
     Vector3 playerSize = { 1.0f, 2.0f, 1.0f };

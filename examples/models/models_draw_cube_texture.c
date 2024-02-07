@@ -39,6 +39,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
+    camera.sensitivity = 0.003f;
     camera.projection = CAMERA_PERSPECTIVE;
     
     // Load texture to be applied to the cubes sides
