@@ -104,6 +104,7 @@
         Vector3 target;         // Camera target it looks-at
         Vector3 up;             // Camera up vector (rotation over its axis)
         float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+        float sensitivity;      // Camera sensitivity
         int projection;         // Camera projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
@@ -199,9 +200,6 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 #define CAMERA_MOVE_SPEED                               0.09f
 #define CAMERA_ROTATION_SPEED                           0.03f
 #define CAMERA_PAN_SPEED                                0.2f
-
-// Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f     // TODO: it should be independant of framerate
 
 // Camera orbital speed in CAMERA_ORBITAL mode
 #define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
@@ -475,8 +473,8 @@ void UpdateCamera(Camera *camera, int mode)
         else
         {
             // Mouse support
-            CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-            CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            CameraYaw(camera, -mousePositionDelta.x*camera->sensitivity, rotateAroundTarget);
+            CameraPitch(camera, -mousePositionDelta.y*camera->sensitivity, lockView, rotateAroundTarget, rotateUp);
         }
 
         // Keyboard support
@@ -489,8 +487,8 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsGamepadAvailable(0))
         {
             // Gamepad controller support
-            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 2)*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 2)*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 2)*camera->sensitivity, rotateAroundTarget);
+            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 2)*camera->sensitivity, lockView, rotateAroundTarget, rotateUp);
 
             if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) <= -0.25f) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
             if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) <= -0.25f) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
