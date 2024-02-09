@@ -1491,7 +1491,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 
 void DrawPolyPro(Vector2 center, Vector2 *points, int pointCount, Color color)
 {
-	if (pointCount >= 3 && points != NULL)
+    if (pointCount >= 3 && points != NULL)
     {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
         rlSetTexture(texShapes.id);
@@ -1526,12 +1526,12 @@ void DrawPolyPro(Vector2 center, Vector2 *points, int pointCount, Color color)
             int j = i + 1;
             if (j == pointCount) j = 0;
 
-			rlVertex2f(points[i].x, points[i].y);
-			rlVertex2f(center.x, center.y);
-			rlVertex2f(points[j].x, points[j].y);
+            rlVertex2f(points[i].x, points[i].y);
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(points[j].x, points[j].y);
         }
 
-		rlEnd();
+        rlEnd();
 #endif
     }
 }
