@@ -4940,6 +4940,17 @@ return {
       }
     },
     {
+      name = "DrawPolyPro",
+      description = "Draw a filled polygon from an array of points (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "DrawPolyLines",
       description = "Draw a polygon outline of n sides",
       returnType = "void",
@@ -4961,6 +4972,16 @@ return {
         {type = "float", name = "radius"},
         {type = "float", name = "rotation"},
         {type = "float", name = "lineThick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawPolyLinesPro",
+      description = "Draw a polygon outline from an array of points (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
     },
