@@ -1523,8 +1523,7 @@ void DrawPolyPro(Vector2 center, Vector2 *points, int pointCount, Color color)
         rlColor4ub(color.r, color.g, color.b, color.a);
         for (int i = 0; i < pointCount; i++)
         {
-            int j = i + 1;
-            if (j == pointCount) j = 0;
+            int j = (i + 1) % pointCount;
 
             rlVertex2f(points[i].x, points[i].y);
             rlVertex2f(center.x, center.y);
