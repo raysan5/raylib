@@ -1259,8 +1259,10 @@ RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);  
 RLAPI void DrawTriangleFan(Vector2 *points, int pointCount, Color color);                                // Draw a triangle fan defined by points (first vertex is the center)
 RLAPI void DrawTriangleStrip(Vector2 *points, int pointCount, Color color);                              // Draw a triangle strip defined by points
 RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
+RLAPI void DrawPolyPro(Vector2 center, Vector2 *points, int pointCount, Color color);                    // Draw a filled polygon from an array of points (Vector version)
 RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color);          // Draw a polygon outline of n sides
 RLAPI void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color); // Draw a polygon outline of n sides with extended parameters
+RLAPI void DrawPolyLinesPro(Vector2 *points, int pointCount, Color color);                               // Draw a polygon outline from an array of points (Vector version)
 
 // Splines drawing functions
 RLAPI void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color);                  // Draw spline: Linear, minimum 2 points

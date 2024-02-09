@@ -1489,6 +1489,53 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 #endif
 }
 
+void DrawPolyPro(Vector2 center, Vector2 *points, int pointCount, Color color)
+{
+	if (pointCount >= 3 && points != NULL)
+    {
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+        rlSetTexture(texShapes.id);
+
+        rlBegin(RL_QUADS);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        for (int i = 0; i < pointCount; i++)
+        {
+            int j = (i + 1) % pointCount;
+
+            rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
+            rlVertex2f(points[i].x, points[i].y);
+
+            rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
+            rlVertex2f(points[j].x, points[j].y);
+        }
+
+        rlEnd();
+
+        rlSetTexture(0);
+#else
+        rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        for (int i = 0; i < pointCount; i++)
+        {
+            int j = i + 1;
+            if (j == pointCount) j = 0;
+
+			rlVertex2f(points[i].x, points[i].y);
+			rlVertex2f(center.x, center.y);
+			rlVertex2f(points[j].x, points[j].y);
+        }
+
+		rlEnd();
+#endif
+    }
+}
+
 // Draw a polygon outline of n sides
 void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color)
 {
@@ -1563,6 +1610,26 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
 #endif
 }
 
+void DrawPolyLinesPro(Vector2 *points, int pointCount, Color color)
+{
+    if (pointCount >= 3 && points != NULL)
+    {
+        rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < pointCount - 1; i++)
+        {
+            rlVertex2f(points[i].x, points[i].y);
+            rlVertex2f(points[i + 1].x, points[i + 1].y);
+        }
+
+        rlVertex2f(points[pointCount - 1].x, points[pointCount - 1].y);
+        rlVertex2f(points[0].x, points[0].y);
+
+        rlEnd();
+    }
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Splines functions
 //----------------------------------------------------------------------------------
@@ -1575,7 +1642,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 #if defined(SUPPORT_SPLINE_MITERS)
     Vector2 prevNormal = (Vector2){-(points[1].y - points[0].y), (points[1].x - points[0].x)};
     float prevLength = sqrtf(prevNormal.x*prevNormal.x + prevNormal.y*prevNormal.y);
-    
+
     if (prevLength > 0.0f)
     {
         prevNormal.x /= prevLength;
@@ -1588,7 +1655,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
     }
 
     Vector2 prevRadius = { 0.5f*thick*prevNormal.x, 0.5f*thick*prevNormal.y };
-    
+
     for (int i = 0; i < pointCount - 1; i++)
     {
         Vector2 normal = { 0 };
@@ -1597,7 +1664,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
         {
             normal = (Vector2){-(points[i + 2].y - points[i + 1].y), (points[i + 2].x - points[i + 1].x)};
             float normalLength = sqrtf(normal.x*normal.x + normal.y*normal.y);
-            
+
             if (normalLength > 0.0f)
             {
                 normal.x /= normalLength;
@@ -1616,7 +1683,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 
         Vector2 radius = { prevNormal.x + normal.x, prevNormal.y + normal.y };
         float radiusLength = sqrtf(radius.x*radius.x + radius.y*radius.y);
-        
+
         if (radiusLength > 0.0f)
         {
             radius.x /= radiusLength;
@@ -1640,7 +1707,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
             radius.x = 0.0f;
             radius.y = 0.0f;
         }
-        
+
         Vector2 strip[4] = {
             { points[i].x - prevRadius.x, points[i].y - prevRadius.y },
             { points[i].x + prevRadius.x, points[i].y + prevRadius.y },
@@ -1678,7 +1745,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
         DrawTriangleStrip(strip, 4, color);
     }
 #endif
-    
+
 #if defined(SUPPORT_SPLINE_SEGMENT_CAPS)
     // TODO: Add spline segment rounded caps at the begin/end of the spline
 #endif
