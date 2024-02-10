@@ -2191,7 +2191,7 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize)
                     int ykabs = yk + kernelWidth/2;
                     unsigned int imgindex = image->width*(x + xk) + (y + yk);
                     
-                    if (imgindex >= image->width*image->height)
+                    if (imgindex >= (unsigned int)(image->width*image->height))
                     {
                         temp[kernelWidth * xkabs + ykabs].x = 0.0f;
                         temp[kernelWidth * xkabs + ykabs].y = 0.0f;
