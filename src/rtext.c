@@ -530,7 +530,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     Font font = { 0 };
 
     char fileExtLower[16] = { 0 };
-    strcpy(fileExtLower, TextToLower(fileType));
+    strncpy(fileExtLower, TextToLower(fileType), sizeof(fileExtLower) - 1);
 
     font.baseSize = fontSize;
     font.glyphCount = (codepointCount > 0)? codepointCount : 95;
