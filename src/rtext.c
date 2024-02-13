@@ -2264,23 +2264,12 @@ static Font LoadBMFont(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_BDF)
 
 // Convert hexadecimal to decimal (single digit)
-static char HexToInt(char hex) {
-    if (hex >= '0' && hex <= '9')
-    {
-        return hex - '0';
-    }
-    else if (hex >= 'a' && hex <= 'f')
-    {
-        return hex - 'a' + 10;
-    }
-    else if (hex >= 'A' && hex <= 'F')
-    {
-        return hex - 'A' + 10;
-    }
-    else
-    {
-        return 0;
-    }
+static unsigned char HexToInt(char hex)
+{
+    if (hex >= '0' && hex <= '9') return hex - '0';
+    else if (hex >= 'a' && hex <= 'f') return hex - 'a' + 10;
+    else if (hex >= 'A' && hex <= 'F') return hex - 'A' + 10;
+    else return 0;
 }
 
 // Load font data for further use
@@ -2365,7 +2354,7 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
 
                     for (int x = 0; x < readBytes; x++)
                     {
-                        char byte = HexToInt(buffer[x]);
+                        unsigned char byte = HexToInt(buffer[x]);
                         
                         for (int bitX = 0; bitX < 4; bitX++)
                         {

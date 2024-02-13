@@ -362,7 +362,7 @@ static int screenshotCounter = 0;    // Screenshots counter
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-int gifFrameCounter = 0;             // GIF frames counter
+unsigned int gifFrameCounter = 0;    // GIF frames counter
 bool gifRecording = false;           // GIF recording state
 MsfGifState gifState = { 0 };        // MSGIF context state
 #endif
