@@ -530,7 +530,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     Font font = { 0 };
 
     char fileExtLower[16] = { 0 };
-    strncpy(fileExtLower, TextToLower(fileType), sizeof(fileExtLower) - 1);
+    strncpy(fileExtLower, TextToLower(fileType), 16 - 1);
 
     font.baseSize = fontSize;
     font.glyphCount = (codepointCount > 0)? codepointCount : 95;
@@ -971,7 +971,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
 
     // Get file name from path
     char fileNamePascal[256] = { 0 };
-    strcpy(fileNamePascal, TextToPascal(GetFileNameWithoutExt(fileName)));
+    strncpy(fileNamePascal, TextToPascal(GetFileNameWithoutExt(fileName)), 256 - 1);
 
     // NOTE: Text data buffer size is estimated considering image data size in bytes
     // and requiring 6 char bytes for every byte: "0x00, "
@@ -1699,7 +1699,8 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     return result;
 }
 
-// Append text at specific position and move cursor!
+// Append text at specific position and move cursor
+// WARNING: It's up to the user to make sure appended text does not overflow the buffer!
 // REQUIRES: strcpy()
 void TextAppend(char *text, const char *append, int *position)
 {
