@@ -3823,6 +3823,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
     }
 
     cubemap.height = cubemap.width;
+    cubemap.format = image.format;
 
     // Layout provided or already auto-detected
     if (layout != CUBEMAP_LAYOUT_AUTO_DETECT)
