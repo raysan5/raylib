@@ -165,7 +165,7 @@ typedef struct float16 {
     float v[16];
 } float16;
 
-#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -605,12 +605,12 @@ RMAPI Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result = { 0 };
 
-    float min = (float) fabs(v.x);
+    float min = fabsf(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
     if (fabsf(v.y) < min)
     {
-        min = (float) fabs(v.y);
+        min = fabsf(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
