@@ -88,13 +88,9 @@ jobs:
         path: ./build/${{ env.RELEASE_NAME }}.tar.gz
         
     - name: Upload Artifact to Release
-      uses: actions/upload-release-asset@v1.0.1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./build/${{ env.RELEASE_NAME }}.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/${{ env.RELEASE_NAME }}.tar.gz
-          asset_name: ${{ env.RELEASE_NAME }}.tar.gz
-          asset_content_type: application/gzip
-      if: github.event_name == 'release' && github.event.action == 'published'  
-
+      if: github.event_name == 'release' && github.event.action == 'published'
