@@ -120,7 +120,6 @@
     #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
 #endif
 
-
 // Function specifiers definition
 #ifndef RLAPI
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
@@ -3411,7 +3410,6 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
     TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] GPU mipmap generation not supported", id);
 #endif
 }
-
 
 // Read texture pixel data
 void *rlReadTexturePixels(unsigned int id, int width, int height, int format)

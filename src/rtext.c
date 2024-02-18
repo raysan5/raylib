@@ -1112,7 +1112,6 @@ bool ExportFontAsCode(Font font, const char *fileName)
     return success;
 }
 
-
 // Draw current FPS
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
@@ -1437,7 +1436,6 @@ const char *TextFormat(const char *text, ...)
 
     return currentBuffer;
 }
-
 
 // Get integer value from text
 // NOTE: This function replaces atoi() [stdlib.h]

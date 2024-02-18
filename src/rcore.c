@@ -1694,7 +1694,6 @@ void WaitTime(double seconds)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //void OpenURL(const char *url)
 
-
 // Set the seed for the random number generator
 void SetRandomSeed(unsigned int seed)
 {
