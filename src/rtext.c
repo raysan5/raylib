@@ -1156,6 +1156,8 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
     float scaleFactor = fontSize/font.baseSize;         // Character quad scaling factor
 
+    float dpiFactorY = GetWindowScaleDPI().y;           // Window scale DPI factor (Y)
+
     for (int i = 0; i < size;)
     {
         // Get next codepoint from byte string and glyph index in font
@@ -1166,7 +1168,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         if (codepoint == '\n')
         {
             // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
-            textOffsetY += textLineSpacing;
+            textOffsetY += textLineSpacing * dpiFactorY;
             textOffsetX = 0.0f;
         }
         else
