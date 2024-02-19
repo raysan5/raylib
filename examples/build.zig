@@ -55,7 +55,6 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: anytype, optim
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
-                exe.addIncludePath(.{ .path = "external/glfw/deps/mingw" });
 
                 exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
