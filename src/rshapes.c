@@ -1831,7 +1831,10 @@ void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color co
 void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 3) return;
-
+    for (int i = 2; i < pointCount - 2; i += 2)
+    {
+        DrawCircleV(points[i], thick/2.0f, color);
+    }
     for (int i = 0; i < pointCount - 2; i += 2)
     {
         DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
@@ -1842,7 +1845,10 @@ void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Col
 void DrawSplineBezierCubic(Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 4) return;
-
+    for (int i = 3; i < pointCount - 3; i += 3)
+    {
+        DrawCircleV(points[i], thick/2.0f, color);
+    }
     for (int i = 0; i < pointCount - 3; i += 3)
     {
         DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
