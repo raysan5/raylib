@@ -956,6 +956,23 @@ void SetMouseCursor(int cursor)
     CORE.Input.Mouse.cursor = cursor;
 }
 
+static void UpdateSDLTouchPoints(SDL_TouchFingerEvent event)
+{
+    CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
+
+    for (int i=0; i<CORE.Input.Touch.pointCount; i++)
+    {
+        SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
+        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.position[i].x = finger->x * CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y * CORE.Window.screen.height;
+        CORE.Input.Touch.currentTouchState[i] = 1;
+    }
+
+    for (int i=CORE.Input.Touch.pointCount; i<MAX_TOUCH_POINTS; i++)
+        CORE.Input.Touch.currentTouchState[i] = 0;
+}
+
 // Register all input events
 void PollInputEvents(void)
 {
@@ -994,15 +1011,7 @@ void PollInputEvents(void)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
-    // Reset touch positions
-    // TODO: It resets on target platform the mouse position and not filled again until a move-event,
-    // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
-
     // Map touch position to mouse position for convenience
-    // WARNING: If the target desktop device supports touch screen, this behavious should be reviewed!
-    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
@@ -1192,34 +1201,21 @@ void PollInputEvents(void)
                 touchAction = 2;
             } break;
 
-            // Check touch events
-            // NOTE: These cases need to be reviewed on a real touch screen
             case SDL_FINGERDOWN:
             {
-                const int touchId = (int)event.tfinger.fingerId;
-                CORE.Input.Touch.currentTouchState[touchId] = 1;
-                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
-                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
-
+                UpdateSDLTouchPoints(event.tfinger);
                 touchAction = 1;
                 realTouch = true;
             } break;
             case SDL_FINGERUP:
             {
-                const int touchId = (int)event.tfinger.fingerId;
-                CORE.Input.Touch.currentTouchState[touchId] = 0;
-                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
-                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
-
+                UpdateSDLTouchPoints(event.tfinger);
                 touchAction = 0;
                 realTouch = true;
             } break;
             case SDL_FINGERMOTION:
             {
-                const int touchId = (int)event.tfinger.fingerId;
-                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
-                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
-
+                UpdateSDLTouchPoints(event.tfinger);
                 touchAction = 2;
                 realTouch = true;
             } break;
