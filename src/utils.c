@@ -44,6 +44,7 @@
     #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
 #endif
 
+#include <ctype.h>                      // Required for: isalpha(), isdigit(), toupper()
 #include <stdlib.h>                     // Required for: exit()
 #include <stdio.h>                      // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose()
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
@@ -288,6 +289,33 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
     return success;
 }
 
+// Get identifier for file which is used in Export...AsCode functions (uses static string)
+// NOTE: this function is not a part of the public API
+const char *GetFileIdentifier(const char *fileName)
+{
+    #define MAX_IDENTIFIER_LENGTH     256
+
+    static char identifier[MAX_IDENTIFIER_LENGTH];
+    memset(identifier, 0, MAX_IDENTIFIER_LENGTH);
+
+    const char *tmpFileName = GetFileNameWithoutExt(fileName);
+    int pos = 0;
+
+    if (isdigit(*tmpFileName)) identifier[pos++] = '_';
+
+    while (*tmpFileName != '\0')
+    {
+        char c = *(tmpFileName++);
+        bool isAlphanumeric = isalpha(c) || isdigit(c);
+        if (!isAlphanumeric && pos > 0 && identifier[pos - 1] == '_') continue;
+        identifier[pos++] = isAlphanumeric ? toupper(c) : '_';
+    }
+
+    // We do not need add '\0' manually since we call memset() at the beginning of the function.
+
+    return identifier;
+}
+
 // Export data to code (.h), returns true on success
 bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName)
 {
@@ -313,10 +341,7 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-    // Get file name from path and convert variable name to uppercase
-    char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+    const char *varFileName = GetFileIdentifier(fileName);
 
     byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, dataSize);
 

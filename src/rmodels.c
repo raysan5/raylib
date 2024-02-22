@@ -1874,10 +1874,7 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-    // Get file name from path and convert variable name to uppercase
-    char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+    const char *varFileName = GetFileIdentifier(fileName);
 
     // Add image information
     byteCount += sprintf(txtData + byteCount, "// Mesh basic information\n");

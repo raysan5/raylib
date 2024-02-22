@@ -418,6 +418,7 @@ static bool IsFileExtension(const char *fileName, const char *ext); // Check fil
 static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)
 static const char *GetFileName(const char *filePath);               // Get pointer to filename for a path string
 static const char *GetFileNameWithoutExt(const char *filePath);     // Get filename string without extension (uses static string)
+const char *GetFileIdentifier(const char *fileName)                 // Get identifier for file which is used in Export...AsCode functions (uses static string)
 
 static unsigned char *LoadFileData(const char *fileName, int *dataSize);    // Load file data as byte array (read)
 static bool SaveFileData(const char *fileName, void *data, int dataSize);   // Save data to file from byte array (write)
@@ -1097,10 +1098,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
     byteCount += sprintf(txtData + byteCount, "//////////////////////////////////////////////////////////////////////////////////\n\n");
 
-    // Get file name from path and convert variable name to uppercase
-    char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+    const char *varFileName = GetFileIdentifier(fileName);
 
     // Add wave information
     byteCount += sprintf(txtData + byteCount, "// Wave data information\n");
@@ -2687,6 +2685,34 @@ static const char *GetFileNameWithoutExt(const char *filePath)
     }
 
     return fileName;
+}
+
+// Get identifier for file which is used in Export...AsCode functions (uses static string)
+const char *GetFileIdentifier(const char *fileName)
+{
+    // We get GetFileNameWithoutExt() output, replace some characters, delete some characters and maybe add '_'
+    // at begin. In the worst case, we will not delete any characters and add one character at the beginning.
+    #define MAX_IDENTIFIER_LENGTH     (MAX_FILENAME_LENGTH + 1)
+
+    static char identifier[MAX_IDENTIFIER_LENGTH];
+    memset(identifier, 0, MAX_IDENTIFIER_LENGTH);
+
+    const char *tmpFileName = GetFileNameWithoutExt(fileName);
+    int pos = 0;
+
+    if (isdigit(*tmpFileName)) identifier[pos++] = '_';
+
+    while (*tmpFileName != '\0')
+    {
+        char c = *(tmpFileName++);
+        bool isAlphanumeric = isalpha(c) || isdigit(c);
+        if (!isAlphanumeric && pos > 0 && identifier[pos - 1] == '_') continue;
+        identifier[pos++] = isAlphanumeric ? toupper(c) : '_';
+    }
+
+    // We do not need add '\0' manually since we call memset() at the beginning of the function.
+
+    return identifier;
 }
 
 // Load data from file into a buffer

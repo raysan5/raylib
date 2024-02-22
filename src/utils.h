@@ -74,6 +74,8 @@ void InitAssetManager(AAssetManager *manager, const char *dataPath);   // Initia
 FILE *android_fopen(const char *fileName, const char *mode);           // Replacement for fopen() -> Read-only!
 #endif
 
+const char *GetFileIdentifier(const char *fileName);                   // Get identifier for file which is used in Export...AsCode functions (uses static string)
+
 #if defined(__cplusplus)
 }
 #endif
