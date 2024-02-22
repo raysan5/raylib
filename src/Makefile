@@ -98,8 +98,8 @@ USE_EXTERNAL_GLFW     ?= FALSE
 
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
-SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
-SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/lib
+SDL_INCLUDE_PATH      ?= $(shell sdl2-config --cflags)
+SDL_LIBRARY_PATH      ?= $(shell sdl2-config --libs)
 
 # Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
@@ -434,7 +434,7 @@ endif
 # Define include paths for required headers: INCLUDE_PATHS
 # NOTE: Several external required libraries (stb and others)
 #------------------------------------------------------------------------------------------------
-INCLUDE_PATHS = -I. 
+INCLUDE_PATHS = -I.
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -444,7 +444,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
-    INCLUDE_PATHS += -I$(SDL_INCLUDE_PATH)
+    INCLUDE_PATHS += $(SDL_INCLUDE_PATH)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     INCLUDE_PATHS += -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
@@ -500,7 +500,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
-    LDFLAGS += -L$(SDL_LIBRARY_PATH)
+    LDFLAGS += $(SDL_LIBRARY_PATH)
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
