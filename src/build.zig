@@ -97,7 +97,6 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
-            raylib.addIncludePath(.{ .path = "external/glfw/deps/mingw" });
 
             raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },

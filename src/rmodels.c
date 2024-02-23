@@ -5368,7 +5368,7 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
         }
     }
 
-    float t = (time - tstart)/(tend - tstart);
+    float t = (time - tstart)/fmax((tend - tstart), EPSILON);
     t = (t < 0.0f)? 0.0f : t;
     t = (t > 1.0f)? 1.0f : t;
 
@@ -5506,7 +5506,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                 strncpy(animations[i].name, animData.name, sizeof(animations[i].name));
                 animations[i].name[sizeof(animations[i].name) - 1] = '\0';
 
-                animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY);
+                animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY) + 1;
                 animations[i].framePoses = RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
 
                 for (int j = 0; j < animations[i].frameCount; j++)
