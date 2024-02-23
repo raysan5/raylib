@@ -1584,6 +1584,8 @@ void ClosePlatform(void)
 static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
+
+    exit(1);
 }
 
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
