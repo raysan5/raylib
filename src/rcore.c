@@ -224,7 +224,7 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 #ifndef MAX_GAMEPAD_BUTTONS
     #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
 #endif
-#ifndef MAX_GAMEPAD_BUTTONS
+#ifndef MAX_GAMEPAD_VIBRATION_TIME
     #define MAX_GAMEPAD_VIBRATION_TIME     2.0f     // Maximum vibration time in seconds
 #endif
 #ifndef MAX_TOUCH_POINTS
