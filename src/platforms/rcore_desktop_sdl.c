@@ -938,6 +938,21 @@ int SetGamepadMappings(const char *mappings)
     return SDL_GameControllerAddMapping(mappings);
 }
 
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
+{
+    //Limit input values to between 0.0f and 1.0f
+    leftMotor  = (0.0f > leftMotor)  ? 0.0f : leftMotor;
+    rightMotor = (0.0f > rightMotor) ? 0.0f : rightMotor;
+    leftMotor  = (1.0f < leftMotor)  ? 1.0f : leftMotor;
+    rightMotor = (1.0f < rightMotor) ? 1.0f : rightMotor;
+
+    if (IsGamepadAvailable(gamepad))
+    {
+        SDL_JoystickRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), (Uint32)(MAX_GAMEPAD_VIBRATION_TIME*1000.0f));
+    }
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {

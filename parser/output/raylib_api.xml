@@ -669,7 +669,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="559">
+    <Functions count="560">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1192,6 +1192,11 @@
         </Function>
         <Function name="SetGamepadMappings" retType="int" paramCount="1" desc="Set internal gamepad mappings (SDL_GameControllerDB)">
             <Param type="const char *" name="mappings" desc="" />
+        </Function>
+        <Function name="SetGamepadVibration" retType="void" paramCount="3" desc="Set gamepad vibration for both motors">
+            <Param type="int" name="gamepad" desc="" />
+            <Param type="float" name="leftMotor" desc="" />
+            <Param type="float" name="rightMotor" desc="" />
         </Function>
         <Function name="IsMouseButtonPressed" retType="bool" paramCount="1" desc="Check if a mouse button has been pressed once">
             <Param type="int" name="button" desc="" />
