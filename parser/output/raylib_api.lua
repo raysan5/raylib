@@ -4343,6 +4343,16 @@ return {
       }
     },
     {
+      name = "SetGamepadVibration",
+      description = "Set gamepad vibration for both motors",
+      returnType = "void",
+      params = {
+        {type = "int", name = "gamepad"},
+        {type = "float", name = "leftMotor"},
+        {type = "float", name = "rightMotor"}
+      }
+    },
+    {
       name = "IsMouseButtonPressed",
       description = "Check if a mouse button has been pressed once",
       returnType = "bool",
