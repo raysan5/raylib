@@ -949,7 +949,7 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
 
     if (IsGamepadAvailable(gamepad))
     {
-        SDL_JoystickRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), MAX_GAMEPAD_VIBRATION_TIME*1000);
+        SDL_JoystickRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), (Uint32)(MAX_GAMEPAD_VIBRATION_TIME*1000.0f));
     }
 }
 
