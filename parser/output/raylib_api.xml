@@ -902,11 +902,11 @@
         <Function name="UnloadShader" retType="void" paramCount="1" desc="Unload shader from GPU memory (VRAM)">
             <Param type="Shader" name="shader" desc="" />
         </Function>
-        <Function name="GetMouseRay" retType="Ray" paramCount="2" desc="Get a ray trace from mouse position">
+        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from mouse position">
             <Param type="Vector2" name="mousePosition" desc="" />
             <Param type="Camera" name="camera" desc="" />
         </Function>
-        <Function name="GetViewRay" retType="Ray" paramCount="4" desc="Get a ray trace from mouse position in a viewport">
+        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from mouse position in a viewport">
             <Param type="Vector2" name="mousePosition" desc="" />
             <Param type="Camera" name="camera" desc="" />
             <Param type="float" name="width" desc="" />
