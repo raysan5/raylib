@@ -101,9 +101,9 @@ USE_EXTERNAL_GLFW     ?= FALSE
 SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
 SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/lib
 
-# Disable Wayland display server protocol on Linux desktop (and use X11 only)
+# Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
-DISABLE_WAYLAND       ?= FALSE
+USE_WAYLAND_DISPLAY   ?= FALSE
 
 # Determine if the file has root access (only required to install raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
@@ -407,9 +407,7 @@ endif
 # Use Wayland display on Linux desktop
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS), LINUX)
-        CFLAGS += -D_GLFW_X11
-
-        ifeq ($(DISABLE_WAYLAND),FALSE)
+        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             CFLAGS += -D_GLFW_WAYLAND
             LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
 
@@ -534,7 +532,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt -lX11
+        LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
+        ifeq ($(USE_WAYLAND_DISPLAY),FALSE)
+            LDLIBS += -lX11
+        endif
         # TODO: On ARM 32bit arch, miniaudio requires atomics library
         #LDLIBS += -latomic
     endif
@@ -555,7 +556,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
         LDLIBS = -static-libgcc -lopengl32 -lgdi32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt -lX11
+        LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
+        ifeq ($(USE_WAYLAND_DISPLAY),FALSE)
+            LDLIBS += -lX11
+        endif
     endif
     LDLIBS += -lSDL2 -lSDL2main
 endif
