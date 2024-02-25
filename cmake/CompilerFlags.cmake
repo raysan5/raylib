@@ -11,6 +11,12 @@ add_if_flag_compiles(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
 # Allows some casting of pointers without generating a warning
 add_if_flag_compiles(-fno-strict-aliasing CMAKE_C_FLAGS)
 
+# Set the charset of input files and executable files as utf-8
+# Since the default charset of MSVC is not utf-8
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    add_if_flag_compiles(-utf-8 CMAKE_C_FLAGS)
+endif()
+
 if (ENABLE_MSAN AND ENABLE_ASAN)
     # MSAN and ASAN both work on memory - ASAN does more things
     MESSAGE(WARNING "Compiling with both AddressSanitizer and MemorySanitizer is not recommended")

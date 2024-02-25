@@ -9,4 +9,7 @@ function(add_if_flag_compiles flag)
     set(outcome "compiles")
   endif()
   message(STATUS "Testing if ${flag} can be used -- ${outcome}")
+  # It must be manually removed from the cache; otherwise, the check won't be re-evalated
+  # https://cmake.org/cmake/help/latest/module/CheckCCompilerFlag.html
+  unset(COMPILER_HAS_THOSE_TOGGLES CACHE)
 endfunction()

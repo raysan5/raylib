@@ -142,5 +142,8 @@ foreach (example_source ${example_sources})
     endif ()
 endforeach ()
 
+# Need glfw implemention for glfw3.h
+target_sources(rlgl_standalone PRIVATE ${CMAKE_SOURCE_DIR}/src/rglfw.c)
+
 # Copy all of the resource files to the destination
 file(COPY ${example_resources} DESTINATION "resources/")

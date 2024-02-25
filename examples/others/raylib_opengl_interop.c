@@ -38,6 +38,9 @@
             #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
             #include <OpenGL/gl3ext.h>  // OpenGL 3 extensions library for OSX
         #else
+            #if defined(_WIN32) && defined(_MSC_VER)
+                #define GLAD_IMPLEMENTATION  // Need self-implementation for MSVC
+            #endif
             #include "glad.h"       // Required for: OpenGL functionality 
         #endif
         #define GLSL_VERSION            330
