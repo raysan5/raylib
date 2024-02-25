@@ -24,10 +24,15 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
+
+#include <string.h>
+#include <stdlib.h>
+
+// These construct a string literal from individual numeric constants
+#define _GLFW_CONCAT_VERSION(m, n, r) #m "." #n "." #r
+#define _GLFW_MAKE_VERSION(m, n, r) _GLFW_CONCAT_VERSION(m, n, r)
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW internal API                      //////
@@ -45,11 +50,11 @@ static const struct
 #if defined(_GLFW_COCOA)
     { GLFW_PLATFORM_COCOA, _glfwConnectCocoa },
 #endif
-#if defined(_GLFW_X11)
-    { GLFW_PLATFORM_X11, _glfwConnectX11 },
-#endif
 #if defined(_GLFW_WAYLAND)
     { GLFW_PLATFORM_WAYLAND, _glfwConnectWayland },
+#endif
+#if defined(_GLFW_X11)
+    { GLFW_PLATFORM_X11, _glfwConnectX11 },
 #endif
 };
 
@@ -71,12 +76,28 @@ GLFWbool _glfwSelectPlatform(int desiredID, _GLFWplatform* platform)
 
     // Only allow the Null platform if specifically requested
     if (desiredID == GLFW_PLATFORM_NULL)
-        return GLFW_FALSE; //_glfwConnectNull(desiredID, platform);  // @raysan5
+        return _glfwConnectNull(desiredID, platform);
     else if (count == 0)
     {
         _glfwInputError(GLFW_PLATFORM_UNAVAILABLE, "This binary only supports the Null platform");
         return GLFW_FALSE;
     }
+
+#if defined(_GLFW_WAYLAND) && defined(_GLFW_X11)
+    if (desiredID == GLFW_ANY_PLATFORM)
+    {
+        const char* const session = getenv("XDG_SESSION_TYPE");
+        if (session)
+        {
+            // Only follow XDG_SESSION_TYPE if it is set correctly and the
+            // environment looks plausble; otherwise fall back to detection
+            if (strcmp(session, "wayland") == 0 && getenv("WAYLAND_DISPLAY"))
+                desiredID = GLFW_PLATFORM_WAYLAND;
+            else if (strcmp(session, "x11") == 0 && getenv("DISPLAY"))
+                desiredID = GLFW_PLATFORM_X11;
+        }
+    }
+#endif
 
     if (desiredID == GLFW_ANY_PLATFORM)
     {
@@ -146,7 +167,9 @@ GLFWAPI int glfwPlatformSupported(int platformID)
 
 GLFWAPI const char* glfwGetVersionString(void)
 {
-    return _GLFW_VERSION_NUMBER
+    return _GLFW_MAKE_VERSION(GLFW_VERSION_MAJOR,
+                              GLFW_VERSION_MINOR,
+                              GLFW_VERSION_REVISION)
 #if defined(_GLFW_WIN32)
         " Win32 WGL"
 #endif

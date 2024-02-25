@@ -24,10 +24,10 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_WIN32)
 
 #include <stdio.h>
 #include <math.h>
@@ -734,6 +734,13 @@ GLFWbool _glfwPollJoystickWin32(_GLFWjoystick* js, int mode)
         if (xis.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT)
             dpad |= GLFW_HAT_LEFT;
 
+        // Treat invalid combinations as neither being pressed
+        // while preserving what data can be preserved
+        if ((dpad & GLFW_HAT_RIGHT) && (dpad & GLFW_HAT_LEFT))
+            dpad &= ~(GLFW_HAT_RIGHT | GLFW_HAT_LEFT);
+        if ((dpad & GLFW_HAT_UP) && (dpad & GLFW_HAT_DOWN))
+            dpad &= ~(GLFW_HAT_UP | GLFW_HAT_DOWN);
+
         _glfwInputJoystickHat(js, 0, dpad);
     }
 
@@ -755,4 +762,6 @@ void _glfwUpdateGamepadGUIDWin32(char* guid)
                 original, original + 4);
     }
 }
+
+#endif // _GLFW_WIN32
 

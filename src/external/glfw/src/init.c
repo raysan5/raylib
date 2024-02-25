@@ -24,8 +24,6 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
 
@@ -51,16 +49,22 @@ static GLFWerrorfun _glfwErrorCallback;
 static GLFWallocator _glfwInitAllocator;
 static _GLFWinitconfig _glfwInitHints =
 {
-    GLFW_TRUE,      // hat buttons
-    GLFW_ANGLE_PLATFORM_TYPE_NONE, // ANGLE backend
-    GLFW_ANY_PLATFORM, // preferred platform
-    NULL,           // vkGetInstanceProcAddr function
+    .hatButtons = GLFW_TRUE,
+    .angleType = GLFW_ANGLE_PLATFORM_TYPE_NONE,
+    .platformID = GLFW_ANY_PLATFORM,
+    .vulkanLoader = NULL,
+    .ns =
     {
-        GLFW_TRUE,  // macOS menu bar
-        GLFW_TRUE   // macOS bundle chdir
+        .menubar = GLFW_TRUE,
+        .chdir = GLFW_TRUE
     },
+    .x11 =
     {
-        GLFW_TRUE,  // X11 XCB Vulkan surface
+        .xcbVulkanSurface = GLFW_TRUE,
+    },
+    .wl =
+    {
+        .libdecorMode = GLFW_WAYLAND_PREFER_LIBDECOR
     },
 };
 
@@ -240,30 +244,6 @@ int _glfw_min(int a, int b)
 int _glfw_max(int a, int b)
 {
     return a > b ? a : b;
-}
-
-float _glfw_fminf(float a, float b)
-{
-    if (a != a)
-        return b;
-    else if (b != b)
-        return a;
-    else if (a < b)
-        return a;
-    else
-        return b;
-}
-
-float _glfw_fmaxf(float a, float b)
-{
-    if (a != a)
-        return b;
-    else if (b != b)
-        return a;
-    else if (a > b)
-        return a;
-    else
-        return b;
 }
 
 void* _glfw_calloc(size_t count, size_t size)
@@ -478,6 +458,9 @@ GLFWAPI void glfwInitHint(int hint, int value)
             return;
         case GLFW_X11_XCB_VULKAN_SURFACE:
             _glfwInitHints.x11.xcbVulkanSurface = value;
+            return;
+        case GLFW_WAYLAND_LIBDECOR:
+            _glfwInitHints.wl.libdecorMode = value;
             return;
     }
 

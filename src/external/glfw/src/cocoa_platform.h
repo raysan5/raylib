@@ -145,7 +145,7 @@ typedef struct _GLFWwindowNS
 
     GLFWbool        maximized;
     GLFWbool        occluded;
-    GLFWbool        retina;
+    GLFWbool        scaleFramebuffer;
 
     // Cached window properties to filter out duplicate events
     int             width, height;
@@ -281,7 +281,7 @@ void _glfwGetMonitorPosCocoa(_GLFWmonitor* monitor, int* xpos, int* ypos);
 void _glfwGetMonitorContentScaleCocoa(_GLFWmonitor* monitor, float* xscale, float* yscale);
 void _glfwGetMonitorWorkareaCocoa(_GLFWmonitor* monitor, int* xpos, int* ypos, int* width, int* height);
 GLFWvidmode* _glfwGetVideoModesCocoa(_GLFWmonitor* monitor, int* count);
-void _glfwGetVideoModeCocoa(_GLFWmonitor* monitor, GLFWvidmode* mode);
+GLFWbool _glfwGetVideoModeCocoa(_GLFWmonitor* monitor, GLFWvidmode* mode);
 GLFWbool _glfwGetGammaRampCocoa(_GLFWmonitor* monitor, GLFWgammaramp* ramp);
 void _glfwSetGammaRampCocoa(_GLFWmonitor* monitor, const GLFWgammaramp* ramp);
 
