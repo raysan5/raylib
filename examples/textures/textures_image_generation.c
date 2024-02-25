@@ -13,7 +13,7 @@
 
 #include "raylib.h"
 
-#define NUM_TEXTURES  9      // Currently we have 8 generation algorithms but some are have multiple purposes (Linear and Square Gradients)
+#define NUM_TEXTURES  9      // Currently we have 8 generation algorithms but some have multiple purposes (Linear and Square Gradients)
 
 //------------------------------------------------------------------------------------
 // Program main entry point

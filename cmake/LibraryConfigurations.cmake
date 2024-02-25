@@ -91,6 +91,11 @@ elseif ("${PLATFORM}" MATCHES "DRM")
     endif ()
     set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread m dl)
 
+elseif ("${PLATFORM}" MATCHES "SDL")
+    find_package(SDL2 REQUIRED)
+    set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+    set(LIBS_PRIVATE SDL2::SDL2)
+
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
