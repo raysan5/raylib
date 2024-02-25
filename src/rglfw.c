@@ -34,8 +34,8 @@
 // _GLFW_X11        to use the X Window System
 // _GLFW_WAYLAND    to use the Wayland API (experimental and incomplete)
 // _GLFW_COCOA      to use the Cocoa frameworks
-// _GLFW_OSMESA     to use the OSMesa API (headless and non-interactive)
-// _GLFW_MIR        experimental, not supported at this moment
+//
+// _GLFW_WAYLAND and _GLFW_X11 may be combined
 
 //----------------------------------------------------------------------------------
 // Feature Test Macros required for this module
