@@ -35,7 +35,7 @@
 // _GLFW_WAYLAND    to use the Wayland API (experimental and incomplete)
 // _GLFW_COCOA      to use the Cocoa frameworks
 //
-// _GLFW_WAYLAND and _GLFW_X11 may be combined
+// Note: GLFW's runtime platform selection is not supported at the moment
 
 //----------------------------------------------------------------------------------
 // Feature Test Macros required for this module
