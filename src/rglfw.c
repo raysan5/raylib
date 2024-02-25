@@ -69,6 +69,15 @@
     #define _WIN32_WINNT_WINXP      0x0501
 #endif
 
+#include "external/glfw/src/internal.h"
+
+// We do not use GLFW's "null" platform, but the absence of this function
+// causes the build to fail
+GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
+{
+    return GLFW_TRUE;
+}
+
 // Common modules to all platforms
 #include "external/glfw/src/init.c"
 #include "external/glfw/src/platform.c"
