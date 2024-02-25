@@ -313,10 +313,16 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-    // Get file name from path and convert variable name to uppercase
+    // Get file name from path
     char varFileName[256] = { 0 };
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+    for (int i = 0; varFileName[i] != '\0'; i++)
+    {
+        // Convert variable name to uppercase
+        if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+        // Replace '-' (non valid character for C identifier with '_')
+        if (varFileName[i] == '-') { varFileName[i] = '_'; }
+    }
 
     byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, dataSize);
 
