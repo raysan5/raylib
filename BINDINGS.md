@@ -74,7 +74,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-SmallBASIC  | 5.0     | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-umka        | **4.5** | [Umka](https://github.com/vtereshkov/umka-lang) | Zlib | https://github.com/robloach/raylib-umka |
 | raylib.v           | 4.2     | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
-| raylib-vapi        | 4.2     | [Vala](https://vala.dev/)            | Zlib     | https://github.com/lxmcf/raylib-vapi         |
+| raylib-vapi        | 5.0     | [Vala](https://vala.dev/)            | Zlib     | https://github.com/lxmcf/raylib-vapi         |
 | raylib-wren        | 4.0     | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib-zig         | 4.6-dev | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
 | raylib.zig         | 5.1-dev | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
