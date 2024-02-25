@@ -1404,13 +1404,13 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 //----------------------------------------------------------------------------------
 
 // Get a ray trace from mouse position
-Ray GetMouseRay(Vector2 mousePosition, Camera camera)
+Ray GetScreenToWorldRay(Vector2 mousePosition, Camera camera)
 {
-    return GetViewRay(mousePosition, camera, (float)GetScreenWidth(), (float)GetScreenHeight());
+    return GetScreenToWorldRayEx(mousePosition, camera, (float)GetScreenWidth(), (float)GetScreenHeight());
 }
 
 // Get a ray trace from the mouse position within a specific section of the screen
-Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height)
+Ray GetScreenToWorldRayEx(Vector2 mousePosition, Camera camera, float width, float height)
 {
     Ray ray = { 0 };
 

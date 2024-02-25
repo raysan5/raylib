@@ -195,7 +195,7 @@ int main(void)
         // Handle clicking the cube
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            Ray ray = GetMouseRay(GetMousePosition(), camera);
+            Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
 
             // Check collision between ray and box
             RayCollision collision = GetRayCollisionBox(ray,
