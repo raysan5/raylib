@@ -411,8 +411,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             CFLAGS += -D_GLFW_WAYLAND
             LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
 
-            WL_PROTOCOLS_DIR := $(shell pkg-config wayland-protocols --variable=pkgdatadir)
-            WL_CLIENT_DIR := $(shell pkg-config wayland-client --variable=pkgdatadir)
+            WL_PROTOCOLS_DIR := external/glfw/deps/wayland
 
             wl_generate = \
                 $(eval protocol=$(1)) \
@@ -420,13 +419,15 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
                 $(shell wayland-scanner client-header $(protocol) $(RAYLIB_SRC_PATH)/$(basename).h) \
                 $(shell wayland-scanner private-code $(protocol) $(RAYLIB_SRC_PATH)/$(basename)-code.h)
 
-            $(call wl_generate, $(WL_CLIENT_DIR)/wayland.xml, wayland-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml, wayland-xdg-shell-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml, wayland-xdg-decoration-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/stable/viewporter/viewporter.xml, wayland-viewporter-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/relative-pointer/relative-pointer-unstable-v1.xml, wayland-relative-pointer-unstable-v1-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml, wayland-pointer-constraints-unstable-v1-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml, wayland-idle-inhibit-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/wayland.xml, wayland-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-shell.xml, xdg-shell-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-decoration-unstable-v1.xml, xdg-decoration-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/viewporter.xml, viewporter-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/relative-pointer-unstable-v1.xml, relative-pointer-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-constraints-unstable-v1.xml, pointer-constraints-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/fractional-scale-v1.xml, fractional-scale-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-activation-v1.xml, xdg-activation-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/idle-inhibit-unstable-v1.xml, idle-inhibit-unstable-v1-client-protocol)
         endif
     endif
 endif
@@ -805,7 +806,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
 clean_shell_sh:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
