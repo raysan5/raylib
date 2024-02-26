@@ -1,12 +1,16 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-// This has been tested to work with zig 0.11.0 and zig 0.12.0-dev.2075+f5978181e
+// This has been tested to work with zig 0.11.0, zig 0.12.0-dev.2075+f5978181e and 0.12.0-dev.2990+31763d28c
 //
 // anytype is used here to preserve compatibility, in 0.12.0dev the std.zig.CrossTarget type
 // was reworked into std.Target.Query and std.Build.ResolvedTarget. Using anytype allows
 // us to accept both CrossTarget and ResolvedTarget and act accordingly in getOsTagVersioned.
 pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
+    var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    const gpa = general_purpose_allocator.allocator();
+    // get the relative source path, because it is needed for addCSourceFilesVersioned
+    const relative = srcdir[b.build_root.path.?.len..];
     if (comptime builtin.zig_version.minor >= 12 and @TypeOf(target) != std.Build.ResolvedTarget) {
         @compileError("Expected 'std.Build.ResolvedTarget' for argument 2 'target' in 'addRaylib', found '" ++ @typeName(@TypeOf(target)) ++ "'");
     } else if (comptime builtin.zig_version.minor == 11 and @TypeOf(target) != std.zig.CrossTarget) {
@@ -45,37 +49,37 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
 
     // No GLFW required on PLATFORM_DRM
     if (!options.platform_drm) {
-        raylib.addIncludePath(.{ .path = srcdir ++ "/external/glfw/include" });
+        raylib.addIncludePath(.{ .cwd_relative = srcdir ++ "/external/glfw/include" });
     }
 
     addCSourceFilesVersioned(raylib, &.{
-        srcdir ++ "/rcore.c",
-        srcdir ++ "/utils.c",
+        try join2(gpa, relative, "rcore.c"),
+        try join2(gpa, relative, "utils.c"),
     }, raylib_flags_arr.items);
 
     if (options.raudio) {
         addCSourceFilesVersioned(raylib, &.{
-            srcdir ++ "/raudio.c",
+            try join2(gpa, relative, "raudio.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rmodels) {
         addCSourceFilesVersioned(raylib, &.{
-            srcdir ++ "/rmodels.c",
+            try join2(gpa, relative, "rmodels.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rshapes) {
         addCSourceFilesVersioned(raylib, &.{
-            srcdir ++ "/rshapes.c",
+            try join2(gpa, relative, "rshapes.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rtext) {
         addCSourceFilesVersioned(raylib, &.{
-            srcdir ++ "/rtext.c",
+            try join2(gpa, relative, "rtext.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rtextures) {
         addCSourceFilesVersioned(raylib, &.{
-            srcdir ++ "/rtextures.c",
+            try join2(gpa, relative, "rtextures.c"),
         }, raylib_flags_arr.items);
     }
 
@@ -85,14 +89,14 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
     if (options.raygui) {
         const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
         raylib.addCSourceFile(.{ .file = raygui_c_path, .flags = raylib_flags_arr.items });
-        raylib.addIncludePath(.{ .path = srcdir });
-        raylib.addIncludePath(.{ .path = srcdir ++ "/../../raygui/src" });
+        raylib.addIncludePath(.{ .cwd_relative = srcdir });
+        raylib.addIncludePath(.{ .cwd_relative = srcdir ++ "/../../raygui/src" });
     }
 
     switch (getOsTagVersioned(target)) {
         .windows => {
             addCSourceFilesVersioned(raylib, &.{
-                srcdir ++ "/rglfw.c",
+                try join2(gpa, relative, "rglfw.c"),
             }, raylib_flags_arr.items);
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
@@ -103,7 +107,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
         .linux => {
             if (!options.platform_drm) {
                 addCSourceFilesVersioned(raylib, &.{
-                    srcdir ++ "/rglfw.c",
+                    try join2(gpa, relative, "rglfw.c"),
                 }, raylib_flags_arr.items);
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
@@ -133,7 +137,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
             addCSourceFilesVersioned(raylib, &.{
-                srcdir ++ "/rglfw.c",
+                try join2(gpa, relative, "rglfw.c"),
             }, raylib_flags_arr.items);
             raylib.linkSystemLibrary("GL");
             raylib.linkSystemLibrary("rt");
@@ -152,7 +156,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
             // On macos rglfw.c include Objective-C files.
             try raylib_flags_arr.append("-ObjC");
             addCSourceFilesVersioned(raylib, &.{
-                srcdir ++ "/rglfw.c",
+                try join2(gpa, relative, "rglfw.c"),
             }, raylib_flags_arr.items);
             raylib.linkFramework("Foundation");
             raylib.linkFramework("CoreServices");
@@ -256,4 +260,9 @@ fn addCSourceFilesVersioned(exe: *std.Build.Step.Compile, files: []const []const
     } else {
         exe.addCSourceFiles(files, flags);
     }
+}
+
+fn join2(allocator: std.mem.Allocator, path1: []const u8, path2: []const u8) ![]u8 {
+    const joinedPath = try std.fs.path.join(allocator, &[_][]const u8{ path1, path2 });
+    return joinedPath;
 }
