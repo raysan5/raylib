@@ -5287,6 +5287,13 @@ static Model LoadGLTF(const char *fileName)
                             unsigned short* ptr = (unsigned short*)model.meshes[meshIndex].boneIds;
                             LOAD_ATTRIBUTE(attribute, 2, unsigned short, ptr)
                         }
+                        else if ((attribute->component_type == cgltf_component_type_r_16u) && (attribute->type == cgltf_type_vec4))
+                        {
+                            // Handle 16-bit unsigned short, vec4 format
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned short));
+                            unsigned short* ptr = (unsigned short*)model.meshes[meshIndex].boneIds;
+                            LOAD_ATTRIBUTE(attribute, 4, unsigned short, ptr)
+                        }
                         else if ((attribute->component_type == cgltf_component_type_r_32u) && (attribute->type == cgltf_type_vec4))
                         {
                             // Handle 32-bit unsigned int, vec4 format
