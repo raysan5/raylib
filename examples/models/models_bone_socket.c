@@ -35,13 +35,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - bone socket");
 
     // Define the camera to look into our 3d world
-    Camera camera = {
-        .position = { 5.0f, 5.0f, 5.0f },    // Camera position
-        .target = { 0.0f, 2.0f, 0.0f },      // Camera looking at point
-        .up = { 0.0f, 1.0f, 0.0f },          // Camera up vector (rotation towards target)
-        .fovy = 45.0f,                       // Camera field-of-view Y
-        .projection = CAMERA_PERSPECTIVE     // Camera projection type
-    };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 5.0f, 5.0f, 5.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };  // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };      // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                            // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
 
     // Load gltf model
     Model characterModel = LoadModel("resources/models/gltf/greenman.glb"); // Load character model
@@ -132,7 +131,7 @@ int main(void)
                 DrawMesh(characterModel.meshes[0], characterModel.materials[1], characterModel.transform);
 
                 // Draw equipments (hat, sword, shield)
-                for (unsigned short i=0; i<BONE_SOCKETS; i++)
+                for (int i = 0; i < BONE_SOCKETS; i++)
                 {
                     if (!showEquip[i]) continue;
 
@@ -171,7 +170,7 @@ int main(void)
     UnloadModel(characterModel);         // Unload character model and meshes/material
     
     // Unload equipment model and meshes/material
-    for (unsigned short i = 0; i < BONE_SOCKETS; i++) UnloadModel(equipModel[i]);
+    for (int i = 0; i < BONE_SOCKETS; i++) UnloadModel(equipModel[i]);
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
