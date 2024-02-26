@@ -48,6 +48,7 @@
 #include <stdio.h>                      // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose()
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
+#include <ctype.h>                      // Required for: isalnum()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -320,8 +321,8 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     {
         // Convert variable name to uppercase
         if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
-        // Replace '-' (non valid character for C identifier with '_')
-        if (varFileName[i] == '-') { varFileName[i] = '_'; }
+        // Replace non valid character for C identifier with '_'
+        if (!isalnum(varFileName[i])) { varFileName[i] = '_'; }
     }
 
     byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, dataSize);
