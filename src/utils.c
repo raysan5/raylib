@@ -320,8 +320,8 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     {
         // Convert variable name to uppercase
         if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
-        // Replace '-' (non valid character for C identifier with '_')
-        if (varFileName[i] == '-') { varFileName[i] = '_'; }
+        // Replace non valid character for C identifier with '_'
+        else if (varFileName[i] == '.' || varFileName[i] == '-' || varFileName[i] == '?' || varFileName[i] == '!' || varFileName[i] == '+') { varFileName[i] = '_'; }
     }
 
     byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, dataSize);
