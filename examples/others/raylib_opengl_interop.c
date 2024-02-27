@@ -35,6 +35,7 @@
         #define GLSL_VERSION            100
     #else
         #if defined(__APPLE__)
+            #define GL_SILENCE_DEPRECATION // Silence Opengl API deprecation warnings 
             #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
             #include <OpenGL/gl3ext.h>  // OpenGL 3 extensions library for OSX
         #else
