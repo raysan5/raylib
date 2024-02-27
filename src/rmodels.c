@@ -5641,6 +5641,7 @@ static Model LoadVOX(const char *fileName)
 
     // 6*4 = 12 vertices per voxel
     Vector3 *pvertices = (Vector3 *)voxarray.vertices.array;
+    Vector3* pnormals = (Vector3*)voxarray.normals.array;
     Color *pcolors = (Color *)voxarray.colors.array;
 
     unsigned short *pindices = voxarray.indices.array;    // 5461*6*6 = 196596 indices max per mesh
@@ -5659,6 +5660,10 @@ static Model LoadVOX(const char *fileName)
         pmesh->vertices = RL_MALLOC(size);
         memcpy(pmesh->vertices, pvertices, size);
 
+        // Copy normals
+        pmesh->normals = RL_MALLOC(size); //Rk. size as vertices
+        memcpy(pmesh->normals, pnormals, size);
+
         // Copy indices
         size = voxarray.indices.used*sizeof(unsigned short);
         pmesh->indices = RL_MALLOC(size);
@@ -5676,6 +5681,7 @@ static Model LoadVOX(const char *fileName)
 
         verticesRemain -= verticesMax;
         pvertices += verticesMax;
+        pnormals += verticesMax;
         pcolors += verticesMax;
     }
 
