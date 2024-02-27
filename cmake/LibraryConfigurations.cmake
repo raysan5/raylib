@@ -43,7 +43,7 @@ if (${PLATFORM} MATCHES "Desktop")
         if ("${OPENGL_LIBRARIES}" STREQUAL "")
             set(OPENGL_LIBRARIES "GL")
         endif ()
-        
+
         set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
 
         if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
@@ -86,7 +86,7 @@ elseif ("${PLATFORM}" MATCHES "DRM")
     find_library(DRM drm)
     find_library(GBM gbm)
 
-    if (NOT CMAKE_CROSSCOMPILING)
+    if (NOT CMAKE_CROSSCOMPILING OR NOT CMAKE_SYSROOT)
         include_directories(/usr/include/libdrm)
     endif ()
     set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread m dl)
