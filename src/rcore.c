@@ -106,7 +106,7 @@
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
+#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset(), memmove()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
@@ -1799,7 +1799,7 @@ void TakeScreenshot(const char *fileName)
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
-    
+
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
@@ -1955,7 +1955,7 @@ const char *GetFileName(const char *filePath)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
     #define MAX_FILENAME_LENGTH     256
-    
+
     static char fileName[MAX_FILENAME_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAME_LENGTH);
 
@@ -1963,7 +1963,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     {
         strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
         int size = (int)strlen(fileName); // Get size in bytes
-        
+
         for (int i = size; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
@@ -1974,7 +1974,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
             }
         }
     }
-    
+
     return fileName;
 }
 
@@ -2735,48 +2735,36 @@ bool IsKeyUp(int key)
     return up;
 }
 
-// Get the last key pressed
-int GetKeyPressed(void)
+static int popQueue(int* queue, int* len)
 {
     int value = 0;
 
-    if (CORE.Input.Keyboard.keyPressedQueueCount > 0)
+    if (*len > 0)
     {
         // Get character from the queue head
-        value = CORE.Input.Keyboard.keyPressedQueue[0];
+        value = queue[0];
 
         // Shift elements 1 step toward the head
-        for (int i = 0; i < (CORE.Input.Keyboard.keyPressedQueueCount - 1); i++)
-            CORE.Input.Keyboard.keyPressedQueue[i] = CORE.Input.Keyboard.keyPressedQueue[i + 1];
+        memmove(queue, queue + 1, (*len - 1) * sizeof(int));
 
-        // Reset last character in the queue
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1] = 0;
-        CORE.Input.Keyboard.keyPressedQueueCount--;
+        // Reset last character in the queue and update its length
+        queue[*len - 1] = 0;
+        (*len)--;
     }
 
     return value;
 }
 
+// Get the last key pressed
+int GetKeyPressed(void)
+{
+    return popQueue(CORE.Input.Keyboard.keyPressedQueue, &CORE.Input.Keyboard.keyPressedQueueCount);
+}
+
 // Get the last char pressed
 int GetCharPressed(void)
 {
-    int value = 0;
-
-    if (CORE.Input.Keyboard.charPressedQueueCount > 0)
-    {
-        // Get character from the queue head
-        value = CORE.Input.Keyboard.charPressedQueue[0];
-
-        // Shift elements 1 step toward the head
-        for (int i = 0; i < (CORE.Input.Keyboard.charPressedQueueCount - 1); i++)
-            CORE.Input.Keyboard.charPressedQueue[i] = CORE.Input.Keyboard.charPressedQueue[i + 1];
-
-        // Reset last character in the queue
-        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount - 1] = 0;
-        CORE.Input.Keyboard.charPressedQueueCount--;
-    }
-
-    return value;
+    return popQueue(CORE.Input.Keyboard.charPressedQueue, &CORE.Input.Keyboard.charPressedQueueCount);
 }
 
 // Set a custom key to exit program
