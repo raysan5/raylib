@@ -74,7 +74,6 @@
 
     //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
     //#define GLFW_EXPOSE_NATIVE_WAYLAND
-    //#define GLFW_EXPOSE_NATIVE_MIR
     #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
 #endif
 #if defined(__APPLE__)
