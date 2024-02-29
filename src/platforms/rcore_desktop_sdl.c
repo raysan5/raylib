@@ -971,21 +971,20 @@ void SetMouseCursor(int cursor)
     CORE.Input.Mouse.cursor = cursor;
 }
 
-static void UpdateSDLTouchPoints(SDL_TouchFingerEvent event)
+static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
 {
     CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
 
-    for (int i=0; i<CORE.Input.Touch.pointCount; i++)
+    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
     {
         SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
         CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x * CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y * CORE.Window.screen.height;
+        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
     }
 
-    for (int i=CORE.Input.Touch.pointCount; i<MAX_TOUCH_POINTS; i++)
-        CORE.Input.Touch.currentTouchState[i] = 0;
+    for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
 }
 
 // Register all input events
@@ -1218,19 +1217,19 @@ void PollInputEvents(void)
 
             case SDL_FINGERDOWN:
             {
-                UpdateSDLTouchPoints(event.tfinger);
+                UpdateTouchPointsSDL(event.tfinger);
                 touchAction = 1;
                 realTouch = true;
             } break;
             case SDL_FINGERUP:
             {
-                UpdateSDLTouchPoints(event.tfinger);
+                UpdateTouchPointsSDL(event.tfinger);
                 touchAction = 0;
                 realTouch = true;
             } break;
             case SDL_FINGERMOTION:
             {
-                UpdateSDLTouchPoints(event.tfinger);
+                UpdateTouchPointsSDL(event.tfinger);
                 touchAction = 2;
                 realTouch = true;
             } break;
@@ -1239,7 +1238,9 @@ void PollInputEvents(void)
             case SDL_JOYDEVICEADDED:
             {
                 int jid = event.jdevice.which;
-                if (!CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS)) {
+
+                if (!CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
+                {
                     platform.gamepad[jid] = SDL_JoystickOpen(jid);
 
                     if (platform.gamepad[jid])
@@ -1260,7 +1261,9 @@ void PollInputEvents(void)
             case SDL_JOYDEVICEREMOVED:
             {
                 int jid = event.jdevice.which;
-                if (jid == SDL_JoystickInstanceID(platform.gamepad[jid])) {
+
+                if (jid == SDL_JoystickInstanceID(platform.gamepad[jid]))
+                {
                     SDL_JoystickClose(platform.gamepad[jid]);
                     platform.gamepad[jid] = SDL_JoystickOpen(0);
                     CORE.Input.Gamepad.ready[jid] = false;
