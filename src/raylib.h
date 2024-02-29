@@ -1408,6 +1408,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, V
 RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draws a texture (or part of it) that stretches or shrinks nicely
 
 // Color/pixel related functions
+RLAPI bool ColorIsEqual(Color col1, Color col2);                            // Check if two colors are equal
 RLAPI Color Fade(Color color, float alpha);                                 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI int ColorToInt(Color color);                                          // Get hexadecimal value for a Color
 RLAPI Vector4 ColorNormalize(Color color);                                  // Get Color normalized as float [0..1]

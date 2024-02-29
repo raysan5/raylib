@@ -4453,6 +4453,16 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
     }
 }
 
+// Check if two colors are equal
+bool ColorIsEqual(Color col1, Color col2)
+{
+    bool result = false;
+
+    if ((col1.r == col2.r) && (col1.g == col2.g) && (col1.b == col2.b) && (col1.a == col2.a)) result = true;
+
+    return result;
+}
+
 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color Fade(Color color, float alpha)
 {
