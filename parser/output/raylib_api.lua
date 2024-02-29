@@ -6155,6 +6155,15 @@ return {
       }
     },
     {
+      name = "ColorIsEqual",
+      description = "Check if two colors are equal",
+      returnType = "bool",
+      params = {
+        {type = "Color", name = "col1"},
+        {type = "Color", name = "col2"}
+      }
+    },
+    {
       name = "Fade",
       description = "Get color with alpha applied, alpha goes from 0.0f to 1.0f",
       returnType = "Color",
