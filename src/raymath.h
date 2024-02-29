@@ -382,7 +382,7 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
     Vector2 result = { 0 };
     float lengthSq = (v.x*v.x) + (v.y*v.y);
 
-    if (lengthSq == 0.0'f) lengthSq = 1.0f;
+    if (lengthSq == 0.0f) lengthSq = 1.0f;
     float ilength = 1.0f/sqrtf(lengthSq);
     result.x = v.x*ilength;
     result.y = v.y*ilength;
