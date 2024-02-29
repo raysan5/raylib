@@ -53,6 +53,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_multitouch", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_loading_thread", "examples\core_loading_thread.vcxproj", "{F026020F-7B00-40C8-91C3-5DE85EC45A95}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_sequence", "examples\core_random_sequence.vcxproj", "{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_values", "examples\core_random_values.vcxproj", "{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_scissor_test", "examples\core_scissor_test.vcxproj", "{59089B0C-AAB4-4532-B294-44DEAE7178B7}"

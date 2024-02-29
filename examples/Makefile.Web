@@ -359,6 +359,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_loading_thread \
+    core/core_random_sequence \
     core/core_random_values \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \
@@ -587,6 +588,9 @@ core/core_input_multitouch: core/core_input_multitouch.c
 # in its source were transformed to non-atomic operations and non-thread-local data
 core/core_loading_thread: core/core_loading_thread.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sUSE_PTHREADS=1
+
+core/core_random_sequence: core/core_random_sequence.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_random_values: core/core_random_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
