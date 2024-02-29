@@ -669,7 +669,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="560">
+    <Functions count="561">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2110,6 +2110,10 @@
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="ColorIsEqual" retType="bool" paramCount="2" desc="Check if two colors are equal">
+            <Param type="Color" name="col1" desc="" />
+            <Param type="Color" name="col2" desc="" />
         </Function>
         <Function name="Fade" retType="Color" paramCount="2" desc="Get color with alpha applied, alpha goes from 0.0f to 1.0f">
             <Param type="Color" name="color" desc="" />
