@@ -123,6 +123,7 @@ typedef struct {
 
     // Arrays for mesh build
     ArrayVector3 vertices;
+	ArrayVector3 normals;
     ArrayUShort indices;
     ArrayColor colors;
 
@@ -291,6 +292,16 @@ const VoxVector3 SolidVertex[] = {
 	{0, 1, 1},   //6
 	{1, 1, 1}    //7
  };
+
+const VoxVector3 FacesPerSideNormal[] = {
+	{ -1, 0, 0 }, //-X
+	{1, 0, 0 },   //+X
+	{0,-1, 0},    //-Y
+	{0, 1, 0},    //+Y
+	{0, 0, -1},   //-Z
+	{0, 0,  1},  //+Z
+};
+
 
 // Allocated VoxArray3D size
 static void Vox_AllocArray(VoxArray3D* pvoxarray, int _sx, int _sy, int _sz)
@@ -508,6 +519,11 @@ static void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matI
 		insertArrayVector3(&pvoxArray->vertices, vertComputed[v2]);
 		insertArrayVector3(&pvoxArray->vertices, vertComputed[v3]);
 
+		insertArrayVector3(&pvoxArray->normals, FacesPerSideNormal[i]);
+		insertArrayVector3(&pvoxArray->normals, FacesPerSideNormal[i]);
+		insertArrayVector3(&pvoxArray->normals, FacesPerSideNormal[i]);
+		insertArrayVector3(&pvoxArray->normals, FacesPerSideNormal[i]);
+
 		VoxColor col = pvoxArray->palette[matID];
 
 		insertArrayColor(&pvoxArray->colors, col);
@@ -653,6 +669,7 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 
 	// Init Arrays
 	initArrayVector3(&pvoxarray->vertices, 3 * 1024);
+	initArrayVector3(&pvoxarray->normals, 3 * 1024);
 	initArrayUShort(&pvoxarray->indices, 3 * 1024);
 	initArrayColor(&pvoxarray->colors, 3 * 1024);
 
