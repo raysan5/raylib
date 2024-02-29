@@ -2,7 +2,6 @@
 
 [![Build status](https://github.com/glfw/glfw/actions/workflows/build.yml/badge.svg)](https://github.com/glfw/glfw/actions)
 [![Build status](https://ci.appveyor.com/api/projects/status/0kf0ct9831i5l6sp/branch/master?svg=true)](https://ci.appveyor.com/project/elmindreda/glfw)
-[![Coverity Scan](https://scan.coverity.com/projects/4884/badge.svg)](https://scan.coverity.com/projects/glfw-glfw)
 
 ## Introduction
 
@@ -11,15 +10,15 @@ application development.  It provides a simple, platform-independent API for
 creating windows, contexts and surfaces, reading input, handling events, etc.
 
 GLFW natively supports Windows, macOS and Linux and other Unix-like systems.  On
-Linux both X11 and Wayland are supported.
+Linux both Wayland and X11 are supported.
 
 GLFW is licensed under the [zlib/libpng
 license](https://www.glfw.org/license.html).
 
 You can [download](https://www.glfw.org/download.html) the latest stable release
-as source or Windows binaries, or fetch the `latest` branch from GitHub.  Each
-release starting with 3.0 also has a corresponding [annotated
-tag](https://github.com/glfw/glfw/releases) with source and binary archives.
+as source or Windows binaries.  Each release starting with 3.0 also has
+a corresponding [annotated tag](https://github.com/glfw/glfw/releases) with
+source and binary archives.
 
 The [documentation](https://www.glfw.org/docs/latest/) is available online and is
 included in all source and binary archives.  See the [release
@@ -47,18 +46,19 @@ features or fixing bugs.
 
 ## Compiling GLFW
 
-GLFW itself requires only the headers and libraries for your OS and window
-system.  It does not need the headers for any context creation API (WGL, GLX,
-EGL, NSGL, OSMesa) or rendering API (OpenGL, OpenGL ES, Vulkan) to enable
-support for them.
+GLFW is written primarily in C99, with parts of macOS support being written in
+Objective-C.  GLFW itself requires only the headers and libraries for your OS
+and window system.  It does not need any additional headers for context creation
+APIs (WGL, GLX, EGL, NSGL, OSMesa) or rendering APIs (OpenGL, OpenGL ES, Vulkan)
+to enable support for them.
 
-GLFW supports compilation on Windows with Visual C++ 2010 and later, MinGW and
+GLFW supports compilation on Windows with Visual C++ 2013 and later, MinGW and
 MinGW-w64, on macOS with Clang and on Linux and other Unix-like systems with GCC
 and Clang.  It will likely compile in other environments as well, but this is
 not regularly tested.
 
-There are [pre-compiled Windows binaries](https://www.glfw.org/download.html)
-available for all supported compilers.
+There are [pre-compiled binaries](https://www.glfw.org/download.html) available
+for all supported compilers on Windows and macOS.
 
 See the [compilation guide](https://www.glfw.org/docs/latest/compile.html) for
 more information about how to compile GLFW yourself.
@@ -119,7 +119,7 @@ guide](https://github.com/glfw/glfw/blob/master/docs/CONTRIBUTING.md) for
 information on what to include when reporting a bug.
 
 
-## Changelog
+## Changelog since 3.3.10
 
  - Added `GLFW_PLATFORM` init hint for runtime platform selection (#1958)
  - Added `GLFW_ANY_PLATFORM`, `GLFW_PLATFORM_WIN32`, `GLFW_PLATFORM_COCOA`,
@@ -131,6 +131,7 @@ information on what to include when reporting a bug.
  - Added `glfwInitAllocator` for setting a custom memory allocator (#544,#1628,#1947)
  - Added `GLFWallocator` struct and `GLFWallocatefun`, `GLFWreallocatefun` and
    `GLFWdeallocatefun` types (#544,#1628,#1947)
+ - Added `glfwGetWindowTitle` function for querying window title (#1448,#1909,#2482)
  - Added `glfwInitVulkanLoader` for using a non-default Vulkan loader (#1374,#1890)
  - Added `GLFW_RESIZE_NWSE_CURSOR`, `GLFW_RESIZE_NESW_CURSOR`,
    `GLFW_RESIZE_ALL_CURSOR` and `GLFW_NOT_ALLOWED_CURSOR` cursor shapes (#427)
@@ -143,6 +144,7 @@ information on what to include when reporting a bug.
    content area (#58)
  - Added `GLFW_POSITION_X` and `GLFW_POSITION_Y` window hints for initial position
    (#1603,#1747)
+ - Added `GLFW_SCALE_FRAMEBUFFER` window hint for Wayland and macOS scaling (#2457)
  - Added `GLFW_ANY_POSITION` hint value for letting the window manager choose (#1603,#1747)
  - Added `GLFW_PLATFORM_UNAVAILABLE` error for platform detection failures (#1958)
  - Added `GLFW_FEATURE_UNAVAILABLE` error for platform limitations (#1692)
@@ -153,22 +155,63 @@ information on what to include when reporting a bug.
    values to select ANGLE backend (#1380)
  - Added `GLFW_X11_XCB_VULKAN_SURFACE` init hint for selecting X11 Vulkan
    surface extension (#1793)
+ - Added `GLFW_WIN32_KEYBOARD_MENU` window hint for enabling access to the window menu
+ - Added `GLFW_WIN32_SHOWDEFAULT` window hint for applying the parent process
+   show command (#2359)
  - Added `GLFW_NATIVE_INCLUDE_NONE` for disabling inclusion of native headers (#1348)
  - Added `GLFW_BUILD_WIN32` CMake option for enabling Win32 support (#1958)
  - Added `GLFW_BUILD_COCOA` CMake option for enabling Cocoa support (#1958)
  - Added `GLFW_BUILD_X11` CMake option for enabling X11 support (#1958)
  - Added `GLFW_LIBRARY_TYPE` CMake variable for overriding the library type
    (#279,#1307,#1497,#1574,#1928)
+ - Added support for `XDG_SESSION_TYPE` environment variable
  - Added `GLFW_PKG_CONFIG_REQUIRES_PRIVATE` and `GLFW_PKG_CONFIG_LIBS_PRIVATE` CMake
    variables exposing pkg-config dependencies (#1307)
  - Made joystick subsystem initialize at first use (#1284,#1646)
  - Made `GLFW_DOUBLEBUFFER` a read-only window attribute
- - Updated the minimum required CMake version to 3.1
+ - Made Wayland the preferred platform over X11 if both are available (#2035)
+ - Updated the minimum required CMake version to 3.4
  - Updated gamepad mappings from upstream
- - Disabled tests and examples by default when built as a CMake subdirectory
  - Renamed `GLFW_USE_WAYLAND` CMake option to `GLFW_BUILD_WAYLAND` (#1958)
+ - Disabled tests and examples by default when built as a CMake subdirectory
  - Removed `GLFW_USE_OSMESA` CMake option enabling the Null platform (#1958)
  - Removed CMake generated configuration header
+ - Bugfix: `glfwGetVideoMode` returned an invalid mode on error (#1292)
+ - [Win32] Added a version info resource to the GLFW DLL
+ - [Win32] Made hidden helper window use its own window class
+ - [Win32] Bugfix: The foreground lock timeout was overridden, ignoring the user
+ - [Cocoa] Added `glfwGetCocoaView` native access function (#2235)
+ - [Cocoa] Moved main menu creation to GLFW initialization time (#1649)
+ - [Cocoa] Bugfix: Touching event queue from secondary thread before main thread
+   would abort (#1649)
+ - [Wayland] Added support for `glfwRequestWindowAttention` (#2287)
+ - [Wayland] Added support for `glfwFocusWindow`
+ - [Wayland] Added support for `GLFW_RESIZABLE` (#2203)
+ - [Wayland] Added support for fractional scaling of window contents
+ - [Wayland] Added dynamic loading of all Wayland libraries
+ - [Wayland] Bugfix: `CLOCK_MONOTONIC` was not correctly enabled
+ - [Wayland] Bugfix: `GLFW_HOVERED` was true when the cursor was over any
+   fallback window decoration
+ - [Wayland] Bugfix: Fallback decorations allowed resizing to invalid size
+   (#2204)
+ - [X11] Bugfix: Termination would segfault if the IM had been destroyed
+ - [X11] Bugfix: Any IM started after initialization would not be detected
+ - [Linux] Bugfix: Joystick evdev fds remained open in forks (#2446)
+ - [POSIX] Removed use of deprecated function `gettimeofday`
+ - [POSIX] Bugfix: `CLOCK_MONOTONIC` was not correctly tested for or enabled
+ - [WGL] Disabled the DWM swap interval hack for Windows 8 and later (#1072)
+ - [NSGL] Removed enforcement of forward-compatible flag for core contexts
+ - [NSGL] Bugfix: A core profile OpenGL context was returned if 3.2+
+   compatibility profile was requested
+ - [EGL] Added platform selection via the `EGL_EXT_platform_base` extension
+   (#442)
+ - [EGL] Added ANGLE backend selection via `EGL_ANGLE_platform_angle` extension
+   (#1380)
+
+
+## Changelog since 3.3
+
+ - Added `GLFW_WAYLAND_LIBDECOR` init hint for disabling libdecor support (#1639,#1693)
  - Bugfix: The CMake config-file package used an absolute path and was not
    relocatable (#1470)
  - Bugfix: Video modes with a duplicate screen area were discarded (#1555,#1556)
@@ -183,10 +226,8 @@ information on what to include when reporting a bug.
  - Bugfix: `glfwMakeContextCurrent` would access TLS slot before initialization
  - Bugfix: `glfwSetGammaRamp` could emit `GLFW_INVALID_VALUE` before initialization
  - Bugfix: `glfwGetJoystickUserPointer` returned `NULL` during disconnection (#2092)
- - [Win32] Added the `GLFW_WIN32_KEYBOARD_MENU` window hint for enabling access
-           to the window menu
- - [Win32] Added a version info resource to the GLFW DLL
- - [Win32] Made hidden helper window use its own window class
+ - Bugfix: `glfwGetKeyScancode` returned `0` on error when initialized instead of `-1`
+ - Bugfix: Failure to make a newly created context current could cause segfault (#2327)
  - [Win32] Disabled framebuffer transparency on Windows 7 when DWM windows are
    opaque (#1512)
  - [Win32] Bugfix: `GLFW_INCLUDE_VULKAN` plus `VK_USE_PLATFORM_WIN32_KHR` caused
@@ -213,7 +254,6 @@ information on what to include when reporting a bug.
  - [Win32] Bugfix: `USE_MSVC_RUNTIME_LIBRARY_DLL` had no effect on CMake 3.15 or
    later (#1783,#1796)
  - [Win32] Bugfix: Compilation with LLVM for Windows failed (#1807,#1824,#1874)
- - [Win32] Bugfix: The foreground lock timeout was overridden, ignoring the user
  - [Win32] Bugfix: Content scale queries could fail silently (#1615)
  - [Win32] Bugfix: Content scales could have garbage values if monitor was recently
    disconnected (#1615)
@@ -229,9 +269,13 @@ information on what to include when reporting a bug.
  - [Win32] Bugfix: Instance-local operations used executable instance (#469,#1296,#1395)
  - [Win32] Bugfix: The OSMesa library was not unloaded on termination
  - [Win32] Bugfix: Right shift emitted `GLFW_KEY_UNKNOWN` when using a CJK IME (#2050)
+ - [Win32] Bugfix: `glfwWaitEventsTimeout` did not return for some sent messages (#2408)
+ - [Win32] Bugfix: Fix pkg-config for dynamic library on Windows (#2386, #2420)
+ - [Win32] Bugfix: XInput could reportedly provide invalid DPad bit masks (#2291)
+ - [Win32] Bugfix: Rapid clipboard calls could fail due to Clipboard History
+ - [Win32] Bugfix: Disabled cursor mode doesn't work right when connected over RDP (#1276,#1279,#2431)
  - [Cocoa] Added support for `VK_EXT_metal_surface` (#1619)
  - [Cocoa] Added locating the Vulkan loader at runtime in an application bundle
- - [Cocoa] Moved main menu creation to GLFW initialization time (#1649)
  - [Cocoa] Changed `EGLNativeWindowType` from `NSView` to `CALayer` (#1169)
  - [Cocoa] Changed F13 key to report Print Screen for cross-platform consistency
    (#1786)
@@ -242,8 +286,6 @@ information on what to include when reporting a bug.
    (#1412)
  - [Cocoa] Bugfix: Event processing before window creation would assert (#1543)
  - [Cocoa] Bugfix: Undecorated windows could not be iconified on recent macOS
- - [Cocoa] Bugfix: Touching event queue from secondary thread before main thread
-   would abort (#1649)
  - [Cocoa] Bugfix: Non-BMP Unicode codepoint input was reported as UTF-16
    (#1635)
  - [Cocoa] Bugfix: Failing to retrieve the refresh rate of built-in displays
@@ -269,6 +311,10 @@ information on what to include when reporting a bug.
    application (#2110)
  - [Cocoa] Bugfix: The Vulkan loader was not loaded from the `Frameworks` bundle
    subdirectory (#2113,#2120)
+ - [Cocoa] Bugfix: Compilation failed on OS X 10.8 due to unconditional use of 10.9+
+   symbols (#2161)
+ - [Cocoa] Bugfix: Querying joystick elements could reportedly segfault on macOS
+   13 Ventura (#2320)
  - [X11] Bugfix: The CMake files did not check for the XInput headers (#1480)
  - [X11] Bugfix: Key names were not updated when the keyboard layout changed
    (#1462,#1528)
@@ -283,8 +329,6 @@ information on what to include when reporting a bug.
  - [X11] Bugfix: `glfwFocusWindow` could terminate on older WMs or without a WM
  - [X11] Bugfix: Querying a disconnected monitor could segfault (#1602)
  - [X11] Bugfix: IME input of CJK was broken for "C" locale (#1587,#1636)
- - [X11] Bugfix: Termination would segfault if the IM had been destroyed
- - [X11] Bugfix: Any IM started after initialization would not be detected
  - [X11] Bugfix: Xlib errors caused by other parts of the application could be
    reported as GLFW errors
  - [X11] Bugfix: A handle race condition could cause a `BadWindow` error (#1633)
@@ -311,7 +355,7 @@ information on what to include when reporting a bug.
  - [X11] Bugfix: The OSMesa libray was not unloaded on termination
  - [X11] Bugfix: A malformed response during selection transfer could cause a segfault
  - [X11] Bugfix: Some calls would reset Xlib to the default error handler (#2108)
- - [Wayland] Added dynamic loading of all Wayland libraries
+ - [Wayland] Added improved fallback window decorations via libdecor (#1639,#1693)
  - [Wayland] Added support for key names via xkbcommon
  - [Wayland] Added support for file path drop events (#2040)
  - [Wayland] Added support for more human-readable monitor names where available
@@ -319,7 +363,6 @@ information on what to include when reporting a bug.
    `EGL_EXT_present_opaque` (#1895)
  - [Wayland] Removed support for `wl_shell` (#1443)
  - [Wayland] Bugfix: The `GLFW_HAND_CURSOR` shape used the wrong image (#1432)
- - [Wayland] Bugfix: `CLOCK_MONOTONIC` was not correctly enabled
  - [Wayland] Bugfix: Repeated keys could be reported with `NULL` window (#1704)
  - [Wayland] Bugfix: Retrieving partial framebuffer size would segfault
  - [Wayland] Bugfix: Scrolling offsets were inverted compared to other platforms
@@ -382,22 +425,18 @@ information on what to include when reporting a bug.
  - [Wayland] Bugfix: `GLFW_DECORATED` was ignored when showing a window with XDG
    decorations
  - [Wayland] Bugfix: Connecting a mouse after `glfwInit` would segfault (#1450)
- - [POSIX] Removed use of deprecated function `gettimeofday`
- - [POSIX] Bugfix: `CLOCK_MONOTONIC` was not correctly tested for or enabled
+ - [Wayland] Bugfix: Joysticks connected after `glfwInit` were not detected (#2198)
+ - [Wayland] Bugfix: Fallback decorations emitted `GLFW_CURSOR_UNAVAILABLE` errors
  - [Linux] Bugfix: Joysticks without buttons were ignored (#2042,#2043)
- - [WGL] Disabled the DWM swap interval hack for Windows 8 and later (#1072)
- - [NSGL] Removed enforcement of forward-compatible flag for core contexts
+ - [Linux] Bugfix: A small amount of memory could leak if initialization failed (#2229)
  - [NSGL] Bugfix: `GLFW_COCOA_RETINA_FRAMEBUFFER` had no effect on newer
    macOS versions (#1442)
  - [NSGL] Bugfix: Workaround for swap interval on 10.14 broke on 10.12 (#1483)
  - [NSGL] Bugfix: Defining `GL_SILENCE_DEPRECATION` externally caused
    a duplicate definition warning (#1840)
- - [EGL] Added platform selection via the `EGL_EXT_platform_base` extension
-   (#442)
- - [EGL] Added ANGLE backend selection via `EGL_ANGLE_platform_angle` extension
-   (#1380)
-   [EGL] Added loading of glvnd `libOpenGL.so.0` where available for OpenGL
+ - [EGL] Added loading of glvnd `libOpenGL.so.0` where available for OpenGL
  - [EGL] Bugfix: The `GLFW_DOUBLEBUFFER` context attribute was ignored (#1843)
+ - [EGL] Bugfix: Setting `GLFW_CONTEXT_DEBUG` caused creation to fail (#2348)
  - [GLX] Added loading of glvnd `libGLX.so.0` where available
  - [GLX] Bugfix: Context creation failed if GLX 1.4 was not exported by GLX library
 
@@ -408,13 +447,12 @@ On [glfw.org](https://www.glfw.org/) you can find the latest version of GLFW, as
 well as news, documentation and other information about the project.
 
 If you have questions related to the use of GLFW, we have a
-[forum](https://discourse.glfw.org/), and the `#glfw` IRC channel on
-[Libera.Chat](https://libera.chat/).
+[forum](https://discourse.glfw.org/).
 
 If you have a bug to report, a patch to submit or a feature you'd like to
 request, please file it in the
 [issue tracker](https://github.com/glfw/glfw/issues) on GitHub.
 
 Finally, if you're interested in helping out with the development of GLFW or
-porting it to your favorite platform, join us on the forum, GitHub or IRC.
+porting it to your favorite platform, join us on the forum or GitHub.
 

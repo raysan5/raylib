@@ -34,8 +34,8 @@
 // _GLFW_X11        to use the X Window System
 // _GLFW_WAYLAND    to use the Wayland API (experimental and incomplete)
 // _GLFW_COCOA      to use the Cocoa frameworks
-// _GLFW_OSMESA     to use the OSMesa API (headless and non-interactive)
-// _GLFW_MIR        experimental, not supported at this moment
+//
+// Note: GLFW's runtime platform selection is not supported at the moment
 
 //----------------------------------------------------------------------------------
 // Feature Test Macros required for this module
@@ -68,6 +68,15 @@
 #if defined(__TINYC__)
     #define _WIN32_WINNT_WINXP      0x0501
 #endif
+
+#include "external/glfw/src/internal.h"
+
+// We do not use GLFW's "null" platform, but the absence of this function
+// causes the build to fail
+GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
+{
+    return GLFW_TRUE;
+}
 
 // Common modules to all platforms
 #include "external/glfw/src/init.c"

@@ -24,10 +24,10 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(GLFW_BUILD_LINUX_JOYSTICK)
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -135,7 +135,7 @@ static GLFWbool openJoystickDevice(const char* path)
     }
 
     _GLFWjoystickLinux linjs = {0};
-    linjs.fd = open(path, O_RDONLY | O_NONBLOCK);
+    linjs.fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if (linjs.fd == -1)
         return GLFW_FALSE;
 
@@ -324,7 +324,8 @@ GLFWbool _glfwInitJoysticksLinux(void)
 
     // Continue without device connection notifications if inotify fails
 
-    if (regcomp(&_glfw.linjs.regex, "^event[0-9]\\+$", 0) != 0)
+    _glfw.linjs.regexCompiled = (regcomp(&_glfw.linjs.regex, "^event[0-9]\\+$", 0) == 0);
+    if (!_glfw.linjs.regexCompiled)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR, "Linux: Failed to compile regex");
         return GLFW_FALSE;
@@ -376,8 +377,10 @@ void _glfwTerminateJoysticksLinux(void)
             inotify_rm_watch(_glfw.linjs.inotify, _glfw.linjs.watch);
 
         close(_glfw.linjs.inotify);
-        regfree(&_glfw.linjs.regex);
     }
+
+    if (_glfw.linjs.regexCompiled)
+        regfree(&_glfw.linjs.regex);
 }
 
 GLFWbool _glfwPollJoystickLinux(_GLFWjoystick* js, int mode)
@@ -428,4 +431,6 @@ const char* _glfwGetMappingNameLinux(void)
 void _glfwUpdateGamepadGUIDLinux(char* guid)
 {
 }
+
+#endif // GLFW_BUILD_LINUX_JOYSTICK
 

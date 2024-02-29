@@ -74,7 +74,6 @@
 
     //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
     //#define GLFW_EXPOSE_NATIVE_WAYLAND
-    //#define GLFW_EXPOSE_NATIVE_MIR
     #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
 #endif
 #if defined(__APPLE__)
@@ -1570,6 +1569,17 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
+    char* glfwPlatform = "";
+    switch (glfwGetPlatform())
+    {
+        case GLFW_PLATFORM_WIN32:   glfwPlatform = "Win32";   break;
+        case GLFW_PLATFORM_COCOA:   glfwPlatform = "Cocoa";   break;
+        case GLFW_PLATFORM_WAYLAND: glfwPlatform = "Wayland"; break;
+        case GLFW_PLATFORM_X11:     glfwPlatform = "X11";     break;
+        case GLFW_PLATFORM_NULL:    glfwPlatform = "Null";    break;
+    }
+
+    TRACELOG(LOG_INFO, "GLFW platform: %s", glfwPlatform);
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (GLFW): Initialized successfully");
 
     return 0;
