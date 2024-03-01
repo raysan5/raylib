@@ -1,8 +1,8 @@
 
 if(USE_EXTERNAL_GLFW STREQUAL "ON")
-    find_package(glfw3 3.3.3 REQUIRED)
+    find_package(glfw3 3.4 REQUIRED)
 elseif(USE_EXTERNAL_GLFW STREQUAL "IF_POSSIBLE")
-    find_package(glfw3 3.3.3 QUIET)
+    find_package(glfw3 3.4 QUIET)
 endif()
 if (glfw3_FOUND)
     set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
