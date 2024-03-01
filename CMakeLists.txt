@@ -41,7 +41,7 @@ include(BuildOptions)
 
 if (UNIX AND NOT APPLE)
   if (NOT GLFW_BUILD_WAYLAND AND NOT GLFW_BUILD_X11)
-    MESSAGE(FATAL_ERROR "Cannot disable both X11 and Wayland")
+    MESSAGE(FATAL_ERROR "Cannot disable both Wayland and X11")
   endif()
 endif()
 
