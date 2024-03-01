@@ -1,16 +1,18 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-// This has been tested to work with zig 0.11.0, zig 0.12.0-dev.2075+f5978181e and 0.12.0-dev.2990+31763d28c
+// This has been tested with zig version(s):
+// 0.11.0
+// 0.12.0-dev.2075+f5978181e
+// 0.12.0-dev.2990+31763d28c
 //
-// anytype is used here to preserve compatibility, in 0.12.0dev the std.zig.CrossTarget type
+// Anytype is used here to preserve compatibility, in 0.12.0dev the std.zig.CrossTarget type
 // was reworked into std.Target.Query and std.Build.ResolvedTarget. Using anytype allows
 // us to accept both CrossTarget and ResolvedTarget and act accordingly in getOsTagVersioned.
 pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     const gpa = general_purpose_allocator.allocator();
-    // get the relative source path, because it is needed for addCSourceFilesVersioned
-    const relative = srcdir[b.build_root.path.?.len..];
+
     if (comptime builtin.zig_version.minor >= 12 and @TypeOf(target) != std.Build.ResolvedTarget) {
         @compileError("Expected 'std.Build.ResolvedTarget' for argument 2 'target' in 'addRaylib', found '" ++ @typeName(@TypeOf(target)) ++ "'");
     } else if (comptime builtin.zig_version.minor == 11 and @TypeOf(target) != std.zig.CrossTarget) {
@@ -53,33 +55,33 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
     }
 
     addCSourceFilesVersioned(raylib, &.{
-        try join2(gpa, relative, "rcore.c"),
-        try join2(gpa, relative, "utils.c"),
+        try join2(gpa, srcdir, "rcore.c"),
+        try join2(gpa, srcdir, "utils.c"),
     }, raylib_flags_arr.items);
 
     if (options.raudio) {
         addCSourceFilesVersioned(raylib, &.{
-            try join2(gpa, relative, "raudio.c"),
+            try join2(gpa, srcdir, "raudio.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rmodels) {
         addCSourceFilesVersioned(raylib, &.{
-            try join2(gpa, relative, "rmodels.c"),
+            try join2(gpa, srcdir, "rmodels.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rshapes) {
         addCSourceFilesVersioned(raylib, &.{
-            try join2(gpa, relative, "rshapes.c"),
+            try join2(gpa, srcdir, "rshapes.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rtext) {
         addCSourceFilesVersioned(raylib, &.{
-            try join2(gpa, relative, "rtext.c"),
+            try join2(gpa, srcdir, "rtext.c"),
         }, raylib_flags_arr.items);
     }
     if (options.rtextures) {
         addCSourceFilesVersioned(raylib, &.{
-            try join2(gpa, relative, "rtextures.c"),
+            try join2(gpa, srcdir, "rtextures.c"),
         }, raylib_flags_arr.items);
     }
 
@@ -96,7 +98,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
     switch (getOsTagVersioned(target)) {
         .windows => {
             addCSourceFilesVersioned(raylib, &.{
-                try join2(gpa, relative, "rglfw.c"),
+                try join2(gpa, srcdir, "rglfw.c"),
             }, raylib_flags_arr.items);
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
@@ -107,7 +109,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
         .linux => {
             if (!options.platform_drm) {
                 addCSourceFilesVersioned(raylib, &.{
-                    try join2(gpa, relative, "rglfw.c"),
+                    try join2(gpa, srcdir, "rglfw.c"),
                 }, raylib_flags_arr.items);
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
@@ -137,7 +139,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
             addCSourceFilesVersioned(raylib, &.{
-                try join2(gpa, relative, "rglfw.c"),
+                try join2(gpa, srcdir, "rglfw.c"),
             }, raylib_flags_arr.items);
             raylib.linkSystemLibrary("GL");
             raylib.linkSystemLibrary("rt");
@@ -156,7 +158,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
             // On macos rglfw.c include Objective-C files.
             try raylib_flags_arr.append("-ObjC");
             addCSourceFilesVersioned(raylib, &.{
-                try join2(gpa, relative, "rglfw.c"),
+                try join2(gpa, srcdir, "rglfw.c"),
             }, raylib_flags_arr.items);
             raylib.linkFramework("Foundation");
             raylib.linkFramework("CoreServices");
@@ -251,14 +253,23 @@ fn getOsTagVersioned(target: anytype) std.Target.Os.Tag {
     }
 }
 
-fn addCSourceFilesVersioned(exe: *std.Build.Step.Compile, files: []const []const u8, flags: []const []const u8) void {
+fn addCSourceFilesVersioned(
+    exe: *std.Build.Step.Compile,
+    files: []const []const u8,
+    flags: []const []const u8,
+) void {
+    //- HACK(cabarger): I hate this so much!!!
     if (comptime builtin.zig_version.minor >= 12) {
-        exe.addCSourceFiles(.{
-            .files = files,
-            .flags = flags,
-        });
-    } else {
+        for (files) |file| {
+            exe.addCSourceFile(.{
+                .file = .{ .path = file },
+                .flags = flags,
+            });
+        }
+    } else if (comptime builtin.zig_version.minor == 11) {
         exe.addCSourceFiles(files, flags);
+    } else {
+        @compileError("Expected zig version 11 or 12");
     }
 }
 
