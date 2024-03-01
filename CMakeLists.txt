@@ -39,6 +39,12 @@ include(CMakeOptions.txt)
 # Enforces a few environment and compiler configurations
 include(BuildOptions)
 
+if (UNIX AND NOT APPLE)
+  if (NOT GLFW_BUILD_WAYLAND AND NOT GLFW_BUILD_X11)
+    MESSAGE(FATAL_ERROR "Cannot disable both X11 and Wayland")
+  endif()
+endif()
+
 # Main sources directory (the second parameter sets the output directory name to raylib)
 add_subdirectory(src raylib)
 
