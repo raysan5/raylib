@@ -5716,7 +5716,7 @@ static Model LoadM3D(const char *fileName)
 
         if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d? m3d->errcode : -2);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
             if (m3d) m3d_free(m3d);
             UnloadFileData(fileData);
             return model;
@@ -5768,9 +5768,9 @@ static Model LoadM3D(const char *fileName)
         }
         */
 
-        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
-        model.materials = (Material *)RL_CALLOC(model.materialCount + 1, sizeof(Material));
+        model.meshes = (Mesh*)RL_CALLOC(model.meshCount, sizeof(Mesh));
+        model.meshMaterial = (int*)RL_CALLOC(model.meshCount, sizeof(int));
+        model.materials = (Material*)RL_CALLOC(model.materialCount + 1, sizeof(Material));
 
         // Map no material to index 0 with default shader, everything else materialid + 1
         model.materials[0] = LoadMaterialDefault();
@@ -5784,9 +5784,9 @@ static Model LoadM3D(const char *fileName)
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
-                    model.meshes = (Mesh *)RL_REALLOC(model.meshes, model.meshCount*sizeof(Mesh));
+                    model.meshes = (Mesh*)RL_REALLOC(model.meshes, model.meshCount * sizeof(Mesh));
                     memset(&model.meshes[model.meshCount - 1], 0, sizeof(Mesh));
-                    model.meshMaterial = (int *)RL_REALLOC(model.meshMaterial, model.meshCount*sizeof(int));
+                    model.meshMaterial = (int*)RL_REALLOC(model.meshMaterial, model.meshCount * sizeof(int));
                 }
 
                 k++;
@@ -5801,15 +5801,22 @@ static Model LoadM3D(const char *fileName)
                         !m3d->vertex[m3d->face[j].vertex[2]].color) vcolor = 1;
                 }
 
-                model.meshes[k].vertexCount = l*3;
+                model.meshes[k].vertexCount = l * 3;
                 model.meshes[k].triangleCount = l;
-                model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
-                model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
-                model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                model.meshes[k].vertices = (float*)RL_CALLOC(model.meshes[k].vertexCount * 3, sizeof(float));
+                model.meshes[k].texcoords = (float*)RL_CALLOC(model.meshes[k].vertexCount * 2, sizeof(float));
+                model.meshes[k].normals = (float*)RL_CALLOC(model.meshes[k].vertexCount * 3, sizeof(float));
 
                 // If no map is provided, or we have colors defined, we allocate storage for vertex colors
                 // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
-                if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount * 4, sizeof(unsigned char));
+
+                // If no map is provided and we allocated vertex colors, set them too white
+                if ((mi == M3D_UNDEF) && model.meshes[k].colors != NULL)
+                {
+                    for (int c = 0; c < model.meshes[k].vertexCount * 4; c++)
+                        model.meshes[k].colors[c] = 255;
+                }
 
                 if (m3d->numbone && m3d->numskin)
                 {
