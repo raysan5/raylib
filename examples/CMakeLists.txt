@@ -145,5 +145,11 @@ foreach (example_source ${example_sources})
     endif ()
 endforeach ()
 
+# For SDL, have rlgl_standalone link the glfw dependency.
+if ("${PLATFORM}" STREQUAL "SDL")
+    find_package(glfw3 3.3 REQUIRED)
+    target_link_libraries(rlgl_standalone glfw)
+endif()
+
 # Copy all of the resource files to the destination
 file(COPY ${example_resources} DESTINATION "resources/")
