@@ -5666,7 +5666,7 @@ static Model LoadVOX(const char *fileName)
 
         // Copy indices
         size = voxarray.indices.used*sizeof(unsigned short);
-        pmesh->indices = (float *)RL_MALLOC(size);
+        pmesh->indices = (unsigned short *)RL_MALLOC(size);
         memcpy(pmesh->indices, pindices, size);
 
         pmesh->triangleCount = (pmesh->vertexCount/4)*2;
