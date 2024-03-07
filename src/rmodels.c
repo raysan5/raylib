@@ -5810,6 +5810,12 @@ static Model LoadM3D(const char *fileName)
                 // If no map is provided, or we have colors defined, we allocate storage for vertex colors
                 // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
                 if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                
+                // If no map is provided and we allocated vertex colors, set them to white
+                if ((mi == M3D_UNDEF) && (model.meshes[k].colors != NULL))
+                {
+                    for (int c = 0; c < model.meshes[k].vertexCount*4; c++) model.meshes[k].colors[c] = 255;
+                }
 
                 if (m3d->numbone && m3d->numskin)
                 {
