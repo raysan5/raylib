@@ -3635,7 +3635,7 @@ return {
       }
     },
     {
-      name = "GetMouseRay",
+      name = "GetScreenToWorldRay",
       description = "Get a ray trace from mouse position",
       returnType = "Ray",
       params = {
@@ -3644,7 +3644,7 @@ return {
       }
     },
     {
-      name = "GetViewRay",
+      name = "GetScreenToWorldRayEx",
       description = "Get a ray trace from mouse position in a viewport",
       returnType = "Ray",
       params = {

@@ -109,7 +109,7 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             // Check collision between ray and box
-            if (GetRayCollisionBox(GetMouseRay(GetMousePosition(), camera), bounds).hit) selected = !selected;
+            if (GetRayCollisionBox(GetScreenToWorldRay(GetMousePosition(), camera), bounds).hit) selected = !selected;
             else selected = false;
         }
         //----------------------------------------------------------------------------------

@@ -1421,14 +1421,14 @@ Function 083: UnloadShader() (1 input parameters)
   Return type: void
   Description: Unload shader from GPU memory (VRAM)
   Param[1]: shader (type: Shader)
-Function 084: GetMouseRay() (2 input parameters)
-  Name: GetMouseRay
+Function 084: GetScreenToWorldRay() (2 input parameters)
+  Name: GetScreenToWorldRay
   Return type: Ray
   Description: Get a ray trace from mouse position
   Param[1]: mousePosition (type: Vector2)
   Param[2]: camera (type: Camera)
-Function 085: GetViewRay() (4 input parameters)
-  Name: GetViewRay
+Function 085: GetScreenToWorldRayEx() (4 input parameters)
+  Name: GetScreenToWorldRayEx
   Return type: Ray
   Description: Get a ray trace from mouse position in a viewport
   Param[1]: mousePosition (type: Vector2)

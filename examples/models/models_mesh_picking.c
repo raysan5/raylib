@@ -88,7 +88,7 @@ int main(void)
         Color cursorColor = WHITE;
 
         // Get ray and test against objects
-        ray = GetMouseRay(GetMousePosition(), camera);
+        ray = GetScreenToWorldRay(GetMousePosition(), camera);
 
         // Check ray collision against ground quad
         RayCollision groundHitInfo = GetRayCollisionQuad(ray, g0, g1, g2, g3);
