@@ -266,8 +266,8 @@
 *           - void DrawRectangle(int x, int y, int width, int height, Color color); // -- GuiDrawRectangle()
 *           - void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4); // -- GuiColorPicker()
 *
-*           - Font GetFontDefault(void);                            // -- GuiLoadStyleDefault()
-*           - Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // -- GuiLoadStyle()
+*           - RLFont GetFontDefault(void);                            // -- GuiLoadStyleDefault()
+*           - RLFont LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // -- GuiLoadStyle()
 *           - Texture2D LoadTextureFromImage(Image image);          // -- GuiLoadStyle(), required to load texture from embedded font atlas image
 *           - void SetShapesTexture(Texture2D tex, Rectangle rec);  // -- GuiLoadStyle(), required to set shapes rec to font white rec (optimization)
 *           - char *LoadFileText(const char *fileName);             // -- GuiLoadStyle(), required to load charset data
@@ -401,7 +401,7 @@
         float height;
     } Rectangle;
 
-    // TODO: Texture2D type is very coupled to raylib, required by Font type
+    // TODO: Texture2D type is very coupled to raylib, required by RLFont type
     // It should be redesigned to be provided by user
     typedef struct Texture2D {
         unsigned int id;        // OpenGL texture id
@@ -429,16 +429,16 @@
         Image image;            // Character image data
     } GlyphInfo;
 
-    // TODO: Font type is very coupled to raylib, mostly required by GuiLoadStyle()
+    // TODO: RLFont type is very coupled to raylib, mostly required by GuiLoadStyle()
     // It should be redesigned to be provided by user
-    typedef struct Font {
+    typedef struct RLFont {
         int baseSize;           // Base size (default chars height)
         int glyphCount;         // Number of glyph characters
         int glyphPadding;       // Padding around the glyph characters
         Texture2D texture;      // Texture atlas containing the glyphs
         Rectangle *recs;        // Rectangles in texture for the glyphs
         GlyphInfo *glyphs;      // Glyphs info data
-    } Font;
+    } RLFont;
 #endif
 
 
@@ -672,9 +672,9 @@ RAYGUIAPI void GuiSetAlpha(float alpha);                        // Set gui contr
 RAYGUIAPI void GuiSetState(int state);                          // Set gui state (global state)
 RAYGUIAPI int GuiGetState(void);                                // Get gui state (global state)
 
-// Font set/get functions
-RAYGUIAPI void GuiSetFont(Font font);                           // Set gui custom font (global state)
-RAYGUIAPI Font GuiGetFont(void);                                // Get gui custom font (global state)
+// RLFont set/get functions
+RAYGUIAPI void GuiSetFont(RLFont font);                           // Set gui custom font (global state)
+RAYGUIAPI RLFont GuiGetFont(void);                                // Get gui custom font (global state)
 
 // Style set/get functions
 RAYGUIAPI void GuiSetStyle(int control, int property, int value); // Set one style property
@@ -1354,7 +1354,7 @@ typedef enum { BORDER = 0, BASE, TEXT, OTHER } GuiPropertyElement;
 //----------------------------------------------------------------------------------
 static GuiState guiState = STATE_NORMAL;        // Gui global state, if !STATE_NORMAL, forces defined state
 
-static Font guiFont = { 0 };                    // Gui current font (WARNING: highly coupled to raylib)
+static RLFont guiFont = { 0 };                    // Gui current font (WARNING: highly coupled to raylib)
 static bool guiLocked = false;                  // Gui lock state (no inputs processed)
 static float guiAlpha = 1.0f;                   // Gui controls transparency
 
@@ -1425,8 +1425,8 @@ static void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color
 
 // Text required functions
 //-------------------------------------------------------------------------------
-static Font GetFontDefault(void);                            // -- GuiLoadStyleDefault()
-static Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // -- GuiLoadStyle(), load font
+static RLFont GetFontDefault(void);                            // -- GuiLoadStyleDefault()
+static RLFont LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // -- GuiLoadStyle(), load font
 
 static Texture2D LoadTextureFromImage(Image image);          // -- GuiLoadStyle(), required to load texture from embedded font atlas image
 static void SetShapesTexture(Texture2D tex, Rectangle rec);  // -- GuiLoadStyle(), required to set shapes rec to font white rec (optimization)
@@ -1516,8 +1516,8 @@ void GuiSetState(int state) { guiState = (GuiState)state; }
 int GuiGetState(void) { return guiState; }
 
 // Set custom gui font
-// NOTE: Font loading/unloading is external to raygui
-void GuiSetFont(Font font)
+// NOTE: RLFont loading/unloading is external to raygui
+void GuiSetFont(RLFont font)
 {
     if (font.texture.id > 0)
     {
@@ -1531,7 +1531,7 @@ void GuiSetFont(Font font)
 }
 
 // Get custom gui font
-Font GuiGetFont(void)
+RLFont GuiGetFont(void)
 {
     return guiFont;
 }
@@ -4003,7 +4003,7 @@ void GuiLoadStyle(const char *fileName)
                         char fontFileName[256] = { 0 };
                         sscanf(buffer, "f %d %s %[^\r\n]s", &fontSize, charmapFileName, fontFileName);
 
-                        Font font = { 0 };
+                        RLFont font = { 0 };
                         int *codepoints = NULL;
                         int codepointCount = 0;
 
@@ -4366,7 +4366,7 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
             else GuiSetStyle((int)controlId, (int)propertyId, propertyValue);
         }
 
-        // Font loading is highly dependant on raylib API to load font data and image
+        // RLFont loading is highly dependant on raylib API to load font data and image
 
 #if !defined(RAYGUI_STANDALONE)
         // Load custom font if available
@@ -4376,7 +4376,7 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
 
         if (fontDataSize > 0)
         {
-            Font font = { 0 };
+            RLFont font = { 0 };
             int fontType = 0;   // 0-Normal, 1-SDF
 
             memcpy(&font.baseSize, fileDataPtr, sizeof(int));
@@ -4420,7 +4420,7 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
             }
             else
             {
-                // Font atlas image data is not compressed
+                // RLFont atlas image data is not compressed
                 imFont.data = (unsigned char *)RAYGUI_MALLOC(fontImageUncompSize);
                 memcpy(imFont.data, fileDataPtr, fontImageUncompSize);
                 fileDataPtr += fontImageUncompSize;

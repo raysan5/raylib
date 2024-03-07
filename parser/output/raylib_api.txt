@@ -374,9 +374,9 @@ Struct 11: GlyphInfo (5 fields)
   Field[3]: int offsetY // Character offset Y when drawing
   Field[4]: int advanceX // Character advance position X
   Field[5]: Image image // Character image data
-Struct 12: Font (6 fields)
-  Name: Font
-  Description: Font, font texture and GlyphInfo array data
+Struct 12: RLFont (6 fields)
+  Name: RLFont
+  Description: RLFont, font texture and GlyphInfo array data
   Field[1]: int baseSize // Base size (default chars height)
   Field[2]: int glyphCount // Number of glyph characters
   Field[3]: int glyphPadding // Padding around the glyph characters
@@ -890,7 +890,7 @@ Enum 15: CubemapLayout (6 values)
   Value[CUBEMAP_LAYOUT_PANORAMA]: 5
 Enum 16: FontType (3 values)
   Name: FontType
-  Description: Font type, defines generation method
+  Description: RLFont type, defines generation method
   Value[FONT_DEFAULT]: 0
   Value[FONT_BITMAP]: 1
   Value[FONT_SDF]: 2
@@ -2751,7 +2751,7 @@ Function 291: ImageTextEx() (5 input parameters)
   Name: ImageTextEx
   Return type: Image
   Description: Create an image from text (custom sprite font)
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: text (type: const char *)
   Param[3]: fontSize (type: float)
   Param[4]: spacing (type: float)
@@ -3075,7 +3075,7 @@ Function 338: ImageDrawTextEx() (7 input parameters)
   Return type: void
   Description: Draw text (custom sprite font) within an image (destination)
   Param[1]: dst (type: Image *)
-  Param[2]: font (type: Font)
+  Param[2]: font (type: RLFont)
   Param[3]: text (type: const char *)
   Param[4]: position (type: Vector2)
   Param[5]: fontSize (type: float)
@@ -3296,17 +3296,17 @@ Function 372: GetPixelDataSize() (3 input parameters)
   Param[3]: format (type: int)
 Function 373: GetFontDefault() (0 input parameters)
   Name: GetFontDefault
-  Return type: Font
-  Description: Get the default Font
+  Return type: RLFont
+  Description: Get the default RLFont
   No input parameters
 Function 374: LoadFont() (1 input parameters)
   Name: LoadFont
-  Return type: Font
+  Return type: RLFont
   Description: Load font from file into GPU memory (VRAM)
   Param[1]: fileName (type: const char *)
 Function 375: LoadFontEx() (4 input parameters)
   Name: LoadFontEx
-  Return type: Font
+  Return type: RLFont
   Description: Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont
   Param[1]: fileName (type: const char *)
   Param[2]: fontSize (type: int)
@@ -3314,14 +3314,14 @@ Function 375: LoadFontEx() (4 input parameters)
   Param[4]: codepointCount (type: int)
 Function 376: LoadFontFromImage() (3 input parameters)
   Name: LoadFontFromImage
-  Return type: Font
+  Return type: RLFont
   Description: Load font from Image (XNA style)
   Param[1]: image (type: Image)
   Param[2]: key (type: Color)
   Param[3]: firstChar (type: int)
 Function 377: LoadFontFromMemory() (6 input parameters)
   Name: LoadFontFromMemory
-  Return type: Font
+  Return type: RLFont
   Description: Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
   Param[1]: fileType (type: const char *)
   Param[2]: fileData (type: const unsigned char *)
@@ -3333,7 +3333,7 @@ Function 378: IsFontReady() (1 input parameters)
   Name: IsFontReady
   Return type: bool
   Description: Check if a font is ready
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
 Function 379: LoadFontData() (6 input parameters)
   Name: LoadFontData
   Return type: GlyphInfo *
@@ -3364,12 +3364,12 @@ Function 382: UnloadFont() (1 input parameters)
   Name: UnloadFont
   Return type: void
   Description: Unload font from GPU memory (VRAM)
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
 Function 383: ExportFontAsCode() (2 input parameters)
   Name: ExportFontAsCode
   Return type: bool
   Description: Export font as code file, returns true on success
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: fileName (type: const char *)
 Function 384: DrawFPS() (2 input parameters)
   Name: DrawFPS
@@ -3390,7 +3390,7 @@ Function 386: DrawTextEx() (6 input parameters)
   Name: DrawTextEx
   Return type: void
   Description: Draw text using font and additional parameters
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: text (type: const char *)
   Param[3]: position (type: Vector2)
   Param[4]: fontSize (type: float)
@@ -3399,8 +3399,8 @@ Function 386: DrawTextEx() (6 input parameters)
 Function 387: DrawTextPro() (8 input parameters)
   Name: DrawTextPro
   Return type: void
-  Description: Draw text using Font and pro parameters (rotation)
-  Param[1]: font (type: Font)
+  Description: Draw text using RLFont and pro parameters (rotation)
+  Param[1]: font (type: RLFont)
   Param[2]: text (type: const char *)
   Param[3]: position (type: Vector2)
   Param[4]: origin (type: Vector2)
@@ -3412,7 +3412,7 @@ Function 388: DrawTextCodepoint() (5 input parameters)
   Name: DrawTextCodepoint
   Return type: void
   Description: Draw one character (codepoint)
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: codepoint (type: int)
   Param[3]: position (type: Vector2)
   Param[4]: fontSize (type: float)
@@ -3421,7 +3421,7 @@ Function 389: DrawTextCodepoints() (7 input parameters)
   Name: DrawTextCodepoints
   Return type: void
   Description: Draw multiple character (codepoint)
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: codepoints (type: const int *)
   Param[3]: codepointCount (type: int)
   Param[4]: position (type: Vector2)
@@ -3442,8 +3442,8 @@ Function 391: MeasureText() (2 input parameters)
 Function 392: MeasureTextEx() (4 input parameters)
   Name: MeasureTextEx
   Return type: Vector2
-  Description: Measure string size for Font
-  Param[1]: font (type: Font)
+  Description: Measure string size for RLFont
+  Param[1]: font (type: RLFont)
   Param[2]: text (type: const char *)
   Param[3]: fontSize (type: float)
   Param[4]: spacing (type: float)
@@ -3451,19 +3451,19 @@ Function 393: GetGlyphIndex() (2 input parameters)
   Name: GetGlyphIndex
   Return type: int
   Description: Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: codepoint (type: int)
 Function 394: GetGlyphInfo() (2 input parameters)
   Name: GetGlyphInfo
   Return type: GlyphInfo
   Description: Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: codepoint (type: int)
 Function 395: GetGlyphAtlasRec() (2 input parameters)
   Name: GetGlyphAtlasRec
   Return type: Rectangle
   Description: Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
-  Param[1]: font (type: Font)
+  Param[1]: font (type: RLFont)
   Param[2]: codepoint (type: int)
 Function 396: LoadUTF8() (2 input parameters)
   Name: LoadUTF8

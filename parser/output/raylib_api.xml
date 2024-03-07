@@ -138,7 +138,7 @@
             <Field type="int" name="advanceX" desc="Character advance position X" />
             <Field type="Image" name="image" desc="Character image data" />
         </Struct>
-        <Struct name="Font" fieldCount="6" desc="Font, font texture and GlyphInfo array data">
+        <Struct name="RLFont" fieldCount="6" desc="RLFont, font texture and GlyphInfo array data">
             <Field type="int" name="baseSize" desc="Base size (default chars height)" />
             <Field type="int" name="glyphCount" desc="Number of glyph characters" />
             <Field type="int" name="glyphPadding" desc="Padding around the glyph characters" />
@@ -597,7 +597,7 @@
             <Value name="CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE" integer="4" desc="Layout is defined by a 4x3 cross with cubemap faces" />
             <Value name="CUBEMAP_LAYOUT_PANORAMA" integer="5" desc="Layout is defined by a panorama image (equirrectangular map)" />
         </Enum>
-        <Enum name="FontType" valueCount="3" desc="Font type, defines generation method">
+        <Enum name="FontType" valueCount="3" desc="RLFont type, defines generation method">
             <Value name="FONT_DEFAULT" integer="0" desc="Default font generation, anti-aliased" />
             <Value name="FONT_BITMAP" integer="1" desc="Bitmap font generation, no anti-aliasing" />
             <Value name="FONT_SDF" integer="2" desc="SDF font generation, requires external shader" />
@@ -1783,7 +1783,7 @@
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ImageTextEx" retType="Image" paramCount="5" desc="Create an image from text (custom sprite font)">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
@@ -2013,7 +2013,7 @@
         </Function>
         <Function name="ImageDrawTextEx" retType="void" paramCount="7" desc="Draw text (custom sprite font) within an image (destination)">
             <Param type="Image *" name="dst" desc="" />
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="float" name="fontSize" desc="" />
@@ -2165,23 +2165,23 @@
             <Param type="int" name="height" desc="" />
             <Param type="int" name="format" desc="" />
         </Function>
-        <Function name="GetFontDefault" retType="Font" paramCount="0" desc="Get the default Font">
+        <Function name="GetFontDefault" retType="RLFont" paramCount="0" desc="Get the default RLFont">
         </Function>
-        <Function name="LoadFont" retType="Font" paramCount="1" desc="Load font from file into GPU memory (VRAM)">
+        <Function name="LoadFont" retType="RLFont" paramCount="1" desc="Load font from file into GPU memory (VRAM)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont">
+        <Function name="LoadFontEx" retType="RLFont" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
         </Function>
-        <Function name="LoadFontFromImage" retType="Font" paramCount="3" desc="Load font from Image (XNA style)">
+        <Function name="LoadFontFromImage" retType="RLFont" paramCount="3" desc="Load font from Image (XNA style)">
             <Param type="Image" name="image" desc="" />
             <Param type="Color" name="key" desc="" />
             <Param type="int" name="firstChar" desc="" />
         </Function>
-        <Function name="LoadFontFromMemory" retType="Font" paramCount="6" desc="Load font from memory buffer, fileType refers to extension: i.e. '.ttf'">
+        <Function name="LoadFontFromMemory" retType="RLFont" paramCount="6" desc="Load font from memory buffer, fileType refers to extension: i.e. '.ttf'">
             <Param type="const char *" name="fileType" desc="" />
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
@@ -2190,7 +2190,7 @@
             <Param type="int" name="codepointCount" desc="" />
         </Function>
         <Function name="IsFontReady" retType="bool" paramCount="1" desc="Check if a font is ready">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
         </Function>
         <Function name="LoadFontData" retType="GlyphInfo *" paramCount="6" desc="Load font data for further use">
             <Param type="const unsigned char *" name="fileData" desc="" />
@@ -2213,10 +2213,10 @@
             <Param type="int" name="glyphCount" desc="" />
         </Function>
         <Function name="UnloadFont" retType="void" paramCount="1" desc="Unload font from GPU memory (VRAM)">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
         </Function>
         <Function name="ExportFontAsCode" retType="bool" paramCount="2" desc="Export font as code file, returns true on success">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="DrawFPS" retType="void" paramCount="2" desc="Draw current FPS">
@@ -2231,15 +2231,15 @@
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawTextEx" retType="void" paramCount="6" desc="Draw text using font and additional parameters">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTextPro" retType="void" paramCount="8" desc="Draw text using Font and pro parameters (rotation)">
-            <Param type="Font" name="font" desc="" />
+        <Function name="DrawTextPro" retType="void" paramCount="8" desc="Draw text using RLFont and pro parameters (rotation)">
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="Vector2" name="origin" desc="" />
@@ -2249,14 +2249,14 @@
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="DrawTextCodepoint" retType="void" paramCount="5" desc="Draw one character (codepoint)">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="DrawTextCodepoints" retType="void" paramCount="7" desc="Draw multiple character (codepoint)">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
             <Param type="Vector2" name="position" desc="" />
@@ -2271,22 +2271,22 @@
             <Param type="const char *" name="text" desc="" />
             <Param type="int" name="fontSize" desc="" />
         </Function>
-        <Function name="MeasureTextEx" retType="Vector2" paramCount="4" desc="Measure string size for Font">
-            <Param type="Font" name="font" desc="" />
+        <Function name="MeasureTextEx" retType="Vector2" paramCount="4" desc="Measure string size for RLFont">
+            <Param type="RLFont" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
         </Function>
         <Function name="GetGlyphIndex" retType="int" paramCount="2" desc="Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
         </Function>
         <Function name="GetGlyphInfo" retType="GlyphInfo" paramCount="2" desc="Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
         </Function>
         <Function name="GetGlyphAtlasRec" retType="Rectangle" paramCount="2" desc="Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
-            <Param type="Font" name="font" desc="" />
+            <Param type="RLFont" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
         </Function>
         <Function name="LoadUTF8" retType="char *" paramCount="2" desc="Load UTF-8 text encoded from codepoints array">

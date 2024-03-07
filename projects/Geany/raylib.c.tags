@@ -194,12 +194,12 @@ ImageMipmaps|void|(Image *image);|
 ImageDither|void|(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);|
 ImageExtractPalette|Color *|(Image image, int maxPaletteSize, int *extractCount);|
 ImageText|Image|(const char *text, int fontSize, Color color);|
-ImageTextEx|Image|(Font font, const char *text, float fontSize, float spacing, Color tint);|
+ImageTextEx|Image|(RLFont font, const char *text, float fontSize, float spacing, Color tint);|
 ImageDraw|void|(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);|
 ImageDrawRectangle|void|(Image *dst, Rectangle rec, Color color);|
 ImageDrawRectangleLines|void|(Image *dst, Rectangle rec, int thick, Color color);|
 ImageDrawText|void|(Image *dst, Vector2 position, const char *text, int fontSize, Color color);|
-ImageDrawTextEx|void|(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color);|
+ImageDrawTextEx|void|(Image *dst, Vector2 position, RLFont font, const char *text, float fontSize, float spacing, Color color);|
 ImageFlipVertical|void|(Image *image);|
 ImageFlipHorizontal|void|(Image *image);|
 ImageRotate|void|(Image *image, int degrees);|
@@ -229,21 +229,21 @@ DrawTextureRec|void|(Texture2D texture, Rectangle sourceRec, Vector2 position, C
 DrawTextureQuad|void|(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint);|
 DrawTexturePro|void|(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint);|
 DrawTextureNPatch|void|(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint);|
-GetFontDefault|Font|(void);|
-LoadFont|Font|(const char *fileName);|
-LoadFontEx|Font|(const char *fileName, int fontSize, int *fontChars, int charsCount);|
-LoadFontFromImage|Font|(Image image, Color key, int firstChar);|
+GetFontDefault|RLFont|(void);|
+LoadFont|RLFont|(const char *fileName);|
+LoadFontEx|RLFont|(const char *fileName, int fontSize, int *fontChars, int charsCount);|
+LoadFontFromImage|RLFont|(Image image, Color key, int firstChar);|
 LoadFontData|CharInfo *|(const char *fileName, int fontSize, int *fontChars, int charsCount, int type);|
 GenImageFontAtlas|Image|(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod);|
-UnloadFont|void|(Font font);|
+UnloadFont|void|(RLFont font);|
 DrawFPS|void|(int posX, int posY);|
 DrawText|void|(const char *text, int posX, int posY, int fontSize, Color color);|
-DrawTextEx|void|(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);|
-DrawTextRec|void|(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);|
-DrawTextRecEx|void|(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectText, Color selectBack);|
+DrawTextEx|void|(RLFont font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);|
+DrawTextRec|void|(RLFont font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);|
+DrawTextRecEx|void|(RLFont font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectText, Color selectBack);|
 MeasureText|int|(const char *text, int fontSize);|
-MeasureTextEx|Vector2|(Font font, const char *text, float fontSize, float spacing);|
-GetGlyphIndex|int|(Font font, int character);|
+MeasureTextEx|Vector2|(RLFont font, const char *text, float fontSize, float spacing);|
+GetGlyphIndex|int|(RLFont font, int character);|
 TextIsEqual|bool|(const char *text1, const char *text2);|
 TextLength|unsigned int|(const char *text);|
 TextFormat|const char *|(const char *text, ...);|
@@ -406,7 +406,7 @@ Texture|struct||
 RenderTexture|struct||
 NPatchInfo|struct||
 CharInfo|struct||
-Font|struct||
+RLFont|struct||
 Camera|struct||
 Camera2D|struct||
 Mesh|struct||

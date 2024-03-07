@@ -27,8 +27,8 @@ int main(void)
 
     Image parrots = LoadImage("resources/parrots.png"); // Load image in CPU memory (RAM)
 
-    // TTF Font loading with custom generation parameters
-    Font font = LoadFontEx("resources/KAISG.ttf", 64, 0, 0);
+    // TTF RLFont loading with custom generation parameters
+    RLFont font = LoadFontEx("resources/KAISG.ttf", 64, 0, 0);
 
     // Draw over image using custom font
     ImageDrawTextEx(&parrots, font, "[Parrots font drawing]", (Vector2){ 20.0f, 20.0f }, (float)font.baseSize, 0.0f, RED);

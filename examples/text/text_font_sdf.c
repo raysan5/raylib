@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font SDF loading
+*   raylib [text] example - RLFont SDF loading
 *
 *   Example originally created with raylib 1.3, last time updated with raylib 4.0
 *
@@ -42,7 +42,7 @@ int main(void)
     unsigned char *fileData = LoadFileData("resources/anonymous_pro_bold.ttf", &fileSize);
 
     // Default font generation from TTF font
-    Font fontDefault = { 0 };
+    RLFont fontDefault = { 0 };
     fontDefault.baseSize = 16;
     fontDefault.glyphCount = 95;
 
@@ -55,7 +55,7 @@ int main(void)
     UnloadImage(atlas);
 
     // SDF font generation from TTF font
-    Font fontSDF = { 0 };
+    RLFont fontSDF = { 0 };
     fontSDF.baseSize = 16;
     fontSDF.glyphCount = 95;
     // Parameters > font size: 16, no glyphs array provided (0), glyphs count: 0 (defaults to 95)

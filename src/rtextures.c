@@ -1533,7 +1533,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 {
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
-    int defaultFontSize = 10;   // Default Font chars height in pixel
+    int defaultFontSize = 10;   // Default RLFont chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = fontSize/defaultFontSize;
     imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);   // WARNING: Module required: rtext
@@ -1546,7 +1546,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 
 // Create an image from text (custom sprite font)
 // WARNING: Module required: rtext
-Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
+Image ImageTextEx(RLFont font, const char *text, float fontSize, float spacing, Color tint)
 {
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
@@ -3739,7 +3739,7 @@ void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSiz
 }
 
 // Draw text (custom sprite font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
+void ImageDrawTextEx(Image *dst, RLFont font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, tint);
 

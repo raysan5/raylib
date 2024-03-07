@@ -690,8 +690,8 @@
       ]
     },
     {
-      "name": "Font",
-      "description": "Font, font texture and GlyphInfo array data",
+      "name": "RLFont",
+      "description": "RLFont, font texture and GlyphInfo array data",
       "fields": [
         {
           "type": "int",
@@ -2818,7 +2818,7 @@
     },
     {
       "name": "FontType",
-      "description": "Font type, defines generation method",
+      "description": "RLFont type, defines generation method",
       "values": [
         {
           "name": "FONT_DEFAULT",
@@ -7126,7 +7126,7 @@
       "returnType": "Image",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -7999,7 +7999,7 @@
           "name": "dst"
         },
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -8572,13 +8572,13 @@
     },
     {
       "name": "GetFontDefault",
-      "description": "Get the default Font",
-      "returnType": "Font"
+      "description": "Get the default RLFont",
+      "returnType": "RLFont"
     },
     {
       "name": "LoadFont",
       "description": "Load font from file into GPU memory (VRAM)",
-      "returnType": "Font",
+      "returnType": "RLFont",
       "params": [
         {
           "type": "const char *",
@@ -8589,7 +8589,7 @@
     {
       "name": "LoadFontEx",
       "description": "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont",
-      "returnType": "Font",
+      "returnType": "RLFont",
       "params": [
         {
           "type": "const char *",
@@ -8612,7 +8612,7 @@
     {
       "name": "LoadFontFromImage",
       "description": "Load font from Image (XNA style)",
-      "returnType": "Font",
+      "returnType": "RLFont",
       "params": [
         {
           "type": "Image",
@@ -8631,7 +8631,7 @@
     {
       "name": "LoadFontFromMemory",
       "description": "Load font from memory buffer, fileType refers to extension: i.e. '.ttf'",
-      "returnType": "Font",
+      "returnType": "RLFont",
       "params": [
         {
           "type": "const char *",
@@ -8665,7 +8665,7 @@
       "returnType": "bool",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         }
       ]
@@ -8753,7 +8753,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         }
       ]
@@ -8764,7 +8764,7 @@
       "returnType": "bool",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -8821,7 +8821,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -8848,11 +8848,11 @@
     },
     {
       "name": "DrawTextPro",
-      "description": "Draw text using Font and pro parameters (rotation)",
+      "description": "Draw text using RLFont and pro parameters (rotation)",
       "returnType": "void",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -8891,7 +8891,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -8918,7 +8918,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -8975,11 +8975,11 @@
     },
     {
       "name": "MeasureTextEx",
-      "description": "Measure string size for Font",
+      "description": "Measure string size for RLFont",
       "returnType": "Vector2",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -9002,7 +9002,7 @@
       "returnType": "int",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -9017,7 +9017,7 @@
       "returnType": "GlyphInfo",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {
@@ -9032,7 +9032,7 @@
       "returnType": "Rectangle",
       "params": [
         {
-          "type": "Font",
+          "type": "RLFont",
           "name": "font"
         },
         {

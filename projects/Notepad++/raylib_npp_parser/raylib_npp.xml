@@ -1670,7 +1670,7 @@
         </KeyWord>
         <KeyWord name="ImageTextEx" func="yes">
             <Overload retVal="Image" descr="Create an image from text (custom sprite font)">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="const char *text" />
                 <Param name="float fontSize" />
                 <Param name="float spacing" />
@@ -1990,7 +1990,7 @@
         <KeyWord name="ImageDrawTextEx" func="yes">
             <Overload retVal="void" descr="Draw text (custom sprite font) within an image (destination)">
                 <Param name="Image *dst" />
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="const char *text" />
                 <Param name="Vector2 position" />
                 <Param name="float fontSize" />
@@ -2215,20 +2215,20 @@
         </KeyWord>
 
         <!-------------------------------------------------------------------------------------- -->
-        <!-- Font Loading and Text Drawing Functions (Module: text) -->
+        <!-- RLFont Loading and Text Drawing Functions (Module: text) -->
         <!-------------------------------------------------------------------------------------- -->
 
-        <!-- Font loading/unloading functions -->
+        <!-- RLFont loading/unloading functions -->
         <KeyWord name="GetFontDefault" func="yes">
-            <Overload retVal="Font" descr="Get the default Font"></Overload>
+            <Overload retVal="RLFont" descr="Get the default RLFont"></Overload>
         </KeyWord>
         <KeyWord name="LoadFont" func="yes">
-            <Overload retVal="Font" descr="Load font from file into GPU memory (VRAM)">
+            <Overload retVal="RLFont" descr="Load font from file into GPU memory (VRAM)">
                 <Param name="const char *fileName" />
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontEx" func="yes">
-            <Overload retVal="Font" descr="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set">
+            <Overload retVal="RLFont" descr="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set">
                 <Param name="const char *fileName" />
                 <Param name="int fontSize" />
                 <Param name="int *codepoints" />
@@ -2236,14 +2236,14 @@
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontFromImage" func="yes">
-            <Overload retVal="Font" descr="Load font from Image (XNA style)">
+            <Overload retVal="RLFont" descr="Load font from Image (XNA style)">
                 <Param name="Image image" />
                 <Param name="Color key" />
                 <Param name="int firstChar" />
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontFromMemory" func="yes">
-            <Overload retVal="Font" descr="Load font from memory buffer, fileType refers to extension: i.e. '.ttf'">
+            <Overload retVal="RLFont" descr="Load font from memory buffer, fileType refers to extension: i.e. '.ttf'">
                 <Param name="const char *fileType" />
                 <Param name="const unsigned char" />
                 <Param name="int dataSize" />
@@ -2254,7 +2254,7 @@
         </KeyWord>
         <KeyWord name="IsFontReady" func="yes">
             <Overload retVal="bool" descr="Check if a font is ready">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontData" func="yes">
@@ -2285,12 +2285,12 @@
         </KeyWord>
         <KeyWord name="UnloadFont" func="yes">
             <Overload retVal="void" descr="Unload font from GPU memory (VRAM)">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
             </Overload>
         </KeyWord>
         <KeyWord name="ExportFontAsCode" func="yes">
             <Overload retVal="bool" descr="Export font as code file, returns true on success">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="const char *fileName" />
             </Overload>
         </KeyWord>
@@ -2313,7 +2313,7 @@
         </KeyWord>
         <KeyWord name="DrawTextEx" func="yes">
             <Overload retVal="void" descr="Draw text using font and additional parameters">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="const char *text" />
                 <Param name="Vector2 position" />
                 <Param name="float fontSize" />
@@ -2322,8 +2322,8 @@
             </Overload>
         </KeyWord>
         <KeyWord name="DrawTextPro" func="yes">
-            <Overload retVal="void" descr="Draw text using Font and pro parameters (rotation)">
-                <Param name="Font font" />
+            <Overload retVal="void" descr="Draw text using RLFont and pro parameters (rotation)">
+                <Param name="RLFont font" />
                 <Param name="const char *text" />
                 <Param name="Vector2 position" />
                 <Param name="Vector2 origin" />
@@ -2335,7 +2335,7 @@
         </KeyWord>
         <KeyWord name="DrawTextCodepoint" func="yes">
             <Overload retVal="void" descr="Draw one character (codepoint)">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="int codepoint" />
                 <Param name="Vector2 position" />
                 <Param name="float fontSize" />
@@ -2344,7 +2344,7 @@
         </KeyWord>
         <KeyWord name="DrawTextCodepoints" func="yes">
             <Overload retVal="void" descr="Draw multiple character (codepoint)">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="const int *codepoints" />
                 <Param name="int codepointCount" />
                 <Param name="Vector2 position" />
@@ -2367,8 +2367,8 @@
             </Overload>
         </KeyWord>
         <KeyWord name="MeasureTextEx" func="yes">
-            <Overload retVal="Vector2" descr="Measure string size for Font">
-                <Param name="Font font" />
+            <Overload retVal="Vector2" descr="Measure string size for RLFont">
+                <Param name="RLFont font" />
                 <Param name="const char *text" />
                 <Param name="float fontSize" />
                 <Param name="float spacing" />
@@ -2376,19 +2376,19 @@
         </KeyWord>
         <KeyWord name="GetGlyphIndex" func="yes">
             <Overload retVal="int" descr="Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="int codepoint" />
             </Overload>
         </KeyWord>
         <KeyWord name="GetGlyphInfo" func="yes">
             <Overload retVal="GlyphInfo" descr="Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="int codepoint" />
             </Overload>
         </KeyWord>
         <KeyWord name="GetGlyphAtlasRec" func="yes">
             <Overload retVal="Rectangle" descr="Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
-                <Param name="Font font" />
+                <Param name="RLFont font" />
                 <Param name="int codepoint" />
             </Overload>
         </KeyWord>
@@ -2822,7 +2822,7 @@
                 <Param name="Vector2 size" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
-                <Param name="0ó¿8± " />
+                <Param name="0ï¿½8ï¿½ " />
             </Overload>
         </KeyWord>
 
@@ -3452,5 +3452,3 @@
                 <Param name="AudioCallback processor" />
             </Overload>
         </KeyWord>
-
-
