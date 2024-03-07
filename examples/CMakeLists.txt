@@ -113,10 +113,13 @@ elseif ("${PLATFORM}" STREQUAL "DRM")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
 
-elseif ("${PLATFORM}" STREQUAL "SDL")
+endif ()
+
+# The rlgl_standalone example only targets desktop, without shared libraries.
+if (BUILD_SHARED_LIBS OR NOT ${PLATFORM} MATCHES "Desktop")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
 
-endif ()
+endif()
 
 include_directories(BEFORE SYSTEM others/external/include)
 
