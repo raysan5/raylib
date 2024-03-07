@@ -2119,7 +2119,7 @@
             <Param type="Color" name="color" desc="" />
             <Param type="float" name="alpha" desc="" />
         </Function>
-        <Function name="ColorToInt" retType="int" paramCount="1" desc="Get hexadecimal value for a Color">
+        <Function name="ColorToInt" retType="int" paramCount="1" desc="Get hexadecimal value for a Color (0xRRGGBBAA)">
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ColorNormalize" retType="Vector4" paramCount="1" desc="Get Color normalized as float [0..1]">

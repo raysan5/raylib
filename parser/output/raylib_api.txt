@@ -3227,7 +3227,7 @@ Function 360: Fade() (2 input parameters)
 Function 361: ColorToInt() (1 input parameters)
   Name: ColorToInt
   Return type: int
-  Description: Get hexadecimal value for a Color
+  Description: Get hexadecimal value for a Color (0xRRGGBBAA)
   Param[1]: color (type: Color)
 Function 362: ColorNormalize() (1 input parameters)
   Name: ColorNormalize
