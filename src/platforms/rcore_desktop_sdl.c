@@ -1108,11 +1108,17 @@ void PollInputEvents(void)
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;
                     } break;
+                    case SDL_WINDOWEVENT_ENTER:
+                    {
+                        CORE.Input.Mouse.cursorOnScreen = true;
+                    } break;
                     case SDL_WINDOWEVENT_LEAVE:
+                    {
+                        CORE.Input.Mouse.cursorOnScreen = false;
+                    } break;
                     case SDL_WINDOWEVENT_HIDDEN:
                     case SDL_WINDOWEVENT_MINIMIZED:
                     case SDL_WINDOWEVENT_FOCUS_LOST:
-                    case SDL_WINDOWEVENT_ENTER:
                     case SDL_WINDOWEVENT_SHOWN:
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
                     case SDL_WINDOWEVENT_MAXIMIZED:
