@@ -115,6 +115,12 @@ elseif ("${PLATFORM}" STREQUAL "DRM")
 
 endif ()
 
+# The rlgl_standalone example only targets desktop, without shared libraries.
+if (BUILD_SHARED_LIBS OR NOT ${PLATFORM} MATCHES "Desktop")
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+
+endif()
+
 include_directories(BEFORE SYSTEM others/external/include)
 
 if (NOT TARGET raylib)
@@ -144,12 +150,6 @@ foreach (example_source ${example_sources})
         set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
     endif ()
 endforeach ()
-
-# For SDL, have rlgl_standalone link the glfw dependency.
-if ("${PLATFORM}" STREQUAL "SDL")
-    find_package(glfw3 3.3 REQUIRED)
-    target_link_libraries(rlgl_standalone glfw)
-endif()
 
 # Copy all of the resource files to the destination
 file(COPY ${example_resources} DESTINATION "resources/")
