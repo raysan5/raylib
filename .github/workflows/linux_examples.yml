@@ -27,7 +27,7 @@ jobs:
     - name: Setup Environment
       run: | 
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-bin libwayland-dev
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-bin libwayland-dev libxkbcommon-dev
         
     - name: Build Library
       run: |
