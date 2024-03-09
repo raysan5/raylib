@@ -1,7 +1,8 @@
 //========================================================================
-// GLFW 3.4 macOS - www.glfw.org
+// GLFW 3.4 macOS (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -175,7 +176,7 @@ static void createMenuBar(void)
 
 // Create key code translation tables
 //
-static void createKeyTables(void)
+static void createKeyTablesCocoa(void)
 {
     memset(_glfw.ns.keycodes, -1, sizeof(_glfw.ns.keycodes));
     memset(_glfw.ns.scancodes, -1, sizeof(_glfw.ns.scancodes));
@@ -618,7 +619,7 @@ int _glfwInitCocoa(void)
                name:NSTextInputContextKeyboardSelectionDidChangeNotification
              object:nil];
 
-    createKeyTables();
+    createKeyTablesCocoa();
 
     _glfw.ns.eventSource = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
     if (!_glfw.ns.eventSource)

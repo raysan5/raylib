@@ -96,14 +96,14 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
 
+# Enable support for both Wayland and X11 by default on Linux when using GLFW
+GLFW_LINUX_ENABLE_WAYLAND  ?= TRUE
+GLFW_LINUX_ENABLE_X11      ?= TRUE
+
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
 SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
 SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/lib
-
-# Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
-# NOTE: This variable is only used for PLATFORM_OS: LINUX
-USE_WAYLAND_DISPLAY   ?= FALSE
 
 # Determine if the file has root access (only required to install raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
@@ -407,7 +407,11 @@ endif
 # Use Wayland display on Linux desktop
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS), LINUX)
-        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
+        ifeq ($(GLFW_LINUX_ENABLE_X11),TRUE)
+            CFLAGS += -D_GLFW_X11
+        endif
+
+        ifeq ($(GLFW_LINUX_ENABLE_WAYLAND),TRUE)
             CFLAGS += -D_GLFW_WAYLAND
             LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
 
@@ -533,7 +537,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
-        ifeq ($(USE_WAYLAND_DISPLAY),FALSE)
+        ifeq ($(GLFW_LINUX_ENABLE_X11),TRUE)
             LDLIBS += -lX11
         endif
         # TODO: On ARM 32bit arch, miniaudio requires atomics library
