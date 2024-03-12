@@ -269,6 +269,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             // Front face
+            rlNormal3f(0.0f, 0.0f, 1.0f);
             rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left
             rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
             rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left
@@ -278,6 +279,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
             rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
 
             // Back face
+            rlNormal3f(0.0f, 0.0f, -1.0f);
             rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Left
             rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
             rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right
@@ -287,6 +289,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
             rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
 
             // Top face
+            rlNormal3f(0.0f, 1.0f, 0.0f);
             rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
             rlVertex3f(x - width/2, y + height/2, z + length/2);  // Bottom Left
             rlVertex3f(x + width/2, y + height/2, z + length/2);  // Bottom Right
@@ -296,6 +299,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
             rlVertex3f(x + width/2, y + height/2, z + length/2);  // Bottom Right
 
             // Bottom face
+            rlNormal3f(0.0f, -1.0f, 0.0f);
             rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top Left
             rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
             rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left
@@ -305,6 +309,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
             rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top Left
 
             // Right face
+            rlNormal3f(1.0f, 0.0f, 0.0f);
             rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right
             rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right
             rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Left
@@ -314,6 +319,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
             rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Left
 
             // Left face
+            rlNormal3f(-1.0f, 0.0f, 0.0f);
             rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Right
             rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left
             rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Right
