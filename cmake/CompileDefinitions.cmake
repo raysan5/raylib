@@ -99,6 +99,13 @@ if (${CUSTOMIZE_BUILD})
     target_compile_definitions("raylib" PUBLIC "RL_CULL_DISTANCE_NEAR=0.01")
     target_compile_definitions("raylib" PUBLIC "RL_CULL_DISTANCE_FAR=1000.0")
 
+    target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION=0")
+    target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD=1")
+    target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL=2")
+    target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR=3")
+    target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT=4")
+    target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2=5")
+
     target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION=\"vertexPosition\"")
     target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD=\"vertexTexCoord\"")
     target_compile_definitions("raylib" PUBLIC "RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL=\"vertexNormal\"")
