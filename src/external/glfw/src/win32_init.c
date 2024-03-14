@@ -1,8 +1,9 @@
 //========================================================================
-// GLFW 3.4 Win32 - www.glfw.org
+// GLFW 3.4 Win32 (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -195,7 +196,7 @@ static void freeLibraries(void)
 
 // Create key code translation tables
 //
-static void createKeyTables(void)
+static void createKeyTablesWin32(void)
 {
     int scancode;
 
@@ -685,7 +686,7 @@ int _glfwInitWin32(void)
     if (!loadLibraries())
         return GLFW_FALSE;
 
-    createKeyTables();
+    createKeyTablesWin32();
     _glfwUpdateKeyNamesWin32();
 
     if (_glfwIsWindows10Version1703OrGreaterWin32())
