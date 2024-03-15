@@ -1131,7 +1131,17 @@ void PollInputEvents(void)
             case SDL_KEYDOWN:
             {
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
-                if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+                if (key != KEY_NULL) {
+                    // If key was up, add it to the key pressed queue
+                    if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
+                    {
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                        CORE.Input.Keyboard.keyPressedQueueCount++;
+                    }
+
+                    CORE.Input.Keyboard.currentKeyState[key] = 1;
+                }
 
                 if (event.key.repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
@@ -1153,14 +1163,6 @@ void PollInputEvents(void)
                 // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
 
                 int codepointSize = 0;
-
-                // Check if there is space available in the key queue
-                if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
-                {
-                    // Add character (key) to the queue
-                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = GetCodepointNext(event.text.text, &codepointSize);
-                    CORE.Input.Keyboard.keyPressedQueueCount++;
-                }
 
                 // Check if there is space available in the queue
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
