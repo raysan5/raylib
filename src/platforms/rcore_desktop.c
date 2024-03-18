@@ -972,6 +972,9 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
+    if (glfwRawMouseMotionSupported())
+        glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
@@ -982,6 +985,9 @@ void DisableCursor(void)
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    if (glfwRawMouseMotionSupported())
+        glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     CORE.Input.Mouse.cursorHidden = true;
 }
