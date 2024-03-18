@@ -903,6 +903,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define GL_TEXTURE_MAX_ANISOTROPY_EXT       0x84FE
 #endif
 
+#if !defined(GL_PROGRAM_POINT_SIZE)
+    #define GL_PROGRAM_POINT_SIZE               0x8642
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_11)
     #define GL_UNSIGNED_SHORT_5_6_5             0x8363
     #define GL_UNSIGNED_SHORT_5_5_5_1           0x8034
