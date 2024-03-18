@@ -1470,9 +1470,6 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader)
-    if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
-
     int eyeCount = 1;
     if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
@@ -1690,9 +1687,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
-
-    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader)
-    if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
 
     int eyeCount = 1;
     if (rlIsStereoRenderEnabled()) eyeCount = 2;
