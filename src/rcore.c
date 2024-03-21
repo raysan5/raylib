@@ -292,16 +292,16 @@ typedef struct CoreData {
     struct {
         struct {
             int exitKey;                    // Default exit key
-            char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
-            char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
+            char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
+            char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
 
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
-            char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame.
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame.
 
-            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input keys queue
+            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
-            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
+            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
 
         } Keyboard;
@@ -331,7 +331,7 @@ typedef struct CoreData {
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
-            int axisCount[MAX_GAMEPADS];                  // Register number of available gamepad axis
+            int axisCount[MAX_GAMEPADS];    // Register number of available gamepad axis
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             char name[MAX_GAMEPADS][64];    // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
