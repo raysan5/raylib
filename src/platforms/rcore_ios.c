@@ -2,8 +2,8 @@
 *
 *   rcore_<platform> template - Functions to manage window, graphics device and inputs
 *
-*   PLATFORM: <PLATFORM>
-*       - TODO: Define the target platform for the core
+*   PLATFORM: IOS
+*       - iOS (arm64)
 *
 *   LIMITATIONS:
 *       - Limitation 01
@@ -357,7 +357,7 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        // TODO:
+        TRACELOG(LOG_WARNING, "OpenURL() not implemented on target platform");
     }
 }
 
@@ -585,6 +585,27 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     // TODO: De-initialize graphics, inputs and more
+
+    // Close surface, context and display
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (platform.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
+        }
+
+        if (platform.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
+    }
 }
 
 // EOF
