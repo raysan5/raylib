@@ -60,6 +60,11 @@ extern void ios_destroy();
 /* GameViewController */
 @interface GameViewController : UIViewController
 - (void)update;
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches;
 @end
 
 /* AppDelegate */
@@ -71,7 +76,6 @@ extern void ios_destroy();
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
-    // TODO: Define the platform specific variables required
     GameViewController *viewController;  // Root view controller
 
     // Display data
@@ -92,7 +96,6 @@ static PlatformData platform = { 0 };   // Platform specific data
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
-bool InitGraphicsDevice(void);   // Initialize graphics device
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -441,7 +444,9 @@ void PollInputEvents(void)
     }
 
     // TODO: Poll input events for iOS
-    
+
+    // Register touch points count
+    // https://developer.apple.com/documentation/uikit/touches_presses_and_gestures
 }
 
 
@@ -645,6 +650,7 @@ void ClosePlatform(void)
     [super viewDidLoad];
     // self.modalPresentationCapturesStatusBarAppearance = true;
     platform.viewController = self;
+    self.view.multipleTouchEnabled = true;
 }
 
 - (void)update
