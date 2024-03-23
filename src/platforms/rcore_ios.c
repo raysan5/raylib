@@ -49,10 +49,17 @@
 // TODO: Include the platform specific libraries
 #include "libEGL/libEGL.h"
 
+// iOS only supports callbacks
+// We are not able to give users full control of the game loop
+extern void ios_ready();
+extern void ios_update();
+extern void ios_destroy();
+
 #import <UIKit/UIKit.h>
 
 /* GameViewController */
 @interface GameViewController : UIViewController
+- (void)update;
 @end
 
 /* AppDelegate */
@@ -476,10 +483,17 @@ int InitPlatform(void)
         EGL_NONE
     };
 
+//    const EGLint contextAttribs[] =
+//    {
+//        EGL_CONTEXT_CLIENT_VERSION, 2,
+//        EGL_NONE
+//    };
+    
     const EGLint contextAttribs[] =
     {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
+        EGL_CONTEXT_MAJOR_VERSION, 2,
+        EGL_CONTEXT_MINOR_VERSION, 0,
+        EGL_NONE,
     };
 
     EGLint numConfigs = 0;
@@ -590,7 +604,7 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-    TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
+    TRACELOG(LOG_INFO, "PLATFORM: IOS: Initialized successfully");
 
     return 0;
 }
@@ -632,6 +646,11 @@ void ClosePlatform(void)
     platform.viewController = self;
 }
 
+- (void)update
+{
+    ios_update();
+}
+
 - (bool)prefersStatusBarHidden
 {
     return true;
@@ -644,10 +663,14 @@ void ClosePlatform(void)
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    NSLog(@"bounds: %@", NSStringFromCGRect([UIScreen mainScreen].bounds));
     self.window.backgroundColor = [UIColor redColor];
     self.window.rootViewController = [[GameViewController alloc] init];
     [self.window makeKeyAndVisible];
+    
+    ios_ready();
+
+    CADisplayLink *displayLink = [CADisplayLink displayLinkWithTarget:self.window.rootViewController selector:@selector(update)];
+    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     return YES;
 }
 
@@ -668,11 +691,11 @@ void ClosePlatform(void)
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
 }
 
-@end
+- (void)applicationWillTerminate:(UIApplication *)application {
+    ios_destroy();
+}
 
-// To allow easier porting to android, we allow the user to define a
-// main function which we call from android_main, defined by ourselves
-extern int ios_main(int argc, char *argv[]);
+@end
 
 /* main() */
 int main(int argc, char * argv[]) {

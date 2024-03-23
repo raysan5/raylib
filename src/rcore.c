@@ -502,7 +502,7 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
     #include "platforms/rcore_android.c"
-#elif defined(PLATFORM_IOS) || defined(PLATFORM_IOSSIMULATOR)
+#elif defined(PLATFORM_IOS)
     #include "platforms/rcore_ios.c"
 #else
     // TODO: Include your custom platform backend!
