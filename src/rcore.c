@@ -572,6 +572,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: NATIVE DRM");
 #elif defined(PLATFORM_ANDROID)
     TRACELOG(LOG_INFO, "Platform backend: ANDROID");
+#elif defined(PLATFORM_IOS)
+    TRACELOG(LOG_INFO, "Platform backend: IOS");
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!

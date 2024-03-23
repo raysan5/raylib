@@ -440,7 +440,8 @@ void PollInputEvents(void)
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
-    // TODO: Poll input events for current platform
+    // TODO: Poll input events for iOS
+    
 }
 
 
@@ -451,6 +452,24 @@ void PollInputEvents(void)
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
+    if(CORE.Window.screen.width == 0){
+        CORE.Window.screen.width = platform.viewController.view.frame.size.width;
+    }
+    if(CORE.Window.screen.height == 0){
+        CORE.Window.screen.height = platform.viewController.view.frame.size.height;
+    }
+
+    int orientation = [[UIApplication sharedApplication] statusBarOrientation];
+    if(orientation == UIInterfaceOrientationPortrait){
+        TRACELOG(LOG_INFO, "IOS: Window orientation set as Portrait");
+    }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
+        TRACELOG(LOG_INFO, "IOS: Window orientation set as PortraitUpsideDown");
+    }else if(orientation == UIInterfaceOrientationLandscapeLeft){
+        TRACELOG(LOG_INFO, "IOS: Window orientation set as LandscapeLeft");
+    }else if(orientation == UIInterfaceOrientationLandscapeRight){
+        TRACELOG(LOG_INFO, "IOS: Window orientation set as LandscapeRight");
+    }
+
     // TODO: Initialize graphic device: display/window
     // It usually requires setting up the platform display system configuration
     // and connexion with the GPU through some system graphic API
@@ -541,15 +560,15 @@ int InitPlatform(void)
     platform.surface = eglCreateWindowSurface(platform.device, platform.config, native_window, NULL);
 
     // There must be at least one frame displayed before the buffers are swapped
-    eglSwapInterval(platform.device, 1);
+    //eglSwapInterval(platform.device, 1);
 
-    EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
-
-    // Check surface and context activation
-    if (result != EGL_FALSE)
+    if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
-        CORE.Window.ready = true;
-
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
+        return -1;
+    }
+    else
+    {
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -561,30 +580,12 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-    else
-    {
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
-        return -1;
-    }
     //----------------------------------------------------------------------------
-
-    // If everything work as expected, we can continue
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
-    CORE.Window.currentFbo.width = CORE.Window.render.width;
-    CORE.Window.currentFbo.height = CORE.Window.render.height;
-
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-
-    // TODO: Load OpenGL extensions
+    // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
-    //----------------------------------------------------------------------------
     rlLoadExtensions(eglGetProcAddress);
-    //----------------------------------------------------------------------------
+
+    CORE.Window.ready = true;
 
     // TODO: Initialize input events system
     // It could imply keyboard, mouse, gamepad, touch...

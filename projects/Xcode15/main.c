@@ -20,15 +20,17 @@
 //------------------------------------------------------------------------------------------
 typedef enum GameScreen { LOGO = 0, TITLE, GAMEPLAY, ENDING } GameScreen;
 
-const int screenWidth = 800;
-const int screenHeight = 450;
+int screenWidth = 0;
+int screenHeight = 0;
 GameScreen currentScreen = LOGO;
 int framesCounter = 0;          // Useful to count frames
 
 void ios_ready(){
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic screen manager");
+    InitWindow(0, 0, "raylib [core] example - basic screen manager");
+    screenWidth = GetScreenWidth();
+    screenHeight = GetScreenHeight();
 
     // TODO: Initialize all required variables and load all required data here!
     SetTargetFPS(60);               // Set desired framerate (frames-per-second)
@@ -129,6 +131,7 @@ void ios_update()
         default: break;
     }
     
+    DrawFPS(screenWidth / 2, 0);
     EndDrawing();
     //----------------------------------------------------------------------------------
 }
