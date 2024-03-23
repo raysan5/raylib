@@ -47,6 +47,7 @@
 **********************************************************************************************/
 
 // TODO: Include the platform specific libraries
+#include "libEGL/libEGL.h"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -508,10 +509,8 @@ int InitPlatform(void)
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
     eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
-    // Android specific call
-    ANativeWindow_setBuffersGeometry(platform.app->window, 0, 0, displayFormat);       // Force use of native display size
-
-    platform.surface = eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
+    // eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
+    platform.surface = eglCreateWindowSurface(platform.device, platform.config, NULL, NULL);
 
     // There must be at least one frame displayed before the buffers are swapped
     eglSwapInterval(platform.device, 1);

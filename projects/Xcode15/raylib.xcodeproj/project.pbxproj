@@ -1,0 +1,408 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1B16D9052BAEDC41001FD5E0 /* libGLESv2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B16D9032BAEDC41001FD5E0 /* libGLESv2.xcframework */; };
+		1B16D9062BAEDC41001FD5E0 /* libEGL.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B16D9042BAEDC41001FD5E0 /* libEGL.xcframework */; };
+		1B3BE7442BAEE2D700EF4B82 /* rshapes.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE73D2BAEE2D700EF4B82 /* rshapes.c */; };
+		1B3BE7452BAEE2D700EF4B82 /* utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE73E2BAEE2D700EF4B82 /* utils.c */; };
+		1B3BE7462BAEE2D700EF4B82 /* rtext.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE73F2BAEE2D700EF4B82 /* rtext.c */; };
+		1B3BE7472BAEE2D700EF4B82 /* rtextures.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE7402BAEE2D700EF4B82 /* rtextures.c */; };
+		1B3BE7482BAEE2D700EF4B82 /* raudio.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE7412BAEE2D700EF4B82 /* raudio.c */; };
+		1B3BE7492BAEE2D700EF4B82 /* rcore.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE7422BAEE2D700EF4B82 /* rcore.c */; };
+		1B3BE74A2BAEE2D700EF4B82 /* rmodels.c in Sources */ = {isa = PBXBuildFile; fileRef = 1B3BE7432BAEE2D700EF4B82 /* rmodels.c */; };
+		1BF3FC952BAEE3BD00D3B043 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1BF3FC942BAEE3BD00D3B043 /* AVFoundation.framework */; };
+		1BF3FC972BAEE3CF00D3B043 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1BF3FC962BAEE3CF00D3B043 /* Foundation.framework */; };
+		1BF3FC992BAEE43900D3B043 /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1BF3FC982BAEE43800D3B043 /* AVFAudio.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1B16D8F82BAEDBEA001FD5E0 /* raylib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = raylib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B16D9032BAEDC41001FD5E0 /* libGLESv2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libGLESv2.xcframework; sourceTree = "<group>"; };
+		1B16D9042BAEDC41001FD5E0 /* libEGL.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libEGL.xcframework; sourceTree = "<group>"; };
+		1B3BE73D2BAEE2D700EF4B82 /* rshapes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rshapes.c; path = ../../../src/rshapes.c; sourceTree = "<group>"; };
+		1B3BE73E2BAEE2D700EF4B82 /* utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = utils.c; path = ../../../src/utils.c; sourceTree = "<group>"; };
+		1B3BE73F2BAEE2D700EF4B82 /* rtext.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rtext.c; path = ../../../src/rtext.c; sourceTree = "<group>"; };
+		1B3BE7402BAEE2D700EF4B82 /* rtextures.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rtextures.c; path = ../../../src/rtextures.c; sourceTree = "<group>"; };
+		1B3BE7412BAEE2D700EF4B82 /* raudio.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = raudio.c; path = ../../../src/raudio.c; sourceTree = "<group>"; };
+		1B3BE7422BAEE2D700EF4B82 /* rcore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rcore.c; path = ../../../src/rcore.c; sourceTree = "<group>"; };
+		1B3BE7432BAEE2D700EF4B82 /* rmodels.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rmodels.c; path = ../../../src/rmodels.c; sourceTree = "<group>"; };
+		1BF3FC942BAEE3BD00D3B043 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		1BF3FC962BAEE3CF00D3B043 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		1BF3FC982BAEE43800D3B043 /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/AVFAudio.framework; sourceTree = DEVELOPER_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1B16D8F52BAEDBEA001FD5E0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1BF3FC992BAEE43900D3B043 /* AVFAudio.framework in Frameworks */,
+				1BF3FC972BAEE3CF00D3B043 /* Foundation.framework in Frameworks */,
+				1BF3FC952BAEE3BD00D3B043 /* AVFoundation.framework in Frameworks */,
+				1B16D9062BAEDC41001FD5E0 /* libEGL.xcframework in Frameworks */,
+				1B16D9052BAEDC41001FD5E0 /* libGLESv2.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1B16D8EE2BAEDBEA001FD5E0 = {
+			isa = PBXGroup;
+			children = (
+				1B16D8FA2BAEDBEA001FD5E0 /* raylib */,
+				1B16D8F92BAEDBEA001FD5E0 /* Products */,
+				1BF3FC932BAEE3BC00D3B043 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		1B16D8F92BAEDBEA001FD5E0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1B16D8F82BAEDBEA001FD5E0 /* raylib.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1B16D8FA2BAEDBEA001FD5E0 /* raylib */ = {
+			isa = PBXGroup;
+			children = (
+				1B3BE7412BAEE2D700EF4B82 /* raudio.c */,
+				1B3BE7422BAEE2D700EF4B82 /* rcore.c */,
+				1B3BE7432BAEE2D700EF4B82 /* rmodels.c */,
+				1B3BE73D2BAEE2D700EF4B82 /* rshapes.c */,
+				1B3BE73F2BAEE2D700EF4B82 /* rtext.c */,
+				1B3BE7402BAEE2D700EF4B82 /* rtextures.c */,
+				1B3BE73E2BAEE2D700EF4B82 /* utils.c */,
+				1B16D9022BAEDC1C001FD5E0 /* Frameworks */,
+			);
+			path = raylib;
+			sourceTree = "<group>";
+		};
+		1B16D9022BAEDC1C001FD5E0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1B16D9042BAEDC41001FD5E0 /* libEGL.xcframework */,
+				1B16D9032BAEDC41001FD5E0 /* libGLESv2.xcframework */,
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
+		1BF3FC932BAEE3BC00D3B043 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1BF3FC982BAEE43800D3B043 /* AVFAudio.framework */,
+				1BF3FC962BAEE3CF00D3B043 /* Foundation.framework */,
+				1BF3FC942BAEE3BD00D3B043 /* AVFoundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		1B16D8F32BAEDBEA001FD5E0 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		1B16D8F72BAEDBEA001FD5E0 /* raylib */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1B16D8FF2BAEDBEA001FD5E0 /* Build configuration list for PBXNativeTarget "raylib" */;
+			buildPhases = (
+				1B16D8F32BAEDBEA001FD5E0 /* Headers */,
+				1B16D8F42BAEDBEA001FD5E0 /* Sources */,
+				1B16D8F52BAEDBEA001FD5E0 /* Frameworks */,
+				1B16D8F62BAEDBEA001FD5E0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = raylib;
+			productName = raylib;
+			productReference = 1B16D8F82BAEDBEA001FD5E0 /* raylib.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1B16D8EF2BAEDBEA001FD5E0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					1B16D8F72BAEDBEA001FD5E0 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = 1B16D8F22BAEDBEA001FD5E0 /* Build configuration list for PBXProject "raylib" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 1B16D8EE2BAEDBEA001FD5E0;
+			productRefGroup = 1B16D8F92BAEDBEA001FD5E0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1B16D8F72BAEDBEA001FD5E0 /* raylib */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1B16D8F62BAEDBEA001FD5E0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1B16D8F42BAEDBEA001FD5E0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B3BE7462BAEE2D700EF4B82 /* rtext.c in Sources */,
+				1B3BE7442BAEE2D700EF4B82 /* rshapes.c in Sources */,
+				1B3BE7472BAEE2D700EF4B82 /* rtextures.c in Sources */,
+				1B3BE7492BAEE2D700EF4B82 /* rcore.c in Sources */,
+				1B3BE7482BAEE2D700EF4B82 /* raudio.c in Sources */,
+				1B3BE7452BAEE2D700EF4B82 /* utils.c in Sources */,
+				1B3BE74A2BAEE2D700EF4B82 /* rmodels.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1B16D8FD2BAEDBEA001FD5E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = NO;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = c17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		1B16D8FE2BAEDBEA001FD5E0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = NO;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = c17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		1B16D9002BAEDBEA001FD5E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_COMMA = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DEVELOPMENT_TEAM = A7A93GC9AY;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.raylib;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1B16D9012BAEDBEA001FD5E0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_COMMA = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DEVELOPMENT_TEAM = A7A93GC9AY;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.raylib;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1B16D8F22BAEDBEA001FD5E0 /* Build configuration list for PBXProject "raylib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1B16D8FD2BAEDBEA001FD5E0 /* Debug */,
+				1B16D8FE2BAEDBEA001FD5E0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1B16D8FF2BAEDBEA001FD5E0 /* Build configuration list for PBXNativeTarget "raylib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1B16D9002BAEDBEA001FD5E0 /* Debug */,
+				1B16D9012BAEDBEA001FD5E0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1B16D8EF2BAEDBEA001FD5E0 /* Project object */;
+}
