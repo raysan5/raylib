@@ -49,11 +49,23 @@
 // TODO: Include the platform specific libraries
 #include "libEGL/libEGL.h"
 
+#import <UIKit/UIKit.h>
+
+/* GameViewController */
+@interface GameViewController : UIViewController
+@end
+
+/* AppDelegate */
+@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@property (strong, nonatomic) UIWindow *window;
+@end
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
     // TODO: Define the platform specific variables required
+    GameViewController *viewController;  // Root view controller
 
     // Display data
     EGLDisplay device;                  // Native display device (physical screen connection)
@@ -510,7 +522,9 @@ int InitPlatform(void)
     eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
     // eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
-    platform.surface = eglCreateWindowSurface(platform.device, platform.config, NULL, NULL);
+    // bridged cast rootViewController.view.layer; to void*
+    void* native_window = (__bridge void*)platform.viewController.view.layer;
+    platform.surface = eglCreateWindowSurface(platform.device, platform.config, native_window, NULL);
 
     // There must be at least one frame displayed before the buffers are swapped
     eglSwapInterval(platform.device, 1);
@@ -606,6 +620,63 @@ void ClosePlatform(void)
         eglTerminate(platform.device);
         platform.device = EGL_NO_DISPLAY;
     }
+}
+
+
+@implementation GameViewController
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // self.modalPresentationCapturesStatusBarAppearance = true;
+    platform.viewController = self;
+}
+
+- (bool)prefersStatusBarHidden
+{
+    return true;
+}
+
+@end
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Override point for customization after application launch.
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    NSLog(@"bounds: %@", NSStringFromCGRect([UIScreen mainScreen].bounds));
+    self.window.backgroundColor = [UIColor redColor];
+    self.window.rootViewController = [[GameViewController alloc] init];
+    [self.window makeKeyAndVisible];
+    return YES;
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application {
+    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
+    // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
+}
+
+- (void)applicationWillEnterForeground:(UIApplication *)application {
+    // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+}
+
+@end
+
+// To allow easier porting to android, we allow the user to define a
+// main function which we call from android_main, defined by ourselves
+extern int ios_main(int argc, char *argv[]);
+
+/* main() */
+int main(int argc, char * argv[]) {
+    return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
 }
 
 // EOF
