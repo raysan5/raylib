@@ -64,7 +64,7 @@ extern void ios_destroy();
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
-- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches;
+//- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches;
 @end
 
 /* AppDelegate */
@@ -444,8 +444,6 @@ void PollInputEvents(void)
     }
 
     // TODO: Poll input events for iOS
-
-    // Register touch points count
     // https://developer.apple.com/documentation/uikit/touches_presses_and_gestures
 }
 
@@ -653,14 +651,61 @@ void ClosePlatform(void)
     self.view.multipleTouchEnabled = true;
 }
 
+- (bool)prefersStatusBarHidden
+{
+    return true;
+}
+
 - (void)update
 {
     ios_update();
 }
 
-- (bool)prefersStatusBarHidden
+void call_gesture(int action)
 {
-    return true;
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    GestureEvent gestureEvent = { 0 };
+
+    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+
+    // Register touch actions
+    gestureEvent.touchAction = action;
+
+    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
+        gestureEvent.position[i] = CORE.Input.Touch.position[i];
+        gestureEvent.position[i].x /= (float)GetScreenWidth();
+        gestureEvent.position[i].y /= (float)GetScreenHeight();
+    }
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+// touch callbacks
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    CORE.Input.Touch.pointCount += touches.count;
+    if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
+    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_DOWN);
+}
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    CORE.Input.Touch.pointCount -= touches.count;
+    if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
+    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_UP);
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_MOVE);
+}
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    CORE.Input.Touch.pointCount = 0;
+    CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
+    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_CANCEL);
 }
 
 @end
