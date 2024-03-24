@@ -323,7 +323,7 @@ typedef struct CoreData {
         } Mouse;
         struct {
             int pointCount;                             // Number of touch points active
-            int pointId[MAX_TOUCH_POINTS];              // Point identifiers
+            long long pointId[MAX_TOUCH_POINTS];              // Point identifiers
             Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
@@ -3038,9 +3038,9 @@ Vector2 GetTouchPosition(int index)
 }
 
 // Get touch point identifier for given index
-int GetTouchPointId(int index)
+long long GetTouchPointId(int index)
 {
-    int id = -1;
+    long long id = -1;
 
     if (index < MAX_TOUCH_POINTS) id = CORE.Input.Touch.pointId[index];
 

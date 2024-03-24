@@ -102,7 +102,7 @@ typedef enum {
 typedef struct {
     int touchAction;
     int pointCount;
-    int pointId[MAX_TOUCH_POINTS];
+    long long pointId[MAX_TOUCH_POINTS];
     Vector2 position[MAX_TOUCH_POINTS];
 } GestureEvent;
 
