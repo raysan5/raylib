@@ -458,7 +458,7 @@ int InitPlatform(void)
         CORE.Window.screen.height = platform.viewController.view.frame.size.height;
     }
 
-    int orientation = [[UIApplication sharedApplication] statusBarOrientation];
+    long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
     if(orientation == UIInterfaceOrientationPortrait){
         TRACELOG(LOG_INFO, "IOS: Window orientation set as Portrait");
     }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
@@ -665,17 +665,23 @@ void ClosePlatform(void)
 
 static void sync_all_touches(UIEvent* event)
 {
-    CORE.Input.Touch.pointCount = event.allTouches.count;
+    CORE.Input.Touch.pointCount = (int)event.allTouches.count;
     int i = 0;
     for (UITouch *touch in event.allTouches)
     {
         CGPoint location = [touch locationInView:platform.viewController.view];
         CORE.Input.Touch.position[i] = (Vector2){ location.x, location.y };
-        CORE.Input.Touch.pointId[i] = (int)touch;
+        CORE.Input.Touch.pointId[i] = (long long)touch;
         i++;
         if(i >= MAX_TOUCH_POINTS) break;
     }
     // TODO: Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
+}
+
+static int array_index_of(long long needle, long long *haystack, int size)
+{
+    for (int i = 0; i < size; i++) if(haystack[i] == needle) return i;
+    return -1;
 }
 
 static void send_gesture_event(NSSet<UITouch *> * touches, int action)
@@ -704,26 +710,21 @@ static void send_gesture_event(NSSet<UITouch *> * touches, int action)
         // One of the touchpoints is released, remove it from touch point arrays
         for (UITouch *touch in touches)
         {
-            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-            {
-                if(CORE.Input.Touch.pointId[i] == (int)touch){
-                    CORE.Input.Touch.pointId[i] = 0;
-                    CORE.Input.Touch.position[i] = (Vector2){ 0.0f, 0.0f };
-                    break;
+            int size = CORE.Input.Touch.pointCount;
+            if(size > MAX_TOUCH_POINTS) size = MAX_TOUCH_POINTS;
+            int i = array_index_of((long long)touch, CORE.Input.Touch.pointId, size);
+            if(i >= 0){
+                // remove i-th touch point
+                for (int j = i; j < size - 1; j++)
+                {
+                    CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[j + 1];
+                    CORE.Input.Touch.position[j] = CORE.Input.Touch.position[j + 1];
                 }
+                CORE.Input.Touch.pointCount--;
+            }else{
+                TRACELOG(LOG_WARNING, "Touch point not found. This may be a bug!");
             }
         }
-        // re-arrange the touch points
-        int j = 0;
-        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-        {
-            if(CORE.Input.Touch.pointId[i] != 0){
-                CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[i];
-                CORE.Input.Touch.position[j] = CORE.Input.Touch.position[i];
-                j++;
-            }
-        }
-        CORE.Input.Touch.pointCount -= touches.count;
     }
 
     if(action == TOUCH_ACTION_MOVE){
