@@ -506,18 +506,11 @@ int InitPlatform(void)
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
         EGL_NONE
     };
-
-//    const EGLint contextAttribs[] =
-//    {
-//        EGL_CONTEXT_CLIENT_VERSION, 2,
-//        EGL_NONE
-//    };
     
     const EGLint contextAttribs[] =
     {
-        EGL_CONTEXT_MAJOR_VERSION, 2,
-        EGL_CONTEXT_MINOR_VERSION, 0,
-        EGL_NONE,
+        EGL_CONTEXT_CLIENT_VERSION, 3,
+        EGL_NONE
     };
 
     EGLint numConfigs = 0;
@@ -584,6 +577,8 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_WARNING, "    > GL: %s", glGetString(GL_VERSION));
+        TRACELOG(LOG_WARNING, "    > EGL: %s", eglQueryString(platform.device, EGL_VERSION));
     }
     //----------------------------------------------------------------------------
     // Load OpenGL extensions
