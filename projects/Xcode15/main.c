@@ -1,148 +1,120 @@
 /*******************************************************************************************
 *
-*   raylib [core] examples - basic screen manager
+*   raylib [core] example - Input Gestures Detection
 *
-*   NOTE: This example illustrates a very simple screen manager based on a states machines
-*
-*   Example originally created with raylib 4.0, last time updated with raylib 4.0
+*   Example originally created with raylib 1.4, last time updated with raylib 4.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-//------------------------------------------------------------------------------------------
-// Types and Structures Definition
-//------------------------------------------------------------------------------------------
-typedef enum GameScreen { LOGO = 0, TITLE, GAMEPLAY, ENDING } GameScreen;
-
+int MAX_GESTURE_STRINGS = 20;
 int screenWidth = 0;
 int screenHeight = 0;
-GameScreen currentScreen = LOGO;
-int framesCounter = 0;          // Useful to count frames
+Vector2 touchPosition;
+Rectangle touchArea;
+int gesturesCount = 0;
+char gestureStrings[100][32];
+int currentGesture = GESTURE_NONE;
+int lastGesture = GESTURE_NONE;
 
 void ios_ready(){
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    InitWindow(0, 0, "raylib [core] example - basic screen manager");
+    InitWindow(0, 0, "raylib [core] example - input gestures");
+    
     screenWidth = GetScreenWidth();
     screenHeight = GetScreenHeight();
-
-    // TODO: Initialize all required variables and load all required data here!
-    SetTargetFPS(60);               // Set desired framerate (frames-per-second)
-    //--------------------------------------------------------------------------------------
+    
+    touchPosition = (Vector2){ 0, 0 };
+    touchArea = (Rectangle){ 220, 10, screenWidth - 230.0f, screenHeight - 20.0f };
+    
+    //SetGesturesEnabled(0b0000000000001001);   // Enable only some gestures to be detected
+    SetTargetFPS(60);
+    MAX_GESTURE_STRINGS = (screenHeight - 50) / 20;
 }
 
+static void add_gesture(const char* title){
+    if (gesturesCount >= MAX_GESTURE_STRINGS)
+    {
+        for (int i = 0; i < MAX_GESTURE_STRINGS; i++) TextCopy(gestureStrings[i], "\0");
+        gesturesCount = 0;
+    }
+    TextCopy(gestureStrings[gesturesCount], title);
+    gesturesCount++;
+}
 
 void ios_update()
 {
-    // Update
-    //----------------------------------------------------------------------------------
-    switch(currentScreen)
+    lastGesture = currentGesture;
+    currentGesture = GetGestureDetected();
+    touchPosition = GetTouchPosition(0);
+
+    if(IsMouseButtonPressed(0)) add_gesture("MouseButtonPressed");
+    if(IsMouseButtonReleased(0)) add_gesture("MouseButtonReleased");
+
+    if (CheckCollisionPointRec(touchPosition, touchArea) && (currentGesture != GESTURE_NONE))
     {
-        case LOGO:
+        if (currentGesture != lastGesture)
         {
-            // TODO: Update LOGO screen variables here!
-            framesCounter++;    // Count frames
-            
-            // Wait for 2 seconds (120 frames) before jumping to TITLE screen
-            if (framesCounter > 120)
+            // Store gesture string
+            switch (currentGesture)
             {
-                currentScreen = TITLE;
+                case GESTURE_TAP: add_gesture( "GESTURE TAP"); break;
+                case GESTURE_DOUBLETAP: add_gesture( "GESTURE DOUBLETAP"); break;
+                case GESTURE_HOLD: add_gesture( "GESTURE HOLD"); break;
+                case GESTURE_DRAG: add_gesture( "GESTURE DRAG"); break;
+                case GESTURE_SWIPE_RIGHT: add_gesture( "GESTURE SWIPE RIGHT"); break;
+                case GESTURE_SWIPE_LEFT: add_gesture( "GESTURE SWIPE LEFT"); break;
+                case GESTURE_SWIPE_UP: add_gesture( "GESTURE SWIPE UP"); break;
+                case GESTURE_SWIPE_DOWN: add_gesture( "GESTURE SWIPE DOWN"); break;
+                case GESTURE_PINCH_IN: add_gesture( "GESTURE PINCH IN"); break;
+                case GESTURE_PINCH_OUT: add_gesture( "GESTURE PINCH OUT"); break;
+                default: break;
             }
-        } break;
-        case TITLE:
-        {
-            // TODO: Update TITLE screen variables here!
-            
-            // Press enter to change to GAMEPLAY screen
-            if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
-            {
-                currentScreen = GAMEPLAY;
-            }
-        } break;
-        case GAMEPLAY:
-        {
-            // TODO: Update GAMEPLAY screen variables here!
-            
-            // Press enter to change to ENDING screen
-            if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
-            {
-                currentScreen = ENDING;
-            }
-        } break;
-        case ENDING:
-        {
-            // TODO: Update ENDING screen variables here!
-            
-            // Press enter to return to TITLE screen
-            if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
-            {
-                currentScreen = TITLE;
-            }
-        } break;
-        default: break;
+        }
     }
-    //----------------------------------------------------------------------------------
-    
+
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
-    
+
     ClearBackground(RAYWHITE);
-    
-    switch(currentScreen)
+
+    DrawRectangleRec(touchArea, GRAY);
+    DrawRectangle(225, 15, screenWidth - 240, screenHeight - 30, RAYWHITE);
+
+    DrawText("GESTURES TEST AREA", screenWidth - 270, screenHeight - 40, 20, Fade(GRAY, 0.5f));
+
+    for (int i = 0; i < gesturesCount; i++)
     {
-        case LOGO:
-        {
-            // TODO: Draw LOGO screen here!
-            DrawText("LOGO SCREEN", 20, 20, 40, LIGHTGRAY);
-            DrawText("WAIT for 2 SECONDS...", 290, 220, 20, GRAY);
-            
-        } break;
-        case TITLE:
-        {
-            // TODO: Draw TITLE screen here!
-            DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
-            DrawText("TITLE SCREEN", 20, 20, 40, DARKGREEN);
-            DrawText("PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", 120, 220, 20, DARKGREEN);
-            
-        } break;
-        case GAMEPLAY:
-        {
-            // TODO: Draw GAMEPLAY screen here!
-            DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
-            DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
-            DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, MAROON);
-            
-        } break;
-        case ENDING:
-        {
-            // TODO: Draw ENDING screen here!
-            DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
-            DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
-            DrawText("PRESS ENTER or TAP to RETURN to TITLE SCREEN", 120, 220, 20, DARKBLUE);
-            
-        } break;
-        default: break;
+        if (i % 2 == 0){
+            DrawRectangle(10, 30 + 20*i, 200, 20, Fade(LIGHTGRAY, 0.5f));
+        }else{
+            DrawRectangle(10, 30 + 20*i, 200, 20, Fade(LIGHTGRAY, 0.3f));
+        }
+        if (i < gesturesCount - 1){
+            DrawText(gestureStrings[i], 35, 36 + 20*i, 10, DARKGRAY);
+        }else{
+            DrawText(gestureStrings[i], 35, 36 + 20*i, 10, MAROON);
+        }
     }
-    
-    DrawFPS(screenWidth / 2, 0);
+
+    DrawRectangleLines(10, 29, 200, screenHeight - 50, GRAY);
+    DrawText(
+             TextFormat("TOUCH COUNT: %d", GetTouchPointCount()),
+             50, 15, 10, GRAY
+             );
+
+    for(int i=0; i < GetTouchPointCount(); i++){
+        DrawCircleV(GetTouchPosition(i), 30, MAROON);
+    }
     EndDrawing();
-    //----------------------------------------------------------------------------------
 }
 
 void ios_destroy(){
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-
-    // TODO: Unload all loaded data (textures, fonts, audio) here!
-
     CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
-
 }

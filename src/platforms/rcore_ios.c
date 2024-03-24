@@ -1,13 +1,13 @@
 /**********************************************************************************************
 *
-*   rcore_<platform> template - Functions to manage window, graphics device and inputs
+*   rcore_ios - Functions to manage window, graphics device and touch inputs
 *
 *   PLATFORM: IOS
 *       - iOS (arm64)
 *
 *   LIMITATIONS:
-*       - Limitation 01
-*       - Limitation 02
+*       - No keyboard input support
+*       - No gamepad input support
 *
 *   POSSIBLE IMPROVEMENTS:
 *       - Improvement 01
@@ -21,7 +21,7 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - <platform-specific SDK dependency>
+*       - ANGLE for iOS
 *       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
@@ -48,6 +48,7 @@
 
 // TODO: Include the platform specific libraries
 #include "libEGL/libEGL.h"
+#include <complex.h>
 
 // iOS only supports callbacks
 // We are not able to give users full control of the game loop
@@ -60,11 +61,6 @@ extern void ios_destroy();
 /* GameViewController */
 @interface GameViewController : UIViewController
 - (void)update;
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
-//- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches;
 @end
 
 /* AppDelegate */
@@ -661,7 +657,28 @@ void ClosePlatform(void)
     ios_update();
 }
 
-void call_gesture(int action)
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    // In iOS 17, Messages allows you to interactively resize iMessage apps with a vertical pan gesture. Messages handles any conflicts between resize gestures and your custom gestures. If your app uses manual touch handling, override those methods in your app’s UIView. You can either change your manual touch handling code to use a gesture recognizer instead, or your UIView can override gestureRecognizerShouldBegin: and return NO when your iMessage app doesn’t own the gesture.
+    return false;
+}
+
+static void sync_all_touches(UIEvent* event)
+{
+    CORE.Input.Touch.pointCount = event.allTouches.count;
+    int i = 0;
+    for (UITouch *touch in event.allTouches)
+    {
+        CGPoint location = [touch locationInView:platform.viewController.view];
+        CORE.Input.Touch.position[i] = (Vector2){ location.x, location.y };
+        CORE.Input.Touch.pointId[i] = (int)touch;
+        i++;
+        if(i >= MAX_TOUCH_POINTS) break;
+    }
+    // TODO: Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
+}
+
+static void send_gesture_event(NSSet<UITouch *> * touches, int action)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
@@ -682,30 +699,65 @@ void call_gesture(int action)
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
+
+    if(action == TOUCH_ACTION_UP){
+        // One of the touchpoints is released, remove it from touch point arrays
+        for (UITouch *touch in touches)
+        {
+            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+            {
+                if(CORE.Input.Touch.pointId[i] == (int)touch){
+                    CORE.Input.Touch.pointId[i] = 0;
+                    CORE.Input.Touch.position[i] = (Vector2){ 0.0f, 0.0f };
+                    break;
+                }
+            }
+        }
+        // re-arrange the touch points
+        int j = 0;
+        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+        {
+            if(CORE.Input.Touch.pointId[i] != 0){
+                CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[i];
+                CORE.Input.Touch.position[j] = CORE.Input.Touch.position[i];
+                j++;
+            }
+        }
+        CORE.Input.Touch.pointCount -= touches.count;
+    }
+
+    if(action == TOUCH_ACTION_MOVE){
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+    }else{
+        CORE.Input.Mouse.previousPosition = CORE.Input.Touch.position[0];
+    }
+
+    // Map touch[0] as mouse input for convenience
+    CORE.Input.Mouse.currentPosition = CORE.Input.Touch.position[0];
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
 }
 
 // touch callbacks
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    CORE.Input.Touch.pointCount += touches.count;
-    if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
-    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_DOWN);
+    sync_all_touches(event);
+    send_gesture_event(touches, TOUCH_ACTION_DOWN);
 }
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    CORE.Input.Touch.pointCount -= touches.count;
-    if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
-    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_UP);
+    sync_all_touches(event);
+    send_gesture_event(touches, TOUCH_ACTION_UP);
+    // post sync needed
 }
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_MOVE);
+    sync_all_touches(event);
+    send_gesture_event(touches, TOUCH_ACTION_MOVE);
 }
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    CORE.Input.Touch.pointCount = 0;
-    CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
-    for(UITouch* touch in touches) call_gesture(TOUCH_ACTION_CANCEL);
+    sync_all_touches(event);
+    send_gesture_event(touches, TOUCH_ACTION_CANCEL);
 }
 
 @end
@@ -718,9 +770,7 @@ void call_gesture(int action)
     self.window.backgroundColor = [UIColor redColor];
     self.window.rootViewController = [[GameViewController alloc] init];
     [self.window makeKeyAndVisible];
-    
     ios_ready();
-
     CADisplayLink *displayLink = [CADisplayLink displayLinkWithTarget:self.window.rootViewController selector:@selector(update)];
     [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     return YES;
@@ -729,8 +779,12 @@ void call_gesture(int action)
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
 }
-
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+}
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
 }
@@ -739,12 +793,16 @@ void call_gesture(int action)
     // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
 }
 
-- (void)applicationDidBecomeActive:(UIApplication *)application {
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-}
-
 - (void)applicationWillTerminate:(UIApplication *)application {
     ios_destroy();
+
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        // the user does not call CloseWindow() before exiting
+        TRACELOG(LOG_ERROR, "DISPLAY: CloseWindow() should be called before terminating the application");
+    }
+    // If 'platform.device' is already set to 'EGL_NO_DISPLAY'
+    // this means that the user has already called 'CloseWindow()'
 }
 
 @end
