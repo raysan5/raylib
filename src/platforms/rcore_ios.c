@@ -727,6 +727,9 @@ static void send_gesture_event(NSSet<UITouch *> * touches, int action)
         }
     }
 
+    if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
+    else CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
+
     if(action == TOUCH_ACTION_MOVE){
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }else{
