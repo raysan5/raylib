@@ -816,8 +816,12 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(PLATFORM_IOS)
+    // These required macros should be defined in Xcode
     #ifndef GRAPHICS_API_OPENGL_ES3
         #error "GRAPHICS_API_OPENGL_ES3 required on PLATFORM_IOS"
+    #endif
+    #ifndef GL_GLEXT_PROTOTYPES
+        #error "GL_GLEXT_PROTOTYPES required on PLATFORM_IOS"
     #endif
     #include "libGLESv2/GLES/glext.h"
     #include "libGLESv2/GLES2/gl2.h"
