@@ -26,10 +26,9 @@ jobs:
         cd projects/Xcode15
         curl -L https://github.com/raysan5/raylib/files/14743869/libEGL.xcframework.zip --output libEGL.xcframework.zip
         curl -L https://github.com/raysan5/raylib/files/14743873/libGLESv2.xcframework.zip --output libGLESv2.xcframework.zip
-        unzip -q libEGL.xcframework.zip -d libEGL.xcframework
-        unzip -q libGLESv2.xcframework.zip -d libGLESv2.xcframework
+        unzip -q libEGL.xcframework.zip -d raylib/Frameworks/libEGL.xcframework
+        unzip -q libGLESv2.xcframework.zip -d raylib/Frameworks/libGLESv2.xcframework
         rm libEGL.xcframework.zip
         rm libGLESv2.xcframework.zip
-        ls
         xcodebuild -project raylib.xcodeproj -scheme raylib -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14' build
   
