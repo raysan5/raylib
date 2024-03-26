@@ -57,6 +57,12 @@
 #include <sys/ioctl.h>      // Required for: ioctl() - UNIX System call for device-specific input/output operations
 #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
 #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
+
+// So both `linux/input.h` and `raylib.h` define KEY_F12
+// To avoid conflict with the capturing code in rcore.c we undefine the macro KEY_F12,
+// so the enum KEY_F12 from raylib is used
+#undef KEY_F12
+
 #include <linux/joystick.h> // Linux: Joystick support library
 
 #include <gbm.h>         // Generic Buffer Management (native platform for EGL on DRM)
@@ -548,6 +554,16 @@ void PollInputEvents(void)
 
     PollKeyboardEvents();
 
+    #if defined(SUPPORT_SSH_KEYBOARD_RPI)
+        // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
+        // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
+
+        if (!platform.eventKeyboardMode) ProcessKeyboard();
+    #endif
+
+    // Check exit key
+    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+
     // Register previous mouse position
     if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
     else CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
@@ -574,13 +590,6 @@ void PollInputEvents(void)
 
     // Map touch position to mouse position for convenience
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
-    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
-    // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
-
-    if (!platform.eventKeyboardMode) ProcessKeyboard();
-#endif
 
     // Handle the mouse/touch/gestures events:
     // NOTE: Replaces the EventThread handling that is now commented.
@@ -1206,18 +1215,6 @@ static void ProcessKeyboard(void)
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
     }
-
-    // Check exit key (same functionality as GLFW3 KeyCallback())
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
-
-#if defined(SUPPORT_SCREEN_CAPTURE)
-    // Check screen capture key (raylib key: KEY_F12)
-    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
-    {
-        TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-        screenshotCounter++;
-    }
-#endif
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
@@ -1470,57 +1467,49 @@ static void PollKeyboardEvents(void)
     // Try to read data from the keyboard and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
     {
-        // Button parsing
-        if (event.type == EV_KEY)
-        {
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
-            // Change keyboard mode to events
-            platform.eventKeyboardMode = true;
-#endif
-            // Keyboard button parsing
-            if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
-            {
-                keycode = keymapUS[event.code & 0xFF];     // The code we get is a scancode so we look up the appropriate keycode
+        // Check if the event is a key event
+        if (event.type != EV_KEY) continue;
 
-                // Make sure we got a valid keycode
-                if ((keycode > 0) && (keycode < sizeof(CORE.Input.Keyboard.currentKeyState)))
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+        // If the event was a key, we know a working keyboard is connected, so disable the SSH keyboard
+        platform.eventKeyboardMode = true;
+#endif
+
+        // Keyboard keys appear for codes 1 to 255, ignore everthing else
+        if ((event.code >= 1) && (event.code <= 255))
+        {
+
+            // Lookup the scancode in the keymap to get a keycode
+            keycode = keymapUS[event.code];
+
+            // Make sure we got a valid keycode
+            if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
+            {
+
+                // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
+                // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
+                // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
+                CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1);
+                CORE.Input.Keyboard.keyRepeatInFrame[keycode] = (event.value == 2);
+
+                // If the key is pressed add it to the queues
+                if (event.value == 1)
                 {
-                    // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
-                    // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
-                    // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
-                    CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1)? 1 : 0;
-                    CORE.Input.Keyboard.keyRepeatInFrame[keycode] = (event.value == 2)? 1 : 0;
-                    if (event.value >= 1)
+                    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                     {
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
 
-                #if defined(SUPPORT_SCREEN_CAPTURE)
-                    // Check screen capture key (raylib key: KEY_F12)
-                    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+                    if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                     {
-                        TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-                        screenshotCounter++;
+                        // TODO/FIXME: This is not actually converting to unicode properly because it's not taking things like shift into account
+                        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = EvkeyToUnicodeLUT[event.code];
+                        CORE.Input.Keyboard.charPressedQueueCount++;
                     }
-                #endif
-
-                    // Detect char presses (unicode)
-                    if (event.value == 1)
-                    {
-                        // Check if there is space available in the queue
-                        if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
-                        {
-                            // Add character to the queue
-                            CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = EvkeyToUnicodeLUT[event.code];
-                            CORE.Input.Keyboard.charPressedQueueCount++;
-                        }
-                    }
-
-                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
-
-                    TRACELOGD("DRM: KEY_%s ScanCode: %4i KeyCode: %4i", (event.value == 0)? "UP" : "DOWN", event.code, keycode);
                 }
+
+                TRACELOG(LOG_DEBUG, "DRM: KEY_%s Keycode(linux): %4i KeyCode(raylib): %4i", (event.value == 0) ? "UP  " : "DOWN", event.code, keycode);
             }
         }
     }
