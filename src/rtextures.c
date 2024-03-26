@@ -681,10 +681,11 @@ Image LoadImageFromTexture(Texture2D texture)
 // Load image from screen buffer and (screenshot)
 Image LoadImageFromScreen(void)
 {
+    Vector2 scale = GetWindowScaleDPI();
     Image image = { 0 };
 
-    image.width = GetScreenWidth();
-    image.height = GetScreenHeight();
+    image.width = GetScreenWidth()*scale.x;
+    image.height = GetScreenHeight()*scale.y;
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);
