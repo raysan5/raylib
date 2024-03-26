@@ -1080,7 +1080,7 @@ static void InitKeyboard(void)
     int result = ioctl(STDIN_FILENO, KDGKBMODE, &platform.defaultKeyboardMode);
 
     // In case of failure, it could mean a remote keyboard is used (SSH)
-    if (result < 0) TRACELOG(LOG_WARNING, "RPI: Failed to change keyboard mode, an SSH keyboard is probably used");
+    if (result < 0) TRACELOG(LOG_WARNING, "DRM: Failed to change keyboard mode, an SSH keyboard is probably used");
     else
     {
         // Reconfigure keyboard mode to get:
@@ -1264,7 +1264,7 @@ static void InitEvdevInput(void)
 
         closedir(directory);
     }
-    else TRACELOG(LOG_WARNING, "RPI: Failed to open linux event directory: %s", DEFAULT_EVDEV_PATH);
+    else TRACELOG(LOG_WARNING, "DRM: Failed to open linux event directory: %s", DEFAULT_EVDEV_PATH);
 }
 
 // Identifies a input device and configures it for use if appropriate
@@ -1286,7 +1286,7 @@ static void ConfigureEvdevDevice(char *device)
     int fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        TRACELOG(LOG_WARNING, "Failed to open input device: %s", device);
+        TRACELOG(LOG_WARNING, "DRM: Failed to open input device: %s", device);
         return;
     }
 
@@ -1519,7 +1519,7 @@ static void PollKeyboardEvents(void)
 
                     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
-                    TRACELOGD("KEY_%s ScanCode: %4i KeyCode: %4i", (event.value == 0)? "UP" : "DOWN", event.code, keycode);
+                    TRACELOGD("DRM: KEY_%s ScanCode: %4i KeyCode: %4i", (event.value == 0)? "UP" : "DOWN", event.code, keycode);
                 }
             }
         }
@@ -1544,7 +1544,7 @@ static void PollGamepadEvents(void)
             {
                 if (event.code >= MAX_GAMEPAD_BUTTONS) return;
 
-                TRACELOG(LOG_DEBUG, "Gamepad %i button: %i, value: %i", i, event.code, event.value);
+                TRACELOG(LOG_DEBUG, "DRM: Gamepad %i button: %i, value: %i", i, event.code, event.value);
 
                 // 1 - button pressed, 0 - button released
                 CORE.Input.Gamepad.currentButtonState[i][event.code] = event.value;
@@ -1556,7 +1556,7 @@ static void PollGamepadEvents(void)
             {
                 if (event.code >= MAX_GAMEPAD_AXIS) return;
 
-                TRACELOG(LOG_DEBUG, "Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
+                TRACELOG(LOG_DEBUG, "DRM: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
 
                 if (event.type == EV_REL) CORE.Input.Gamepad.axisState[i][event.code] += (float)event.value;
                 else
