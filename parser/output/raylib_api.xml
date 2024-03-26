@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
-    <Defines count="56">
+    <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
@@ -57,6 +57,7 @@
         <Define name="MATERIAL_MAP_SPECULAR" type="UNKNOWN" value="MATERIAL_MAP_METALNESS" desc="" />
         <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" value="SHADER_LOC_MAP_ALBEDO" desc="" />
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
+        <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
     <Structs count="34">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
@@ -301,9 +302,10 @@
         <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
     </Aliases>
     <Enums count="21">
-        <Enum name="ConfigFlags" valueCount="16" desc="System/Window config flags">
+        <Enum name="ConfigFlags" valueCount="17" desc="System/Window config flags">
             <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
             <Value name="FLAG_FULLSCREEN_MODE" integer="2" desc="Set to run program in fullscreen" />
+            <Value name="FLAG_MANAGE_PREEDIT_CANDIDATE" integer="131072" desc="Set to manage the drawing of preedit candidates by the application side" />
             <Value name="FLAG_WINDOW_RESIZABLE" integer="4" desc="Set to allow resizable window" />
             <Value name="FLAG_WINDOW_UNDECORATED" integer="8" desc="Set to disable window decoration (frame and buttons)" />
             <Value name="FLAG_WINDOW_HIDDEN" integer="128" desc="Set to hide window" />
@@ -642,7 +644,7 @@
             <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="Npatch layout: 3x1 tiles" />
         </Enum>
     </Enums>
-    <Callbacks count="6">
+    <Callbacks count="8">
         <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
             <Param type="int" name="logLevel" desc="" />
             <Param type="const char *" name="text" desc="" />
@@ -664,12 +666,26 @@
             <Param type="const char *" name="fileName" desc="" />
             <Param type="char *" name="text" desc="" />
         </Callback>
+        <Callback name="PreeditCallback" retType="void" paramCount="6" desc="">
+            <Param type="int" name="preeditLength" desc="" />
+            <Param type="int *" name="preeditString" desc="" />
+            <Param type="int" name="blockCount" desc="" />
+            <Param type="int *" name="blockSizes" desc="" />
+            <Param type="int" name="focusedBlock" desc="" />
+            <Param type="int" name="caret" desc="" />
+        </Callback>
+        <Callback name="PreeditCandidateCallback" retType="void" paramCount="4" desc="">
+            <Param type="int" name="candidatesCount" desc="" />
+            <Param type="int" name="selectedIndex" desc="" />
+            <Param type="int" name="pageStart" desc="" />
+            <Param type="int" name="pageSize" desc="" />
+        </Callback>
         <Callback name="AudioCallback" retType="void" paramCount="2" desc="">
             <Param type="void *" name="bufferData" desc="" />
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="561">
+    <Functions count="569">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -902,12 +918,12 @@
         <Function name="UnloadShader" retType="void" paramCount="1" desc="Unload shader from GPU memory (VRAM)">
             <Param type="Shader" name="shader" desc="" />
         </Function>
-        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from mouse position">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from screen position (i.e mouse)">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
         </Function>
-        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from mouse position in a viewport">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from screen position (i.e mouse) in a viewport">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
             <Param type="float" name="width" desc="" />
             <Param type="float" name="height" desc="" />
@@ -1158,6 +1174,35 @@
         </Function>
         <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
             <Param type="int" name="key" desc="" />
+        </Function>
+        <Function name="SetPreeditCallback" retType="void" paramCount="1" desc="Set a callback for preedit">
+            <Param type="PreeditCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetPreeditCursorRectangle" retType="void" paramCount="4" desc="Set the preedit cursor area that is used to decide the position of the candidate window">
+            <Param type="int" name="x" desc="" />
+            <Param type="int" name="y" desc="" />
+            <Param type="int" name="w" desc="" />
+            <Param type="int" name="h" desc="" />
+        </Function>
+        <Function name="GetPreeditCursorRectangle" retType="void" paramCount="4" desc="Get the preedit cursor area">
+            <Param type="int *" name="x" desc="" />
+            <Param type="int *" name="y" desc="" />
+            <Param type="int *" name="w" desc="" />
+            <Param type="int *" name="h" desc="" />
+        </Function>
+        <Function name="IsImeOn" retType="bool" paramCount="0" desc="Check if IME is ON">
+        </Function>
+        <Function name="SetImeStatus" retType="void" paramCount="1" desc="Set IME status">
+            <Param type="bool" name="on" desc="" />
+        </Function>
+        <Function name="ResetPreedit" retType="void" paramCount="0" desc="Reset preedit text">
+        </Function>
+        <Function name="SetPreeditCandidateCallback" retType="void" paramCount="1" desc="Set a callback for preedit candidates">
+            <Param type="PreeditCandidateCallback" name="callback" desc="" />
+        </Function>
+        <Function name="GetPreeditCandidate" retType="int *" paramCount="2" desc="Get the text of the preedie candidate. This can be used only when `FLAG_MANAGE_PREEDIT_CANDIDATE` ConfigFlag is enabled on Win32int *">
+            <Param type="int" name="index" desc="" />
+            <Param type="int *" name="textCount" desc="" />
         </Function>
         <Function name="IsGamepadAvailable" retType="bool" paramCount="1" desc="Check if a gamepad is available">
             <Param type="int" name="gamepad" desc="" />
