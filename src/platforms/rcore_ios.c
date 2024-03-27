@@ -293,7 +293,9 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    return (Vector2){ 1.0f, 1.0f };
+    CGFloat scale = [[UIScreen mainScreen] scale];
+    return (Vector2){ scale, scale };
+    // return (Vector2){ 1.0f, 1.0f };
 }
 
 // Set clipboard text content
@@ -595,6 +597,13 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     // ...
     //----------------------------------------------------------------------------
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
+    // Setup default viewport
+    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
     // TODO: Initialize timing system
     //----------------------------------------------------------------------------
@@ -647,6 +656,7 @@ void ClosePlatform(void)
     // self.modalPresentationCapturesStatusBarAppearance = true;
     platform.viewController = self;
     self.view.multipleTouchEnabled = true;
+    self.view.contentScaleFactor = [[UIScreen mainScreen] scale];
 }
 
 - (bool)prefersStatusBarHidden
