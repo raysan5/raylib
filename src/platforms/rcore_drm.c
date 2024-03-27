@@ -1542,7 +1542,7 @@ static void PollGamepadEvents(void)
         {
             if (event.type == EV_KEY)
             {
-                if (event.code >= MAX_GAMEPAD_BUTTONS) return;
+                if (event.code >= MAX_GAMEPAD_BUTTONS) continue;
 
                 TRACELOG(LOG_DEBUG, "DRM: Gamepad %i button: %i, value: %i", i, event.code, event.value);
 
@@ -1554,7 +1554,7 @@ static void PollGamepadEvents(void)
             }
             else if (event.type == EV_ABS)
             {
-                if (event.code >= MAX_GAMEPAD_AXIS) return;
+                if (event.code >= MAX_GAMEPAD_AXIS) continue;
 
                 TRACELOG(LOG_DEBUG, "DRM: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
 
