@@ -63,7 +63,7 @@ int main(void)
     Vector2 *focusedControlPoint = NULL;
     
     // Cubic Bezier control points initialization
-    ControlPoint control[MAX_SPLINE_POINTS] = { 0 };
+    ControlPoint control[MAX_SPLINE_POINTS-1] = { 0 };
     for (int i = 0; i < pointCount - 1; i++)
     {
         control[i].start = (Vector2){ points[i].x + 50, points[i].y };
@@ -88,6 +88,9 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && (pointCount < MAX_SPLINE_POINTS))
         {
             points[pointCount] = GetMousePosition();
+            int i = pointCount - 1;
+            control[i].start = (Vector2){ points[i].x + 50, points[i].y };
+            control[i].end = (Vector2){ points[i + 1].x - 50, points[i + 1].y };
             pointCount++;
         }
 
@@ -114,7 +117,7 @@ int main(void)
         if ((splineTypeActive == SPLINE_BEZIER) && (focusedPoint == -1))
         {
             // Spline control point focus and selection logic
-            for (int i = 0; i < pointCount; i++)
+            for (int i = 0; i < pointCount - 1; i++)
             {
                 if (CheckCollisionPointCircle(GetMousePosition(), control[i].start, 6.0f))
                 {
@@ -186,10 +189,20 @@ int main(void)
             else if (splineTypeActive == SPLINE_BEZIER)
             {
                 // Draw spline: cubic-bezier (with control points)
+
+                Vector2 fullPoints[3*(MAX_SPLINE_POINTS-1)+1] = {0};
+                for (int i = 0; i < pointCount-1; i++) {
+                    fullPoints[3*i] = points[i];
+                    fullPoints[3*i+1] = control[i].start;
+                    fullPoints[3*i+2] = control[i].end;
+                }
+                fullPoints[3*(pointCount-1)] = points[pointCount-1],
+                DrawSplineBezierCubic(fullPoints, 3*(pointCount-1)+1, splineThickness, RED);
+
                 for (int i = 0; i < pointCount - 1; i++)
                 {
                     // Drawing individual segments, not considering thickness connection compensation
-                    DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], splineThickness, RED);
+                    // DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], splineThickness, RED);
 
                     // Every cubic bezier point should have two control points
                     DrawCircleV(control[i].start, 6, GOLD);
