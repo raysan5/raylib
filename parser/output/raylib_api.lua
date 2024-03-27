@@ -4476,7 +4476,7 @@ return {
     {
       name = "GetTouchPointId",
       description = "Get touch point identifier for given index",
-      returnType = "long long",
+      returnType = "int",
       params = {
         {type = "int", name = "index"}
       }

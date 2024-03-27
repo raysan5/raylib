@@ -2006,7 +2006,7 @@ Function 190: GetTouchPosition() (1 input parameters)
   Param[1]: index (type: int)
 Function 191: GetTouchPointId() (1 input parameters)
   Name: GetTouchPointId
-  Return type: long long
+  Return type: int
   Description: Get touch point identifier for given index
   Param[1]: index (type: int)
 Function 192: GetTouchPointCount() (0 input parameters)
