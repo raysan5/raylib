@@ -459,23 +459,6 @@ int InitPlatform(void)
         CORE.Window.screen.height = [[UIScreen mainScreen] bounds].size.height;
     }
 
-    long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
-    if(orientation == UIInterfaceOrientationPortrait){
-        TRACELOG(LOG_INFO, "IOS: Window orientation set as Portrait");
-    }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
-        TRACELOG(LOG_INFO, "IOS: Window orientation set as PortraitUpsideDown");
-    }else if(orientation == UIInterfaceOrientationLandscapeLeft){
-        TRACELOG(LOG_INFO, "IOS: Window orientation set as LandscapeLeft");
-    }else if(orientation == UIInterfaceOrientationLandscapeRight){
-        TRACELOG(LOG_INFO, "IOS: Window orientation set as LandscapeRight");
-    }
-
-    // TODO: Initialize graphic device: display/window
-    // It usually requires setting up the platform display system configuration
-    // and connexion with the GPU through some system graphic API
-    // raylib uses OpenGL so, platform should create that kind of connection
-    // Below example illustrates that process using EGL library
-    //----------------------------------------------------------------------------
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -573,6 +556,19 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", GetRenderWidth(), GetRenderHeight());
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
         TRACELOG(LOG_INFO, "    > EGL: %s", eglQueryString(platform.device, EGL_VERSION));
+        
+        long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        if(orientation == UIInterfaceOrientationPortrait){
+            TRACELOG(LOG_INFO, "    > Orientation: Portrait");
+        }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
+            TRACELOG(LOG_INFO, "    > Orientation: PortraitUpsideDown");
+        }else if(orientation == UIInterfaceOrientationLandscapeLeft){
+            TRACELOG(LOG_INFO, "    > Orientation: LandscapeLeft");
+        }else if(orientation == UIInterfaceOrientationLandscapeRight){
+            TRACELOG(LOG_INFO, "    > Orientation: LandscapeRight");
+        }else{
+            TRACELOG(LOG_INFO, "    > Orientation: Unknown");
+        }
     }
     //----------------------------------------------------------------------------
     // Load OpenGL extensions
