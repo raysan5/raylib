@@ -443,7 +443,7 @@ void PollInputEvents(void)
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
-    // TODO: Poll input events for iOS
+    // Poll input events for iOS
     // https://developer.apple.com/documentation/uikit/touches_presses_and_gestures
 }
 
@@ -542,7 +542,7 @@ int InitPlatform(void)
     if (platform.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return -1;
+        return false;
     }
 
     // Create an EGL window surface
@@ -563,7 +563,7 @@ int InitPlatform(void)
     if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return -1;
+        return false;
     }
     else
     {
@@ -583,15 +583,7 @@ int InitPlatform(void)
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
-
     CORE.Window.ready = true;
-
-    // TODO: Initialize input events system
-    // It could imply keyboard, mouse, gamepad, touch...
-    // Depending on the platform libraries/SDK it could use a callback mechanism
-    // For system events and inputs evens polling on a per-frame basis, use PollInputEvents()
-    //----------------------------------------------------------------------------
-    // ...
     //----------------------------------------------------------------------------
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
@@ -600,20 +592,10 @@ int InitPlatform(void)
     // Setup default viewport
     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // TODO: Initialize timing system
-    //----------------------------------------------------------------------------
     InitTimer();
-    //----------------------------------------------------------------------------
-
-    // TODO: Initialize storage system
-    //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
-    //----------------------------------------------------------------------------
-
     TRACELOG(LOG_INFO, "PLATFORM: IOS: Initialized successfully");
-
-    return 0;
+    return true;
 }
 
 // Close platform
