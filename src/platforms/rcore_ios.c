@@ -301,15 +301,16 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on target platform");
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    pasteboard.string = [NSString stringWithUTF8String:text];
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on target platform");
-    return NULL;
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    NSString *clipboard = pasteboard.string;
+    return clipboard.UTF8String;
 }
 
 // Show mouse cursor
@@ -372,12 +373,8 @@ double GetTime(void)
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Security check to (partially) avoid malicious code on target platform
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
-    else
-    {
-        TRACELOG(LOG_WARNING, "OpenURL() not implemented on target platform");
-    }
+    NSURL *nsurl = [NSURL URLWithString:[NSString stringWithUTF8String:url]];
+    [[UIApplication sharedApplication] openURL:nsurl options:@{} completionHandler:nil];
 }
 
 //----------------------------------------------------------------------------------
@@ -578,9 +575,8 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", GetRenderWidth(), GetRenderHeight());
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-        TRACELOG(LOG_INFO, "    > GL: %s", glGetString(GL_VERSION));
         TRACELOG(LOG_INFO, "    > EGL: %s", eglQueryString(platform.device, EGL_VERSION));
     }
     //----------------------------------------------------------------------------
