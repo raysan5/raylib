@@ -1558,15 +1558,11 @@ static void PollGamepadEvents(void)
 
                 TRACELOG(LOG_DEBUG, "DRM: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
 
-                if (event.type == EV_REL) CORE.Input.Gamepad.axisState[i][event.code] += (float)event.value;
-                else
-                {
-                    int min = platform.gamepadAbsAxisRange[i][event.code][0];
-                    int range = platform.gamepadAbsAxisRange[i][event.code][1];
+                int min = platform.gamepadAbsAxisRange[i][event.code][0];
+                int range = platform.gamepadAbsAxisRange[i][event.code][1];
 
-                    // NOTE: Scaling of event.value to get values between -1..1
-                    CORE.Input.Gamepad.axisState[i][platform.gamepadAbsAxisMap[i][event.code]] = (2 * (float)(event.value - min) / range) - 1;
-                }
+                // NOTE: Scaling of event.value to get values between -1..1
+                CORE.Input.Gamepad.axisState[i][platform.gamepadAbsAxisMap[i][event.code]] = (2 * (float)(event.value - min) / range) - 1;
             }
         }
     }
