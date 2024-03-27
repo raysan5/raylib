@@ -293,7 +293,6 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
     return (Vector2){ 1.0f, 1.0f };
 }
 
@@ -457,11 +456,13 @@ void PollInputEvents(void)
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
+    CORE.Window.display.width = [[UIScreen mainScreen] nativeBounds].size.width;
+    CORE.Window.display.height = [[UIScreen mainScreen] nativeBounds].size.height;
     if(CORE.Window.screen.width == 0){
-        CORE.Window.screen.width = platform.viewController.view.frame.size.width;
+        CORE.Window.screen.width = [[UIScreen mainScreen] bounds].size.width;
     }
     if(CORE.Window.screen.height == 0){
-        CORE.Window.screen.height = platform.viewController.view.frame.size.height;
+        CORE.Window.screen.height = [[UIScreen mainScreen] bounds].size.height;
     }
 
     long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
@@ -577,8 +578,8 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-        TRACELOG(LOG_WARNING, "    > GL: %s", glGetString(GL_VERSION));
-        TRACELOG(LOG_WARNING, "    > EGL: %s", eglQueryString(platform.device, EGL_VERSION));
+        TRACELOG(LOG_INFO, "    > GL: %s", glGetString(GL_VERSION));
+        TRACELOG(LOG_INFO, "    > EGL: %s", eglQueryString(platform.device, EGL_VERSION));
     }
     //----------------------------------------------------------------------------
     // Load OpenGL extensions
