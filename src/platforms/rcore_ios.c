@@ -45,10 +45,7 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-
-// TODO: Include the platform specific libraries
 #include "libEGL/libEGL.h"
-#include <complex.h>
 
 // iOS only supports callbacks
 // We are not able to give users full control of the game loop
@@ -119,15 +116,6 @@ static int map_point_id(UITouch *touch){
 }
 
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
-
-//----------------------------------------------------------------------------------
-// Module Functions Declaration
-//----------------------------------------------------------------------------------
-// NOTE: Functions declaration is provided by raylib.h
-
-//----------------------------------------------------------------------------------
-// Module Functions Definition: Window and Graphics Device
-//----------------------------------------------------------------------------------
 
 // Check if application should close
 bool WindowShouldClose(void)
@@ -253,7 +241,7 @@ int GetMonitorCount(void)
     return 1;
 }
 
-// Get number of monitors
+// Get current monitor id
 int GetCurrentMonitor(void)
 {
     return 0;
@@ -317,7 +305,6 @@ Vector2 GetWindowScaleDPI(void)
 {
     CGFloat scale = [[UIScreen mainScreen] scale];
     return (Vector2){ scale, scale };
-    // return (Vector2){ 1.0f, 1.0f };
 }
 
 // Set clipboard text content
