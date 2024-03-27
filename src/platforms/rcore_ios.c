@@ -73,7 +73,7 @@ extern void ios_destroy();
 //----------------------------------------------------------------------------------
 typedef struct {
     GameViewController *viewController;  // Root view controller
-
+    
     // Display data
     EGLDisplay device;                  // Native display device (physical screen connection)
     EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
@@ -91,6 +91,33 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
+static int map_point_id(UITouch *touch){
+    static UITouch* touchs[MAX_TOUCH_POINTS] = { 0 };
+    for(int i = 0; i < MAX_TOUCH_POINTS; i++){
+        if(touchs[i] == touch) return i + 1;
+    }
+    // clear unused touch pairs before insert
+    for(int i = 0; i < MAX_TOUCH_POINTS; i++){
+        if(touchs[i] == NULL) continue;
+        bool found = false;
+        for(int j = 0; j < MAX_TOUCH_POINTS; j++){
+            if(CORE.Input.Touch.pointId[j] == i + 1){
+                found = true;
+                break;
+            }
+        }
+        if(!found) touchs[i] = NULL;
+    }
+    for(int i = 0; i < MAX_TOUCH_POINTS; i++){
+        if(touchs[i] == NULL){
+            touchs[i] = touch;
+            return i + 1;
+        }
+    }
+    TRACELOG(LOG_ERROR, "Touch point id overflow. This may be a bug!");
+    return 0;
+}
+
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 
 //----------------------------------------------------------------------------------
@@ -642,15 +669,6 @@ void ClosePlatform(void)
 {
     // In iOS 17, Messages allows you to interactively resize iMessage apps with a vertical pan gesture. Messages handles any conflicts between resize gestures and your custom gestures. If your app uses manual touch handling, override those methods in your app’s UIView. You can either change your manual touch handling code to use a gesture recognizer instead, or your UIView can override gestureRecognizerShouldBegin: and return NO when your iMessage app doesn’t own the gesture.
     return false;
-}
-
-static int map_point_id(UITouch* touch){
-    int value = (int)(long long)touch;
-    // handle collisions
-    while(array_index_of(value, CORE.Input.Touch.pointId, MAX_TOUCH_POINTS) >= 0){
-        value++;
-    }
-    return value;
 }
 
 static void sync_all_touches(UIEvent* event)
