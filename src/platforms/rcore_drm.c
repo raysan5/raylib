@@ -57,20 +57,23 @@
 #include <sys/ioctl.h>      // Required for: ioctl() - UNIX System call for device-specific input/output operations
 #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
 #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
+#include <linux/joystick.h> // Linux: Joystick support library
 
-// So both `linux/input.h` and `raylib.h` define KEY_F12
+// WARNING: Both 'linux/input.h' and 'raylib.h' define KEY_F12
 // To avoid conflict with the capturing code in rcore.c we undefine the macro KEY_F12,
 // so the enum KEY_F12 from raylib is used
 #undef KEY_F12
 
-#include <linux/joystick.h> // Linux: Joystick support library
+#include <gbm.h>            // Generic Buffer Management (native platform for EGL on DRM)
+#include <xf86drm.h>        // Direct Rendering Manager user-level library interface
+#include <xf86drmMode.h>    // Direct Rendering Manager mode setting (KMS) interface
 
-#include <gbm.h>         // Generic Buffer Management (native platform for EGL on DRM)
-#include <xf86drm.h>     // Direct Rendering Manager user-level library interface
-#include <xf86drmMode.h> // Direct Rendering Manager mode setting (KMS) interface
+#include "EGL/egl.h"        // Native platform windowing system interface
+#include "EGL/eglext.h"     // EGL extensions
 
-#include "EGL/egl.h"    // Native platform windowing system interface
-#include "EGL/eglext.h" // EGL extensions
+#ifndef EGL_OPENGL_ES3_BIT
+    #define EGL_OPENGL_ES3_BIT  0x40
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -157,7 +160,7 @@ static const int keymapUS[] = {
 
 // NOTE: The complete evdev EV_KEY list can be found at /usr/include/linux/input-event-codes.h
 // TODO: Complete the LUT with all unicode decimal values
-static const int EvkeyToUnicodeLUT[] = {
+static const int evkeyToUnicodeLUT[] = {
     0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 0, 113, 119, 101, 114,
     116, 121, 117, 105, 111, 112, 0, 0, 13, 0, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59,
     39, 96, 0, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0, 0, 0, 32
@@ -554,12 +557,11 @@ void PollInputEvents(void)
 
     PollKeyboardEvents();
 
-    #if defined(SUPPORT_SSH_KEYBOARD_RPI)
-        // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
-        // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
-
-        if (!platform.eventKeyboardMode) ProcessKeyboard();
-    #endif
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
+    // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
+    if (!platform.eventKeyboardMode) ProcessKeyboard();
+#endif
 
     // Check exit key
     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
@@ -572,6 +574,7 @@ void PollInputEvents(void)
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = platform.eventWheelMove;
     platform.eventWheelMove = (Vector2){ 0.0f, 0.0f };
+    
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -592,7 +595,6 @@ void PollInputEvents(void)
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Handle the mouse/touch/gestures events:
-    // NOTE: Replaces the EventThread handling that is now commented.
     PollMouseEvents();
 }
 
@@ -952,10 +954,9 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     InitEvdevInput();   // Evdev inputs initialization
 
-    #if defined(SUPPORT_SSH_KEYBOARD_RPI)
-        InitKeyboard();     // Keyboard init (stdin)
-    #endif
-
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+    InitKeyboard();     // Keyboard init (stdin)
+#endif
     //----------------------------------------------------------------------------
 
     // Initialize storage system
@@ -1057,7 +1058,6 @@ void ClosePlatform(void)
 }
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
-
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
@@ -1261,7 +1261,7 @@ static void InitEvdevInput(void)
 
         closedir(directory);
     }
-    else TRACELOG(LOG_WARNING, "DRM: Failed to open linux event directory: %s", DEFAULT_EVDEV_PATH);
+    else TRACELOG(LOG_WARNING, "INPUT: Failed to open linux event directory: %s", DEFAULT_EVDEV_PATH);
 }
 
 // Identifies a input device and configures it for use if appropriate
@@ -1308,7 +1308,8 @@ static void ConfigureEvdevDevice(char *device)
     ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits);
     ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits);
 
-    if (TEST_BIT(evBits, EV_ABS)) {
+    if (TEST_BIT(evBits, EV_ABS))
+    {
         ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absBits)), absBits);
 
         // If the device has an X an Y axis it's either a touch device, a special mouse or a gamepad
@@ -1333,10 +1334,12 @@ static void ConfigureEvdevDevice(char *device)
         else if (hasAbsXY && TEST_BIT(keyBits, BTN_MOUSE)) isMouse = true;
 
         // If any of the common joystick axis is present, we assume it's a gamepad
-        else {
-            for (int axis = (hasAbsXY ? ABS_Z : ABS_X); axis < ABS_PRESSURE; axis++)
+        else
+        {
+            for (int axis = (hasAbsXY? ABS_Z : ABS_X); axis < ABS_PRESSURE; axis++)
             {
-                if (TEST_BIT(absBits, axis)) {
+                if (TEST_BIT(absBits, axis))
+                {
                     isGamepad = true;
                     absAxisCount++;
 
@@ -1391,15 +1394,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         deviceKindStr = "mouse";
         if (platform.mouseFd != -1) close(platform.mouseFd);
-
         platform.mouseFd = fd;
-
-// TODO: What is this supposed to do?
-// Previously if set, it just didn't do anything as the thread code got deleted, so no new
-// threads were created and this deleted all old threads, thus doing nothing
-// And the description isn't quite clear as to how it behaves together with a mouse
-#if defined(USE_LAST_TOUCH_DEVICE)
-#endif
 
         if (absAxisCount > 0)
         {
@@ -1452,7 +1447,7 @@ static void ConfigureEvdevDevice(char *device)
         return;
     }
 
-    TRACELOG(LOG_INFO, "Initialized input device %s as %s", device, deviceKindStr);
+    TRACELOG(LOG_INFO, "INPUT: Initialized input device %s as %s", device, deviceKindStr);
 }
 
 // Poll and process evdev keyboard events
@@ -1504,17 +1499,18 @@ static void PollKeyboardEvents(void)
                     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                     {
                         // TODO/FIXME: This is not actually converting to unicode properly because it's not taking things like shift into account
-                        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = EvkeyToUnicodeLUT[event.code];
+                        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = evkeyToUnicodeLUT[event.code];
                         CORE.Input.Keyboard.charPressedQueueCount++;
                     }
                 }
 
-                TRACELOG(LOG_DEBUG, "DRM: KEY_%s Keycode(linux): %4i KeyCode(raylib): %4i", (event.value == 0) ? "UP  " : "DOWN", event.code, keycode);
+                TRACELOG(LOG_DEBUG, "INPUT: KEY_%s Keycode(linux): %4i KeyCode(raylib): %4i", (event.value == 0) ? "UP  " : "DOWN", event.code, keycode);
             }
         }
     }
 }
 
+// Poll gamepad input events
 static void PollGamepadEvents(void)
 {
     // Read gamepad event
@@ -1533,7 +1529,7 @@ static void PollGamepadEvents(void)
             {
                 if (event.code >= MAX_GAMEPAD_BUTTONS) continue;
 
-                TRACELOG(LOG_DEBUG, "DRM: Gamepad %i button: %i, value: %i", i, event.code, event.value);
+                TRACELOG(LOG_DEBUG, "INPUT: Gamepad %i button: %i, value: %i", i, event.code, event.value);
 
                 // 1 - button pressed, 0 - button released
                 CORE.Input.Gamepad.currentButtonState[i][event.code] = event.value;
@@ -1545,7 +1541,7 @@ static void PollGamepadEvents(void)
             {
                 if (event.code >= MAX_GAMEPAD_AXIS) continue;
 
-                TRACELOG(LOG_DEBUG, "DRM: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
+                TRACELOG(LOG_DEBUG, "INPUT: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
 
                 int min = platform.gamepadAbsAxisRange[i][event.code][0];
                 int range = platform.gamepadAbsAxisRange[i][event.code][1];
@@ -1557,13 +1553,13 @@ static void PollGamepadEvents(void)
     }
 }
 
+// Poll mouse input events
 static void PollMouseEvents(void)
 {
     int fd = platform.mouseFd;
     if (fd == -1) return;
 
     struct input_event event = { 0 };
-
     int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
 
     // Try to read data from the mouse/touch/gesture and only continue if successful
@@ -1580,8 +1576,8 @@ static void PollMouseEvents(void)
                     CORE.Input.Mouse.previousPosition.x = 0.0f;
                 }
                 else CORE.Input.Mouse.currentPosition.x += event.value;
+                
                 CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
-
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
@@ -1593,8 +1589,8 @@ static void PollMouseEvents(void)
                     CORE.Input.Mouse.previousPosition.y = 0.0f;
                 }
                 else CORE.Input.Mouse.currentPosition.y += event.value;
+                
                 CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
-
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
@@ -1652,14 +1648,12 @@ static void PollMouseEvents(void)
                 if (!event.value && previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
-
                     touchAction = 0;    // TOUCH_ACTION_UP
                 }
 
                 if (event.value && !previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
-
                     touchAction = 1;    // TOUCH_ACTION_DOWN
                 }
             }
