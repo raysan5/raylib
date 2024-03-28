@@ -82,6 +82,10 @@
 
 #define DEFAULT_EVDEV_PATH       "/dev/input/"      // Path to the linux input events
 
+// So actually the biggest key is KEY_CNT but we only really map the keys up to
+// KEY_ALS_TOGGLE
+#define KEYMAP_SIZE KEY_ALS_TOGGLE
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -135,36 +139,79 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Local Variables Definition
 //----------------------------------------------------------------------------------
-// Scancode to keycode mapping for US keyboards
+
+// NOTE: The complete evdev EV_KEY list can be found at /usr/include/linux/input-event-codes.h
+// TODO: Complete the LUT with all unicode decimal values
 // TODO: Replace this with a keymap from the X11 to get the correct regional map for the keyboard:
 // Currently non US keyboards will have the wrong mapping for some keys
 // NOTE: Replacing this with the keymap from X11 would probably be useless, as people use the drm
 // backend to *avoid* X11
-static const int keymapUS[] = {
-    0, 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 258, 81, 87, 69, 82, 84,
-    89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68, 70, 71, 72, 74, 75, 76, 59, 39, 96,
-    340, 92, 90, 88, 67, 86, 66, 78, 77, 44, 46, 47, 344, 332, 342, 32, 280, 290, 291,
-    292, 293, 294, 295, 296, 297, 298, 299, 282, 281, 327, 328, 329, 333, 324, 325,
-    326, 334, 321, 322, 323, 320, 330, 0, 85, 86, 300, 301, 89, 90, 91, 92, 93, 94, 95,
-    335, 345, 331, 283, 346, 101, 268, 265, 266, 263, 262, 269, 264, 267, 260, 261,
-    112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 347, 127,
-    128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-    144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
-    160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
-    176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-    192, 193, 194, 0, 0, 0, 0, 0, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210,
-    211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
-    227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242,
-    243, 244, 245, 246, 247, 248, 0, 0, 0, 0, 0, 0, 0
-};
-
-// NOTE: The complete evdev EV_KEY list can be found at /usr/include/linux/input-event-codes.h
-// TODO: Complete the LUT with all unicode decimal values
 static const int evkeyToUnicodeLUT[] = {
     0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 0, 113, 119, 101, 114,
     116, 121, 117, 105, 111, 112, 0, 0, 13, 0, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59,
     39, 96, 0, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0, 0, 0, 32
     // LUT currently incomplete, just mapped the most essential keys
+};
+
+// This is the map used to map any keycode returned from linux to a raylib code from 'raylib.h'
+// NOTE: Use short here to save a little memory
+static const short linuxToRaylibMap[KEYMAP_SIZE] = {
+    // We don't map those with designated initialization, because we would getting
+    // into loads of naming conflicts
+    0,   256, 49,  50,  51,  52,  53,  54,
+    55,  56,  57,  48,  45,  61,  259, 258,
+    81,  87,  69,  82,  84,  89,  85,  73,
+    79,  80,  91,  93,  257, 341, 65,  83,
+    68,  70,  71,  72,  74,  75,  76,  59,
+    39,  96,  340, 92,  90,  88,  67,  86,
+    66,  78,  77,  44,  46,  47,  344, 332,
+    342, 32,  280, 290, 291, 292, 293, 294,
+    295, 296, 297, 298, 299, 282, 281, 327,
+    328, 329, 333, 324, 325, 326, 334, 321,
+    322, 323, 320, 330, 0,   85,  86,  300,
+    301, 89,  90,  91,  92,  93,  94,  95,
+    335, 345, 331, 283, 346, 101, 268, 265,
+    266, 263, 262, 269, 264, 267, 260, 261,
+    112, 113, 114, 115, 116, 117, 118, 119,
+    120, 121, 122, 123, 124, 125, 347, 127,
+    128, 129, 130, 131, 132, 133, 134, 135,
+    136, 137, 138, 139, 140, 141, 142, 143,
+    144, 145, 146, 147, 148, 149, 150, 151,
+    152, 153, 154, 155, 156, 157, 158, 159,
+    160, 161, 162, 163, 164, 165, 166, 167,
+    168, 169, 170, 171, 172, 173, 174, 175,
+    176, 177, 178, 179, 180, 181, 182, 183,
+    184, 185, 186, 187, 188, 189, 190, 191,
+    192, 193, 194, 0,   0,   0,   0,   0,
+    200, 201, 202, 203, 204, 205, 206, 207,
+    208, 209, 210, 211, 212, 213, 214, 215,
+    216, 217, 218, 219, 220, 221, 222, 223,
+    224, 225, 226, 227, 228, 229, 230, 231,
+    232, 233, 234, 235, 236, 237, 238, 239,
+    240, 241, 242, 243, 244, 245, 246, 247,
+    248, 0,   0,   0,   0,   0,   0,   0,
+
+    // Gamepads are mapped according to:
+    // https://www.kernel.org/doc/html/next/input/gamepad.html
+    // Those mappings are standardized, but that doesn't mean people follow
+    // the standards, so this is more of an approximation
+    [BTN_DPAD_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+    [BTN_DPAD_RIGHT] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+    [BTN_DPAD_DOWN] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    [BTN_DPAD_LEFT] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+    [BTN_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+    [BTN_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+    [BTN_A] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+    [BTN_X] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+    [BTN_TL] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+    [BTN_TL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+    [BTN_TR] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+    [BTN_TR2] GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    [BTN_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+    [BTN_MODE] = GAMEPAD_BUTTON_MIDDLE,
+    [BTN_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+    [BTN_THUMBL] = GAMEPAD_BUTTON_LEFT_THUMB,
+    [BTN_THUMBR] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
 
 //----------------------------------------------------------------------------------
@@ -1475,7 +1522,7 @@ static void PollKeyboardEvents(void)
         {
 
             // Lookup the scancode in the keymap to get a keycode
-            keycode = keymapUS[event.code];
+            keycode = linuxToRaylibMap[event.code];
 
             // Make sure we got a valid keycode
             if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
@@ -1527,27 +1574,34 @@ static void PollGamepadEvents(void)
         {
             if (event.type == EV_KEY)
             {
-                if (event.code >= MAX_GAMEPAD_BUTTONS) continue;
+                if (event.code < KEYMAP_SIZE)
+                {
+                    short keycodeRaylib = linuxToRaylibMap[event.code];
 
-                TRACELOG(LOG_DEBUG, "INPUT: Gamepad %i button: %i, value: %i", i, event.code, event.value);
+                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0) ? "UP  " : "DOWN", event.code, keycodeRaylib);
 
-                // 1 - button pressed, 0 - button released
-                CORE.Input.Gamepad.currentButtonState[i][event.code] = event.value;
+                    if ((keycodeRaylib != 0) && (keycodeRaylib < MAX_GAMEPAD_BUTTONS))
+                    {
+                        // 1 - button pressed, 0 - button released
+                        CORE.Input.Gamepad.currentButtonState[i][keycodeRaylib] = event.value;
 
-                if (event.value == 1) CORE.Input.Gamepad.lastButtonPressed = event.code;
-                else CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
+                        CORE.Input.Gamepad.lastButtonPressed = (event.value == 1)? keycodeRaylib : GAMEPAD_BUTTON_UNKNOWN;
+                    }
+                }
             }
             else if (event.type == EV_ABS)
             {
-                if (event.code >= MAX_GAMEPAD_AXIS) continue;
+                // TODO : MADMAW MDAM MAP THIS
+                if (event.code < MAX_GAMEPAD_AXIS)
+                {
+                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
 
-                TRACELOG(LOG_DEBUG, "INPUT: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
+                    int min = platform.gamepadAbsAxisRange[i][event.code][0];
+                    int range = platform.gamepadAbsAxisRange[i][event.code][1];
 
-                int min = platform.gamepadAbsAxisRange[i][event.code][0];
-                int range = platform.gamepadAbsAxisRange[i][event.code][1];
-
-                // NOTE: Scaling of event.value to get values between -1..1
-                CORE.Input.Gamepad.axisState[i][platform.gamepadAbsAxisMap[i][event.code]] = (2 * (float)(event.value - min) / range) - 1;
+                    // NOTE: Scaling of event.value to get values between -1..1
+                    CORE.Input.Gamepad.axisState[i][platform.gamepadAbsAxisMap[i][event.code]] = (2 * (float)(event.value - min) / range) - 1;
+                }
             }
         }
     }
