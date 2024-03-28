@@ -152,18 +152,6 @@
     #error "C++11 or later is required. Add -std=c++11"
 #endif
 
-// NOTE: We set some defines with some data types declared by raylib
-// Other modules (raymath, rlgl) also require some of those types, so,
-// to be able to use those other modules as standalone (not depending on raylib)
-// this defines are very useful for internal check and avoid type (re)definitions
-#define RL_COLOR_TYPE
-#define RL_RECTANGLE_TYPE
-#define RL_VECTOR2_TYPE
-#define RL_VECTOR3_TYPE
-#define RL_VECTOR4_TYPE
-#define RL_QUATERNION_TYPE
-#define RL_MATRIX_TYPE
-
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
 #define LIGHTGRAY  CLITERAL(Color){ 200, 200, 200, 255 }   // Light Gray
@@ -198,26 +186,40 @@
 // Structures Definition
 //----------------------------------------------------------------------------------
 // Boolean type
-#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
+#if defined(__cplusplus)
+// Do nothing. `bool` is fundamental type.
+#elif (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
+#elif !defined(bool)
     typedef enum bool { false = 0, true = !false } bool;
     #define RL_BOOL_TYPE
 #endif
 
+// TODO(marco): Improve wording.
+// Note: The following types have its own define guards because they are
+// redefined in other files. So it's here to avoid redefinition in other file
+// and to enable header inclusion reordering.
+
+#if !defined(RL_VECTOR2_TYPE)
 // Vector2, 2 components
 typedef struct Vector2 {
     float x;                // Vector x component
     float y;                // Vector y component
 } Vector2;
+#define RL_VECTOR2_TYPE
+#endif
 
+#if !defined(RL_VECTOR3_TYPE)
 // Vector3, 3 components
 typedef struct Vector3 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
 } Vector3;
+#define RL_VECTOR3_TYPE
+#endif
 
+#if !defined(RL_VECTOR4_TYPE)
 // Vector4, 4 components
 typedef struct Vector4 {
     float x;                // Vector x component
@@ -225,10 +227,16 @@ typedef struct Vector4 {
     float z;                // Vector z component
     float w;                // Vector w component
 } Vector4;
+#define RL_VECTOR4_TYPE
+#endif
 
+#if !defined(RL_QUATERNION_TYPE)
 // Quaternion, 4 components (Vector4 alias)
 typedef Vector4 Quaternion;
+#define RL_QUATERNION_TYPE
+#endif
 
+#if !defined(RL_MATRIX_TYPE)
 // Matrix, 4x4 components, column major, OpenGL style, right-handed
 typedef struct Matrix {
     float m0, m4, m8, m12;  // Matrix first row (4 components)
@@ -236,7 +244,10 @@ typedef struct Matrix {
     float m2, m6, m10, m14; // Matrix third row (4 components)
     float m3, m7, m11, m15; // Matrix fourth row (4 components)
 } Matrix;
+#define RL_MATRIX_TYPE
+#endif
 
+#if !defined(RL_COLOR_TYPE)
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
     unsigned char r;        // Color red value
@@ -244,7 +255,11 @@ typedef struct Color {
     unsigned char b;        // Color blue value
     unsigned char a;        // Color alpha value
 } Color;
+#define RL_COLOR_TYPE
+#endif
 
+
+#if !defined(RL_RECTANGLE_TYPE)
 // Rectangle, 4 components
 typedef struct Rectangle {
     float x;                // Rectangle top-left corner position x
@@ -252,6 +267,8 @@ typedef struct Rectangle {
     float width;            // Rectangle width
     float height;           // Rectangle height
 } Rectangle;
+#define RL_RECTANGLE_TYPE
+#endif
 
 // Image, pixel data stored in CPU memory (RAM)
 typedef struct Image {
