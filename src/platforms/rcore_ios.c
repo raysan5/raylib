@@ -456,6 +456,11 @@ void PollInputEvents(void)
     // https://developer.apple.com/documentation/uikit/touches_presses_and_gestures
 }
 
+static void swap_uint(unsigned int* a, unsigned int * b){
+    unsigned tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
@@ -464,15 +469,6 @@ void PollInputEvents(void)
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
-    CORE.Window.display.width = [[UIScreen mainScreen] nativeBounds].size.width;
-    CORE.Window.display.height = [[UIScreen mainScreen] nativeBounds].size.height;
-    if(CORE.Window.screen.width == 0){
-        CORE.Window.screen.width = [[UIScreen mainScreen] bounds].size.width;
-    }
-    if(CORE.Window.screen.height == 0){
-        CORE.Window.screen.height = [[UIScreen mainScreen] bounds].size.height;
-    }
-
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -559,30 +555,42 @@ int InitPlatform(void)
     }
     else
     {
+        CORE.Window.display.width = [[UIScreen mainScreen] nativeBounds].size.width;
+        CORE.Window.display.height = [[UIScreen mainScreen] nativeBounds].size.height;
+        if(CORE.Window.screen.width == 0){
+            CORE.Window.screen.width = [[UIScreen mainScreen] bounds].size.width;
+        }
+        if(CORE.Window.screen.height == 0){
+            CORE.Window.screen.height = [[UIScreen mainScreen] bounds].size.height;
+        }
+        
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
         CORE.Window.currentFbo.height = CORE.Window.render.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        
+        long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        if(orientation == UIInterfaceOrientationPortrait){
+            TRACELOG(LOG_INFO,  "    > Orientation: Portrait");
+        }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
+            TRACELOG(LOG_INFO,  "    > Orientation: PortraitUpsideDown");
+        }else if(orientation == UIInterfaceOrientationLandscapeLeft){
+            TRACELOG(LOG_INFO,  "    > Orientation: LandscapeLeft");
+            swap_uint(&CORE.Window.display.width, &CORE.Window.display.height);
+        }else if(orientation == UIInterfaceOrientationLandscapeRight){
+            TRACELOG(LOG_INFO,  "    > Orientation: LandscapeRight");
+            swap_uint(&CORE.Window.display.width, &CORE.Window.display.height);
+        }else{
+            TRACELOG(LOG_ERROR, "    > Orientation: Unknown");
+        }
+        
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", GetRenderWidth(), GetRenderHeight());
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
         TRACELOG(LOG_INFO, "    > EGL: %s", eglQueryString(platform.device, EGL_VERSION));
-        
-        long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
-        if(orientation == UIInterfaceOrientationPortrait){
-            TRACELOG(LOG_INFO, "    > Orientation: Portrait");
-        }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
-            TRACELOG(LOG_INFO, "    > Orientation: PortraitUpsideDown");
-        }else if(orientation == UIInterfaceOrientationLandscapeLeft){
-            TRACELOG(LOG_INFO, "    > Orientation: LandscapeLeft");
-        }else if(orientation == UIInterfaceOrientationLandscapeRight){
-            TRACELOG(LOG_INFO, "    > Orientation: LandscapeRight");
-        }else{
-            TRACELOG(LOG_INFO, "    > Orientation: Unknown");
-        }
     }
     //----------------------------------------------------------------------------
     // Load OpenGL extensions
