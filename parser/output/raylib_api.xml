@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
-    <Defines count="56">
+    <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
@@ -16,13 +16,6 @@
         <Define name="RL_REALLOC(ptr,sz)" type="MACRO" value="realloc(ptr,sz)" desc="" />
         <Define name="RL_FREE(ptr)" type="MACRO" value="free(ptr)" desc="" />
         <Define name="CLITERAL(type)" type="MACRO" value="type" desc="" />
-        <Define name="RL_COLOR_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_RECTANGLE_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_VECTOR2_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_VECTOR3_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_VECTOR4_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_QUATERNION_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_MATRIX_TYPE" type="GUARD" value="" desc="" />
         <Define name="LIGHTGRAY" type="COLOR" value="CLITERAL(Color){ 200, 200, 200, 255 }" desc="Light Gray" />
         <Define name="GRAY" type="COLOR" value="CLITERAL(Color){ 130, 130, 130, 255 }" desc="Gray" />
         <Define name="DARKGRAY" type="COLOR" value="CLITERAL(Color){ 80, 80, 80, 255 }" desc="Dark Gray" />
@@ -50,6 +43,13 @@
         <Define name="MAGENTA" type="COLOR" value="CLITERAL(Color){ 255, 0, 255, 255 }" desc="Magenta" />
         <Define name="RAYWHITE" type="COLOR" value="CLITERAL(Color){ 245, 245, 245, 255 }" desc="My own White (raylib logo)" />
         <Define name="RL_BOOL_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_VECTOR2_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_VECTOR3_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_VECTOR4_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_QUATERNION_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_MATRIX_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_COLOR_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_RECTANGLE_TYPE" type="GUARD" value="" desc="" />
         <Define name="MOUSE_LEFT_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_LEFT" desc="" />
         <Define name="MOUSE_RIGHT_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_RIGHT" desc="" />
         <Define name="MOUSE_MIDDLE_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_MIDDLE" desc="" />
@@ -57,6 +57,7 @@
         <Define name="MATERIAL_MAP_SPECULAR" type="UNKNOWN" value="MATERIAL_MAP_METALNESS" desc="" />
         <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" value="SHADER_LOC_MAP_ALBEDO" desc="" />
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
+        <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
     <Structs count="34">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
@@ -902,12 +903,12 @@
         <Function name="UnloadShader" retType="void" paramCount="1" desc="Unload shader from GPU memory (VRAM)">
             <Param type="Shader" name="shader" desc="" />
         </Function>
-        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from mouse position">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from screen position (i.e mouse)">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
         </Function>
-        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from mouse position in a viewport">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from screen position (i.e mouse) in a viewport">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
             <Param type="float" name="width" desc="" />
             <Param type="float" name="height" desc="" />
