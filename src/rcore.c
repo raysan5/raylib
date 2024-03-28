@@ -502,6 +502,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
     #include "platforms/rcore_android.c"
+#elif defined(PLATFORM_IOS)
+    #include "platforms/rcore_ios.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
@@ -570,6 +572,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: NATIVE DRM");
 #elif defined(PLATFORM_ANDROID)
     TRACELOG(LOG_INFO, "Platform backend: ANDROID");
+#elif defined(PLATFORM_IOS)
+    TRACELOG(LOG_INFO, "Platform backend: IOS");
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
