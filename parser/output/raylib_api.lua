@@ -91,6 +91,48 @@ return {
       description = ""
     },
     {
+      name = "RL_COLOR_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_RECTANGLE_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR2_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR3_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR4_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_QUATERNION_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_MATRIX_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
       name = "LIGHTGRAY",
       type = "COLOR",
       value = "CLITERAL(Color){ 200, 200, 200, 255 }",
@@ -253,48 +295,6 @@ return {
       description = ""
     },
     {
-      name = "RL_VECTOR2_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
-      name = "RL_VECTOR3_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
-      name = "RL_VECTOR4_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
-      name = "RL_QUATERNION_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
-      name = "RL_MATRIX_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
-      name = "RL_COLOR_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
-      name = "RL_RECTANGLE_TYPE",
-      type = "GUARD",
-      value = "",
-      description = ""
-    },
-    {
       name = "MOUSE_LEFT_BUTTON",
       type = "UNKNOWN",
       value = "MOUSE_BUTTON_LEFT",
@@ -335,12 +335,6 @@ return {
       type = "UNKNOWN",
       value = "SHADER_LOC_MAP_METALNESS",
       description = ""
-    },
-    {
-      name = "GetMouseRay",
-      type = "UNKNOWN",
-      value = "GetScreenToWorldRay",
-      description = "Compatibility hack for previous raylib versions"
     }
   },
   structs = {
@@ -3642,19 +3636,19 @@ return {
     },
     {
       name = "GetScreenToWorldRay",
-      description = "Get a ray trace from screen position (i.e mouse)",
+      description = "Get a ray trace from mouse position",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "mousePosition"},
         {type = "Camera", name = "camera"}
       }
     },
     {
       name = "GetScreenToWorldRayEx",
-      description = "Get a ray trace from screen position (i.e mouse) in a viewport",
+      description = "Get a ray trace from mouse position in a viewport",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "mousePosition"},
         {type = "Camera", name = "camera"},
         {type = "float", name = "width"},
         {type = "float", name = "height"}

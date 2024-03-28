@@ -1,5 +1,5 @@
 
-Defines found: 57
+Defines found: 56
 
 Define 001: RAYLIB_H
   Name: RAYLIB_H
@@ -76,173 +76,173 @@ Define 015: CLITERAL(type)
   Type: MACRO
   Value: type
   Description: 
-Define 016: LIGHTGRAY
-  Name: LIGHTGRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 200, 200, 200, 255 }
-  Description: Light Gray
-Define 017: GRAY
-  Name: GRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 130, 130, 130, 255 }
-  Description: Gray
-Define 018: DARKGRAY
-  Name: DARKGRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 80, 80, 80, 255 }
-  Description: Dark Gray
-Define 019: YELLOW
-  Name: YELLOW
-  Type: COLOR
-  Value: CLITERAL(Color){ 253, 249, 0, 255 }
-  Description: Yellow
-Define 020: GOLD
-  Name: GOLD
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 203, 0, 255 }
-  Description: Gold
-Define 021: ORANGE
-  Name: ORANGE
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 161, 0, 255 }
-  Description: Orange
-Define 022: PINK
-  Name: PINK
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 109, 194, 255 }
-  Description: Pink
-Define 023: RED
-  Name: RED
-  Type: COLOR
-  Value: CLITERAL(Color){ 230, 41, 55, 255 }
-  Description: Red
-Define 024: MAROON
-  Name: MAROON
-  Type: COLOR
-  Value: CLITERAL(Color){ 190, 33, 55, 255 }
-  Description: Maroon
-Define 025: GREEN
-  Name: GREEN
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 228, 48, 255 }
-  Description: Green
-Define 026: LIME
-  Name: LIME
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 158, 47, 255 }
-  Description: Lime
-Define 027: DARKGREEN
-  Name: DARKGREEN
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 117, 44, 255 }
-  Description: Dark Green
-Define 028: SKYBLUE
-  Name: SKYBLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 102, 191, 255, 255 }
-  Description: Sky Blue
-Define 029: BLUE
-  Name: BLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 121, 241, 255 }
-  Description: Blue
-Define 030: DARKBLUE
-  Name: DARKBLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 82, 172, 255 }
-  Description: Dark Blue
-Define 031: PURPLE
-  Name: PURPLE
-  Type: COLOR
-  Value: CLITERAL(Color){ 200, 122, 255, 255 }
-  Description: Purple
-Define 032: VIOLET
-  Name: VIOLET
-  Type: COLOR
-  Value: CLITERAL(Color){ 135, 60, 190, 255 }
-  Description: Violet
-Define 033: DARKPURPLE
-  Name: DARKPURPLE
-  Type: COLOR
-  Value: CLITERAL(Color){ 112, 31, 126, 255 }
-  Description: Dark Purple
-Define 034: BEIGE
-  Name: BEIGE
-  Type: COLOR
-  Value: CLITERAL(Color){ 211, 176, 131, 255 }
-  Description: Beige
-Define 035: BROWN
-  Name: BROWN
-  Type: COLOR
-  Value: CLITERAL(Color){ 127, 106, 79, 255 }
-  Description: Brown
-Define 036: DARKBROWN
-  Name: DARKBROWN
-  Type: COLOR
-  Value: CLITERAL(Color){ 76, 63, 47, 255 }
-  Description: Dark Brown
-Define 037: WHITE
-  Name: WHITE
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 255, 255, 255 }
-  Description: White
-Define 038: BLACK
-  Name: BLACK
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 0, 0, 255 }
-  Description: Black
-Define 039: BLANK
-  Name: BLANK
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 0, 0, 0 }
-  Description: Blank (Transparent)
-Define 040: MAGENTA
-  Name: MAGENTA
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 0, 255, 255 }
-  Description: Magenta
-Define 041: RAYWHITE
-  Name: RAYWHITE
-  Type: COLOR
-  Value: CLITERAL(Color){ 245, 245, 245, 255 }
-  Description: My own White (raylib logo)
-Define 042: RL_BOOL_TYPE
-  Name: RL_BOOL_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 043: RL_VECTOR2_TYPE
-  Name: RL_VECTOR2_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 044: RL_VECTOR3_TYPE
-  Name: RL_VECTOR3_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 045: RL_VECTOR4_TYPE
-  Name: RL_VECTOR4_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 046: RL_QUATERNION_TYPE
-  Name: RL_QUATERNION_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 047: RL_MATRIX_TYPE
-  Name: RL_MATRIX_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 048: RL_COLOR_TYPE
+Define 016: RL_COLOR_TYPE
   Name: RL_COLOR_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 049: RL_RECTANGLE_TYPE
+Define 017: RL_RECTANGLE_TYPE
   Name: RL_RECTANGLE_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 018: RL_VECTOR2_TYPE
+  Name: RL_VECTOR2_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 019: RL_VECTOR3_TYPE
+  Name: RL_VECTOR3_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 020: RL_VECTOR4_TYPE
+  Name: RL_VECTOR4_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 021: RL_QUATERNION_TYPE
+  Name: RL_QUATERNION_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 022: RL_MATRIX_TYPE
+  Name: RL_MATRIX_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 023: LIGHTGRAY
+  Name: LIGHTGRAY
+  Type: COLOR
+  Value: CLITERAL(Color){ 200, 200, 200, 255 }
+  Description: Light Gray
+Define 024: GRAY
+  Name: GRAY
+  Type: COLOR
+  Value: CLITERAL(Color){ 130, 130, 130, 255 }
+  Description: Gray
+Define 025: DARKGRAY
+  Name: DARKGRAY
+  Type: COLOR
+  Value: CLITERAL(Color){ 80, 80, 80, 255 }
+  Description: Dark Gray
+Define 026: YELLOW
+  Name: YELLOW
+  Type: COLOR
+  Value: CLITERAL(Color){ 253, 249, 0, 255 }
+  Description: Yellow
+Define 027: GOLD
+  Name: GOLD
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 203, 0, 255 }
+  Description: Gold
+Define 028: ORANGE
+  Name: ORANGE
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 161, 0, 255 }
+  Description: Orange
+Define 029: PINK
+  Name: PINK
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 109, 194, 255 }
+  Description: Pink
+Define 030: RED
+  Name: RED
+  Type: COLOR
+  Value: CLITERAL(Color){ 230, 41, 55, 255 }
+  Description: Red
+Define 031: MAROON
+  Name: MAROON
+  Type: COLOR
+  Value: CLITERAL(Color){ 190, 33, 55, 255 }
+  Description: Maroon
+Define 032: GREEN
+  Name: GREEN
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 228, 48, 255 }
+  Description: Green
+Define 033: LIME
+  Name: LIME
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 158, 47, 255 }
+  Description: Lime
+Define 034: DARKGREEN
+  Name: DARKGREEN
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 117, 44, 255 }
+  Description: Dark Green
+Define 035: SKYBLUE
+  Name: SKYBLUE
+  Type: COLOR
+  Value: CLITERAL(Color){ 102, 191, 255, 255 }
+  Description: Sky Blue
+Define 036: BLUE
+  Name: BLUE
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 121, 241, 255 }
+  Description: Blue
+Define 037: DARKBLUE
+  Name: DARKBLUE
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 82, 172, 255 }
+  Description: Dark Blue
+Define 038: PURPLE
+  Name: PURPLE
+  Type: COLOR
+  Value: CLITERAL(Color){ 200, 122, 255, 255 }
+  Description: Purple
+Define 039: VIOLET
+  Name: VIOLET
+  Type: COLOR
+  Value: CLITERAL(Color){ 135, 60, 190, 255 }
+  Description: Violet
+Define 040: DARKPURPLE
+  Name: DARKPURPLE
+  Type: COLOR
+  Value: CLITERAL(Color){ 112, 31, 126, 255 }
+  Description: Dark Purple
+Define 041: BEIGE
+  Name: BEIGE
+  Type: COLOR
+  Value: CLITERAL(Color){ 211, 176, 131, 255 }
+  Description: Beige
+Define 042: BROWN
+  Name: BROWN
+  Type: COLOR
+  Value: CLITERAL(Color){ 127, 106, 79, 255 }
+  Description: Brown
+Define 043: DARKBROWN
+  Name: DARKBROWN
+  Type: COLOR
+  Value: CLITERAL(Color){ 76, 63, 47, 255 }
+  Description: Dark Brown
+Define 044: WHITE
+  Name: WHITE
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 255, 255, 255 }
+  Description: White
+Define 045: BLACK
+  Name: BLACK
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 0, 0, 255 }
+  Description: Black
+Define 046: BLANK
+  Name: BLANK
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 0, 0, 0 }
+  Description: Blank (Transparent)
+Define 047: MAGENTA
+  Name: MAGENTA
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 0, 255, 255 }
+  Description: Magenta
+Define 048: RAYWHITE
+  Name: RAYWHITE
+  Type: COLOR
+  Value: CLITERAL(Color){ 245, 245, 245, 255 }
+  Description: My own White (raylib logo)
+Define 049: RL_BOOL_TYPE
+  Name: RL_BOOL_TYPE
   Type: GUARD
   Value: 
   Description: 
@@ -281,11 +281,6 @@ Define 056: SHADER_LOC_MAP_SPECULAR
   Type: UNKNOWN
   Value: SHADER_LOC_MAP_METALNESS
   Description: 
-Define 057: GetMouseRay
-  Name: GetMouseRay
-  Type: UNKNOWN
-  Value: GetScreenToWorldRay
-  Description: Compatibility hack for previous raylib versions
 
 Structures found: 34
 
@@ -1429,14 +1424,14 @@ Function 083: UnloadShader() (1 input parameters)
 Function 084: GetScreenToWorldRay() (2 input parameters)
   Name: GetScreenToWorldRay
   Return type: Ray
-  Description: Get a ray trace from screen position (i.e mouse)
-  Param[1]: position (type: Vector2)
+  Description: Get a ray trace from mouse position
+  Param[1]: mousePosition (type: Vector2)
   Param[2]: camera (type: Camera)
 Function 085: GetScreenToWorldRayEx() (4 input parameters)
   Name: GetScreenToWorldRayEx
   Return type: Ray
-  Description: Get a ray trace from screen position (i.e mouse) in a viewport
-  Param[1]: position (type: Vector2)
+  Description: Get a ray trace from mouse position in a viewport
+  Param[1]: mousePosition (type: Vector2)
   Param[2]: camera (type: Camera)
   Param[3]: width (type: float)
   Param[4]: height (type: float)
