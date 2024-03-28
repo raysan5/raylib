@@ -195,10 +195,12 @@
     #define RL_BOOL_TYPE
 #endif
 
-// TODO(marco): Improve wording.
-// Note: The following types have its own define guards because they are
-// redefined in other files. So it's here to avoid redefinition in other file
-// and to enable header inclusion reordering.
+// NOTE: In the following types we set some defines with some data types
+// declared by raylib's other modules (raymath, rlgl), they also require some of
+// those types, so, to be able to use those other modules as standalone (not
+// depending on raylib), add include guard to be able to include the headers in
+// any order, these defines are useful for internal checks and to avoid type
+// redefinitions.
 
 #if !defined(RL_VECTOR2_TYPE)
 // Vector2, 2 components
