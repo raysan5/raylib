@@ -1340,7 +1340,10 @@ static void ConfigureEvdevDevice(char *device)
 
     // Identify the device
     //-------------------------------------------------------------------------------------------------------
-    struct input_absinfo absinfo[ABS_CNT] = { 0 };
+    struct {
+        bool exist;
+        struct input_absinfo info;
+    } absinfo[ABS_CNT] = { 0 };
 
     // These flags aren't really a one of
     // Some devices could have properties we assosciate with keyboards as well as properties
@@ -1365,8 +1368,12 @@ static void ConfigureEvdevDevice(char *device)
         if (hasAbsXY)
         {
             absAxisCount += 2;
-            ioctl(fd, EVIOCGABS(ABS_X), &absinfo[ABS_X]);
-            ioctl(fd, EVIOCGABS(ABS_Y), &absinfo[ABS_Y]);
+
+            absinfo[ABS_X].exist = true;
+            absinfo[ABS_Y].exist = true;
+
+            ioctl(fd, EVIOCGABS(ABS_X), &absinfo[ABS_X].info);
+            ioctl(fd, EVIOCGABS(ABS_Y), &absinfo[ABS_Y].info);
         }
 
         // If it has any of these buttons it's a touch device
@@ -1387,10 +1394,11 @@ static void ConfigureEvdevDevice(char *device)
             {
                 if (TEST_BIT(absBits, axis))
                 {
+                    absinfo[axis].exist = true;
                     isGamepad = true;
                     absAxisCount++;
 
-                    ioctl(fd, EVIOCGABS(axis), &absinfo[axis]);
+                    ioctl(fd, EVIOCGABS(axis), &absinfo[axis].info);
                 }
             }
         }
@@ -1445,11 +1453,11 @@ static void ConfigureEvdevDevice(char *device)
 
         if (absAxisCount > 0)
         {
-            platform.absRange.x = absinfo[ABS_X].minimum;
-            platform.absRange.width = absinfo[ABS_X].maximum - absinfo[ABS_X].minimum;
+            platform.absRange.x = absinfo[ABS_X].info.minimum;
+            platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
 
-            platform.absRange.y = absinfo[ABS_Y].minimum;
-            platform.absRange.height = absinfo[ABS_Y].maximum - absinfo[ABS_Y].minimum;
+            platform.absRange.y = absinfo[ABS_Y].info.minimum;
+            platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
         }
     }
     else if (isGamepad && !isMouse && !isKeyboard && platform.gamepadCount < MAX_GAMEPADS)
@@ -1476,10 +1484,14 @@ static void ConfigureEvdevDevice(char *device)
             int axisIndex = 0;
             for (int axis = ABS_X; axis < ABS_PRESSURE; axis++)
             {
-                platform.gamepadAbsAxisRange[index][axisIndex][0] = absinfo[axisIndex].minimum;
-                platform.gamepadAbsAxisRange[index][axisIndex][1] = absinfo[axisIndex].maximum - absinfo[axisIndex].minimum;
+                if (absinfo[axis].exist)
+                {
+                    platform.gamepadAbsAxisRange[index][axisIndex][0] = absinfo[axisIndex].info.minimum;
+                    platform.gamepadAbsAxisRange[index][axisIndex][1] = absinfo[axisIndex].info.maximum - absinfo[axisIndex].info.minimum;
 
-                platform.gamepadAbsAxisMap[index][axis] = axisIndex++;
+                    platform.gamepadAbsAxisMap[index][axis] = axisIndex;
+                    axisIndex++;
+                }
             }
         }
     }
@@ -1591,16 +1603,20 @@ static void PollGamepadEvents(void)
             }
             else if (event.type == EV_ABS)
             {
-                // TODO : MADMAW MDAM MAP THIS
-                if (event.code < MAX_GAMEPAD_AXIS)
+                if (event.code < ABS_CNT)
                 {
-                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %i axis: %i, value: %i", i, platform.gamepadAbsAxisMap[i][event.code], event.value);
+                    int axisRaylib = platform.gamepadAbsAxisMap[i][event.code];
 
-                    int min = platform.gamepadAbsAxisRange[i][event.code][0];
-                    int range = platform.gamepadAbsAxisRange[i][event.code][1];
+                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: Axis: %2i Value: %i", i, axisRaylib, event.value);
 
-                    // NOTE: Scaling of event.value to get values between -1..1
-                    CORE.Input.Gamepad.axisState[i][platform.gamepadAbsAxisMap[i][event.code]] = (2 * (float)(event.value - min) / range) - 1;
+                    if (axisRaylib < MAX_GAMEPAD_AXIS)
+                    {
+                        int min = platform.gamepadAbsAxisRange[i][event.code][0];
+                        int range = platform.gamepadAbsAxisRange[i][event.code][1];
+
+                        // NOTE: Scaling of event.value to get values between -1..1
+                        CORE.Input.Gamepad.axisState[i][axisRaylib] = (2 * (float)(event.value - min) / range) - 1;
+                    }
                 }
             }
         }
