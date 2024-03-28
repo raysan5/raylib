@@ -621,7 +621,7 @@ void PollInputEvents(void)
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = platform.eventWheelMove;
     platform.eventWheelMove = (Vector2){ 0.0f, 0.0f };
-    
+
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -1630,7 +1630,7 @@ static void PollMouseEvents(void)
                     CORE.Input.Mouse.previousPosition.x = 0.0f;
                 }
                 else CORE.Input.Mouse.currentPosition.x += event.value;
-                
+
                 CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
@@ -1643,7 +1643,7 @@ static void PollMouseEvents(void)
                     CORE.Input.Mouse.previousPosition.y = 0.0f;
                 }
                 else CORE.Input.Mouse.currentPosition.y += event.value;
-                
+
                 CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
