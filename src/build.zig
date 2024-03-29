@@ -107,6 +107,11 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
             raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .linux => {
+            switch (options.linux_display_backend) {
+                .X11 => raylib.defineCMacro("_GLFW_X11", null),
+                .Wayland => raylib.defineCMacro("_GLFW_WAYLAND", null),
+            }
+
             if (!options.platform_drm) {
                 addCSourceFilesVersioned(raylib, &.{
                     try join2(gpa, srcdir, "rglfw.c"),
@@ -201,6 +206,12 @@ pub const Options = struct {
     raygui: bool = false,
     platform_drm: bool = false,
     shared: bool = false,
+    linux_display_backend: LinuxDisplayBackend = .X11,
+};
+
+pub const LinuxDisplayBackend = enum {
+    X11,
+    Wayland,
 };
 
 pub fn build(b: *std.Build) !void {
