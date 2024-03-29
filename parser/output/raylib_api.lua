@@ -335,6 +335,12 @@ return {
       type = "UNKNOWN",
       value = "SHADER_LOC_MAP_METALNESS",
       description = ""
+    },
+    {
+      name = "GetMouseRay",
+      type = "UNKNOWN",
+      value = "GetScreenToWorldRay",
+      description = "Compatibility hack for previous raylib versions"
     }
   },
   structs = {
@@ -2223,7 +2229,7 @@ return {
         {
           name = "GAMEPAD_BUTTON_RIGHT_FACE_RIGHT",
           value = 6,
-          description = "Gamepad right button right (i.e. PS3: Square, Xbox: X)"
+          description = "Gamepad right button right (i.e. PS3: Circle, Xbox: B)"
         },
         {
           name = "GAMEPAD_BUTTON_RIGHT_FACE_DOWN",
@@ -2233,7 +2239,7 @@ return {
         {
           name = "GAMEPAD_BUTTON_RIGHT_FACE_LEFT",
           value = 8,
-          description = "Gamepad right button left (i.e. PS3: Circle, Xbox: B)"
+          description = "Gamepad right button left (i.e. PS3: Square, Xbox: X)"
         },
         {
           name = "GAMEPAD_BUTTON_LEFT_TRIGGER_1",
@@ -3636,19 +3642,19 @@ return {
     },
     {
       name = "GetScreenToWorldRay",
-      description = "Get a ray trace from mouse position",
+      description = "Get a ray trace from screen position (i.e mouse)",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "mousePosition"},
+        {type = "Vector2", name = "position"},
         {type = "Camera", name = "camera"}
       }
     },
     {
       name = "GetScreenToWorldRayEx",
-      description = "Get a ray trace from mouse position in a viewport",
+      description = "Get a ray trace from screen position (i.e mouse) in a viewport",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "mousePosition"},
+        {type = "Vector2", name = "position"},
         {type = "Camera", name = "camera"},
         {type = "float", name = "width"},
         {type = "float", name = "height"}

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
-    <Defines count="56">
+    <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
@@ -57,6 +57,7 @@
         <Define name="MATERIAL_MAP_SPECULAR" type="UNKNOWN" value="MATERIAL_MAP_METALNESS" desc="" />
         <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" value="SHADER_LOC_MAP_ALBEDO" desc="" />
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
+        <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
     <Structs count="34">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
@@ -470,9 +471,9 @@
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_DOWN" integer="3" desc="Gamepad left DPAD down button" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_LEFT" integer="4" desc="Gamepad left DPAD left button" />
             <Value name="GAMEPAD_BUTTON_RIGHT_FACE_UP" integer="5" desc="Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_RIGHT" integer="6" desc="Gamepad right button right (i.e. PS3: Square, Xbox: X)" />
+            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_RIGHT" integer="6" desc="Gamepad right button right (i.e. PS3: Circle, Xbox: B)" />
             <Value name="GAMEPAD_BUTTON_RIGHT_FACE_DOWN" integer="7" desc="Gamepad right button down (i.e. PS3: Cross, Xbox: A)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_LEFT" integer="8" desc="Gamepad right button left (i.e. PS3: Circle, Xbox: B)" />
+            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_LEFT" integer="8" desc="Gamepad right button left (i.e. PS3: Square, Xbox: X)" />
             <Value name="GAMEPAD_BUTTON_LEFT_TRIGGER_1" integer="9" desc="Gamepad top/back trigger left (first), it could be a trailing button" />
             <Value name="GAMEPAD_BUTTON_LEFT_TRIGGER_2" integer="10" desc="Gamepad top/back trigger left (second), it could be a trailing button" />
             <Value name="GAMEPAD_BUTTON_RIGHT_TRIGGER_1" integer="11" desc="Gamepad top/back trigger right (one), it could be a trailing button" />
@@ -902,12 +903,12 @@
         <Function name="UnloadShader" retType="void" paramCount="1" desc="Unload shader from GPU memory (VRAM)">
             <Param type="Shader" name="shader" desc="" />
         </Function>
-        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from mouse position">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from screen position (i.e mouse)">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
         </Function>
-        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from mouse position in a viewport">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from screen position (i.e mouse) in a viewport">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
             <Param type="float" name="width" desc="" />
             <Param type="float" name="height" desc="" />
