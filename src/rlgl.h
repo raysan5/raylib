@@ -1837,7 +1837,13 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
 
 // Set color mask active for screen read/draw
-void rlColorMask(bool r, bool g, bool b, bool a) { glColorMask(r, g, b, a); }
+void rlColorMask(bool r, bool g, bool b, bool a) 
+{
+#if defined(PLATFORM_NINTENDO64) 
+#else 
+    glColorMask(r, g, b, a);
+#endif
+}
 
 // Set face culling mode
 void rlSetCullFace(int mode)
@@ -1873,7 +1879,7 @@ void rlEnablePointMode(void)
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-    #if defined(PLATFORM_DREAMCAST) //fix needed on gldc by now hardcoded here to avoid compiling errors
+    #if defined(PLATFORM_DREAMCAST) || defined(PLATFORM_NINTENDO64)//fix needed on gldc by now hardcoded here to avoid compiling errors. Also Not defined in libdragon
     glEnable(0x8642/*GL_PROGRAM_POINT_SIZE*/);
     #else
     glEnable(GL_PROGRAM_POINT_SIZE);
@@ -2180,7 +2186,11 @@ void rlglInit(int width, int height)
     // Initialize OpenGL default states
     //----------------------------------------------------------
     // Init state: Depth test
-    glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
+    #if defined(PLATFORM_NINTENDO64) //to review in libdragon
+    glDepthFunc(GL_LESS_INTERPENETRATING_N64);                                 // Type of depth testing to apply
+    #else
+    glDepthFunc(GL_LEQUAL); 
+    #endif                                // Type of depth testing to apply
     glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
 
     // Init state: Blending mode
@@ -3081,12 +3091,13 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
 
         if (glInternalFormat != 0)
-        {
+        {   
+            #if !defined(PLATFORM_NINTENDO64)
             if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, dataPtr);
 #if !defined(GRAPHICS_API_OPENGL_11)
             else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, dataPtr);
 #endif
-
+            #endif
 #if defined(GRAPHICS_API_OPENGL_33)
             if (format == RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
             {
@@ -3147,7 +3158,9 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     }
 #endif
-
+    #if defined(PLATFORM_NINTENDO64) //glTextParameter must be set before upload to gpu 
+    rlLoadTextureN64(data,width,height,format,mipmapCount);
+    #endif
     // At this point we have the texture loaded in GPU and texture parameters configured
 
     // NOTE: If mipmaps were not in data, they are not generated automatically
@@ -3304,7 +3317,10 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 
     if ((glInternalFormat != 0) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
+        #if defined(PLATFORM_NINTENDO64)
+        #else
         glTexSubImage2D(GL_TEXTURE_2D, 0, offsetX, offsetY, width, height, glFormat, glType, data);
+        #endif
     }
     else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Failed to update for current texture format (%i)", id, format);
 }
@@ -3449,7 +3465,10 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     if ((glInternalFormat != 0) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
         pixels = RL_MALLOC(size);
+        #if defined(PLATFORM_NINTENDO64)
+        #else
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
+        #endif
     }
     else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Data retrieval not suported for pixel format (%i)", id, format);
 
@@ -3492,8 +3511,10 @@ unsigned char *rlReadScreenPixels(int width, int height)
 
     // NOTE 1: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     // NOTE 2: We are getting alpha channel! Be careful, it can be transparent if not cleared properly!
+    #if defined(PLATFORM_NINTENDO64)
+    #else
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
-
+    #endif
     // Flip image vertically!
     unsigned char *imgData = (unsigned char *)RL_MALLOC(width*height*4*sizeof(unsigned char));
 

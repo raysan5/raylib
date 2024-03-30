@@ -21,7 +21,8 @@
 *           - Android (ARM, ARM64)
 *       > PLATFORM_DREAMCAST:
 *           - Sega Dreamcast (SH4)
-*
+*       > PLATFORM_NINTENDO64:
+*           - Nintendo 64 (MIPS4300)
 *   CONFIGURATION:
 *       #define SUPPORT_DEFAULT_FONT (default)
 *           Default font is loaded on window initialization to be available for the user to render simple text.
@@ -183,7 +184,11 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in LoadDirectoryFiles()]
 #else
+#if defined(PLATFORM_NINTENDO64)
+//avoid dirent on Nintendo 64
+#else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in LoadDirectoryFiles()]
+#endif
 #endif
 
 #if defined(_WIN32)
@@ -503,6 +508,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_android.c"
 #elif defined(PLATFORM_DREAMCAST)
     #include "platforms/rcore_dreamcast.c"
+#elif defined(PLATFORM_NINTENDO64)
+    #include "platforms/rcore_nintendo64.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
@@ -573,6 +580,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: ANDROID");
 #elif defined(PLATFORM_DREAMCAST)
     TRACELOG(LOG_INFO, "Platform backend: DREAMCAST");
+#elif defined(PLATFORM_NINTENDO64)
+    TRACELOG(LOG_INFO, "Platform backend: NINTENDO64");
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
@@ -641,7 +650,11 @@ void InitWindow(int width, int height, const char *title)
     #if defined(SUPPORT_MODULE_RSHAPES)
     // Set font white rectangle for shapes drawing, so shapes and text can be batched together
     // WARNING: rshapes module is required, if not available, default internal white rectangle is used
+    #if defined(PLATFORM_NINTENDO64)
+    Rectangle rec=(Rectangle){ 0.0f, 0.0f, 5.0f, 10.0f };
+    #else
     Rectangle rec = GetFontDefault().recs[95];
+    #endif
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
         // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
@@ -676,6 +689,9 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
+    #if defined(PLATFORM_NINTENDO64)
+    SwapScreenBuffer();
+    #endif
 }
 
 // Close window and unload OpenGL context
@@ -831,7 +847,13 @@ void BeginDrawing(void)
 {
     // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
     // consequently the measure for update vs draw is not accurate (only the total frame time is accurate)
+    #if defined(PLATFORM_NINTENDO64)
+    platform.disp = display_get();
 
+    rdpq_attach(platform.disp, &platform.zbuffer);
+
+    gl_context_begin();
+    #endif
     CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
     CORE.Time.update = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
@@ -1886,6 +1908,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 bool DirectoryExists(const char *dirPath)
 {
     bool result = false;
+    #if !defined(PLATFORM_VITA) && !defined(PLATFORM_ORBIS) && !defined(PLATFORM_PROSPERO) && !defined(PLATFORM_NINTENDO64)
     DIR *dir = opendir(dirPath);
 
     if (dir != NULL)
@@ -1893,7 +1916,7 @@ bool DirectoryExists(const char *dirPath)
         result = true;
         closedir(dir);
     }
-
+    #endif
     return result;
 }
 
@@ -2059,9 +2082,11 @@ const char *GetWorkingDirectory(void)
 {
     static char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
-
+    #if !defined(PLATFORM_VITA) && !defined(PLATFORM_ORBIS) && !defined(PLATFORM_PROSPERO) && !defined(PLATFORM_NINTENDO64)
     char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
-
+    #else
+    char *path=".";
+    #endif
     return path;
 }
 
@@ -2151,6 +2176,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
     unsigned int fileCounter = 0;
 
     struct dirent *entity;
+    #if !defined(PLATFORM_VITA) && !defined(PLATFORM_ORBIS) && !defined(PLATFORM_PROSPERO) && !defined(PLATFORM_NINTENDO64)
     DIR *dir = opendir(dirPath);
 
     if (dir != NULL) // It's a directory
@@ -2177,7 +2203,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         if (files.count != files.capacity) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
-
+    #endif
     return files;
 }
 
@@ -2210,10 +2236,13 @@ void UnloadDirectoryFiles(FilePathList files)
 // Change working directory, returns true on success
 bool ChangeDirectory(const char *dir)
 {
+    #if !defined(PLATFORM_VITA) && !defined(PLATFORM_ORBIS) && !defined(PLATFORM_PROSPERO) && !defined(PLATFORM_NINTENDO64)
     bool result = CHDIR(dir);
 
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dir);
-
+    #else
+    bool result=1;
+    #endif
     return (result == 0);
 }
 
@@ -3081,7 +3110,11 @@ void InitTimer(void)
     }
     else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
 #endif
-
+#if defined(PLATFORM_NINTENDO64)
+    disable_interrupts();
+    CORE.Time.base = get_ticks_us();
+    enable_interrupts();
+#endif
     CORE.Time.previous = GetTime();     // Get time as double
 }
 
@@ -3106,7 +3139,7 @@ void SetupViewport(int width, int height)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
-    #if defined(PLATFORM_DREAMCAST)
+    #if defined(PLATFORM_DREAMCAST) || defined(PLATFORM_NINTENDO64)
     rlOrtho(0, CORE.Window.render.width, CORE.Window.render.height, 0, -1.0f, 1.0f);
     #else
     rlOrtho(0, CORE.Window.render.width, CORE.Window.render.height, 0, 0.0f, 1.0f);
@@ -3200,7 +3233,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 {
     static char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
-
+    #if !defined(PLATFORM_VITA) && !defined(PLATFORM_ORBIS) && !defined(PLATFORM_PROSPERO) && !defined(PLATFORM_NINTENDO64)
     struct dirent *dp = NULL;
     DIR *dir = opendir(basePath);
 
@@ -3236,6 +3269,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+    #endif
 }
 
 // Scan all files and directories recursively from a base path
@@ -3243,7 +3277,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 {
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
-
+    #if !defined(PLATFORM_VITA) && !defined(PLATFORM_ORBIS) && !defined(PLATFORM_PROSPERO) && !defined(PLATFORM_NINTENDO64)
     struct dirent *dp = NULL;
     DIR *dir = opendir(basePath);
 
@@ -3289,6 +3323,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+    #endif
 }
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)

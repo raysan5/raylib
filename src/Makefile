@@ -22,6 +22,8 @@
 #         - Android (ARM, ARM64)
 #     > PLATFORM_DREAMCAST:
 #         - Sega Dreamcast (SH4)
+#     > PLATFORM_NINTENDO64:
+#         - Nintendo 64 (MIPS4300)
 #
 #   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
@@ -52,7 +54,7 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_DREAMCAST
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_DREAMCAST, PLATFORM_NINTENDO64
 PLATFORM             ?= PLATFORM_DREAMCAST
 
 # Define required raylib variables
@@ -224,6 +226,12 @@ ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
     PLATFORM_SHELL = sh
 endif
 
+#Nintendo64
+ifeq ($(PLATFORM),PLATFORM_NINTENDO64)
+    PLATFORM_OS = NINTENDO64
+    PLATFORM_SHELL = sh
+endif
+
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # By default use OpenGL 3.3 on desktop platforms
@@ -255,6 +263,12 @@ ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
     # By default use OpenGL 1.1 on DREAMCAST
     GRAPHICS = GRAPHICS_API_OPENGL_11
 endif
+
+ifeq ($(PLATFORM),PLATFORM_NINTENDO64)
+    # By default use OpenGL 1.1 on NINTENDO64
+    GRAPHICS = GRAPHICS_API_OPENGL_11
+endif
+
 # Define default C compiler and archiver to pack library: CC, AR
 #------------------------------------------------------------------------------------------------
 CC = gcc
@@ -300,6 +314,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
+endif
+
+ifeq ($(PLATFORM),PLATFORM_NINTENDO64)
+include $(N64_INST)/include/raylib4Nintendo64.mk
+    CC = $(N64_CC)
+    AR = $(N64_AR)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
@@ -452,6 +472,11 @@ endif
 # NOTE: Several external required libraries (stb and others)
 #------------------------------------------------------------------------------------------------
 INCLUDE_PATHS = -I. 
+
+ifeq ($(PLATFORM),PLATFORM_NINTENDO64)
+    CFLAGS = $(N64_CFLAGS) -D$(PLATFORM) -D$(GRAPHICS) 
+    INCLUDE_PATHS = $(N64_INCLUDEDIR)
+endif
 
 ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
     CFLAGS = $(KOS_CFLAGS) -D$(PLATFORM) -D$(GRAPHICS) 
@@ -765,6 +790,9 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 
 # RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
 #DESTDIR ?= /usr/local
+ifeq ($(PLATFORM),PLATFORM_NINTENDO64)
+PREFIX ?= $(N64_ROOTDIR)/mips64-elf
+endif
 ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
 PREFIX ?= $(KOS_PORTS)
 endif
