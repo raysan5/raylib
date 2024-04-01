@@ -115,9 +115,33 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
                 raylib.linkSystemLibrary("rt");
                 raylib.linkSystemLibrary("dl");
                 raylib.linkSystemLibrary("m");
-                raylib.linkSystemLibrary("X11");
+
                 raylib.addLibraryPath(.{ .path = "/usr/lib" });
                 raylib.addIncludePath(.{ .path = "/usr/include" });
+
+                switch (options.linux_display_backend) {
+                    .X11 => {
+                        raylib.defineCMacro("_GLFW_X11", null);
+                        raylib.linkSystemLibrary("X11");
+                    },
+                    .Wayland => {
+                        raylib.defineCMacro("_GLFW_WAYLAND", null);
+                        raylib.linkSystemLibrary("wayland-client");
+                        raylib.linkSystemLibrary("wayland-cursor");
+                        raylib.linkSystemLibrary("wayland-egl");
+                        raylib.linkSystemLibrary("xkbcommon");
+                        raylib.addIncludePath(.{ .path = srcdir });
+                        try waylandGenerate(gpa, "wayland.xml", "wayland-client-protocol");
+                        try waylandGenerate(gpa, "xdg-shell.xml", "xdg-shell-client-protocol");
+                        try waylandGenerate(gpa, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
+                        try waylandGenerate(gpa, "viewporter.xml", "viewporter-client-protocol");
+                        try waylandGenerate(gpa, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
+                        try waylandGenerate(gpa, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
+                        try waylandGenerate(gpa, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
+                        try waylandGenerate(gpa, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
+                        try waylandGenerate(gpa, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
+                    },
+                }
 
                 raylib.defineCMacro("PLATFORM_DESKTOP", null);
             } else {
@@ -201,6 +225,12 @@ pub const Options = struct {
     raygui: bool = false,
     platform_drm: bool = false,
     shared: bool = false,
+    linux_display_backend: LinuxDisplayBackend = .X11,
+};
+
+pub const LinuxDisplayBackend = enum {
+    X11,
+    Wayland,
 };
 
 pub fn build(b: *std.Build) !void {
@@ -245,6 +275,8 @@ const srcdir = struct {
     }
 }.getSrcDir();
 
+const waylandDir = srcdir ++ "/external/glfw/deps/wayland";
+
 fn getOsTagVersioned(target: anytype) std.Target.Os.Tag {
     if (comptime builtin.zig_version.minor >= 12) {
         return target.result.os.tag;
@@ -271,6 +303,27 @@ fn addCSourceFilesVersioned(
     } else {
         @compileError("Expected zig version 11 or 12");
     }
+}
+
+fn waylandGenerate(allocator: std.mem.Allocator, comptime protocol: []const u8, comptime basename: []const u8) !void {
+    _ = try std.process.Child.run(.{
+        .allocator = allocator,
+        .argv = &[_][]const u8{
+            "wayland-scanner",
+            "client-header",
+            waylandDir ++ "/" ++ protocol,
+            srcdir ++ "/" ++ basename ++ ".h",
+        },
+    });
+    _ = try std.process.Child.run(.{
+        .allocator = allocator,
+        .argv = &[_][]const u8{
+            "wayland-scanner",
+            "private-code",
+            waylandDir ++ "/" ++ protocol,
+            srcdir ++ "/" ++ basename ++ "-code.h",
+        },
+    });
 }
 
 fn join2(allocator: std.mem.Allocator, path1: []const u8, path2: []const u8) ![]u8 {
