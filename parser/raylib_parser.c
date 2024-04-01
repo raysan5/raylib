@@ -1464,6 +1464,20 @@ static char *TextReplace(char *text, const char *replace, const char *by)
 }
 */
 
+static void PrintXMLEscaped(FILE *outFile, const char *string)
+{
+    for (int i = 0; string[i] != '\0'; ++i)
+    {
+        switch (string[i])
+        {
+            case '<': fputs("&lt;", outFile); break;
+            case '>': fputs("&gt;", outFile); break;
+            case '&': fputs("&amp;", outFile); break;
+            default: fputc(string[i], outFile); break;
+        }
+    }
+}
+
 // Export parsed data in desired format
 static void ExportParsedData(const char *fileName, int format)
 {
@@ -1761,7 +1775,9 @@ static void ExportParsedData(const char *fileName, int format)
                 {
                     fprintf(outFile, "value=\"%s\"", defines[i].value);
                 }
-                fprintf(outFile, " desc=\"%s\" />\n", defines[i].desc);
+                fprintf(outFile, " desc=\"");
+                PrintXMLEscaped(outFile, defines[i].desc);
+                fprintf(outFile, "\" />\n");
             }
             fprintf(outFile, "    </Defines>\n");
 
@@ -1769,10 +1785,14 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Structs count=\"%i\">\n", structCount);
             for (int i = 0; i < structCount; i++)
             {
-                fprintf(outFile, "        <Struct name=\"%s\" fieldCount=\"%i\" desc=\"%s\">\n", structs[i].name, structs[i].fieldCount, structs[i].desc);
+                fprintf(outFile, "        <Struct name=\"%s\" fieldCount=\"%i\" desc=\"", structs[i].name, structs[i].fieldCount);
+                PrintXMLEscaped(outFile, structs[i].desc);
+                fprintf(outFile, "\">\n");
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
-                    fprintf(outFile, "            <Field type=\"%s\" name=\"%s\" desc=\"%s\" />\n", structs[i].fieldType[f], structs[i].fieldName[f], structs[i].fieldDesc[f]);
+                    fprintf(outFile, "            <Field type=\"%s\" name=\"%s\" desc=\"", structs[i].fieldType[f], structs[i].fieldName[f]);
+                    PrintXMLEscaped(outFile, structs[i].fieldDesc[f]);
+                    fprintf(outFile, "\" />\n");
                 }
                 fprintf(outFile, "        </Struct>\n");
             }
@@ -1782,7 +1802,9 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Aliases count=\"%i\">\n", aliasCount);
             for (int i = 0; i < aliasCount; i++)
             {
-                fprintf(outFile, "        <Alias type=\"%s\" name=\"%s\" desc=\"%s\" />\n", aliases[i].name, aliases[i].type, aliases[i].desc);
+                fprintf(outFile, "        <Alias type=\"%s\" name=\"%s\" desc=\"", aliases[i].name, aliases[i].type);
+                    PrintXMLEscaped(outFile, aliases[i].desc);
+                    fprintf(outFile, "\" />\n");
             }
             fprintf(outFile, "    </Aliases>\n");
 
@@ -1790,10 +1812,14 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Enums count=\"%i\">\n", enumCount);
             for (int i = 0; i < enumCount; i++)
             {
-                fprintf(outFile, "        <Enum name=\"%s\" valueCount=\"%i\" desc=\"%s\">\n", enums[i].name, enums[i].valueCount, enums[i].desc);
+                fprintf(outFile, "        <Enum name=\"%s\" valueCount=\"%i\" desc=\"", enums[i].name, enums[i].valueCount);
+                PrintXMLEscaped(outFile, enums[i].desc);
+                fprintf(outFile, "\">\n");
                 for (int v = 0; v < enums[i].valueCount; v++)
                 {
-                    fprintf(outFile, "            <Value name=\"%s\" integer=\"%i\" desc=\"%s\" />\n", enums[i].valueName[v], enums[i].valueInteger[v], enums[i].valueDesc[v]);
+                    fprintf(outFile, "            <Value name=\"%s\" integer=\"%i\" desc=\"", enums[i].valueName[v], enums[i].valueInteger[v]);
+                    PrintXMLEscaped(outFile, enums[i].valueDesc[v]);
+                    fprintf(outFile, "\" />\n");
                 }
                 fprintf(outFile, "        </Enum>\n");
             }
@@ -1803,10 +1829,14 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Callbacks count=\"%i\">\n", callbackCount);
             for (int i = 0; i < callbackCount; i++)
             {
-                fprintf(outFile, "        <Callback name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"%s\">\n", callbacks[i].name, callbacks[i].retType, callbacks[i].paramCount, callbacks[i].desc);
+                fprintf(outFile, "        <Callback name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"", callbacks[i].name, callbacks[i].retType, callbacks[i].paramCount);
+                PrintXMLEscaped(outFile, callbacks[i].desc);
+                fprintf(outFile, "\">\n");
                 for (int p = 0; p < callbacks[i].paramCount; p++)
                 {
-                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"%s\" />\n", callbacks[i].paramType[p], callbacks[i].paramName[p], callbacks[i].paramDesc[p]);
+                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"", callbacks[i].paramType[p], callbacks[i].paramName[p]);
+                    PrintXMLEscaped(outFile, callbacks[i].paramDesc[p]);
+                    fprintf(outFile, "\" />\n");
                 }
                 fprintf(outFile, "        </Callback>\n");
             }
@@ -1816,10 +1846,14 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Functions count=\"%i\">\n", funcCount);
             for (int i = 0; i < funcCount; i++)
             {
-                fprintf(outFile, "        <Function name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"%s\">\n", funcs[i].name, funcs[i].retType, funcs[i].paramCount, funcs[i].desc);
+                fprintf(outFile, "        <Function name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"", funcs[i].name, funcs[i].retType, funcs[i].paramCount);
+                PrintXMLEscaped(outFile, funcs[i].desc);
+                fprintf(outFile, "\">\n");
                 for (int p = 0; p < funcs[i].paramCount; p++)
                 {
-                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"%s\" />\n", funcs[i].paramType[p], funcs[i].paramName[p], funcs[i].paramDesc[p]);
+                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"", funcs[i].paramType[p], funcs[i].paramName[p]);
+                    PrintXMLEscaped(outFile, funcs[i].paramDesc[p]);
+                    fprintf(outFile, "\" />\n");
                 }
                 fprintf(outFile, "        </Function>\n");
             }
