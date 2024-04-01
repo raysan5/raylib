@@ -4500,7 +4500,7 @@ Function 557: SetAudioStreamCallback() (2 input parameters)
 Function 558: AttachAudioStreamProcessor() (2 input parameters)
   Name: AttachAudioStreamProcessor
   Return type: void
-  Description: Attach audio stream processor to stream, receives the samples as <float>s
+  Description: Attach audio stream processor to stream, receives the samples as 'float'
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
 Function 559: DetachAudioStreamProcessor() (2 input parameters)
@@ -4512,7 +4512,7 @@ Function 559: DetachAudioStreamProcessor() (2 input parameters)
 Function 560: AttachAudioMixedProcessor() (1 input parameters)
   Name: AttachAudioMixedProcessor
   Return type: void
-  Description: Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s
+  Description: Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
   Param[1]: processor (type: AudioCallback)
 Function 561: DetachAudioMixedProcessor() (1 input parameters)
   Name: DetachAudioMixedProcessor
