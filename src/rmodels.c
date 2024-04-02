@@ -5804,7 +5804,7 @@ static Model LoadM3D(const char *fileName)
                 // If no map is provided, or we have colors defined, we allocate storage for vertex colors
                 // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
                 if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
-                
+
                 // If no map is provided and we allocated vertex colors, set them to white
                 if ((mi == M3D_UNDEF) && (model.meshes[k].colors != NULL))
                 {
@@ -6076,7 +6076,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             animations[a].framePoses = RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
             strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
             animations[a].name[sizeof(animations[a].name) - 1] = '\0';
-            
+
             TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
 
             for (i = 0; i < (int)m3d->numbone; i++)

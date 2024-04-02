@@ -942,13 +942,13 @@ Sound LoadSoundAlias(Sound source)
     if (source.stream.buffer->data != NULL)
     {
         AudioBuffer *audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
-        
+
         if (audioBuffer == NULL)
         {
             TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
             return sound; // Early return to avoid dereferencing the audioBuffer null pointer
         }
-        
+
         audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
         audioBuffer->volume = source.stream.buffer->volume;
         audioBuffer->data = source.stream.buffer->data;
@@ -1081,7 +1081,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     int waveDataSize = wave.frameCount*wave.channels*wave.sampleSize/8;
 
     // NOTE: Text data buffer size is estimated considering wave data size in bytes
-    // and requiring 12 char bytes for every byte; the actual size varies, but 
+    // and requiring 12 char bytes for every byte; the actual size varies, but
     // the longest possible char being appended is "%.4ff,\n    ", which is 12 bytes.
     char *txtData = (char *)RL_CALLOC(waveDataSize*12 + 2000, sizeof(char));
 
@@ -2752,7 +2752,7 @@ static bool SaveFileData(const char *fileName, void *data, int dataSize)
             return false;
         }
     }
-    else 
+    else
     {
         TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
         return false;

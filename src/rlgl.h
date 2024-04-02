@@ -623,7 +623,7 @@ RLAPI void rlDisableFramebuffer(void);                  // Disable render textur
 RLAPI unsigned int rlGetActiveFramebuffer(void);        // Get the currently active render texture (fbo), 0 for default framebuffer
 RLAPI void rlActiveDrawBuffers(int count);              // Activate multiple draw color buffers
 RLAPI void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask); // Blit active framebuffer to main framebuffer
-RLAPI void rlBindFramebuffer(unsigned int target, unsigned int framebuffer); // Bind framebuffer (FBO) 
+RLAPI void rlBindFramebuffer(unsigned int target, unsigned int framebuffer); // Bind framebuffer (FBO)
 
 // General render state
 RLAPI void rlEnableColorBlend(void);                    // Enable color blending
@@ -3828,8 +3828,8 @@ void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool norma
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: Data type could be: GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT, GL_INT, GL_UNSIGNED_INT
-    // Additional types (depends on OpenGL version or extensions): 
-    //  - GL_HALF_FLOAT, GL_FLOAT, GL_DOUBLE, GL_FIXED, 
+    // Additional types (depends on OpenGL version or extensions):
+    //  - GL_HALF_FLOAT, GL_FLOAT, GL_DOUBLE, GL_FIXED,
     //  - GL_INT_2_10_10_10_REV, GL_UNSIGNED_INT_2_10_10_10_REV, GL_UNSIGNED_INT_10F_11F_11F_REV
     glVertexAttribPointer(index, compSize, type, normalized, stride, pointer);
 #endif

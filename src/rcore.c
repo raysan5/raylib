@@ -118,12 +118,12 @@
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define RGESTURES_IMPLEMENTATION
-    #include "rgestures.h"           // Gestures detection functionality
+    #include "rgestures.h"          // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
     #define RCAMERA_IMPLEMENTATION
-    #include "rcamera.h"             // Camera system functionality
+    #include "rcamera.h"            // Camera system functionality
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -1799,7 +1799,7 @@ void TakeScreenshot(const char *fileName)
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
-    
+
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
@@ -1955,7 +1955,7 @@ const char *GetFileName(const char *filePath)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
     #define MAX_FILENAME_LENGTH     256
-    
+
     static char fileName[MAX_FILENAME_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAME_LENGTH);
 
@@ -1963,7 +1963,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     {
         strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
         int size = (int)strlen(fileName); // Get size in bytes
-        
+
         for (int i = size; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
@@ -1974,7 +1974,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
             }
         }
     }
-    
+
     return fileName;
 }
 
