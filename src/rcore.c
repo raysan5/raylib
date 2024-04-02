@@ -849,23 +849,33 @@ void EndDrawing(void)
     // Draw record indicator
     if (gifRecording)
     {
+        #ifndef GIF_RECORD_FRAMERATE
         #define GIF_RECORD_FRAMERATE    10
-        gifFrameCounter++;
+        #endif
+        gifFrameCounter += GetFrameTime()*1000;
 
-        // NOTE: We record one gif frame every 10 game frames
-        if ((gifFrameCounter%GIF_RECORD_FRAMERATE) == 0)
+        // NOTE: We record one gif frame depending on the desired gif framerate
+        if (gifFrameCounter > 1000/GIF_RECORD_FRAMERATE)
         {
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
             Vector2 scale = GetWindowScaleDPI();
             unsigned char *screenData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-            msf_gif_frame(&gifState, screenData, 10, 16, (int)((float)CORE.Window.render.width*scale.x)*4);
+
+            #ifndef GIF_RECORD_BITRATE
+            #define GIF_RECORD_BITRATE 16
+            #endif
+
+            // Add the frame to the gif recording, given how many frames have passed in centiseconds
+            msf_gif_frame(&gifState, screenData, gifFrameCounter/10, GIF_RECORD_BITRATE, (int)((float)CORE.Window.render.width*scale.x)*4);
+            gifFrameCounter -= 1000/GIF_RECORD_FRAMERATE;
 
             RL_FREE(screenData);    // Free image data
         }
 
     #if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MODULE_RTEXT)
-        if (((gifFrameCounter/15)%2) == 1)
+        // Display the recording indicator every half-second
+        if ((int)(GetTime()/0.5)%2 == 1)
         {
             DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);                 // WARNING: Module required: rshapes
             DrawText("GIF RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);     // WARNING: Module required: rtext
