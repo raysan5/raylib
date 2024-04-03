@@ -1438,8 +1438,8 @@ Function 085: GetScreenToWorldRayEx() (4 input parameters)
   Description: Get a ray trace from screen position (i.e mouse) in a viewport
   Param[1]: position (type: Vector2)
   Param[2]: camera (type: Camera)
-  Param[3]: width (type: float)
-  Param[4]: height (type: float)
+  Param[3]: width (type: int)
+  Param[4]: height (type: int)
 Function 086: GetWorldToScreen() (2 input parameters)
   Name: GetWorldToScreen
   Return type: Vector2

@@ -910,8 +910,8 @@
         <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from screen position (i.e mouse) in a viewport">
             <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
-            <Param type="float" name="width" desc="" />
-            <Param type="float" name="height" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
         </Function>
         <Function name="GetWorldToScreen" retType="Vector2" paramCount="2" desc="Get the screen space position for a 3d world space position">
             <Param type="Vector3" name="position" desc="" />
