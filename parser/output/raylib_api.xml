@@ -1245,7 +1245,7 @@
         <Function name="GetTouchPosition" retType="Vector2" paramCount="1" desc="Get touch position XY for a touch point index (relative to screen size)">
             <Param type="int" name="index" desc="" />
         </Function>
-        <Function name="GetTouchPointId" retType="int" paramCount="1" desc="Get touch point identifier for given index">
+        <Function name="GetTouchPointId" retType="long long" paramCount="1" desc="Get touch point identifier for given index">
             <Param type="int" name="index" desc="" />
         </Function>
         <Function name="GetTouchPointCount" retType="int" paramCount="0" desc="Get number of touch points">
