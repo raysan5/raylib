@@ -335,12 +335,6 @@ return {
       type = "UNKNOWN",
       value = "SHADER_LOC_MAP_METALNESS",
       description = ""
-    },
-    {
-      name = "GetMouseRay",
-      type = "UNKNOWN",
-      value = "GetScreenToWorldRay",
-      description = "Compatibility hack for previous raylib versions"
     }
   },
   structs = {
@@ -3642,19 +3636,19 @@ return {
     },
     {
       name = "GetScreenToWorldRay",
-      description = "Get a ray trace from screen position (i.e mouse)",
+      description = "Get a ray trace from mouse position",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "mousePosition"},
         {type = "Camera", name = "camera"}
       }
     },
     {
       name = "GetScreenToWorldRayEx",
-      description = "Get a ray trace from screen position (i.e mouse) in a viewport",
+      description = "Get a ray trace from mouse position in a viewport",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "mousePosition"},
         {type = "Camera", name = "camera"},
         {type = "float", name = "width"},
         {type = "float", name = "height"}
@@ -4476,7 +4470,7 @@ return {
     {
       name = "GetTouchPointId",
       description = "Get touch point identifier for given index",
-      returnType = "long long",
+      returnType = "int",
       params = {
         {type = "int", name = "index"}
       }

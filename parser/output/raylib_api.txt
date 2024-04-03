@@ -1,5 +1,5 @@
 
-Defines found: 57
+Defines found: 56
 
 Define 001: RAYLIB_H
   Name: RAYLIB_H
@@ -281,11 +281,6 @@ Define 056: SHADER_LOC_MAP_SPECULAR
   Type: UNKNOWN
   Value: SHADER_LOC_MAP_METALNESS
   Description: 
-Define 057: GetMouseRay
-  Name: GetMouseRay
-  Type: UNKNOWN
-  Value: GetScreenToWorldRay
-  Description: Compatibility hack for previous raylib versions
 
 Structures found: 34
 
@@ -1429,14 +1424,14 @@ Function 083: UnloadShader() (1 input parameters)
 Function 084: GetScreenToWorldRay() (2 input parameters)
   Name: GetScreenToWorldRay
   Return type: Ray
-  Description: Get a ray trace from screen position (i.e mouse)
-  Param[1]: position (type: Vector2)
+  Description: Get a ray trace from mouse position
+  Param[1]: mousePosition (type: Vector2)
   Param[2]: camera (type: Camera)
 Function 085: GetScreenToWorldRayEx() (4 input parameters)
   Name: GetScreenToWorldRayEx
   Return type: Ray
-  Description: Get a ray trace from screen position (i.e mouse) in a viewport
-  Param[1]: position (type: Vector2)
+  Description: Get a ray trace from mouse position in a viewport
+  Param[1]: mousePosition (type: Vector2)
   Param[2]: camera (type: Camera)
   Param[3]: width (type: float)
   Param[4]: height (type: float)
@@ -2006,7 +2001,7 @@ Function 190: GetTouchPosition() (1 input parameters)
   Param[1]: index (type: int)
 Function 191: GetTouchPointId() (1 input parameters)
   Name: GetTouchPointId
-  Return type: long long
+  Return type: int
   Description: Get touch point identifier for given index
   Param[1]: index (type: int)
 Function 192: GetTouchPointCount() (0 input parameters)
