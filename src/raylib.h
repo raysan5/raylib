@@ -1050,7 +1050,7 @@ RLAPI void UnloadShader(Shader shader);                                    // Un
 
 // Screen-space-related functions
 #define GetMouseRay GetScreenToWorldRay     // Compatibility hack for previous raylib versions
-RLAPI Ray GetScreenToWorldRay(Vector2 position, Camera camera);            // Get a ray trace from screen position (i.e mouse)
+RLAPI Ray GetScreenToWorldRay(Vector2 position, Camera camera);         // Get a ray trace from screen position (i.e mouse)
 RLAPI Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height); // Get a ray trace from screen position (i.e mouse) in a viewport
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);        // Get the screen space position for a 3d world space position
 RLAPI Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height); // Get size position for a 3d world space position
