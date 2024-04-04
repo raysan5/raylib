@@ -88,7 +88,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static int map_point_id(UITouch *touch){
+static int MapPointId(UITouch *touch){
     static UITouch* touchs[MAX_TOUCH_POINTS] = { 0 };
     for(int i = 0; i < MAX_TOUCH_POINTS; i++){
         if(touchs[i] == touch) return i + 1;
@@ -643,7 +643,7 @@ static void SyncAllTouches(UIEvent* event)
     {
         CGPoint location = [touch locationInView:platform.viewController.view];
         CORE.Input.Touch.position[i] = (Vector2){ location.x, location.y };
-        CORE.Input.Touch.pointId[i] = map_point_id(touch);
+        CORE.Input.Touch.pointId[i] = MapPointId(touch);
         i++;
         if(i >= MAX_TOUCH_POINTS) break;
     }
@@ -684,7 +684,7 @@ static void SendGestureEvent(NSSet<UITouch *> * touches, int action)
         {
             int size = CORE.Input.Touch.pointCount;
             if(size > MAX_TOUCH_POINTS) size = MAX_TOUCH_POINTS;
-            int i = IndexOf(map_point_id(touch), CORE.Input.Touch.pointId, size);
+            int i = IndexOf(MapPointId(touch), CORE.Input.Touch.pointId, size);
             if(i >= 0){
                 // remove i-th touch point
                 for (int j = i; j < size - 1; j++)
