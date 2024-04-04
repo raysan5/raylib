@@ -456,12 +456,6 @@ void PollInputEvents(void)
     // https://developer.apple.com/documentation/uikit/touches_presses_and_gestures
 }
 
-static void swap_uint(unsigned int* a, unsigned int * b){
-    unsigned tmp = *a;
-    *a = *b;
-    *b = tmp;
-}
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
@@ -555,37 +549,12 @@ int InitPlatform(void)
     }
     else
     {
-        CORE.Window.display.width = [[UIScreen mainScreen] nativeBounds].size.width;
-        CORE.Window.display.height = [[UIScreen mainScreen] nativeBounds].size.height;
-        if(CORE.Window.screen.width == 0){
-            CORE.Window.screen.width = [[UIScreen mainScreen] bounds].size.width;
-        }
-        if(CORE.Window.screen.height == 0){
-            CORE.Window.screen.height = [[UIScreen mainScreen] bounds].size.height;
-        }
-        
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
         CORE.Window.currentFbo.height = CORE.Window.render.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        
-        long long orientation = [[UIApplication sharedApplication] statusBarOrientation];
-        if(orientation == UIInterfaceOrientationPortrait){
-            TRACELOG(LOG_INFO,  "    > Orientation: Portrait");
-        }else if(orientation == UIInterfaceOrientationPortraitUpsideDown){
-            TRACELOG(LOG_INFO,  "    > Orientation: PortraitUpsideDown");
-        }else if(orientation == UIInterfaceOrientationLandscapeLeft){
-            TRACELOG(LOG_INFO,  "    > Orientation: LandscapeLeft");
-            swap_uint(&CORE.Window.display.width, &CORE.Window.display.height);
-        }else if(orientation == UIInterfaceOrientationLandscapeRight){
-            TRACELOG(LOG_INFO,  "    > Orientation: LandscapeRight");
-            swap_uint(&CORE.Window.display.width, &CORE.Window.display.height);
-        }else{
-            TRACELOG(LOG_ERROR, "    > Orientation: Unknown");
-        }
-        
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", GetRenderWidth(), GetRenderHeight());
@@ -666,7 +635,7 @@ void ClosePlatform(void)
     return false;
 }
 
-static void sync_all_touches(UIEvent* event)
+static void SyncAllTouches(UIEvent* event)
 {
     CORE.Input.Touch.pointCount = (int)event.allTouches.count;
     int i = 0;
@@ -681,13 +650,13 @@ static void sync_all_touches(UIEvent* event)
     // TODO: Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
 }
 
-static int array_index_of(int needle, int *haystack, int size)
+static int IndexOf(int needle, int *haystack, int size)
 {
     for (int i = 0; i < size; i++) if(haystack[i] == needle) return i;
     return -1;
 }
 
-static void send_gesture_event(NSSet<UITouch *> * touches, int action)
+static void SendGestureEvent(NSSet<UITouch *> * touches, int action)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
@@ -715,7 +684,7 @@ static void send_gesture_event(NSSet<UITouch *> * touches, int action)
         {
             int size = CORE.Input.Touch.pointCount;
             if(size > MAX_TOUCH_POINTS) size = MAX_TOUCH_POINTS;
-            int i = array_index_of(map_point_id(touch), CORE.Input.Touch.pointId, size);
+            int i = IndexOf(map_point_id(touch), CORE.Input.Touch.pointId, size);
             if(i >= 0){
                 // remove i-th touch point
                 for (int j = i; j < size - 1; j++)
@@ -747,24 +716,24 @@ static void send_gesture_event(NSSet<UITouch *> * touches, int action)
 // touch callbacks
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    sync_all_touches(event);
-    send_gesture_event(touches, TOUCH_ACTION_DOWN);
+    SyncAllTouches(event);
+    SendGestureEvent(touches, TOUCH_ACTION_DOWN);
 }
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    sync_all_touches(event);
-    send_gesture_event(touches, TOUCH_ACTION_UP);
+    SyncAllTouches(event);
+    SendGestureEvent(touches, TOUCH_ACTION_UP);
     // post sync needed
 }
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    sync_all_touches(event);
-    send_gesture_event(touches, TOUCH_ACTION_MOVE);
+    SyncAllTouches(event);
+    SendGestureEvent(touches, TOUCH_ACTION_MOVE);
 }
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    sync_all_touches(event);
-    send_gesture_event(touches, TOUCH_ACTION_CANCEL);
+    SyncAllTouches(event);
+    SendGestureEvent(touches, TOUCH_ACTION_CANCEL);
 }
 
 @end
