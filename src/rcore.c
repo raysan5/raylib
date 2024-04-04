@@ -762,6 +762,12 @@ int GetScreenHeight(void)
     return CORE.Window.screen.height;
 }
 
+// Get current screen width and height as a Vector2
+Vector2 GetScreenSize(void)
+{
+    return (Vector2){ (float)CORE.Window.screen.width, (float)CORE.Window.screen.height };
+}
+
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
