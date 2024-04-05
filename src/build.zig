@@ -254,6 +254,7 @@ pub fn build(b: *std.Build) !void {
         .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
         .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
+        .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
     };
 
     const lib = try addRaylib(b, target, optimize, options);
@@ -306,24 +307,28 @@ fn addCSourceFilesVersioned(
 }
 
 fn waylandGenerate(allocator: std.mem.Allocator, comptime protocol: []const u8, comptime basename: []const u8) !void {
-    _ = try std.process.Child.run(.{
-        .allocator = allocator,
-        .argv = &[_][]const u8{
-            "wayland-scanner",
-            "client-header",
-            waylandDir ++ "/" ++ protocol,
-            srcdir ++ "/" ++ basename ++ ".h",
-        },
-    });
-    _ = try std.process.Child.run(.{
-        .allocator = allocator,
-        .argv = &[_][]const u8{
-            "wayland-scanner",
-            "private-code",
-            waylandDir ++ "/" ++ protocol,
-            srcdir ++ "/" ++ basename ++ "-code.h",
-        },
-    });
+    const protocolDir = waylandDir ++ "/" ++ protocol;
+    const clientHeader = srcdir ++ "/" ++ basename ++ ".h";
+    const privateCode = srcdir ++ "/" ++ basename ++ "-code.h";
+    if (comptime builtin.zig_version.minor >= 12) {
+        _ = try std.process.Child.run(.{
+            .allocator = allocator,
+            .argv = &[_][]const u8{ "wayland-scanner", "client-header", protocolDir, clientHeader },
+        });
+        _ = try std.process.Child.run(.{
+            .allocator = allocator,
+            .argv = &[_][]const u8{ "wayland-scanner", "private-code", protocolDir, privateCode },
+        });
+    } else {
+        _ = try std.process.Child.exec(.{
+            .allocator = allocator,
+            .argv = &[_][]const u8{ "wayland-scanner", "client-header", protocolDir, clientHeader },
+        });
+        _ = try std.process.Child.exec(.{
+            .allocator = allocator,
+            .argv = &[_][]const u8{ "wayland-scanner", "private-code", protocolDir, privateCode },
+        });
+    }
 }
 
 fn join2(allocator: std.mem.Allocator, path1: []const u8, path2: []const u8) ![]u8 {
