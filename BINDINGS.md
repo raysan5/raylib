@@ -22,7 +22,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | bindbc-raylib3     | **5.0**     | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | 4.2     | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/redthing1/dray          |
 | raylib-d           | **5.0** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
-| dlang_raylib       | 4.0     | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | 4.5     | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
 | raylib-freebasic   | **5.0** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
@@ -100,6 +99,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
+| dlang_raylib       | 4.0 | [D](https://dlang.org)                | MPL-2.0 |https://github.com/rc-05/dlang_raylib |
 | raylib_d           | 2.5 | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | bindbc-raylib      | 3.0 | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
 | go-raylib          | 3.5 | [Go](https://golang.org/)             | https://github.com/chunqian/go-raylib  |
