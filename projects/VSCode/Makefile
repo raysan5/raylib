@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= game
-RAYLIB_VERSION     ?= 4.2.0
+RAYLIB_VERSION     ?= 5.1-dev
 RAYLIB_PATH        ?= ..\..
 
 # Define compiler path on Windows
