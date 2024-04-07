@@ -17,17 +17,14 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | chez-raylib        | **auto** | [Chez Scheme](https://cisco.github.io/ChezScheme/) | GPLv3 | https://github.com/Yunoinsky/chez-raylib |
 | raylib-cr          | 4.6-dev (5e1a81) | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | ray-cyber          | 5.0     | [Cyber](https://cyberscript.dev)  | MIT | https://github.com/fubark/ray-cyber |
-| raylib-c3          | **5.0**     | [C3](https://c3-lang.org/)           | Zlib | https://github.com/Its-Kenta/Raylib-C3 |
 | dart-raylib        | 4.0     | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
 | bindbc-raylib3     | **5.0**     | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | 4.2     | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/redthing1/dray          |
 | raylib-d           | **5.0** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
-| dlang_raylib       | 4.0     | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | 4.5     | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
 | raylib-freebasic   | **5.0** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
 | fortran-raylib     | 4.5 | [Fortran](https://fortran-lang.org/) | ISC | https://github.com/interkosmos/fortran-raylib     |
-| raylib for Pascal  | 4.5 | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal) | Modified Zlib | https://github.com/tinyBigGAMES/raylib |
 | raylib-go          | **5.0** | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
 | raylib-guile       | **auto** | [Guile](https://www.gnu.org/software/guile/) | Zlib | https://github.com/petelliott/raylib-guile |
 | gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | **???**  | https://github.com/ArnautDaniel/gforth-raylib   |
@@ -43,7 +40,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-lua         | 4.5     | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | 4.0     | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
 | raylib-matte       | 4.6-dev | [Matte](https://github.com/jcorks/matte/) | MIT | https://github.com/jcorks/raylib-matte | 
-| nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
 | Raylib.nelua       | **5.0** | [nelua](https://nelua.io/)           | Zlib | https://github.com/AuzFox/Raylib.nelua     |
 | NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
 | raylib-bindings    | 4.5     | [Ruby](https://www.ruby-lang.org/en/) | Zlib | https://github.com/vaiorabbit/raylib-bindings |
@@ -58,11 +54,11 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Raylib.4.0.Pascal  | 4.0     | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)| Zlib |  https://github.com/sysrpl/Raylib.4.0.Pascal |
 | pyraylib           | 3.7     | [Python](https://www.python.org/)    | Zlib    | https://github.com/Ho011/pyraylib         |
 | raylib-python-cffi | 4.2 | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
-| raylibpyctbg     | **4.5** | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylibpyctbg                |
+| raylibpyctbg     | 4.5 | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylibpyctbg                |
 | raylib-py          | **5.0b1** | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylib-py       |
 | raylib-python-ctypes | 4.6-dev | [Python](https://www.python.org/)    | MIT | https://github.com/sDos280/raylib-python-ctypes |
 | raylib-pkpy-bindings | 4.6-dev | [pocketpy](https://pocketpy.dev/)    | MIT | https://github.com/blueloveTH/pkpy-bindings |
-| raylib-php         | **4.5** | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
+| raylib-php         | 4.5 | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylibr            | 4.0     | [R](https://www.r-project.org)       | MIT | https://github.com/jeroenjanssens/raylibr         |
 | raylib-ffi          | 4.5     | [Rust](https://www.rust-lang.org/)   | GPLv3 | https://github.com/ewpratten/raylib-ffi        |
@@ -72,7 +68,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-swift       | 4.0     | [Swift](https://swift.org/)          | MIT | https://github.com/STREGAsGate/Raylib          |
 | raylib-scopes      | auto    | [Scopes](http://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
 | raylib-SmallBASIC  | 5.0     | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
-| raylib-umka        | **4.5** | [Umka](https://github.com/vtereshkov/umka-lang) | Zlib | https://github.com/robloach/raylib-umka |
+| raylib-umka        | 4.5 | [Umka](https://github.com/vtereshkov/umka-lang) | Zlib | https://github.com/robloach/raylib-umka |
 | raylib.v           | 4.2     | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
 | raylib-vapi        | 5.0     | [Vala](https://vala.dev/)            | Zlib     | https://github.com/lxmcf/raylib-vapi         |
 | raylib-wren        | 4.0     | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
