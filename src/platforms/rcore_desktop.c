@@ -1515,7 +1515,15 @@ int InitPlatform(void)
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
+    else 
+    {
+        // Try to center window on screen but avoiding window-bar outside of screen
+        int posX = GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2;
+        int posY = GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2;
+        if (posX < 0) posX = 0;
+        if (posY < 0) posY = 0;
+        SetWindowPosition(posX, posY);
+    }
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
