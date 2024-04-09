@@ -431,8 +431,10 @@ static bool SaveFileText(const char *fileName, char *text);         // Save text
 AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 sizeInFrames, int usage);
 void UnloadAudioBuffer(AudioBuffer *buffer);
 
+bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer);
 bool IsAudioBufferPlaying(AudioBuffer *buffer);
 void PlayAudioBuffer(AudioBuffer *buffer);
+void StopAudioBufferInLockedState(AudioBuffer *buffer);
 void StopAudioBuffer(AudioBuffer *buffer);
 void PauseAudioBuffer(AudioBuffer *buffer);
 void ResumeAudioBuffer(AudioBuffer *buffer);
@@ -619,13 +621,23 @@ void UnloadAudioBuffer(AudioBuffer *buffer)
     }
 }
 
-// Check if an audio buffer is playing
-bool IsAudioBufferPlaying(AudioBuffer *buffer)
+// Check if an audio buffer is playing, assuming the audio system mutex has been locked.
+bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer)
 {
     bool result = false;
 
     if (buffer != NULL) result = (buffer->playing && !buffer->paused);
 
+    return result;
+}
+
+// Check if an audio buffer is playing from a program state without lock.
+bool IsAudioBufferPlaying(AudioBuffer *buffer)
+{
+    bool result = false;
+    ma_mutex_lock(&AUDIO.System.lock);
+    result = IsAudioBufferPlayingInLockedState(buffer);
+    ma_mutex_unlock(&AUDIO.System.lock);
     return result;
 }
 
@@ -636,18 +648,20 @@ void PlayAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL)
     {
+        ma_mutex_lock(&AUDIO.System.lock);
         buffer->playing = true;
         buffer->paused = false;
         buffer->frameCursorPos = 0;
+        ma_mutex_unlock(&AUDIO.System.lock);
     }
 }
 
-// Stop an audio buffer
-void StopAudioBuffer(AudioBuffer *buffer)
+// Stop an audio buffer, assuming the audio system mutex has been locked.
+void StopAudioBufferInLockedState(AudioBuffer *buffer)
 {
     if (buffer != NULL)
     {
-        if (IsAudioBufferPlaying(buffer))
+        if (IsAudioBufferPlayingInLockedState(buffer))
         {
             buffer->playing = false;
             buffer->paused = false;
@@ -659,22 +673,45 @@ void StopAudioBuffer(AudioBuffer *buffer)
     }
 }
 
+// Stop an audio buffer from a program state without lock.
+void StopAudioBuffer(AudioBuffer *buffer)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+    StopAudioBufferInLockedState(buffer);
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
 // Pause an audio buffer
 void PauseAudioBuffer(AudioBuffer *buffer)
 {
-    if (buffer != NULL) buffer->paused = true;
+    if (buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        buffer->paused = true;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
 }
 
 // Resume an audio buffer
 void ResumeAudioBuffer(AudioBuffer *buffer)
 {
-    if (buffer != NULL) buffer->paused = false;
+    if (buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        buffer->paused = false;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
 }
 
 // Set volume for an audio buffer
 void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 {
-    if (buffer != NULL) buffer->volume = volume;
+    if (buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        buffer->volume = volume;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
 }
 
 // Set pitch for an audio buffer
@@ -682,6 +719,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
     if ((buffer != NULL) && (pitch > 0.0f))
     {
+        ma_mutex_lock(&AUDIO.System.lock);
         // Pitching is just an adjustment of the sample rate.
         // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
@@ -690,6 +728,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
         ma_data_converter_set_rate(&buffer->converter, buffer->converter.sampleRateIn, outputSampleRate);
 
         buffer->pitch = pitch;
+        ma_mutex_unlock(&AUDIO.System.lock);
     }
 }
 
@@ -699,7 +738,12 @@ void SetAudioBufferPan(AudioBuffer *buffer, float pan)
     if (pan < 0.0f) pan = 0.0f;
     else if (pan > 1.0f) pan = 1.0f;
 
-    if (buffer != NULL) buffer->pan = pan;
+    if (buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        buffer->pan = pan;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
 }
 
 // Track audio buffer to linked list next position
@@ -2410,7 +2454,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
             // We need to break from this loop if we're not looping
             if (!audioBuffer->looping)
             {
-                StopAudioBuffer(audioBuffer);
+                StopAudioBufferInLockedState(audioBuffer);
                 break;
             }
         }
@@ -2546,7 +2590,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                     {
                         if (!audioBuffer->looping)
                         {
-                            StopAudioBuffer(audioBuffer);
+                            StopAudioBufferInLockedState(audioBuffer);
                             break;
                         }
                         else
