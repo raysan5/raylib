@@ -3,8 +3,7 @@ const builtin = @import("builtin");
 
 // This has been tested with zig version(s):
 // 0.11.0
-// 0.12.0-dev.2075+f5978181e
-// 0.12.0-dev.2990+31763d28c
+// 0.12.0-dev.3580+e204a6edb
 //
 // Anytype is used here to preserve compatibility, in 0.12.0dev the std.zig.CrossTarget type
 // was reworked into std.Target.Query and std.Build.ResolvedTarget. Using anytype allows
@@ -259,12 +258,12 @@ pub fn build(b: *std.Build) !void {
 
     const lib = try addRaylib(b, target, optimize, options);
 
-    lib.installHeader(.{ .path = "src/raylib.h" }, "raylib.h");
-    lib.installHeader(.{ .path = "src/raymath.h" }, "raymath.h");
-    lib.installHeader(.{ .path = "src/rlgl.h" }, "rlgl.h");
+    installHeaderVersioned(lib, "src/raylib.h", "raylib.h");
+    installHeaderVersioned(lib, "src/raymath.h", "raymath.h");
+    installHeaderVersioned(lib, "src/rlgl.h", "rlgl.h");
 
     if (options.raygui) {
-        lib.installHeader(.{ .path = "../raygui/src/raygui.h" }, "raygui.h");
+        installHeaderVersioned(lib, "../raygui/src/raygui.h", "raygui.h");
     }
 
     b.installArtifact(lib);
@@ -297,27 +296,33 @@ fn addCSourceFilesVersioned(
     }
 }
 
+fn installHeaderVersioned(
+    lib: *std.Build.Step.Compile,
+    source: []const u8,
+    dest: []const u8,
+) void {
+    if (comptime builtin.zig_version.minor >= 12) {
+        lib.installHeader(.{ .path = source }, dest);
+    } else {
+        lib.installHeader(source, dest);
+    }
+}
+
+const childRunVersioned = if (builtin.zig_version.minor >= 12)
+    std.process.Child.run
+else
+    std.process.Child.exec;
+
 fn waylandGenerate(allocator: std.mem.Allocator, comptime protocol: []const u8, comptime basename: []const u8) !void {
     const protocolDir = waylandDir ++ "/" ++ protocol;
     const clientHeader = "src/" ++ basename ++ ".h";
     const privateCode = "src/" ++ basename ++ "-code.h";
-    if (comptime builtin.zig_version.minor >= 12) {
-        _ = try std.process.Child.run(.{
-            .allocator = allocator,
-            .argv = &[_][]const u8{ "wayland-scanner", "client-header", protocolDir, clientHeader },
-        });
-        _ = try std.process.Child.run(.{
-            .allocator = allocator,
-            .argv = &[_][]const u8{ "wayland-scanner", "private-code", protocolDir, privateCode },
-        });
-    } else {
-        _ = try std.process.Child.exec(.{
-            .allocator = allocator,
-            .argv = &[_][]const u8{ "wayland-scanner", "client-header", protocolDir, clientHeader },
-        });
-        _ = try std.process.Child.exec(.{
-            .allocator = allocator,
-            .argv = &[_][]const u8{ "wayland-scanner", "private-code", protocolDir, privateCode },
-        });
-    }
+    _ = try childRunVersioned(.{
+        .allocator = allocator,
+        .argv = &[_][]const u8{ "wayland-scanner", "client-header", protocolDir, clientHeader },
+    });
+    _ = try childRunVersioned(.{
+        .allocator = allocator,
+        .argv = &[_][]const u8{ "wayland-scanner", "private-code", protocolDir, privateCode },
+    });
 }
