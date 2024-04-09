@@ -1037,8 +1037,8 @@ void UnloadSoundAlias(Sound alias)
     // Untrack and unload just the sound buffer, not the sample data, it is shared with the source for the alias
     if (alias.stream.buffer != NULL)
     {
-        ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
         UntrackAudioBuffer(alias.stream.buffer);
+        ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
         RL_FREE(alias.stream.buffer);
     }
 }
