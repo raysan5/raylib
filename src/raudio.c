@@ -445,6 +445,11 @@ void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
 //----------------------------------------------------------------------------------
+// AudioStream management functions declaration
+//----------------------------------------------------------------------------------
+void UpdateAudioStreamInLockedState(AudioStream stream, const void *data, int frameCount);
+
+//----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
 // Initialize audio device
@@ -1770,19 +1775,10 @@ void UnloadMusicStream(Music music)
     }
 }
 
-// Start music playing (open stream)
+// Start music playing (open stream) from beginning
 void PlayMusicStream(Music music)
 {
-    if (music.stream.buffer != NULL)
-    {
-        // For music streams, we need to make sure we maintain the frame cursor position
-        // This is a hack for this section of code in UpdateMusicStream()
-        // NOTE: In case window is minimized, music stream is stopped, just make sure to
-        // play again on window restore: if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
-        ma_uint32 frameCursorPos = music.stream.buffer->frameCursorPos;
-        PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
-        music.stream.buffer->frameCursorPos = frameCursorPos;
-    }
+    PlayAudioStream(music.stream);
 }
 
 // Pause music playing
@@ -1873,6 +1869,8 @@ void SeekMusicStream(Music music, float position)
 void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
+
+    ma_mutex_lock(&AUDIO.System.lock);
 
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
@@ -2009,7 +2007,7 @@ void UpdateMusicStream(Music music)
             default: break;
         }
 
-        UpdateAudioStream(music.stream, AUDIO.System.pcmBuffer, framesToStream);
+        UpdateAudioStreamInLockedState(music.stream, AUDIO.System.pcmBuffer, framesToStream);
 
         music.stream.buffer->framesProcessed = music.stream.buffer->framesProcessed%music.frameCount;
 
@@ -2017,6 +2015,7 @@ void UpdateMusicStream(Music music)
         {
             if (!music.looping)
             {
+                ma_mutex_unlock(&AUDIO.System.lock);
                 // Streaming is ending, we filled latest frames from input
                 StopMusicStream(music);
                 return;
@@ -2024,9 +2023,7 @@ void UpdateMusicStream(Music music)
         }
     }
 
-    // NOTE: In case window is minimized, music stream is stopped,
-    // just make sure to play again on window restore
-    if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
+    ma_mutex_unlock(&AUDIO.System.lock);
 }
 
 // Check if any music is playing
@@ -2150,6 +2147,13 @@ void UnloadAudioStream(AudioStream stream)
 // NOTE 1: Only updates one buffer of the stream source: dequeue -> update -> queue
 // NOTE 2: To dequeue a buffer it needs to be processed: IsAudioStreamProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+    UpdateAudioStreamInLockedState(stream, data, frameCount);
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+void UpdateAudioStreamInLockedState(AudioStream stream, const void *data, int frameCount)
 {
     if (stream.buffer != NULL)
     {
