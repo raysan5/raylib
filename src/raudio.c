@@ -612,8 +612,8 @@ void UnloadAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL)
     {
-        ma_data_converter_uninit(&buffer->converter, NULL);
         UntrackAudioBuffer(buffer);
+        ma_data_converter_uninit(&buffer->converter, NULL);
         RL_FREE(buffer->data);
         RL_FREE(buffer);
     }
