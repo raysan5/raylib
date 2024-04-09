@@ -1864,7 +1864,9 @@ void SeekMusicStream(Music music, float position)
         default: break;
     }
 
+    ma_mutex_lock(&AUDIO.System.lock);
     music.stream.buffer->framesProcessed = positionInFrames;
+    ma_mutex_unlock(&AUDIO.System.lock);
 }
 
 // Update (re-fill) music buffers if data already processed
@@ -2078,6 +2080,7 @@ float GetMusicTimePlayed(Music music)
         else
 #endif
         {
+            ma_mutex_lock(&AUDIO.System.lock);
             //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
             int framesProcessed = (int)music.stream.buffer->framesProcessed;
             int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
@@ -2087,6 +2090,7 @@ float GetMusicTimePlayed(Music music)
             int framesPlayed = (framesProcessed - framesInFirstBuffer - framesInSecondBuffer + framesSentToMix)%(int)music.frameCount;
             if (framesPlayed < 0) framesPlayed += music.frameCount;
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
+            ma_mutex_unlock(&AUDIO.System.lock);
         }
     }
 
@@ -2199,7 +2203,11 @@ bool IsAudioStreamProcessed(AudioStream stream)
 {
     if (stream.buffer == NULL) return false;
 
-    return (stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1]);
+    bool result = false;
+    ma_mutex_lock(&AUDIO.System.lock);
+    result = stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1];
+    ma_mutex_unlock(&AUDIO.System.lock);
+    return result;
 }
 
 // Play audio stream
@@ -2259,7 +2267,12 @@ void SetAudioStreamBufferSizeDefault(int size)
 // Audio thread callback to request new data
 void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
 {
-    if (stream.buffer != NULL) stream.buffer->callback = callback;
+    if (stream.buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        stream.buffer->callback = callback;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
 }
 
 // Add processor to audio stream. Contrary to buffers, the order of processors is important.
