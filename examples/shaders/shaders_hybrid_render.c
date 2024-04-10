@@ -116,7 +116,7 @@ int main(void)
                 DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
             EndShaderMode();
             
-            // Raserize Scene
+            // Rasterize Scene
             BeginMode3D(camera);
                 BeginShaderMode(shdrRaster);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, RED);
