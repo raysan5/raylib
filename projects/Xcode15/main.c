@@ -10,6 +10,7 @@
 *   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
+#ifndef RL_IOS_NO_EXAMPLE
 
 #include "raylib.h"
 
@@ -118,3 +119,5 @@ void ios_update()
 void ios_destroy(){
     CloseWindow();        // Close window and OpenGL context
 }
+
+#endif
