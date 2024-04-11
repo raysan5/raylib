@@ -115,8 +115,8 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
                 raylib.linkSystemLibrary("dl");
                 raylib.linkSystemLibrary("m");
 
-                raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
-                raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
+                raylib.addLibraryPath(.{ .path = "/usr/lib" });
+                raylib.addIncludePath(.{ .path = "/usr/include" });
 
                 switch (options.linux_display_backend) {
                     .X11 => {
