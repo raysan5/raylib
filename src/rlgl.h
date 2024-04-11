@@ -558,6 +558,10 @@ typedef enum {
 extern "C" {            // Prevents name mangling of functions
 #endif
 
+RLAPI void rlSetClipPlanes(double near, double far);
+RLAPI double rlGetCullDistanceNear();
+RLAPI double rlGetCullDistanceFar();
+
 RLAPI void rlMatrixMode(int mode);                      // Choose the current matrix to be transformed
 RLAPI void rlPushMatrix(void);                          // Push the current matrix to stack
 RLAPI void rlPopMatrix(void);                           // Pop latest inserted matrix from stack
@@ -1062,6 +1066,10 @@ typedef void *(*rlglLoadProc)(const char *name);   // OpenGL extension functions
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+
+static double rlCullDistanceNear = RL_CULL_DISTANCE_NEAR;
+static double rlCullDistanceFar = RL_CULL_DISTANCE_FAR;
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static rlglData RLGL = { 0 };
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
@@ -1098,6 +1106,22 @@ static Matrix rlMatrixMultiply(Matrix left, Matrix right);  // Multiply two matr
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
 //----------------------------------------------------------------------------------
+
+void rlSetClipPlanes(double near, double far)
+{
+	rlCullDistanceNear = near;
+	rlCullDistanceFar = far;
+}
+
+double rlGetCullDistanceFar()
+{
+	return rlCullDistanceFar;
+}
+
+double rlGetCullDistanceNear()
+{
+	return rlCullDistanceNear;
+}
 
 #if defined(GRAPHICS_API_OPENGL_11)
 // Fallback to OpenGL 1.1 function calls
