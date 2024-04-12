@@ -549,6 +549,15 @@ int InitPlatform(void)
     }
     else
     {
+        CORE.Window.display.width = [[UIScreen mainScreen] nativeBounds].size.width;
+        CORE.Window.display.height = [[UIScreen mainScreen] nativeBounds].size.height;
+        if(CORE.Window.screen.width == 0){
+            CORE.Window.screen.width = [[UIScreen mainScreen] bounds].size.width;
+        }
+        if(CORE.Window.screen.height == 0){
+            CORE.Window.screen.height = [[UIScreen mainScreen] bounds].size.height;
+        }
+        
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
