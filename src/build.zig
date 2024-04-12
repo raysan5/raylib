@@ -258,12 +258,12 @@ pub fn build(b: *std.Build) !void {
 
     const lib = try addRaylib(b, target, optimize, options);
 
-    installHeaderVersioned(lib, "src/raylib.h", "raylib.h");
-    installHeaderVersioned(lib, "src/raymath.h", "raymath.h");
-    installHeaderVersioned(lib, "src/rlgl.h", "rlgl.h");
+    installHeaderVersioned(b, lib, "src/raylib.h", "raylib.h");
+    installHeaderVersioned(b, lib, "src/raymath.h", "raymath.h");
+    installHeaderVersioned(b, lib, "src/rlgl.h", "rlgl.h");
 
     if (options.raygui) {
-        installHeaderVersioned(lib, "../raygui/src/raygui.h", "raygui.h");
+        installHeaderVersioned(b, lib, "../raygui/src/raygui.h", "raygui.h");
     }
 
     b.installArtifact(lib);
@@ -297,12 +297,16 @@ fn addCSourceFilesVersioned(
 }
 
 fn installHeaderVersioned(
+    b: *std.Build,
     lib: *std.Build.Step.Compile,
     source: []const u8,
     dest: []const u8,
 ) void {
     if (comptime builtin.zig_version.minor >= 12) {
-        lib.installHeader(.{ .path = source }, dest);
+        lib.installHeader(.{ .src_path = .{
+            .owner = b,
+            .sub_path = source,
+        } }, dest);
     } else {
         lib.installHeader(source, dest);
     }
