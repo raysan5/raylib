@@ -1461,6 +1461,7 @@ Music LoadMusicStream(const char *fileName)
     #endif
 
         music.ctxData = NULL;
+        music.ctxType = MUSIC_AUDIO_NONE;
         TRACELOG(LOG_WARNING, "FILEIO: [%s] Music file could not be opened", fileName);
     }
     else
@@ -1670,6 +1671,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 #endif
 
         music.ctxData = NULL;
+        music.ctxType = MUSIC_AUDIO_NONE;
         TRACELOG(LOG_WARNING, "FILEIO: Music data could not be loaded");
     }
     else
