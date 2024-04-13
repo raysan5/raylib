@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 
 // This has been tested with zig version(s):
 // 0.11.0
-// 0.12.0-dev.3580+e204a6edb
+// 0.12.0-dev.3632+7fb5a0b18
 //
 // Anytype is used here to preserve compatibility, in 0.12.0dev the std.zig.CrossTarget type
 // was reworked into std.Target.Query and std.Build.ResolvedTarget. Using anytype allows
@@ -50,37 +50,37 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
 
     // No GLFW required on PLATFORM_DRM
     if (!options.platform_drm) {
-        raylib.addIncludePath(.{ .path = "src/external/glfw/include" });
+        raylib.addIncludePath(.{ .cwd_relative = srcdir ++ "external/glfw/include" });
     }
 
     addCSourceFilesVersioned(raylib, &.{
-        "src/rcore.c",
-        "src/utils.c",
+        "rcore.c",
+        "utils.c",
     }, raylib_flags_arr.items);
 
     if (options.raudio) {
         addCSourceFilesVersioned(raylib, &.{
-            "src/raudio.c",
+            "raudio.c",
         }, raylib_flags_arr.items);
     }
     if (options.rmodels) {
         addCSourceFilesVersioned(raylib, &.{
-            "src/rmodels.c",
+            "rmodels.c",
         }, raylib_flags_arr.items);
     }
     if (options.rshapes) {
         addCSourceFilesVersioned(raylib, &.{
-            "src/rshapes.c",
+            "rshapes.c",
         }, raylib_flags_arr.items);
     }
     if (options.rtext) {
         addCSourceFilesVersioned(raylib, &.{
-            "src/rtext.c",
+            "rtext.c",
         }, raylib_flags_arr.items);
     }
     if (options.rtextures) {
         addCSourceFilesVersioned(raylib, &.{
-            "src/rtextures.c",
+            "rtextures.c",
         }, raylib_flags_arr.items);
     }
 
@@ -90,14 +90,14 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
     if (options.raygui) {
         const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
         raylib.addCSourceFile(.{ .file = raygui_c_path, .flags = raylib_flags_arr.items });
-        raylib.addIncludePath(.{ .path = "src" });
-        raylib.addIncludePath(.{ .path = "../raygui/src" });
+        raylib.addIncludePath(.{ .cwd_relative = srcdir });
+        raylib.addIncludePath(.{ .cwd_relative = srcdir ++ "../../raygui/src" });
     }
 
     switch (getOsTagVersioned(target)) {
         .windows => {
             addCSourceFilesVersioned(raylib, &.{
-                "src/rglfw.c",
+                "rglfw.c",
             }, raylib_flags_arr.items);
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
@@ -108,7 +108,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
         .linux => {
             if (!options.platform_drm) {
                 addCSourceFilesVersioned(raylib, &.{
-                    "src/rglfw.c",
+                    "rglfw.c",
                 }, raylib_flags_arr.items);
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
@@ -129,7 +129,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
                         raylib.linkSystemLibrary("wayland-cursor");
                         raylib.linkSystemLibrary("wayland-egl");
                         raylib.linkSystemLibrary("xkbcommon");
-                        raylib.addIncludePath(.{ .path = "src" });
+                        raylib.addIncludePath(.{ .path = srcdir });
                         try waylandGenerate(gpa, "wayland.xml", "wayland-client-protocol");
                         try waylandGenerate(gpa, "xdg-shell.xml", "xdg-shell-client-protocol");
                         try waylandGenerate(gpa, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
@@ -162,7 +162,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
             addCSourceFilesVersioned(raylib, &.{
-                "src/rglfw.c",
+                "rglfw.c",
             }, raylib_flags_arr.items);
             raylib.linkSystemLibrary("GL");
             raylib.linkSystemLibrary("rt");
@@ -181,7 +181,7 @@ pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeM
             // On macos rglfw.c include Objective-C files.
             try raylib_flags_arr.append("-ObjC");
             addCSourceFilesVersioned(raylib, &.{
-                "src/rglfw.c",
+                "rglfw.c",
             }, raylib_flags_arr.items);
             raylib.linkFramework("Foundation");
             raylib.linkFramework("CoreServices");
@@ -269,7 +269,13 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(lib);
 }
 
-const waylandDir = "src/external/glfw/deps/wayland";
+const srcdir = struct {
+    fn getSrcDir() []const u8 {
+        return std.fs.path.dirname(@src().file).?;
+    }
+}.getSrcDir() ++ "/";
+
+const waylandDir = srcdir ++ "external/glfw/deps/wayland";
 
 fn getOsTagVersioned(target: anytype) std.Target.Os.Tag {
     if (comptime builtin.zig_version.minor >= 12) {
@@ -279,18 +285,24 @@ fn getOsTagVersioned(target: anytype) std.Target.Os.Tag {
     }
 }
 
-fn addCSourceFilesVersioned(
+inline fn addCSourceFilesVersioned(
     exe: *std.Build.Step.Compile,
     files: []const []const u8,
     flags: []const []const u8,
 ) void {
     if (comptime builtin.zig_version.minor >= 12) {
         exe.addCSourceFiles(.{
+            .root = .{ .path = srcdir },
             .files = files,
             .flags = flags,
         });
     } else if (comptime builtin.zig_version.minor == 11) {
-        exe.addCSourceFiles(files, flags);
+        inline for (files) |file| {
+            exe.addCSourceFile(.{
+                .file = .{ .path = srcdir ++ file },
+                .flags = flags,
+            });
+        }
     } else {
         @compileError("Expected zig version 11 or 12");
     }
@@ -315,8 +327,8 @@ else
 
 fn waylandGenerate(allocator: std.mem.Allocator, comptime protocol: []const u8, comptime basename: []const u8) !void {
     const protocolDir = waylandDir ++ "/" ++ protocol;
-    const clientHeader = "src/" ++ basename ++ ".h";
-    const privateCode = "src/" ++ basename ++ "-code.h";
+    const clientHeader = srcdir ++ basename ++ ".h";
+    const privateCode = srcdir ++ basename ++ "-code.h";
     _ = try childRunVersioned(.{
         .allocator = allocator,
         .argv = &[_][]const u8{ "wayland-scanner", "client-header", protocolDir, clientHeader },
