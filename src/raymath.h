@@ -955,6 +955,22 @@ RMAPI Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
     return result;
 }
 
+// Calculate cubic hermite interpolation between two vectors and their tangents
+// taken directly from: https://en.wikipedia.org/wiki/Cubic_Hermite_spline
+RMAPI Vector3 Vector3CubicHermite(Vector3 v1, Vector3 tangent1, Vector3 v2, Vector3 tangent2, float amount)
+{
+    Vector3 result = { 0 };
+
+    float amountPow2 = amount * amount;
+    float amountPow3 = amount * amount * amount;
+
+    result.x = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.x + (amountPow3 - 2 * amountPow2 + amount) * tangent1.x + (-2 * amountPow3 + 3 * amountPow2) * v2.x + (amountPow3 - amountPow2) * tangent2.x;
+    result.y = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.y + (amountPow3 - 2 * amountPow2 + amount) * tangent1.y + (-2 * amountPow3 + 3 * amountPow2) * v2.y + (amountPow3 - amountPow2) * tangent2.y;
+    result.z = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.z + (amountPow3 - 2 * amountPow2 + amount) * tangent1.z + (-2 * amountPow3 + 3 * amountPow2) * v2.z + (amountPow3 - amountPow2) * tangent2.z;
+
+    return result;
+}
+
 // Calculate reflected vector to normal
 RMAPI Vector3 Vector3Reflect(Vector3 v, Vector3 normal)
 {
@@ -2194,6 +2210,18 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         }
     }
 
+    return result;
+}
+
+// Calculate quaternion cubic spline interpolation using the SQUAD algorithm
+// roughly adapted from the SQUAD algorithm presented here: https://roboop.sourceforge.io/htmldoc/robotse9.html
+RMAPI Quaternion QuaternionCubicSpline(Quaternion q1, Quaternion tangent1, Quaternion q2, Quaternion tangent2, float amount)
+{
+    Quaternion slerp1 = QuaternionSlerp(q1, q2, amount);
+    Quaternion slerp2 = QuaternionSlerp(tangent1, tangent2, amount);
+    float t = 2 * amount * (1 - amount);
+
+    Quaternion result = QuaternionSlerp(slerp1, slerp2, t);
     return result;
 }
 

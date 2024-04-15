@@ -5356,8 +5356,10 @@ static Model LoadGLTF(const char *fileName)
 }
 
 // Get interpolated pose for bone sampler at a specific time. Returns true on success.
-static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, float time, void *data)
+static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_accessor *input, cgltf_accessor *output, float time, void *data)
 {
+    if (interpolationType >= cgltf_interpolation_type_max_enum) return false;
+
     // Input and output should have the same count
     float tstart = 0.0f;
     float tend = 0.0f;
@@ -5377,7 +5379,7 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
             break;
         }
     }
-
+    
     float t = (time - tstart)/fmax((tend - tstart), EPSILON);
     t = (t < 0.0f)? 0.0f : t;
     t = (t > 1.0f)? 1.0f : t;
@@ -5386,25 +5388,90 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
 
     if (output->type == cgltf_type_vec3)
     {
-        float tmp[3] = { 0.0f };
-        cgltf_accessor_read_float(output, keyframe, tmp, 3);
-        Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
-        cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
-        Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
-        Vector3 *r = data;
-        *r = Vector3Lerp(v1, v2, t);
+        switch (interpolationType)
+        {
+            case cgltf_interpolation_type_step:
+            {
+                float tmp[3] = { 0.0f };
+                cgltf_accessor_read_float(output, keyframe, tmp, 3);
+                Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
+                Vector3 *r = data;
+
+                *r = v1;
+            } break;
+
+            case cgltf_interpolation_type_linear:
+            {
+                float tmp[3] = { 0.0f };
+                cgltf_accessor_read_float(output, keyframe, tmp, 3);
+                Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
+                cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
+                Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
+                Vector3 *r = data;
+                
+                *r = Vector3Lerp(v1, v2, t);
+            } break;
+
+            case cgltf_interpolation_type_cubic_spline:
+            {
+                float tmp[3] = { 0.0f };
+                cgltf_accessor_read_float(output, 3*keyframe+1, tmp, 3);
+                Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
+                cgltf_accessor_read_float(output, 3*keyframe+2, tmp, 3);
+                Vector3 tangent1 = {tmp[0], tmp[1], tmp[2]};
+                cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 3);
+                Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
+                cgltf_accessor_read_float(output, 3*(keyframe+1)+1, tmp, 3);
+                Vector3 tangent2 = {tmp[0], tmp[1], tmp[2]};
+                Vector3 *r = data;
+
+                *r = Vector3CubicHermite(v1, tangent1, v2, tangent2, t);
+            } break;
+        }
     }
     else if (output->type == cgltf_type_vec4)
     {
-        float tmp[4] = { 0.0f };
-        cgltf_accessor_read_float(output, keyframe, tmp, 4);
-        Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
-        cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
-        Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
-        Vector4 *r = data;
-
         // Only v4 is for rotations, so we know it's a quaternion
-        *r = QuaternionSlerp(v1, v2, t);
+        switch (interpolationType)
+        {
+            case cgltf_interpolation_type_step:
+            {
+                float tmp[4] = { 0.0f };
+                cgltf_accessor_read_float(output, keyframe, tmp, 4);
+                Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                Vector4 *r = data;
+
+                *r = v1;
+            } break;
+
+            case cgltf_interpolation_type_linear:
+            {
+                float tmp[4] = { 0.0f };
+                cgltf_accessor_read_float(output, keyframe, tmp, 4);
+                Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
+                Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                Vector4 *r = data;
+                
+                *r = QuaternionSlerp(v1, v2, t);
+            } break;
+
+            case cgltf_interpolation_type_cubic_spline:
+            {
+                float tmp[4] = { 0.0f };
+                cgltf_accessor_read_float(output, 3*keyframe+1, tmp, 4);
+                Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                cgltf_accessor_read_float(output, 3*keyframe+2, tmp, 4);
+                Vector4 tangent1 = {tmp[0], tmp[1], tmp[2]};
+                cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 4);
+                Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                cgltf_accessor_read_float(output, 3*(keyframe+1)+1, tmp, 4);
+                Vector4 tangent2 = {tmp[0], tmp[1], tmp[2]};
+                Vector4 *r = data;
+
+                *r = QuaternionCubicSpline(v1, tangent1, v2, tangent2, t);
+            } break;
+        }
     }
 
     return true;
@@ -5455,6 +5522,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     cgltf_animation_channel *translate;
                     cgltf_animation_channel *rotate;
                     cgltf_animation_channel *scale;
+                    cgltf_interpolation_type interpolationType;
                 };
 
                 struct Channels *boneChannels = RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
@@ -5480,7 +5548,9 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         continue;
                     }
 
-                    if (animData.channels[j].sampler->interpolation == cgltf_interpolation_type_linear)
+                    boneChannels[boneIndex].interpolationType = animData.channels[j].sampler->interpolation;
+
+                    if (animData.channels[j].sampler->interpolation != cgltf_interpolation_type_max_enum)
                     {
                         if (channel.target_path == cgltf_animation_path_type_translation)
                         {
@@ -5499,7 +5569,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                             TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, i);
                         }
                     }
-                    else TRACELOG(LOG_WARNING, "MODEL: [%s] Only linear interpolation curves are supported for GLTF animation.", fileName);
+                    else TRACELOG(LOG_WARNING, "MODEL: [%s] Invalid interpolation curve encountered for GLTF animation.", fileName);
 
                     float t = 0.0f;
                     cgltf_bool r = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &t, 1);
@@ -5532,7 +5602,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                         if (boneChannels[k].translate)
                         {
-                            if (!GetPoseAtTimeGLTF(boneChannels[k].translate->sampler->input, boneChannels[k].translate->sampler->output, time, &translation))
+                            if (!GetPoseAtTimeGLTF(boneChannels[k].interpolationType, boneChannels[k].translate->sampler->input, boneChannels[k].translate->sampler->output, time, &translation))
                             {
                                 TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load translate pose data for bone %s", fileName, animations[i].bones[k].name);
                             }
@@ -5540,7 +5610,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                         if (boneChannels[k].rotate)
                         {
-                            if (!GetPoseAtTimeGLTF(boneChannels[k].rotate->sampler->input, boneChannels[k].rotate->sampler->output, time, &rotation))
+                            if (!GetPoseAtTimeGLTF(boneChannels[k].interpolationType, boneChannels[k].rotate->sampler->input, boneChannels[k].rotate->sampler->output, time, &rotation))
                             {
                                 TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load rotate pose data for bone %s", fileName, animations[i].bones[k].name);
                             }
@@ -5548,7 +5618,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                         if (boneChannels[k].scale)
                         {
-                            if (!GetPoseAtTimeGLTF(boneChannels[k].scale->sampler->input, boneChannels[k].scale->sampler->output, time, &scale))
+                            if (!GetPoseAtTimeGLTF(boneChannels[k].interpolationType, boneChannels[k].scale->sampler->input, boneChannels[k].scale->sampler->output, time, &scale))
                             {
                                 TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load scale pose data for bone %s", fileName, animations[i].bones[k].name);
                             }
