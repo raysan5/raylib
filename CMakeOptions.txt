@@ -8,6 +8,7 @@ enum_option(OPENGL_VERSION "OFF;4.3;3.3;2.1;1.1;ES 2.0;ES 3.0" "Force a specific
 
 # Configuration options
 option(BUILD_EXAMPLES "Build the examples." ${RAYLIB_IS_MAIN})
+option(BUILD_EXAMPLE "Build a specific example by filename." "")
 option(CUSTOMIZE_BUILD "Show options for customizing your Raylib library build." OFF)
 option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades performance)" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)

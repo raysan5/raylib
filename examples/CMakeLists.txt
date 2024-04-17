@@ -48,10 +48,24 @@ endif ()
 # into a CMake variable
 set(example_sources)
 set(example_resources)
+set(example_found FALSE)
 foreach (example_dir ${example_dirs})
-    # Get the .c files
-    file(GLOB sources ${example_dir}/*.c)
-    list(APPEND example_sources ${sources})
+    if (BUILD_EXAMPLE)
+        if (NOT example_found)
+            file(GLOB sources ${example_dir}/${BUILD_EXAMPLE}.c)
+            if (EXISTS ${sources})
+                list(APPEND example_sources ${sources})
+                set(example_found TRUE)
+                message("Raylib example '${BUILD_EXAMPLE}.c' found in ${example_dir}!")
+            else()
+                message("Raylib example '${BUILD_EXAMPLE}.c' not found in ${example_dir}...")
+            endif()
+        endif()
+    else()
+        # Get the .c files
+        file(GLOB sources ${example_dir}/*.c)
+        list(APPEND example_sources ${sources})
+    endif()
 
     # Any any resources
     file(GLOB resources ${example_dir}/resources/*)
