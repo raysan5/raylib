@@ -5380,7 +5380,8 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
         }
     }
     
-    float t = (time - tstart)/fmax((tend - tstart), EPSILON);
+    float duration = fmax((tend - tstart), EPSILON);
+    float t = (time - tstart)/duration;
     t = (t < 0.0f)? 0.0f : t;
     t = (t > 1.0f)? 1.0f : t;
 
@@ -5419,9 +5420,9 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, 3*keyframe+2, tmp, 3);
                 Vector3 tangent1 = {tmp[0], tmp[1], tmp[2]};
-                cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 3);
-                Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1)+1, tmp, 3);
+                Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
+                cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 3);
                 Vector3 tangent2 = {tmp[0], tmp[1], tmp[2]};
                 Vector3 *r = data;
 
@@ -5462,14 +5463,25 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 cgltf_accessor_read_float(output, 3*keyframe+1, tmp, 4);
                 Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, 3*keyframe+2, tmp, 4);
-                Vector4 tangent1 = {tmp[0], tmp[1], tmp[2]};
-                cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 4);
-                Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                Vector4 outTangent1 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1)+1, tmp, 4);
-                Vector4 tangent2 = {tmp[0], tmp[1], tmp[2]};
+                Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+                cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 4);
+                Vector4 inTangent2 = {tmp[0], tmp[1], tmp[2]};
                 Vector4 *r = data;
 
-                *r = QuaternionCubicSpline(v1, tangent1, v2, tangent2, t);
+                v1 = QuaternionNormalize(v1);
+                v2 = QuaternionNormalize(v2);
+
+                if (Vector4DotProduct(v1, v2) < 0.0f)
+                {
+                    v2 = Vector4Negate(v2);
+                }
+                
+                outTangent1 = Vector4Scale(outTangent1, duration);
+                inTangent2 = Vector4Scale(inTangent2, duration);
+
+                *r = QuaternionCubicHermiteSpline(v1, outTangent1, v2, inTangent2, t);
             } break;
         }
     }
