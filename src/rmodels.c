@@ -570,8 +570,9 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
-        for (int i = 0; i < sides; i++) {
-            // compute the four vertices
+        for (int i = 0; i < sides; i++)
+        {
+            // Compute the four vertices
             float s1 = sinf(baseAngle*(i + 0))*startRadius;
             float c1 = cosf(baseAngle*(i + 0))*startRadius;
             Vector3 w1 = { startPos.x + s1*b1.x + c1*b2.x, startPos.y + s1*b1.y + c1*b2.y, startPos.z + s1*b1.z + c1*b2.z };
@@ -585,11 +586,12 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
             float c4 = cosf(baseAngle*(i + 1))*endRadius;
             Vector3 w4 = { endPos.x + s4*b1.x + c4*b2.x, endPos.y + s4*b1.y + c4*b2.y, endPos.z + s4*b1.z + c4*b2.z };
 
-            if (startRadius > 0) {                              //
+            if (startRadius > 0)
+            {
                 rlVertex3f(startPos.x, startPos.y, startPos.z); // |
                 rlVertex3f(w2.x, w2.y, w2.z);                   // T0
                 rlVertex3f(w1.x, w1.y, w1.z);                   // |
-            }                                                   //
+            }
                                                                 //          w2 x.-----------x startPos
             rlVertex3f(w1.x, w1.y, w1.z);                       // |           |\'.  T0    /
             rlVertex3f(w2.x, w2.y, w2.z);                       // T1          | \ '.     /
@@ -599,7 +601,8 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
             rlVertex3f(w4.x, w4.y, w4.z);                       // T2            '.  \  |T3/
             rlVertex3f(w3.x, w3.y, w3.z);                       // |               '. \ | /
                                                                 //                   '.\|/
-            if (endRadius > 0) {                                //                     'x w3
+            if (endRadius > 0)                                  //                     'x w3
+            {
                 rlVertex3f(endPos.x, endPos.y, endPos.z);       // |
                 rlVertex3f(w3.x, w3.y, w3.z);                   // T3
                 rlVertex3f(w4.x, w4.y, w4.z);                   // |
@@ -657,8 +660,9 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
-        for (int i = 0; i < sides; i++) {
-            // compute the four vertices
+        for (int i = 0; i < sides; i++)
+        {
+            // Compute the four vertices
             float s1 = sinf(baseAngle*(i + 0))*startRadius;
             float c1 = cosf(baseAngle*(i + 0))*startRadius;
             Vector3 w1 = { startPos.x + s1*b1.x + c1*b2.x, startPos.y + s1*b1.y + c1*b2.y, startPos.z + s1*b1.z + c1*b2.z };
@@ -4749,7 +4753,8 @@ static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memo
 }
 
 // Release file data callback for cgltf
-static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data) {
+static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data)
+{
     UnloadFileData(data);
 }
 
@@ -5335,7 +5340,8 @@ static Model LoadGLTF(const char *fileName)
                 model.meshes[meshIndex].animVertices = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
                 memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
                 model.meshes[meshIndex].animNormals = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
-                if (model.meshes[meshIndex].normals != NULL) {
+                if (model.meshes[meshIndex].normals != NULL)
+                {
                     memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
                 }
 
@@ -5379,7 +5385,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
             break;
         }
     }
-    
+
     float duration = fmax((tend - tstart), EPSILON);
     float t = (time - tstart)/duration;
     t = (t < 0.0f)? 0.0f : t;
@@ -5400,7 +5406,6 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
 
                 *r = v1;
             } break;
-
             case cgltf_interpolation_type_linear:
             {
                 float tmp[3] = { 0.0f };
@@ -5409,10 +5414,9 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
                 Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
                 Vector3 *r = data;
-                
+
                 *r = Vector3Lerp(v1, v2, t);
             } break;
-
             case cgltf_interpolation_type_cubic_spline:
             {
                 float tmp[3] = { 0.0f };
@@ -5428,6 +5432,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
 
                 *r = Vector3CubicHermite(v1, tangent1, v2, tangent2, t);
             } break;
+            default: break;
         }
     }
     else if (output->type == cgltf_type_vec4)
@@ -5444,7 +5449,6 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
 
                 *r = v1;
             } break;
-
             case cgltf_interpolation_type_linear:
             {
                 float tmp[4] = { 0.0f };
@@ -5453,10 +5457,9 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
                 Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 Vector4 *r = data;
-                
+
                 *r = QuaternionSlerp(v1, v2, t);
             } break;
-
             case cgltf_interpolation_type_cubic_spline:
             {
                 float tmp[4] = { 0.0f };
@@ -5477,12 +5480,13 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 {
                     v2 = Vector4Negate(v2);
                 }
-                
+
                 outTangent1 = Vector4Scale(outTangent1, duration);
                 inTangent2 = Vector4Scale(inTangent2, duration);
 
                 *r = QuaternionCubicHermiteSpline(v1, outTangent1, v2, inTangent2, t);
             } break;
+            default: break;
         }
     }
 

@@ -1993,8 +1993,9 @@ void ImageAlphaPremultiply(Image *image)
     ImageFormat(image, format);
 }
 
-// Apply box blur
-void ImageBlurGaussian(Image *image, int blurSize) {
+// Apply box blur to image
+void ImageBlurGaussian(Image *image, int blurSize)
+{
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
@@ -2006,7 +2007,8 @@ void ImageBlurGaussian(Image *image, int blurSize) {
     Vector4 *pixelsCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
     Vector4 *pixelsCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
 
-    for (int i = 0; i < (image->height)*(image->width); i++) {
+    for (int i = 0; i < (image->height*image->width); i++)
+    {
         pixelsCopy1[i].x = pixels[i].r;
         pixelsCopy1[i].y = pixels[i].g;
         pixelsCopy1[i].z = pixels[i].b;
@@ -2014,7 +2016,8 @@ void ImageBlurGaussian(Image *image, int blurSize) {
     }
 
     // Repeated convolution of rectangular window signal by itself converges to a gaussian distribution
-    for (int j = 0; j < GAUSSIAN_BLUR_ITERATIONS; j++) {
+    for (int j = 0; j < GAUSSIAN_BLUR_ITERATIONS; j++)
+    {
         // Horizontal motion blur
         for (int row = 0; row < image->height; row++)
         {
@@ -4997,22 +5000,25 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-// From https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
-
-static float HalfToFloat(unsigned short x) {
-    const unsigned int e = (x&0x7C00)>>10; // exponent
-    const unsigned int m = (x&0x03FF)<<13; // mantissa
+// Convert half-float (stored as unsigned short) to float
+// REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
+static float HalfToFloat(unsigned short x)
+{
+    const unsigned int e = (x & 0x7C00) >> 10; // Exponent
+    const unsigned int m = (x & 0x03FF) << 13; // Mantissa
     const float fm = (float)m;
-    const unsigned int v = (*(unsigned int*)&fm)>>23; // evil log2 bit hack to count leading zeros in denormalized format
-    const unsigned int r = (x&0x8000)<<16 | (e!=0)*((e+112)<<23|m) | ((e==0)&(m!=0))*((v-37)<<23|((m<<(150-v))&0x007FE000)); // sign : normalized : denormalized
+    const unsigned int v = (*(unsigned int*)&fm) >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
+    const unsigned int r = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
     return *(float*)&r;
 }
 
-static unsigned short FloatToHalf(float x) {
-    const unsigned int b = (*(unsigned int*)&x)+0x00001000; // round-to-nearest-even: add last bit after truncated mantissa
-    const unsigned int e = (b&0x7F800000)>>23; // exponent
-    const unsigned int m = b&0x007FFFFF; // mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
-    return (b&0x80000000)>>16 | (e>112)*((((e-112)<<10)&0x7C00)|m>>13) | ((e<113)&(e>101))*((((0x007FF000+m)>>(125-e))+1)>>1) | (e>143)*0x7FFF; // sign : normalized : denormalized : saturate
+// Convert float to half-float (stored as unsigned short)
+static unsigned short FloatToHalf(float x)
+{
+    const unsigned int b = (*(unsigned int*) & x) + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
+    const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
+    const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
+    return (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7FFF; // sign : normalized : denormalized : saturate
 }
 
 // Get pixel data from image as Vector4 array (float normalized)
