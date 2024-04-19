@@ -1518,10 +1518,16 @@ int InitPlatform(void)
     else 
     {
         // Try to center window on screen but avoiding window-bar outside of screen
-        int posX = GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2;
-        int posY = GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2;
-        if (posX < 0) posX = 0;
-        if (posY < 0) posY = 0;
+        int monitorX = 0;
+        int monitorY = 0;
+        int monitorWidth = 0;
+        int monitorHeight = 0;
+        glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
+
+        int posX = monitorX + (monitorWidth - CORE.Window.screen.width)/2;
+        int posY = monitorY + (monitorHeight - CORE.Window.screen.height)/2;
+        if (posX < monitorX) posX = monitorX;
+        if (posY < monitorY) posY = monitorY;
         SetWindowPosition(posX, posY);
     }
 
