@@ -316,7 +316,8 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         unsigned char *dataPtr = fileData;
         unsigned int size = GetPixelDataSize(width, height, format);
 
-        if (headerSize > 0) dataPtr += headerSize;
+        // Offset file data to expected raw image by header size 
+        if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
 
         image.data = RL_MALLOC(size);      // Allocate required memory in bytes
         memcpy(image.data, dataPtr, size); // Copy required data to image
