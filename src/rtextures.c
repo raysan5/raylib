@@ -920,8 +920,8 @@ Image GenImageColor(int width, int height, Color color)
 #if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: linear gradient
 // The direction value specifies the direction of the gradient (in degrees)
-// with 0 being vertical (from top to bottom), 90 being horizontal (from left to right).
-// The gradient effectively rotates counter-clockwise by the specified amount.
+// with 0 being vertical (from top to bottom), 90 being horizontal (from left to right)
+// The gradient effectively rotates counter-clockwise by the specified amount
 Image GenImageGradientLinear(int width, int height, int direction, Color start, Color end)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
@@ -2152,7 +2152,7 @@ void ImageBlurGaussian(Image *image, int blurSize)
     ImageFormat(image, format);
 }
 
-// The kernel matrix is assumed to be square. Only supply the width of the kernel.
+// The kernel matrix is assumed to be square. Only supply the width of the kernel
 void ImageKernelConvolution(Image *image, float* kernel, int kernelSize)
 {
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0) || kernel == NULL) return;
@@ -4243,7 +4243,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
-        // the vertex positions manually, like done above.
+        // the vertex positions manually, like done above
         // I leave here the old implementation for educational purposes,
         // just in case someone wants to do some performance test
         /*

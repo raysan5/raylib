@@ -296,7 +296,7 @@ typedef struct CoreData {
             char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
 
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
-            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame.
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame
 
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
@@ -806,7 +806,7 @@ bool IsCursorHidden(void)
     return CORE.Input.Mouse.cursorHidden;
 }
 
-// Check if cursor is on the current screen.
+// Check if cursor is on the current screen
 bool IsCursorOnScreen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
@@ -1213,9 +1213,9 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
         config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
         // Compute camera transformation matrices
-        // NOTE: Camera movement might seem more natural if we model the head.
+        // NOTE: Camera movement might seem more natural if we model the head
         // Our axis of rotation is the base of our head, so we might want to add
-        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions
         config.viewOffset[0] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
         config.viewOffset[1] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
@@ -1462,9 +1462,10 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
     Vector3 nearPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
     Vector3 farPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
-    // Unproject the mouse cursor in the near plane.
-    // We need this as the source position because orthographic projects, compared to perspective doesn't have a
-    // convergence point, meaning that the "eye" of the camera is more like a plane than a point.
+    // Unproject the mouse cursor in the near plane
+    // We need this as the source position because orthographic projects, 
+    // compared to perspective doesn't have a convergence point, 
+    // meaning that the "eye" of the camera is more like a plane than a point
     Vector3 cameraPlanePointerPos = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, -1.0f }, matProj, matView);
 
     // Calculate normalized direction vector
@@ -1495,12 +1496,12 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     //   1. Move it to target
     //   2. Rotate by -rotation and scale by (1/zoom)
     //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
-    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
+    //      not for the camera getting bigger, hence the invert. Same deal with rotation
     //   3. Move it by (-offset);
     //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
     //      we need to do it into opposite direction (inverse transform)
 
-    // Having camera transform in world-space, inverse of it gives the modelview transform.
+    // Having camera transform in world-space, inverse of it gives the modelview transform
     // Since (A*B*C)' = C'*B'*A', the modelview is
     //   1. Move to offset
     //   2. Rotate and Scale
@@ -1691,7 +1692,7 @@ void WaitTime(double seconds)
         req.tv_sec = sec;
         req.tv_nsec = nsec;
 
-        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated
         while (nanosleep(&req, &req) == -1) continue;
     #endif
     #if defined(__APPLE__)
@@ -1826,7 +1827,7 @@ void TakeScreenshot(const char *fileName)
 
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
-// because it sets up some flags for the window creation process.
+// because it sets up some flags for the window creation process
 // To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
@@ -3085,10 +3086,10 @@ int GetTouchPointCount(void)
 // Initialize hi-resolution timer
 void InitTimer(void)
 {
-    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
-    // High resolutions can also prevent the CPU power management system from entering power-saving modes.
-    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions
+    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
+    // High resolutions can also prevent the CPU power management system from entering power-saving modes
+    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
@@ -3572,16 +3573,6 @@ static void RecordAutomationEvent(void)
     }
     //-------------------------------------------------------------------------------------
 #endif
-
-    // Window events recording
-    //-------------------------------------------------------------------------------------
-    // TODO.
-    //-------------------------------------------------------------------------------------
-
-    // Custom actions events recording
-    //-------------------------------------------------------------------------------------
-    // TODO.
-    //-------------------------------------------------------------------------------------
 }
 #endif
 

@@ -41,7 +41,7 @@
 #if defined(PLATFORM_ANDROID)
     #include <errno.h>                  // Required for: Android error types
     #include <android/log.h>            // Required for: Android log system: __android_log_vprint()
-    #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
+    #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open()...
 #endif
 
 #include <stdlib.h>                     // Required for: exit()

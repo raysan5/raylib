@@ -1593,7 +1593,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // Enable mesh VAO to attach new buffer
     rlEnableVertexArray(mesh.vaoId);
 
-    // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData().
+    // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData()
     // It isn't clear which would be reliably faster in all cases and on all platforms,
     // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
     // no faster, since we're transferring all the transform matrices anyway
@@ -2695,7 +2695,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
     {
         // Instance a cylinder that sits on the Z=0 plane using the given tessellation
         // levels across the UV domain.  Think of "slices" like a number of pizza
-        // slices, and "stacks" like a number of stacked rings.
+        // slices, and "stacks" like a number of stacked rings
         // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
         par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
         par_shapes_scale(cylinder, radius, radius, height);
@@ -2759,7 +2759,7 @@ Mesh GenMeshCone(float radius, float height, int slices)
     {
         // Instance a cone that sits on the Z=0 plane using the given tessellation
         // levels across the UV domain.  Think of "slices" like a number of pizza
-        // slices, and "stacks" like a number of stacked rings.
+        // slices, and "stacks" like a number of stacked rings
         // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
         par_shapes_mesh *cone = par_shapes_create_cone(slices, 8);
         par_shapes_scale(cone, radius, radius, height);
@@ -3813,7 +3813,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     RayCollision collision = { 0 };
 
     // Note: If ray.position is inside the box, the distance is negative (as if the ray was reversed)
-    // Reversing ray.direction will give use the correct result.
+    // Reversing ray.direction will give use the correct result
     bool insideBox = (ray.position.x > box.min.x) && (ray.position.x < box.max.x) &&
                      (ray.position.y > box.min.y) && (ray.position.y < box.max.y) &&
                      (ray.position.z > box.min.z) && (ray.position.z < box.max.z);
@@ -5068,7 +5068,7 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
 
-                        // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined.
+                        // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined
 
                         if ((attribute->component_type == cgltf_component_type_r_32f) && (attribute->type == cgltf_type_vec3))
                         {
@@ -5129,7 +5129,7 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
 
-                        // WARNING: SPECS: All components of each COLOR_n accessor element MUST be clamped to [0.0, 1.0] range.
+                        // WARNING: SPECS: All components of each COLOR_n accessor element MUST be clamped to [0.0, 1.0] range
 
                         if ((attribute->component_type == cgltf_component_type_r_8u) && (attribute->type == cgltf_type_vec4))
                         {
@@ -5369,7 +5369,7 @@ static Model LoadGLTF(const char *fileName)
     return model;
 }
 
-// Get interpolated pose for bone sampler at a specific time. Returns true on success.
+// Get interpolated pose for bone sampler at a specific time. Returns true on success
 static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_accessor *input, cgltf_accessor *output, float time, void *data)
 {
     if (interpolationType >= cgltf_interpolation_type_max_enum) return false;
@@ -5833,7 +5833,7 @@ static Model LoadM3D(const char *fileName)
         // We always need a default material, so we add +1
         model.materialCount++;
 
-        // Faces must be in non-decreasing materialid order. Verify that quickly, sorting them otherwise.
+        // Faces must be in non-decreasing materialid order. Verify that quickly, sorting them otherwise
         // WARNING: Sorting is not needed, valid M3D model files should already be sorted
         // Just keeping the sorting function for reference (Check PR #3363 #3385)
         /*
@@ -5841,12 +5841,12 @@ static Model LoadM3D(const char *fileName)
         {
             if (m3d->face[i-1].materialid <= m3d->face[i].materialid) continue;
 
-            // face[i-1] > face[i].  slide face[i] lower.
+            // face[i-1] > face[i].  slide face[i] lower
             m3df_t slider = m3d->face[i];
             j = i-1;
 
             do
-            {   // face[j] > slider, face[j+1] is svailable vacant gap.
+            {   // face[j] > slider, face[j+1] is svailable vacant gap
                 m3d->face[j+1] = m3d->face[j];
                 j = j-1;
             }
@@ -6107,7 +6107,7 @@ static Model LoadM3D(const char *fileName)
         }
 
         // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
-        // called, but not before, however DrawMesh uses these if they exist (so not good if they are left empty).
+        // called, but not before, however DrawMesh uses these if they exist (so not good if they are left empty)
         if (m3d->numbone && m3d->numskin)
         {
             for (i = 0; i < model.meshCount; i++)

@@ -119,7 +119,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// ...
+//...
 
 //----------------------------------------------------------------------------------
 // Global variables
@@ -1077,7 +1077,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
 #endif
     // We have two possible mechanisms to assign font.recs and font.glyphs data,
     // that data is already available as global arrays, we two options to assign that data:
-    //  - 1. Data copy. This option consumes more memory and Font MUST be unloaded by user, requiring additional code.
+    //  - 1. Data copy. This option consumes more memory and Font MUST be unloaded by user, requiring additional code
     //  - 2. Data assignment. This option consumes less memory and Font MUST NOT be unloaded by user because data is on protected DATA segment
 //#define SUPPORT_FONT_DATA_COPY
 #if defined(SUPPORT_FONT_DATA_COPY)
