@@ -62,7 +62,7 @@ int main(void)
 
             if (drawRect) DrawRectangleRec(rec, Fade(GOLD, 0.6f));
             if (drawRoundedRect) DrawRectangleRounded(rec, roundness, (int)segments, Fade(MAROON, 0.2f));
-            if (drawRoundedLines) DrawRectangleRoundedLines(rec, roundness, (int)segments, lineThick, Fade(MAROON, 0.4f));
+            if (drawRoundedLines) DrawRectangleRoundedLinesEx(rec, roundness, (int)segments, lineThick, Fade(MAROON, 0.4f));
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
