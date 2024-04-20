@@ -457,6 +457,9 @@ Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileDat
 {
     Image image = { 0 };
     int frameCount = 0;
+    
+    // Security check for input data
+    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
 
 #if defined(SUPPORT_FILEFORMAT_GIF)
     if ((strcmp(fileType, ".gif") == 0) || (strcmp(fileType, ".GIF") == 0))
