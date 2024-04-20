@@ -410,8 +410,17 @@ static AudioData AUDIO = {          // Global AUDIO context
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage);
+
+// Reads audio data from an AudioBuffer object in internal/device formats
+static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer, void *framesOut, ma_uint32 frameCount);
+static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount);
+
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer);
+
+static bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer);
+static void StopAudioBufferInLockedState(AudioBuffer *buffer);
+static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data, int frameCount);
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
@@ -431,10 +440,8 @@ static bool SaveFileText(const char *fileName, char *text);         // Save text
 AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 sizeInFrames, int usage);
 void UnloadAudioBuffer(AudioBuffer *buffer);
 
-bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer);
 bool IsAudioBufferPlaying(AudioBuffer *buffer);
 void PlayAudioBuffer(AudioBuffer *buffer);
-void StopAudioBufferInLockedState(AudioBuffer *buffer);
 void StopAudioBuffer(AudioBuffer *buffer);
 void PauseAudioBuffer(AudioBuffer *buffer);
 void ResumeAudioBuffer(AudioBuffer *buffer);
@@ -444,10 +451,6 @@ void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
-//----------------------------------------------------------------------------------
-// AudioStream management functions declaration
-//----------------------------------------------------------------------------------
-void UpdateAudioStreamInLockedState(AudioStream stream, const void *data, int frameCount);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
@@ -467,12 +470,12 @@ void InitAudioDevice(void)
     }
 
     // Init audio device
-    // NOTE: Using the default device. Format is floating point because it simplifies mixing.
+    // NOTE: Using the default device. Format is floating point because it simplifies mixing
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
-    config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device.
+    config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device
     config.playback.format = AUDIO_DEVICE_FORMAT;
     config.playback.channels = AUDIO_DEVICE_CHANNELS;
-    config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device.
+    config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device
     config.capture.format = ma_format_s16;
     config.capture.channels = 1;
     config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
@@ -488,7 +491,7 @@ void InitAudioDevice(void)
     }
 
     // Mixing happens on a separate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
-    // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
+    // want to look at something a bit smarter later on to keep everything real-time, if that's necessary
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to create mutex for mixing");
@@ -498,7 +501,7 @@ void InitAudioDevice(void)
     }
 
     // Keep the device running the whole time. May want to consider doing something a bit smarter and only have the device running
-    // while there's at least one sound being played.
+    // while there's at least one sound being played
     result = ma_device_start(&AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
@@ -626,17 +629,7 @@ void UnloadAudioBuffer(AudioBuffer *buffer)
     }
 }
 
-// Check if an audio buffer is playing, assuming the audio system mutex has been locked.
-bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer)
-{
-    bool result = false;
-
-    if (buffer != NULL) result = (buffer->playing && !buffer->paused);
-
-    return result;
-}
-
-// Check if an audio buffer is playing from a program state without lock.
+// Check if an audio buffer is playing from a program state without lock
 bool IsAudioBufferPlaying(AudioBuffer *buffer)
 {
     bool result = false;
@@ -647,8 +640,8 @@ bool IsAudioBufferPlaying(AudioBuffer *buffer)
 }
 
 // Play an audio buffer
-// NOTE: Buffer is restarted to the start.
-// Use PauseAudioBuffer() and ResumeAudioBuffer() if the playback position should be maintained.
+// NOTE: Buffer is restarted to the start
+// Use PauseAudioBuffer() and ResumeAudioBuffer() if the playback position should be maintained
 void PlayAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL)
@@ -661,24 +654,7 @@ void PlayAudioBuffer(AudioBuffer *buffer)
     }
 }
 
-// Stop an audio buffer, assuming the audio system mutex has been locked.
-void StopAudioBufferInLockedState(AudioBuffer *buffer)
-{
-    if (buffer != NULL)
-    {
-        if (IsAudioBufferPlayingInLockedState(buffer))
-        {
-            buffer->playing = false;
-            buffer->paused = false;
-            buffer->frameCursorPos = 0;
-            buffer->framesProcessed = 0;
-            buffer->isSubBufferProcessed[0] = true;
-            buffer->isSubBufferProcessed[1] = true;
-        }
-    }
-}
-
-// Stop an audio buffer from a program state without lock.
+// Stop an audio buffer from a program state without lock
 void StopAudioBuffer(AudioBuffer *buffer)
 {
     ma_mutex_lock(&AUDIO.System.lock);
@@ -725,7 +701,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
     if ((buffer != NULL) && (pitch > 0.0f))
     {
         ma_mutex_lock(&AUDIO.System.lock);
-        // Pitching is just an adjustment of the sample rate.
+        // Pitching is just an adjustment of the sample rate
         // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
         //  - lower pitches make it slower
@@ -951,15 +927,15 @@ Sound LoadSoundFromWave(Wave wave)
 
     if (wave.data != NULL)
     {
-        // When using miniaudio we need to do our own mixing.
+        // When using miniaudio we need to do our own mixing
         // To simplify this we need convert the format of each sound to be consistent with
         // the format used to open the playback AUDIO.System.device. We can do this two ways:
         //
-        //   1) Convert the whole sound in one go at load time (here).
-        //   2) Convert the audio data in chunks at mixing time.
+        //   1) Convert the whole sound in one go at load time (here)
+        //   2) Convert the audio data in chunks at mixing time
         //
-        // First option has been selected, format conversion is done on the loading stage.
-        // The downside is that it uses more memory if the original sound is u8 or s16.
+        // First option has been selected, format conversion is done on the loading stage
+        // The downside is that it uses more memory if the original sound is u8 or s16
         ma_format formatIn = ((wave.sampleSize == 8)? ma_format_u8 : ((wave.sampleSize == 16)? ma_format_s16 : ma_format_f32));
         ma_uint32 frameCountIn = wave.frameCount;
 
@@ -2167,55 +2143,6 @@ void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
-void UpdateAudioStreamInLockedState(AudioStream stream, const void *data, int frameCount)
-{
-    if (stream.buffer != NULL)
-    {
-        if (stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1])
-        {
-            ma_uint32 subBufferToUpdate = 0;
-
-            if (stream.buffer->isSubBufferProcessed[0] && stream.buffer->isSubBufferProcessed[1])
-            {
-                // Both buffers are available for updating.
-                // Update the first one and make sure the cursor is moved back to the front.
-                subBufferToUpdate = 0;
-                stream.buffer->frameCursorPos = 0;
-            }
-            else
-            {
-                // Just update whichever sub-buffer is processed.
-                subBufferToUpdate = (stream.buffer->isSubBufferProcessed[0])? 0 : 1;
-            }
-
-            ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
-            unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
-
-            // Total frames processed in buffer is always the complete size, filled with 0 if required
-            stream.buffer->framesProcessed += subBufferSizeInFrames;
-
-            // Does this API expect a whole buffer to be updated in one go?
-            // Assuming so, but if not will need to change this logic.
-            if (subBufferSizeInFrames >= (ma_uint32)frameCount)
-            {
-                ma_uint32 framesToWrite = (ma_uint32)frameCount;
-
-                ma_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
-                memcpy(subBuffer, data, bytesToWrite);
-
-                // Any leftover frames should be filled with zeros.
-                ma_uint32 leftoverFrameCount = subBufferSizeInFrames - framesToWrite;
-
-                if (leftoverFrameCount > 0) memset(subBuffer + bytesToWrite, 0, leftoverFrameCount*stream.channels*(stream.sampleSize/8));
-
-                stream.buffer->isSubBufferProcessed[subBufferToUpdate] = false;
-            }
-            else TRACELOG(LOG_WARNING, "STREAM: Attempting to write too many frames to buffer");
-        }
-        else TRACELOG(LOG_WARNING, "STREAM: Buffer not available for updating");
-    }
-}
-
 // Check if any audio stream buffers requires refill
 bool IsAudioStreamProcessed(AudioStream stream)
 {
@@ -2246,7 +2173,7 @@ void ResumeAudioStream(AudioStream stream)
     ResumeAudioBuffer(stream.buffer);
 }
 
-// Check if audio stream is playing.
+// Check if audio stream is playing
 bool IsAudioStreamPlaying(AudioStream stream)
 {
     return IsAudioBufferPlaying(stream.buffer);
@@ -2293,9 +2220,9 @@ void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
     }
 }
 
-// Add processor to audio stream. Contrary to buffers, the order of processors is important.
+// Add processor to audio stream. Contrary to buffers, the order of processors is important
 // The new processor must be added at the end. As there aren't supposed to be a lot of processors attached to
-// a given stream, we iterate through the list to find the end. That way we don't need a pointer to the last element.
+// a given stream, we iterate through the list to find the end. That way we don't need a pointer to the last element
 void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 {
     ma_mutex_lock(&AUDIO.System.lock);
@@ -2410,7 +2337,7 @@ static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage)
     TRACELOG(LOG_WARNING, "miniaudio: %s", pMessage);   // All log messages from miniaudio are errors
 }
 
-// Reads audio data from an AudioBuffer object in internal format.
+// Reads audio data from an AudioBuffer object in internal format
 static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer, void *framesOut, ma_uint32 frameCount)
 {
     // Using audio buffer callback
@@ -2498,20 +2425,20 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 
         // For static buffers we can fill the remaining frames with silence for safety, but we don't want
         // to report those frames as "read". The reason for this is that the caller uses the return value
-        // to know whether a non-looping sound has finished playback.
+        // to know whether a non-looping sound has finished playback
         if (audioBuffer->usage != AUDIO_BUFFER_USAGE_STATIC) framesRead += totalFramesRemaining;
     }
 
     return framesRead;
 }
 
-// Reads audio data from an AudioBuffer object in device format. Returned data will be in a format appropriate for mixing.
+// Reads audio data from an AudioBuffer object in device format, returned data will be in a format appropriate for mixing
 static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount)
 {
     // What's going on here is that we're continuously converting data from the AudioBuffer's internal format to the mixing format, which
     // should be defined by the output format of the data converter. We do this until frameCount frames have been output. The important
     // detail to remember here is that we never, ever attempt to read more input data than is required for the specified number of output
-    // frames. This can be achieved with ma_data_converter_get_required_input_frame_count().
+    // frames. This can be achieved with ma_data_converter_get_required_input_frame_count()
     ma_uint8 inputBuffer[4096] = { 0 };
     ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
 
@@ -2690,6 +2617,83 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
                 frameOut[c] += (frameIn[c]*localVolume);
             }
         }
+    }
+}
+
+// Check if an audio buffer is playing, assuming the audio system mutex has been locked
+static bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer)
+{
+    bool result = false;
+
+    if (buffer != NULL) result = (buffer->playing && !buffer->paused);
+
+    return result;
+}
+
+// Stop an audio buffer, assuming the audio system mutex has been locked
+static void StopAudioBufferInLockedState(AudioBuffer *buffer)
+{
+    if (buffer != NULL)
+    {
+        if (IsAudioBufferPlayingInLockedState(buffer))
+        {
+            buffer->playing = false;
+            buffer->paused = false;
+            buffer->frameCursorPos = 0;
+            buffer->framesProcessed = 0;
+            buffer->isSubBufferProcessed[0] = true;
+            buffer->isSubBufferProcessed[1] = true;
+        }
+    }
+}
+
+// Update audio stream, assuming the audio system mutex has been locked
+static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data, int frameCount)
+{
+    if (stream.buffer != NULL)
+    {
+        if (stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1])
+        {
+            ma_uint32 subBufferToUpdate = 0;
+
+            if (stream.buffer->isSubBufferProcessed[0] && stream.buffer->isSubBufferProcessed[1])
+            {
+                // Both buffers are available for updating
+                // Update the first one and make sure the cursor is moved back to the front
+                subBufferToUpdate = 0;
+                stream.buffer->frameCursorPos = 0;
+            }
+            else
+            {
+                // Just update whichever sub-buffer is processed
+                subBufferToUpdate = (stream.buffer->isSubBufferProcessed[0])? 0 : 1;
+            }
+
+            ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
+            unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
+
+            // Total frames processed in buffer is always the complete size, filled with 0 if required
+            stream.buffer->framesProcessed += subBufferSizeInFrames;
+
+            // Does this API expect a whole buffer to be updated in one go?
+            // Assuming so, but if not will need to change this logic
+            if (subBufferSizeInFrames >= (ma_uint32)frameCount)
+            {
+                ma_uint32 framesToWrite = (ma_uint32)frameCount;
+
+                ma_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
+                memcpy(subBuffer, data, bytesToWrite);
+
+                // Any leftover frames should be filled with zeros
+                ma_uint32 leftoverFrameCount = subBufferSizeInFrames - framesToWrite;
+
+                if (leftoverFrameCount > 0) memset(subBuffer + bytesToWrite, 0, leftoverFrameCount*stream.channels*(stream.sampleSize/8));
+
+                stream.buffer->isSubBufferProcessed[subBufferToUpdate] = false;
+            }
+            else TRACELOG(LOG_WARNING, "STREAM: Attempting to write too many frames to buffer");
+        }
+        else TRACELOG(LOG_WARNING, "STREAM: Buffer not available for updating");
     }
 }
 
