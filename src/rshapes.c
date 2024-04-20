@@ -196,18 +196,17 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw lines sequuence (using gl lines)
 void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
-    if (pointCount >= 2)
-    {
-        rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+    if (pointCount < 2) return; // Security check
 
-            for (int i = 0; i < pointCount - 1; i++)
-            {
-                rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-            }
-        rlEnd();
-    }
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < pointCount - 1; i++)
+        {
+            rlVertex2f(points[i].x, points[i].y);
+            rlVertex2f(points[i + 1].x, points[i + 1].y);
+        }
+    rlEnd();
 }
 
 // Draw line using cubic-bezier spline, in-out interpolation, no control points
@@ -807,15 +806,11 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 }
 
 // Draw rectangle outline
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
+// WARNING: All Draw*Lines() functions use RL_LINES for drawing,
+// it implies flushing the current batch and changing draw mode to RL_LINES
+// but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-    DrawRectangle(posX, posY, width, 1, color);
-    DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
-    DrawRectangle(posX, posY + height - 1, width, 1, color);
-    DrawRectangle(posX, posY + 1, 1, height - 2, color);
-#else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(posX + 1, posY + 1);
@@ -830,7 +825,6 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         rlVertex2f(posX + 1, posY + height);
         rlVertex2f(posX + 1, posY + 1);
     rlEnd();
-#endif
 }
 
 // Draw rectangle outline with extended parameters
@@ -1090,8 +1084,15 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 #endif
 }
 
+// Draw rectangle with rounded edges
+// TODO: This function should be refactored to use RL_LINES, for consistency with other Draw*Lines()
+void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
+{
+    DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
+}
+
 // Draw rectangle with rounded edges outline
-void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color)
+void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color)
 {
     if (lineThick < 0) lineThick = 0;
 
