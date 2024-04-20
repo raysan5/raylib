@@ -670,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="561">
+    <Functions count="562">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1464,7 +1464,13 @@
             <Param type="int" name="segments" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="5" desc="Draw rectangle with rounded edges outline">
+        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="4" desc="Draw rectangle lines with rounded edges">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="float" name="roundness" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleRoundedLinesEx" retType="void" paramCount="5" desc="Draw rectangle with rounded edges outline">
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="float" name="roundness" desc="" />
             <Param type="int" name="segments" desc="" />
