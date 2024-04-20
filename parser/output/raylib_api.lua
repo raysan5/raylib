@@ -4891,6 +4891,17 @@ return {
     },
     {
       name = "DrawRectangleRoundedLines",
+      description = "Draw rectangle lines with rounded edges",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "float", name = "roundness"},
+        {type = "int", name = "segments"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleRoundedLinesEx",
       description = "Draw rectangle with rounded edges outline",
       returnType = "void",
       params = {
