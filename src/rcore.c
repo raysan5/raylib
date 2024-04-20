@@ -1419,7 +1419,9 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 // Get a ray trace from screen position (i.e mouse)
 Ray GetScreenToWorldRay(Vector2 position, Camera camera)
 {
-    return GetScreenToWorldRayEx(position, camera, GetScreenWidth(), GetScreenHeight());
+    Ray ray = GetScreenToWorldRayEx(position, camera, GetScreenWidth(), GetScreenHeight());
+    
+    return ray;
 }
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
@@ -1480,7 +1482,9 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
 // Get transform matrix for camera
 Matrix GetCameraMatrix(Camera camera)
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix mat = MatrixLookAt(camera.position, camera.target, camera.up);
+    
+    return mat;
 }
 
 // Get camera 2d transform matrix
@@ -1661,7 +1665,7 @@ float GetFrameTime(void)
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
 void WaitTime(double seconds)
 {
-    if (seconds < 0) return;
+    if (seconds < 0) return;    // Security check
 
 #if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
     double destinationTime = GetTime() + seconds;
@@ -1754,7 +1758,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 #if defined(SUPPORT_RPRAND_GENERATOR)
     values = rprand_load_sequence(count, min, max);
 #else
-    if (count > ((unsigned int)abs(max - min) + 1)) return values;
+    if (count > ((unsigned int)abs(max - min) + 1)) return values;  // Security check
 
     values = (int *)RL_CALLOC(count, sizeof(int));
 
@@ -1946,7 +1950,9 @@ const char *GetFileExtension(const char *fileName)
 static const char *strprbrk(const char *s, const char *charset)
 {
     const char *latestMatch = NULL;
+    
     for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+    
     return latestMatch;
 }
 
@@ -1954,9 +1960,10 @@ static const char *strprbrk(const char *s, const char *charset)
 const char *GetFileName(const char *filePath)
 {
     const char *fileName = NULL;
+    
     if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
-
-    if (!fileName) return filePath;
+    
+    if (fileName != NULL) return filePath;
 
     return fileName + 1;
 }
@@ -2235,8 +2242,11 @@ bool IsPathFile(const char *path)
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
-    if (CORE.Window.dropFileCount > 0) return true;
-    else return false;
+    bool result = false;
+    
+    if (CORE.Window.dropFileCount > 0) result = true;
+    
+    return result;
 }
 
 // Load dropped filepaths
@@ -2270,15 +2280,16 @@ void UnloadDroppedFiles(FilePathList files)
 long GetFileModTime(const char *fileName)
 {
     struct stat result = { 0 };
+    long modTime = 0;
 
     if (stat(fileName, &result) == 0)
     {
         time_t mod = result.st_mtime;
 
-        return (long)mod;
+        modTime = (long)mod;
     }
 
-    return 0;
+    return modTime;
 }
 
 //----------------------------------------------------------------------------------
@@ -2347,7 +2358,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 
     char *encodedData = (char *)RL_MALLOC(*outputSize);
 
-    if (encodedData == NULL) return NULL;
+    if (encodedData == NULL) return NULL;   // Security check
 
     for (int i = 0, j = 0; i < dataSize;)
     {
@@ -2949,13 +2960,15 @@ bool IsMouseButtonUp(int button)
 // Get mouse position X
 int GetMouseX(void)
 {
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    int mouseX = (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    return mouseX;
 }
 
 // Get mouse position Y
 int GetMouseY(void)
 {
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    int mouseY = (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    return mouseY;
 }
 
 // Get mouse position XY
@@ -3022,13 +3035,15 @@ Vector2 GetMouseWheelMoveV(void)
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-    return (int)CORE.Input.Touch.position[0].x;
+    int touchX = (int)CORE.Input.Touch.position[0].x;
+    return touchX;
 }
 
 // Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-    return (int)CORE.Input.Touch.position[0].y;
+    int touchY = (int)CORE.Input.Touch.position[0].y;
+    return touchY;
 }
 
 // Get touch position XY for a touch point index (relative to screen size)

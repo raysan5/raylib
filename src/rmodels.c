@@ -228,7 +228,7 @@ void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 // Draw a triangle strip defined by points
 void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
-    if (pointCount < 3) return;
+    if (pointCount < 3) return; // Security check
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -559,7 +559,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     if (sides < 3) sides = 3;
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
-    if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return;
+    if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return; // Security check
 
     // Construct a basis of the base and the top face:
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
@@ -649,7 +649,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     if (sides < 3) sides = 3;
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
-    if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0))return;
+    if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return; // Security check
 
     // Construct a basis of the base and the top face:
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
@@ -755,8 +755,8 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
                         capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin4*b1.z + ringCos4*b2.z) * radius
                     };
 
-                    // make sure cap triangle normals are facing outwards
-                    if(c == 0)
+                    // Make sure cap triangle normals are facing outwards
+                    if (c == 0)
                     {
                         rlVertex3f(w1.x, w1.y, w1.z);
                         rlVertex3f(w2.x, w2.y, w2.z);
@@ -1104,13 +1104,17 @@ Model LoadModelFromMesh(Mesh mesh)
 // Check if a model is ready
 bool IsModelReady(Model model)
 {
-    return ((model.meshes != NULL) &&           // Validate model contains some mesh
-            (model.materials != NULL) &&        // Validate model contains some material (at least default one)
-            (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
-            (model.meshCount > 0) &&            // Validate mesh count
-            (model.materialCount > 0));         // Validate material count
+    bool result = false;
+    
+    if ((model.meshes != NULL) &&           // Validate model contains some mesh
+        (model.materials != NULL) &&        // Validate model contains some material (at least default one)
+        (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
+        (model.meshCount > 0) &&            // Validate mesh count
+        (model.materialCount > 0)) result = true; // Validate material count
 
     // NOTE: This is a very general model validation, many elements could be validated from a model...
+    
+    return result;
 }
 
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)
@@ -2033,8 +2037,12 @@ Material LoadMaterialDefault(void)
 // Check if a material is ready
 bool IsMaterialReady(Material material)
 {
-    return ((material.maps != NULL) &&      // Validate material contain some map
-            (material.shader.id > 0));      // Validate material shader is valid
+    bool result = false;
+    
+    if ((material.maps != NULL) &&      // Validate material contain some map
+        (material.shader.id > 0)) result = true; // Validate material shader is valid
+            
+    return result;
 }
 
 // Unload material from memory
@@ -2230,7 +2238,7 @@ Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
 
-    if (sides < 3) return mesh;
+    if (sides < 3) return mesh; // Security check
 
     int vertexCount = sides*3;
 
@@ -4493,7 +4501,7 @@ static Model LoadIQM(const char *fileName)
 
     BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
 
-    RL_FREE(fileData);
+    UnloadFileData(fileData);
 
     RL_FREE(imesh);
     RL_FREE(tri);
@@ -4725,7 +4733,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         }
     }
 
-    RL_FREE(fileData);
+    UnloadFileData(fileData);
 
     RL_FREE(joints);
     RL_FREE(framedata);
@@ -6102,7 +6110,7 @@ static Model LoadM3D(const char *fileName)
         // called, but not before, however DrawMesh uses these if they exist (so not good if they are left empty).
         if (m3d->numbone && m3d->numskin)
         {
-            for(i = 0; i < model.meshCount; i++)
+            for (i = 0; i < model.meshCount; i++)
             {
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));

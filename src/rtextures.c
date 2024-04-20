@@ -71,10 +71,10 @@
 #if defined(SUPPORT_MODULE_RTEXTURES)
 
 #include "utils.h"              // Required for: TRACELOG()
-#include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+#include "rlgl.h"               // OpenGL abstraction layer to multiple versions
 
-#include <stdlib.h>             // Required for: malloc(), free()
-#include <string.h>             // Required for: strlen() [Used in ImageTextEx()], strcmp() [Used in LoadImageFromMemory()]
+#include <stdlib.h>             // Required for: malloc(), calloc(), free()
+#include <string.h>             // Required for: strlen() [Used in ImageTextEx()], strcmp() [Used in LoadImageFromMemory()/LoadImageAnimFromMemory()/ExportImageToMemory()]
 #include <math.h>               // Required for: fabsf() [Used in DrawTextureRec()]
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
 
@@ -293,9 +293,12 @@ Image LoadImage(const char *fileName)
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     // Loading image from memory data
-    if (fileData != NULL) image = LoadImageFromMemory(GetFileExtension(fileName), fileData, dataSize);
+    if (fileData != NULL) 
+    {
+        image = LoadImageFromMemory(GetFileExtension(fileName), fileData, dataSize);
 
-    RL_FREE(fileData);
+        UnloadFileData(fileData);
+    }
 
     return image;
 }
@@ -322,7 +325,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         image.mipmaps = 1;
         image.format = format;
 
-        RL_FREE(fileData);
+        UnloadFileData(fileData);
     }
 
     return image;
@@ -431,7 +434,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
             image.mipmaps = 1;
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-            RL_FREE(fileData);
+            UnloadFileData(fileData);
             RL_FREE(delays);        // NOTE: Frames delays are discarded
         }
     }
@@ -494,6 +497,9 @@ Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileDat
 Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Image image = { 0 };
+    
+    // Security check for input data
+    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
 
     if ((false)
 #if defined(SUPPORT_FILEFORMAT_PNG)
@@ -699,11 +705,15 @@ Image LoadImageFromScreen(void)
 // Check if an image is ready
 bool IsImageReady(Image image)
 {
-    return ((image.data != NULL) &&     // Validate pixel data available
-            (image.width > 0) &&
-            (image.height > 0) &&       // Validate image size
-            (image.format > 0) &&       // Validate image format
-            (image.mipmaps > 0));       // Validate image mipmaps (at least 1 for basic mipmap level)
+    bool result = false;
+    
+    if ((image.data != NULL) &&     // Validate pixel data available
+        (image.width > 0) &&
+        (image.height > 0) &&       // Validate image size
+        (image.format > 0) &&       // Validate image format
+        (image.mipmaps > 0)) result = true;       // Validate image mipmaps (at least 1 for basic mipmap level)
+        
+    return result;
 }
 
 // Unload image from CPU memory (RAM)
@@ -718,6 +728,7 @@ bool ExportImage(Image image, const char *fileName)
 {
     int result = 0;
 
+    // Security check for input data
     if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return result;
 
 #if defined(SUPPORT_IMAGE_EXPORT)
@@ -805,6 +816,7 @@ unsigned char *ExportImageToMemory(Image image, const char *fileType, int *dataS
     unsigned char *fileData = NULL;
     *dataSize = 0;
 
+    // Security check for input data
     if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return NULL;
 
 #if defined(SUPPORT_IMAGE_EXPORT)
@@ -2184,7 +2196,7 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize)
         endRange = kernelWidth/2 + 1;
     }
 
-    for(int x = 0; x < image->height; x++)
+    for (int x = 0; x < image->height; x++)
     {
         for (int y = 0; y < image->width; y++)
         {
@@ -3940,13 +3952,17 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 // Check if a texture is ready
 bool IsTextureReady(Texture2D texture)
 {
+    bool result = false;
+    
     // TODO: Validate maximum texture size supported by GPU?
 
-    return ((texture.id > 0) &&         // Validate OpenGL id
-            (texture.width > 0) &&
-            (texture.height > 0) &&     // Validate texture size
-            (texture.format > 0) &&     // Validate texture pixel format
-            (texture.mipmaps > 0));     // Validate texture mipmaps (at least 1 for basic mipmap level)
+    if ((texture.id > 0) &&         // Validate OpenGL id
+        (texture.width > 0) &&
+        (texture.height > 0) &&     // Validate texture size
+        (texture.format > 0) &&     // Validate texture pixel format
+        (texture.mipmaps > 0)) result = true;     // Validate texture mipmaps (at least 1 for basic mipmap level)
+        
+    return result;
 }
 
 // Unload texture from GPU memory (VRAM)
@@ -3963,9 +3979,13 @@ void UnloadTexture(Texture2D texture)
 // Check if a render texture is ready
 bool IsRenderTextureReady(RenderTexture2D target)
 {
-    return ((target.id > 0) &&                  // Validate OpenGL id
-            IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
-            IsTextureReady(target.texture));    // Validate FBO texture
+    bool result = false;
+    
+    if ((target.id > 0) &&                  // Validate OpenGL id
+        IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
+        IsTextureReady(target.texture)) result = true;    // Validate FBO texture
+    
+    return result;
 }
 
 // Unload render texture from GPU memory (VRAM)
@@ -4473,16 +4493,22 @@ bool ColorIsEqual(Color col1, Color col2)
 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color Fade(Color color, float alpha)
 {
+    Color result = color;
+    
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
+    
+    result.a = (unsigned char)(255.0f*alpha);
 
-    return (Color){ color.r, color.g, color.b, (unsigned char)(255.0f*alpha) };
+    return result;
 }
 
 // Get hexadecimal value for a Color
 int ColorToInt(Color color)
 {
-    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+    int result = (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+    
+    return result;
 }
 
 // Get color normalized as float [0..1]
@@ -4701,10 +4727,14 @@ Color ColorContrast(Color color, float contrast)
 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color ColorAlpha(Color color, float alpha)
 {
+    Color result = color;
+    
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
 
-    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
+    result.a = (unsigned char)(255.0f*alpha);
+
+    return result;
 }
 
 // Get src alpha-blended into dst color with tint
@@ -5007,21 +5037,31 @@ int GetPixelDataSize(int width, int height, int format)
 // REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
 static float HalfToFloat(unsigned short x)
 {
+    float result = 0.0f;
+    
     const unsigned int e = (x & 0x7C00) >> 10; // Exponent
     const unsigned int m = (x & 0x03FF) << 13; // Mantissa
     const float fm = (float)m;
     const unsigned int v = (*(unsigned int*)&fm) >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
     const unsigned int r = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
-    return *(float*)&r;
+    
+    result = *(float *)&r;
+    
+    return result;
 }
 
 // Convert float to half-float (stored as unsigned short)
 static unsigned short FloatToHalf(float x)
 {
+    unsigned short result = 0;
+    
     const unsigned int b = (*(unsigned int*) & x) + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
     const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
     const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
-    return (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7FFF; // sign : normalized : denormalized : saturate
+    
+    result = (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7FFF; // sign : normalized : denormalized : saturate
+    
+    return result;
 }
 
 // Get pixel data from image as Vector4 array (float normalized)
