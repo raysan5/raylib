@@ -316,15 +316,18 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         unsigned char *dataPtr = fileData;
         unsigned int size = GetPixelDataSize(width, height, format);
 
-        // Offset file data to expected raw image by header size 
-        if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
+        if (size <= dataSize)   // Security check
+        {
+            // Offset file data to expected raw image by header size 
+            if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
 
-        image.data = RL_MALLOC(size);      // Allocate required memory in bytes
-        memcpy(image.data, dataPtr, size); // Copy required data to image
-        image.width = width;
-        image.height = height;
-        image.mipmaps = 1;
-        image.format = format;
+            image.data = RL_MALLOC(size);      // Allocate required memory in bytes
+            memcpy(image.data, dataPtr, size); // Copy required data to image
+            image.width = width;
+            image.height = height;
+            image.mipmaps = 1;
+            image.format = format;
+        }
 
         UnloadFileData(fileData);
     }
