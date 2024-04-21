@@ -293,7 +293,7 @@ Image LoadImage(const char *fileName)
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     // Loading image from memory data
-    if (fileData != NULL) 
+    if (fileData != NULL)
     {
         image = LoadImageFromMemory(GetFileExtension(fileName), fileData, dataSize);
 
@@ -318,7 +318,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
         if (size <= dataSize)   // Security check
         {
-            // Offset file data to expected raw image by header size 
+            // Offset file data to expected raw image by header size
             if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
 
             image.data = RL_MALLOC(size);      // Allocate required memory in bytes
@@ -385,8 +385,8 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
             int offsetX = 0;
             int offsetY = 0;
 
-            if (scaleHeight > scaleWidth) offsetY = (height - svgImage->height*scale) / 2;
-            else offsetX = (width - svgImage->width*scale) / 2;
+            if (scaleHeight > scaleWidth) offsetY = (height - svgImage->height*scale)/2;
+            else offsetX = (width - svgImage->width*scale)/2;
 
             // Rasterize
             struct NSVGrasterizer *rast = nsvgCreateRasterizer();
@@ -464,7 +464,7 @@ Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileDat
 {
     Image image = { 0 };
     int frameCount = 0;
-    
+
     // Security check for input data
     if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
 
@@ -501,7 +501,7 @@ Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileDat
 Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Image image = { 0 };
-    
+
     // Security check for input data
     if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
 
@@ -710,13 +710,13 @@ Image LoadImageFromScreen(void)
 bool IsImageReady(Image image)
 {
     bool result = false;
-    
+
     if ((image.data != NULL) &&     // Validate pixel data available
         (image.width > 0) &&
         (image.height > 0) &&       // Validate image size
         (image.format > 0) &&       // Validate image format
         (image.mipmaps > 0)) result = true;       // Validate image mipmaps (at least 1 for basic mipmap level)
-        
+
     return result;
 }
 
@@ -1018,8 +1018,8 @@ Image GenImageGradientSquare(int width, int height, float density, Color inner, 
             float distY = fabsf(y - centerY);
 
             // Normalize the distances by the dimensions of the gradient rectangle
-            float normalizedDistX = distX / centerX;
-            float normalizedDistY = distY / centerY;
+            float normalizedDistX = distX/centerX;
+            float normalizedDistY = distY/centerY;
 
             // Calculate the total normalized Manhattan distance
             float manhattanDist = fmaxf(normalizedDistX, normalizedDistY);
@@ -1615,7 +1615,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Scale image depending on text size
     if (textSize.y != imSize.y)
     {
-        float scaleFactor = textSize.y / imSize.y;
+        float scaleFactor = textSize.y/imSize.y;
         TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
@@ -2214,17 +2214,17 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize)
 
                     if (imgindex >= (unsigned int)(image->width*image->height))
                     {
-                        temp[kernelWidth * xkabs + ykabs].x = 0.0f;
-                        temp[kernelWidth * xkabs + ykabs].y = 0.0f;
-                        temp[kernelWidth * xkabs + ykabs].z = 0.0f;
-                        temp[kernelWidth * xkabs + ykabs].w = 0.0f;
+                        temp[kernelWidth*xkabs + ykabs].x = 0.0f;
+                        temp[kernelWidth*xkabs + ykabs].y = 0.0f;
+                        temp[kernelWidth*xkabs + ykabs].z = 0.0f;
+                        temp[kernelWidth*xkabs + ykabs].w = 0.0f;
                     }
                     else
                     {
-                        temp[kernelWidth * xkabs + ykabs].x = ((float)pixels[imgindex].r)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                        temp[kernelWidth * xkabs + ykabs].y = ((float)pixels[imgindex].g)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                        temp[kernelWidth * xkabs + ykabs].z = ((float)pixels[imgindex].b)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                        temp[kernelWidth * xkabs + ykabs].w = ((float)pixels[imgindex].a)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                        temp[kernelWidth*xkabs + ykabs].x = ((float)pixels[imgindex].r)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                        temp[kernelWidth*xkabs + ykabs].y = ((float)pixels[imgindex].g)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                        temp[kernelWidth*xkabs + ykabs].z = ((float)pixels[imgindex].b)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                        temp[kernelWidth*xkabs + ykabs].w = ((float)pixels[imgindex].a)/255.0f*kernel[kernelWidth*xkabs + ykabs];
                     }
                 }
             }
@@ -2672,7 +2672,7 @@ void ImageColorTint(Image *image, Color color)
     float cB = (float)color.b/255;
     float cA = (float)color.a/255;
 
-    for (int i = 0; i < image->width * image->height; i++)
+    for (int i = 0; i < image->width*image->height; i++)
     {
         unsigned char r = (unsigned char)(((float)pixels[i].r/255*cR)*255.0f);
         unsigned char g = (unsigned char)(((float)pixels[i].g/255*cG)*255.0f);
@@ -2702,7 +2702,7 @@ void ImageColorInvert(Image *image)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int i = 0; i < image->width * image->height; i++)
+    for (int i = 0; i < image->width*image->height; i++)
     {
         pixels[i].r = 255 - pixels[i].r;
         pixels[i].g = 255 - pixels[i].g;
@@ -2739,7 +2739,7 @@ void ImageColorContrast(Image *image, float contrast)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int i = 0; i < image->width * image->height; i++)
+    for (int i = 0; i < image->width*image->height; i++)
     {
         float pR = (float)pixels[i].r/255.0f;
         pR -= 0.5f;
@@ -2791,7 +2791,7 @@ void ImageColorBrightness(Image *image, int brightness)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int i = 0; i < image->width * image->height; i++)
+    for (int i = 0; i < image->width*image->height; i++)
     {
         int cR = pixels[i].r + brightness;
         int cG = pixels[i].g + brightness;
@@ -2828,7 +2828,7 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int i = 0; i < image->width * image->height; i++)
+    for (int i = 0; i < image->width*image->height; i++)
     {
         if ((pixels[i].r == color.r) &&
             (pixels[i].g == color.g) &&
@@ -3616,7 +3616,7 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     }
 
     // Repeat the first row data for all other rows
-    int bytesPerRow = bytesPerPixel * (int)rec.width;
+    int bytesPerRow = bytesPerPixel*(int)rec.width;
     for (int y = 1; y < (int)rec.height; y++)
     {
         memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
@@ -3957,7 +3957,7 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 bool IsTextureReady(Texture2D texture)
 {
     bool result = false;
-    
+
     // TODO: Validate maximum texture size supported by GPU?
 
     if ((texture.id > 0) &&         // Validate OpenGL id
@@ -3965,7 +3965,7 @@ bool IsTextureReady(Texture2D texture)
         (texture.height > 0) &&     // Validate texture size
         (texture.format > 0) &&     // Validate texture pixel format
         (texture.mipmaps > 0)) result = true;     // Validate texture mipmaps (at least 1 for basic mipmap level)
-        
+
     return result;
 }
 
@@ -3984,11 +3984,11 @@ void UnloadTexture(Texture2D texture)
 bool IsRenderTextureReady(RenderTexture2D target)
 {
     bool result = false;
-    
+
     if ((target.id > 0) &&                  // Validate OpenGL id
         IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
         IsTextureReady(target.texture)) result = true;    // Validate FBO texture
-    
+
     return result;
 }
 
@@ -4498,10 +4498,10 @@ bool ColorIsEqual(Color col1, Color col2)
 Color Fade(Color color, float alpha)
 {
     Color result = color;
-    
+
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
-    
+
     result.a = (unsigned char)(255.0f*alpha);
 
     return result;
@@ -4511,7 +4511,7 @@ Color Fade(Color color, float alpha)
 int ColorToInt(Color color)
 {
     int result = (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-    
+
     return result;
 }
 
@@ -4732,7 +4732,7 @@ Color ColorContrast(Color color, float contrast)
 Color ColorAlpha(Color color, float alpha)
 {
     Color result = color;
-    
+
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
 
@@ -5042,15 +5042,15 @@ int GetPixelDataSize(int width, int height, int format)
 static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
-    
+
     const unsigned int e = (x & 0x7C00) >> 10; // Exponent
     const unsigned int m = (x & 0x03FF) << 13; // Mantissa
     const float fm = (float)m;
     const unsigned int v = (*(unsigned int*)&fm) >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
     const unsigned int r = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
-    
+
     result = *(float *)&r;
-    
+
     return result;
 }
 
@@ -5058,13 +5058,13 @@ static float HalfToFloat(unsigned short x)
 static unsigned short FloatToHalf(float x)
 {
     unsigned short result = 0;
-    
+
     const unsigned int b = (*(unsigned int*) & x) + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
     const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
     const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
-    
+
     result = (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7FFF; // sign : normalized : denormalized : saturate
-    
+
     return result;
 }
 

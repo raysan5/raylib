@@ -1377,7 +1377,7 @@ int InitPlatform(void)
 
     if (CORE.Window.fullscreen)
     {
-        // remember center for switchinging from fullscreen to window
+        // Remember center for switchinging from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
         {
             // If screen width/height equal to the display, we can't calculate the window pos for toggling full-screened/windowed.
@@ -1515,7 +1515,7 @@ int InitPlatform(void)
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
-    else 
+    else
     {
         // Try to center window on screen but avoiding window-bar outside of screen
         int monitorX = 0;

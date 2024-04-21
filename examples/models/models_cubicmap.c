@@ -46,7 +46,7 @@ int main(void)
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };          // Set model position
 
     UnloadImage(image);     // Unload cubesmap image from RAM, already uploaded to VRAM
-    
+
     bool pause = false;     // Pause camera orbital rotation (and zoom)
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -58,7 +58,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_P)) pause = !pause;
-        
+
         if (!pause) UpdateCamera(&camera, CAMERA_ORBITAL);
         //----------------------------------------------------------------------------------
 
@@ -76,10 +76,10 @@ int main(void)
 
             DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
             DrawRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
-            
+
             DrawText("cubicmap image used to", 658, 90, 10, GRAY);
             DrawText("generate map 3d model", 658, 104, 10, GRAY);
-            
+
             DrawFPS(10, 10);
 
         EndDrawing();

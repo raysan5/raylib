@@ -2202,7 +2202,7 @@ bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
         for (int i = 0, j = pointCount - 1; i < pointCount; j = i++)
         {
             if ((points[i].y > point.y) != (points[j].y > point.y) &&
-                (point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+                (point.x < (points[j].x - points[i].x)*(point.y - points[i].y)/(points[j].y - points[i].y) + points[i].x))
             {
                 inside = !inside;
             }
@@ -2347,14 +2347,14 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 static float EaseCubicInOut(float t, float b, float c, float d)
 {
     float result = 0.0f;
-    
+
     if ((t /= 0.5f*d) < 1) result = 0.5f*c*t*t*t + b;
     else
     {
         t -= 2;
         result = 0.5f*c*(t*t*t + 2.0f) + b;
     }
-    
+
     return result;
 }
 

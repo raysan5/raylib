@@ -512,7 +512,7 @@ void InitAudioDevice(void)
     }
 
     TRACELOG(LOG_INFO, "AUDIO: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Backend:       miniaudio / %s", ma_get_backend_name(AUDIO.System.context.backend));
+    TRACELOG(LOG_INFO, "    > Backend:       miniaudio | %s", ma_get_backend_name(AUDIO.System.context.backend));
     TRACELOG(LOG_INFO, "    > Format:        %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
     TRACELOG(LOG_INFO, "    > Channels:      %d -> %d", AUDIO.System.device.playback.channels, AUDIO.System.device.playback.internalChannels);
     TRACELOG(LOG_INFO, "    > Sample rate:   %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
@@ -896,13 +896,13 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 bool IsWaveReady(Wave wave)
 {
     bool result = false;
-    
+
     if ((wave.data != NULL) &&      // Validate wave data available
         (wave.frameCount > 0) &&    // Validate frame count
         (wave.sampleRate > 0) &&    // Validate sample rate is supported
         (wave.sampleSize > 0) &&    // Validate sample size is supported
         (wave.channels > 0)) result = true; // Validate number of channels supported
-    
+
     return result;
 }
 
@@ -997,13 +997,13 @@ Sound LoadSoundAlias(Sound source)
 bool IsSoundReady(Sound sound)
 {
     bool result = false;
-    
+
     if ((sound.frameCount > 0) &&           // Validate frame count
         (sound.stream.buffer != NULL) &&    // Validate stream buffer
         (sound.stream.sampleRate > 0) &&    // Validate sample rate is supported
         (sound.stream.sampleSize > 0) &&    // Validate sample size is supported
         (sound.stream.channels > 0)) result = true; // Validate number of channels supported
-        
+
     return result;
 }
 
@@ -1196,9 +1196,9 @@ void StopSound(Sound sound)
 bool IsSoundPlaying(Sound sound)
 {
     bool result = false;
-    
+
     if (IsAudioBufferPlaying(sound.stream.buffer)) result = true;
-    
+
     return result;
 }
 
