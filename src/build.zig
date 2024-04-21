@@ -211,6 +211,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
+/// This function does not need to be called if you passed .raygui = true to addRaylib
 pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency) void {
     if (raylib_flags_arr.items.len == 0) {
         @panic(

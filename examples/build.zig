@@ -26,19 +26,19 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.Reso
             .target = target,
             .optimize = optimize,
         });
-        exe.addCSourceFile(.{ .file = .{ .path = path }, .flags = &.{} });
+        exe.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
         exe.linkLibC();
         exe.addObjectFile(switch (target.result.os.tag) {
-            .windows => .{ .path = "../zig-out/lib/raylib.lib" },
-            .linux => .{ .path = "../zig-out/lib/libraylib.a" },
-            .macos => .{ .path = "../zig-out/lib/libraylib.a" },
-            .emscripten => .{ .path = "../zig-out/lib/libraylib.a" },
+            .windows => b.path("../zig-out/lib/raylib.lib"),
+            .linux => b.path("../zig-out/lib/libraylib.a"),
+            .macos => b.path("../zig-out/lib/libraylib.a"),
+            .emscripten => b.path("../zig-out/lib/libraylib.a"),
             else => @panic("Unsupported OS"),
         });
 
-        exe.addIncludePath(.{ .path = "../src" });
-        exe.addIncludePath(.{ .path = "../src/external" });
-        exe.addIncludePath(.{ .path = "../src/external/glfw/include" });
+        exe.addIncludePath(b.path("../src"));
+        exe.addIncludePath(b.path("../src/external"));
+        exe.addIncludePath(b.path("../src/external/glfw/include"));
 
         switch (target.result.os.tag) {
             .windows => {
