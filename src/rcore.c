@@ -1964,7 +1964,7 @@ const char *GetFileName(const char *filePath)
 
     if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
 
-    if (fileName != NULL) return filePath;
+    if (fileName == NULL) return filePath;
 
     return fileName + 1;
 }
