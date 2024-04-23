@@ -559,10 +559,6 @@ typedef enum {
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-RLAPI void rlSetClipPlanes(double near, double far);
-RLAPI double rlGetCullDistanceNear();
-RLAPI double rlGetCullDistanceFar();
-
 RLAPI void rlMatrixMode(int mode);                      // Choose the current matrix to be transformed
 RLAPI void rlPushMatrix(void);                          // Push the current matrix to stack
 RLAPI void rlPopMatrix(void);                           // Pop latest inserted matrix from stack
@@ -574,6 +570,9 @@ RLAPI void rlMultMatrixf(const float *matf);            // Multiply the current 
 RLAPI void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar);
 RLAPI void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar);
 RLAPI void rlViewport(int x, int y, int width, int height); // Set the viewport area
+RLAPI void rlSetClipPlanes(double near, double far);    // Set clip planes distances
+RLAPI double rlGetCullDistanceNear();                   // Get cull plane distance near
+RLAPI double rlGetCullDistanceFar();                    // Get cull plane distance far
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
@@ -1087,7 +1086,6 @@ typedef void *(*rlglLoadProc)(const char *name);   // OpenGL extension functions
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
 static double rlCullDistanceNear = RL_CULL_DISTANCE_NEAR;
 static double rlCullDistanceFar = RL_CULL_DISTANCE_FAR;
 
@@ -1134,22 +1132,6 @@ static Matrix rlMatrixInvert(Matrix mat);                   // Invert provided m
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
 //----------------------------------------------------------------------------------
-
-void rlSetClipPlanes(double near, double far)
-{
-	rlCullDistanceNear = near;
-	rlCullDistanceFar = far;
-}
-
-double rlGetCullDistanceFar()
-{
-	return rlCullDistanceFar;
-}
-
-double rlGetCullDistanceNear()
-{
-	return rlCullDistanceNear;
-}
 
 #if defined(GRAPHICS_API_OPENGL_11)
 // Fallback to OpenGL 1.1 function calls
@@ -1386,6 +1368,25 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
+}
+
+// Set clip planes distances
+void rlSetClipPlanes(double near, double far)
+{
+    rlCullDistanceNear = near;
+    rlCullDistanceFar = far;
+}
+
+// Get cull plane distance near
+double rlGetCullDistanceNear(void)
+{
+    return rlCullDistanceNear;
+}
+
+// Get cull plane distance far
+double rlGetCullDistanceFar(void)
+{
+    return rlCullDistanceFar;
 }
 
 //----------------------------------------------------------------------------------
