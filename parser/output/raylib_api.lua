@@ -3098,7 +3098,7 @@ return {
       returnType = "bool"
     },
     {
-      name = "IsWindowReady",
+      name = "IsWindowValid",
       description = "Check if window has been initialized successfully",
       returnType = "bool"
     },
@@ -3564,7 +3564,7 @@ return {
       }
     },
     {
-      name = "IsShaderReady",
+      name = "IsShaderValid",
       description = "Check if a shader is ready",
       returnType = "bool",
       params = {
@@ -5341,7 +5341,7 @@ return {
       returnType = "Image"
     },
     {
-      name = "IsImageReady",
+      name = "IsImageValid",
       description = "Check if an image is ready",
       returnType = "bool",
       params = {
@@ -6025,7 +6025,7 @@ return {
       }
     },
     {
-      name = "IsTextureReady",
+      name = "IsTextureValid",
       description = "Check if a texture is ready",
       returnType = "bool",
       params = {
@@ -6041,7 +6041,7 @@ return {
       }
     },
     {
-      name = "IsRenderTextureReady",
+      name = "IsRenderTextureValid",
       description = "Check if a render texture is ready",
       returnType = "bool",
       params = {
@@ -6362,7 +6362,7 @@ return {
       }
     },
     {
-      name = "IsFontReady",
+      name = "IsFontValid",
       description = "Check if a font is ready",
       returnType = "bool",
       params = {
@@ -7026,7 +7026,7 @@ return {
       }
     },
     {
-      name = "IsModelReady",
+      name = "IsModelValid",
       description = "Check if a model is ready",
       returnType = "bool",
       params = {
@@ -7356,7 +7356,7 @@ return {
       returnType = "Material"
     },
     {
-      name = "IsMaterialReady",
+      name = "IsMaterialValid",
       description = "Check if a material is ready",
       returnType = "bool",
       params = {
@@ -7529,7 +7529,7 @@ return {
       returnType = "void"
     },
     {
-      name = "IsAudioDeviceReady",
+      name = "IsAudioDeviceValid",
       description = "Check if audio device has been initialized successfully",
       returnType = "bool"
     },
@@ -7565,7 +7565,7 @@ return {
       }
     },
     {
-      name = "IsWaveReady",
+      name = "IsWaveValid",
       description = "Checks if wave data is ready",
       returnType = "bool",
       params = {
@@ -7597,7 +7597,7 @@ return {
       }
     },
     {
-      name = "IsSoundReady",
+      name = "IsSoundValid",
       description = "Checks if a sound is ready",
       returnType = "bool",
       params = {
@@ -7787,7 +7787,7 @@ return {
       }
     },
     {
-      name = "IsMusicReady",
+      name = "IsMusicValid",
       description = "Checks if a music stream is ready",
       returnType = "bool",
       params = {
@@ -7913,7 +7913,7 @@ return {
       }
     },
     {
-      name = "IsAudioStreamReady",
+      name = "IsAudioStreamValid",
       description = "Checks if an audio stream is ready",
       returnType = "bool",
       params = {

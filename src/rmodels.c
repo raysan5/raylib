@@ -1108,7 +1108,7 @@ Model LoadModelFromMesh(Mesh mesh)
 }
 
 // Check if a model is ready
-bool IsModelReady(Model model)
+bool IsModelValid(Model model)
 {
     bool result = false;
 
@@ -2041,7 +2041,7 @@ Material LoadMaterialDefault(void)
 }
 
 // Check if a material is ready
-bool IsMaterialReady(Material material)
+bool IsMaterialValid(Material material)
 {
     bool result = false;
 

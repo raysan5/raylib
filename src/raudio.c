@@ -541,7 +541,7 @@ void CloseAudioDevice(void)
 }
 
 // Check if device has been initialized successfully
-bool IsAudioDeviceReady(void)
+bool IsAudioDeviceValid(void)
 {
     return AUDIO.System.isReady;
 }
@@ -893,7 +893,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 }
 
 // Checks if wave data is ready
-bool IsWaveReady(Wave wave)
+bool IsWaveValid(Wave wave)
 {
     bool result = false;
 
@@ -994,7 +994,7 @@ Sound LoadSoundAlias(Sound source)
 
 
 // Checks if a sound is ready
-bool IsSoundReady(Sound sound)
+bool IsSoundValid(Sound sound)
 {
     bool result = false;
 
@@ -1724,7 +1724,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 }
 
 // Checks if a music stream is ready
-bool IsMusicReady(Music music)
+bool IsMusicValid(Music music)
 {
     return ((music.ctxData != NULL) &&          // Validate context loaded
             (music.frameCount > 0) &&           // Validate audio frame count
@@ -2117,7 +2117,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 }
 
 // Checks if an audio stream is ready
-bool IsAudioStreamReady(AudioStream stream)
+bool IsAudioStreamValid(AudioStream stream)
 {
     return ((stream.buffer != NULL) &&    // Validate stream buffer
             (stream.sampleRate > 0) &&    // Validate sample rate is supported

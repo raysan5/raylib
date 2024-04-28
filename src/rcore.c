@@ -703,7 +703,7 @@ void CloseWindow(void)
 }
 
 // Check if window has been initialized successfully
-bool IsWindowReady(void)
+bool IsWindowValid(void)
 {
     return CORE.Window.ready;
 }
@@ -1318,7 +1318,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 }
 
 // Check if a shader is ready
-bool IsShaderReady(Shader shader)
+bool IsShaderValid(Shader shader)
 {
     return ((shader.id > 0) &&          // Validate shader id (loaded successfully)
             (shader.locs != NULL));     // Validate memory has been allocated for default shader locations

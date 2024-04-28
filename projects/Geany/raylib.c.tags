@@ -2,7 +2,7 @@
 InitWindow|void|(int width, int height, const char *title);|
 WindowShouldClose|bool|(void);|
 CloseWindow|void|(void);|
-IsWindowReady|bool|(void);|
+IsWindowValid|bool|(void);|
 IsWindowMinimized|bool|(void);|
 IsWindowResized|bool|(void);|
 IsWindowHidden|bool|(void);|
@@ -342,13 +342,13 @@ InitVrSimulator|void|(void);|
 CloseVrSimulator|void|(void);|
 UpdateVrTracking|void|(Camera *camera);|
 SetVrConfiguration|void|(VrDeviceInfo info, Shader distortion);|
-IsVrSimulatorReady|bool|(void);|
+IsVrSimulatorValid|bool|(void);|
 ToggleVrMode|void|(void);|
 BeginVrDrawing|void|(void);|
 EndVrDrawing|void|(void);|
 InitAudioDevice|void|(void);|
 CloseAudioDevice|void|(void);|
-IsAudioDeviceReady|bool|(void);|
+IsAudioDeviceValid|bool|(void);|
 SetMasterVolume|void|(float volume);|
 LoadWave|Wave|(const char *fileName);|
 LoadWaveEx|Wave|(void *data, int sampleCount, int sampleRate, int sampleSize, int channels);|

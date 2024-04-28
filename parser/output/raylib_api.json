@@ -3146,7 +3146,7 @@
       "returnType": "bool"
     },
     {
-      "name": "IsWindowReady",
+      "name": "IsWindowValid",
       "description": "Check if window has been initialized successfully",
       "returnType": "bool"
     },
@@ -3738,7 +3738,7 @@
       ]
     },
     {
-      "name": "IsShaderReady",
+      "name": "IsShaderValid",
       "description": "Check if a shader is ready",
       "returnType": "bool",
       "params": [
@@ -6838,7 +6838,7 @@
       "returnType": "Image"
     },
     {
-      "name": "IsImageReady",
+      "name": "IsImageValid",
       "description": "Check if an image is ready",
       "returnType": "bool",
       "params": [
@@ -8125,7 +8125,7 @@
       ]
     },
     {
-      "name": "IsTextureReady",
+      "name": "IsTextureValid",
       "description": "Check if a texture is ready",
       "returnType": "bool",
       "params": [
@@ -8147,7 +8147,7 @@
       ]
     },
     {
-      "name": "IsRenderTextureReady",
+      "name": "IsRenderTextureValid",
       "description": "Check if a render texture is ready",
       "returnType": "bool",
       "params": [
@@ -8723,7 +8723,7 @@
       ]
     },
     {
-      "name": "IsFontReady",
+      "name": "IsFontValid",
       "description": "Check if a font is ready",
       "returnType": "bool",
       "params": [
@@ -9993,7 +9993,7 @@
       ]
     },
     {
-      "name": "IsModelReady",
+      "name": "IsModelValid",
       "description": "Check if a model is ready",
       "returnType": "bool",
       "params": [
@@ -10626,7 +10626,7 @@
       "returnType": "Material"
     },
     {
-      "name": "IsMaterialReady",
+      "name": "IsMaterialValid",
       "description": "Check if a material is ready",
       "returnType": "bool",
       "params": [
@@ -10931,7 +10931,7 @@
       "returnType": "void"
     },
     {
-      "name": "IsAudioDeviceReady",
+      "name": "IsAudioDeviceValid",
       "description": "Check if audio device has been initialized successfully",
       "returnType": "bool"
     },
@@ -10982,7 +10982,7 @@
       ]
     },
     {
-      "name": "IsWaveReady",
+      "name": "IsWaveValid",
       "description": "Checks if wave data is ready",
       "returnType": "bool",
       "params": [
@@ -11026,7 +11026,7 @@
       ]
     },
     {
-      "name": "IsSoundReady",
+      "name": "IsSoundValid",
       "description": "Checks if a sound is ready",
       "returnType": "bool",
       "params": [
@@ -11324,7 +11324,7 @@
       ]
     },
     {
-      "name": "IsMusicReady",
+      "name": "IsMusicValid",
       "description": "Checks if a music stream is ready",
       "returnType": "bool",
       "params": [
@@ -11513,7 +11513,7 @@
       ]
     },
     {
-      "name": "IsAudioStreamReady",
+      "name": "IsAudioStreamValid",
       "description": "Checks if an audio stream is ready",
       "returnType": "bool",
       "params": [

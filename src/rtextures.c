@@ -707,7 +707,7 @@ Image LoadImageFromScreen(void)
 }
 
 // Check if an image is ready
-bool IsImageReady(Image image)
+bool IsImageValid(Image image)
 {
     bool result = false;
 
@@ -3954,7 +3954,7 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 }
 
 // Check if a texture is ready
-bool IsTextureReady(Texture2D texture)
+bool IsTextureValid(Texture2D texture)
 {
     bool result = false;
 
@@ -3981,13 +3981,13 @@ void UnloadTexture(Texture2D texture)
 }
 
 // Check if a render texture is ready
-bool IsRenderTextureReady(RenderTexture2D target)
+bool IsRenderTextureValid(RenderTexture2D target)
 {
     bool result = false;
 
     if ((target.id > 0) &&                  // Validate OpenGL id
-        IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
-        IsTextureReady(target.texture)) result = true;    // Validate FBO texture
+        IsTextureValid(target.depth) &&     // Validate FBO depth texture/renderbuffer
+        IsTextureValid(target.texture)) result = true;    // Validate FBO texture
 
     return result;
 }

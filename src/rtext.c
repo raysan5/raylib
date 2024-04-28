@@ -583,7 +583,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 }
 
 // Check if a font is ready
-bool IsFontReady(Font font)
+bool IsFontValid(Font font)
 {
     return ((font.texture.id > 0) &&    // Validate OpenGL id fot font texture atlas
             (font.baseSize > 0) &&      // Validate font size

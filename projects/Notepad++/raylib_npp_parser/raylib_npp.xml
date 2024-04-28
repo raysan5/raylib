@@ -16,7 +16,7 @@
         <KeyWord name="WindowShouldClose" func="yes">
             <Overload retVal="bool" descr="Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)"></Overload>
         </KeyWord>
-        <KeyWord name="IsWindowReady" func="yes">
+        <KeyWord name="IsWindowValid" func="yes">
             <Overload retVal="bool" descr="Check if window has been initialized successfully"></Overload>
         </KeyWord>
         <KeyWord name="IsWindowFullscreen" func="yes">
@@ -315,7 +315,7 @@
                 <Param name="const char *fsCode" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsShaderReady" func="yes">
+        <KeyWord name="IsShaderValid" func="yes">
             <Overload retVal="bool" descr="Check if a shader is ready">
                 <Param name="Shader shader" />
             </Overload>
@@ -1543,7 +1543,7 @@
         <KeyWord name="LoadImageFromScreen" func="yes">
             <Overload retVal="Image" descr="Load image from screen buffer and (screenshot)"></Overload>
         </KeyWord>
-        <KeyWord name="IsImageReady" func="yes">
+        <KeyWord name="IsImageValid" func="yes">
             <Overload retVal="bool" descr="Check if an image is ready">
                 <Param name="Image image" />
             </Overload>
@@ -2023,7 +2023,7 @@
                 <Param name="int height" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsTextureReady" func="yes">
+        <KeyWord name="IsTextureValid" func="yes">
             <Overload retVal="bool" descr="Check if a texture is ready">
                 <Param name="Texture2D texture" />
             </Overload>
@@ -2033,7 +2033,7 @@
                 <Param name="Texture2D texture" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsRenderTextureReady" func="yes">
+        <KeyWord name="IsRenderTextureValid" func="yes">
             <Overload retVal="bool" descr="Check if a render texture is ready">
                 <Param name="RenderTexture2D target" />
             </Overload>
@@ -2252,7 +2252,7 @@
                 <Param name="int codepointCount" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsFontReady" func="yes">
+        <KeyWord name="IsFontValid" func="yes">
             <Overload retVal="bool" descr="Check if a font is ready">
                 <Param name="Font font" />
             </Overload>
@@ -2734,7 +2734,7 @@
                 <Param name="Mesh mesh" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsModelReady" func="yes">
+        <KeyWord name="IsModelValid" func="yes">
             <Overload retVal="bool" descr="Check if a model is ready">
                 <Param name="Model model" />
             </Overload>
@@ -2968,7 +2968,7 @@
         <KeyWord name="LoadMaterialDefault" func="yes">
             <Overload retVal="Material" descr="Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)"></Overload>
         </KeyWord>
-        <KeyWord name="IsMaterialReady" func="yes">
+        <KeyWord name="IsMaterialValid" func="yes">
             <Overload retVal="bool" descr="Check if a material is ready">
                 <Param name="Material material" />
             </Overload>
@@ -3096,7 +3096,7 @@
         <KeyWord name="CloseAudioDevice" func="yes">
             <Overload retVal="void" descr="Close the audio device and context"></Overload>
         </KeyWord>
-        <KeyWord name="IsAudioDeviceReady" func="yes">
+        <KeyWord name="IsAudioDeviceValid" func="yes">
             <Overload retVal="bool" descr="Check if audio device has been initialized successfully"></Overload>
         </KeyWord>
         <KeyWord name="SetMasterVolume" func="yes">
@@ -3121,7 +3121,7 @@
                 <Param name="int dataSize" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsWaveReady" func="yes">
+        <KeyWord name="IsWaveValid" func="yes">
             <Overload retVal="bool" descr="Checks if wave data is ready">
                 <Param name="Wave wave" />
             </Overload>
@@ -3141,7 +3141,7 @@
                 <Param name="Sound source" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsSoundReady" func="yes">
+        <KeyWord name="IsSoundValid" func="yes">
             <Overload retVal="bool" descr="Checks if a sound is ready">
                 <Param name="Sound sound" />
             </Overload>
@@ -3269,7 +3269,7 @@
                 <Param name="int dataSize" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsMusicReady" func="yes">
+        <KeyWord name="IsMusicValid" func="yes">
             <Overload retVal="bool" descr="Checks if a music stream is ready">
                 <Param name="Music music" />
             </Overload>
@@ -3352,7 +3352,7 @@
                 <Param name="unsigned int channels" />
             </Overload>
         </KeyWord>
-        <KeyWord name="IsAudioStreamReady" func="yes">
+        <KeyWord name="IsAudioStreamValid" func="yes">
             <Overload retVal="bool" descr="Checks if an audio stream is ready">
                 <Param name="AudioStream stream" />
             </Overload>

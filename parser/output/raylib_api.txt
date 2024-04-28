@@ -1003,8 +1003,8 @@ Function 003: WindowShouldClose() (0 input parameters)
   Return type: bool
   Description: Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)
   No input parameters
-Function 004: IsWindowReady() (0 input parameters)
-  Name: IsWindowReady
+Function 004: IsWindowValid() (0 input parameters)
+  Name: IsWindowValid
   Return type: bool
   Description: Check if window has been initialized successfully
   No input parameters
@@ -1373,8 +1373,8 @@ Function 075: LoadShaderFromMemory() (2 input parameters)
   Description: Load shader from code strings and bind default locations
   Param[1]: vsCode (type: const char *)
   Param[2]: fsCode (type: const char *)
-Function 076: IsShaderReady() (1 input parameters)
-  Name: IsShaderReady
+Function 076: IsShaderValid() (1 input parameters)
+  Name: IsShaderValid
   Return type: bool
   Description: Check if a shader is ready
   Param[1]: shader (type: Shader)
@@ -2646,8 +2646,8 @@ Function 275: LoadImageFromScreen() (0 input parameters)
   Return type: Image
   Description: Load image from screen buffer and (screenshot)
   No input parameters
-Function 276: IsImageReady() (1 input parameters)
-  Name: IsImageReady
+Function 276: IsImageValid() (1 input parameters)
+  Name: IsImageValid
   Return type: bool
   Description: Check if an image is ready
   Param[1]: image (type: Image)
@@ -3123,8 +3123,8 @@ Function 344: LoadRenderTexture() (2 input parameters)
   Description: Load texture for rendering (framebuffer)
   Param[1]: width (type: int)
   Param[2]: height (type: int)
-Function 345: IsTextureReady() (1 input parameters)
-  Name: IsTextureReady
+Function 345: IsTextureValid() (1 input parameters)
+  Name: IsTextureValid
   Return type: bool
   Description: Check if a texture is ready
   Param[1]: texture (type: Texture2D)
@@ -3133,8 +3133,8 @@ Function 346: UnloadTexture() (1 input parameters)
   Return type: void
   Description: Unload texture from GPU memory (VRAM)
   Param[1]: texture (type: Texture2D)
-Function 347: IsRenderTextureReady() (1 input parameters)
-  Name: IsRenderTextureReady
+Function 347: IsRenderTextureValid() (1 input parameters)
+  Name: IsRenderTextureValid
   Return type: bool
   Description: Check if a render texture is ready
   Param[1]: target (type: RenderTexture2D)
@@ -3355,8 +3355,8 @@ Function 380: LoadFontFromMemory() (6 input parameters)
   Param[4]: fontSize (type: int)
   Param[5]: codepoints (type: int *)
   Param[6]: codepointCount (type: int)
-Function 381: IsFontReady() (1 input parameters)
-  Name: IsFontReady
+Function 381: IsFontValid() (1 input parameters)
+  Name: IsFontValid
   Return type: bool
   Description: Check if a font is ready
   Param[1]: font (type: Font)
@@ -3821,8 +3821,8 @@ Function 446: LoadModelFromMesh() (1 input parameters)
   Return type: Model
   Description: Load model from generated mesh (default material)
   Param[1]: mesh (type: Mesh)
-Function 447: IsModelReady() (1 input parameters)
-  Name: IsModelReady
+Function 447: IsModelValid() (1 input parameters)
+  Name: IsModelValid
   Return type: bool
   Description: Check if a model is ready
   Param[1]: model (type: Model)
@@ -4055,8 +4055,8 @@ Function 479: LoadMaterialDefault() (0 input parameters)
   Return type: Material
   Description: Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
   No input parameters
-Function 480: IsMaterialReady() (1 input parameters)
-  Name: IsMaterialReady
+Function 480: IsMaterialValid() (1 input parameters)
+  Name: IsMaterialValid
   Return type: bool
   Description: Check if a material is ready
   Param[1]: material (type: Material)
@@ -4177,8 +4177,8 @@ Function 498: CloseAudioDevice() (0 input parameters)
   Return type: void
   Description: Close the audio device and context
   No input parameters
-Function 499: IsAudioDeviceReady() (0 input parameters)
-  Name: IsAudioDeviceReady
+Function 499: IsAudioDeviceValid() (0 input parameters)
+  Name: IsAudioDeviceValid
   Return type: bool
   Description: Check if audio device has been initialized successfully
   No input parameters
@@ -4204,8 +4204,8 @@ Function 503: LoadWaveFromMemory() (3 input parameters)
   Param[1]: fileType (type: const char *)
   Param[2]: fileData (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 504: IsWaveReady() (1 input parameters)
-  Name: IsWaveReady
+Function 504: IsWaveValid() (1 input parameters)
+  Name: IsWaveValid
   Return type: bool
   Description: Checks if wave data is ready
   Param[1]: wave (type: Wave)
@@ -4224,8 +4224,8 @@ Function 507: LoadSoundAlias() (1 input parameters)
   Return type: Sound
   Description: Create a new sound that shares the same sample data as the source sound, does not own the sound data
   Param[1]: source (type: Sound)
-Function 508: IsSoundReady() (1 input parameters)
-  Name: IsSoundReady
+Function 508: IsSoundValid() (1 input parameters)
+  Name: IsSoundValid
   Return type: bool
   Description: Checks if a sound is ready
   Param[1]: sound (type: Sound)
@@ -4348,8 +4348,8 @@ Function 529: LoadMusicStreamFromMemory() (3 input parameters)
   Param[1]: fileType (type: const char *)
   Param[2]: data (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 530: IsMusicReady() (1 input parameters)
-  Name: IsMusicReady
+Function 530: IsMusicValid() (1 input parameters)
+  Name: IsMusicValid
   Return type: bool
   Description: Checks if a music stream is ready
   Param[1]: music (type: Music)
@@ -4429,8 +4429,8 @@ Function 544: LoadAudioStream() (3 input parameters)
   Param[1]: sampleRate (type: unsigned int)
   Param[2]: sampleSize (type: unsigned int)
   Param[3]: channels (type: unsigned int)
-Function 545: IsAudioStreamReady() (1 input parameters)
-  Name: IsAudioStreamReady
+Function 545: IsAudioStreamValid() (1 input parameters)
+  Name: IsAudioStreamValid
   Return type: bool
   Description: Checks if an audio stream is ready
   Param[1]: stream (type: AudioStream)
