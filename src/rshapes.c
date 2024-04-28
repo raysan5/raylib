@@ -178,8 +178,9 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f((float)startPosX, (float)startPosY);
-        rlVertex2f((float)endPosX, (float)endPosY);
+        // WARNING: Adding 0.5f offset to "center" point on selected pixel
+        rlVertex2f((float)startPosX + 0.5f, (float)startPosY + 0.5f);
+        rlVertex2f((float)endPosX + 0.5f, (float)endPosY + 0.5f);
     rlEnd();
 }
 
@@ -188,8 +189,9 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(startPos.x, startPos.y);
-        rlVertex2f(endPos.x, endPos.y);
+        // WARNING: Adding 0.5f offset to "center" point on selected pixel
+        rlVertex2f(startPos.x + 0.5f, startPos.y + 0.5f);
+        rlVertex2f(endPos.x + 0.5f, endPos.y + 0.5f);
     rlEnd();
 }
 
