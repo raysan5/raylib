@@ -3565,7 +3565,7 @@ return {
     },
     {
       name = "IsShaderValid",
-      description = "Check if a shader is ready",
+      description = "Check if a shader is valid",
       returnType = "bool",
       params = {
         {type = "Shader", name = "shader"}
@@ -5342,7 +5342,7 @@ return {
     },
     {
       name = "IsImageValid",
-      description = "Check if an image is ready",
+      description = "Check if an image is valid",
       returnType = "bool",
       params = {
         {type = "Image", name = "image"}
@@ -6026,7 +6026,7 @@ return {
     },
     {
       name = "IsTextureValid",
-      description = "Check if a texture is ready",
+      description = "Check if a texture is valid",
       returnType = "bool",
       params = {
         {type = "Texture2D", name = "texture"}
@@ -6042,7 +6042,7 @@ return {
     },
     {
       name = "IsRenderTextureValid",
-      description = "Check if a render texture is ready",
+      description = "Check if a render texture is valid",
       returnType = "bool",
       params = {
         {type = "RenderTexture2D", name = "target"}
@@ -6363,7 +6363,7 @@ return {
     },
     {
       name = "IsFontValid",
-      description = "Check if a font is ready",
+      description = "Check if a font is valid",
       returnType = "bool",
       params = {
         {type = "Font", name = "font"}
@@ -7027,7 +7027,7 @@ return {
     },
     {
       name = "IsModelValid",
-      description = "Check if a model is ready",
+      description = "Check if a model is valid",
       returnType = "bool",
       params = {
         {type = "Model", name = "model"}
@@ -7357,7 +7357,7 @@ return {
     },
     {
       name = "IsMaterialValid",
-      description = "Check if a material is ready",
+      description = "Check if a material is valid",
       returnType = "bool",
       params = {
         {type = "Material", name = "material"}
@@ -7566,7 +7566,7 @@ return {
     },
     {
       name = "IsWaveValid",
-      description = "Checks if wave data is ready",
+      description = "Checks if wave data is valid",
       returnType = "bool",
       params = {
         {type = "Wave", name = "wave"}
@@ -7598,7 +7598,7 @@ return {
     },
     {
       name = "IsSoundValid",
-      description = "Checks if a sound is ready",
+      description = "Checks if a sound is valid",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -7788,7 +7788,7 @@ return {
     },
     {
       name = "IsMusicValid",
-      description = "Checks if a music stream is ready",
+      description = "Checks if a music stream is valid",
       returnType = "bool",
       params = {
         {type = "Music", name = "music"}
@@ -7914,7 +7914,7 @@ return {
     },
     {
       name = "IsAudioStreamValid",
-      description = "Checks if an audio stream is ready",
+      description = "Checks if an audio stream is valid",
       returnType = "bool",
       params = {
         {type = "AudioStream", name = "stream"}

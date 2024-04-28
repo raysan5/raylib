@@ -1376,7 +1376,7 @@ Function 075: LoadShaderFromMemory() (2 input parameters)
 Function 076: IsShaderValid() (1 input parameters)
   Name: IsShaderValid
   Return type: bool
-  Description: Check if a shader is ready
+  Description: Check if a shader is valid
   Param[1]: shader (type: Shader)
 Function 077: GetShaderLocation() (2 input parameters)
   Name: GetShaderLocation
@@ -2649,7 +2649,7 @@ Function 275: LoadImageFromScreen() (0 input parameters)
 Function 276: IsImageValid() (1 input parameters)
   Name: IsImageValid
   Return type: bool
-  Description: Check if an image is ready
+  Description: Check if an image is valid
   Param[1]: image (type: Image)
 Function 277: UnloadImage() (1 input parameters)
   Name: UnloadImage
@@ -3126,7 +3126,7 @@ Function 344: LoadRenderTexture() (2 input parameters)
 Function 345: IsTextureValid() (1 input parameters)
   Name: IsTextureValid
   Return type: bool
-  Description: Check if a texture is ready
+  Description: Check if a texture is valid
   Param[1]: texture (type: Texture2D)
 Function 346: UnloadTexture() (1 input parameters)
   Name: UnloadTexture
@@ -3136,7 +3136,7 @@ Function 346: UnloadTexture() (1 input parameters)
 Function 347: IsRenderTextureValid() (1 input parameters)
   Name: IsRenderTextureValid
   Return type: bool
-  Description: Check if a render texture is ready
+  Description: Check if a render texture is valid
   Param[1]: target (type: RenderTexture2D)
 Function 348: UnloadRenderTexture() (1 input parameters)
   Name: UnloadRenderTexture
@@ -3358,7 +3358,7 @@ Function 380: LoadFontFromMemory() (6 input parameters)
 Function 381: IsFontValid() (1 input parameters)
   Name: IsFontValid
   Return type: bool
-  Description: Check if a font is ready
+  Description: Check if a font is valid
   Param[1]: font (type: Font)
 Function 382: LoadFontData() (6 input parameters)
   Name: LoadFontData
@@ -3824,7 +3824,7 @@ Function 446: LoadModelFromMesh() (1 input parameters)
 Function 447: IsModelValid() (1 input parameters)
   Name: IsModelValid
   Return type: bool
-  Description: Check if a model is ready
+  Description: Check if a model is valid
   Param[1]: model (type: Model)
 Function 448: UnloadModel() (1 input parameters)
   Name: UnloadModel
@@ -4058,7 +4058,7 @@ Function 479: LoadMaterialDefault() (0 input parameters)
 Function 480: IsMaterialValid() (1 input parameters)
   Name: IsMaterialValid
   Return type: bool
-  Description: Check if a material is ready
+  Description: Check if a material is valid
   Param[1]: material (type: Material)
 Function 481: UnloadMaterial() (1 input parameters)
   Name: UnloadMaterial
@@ -4207,7 +4207,7 @@ Function 503: LoadWaveFromMemory() (3 input parameters)
 Function 504: IsWaveValid() (1 input parameters)
   Name: IsWaveValid
   Return type: bool
-  Description: Checks if wave data is ready
+  Description: Checks if wave data is valid
   Param[1]: wave (type: Wave)
 Function 505: LoadSound() (1 input parameters)
   Name: LoadSound
@@ -4227,7 +4227,7 @@ Function 507: LoadSoundAlias() (1 input parameters)
 Function 508: IsSoundValid() (1 input parameters)
   Name: IsSoundValid
   Return type: bool
-  Description: Checks if a sound is ready
+  Description: Checks if a sound is valid
   Param[1]: sound (type: Sound)
 Function 509: UpdateSound() (3 input parameters)
   Name: UpdateSound
@@ -4351,7 +4351,7 @@ Function 529: LoadMusicStreamFromMemory() (3 input parameters)
 Function 530: IsMusicValid() (1 input parameters)
   Name: IsMusicValid
   Return type: bool
-  Description: Checks if a music stream is ready
+  Description: Checks if a music stream is valid
   Param[1]: music (type: Music)
 Function 531: UnloadMusicStream() (1 input parameters)
   Name: UnloadMusicStream
@@ -4432,7 +4432,7 @@ Function 544: LoadAudioStream() (3 input parameters)
 Function 545: IsAudioStreamValid() (1 input parameters)
   Name: IsAudioStreamValid
   Return type: bool
-  Description: Checks if an audio stream is ready
+  Description: Checks if an audio stream is valid
   Param[1]: stream (type: AudioStream)
 Function 546: UnloadAudioStream() (1 input parameters)
   Name: UnloadAudioStream
