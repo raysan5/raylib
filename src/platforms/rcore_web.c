@@ -865,9 +865,7 @@ void SetMousePosition(int x, int y)
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
-    if(CORE.Input.Mouse.cursorHidden) {
-        lockedMousePos = CORE.Input.Mouse.currentPosition;
-    }
+    if (CORE.Input.Mouse.cursorHidden) lockedMousePos = CORE.Input.Mouse.currentPosition;
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
@@ -1488,7 +1486,8 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
     // If the pointer is not locked, follow the position
-    if(!CORE.Input.Mouse.cursorHidden) {
+    if (!CORE.Input.Mouse.cursorHidden)
+    {
         CORE.Input.Mouse.currentPosition.x = (float)x;
         CORE.Input.Mouse.currentPosition.y = (float)y;
         CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
@@ -1521,7 +1520,8 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
     // To emulate the GLFW_RAW_MOUSE_MOTION property.
-    if(CORE.Input.Mouse.cursorHidden) {
+    if (CORE.Input.Mouse.cursorHidden)
+    {
         CORE.Input.Mouse.previousPosition.x = lockedMousePos.x - mouseEvent->movementX;
         CORE.Input.Mouse.previousPosition.y = lockedMousePos.y - mouseEvent->movementY;
     }
@@ -1622,7 +1622,8 @@ static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPoin
 {
     CORE.Input.Mouse.cursorHidden = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
 
-    if(CORE.Input.Mouse.cursorHidden) {
+    if (CORE.Input.Mouse.cursorHidden)
+    {
         lockedMousePos = CORE.Input.Mouse.currentPosition;
         CORE.Input.Mouse.previousPosition = lockedMousePos;
     }
