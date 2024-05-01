@@ -158,11 +158,13 @@
 // this defines are very useful for internal check and avoid type (re)definitions
 #define RL_COLOR_TYPE
 #define RL_RECTANGLE_TYPE
+#ifndef RAYMATH_H
 #define RL_VECTOR2_TYPE
 #define RL_VECTOR3_TYPE
 #define RL_VECTOR4_TYPE
 #define RL_QUATERNION_TYPE
 #define RL_MATRIX_TYPE
+#endif // RAYMATH_H
 
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
@@ -205,6 +207,7 @@
     #define RL_BOOL_TYPE
 #endif
 
+#ifndef RAYMATH_H
 // Vector2, 2 components
 typedef struct Vector2 {
     float x;                // Vector x component
@@ -236,6 +239,7 @@ typedef struct Matrix {
     float m2, m6, m10, m14; // Matrix third row (4 components)
     float m3, m7, m11, m15; // Matrix fourth row (4 components)
 } Matrix;
+#endif // RAYMATH_H
 
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
