@@ -202,7 +202,7 @@ int *rprand_load_sequence(unsigned int count, int min, int max)
     {
         value = ((unsigned int)rprand_xoshiro()%(abs(max - min) + 1)) + min;
 
-        for (int j = 0; j < i; j++)
+        for (unsigned int j = 0; j < i; j++)
         {
             if (sequence[j] == value)
             {
