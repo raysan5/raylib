@@ -5549,7 +5549,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
         }
     }
 
-    float duration = fmax((tend - tstart), EPSILON);
+    float duration = fmaxf((tend - tstart), EPSILON);
     float t = (time - tstart)/duration;
     t = (t < 0.0f)? 0.0f : t;
     t = (t > 1.0f)? 1.0f : t;
