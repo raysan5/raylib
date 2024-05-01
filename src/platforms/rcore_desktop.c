@@ -1371,12 +1371,13 @@ int InitPlatform(void)
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
 
+    GLFWmonitor *monitor = NULL;
     if (CORE.Window.fullscreen)
     {
         // According to glfwCreateWindow(), if the user does not have a choice, fullscreen applications
         // should default to the primary monitor.
 
-        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+        monitor = glfwGetPrimaryMonitor();
         if (!monitor)
         {
           TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
@@ -1442,15 +1443,17 @@ int InitPlatform(void)
     else
     {
         // No-fullscreen window creation
+        bool wantWindowedFullscreen = (CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0);
 
-        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
-        // TODO: 3693 This code will not work if the user already specified the correct monitor dimensions;
-        //       at this point we don't know the monitor's dimensions. (Though, how did the user then?)
-        if (((CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0)))
+        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost.
+        // This hinting code will not work if the user already specified the correct monitor dimensions;
+        // at this point we don't know the monitor's dimensions. (Though, how did the user then?)
+        if (wantWindowedFullscreen)
         {
             glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
         }
 
+        // Default to at least one pixel in size, as creation with a zero dimension is not allowed.
         int creationWidth = CORE.Window.screen.width != 0 ? CORE.Window.screen.width : 1;
         int creationHeight = CORE.Window.screen.height != 0 ? CORE.Window.screen.height : 1;
 
@@ -1465,22 +1468,21 @@ int InitPlatform(void)
 
         if (monitorIndex < monitorCount)
         {
-            // If window screen dimensions are zero (from user), then prepare to resize to monitor size.
-            bool resizeWindow = CORE.Window.screen.width == 0 && CORE.Window.screen.height == 0;
-            SetDimensionsFromMonitor(monitors[monitorIndex]);
-            if (resizeWindow)
+            monitor = monitors[monitorIndex];
+            SetDimensionsFromMonitor(monitor);
+
+            TRACELOG(LOG_INFO, "wantWindowed: %d, size: %dx%d", wantWindowedFullscreen, CORE.Window.screen.width, CORE.Window.screen.height);
+            if (wantWindowedFullscreen)
             {
                 glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
             }
         }
         else
         {
-            // TODO: 3693 If the monitor is wrong/not known, what now? Core.Window.display.* will not be set to the current monitor then.
-            int width = 0;
-            int height = 0;
-            glfwGetWindowSize(platform.handle, &width, &height);
-            CORE.Window.screen.width = width;
-            CORE.Window.screen.height = height;
+            // The monitor for the window-manager-created window can not be determined, so it can not be centered.
+            glfwTerminate();
+            TRACELOG(LOG_WARNING, "GLFW: Failed to determine Monitor to center Window");
+            return -1;
         }
 
         if (platform.handle)
@@ -1565,8 +1567,8 @@ int InitPlatform(void)
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-        int posX = monitorX + (monitorWidth - CORE.Window.screen.width)/2;
-        int posY = monitorY + (monitorHeight - CORE.Window.screen.height)/2;
+        int posX = monitorX + (monitorWidth - (int)CORE.Window.screen.width)/2;
+        int posY = monitorY + (monitorHeight - (int)CORE.Window.screen.height)/2;
         if (posX < monitorX) posX = monitorX;
         if (posY < monitorY) posY = monitorY;
         SetWindowPosition(posX, posY);
