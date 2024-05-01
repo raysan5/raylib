@@ -1166,7 +1166,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         if (codepoint == '\n')
         {
             // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
-            textOffsetY += (fontSize + textLineSpacing);
+            textOffsetY += (int)(fontSize + textLineSpacing);
             textOffsetX = 0.0f;
         }
         else
@@ -1237,7 +1237,7 @@ void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Ve
         if (codepoints[i] == '\n')
         {
             // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
-            textOffsetY += (fontSize + textLineSpacing);
+            textOffsetY += (int)(fontSize + textLineSpacing);
             textOffsetX = 0.0f;
         }
         else

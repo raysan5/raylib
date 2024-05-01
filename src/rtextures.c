@@ -311,15 +311,15 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-    if (fileData != NULL)
+    if (fileData != NULL && dataSize > 0)
     {
         unsigned char *dataPtr = fileData;
         unsigned int size = GetPixelDataSize(width, height, format);
 
-        if (size <= dataSize)   // Security check
+        if (size <= (unsigned int)dataSize)   // Security check
         {
             // Offset file data to expected raw image by header size
-            if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
+            if ((headerSize > 0) && ((headerSize + size) <= (unsigned int)dataSize)) dataPtr += headerSize;
 
             image.data = RL_MALLOC(size);      // Allocate required memory in bytes
             memcpy(image.data, dataPtr, size); // Copy required data to image
@@ -697,8 +697,8 @@ Image LoadImageFromScreen(void)
     Vector2 scale = GetWindowScaleDPI();
     Image image = { 0 };
 
-    image.width = GetScreenWidth()*scale.x;
-    image.height = GetScreenHeight()*scale.y;
+    image.width = (int)(GetScreenWidth()*scale.x);
+    image.height = (int)(GetScreenHeight()*scale.y);
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);
