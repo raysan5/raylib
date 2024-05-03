@@ -788,6 +788,12 @@ int GetRenderHeight(void)
     return height;
 }
 
+// Get current aspect (from the current FBO)
+float GetCurrentAspect()
+{
+    return (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
+}
+
 // Enable waiting for events on EndDrawing(), no automatic event polling
 void EnableEventWaiting(void)
 {
