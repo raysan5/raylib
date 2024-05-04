@@ -984,7 +984,7 @@ Callback 006: AudioCallback() (2 input parameters)
   Param[1]: bufferData (type: void *)
   Param[2]: frames (type: unsigned int)
 
-Functions found: 562
+Functions found: 571
 
 Function 001: InitWindow() (3 input parameters)
   Name: InitWindow
@@ -4294,31 +4294,46 @@ Function 520: SetSoundVolume() (2 input parameters)
   Description: Set volume for a sound (1.0 is max level)
   Param[1]: sound (type: Sound)
   Param[2]: volume (type: float)
-Function 521: SetSoundPitch() (2 input parameters)
+Function 521: GetSoundVolume() (1 input parameters)
+  Name: GetSoundVolume
+  Return type: float
+  Description: Get volume for a sound (1.0 is max level)
+  Param[1]: sound (type: Sound)
+Function 522: SetSoundPitch() (2 input parameters)
   Name: SetSoundPitch
   Return type: void
   Description: Set pitch for a sound (1.0 is base level)
   Param[1]: sound (type: Sound)
   Param[2]: pitch (type: float)
-Function 522: SetSoundPan() (2 input parameters)
+Function 523: GetSoundPitch() (1 input parameters)
+  Name: GetSoundPitch
+  Return type: float
+  Description: Get pitch for a sound (1.0 is base level)
+  Param[1]: sound (type: Sound)
+Function 524: SetSoundPan() (2 input parameters)
   Name: SetSoundPan
   Return type: void
   Description: Set pan for a sound (0.5 is center)
   Param[1]: sound (type: Sound)
   Param[2]: pan (type: float)
-Function 523: WaveCopy() (1 input parameters)
+Function 525: GetSoundPan() (1 input parameters)
+  Name: GetSoundPan
+  Return type: float
+  Description: Set pan for a sound (0.5 is center)
+  Param[1]: sound (type: Sound)
+Function 526: WaveCopy() (1 input parameters)
   Name: WaveCopy
   Return type: Wave
   Description: Copy a wave to a new wave
   Param[1]: wave (type: Wave)
-Function 524: WaveCrop() (3 input parameters)
+Function 527: WaveCrop() (3 input parameters)
   Name: WaveCrop
   Return type: void
   Description: Crop a wave to defined samples range
   Param[1]: wave (type: Wave *)
   Param[2]: initSample (type: int)
   Param[3]: finalSample (type: int)
-Function 525: WaveFormat() (4 input parameters)
+Function 528: WaveFormat() (4 input parameters)
   Name: WaveFormat
   Return type: void
   Description: Convert wave data to desired format
@@ -4326,203 +4341,233 @@ Function 525: WaveFormat() (4 input parameters)
   Param[2]: sampleRate (type: int)
   Param[3]: sampleSize (type: int)
   Param[4]: channels (type: int)
-Function 526: LoadWaveSamples() (1 input parameters)
+Function 529: LoadWaveSamples() (1 input parameters)
   Name: LoadWaveSamples
   Return type: float *
   Description: Load samples data from wave as a 32bit float data array
   Param[1]: wave (type: Wave)
-Function 527: UnloadWaveSamples() (1 input parameters)
+Function 530: UnloadWaveSamples() (1 input parameters)
   Name: UnloadWaveSamples
   Return type: void
   Description: Unload samples data loaded with LoadWaveSamples()
   Param[1]: samples (type: float *)
-Function 528: LoadMusicStream() (1 input parameters)
+Function 531: LoadMusicStream() (1 input parameters)
   Name: LoadMusicStream
   Return type: Music
   Description: Load music stream from file
   Param[1]: fileName (type: const char *)
-Function 529: LoadMusicStreamFromMemory() (3 input parameters)
+Function 532: LoadMusicStreamFromMemory() (3 input parameters)
   Name: LoadMusicStreamFromMemory
   Return type: Music
   Description: Load music stream from data
   Param[1]: fileType (type: const char *)
   Param[2]: data (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 530: IsMusicReady() (1 input parameters)
+Function 533: IsMusicReady() (1 input parameters)
   Name: IsMusicReady
   Return type: bool
   Description: Checks if a music stream is ready
   Param[1]: music (type: Music)
-Function 531: UnloadMusicStream() (1 input parameters)
+Function 534: UnloadMusicStream() (1 input parameters)
   Name: UnloadMusicStream
   Return type: void
   Description: Unload music stream
   Param[1]: music (type: Music)
-Function 532: PlayMusicStream() (1 input parameters)
+Function 535: PlayMusicStream() (1 input parameters)
   Name: PlayMusicStream
   Return type: void
   Description: Start music playing
   Param[1]: music (type: Music)
-Function 533: IsMusicStreamPlaying() (1 input parameters)
+Function 536: IsMusicStreamPlaying() (1 input parameters)
   Name: IsMusicStreamPlaying
   Return type: bool
   Description: Check if music is playing
   Param[1]: music (type: Music)
-Function 534: UpdateMusicStream() (1 input parameters)
+Function 537: UpdateMusicStream() (1 input parameters)
   Name: UpdateMusicStream
   Return type: void
   Description: Updates buffers for music streaming
   Param[1]: music (type: Music)
-Function 535: StopMusicStream() (1 input parameters)
+Function 538: StopMusicStream() (1 input parameters)
   Name: StopMusicStream
   Return type: void
   Description: Stop music playing
   Param[1]: music (type: Music)
-Function 536: PauseMusicStream() (1 input parameters)
+Function 539: PauseMusicStream() (1 input parameters)
   Name: PauseMusicStream
   Return type: void
   Description: Pause music playing
   Param[1]: music (type: Music)
-Function 537: ResumeMusicStream() (1 input parameters)
+Function 540: ResumeMusicStream() (1 input parameters)
   Name: ResumeMusicStream
   Return type: void
   Description: Resume playing paused music
   Param[1]: music (type: Music)
-Function 538: SeekMusicStream() (2 input parameters)
+Function 541: SeekMusicStream() (2 input parameters)
   Name: SeekMusicStream
   Return type: void
   Description: Seek music to a position (in seconds)
   Param[1]: music (type: Music)
   Param[2]: position (type: float)
-Function 539: SetMusicVolume() (2 input parameters)
+Function 542: SetMusicVolume() (2 input parameters)
   Name: SetMusicVolume
   Return type: void
   Description: Set volume for music (1.0 is max level)
   Param[1]: music (type: Music)
   Param[2]: volume (type: float)
-Function 540: SetMusicPitch() (2 input parameters)
+Function 543: GetMusicVolume() (1 input parameters)
+  Name: GetMusicVolume
+  Return type: float
+  Description: Get volume for music (1.0 is max level)
+  Param[1]: music (type: Music)
+Function 544: SetMusicPitch() (2 input parameters)
   Name: SetMusicPitch
   Return type: void
   Description: Set pitch for a music (1.0 is base level)
   Param[1]: music (type: Music)
   Param[2]: pitch (type: float)
-Function 541: SetMusicPan() (2 input parameters)
+Function 545: GetMusicPitch() (1 input parameters)
+  Name: GetMusicPitch
+  Return type: float
+  Description: Get pitch for a music (1.0 is base level)
+  Param[1]: music (type: Music)
+Function 546: SetMusicPan() (2 input parameters)
   Name: SetMusicPan
   Return type: void
   Description: Set pan for a music (0.5 is center)
   Param[1]: music (type: Music)
   Param[2]: pan (type: float)
-Function 542: GetMusicTimeLength() (1 input parameters)
+Function 547: GetMusicPan() (1 input parameters)
+  Name: GetMusicPan
+  Return type: float
+  Description: Get pan for a music (0.5 is center)
+  Param[1]: music (type: Music)
+Function 548: GetMusicTimeLength() (1 input parameters)
   Name: GetMusicTimeLength
   Return type: float
   Description: Get music time length (in seconds)
   Param[1]: music (type: Music)
-Function 543: GetMusicTimePlayed() (1 input parameters)
+Function 549: GetMusicTimePlayed() (1 input parameters)
   Name: GetMusicTimePlayed
   Return type: float
   Description: Get current music time played (in seconds)
   Param[1]: music (type: Music)
-Function 544: LoadAudioStream() (3 input parameters)
+Function 550: LoadAudioStream() (3 input parameters)
   Name: LoadAudioStream
   Return type: AudioStream
   Description: Load audio stream (to stream raw audio pcm data)
   Param[1]: sampleRate (type: unsigned int)
   Param[2]: sampleSize (type: unsigned int)
   Param[3]: channels (type: unsigned int)
-Function 545: IsAudioStreamReady() (1 input parameters)
+Function 551: IsAudioStreamReady() (1 input parameters)
   Name: IsAudioStreamReady
   Return type: bool
   Description: Checks if an audio stream is ready
   Param[1]: stream (type: AudioStream)
-Function 546: UnloadAudioStream() (1 input parameters)
+Function 552: UnloadAudioStream() (1 input parameters)
   Name: UnloadAudioStream
   Return type: void
   Description: Unload audio stream and free memory
   Param[1]: stream (type: AudioStream)
-Function 547: UpdateAudioStream() (3 input parameters)
+Function 553: UpdateAudioStream() (3 input parameters)
   Name: UpdateAudioStream
   Return type: void
   Description: Update audio stream buffers with data
   Param[1]: stream (type: AudioStream)
   Param[2]: data (type: const void *)
   Param[3]: frameCount (type: int)
-Function 548: IsAudioStreamProcessed() (1 input parameters)
+Function 554: IsAudioStreamProcessed() (1 input parameters)
   Name: IsAudioStreamProcessed
   Return type: bool
   Description: Check if any audio stream buffers requires refill
   Param[1]: stream (type: AudioStream)
-Function 549: PlayAudioStream() (1 input parameters)
+Function 555: PlayAudioStream() (1 input parameters)
   Name: PlayAudioStream
   Return type: void
   Description: Play audio stream
   Param[1]: stream (type: AudioStream)
-Function 550: PauseAudioStream() (1 input parameters)
+Function 556: PauseAudioStream() (1 input parameters)
   Name: PauseAudioStream
   Return type: void
   Description: Pause audio stream
   Param[1]: stream (type: AudioStream)
-Function 551: ResumeAudioStream() (1 input parameters)
+Function 557: ResumeAudioStream() (1 input parameters)
   Name: ResumeAudioStream
   Return type: void
   Description: Resume audio stream
   Param[1]: stream (type: AudioStream)
-Function 552: IsAudioStreamPlaying() (1 input parameters)
+Function 558: IsAudioStreamPlaying() (1 input parameters)
   Name: IsAudioStreamPlaying
   Return type: bool
   Description: Check if audio stream is playing
   Param[1]: stream (type: AudioStream)
-Function 553: StopAudioStream() (1 input parameters)
+Function 559: StopAudioStream() (1 input parameters)
   Name: StopAudioStream
   Return type: void
   Description: Stop audio stream
   Param[1]: stream (type: AudioStream)
-Function 554: SetAudioStreamVolume() (2 input parameters)
+Function 560: SetAudioStreamVolume() (2 input parameters)
   Name: SetAudioStreamVolume
   Return type: void
   Description: Set volume for audio stream (1.0 is max level)
   Param[1]: stream (type: AudioStream)
   Param[2]: volume (type: float)
-Function 555: SetAudioStreamPitch() (2 input parameters)
+Function 561: GetAudioStreamVolume() (1 input parameters)
+  Name: GetAudioStreamVolume
+  Return type: float
+  Description: Get volume for audio stream (1.0 is max level)
+  Param[1]: stream (type: AudioStream)
+Function 562: SetAudioStreamPitch() (2 input parameters)
   Name: SetAudioStreamPitch
   Return type: void
   Description: Set pitch for audio stream (1.0 is base level)
   Param[1]: stream (type: AudioStream)
   Param[2]: pitch (type: float)
-Function 556: SetAudioStreamPan() (2 input parameters)
+Function 563: GetAudioStreamPitch() (1 input parameters)
+  Name: GetAudioStreamPitch
+  Return type: float
+  Description: Get pitch for audio stream (1.0 is base level)
+  Param[1]: stream (type: AudioStream)
+Function 564: SetAudioStreamPan() (2 input parameters)
   Name: SetAudioStreamPan
   Return type: void
   Description: Set pan for audio stream (0.5 is centered)
   Param[1]: stream (type: AudioStream)
   Param[2]: pan (type: float)
-Function 557: SetAudioStreamBufferSizeDefault() (1 input parameters)
+Function 565: GetAudioStreamPan() (1 input parameters)
+  Name: GetAudioStreamPan
+  Return type: float
+  Description: Get pan for audio stream (0.5 is centered)
+  Param[1]: stream (type: AudioStream)
+Function 566: SetAudioStreamBufferSizeDefault() (1 input parameters)
   Name: SetAudioStreamBufferSizeDefault
   Return type: void
   Description: Default size for new audio streams
   Param[1]: size (type: int)
-Function 558: SetAudioStreamCallback() (2 input parameters)
+Function 567: SetAudioStreamCallback() (2 input parameters)
   Name: SetAudioStreamCallback
   Return type: void
   Description: Audio thread callback to request new data
   Param[1]: stream (type: AudioStream)
   Param[2]: callback (type: AudioCallback)
-Function 559: AttachAudioStreamProcessor() (2 input parameters)
+Function 568: AttachAudioStreamProcessor() (2 input parameters)
   Name: AttachAudioStreamProcessor
   Return type: void
   Description: Attach audio stream processor to stream, receives the samples as 'float'
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 560: DetachAudioStreamProcessor() (2 input parameters)
+Function 569: DetachAudioStreamProcessor() (2 input parameters)
   Name: DetachAudioStreamProcessor
   Return type: void
   Description: Detach audio stream processor from stream
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 561: AttachAudioMixedProcessor() (1 input parameters)
+Function 570: AttachAudioMixedProcessor() (1 input parameters)
   Name: AttachAudioMixedProcessor
   Return type: void
   Description: Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
   Param[1]: processor (type: AudioCallback)
-Function 562: DetachAudioMixedProcessor() (1 input parameters)
+Function 571: DetachAudioMixedProcessor() (1 input parameters)
   Name: DetachAudioMixedProcessor
   Return type: void
   Description: Detach audio stream processor from the entire audio pipeline

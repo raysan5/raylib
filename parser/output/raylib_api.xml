@@ -670,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="562">
+    <Functions count="571">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2859,13 +2859,22 @@
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="volume" desc="" />
         </Function>
+        <Function name="GetSoundVolume" retType="float" paramCount="1" desc="Get volume for a sound (1.0 is max level)">
+            <Param type="Sound" name="sound" desc="" />
+        </Function>
         <Function name="SetSoundPitch" retType="void" paramCount="2" desc="Set pitch for a sound (1.0 is base level)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
+        <Function name="GetSoundPitch" retType="float" paramCount="1" desc="Get pitch for a sound (1.0 is base level)">
+            <Param type="Sound" name="sound" desc="" />
+        </Function>
         <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (0.5 is center)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pan" desc="" />
+        </Function>
+        <Function name="GetSoundPan" retType="float" paramCount="1" desc="Set pan for a sound (0.5 is center)">
+            <Param type="Sound" name="sound" desc="" />
         </Function>
         <Function name="WaveCopy" retType="Wave" paramCount="1" desc="Copy a wave to a new wave">
             <Param type="Wave" name="wave" desc="" />
@@ -2927,13 +2936,22 @@
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="volume" desc="" />
         </Function>
+        <Function name="GetMusicVolume" retType="float" paramCount="1" desc="Get volume for music (1.0 is max level)">
+            <Param type="Music" name="music" desc="" />
+        </Function>
         <Function name="SetMusicPitch" retType="void" paramCount="2" desc="Set pitch for a music (1.0 is base level)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
+        <Function name="GetMusicPitch" retType="float" paramCount="1" desc="Get pitch for a music (1.0 is base level)">
+            <Param type="Music" name="music" desc="" />
+        </Function>
         <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (0.5 is center)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pan" desc="" />
+        </Function>
+        <Function name="GetMusicPan" retType="float" paramCount="1" desc="Get pan for a music (0.5 is center)">
+            <Param type="Music" name="music" desc="" />
         </Function>
         <Function name="GetMusicTimeLength" retType="float" paramCount="1" desc="Get music time length (in seconds)">
             <Param type="Music" name="music" desc="" />
@@ -2979,13 +2997,22 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="volume" desc="" />
         </Function>
+        <Function name="GetAudioStreamVolume" retType="float" paramCount="1" desc="Get volume for audio stream (1.0 is max level)">
+            <Param type="AudioStream" name="stream" desc="" />
+        </Function>
         <Function name="SetAudioStreamPitch" retType="void" paramCount="2" desc="Set pitch for audio stream (1.0 is base level)">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
+        <Function name="GetAudioStreamPitch" retType="float" paramCount="1" desc="Get pitch for audio stream (1.0 is base level)">
+            <Param type="AudioStream" name="stream" desc="" />
+        </Function>
         <Function name="SetAudioStreamPan" retType="void" paramCount="2" desc="Set pan for audio stream (0.5 is centered)">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="pan" desc="" />
+        </Function>
+        <Function name="GetAudioStreamPan" retType="float" paramCount="1" desc="Get pan for audio stream (0.5 is centered)">
+            <Param type="AudioStream" name="stream" desc="" />
         </Function>
         <Function name="SetAudioStreamBufferSizeDefault" retType="void" paramCount="1" desc="Default size for new audio streams">
             <Param type="int" name="size" desc="" />

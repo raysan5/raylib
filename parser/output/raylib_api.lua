@@ -7706,6 +7706,14 @@ return {
       }
     },
     {
+      name = "GetSoundVolume",
+      description = "Get volume for a sound (1.0 is max level)",
+      returnType = "float",
+      params = {
+        {type = "Sound", name = "sound"}
+      }
+    },
+    {
       name = "SetSoundPitch",
       description = "Set pitch for a sound (1.0 is base level)",
       returnType = "void",
@@ -7715,12 +7723,28 @@ return {
       }
     },
     {
+      name = "GetSoundPitch",
+      description = "Get pitch for a sound (1.0 is base level)",
+      returnType = "float",
+      params = {
+        {type = "Sound", name = "sound"}
+      }
+    },
+    {
       name = "SetSoundPan",
       description = "Set pan for a sound (0.5 is center)",
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"},
         {type = "float", name = "pan"}
+      }
+    },
+    {
+      name = "GetSoundPan",
+      description = "Set pan for a sound (0.5 is center)",
+      returnType = "float",
+      params = {
+        {type = "Sound", name = "sound"}
       }
     },
     {
@@ -7869,6 +7893,14 @@ return {
       }
     },
     {
+      name = "GetMusicVolume",
+      description = "Get volume for music (1.0 is max level)",
+      returnType = "float",
+      params = {
+        {type = "Music", name = "music"}
+      }
+    },
+    {
       name = "SetMusicPitch",
       description = "Set pitch for a music (1.0 is base level)",
       returnType = "void",
@@ -7878,12 +7910,28 @@ return {
       }
     },
     {
+      name = "GetMusicPitch",
+      description = "Get pitch for a music (1.0 is base level)",
+      returnType = "float",
+      params = {
+        {type = "Music", name = "music"}
+      }
+    },
+    {
       name = "SetMusicPan",
       description = "Set pan for a music (0.5 is center)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},
         {type = "float", name = "pan"}
+      }
+    },
+    {
+      name = "GetMusicPan",
+      description = "Get pan for a music (0.5 is center)",
+      returnType = "float",
+      params = {
+        {type = "Music", name = "music"}
       }
     },
     {
@@ -7996,6 +8044,14 @@ return {
       }
     },
     {
+      name = "GetAudioStreamVolume",
+      description = "Get volume for audio stream (1.0 is max level)",
+      returnType = "float",
+      params = {
+        {type = "AudioStream", name = "stream"}
+      }
+    },
+    {
       name = "SetAudioStreamPitch",
       description = "Set pitch for audio stream (1.0 is base level)",
       returnType = "void",
@@ -8005,12 +8061,28 @@ return {
       }
     },
     {
+      name = "GetAudioStreamPitch",
+      description = "Get pitch for audio stream (1.0 is base level)",
+      returnType = "float",
+      params = {
+        {type = "AudioStream", name = "stream"}
+      }
+    },
+    {
       name = "SetAudioStreamPan",
       description = "Set pan for audio stream (0.5 is centered)",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
         {type = "float", name = "pan"}
+      }
+    },
+    {
+      name = "GetAudioStreamPan",
+      description = "Get pan for audio stream (0.5 is centered)",
+      returnType = "float",
+      params = {
+        {type = "AudioStream", name = "stream"}
       }
     },
     {
