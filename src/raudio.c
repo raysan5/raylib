@@ -1202,16 +1202,34 @@ bool IsSoundPlaying(Sound sound)
     return result;
 }
 
+// Get volume for a sound
+float GetSoundVolume(Sound sound)
+{
+    return sound.stream.buffer->volume;
+}
+
 // Set volume for a sound
 void SetSoundVolume(Sound sound, float volume)
 {
     SetAudioBufferVolume(sound.stream.buffer, volume);
 }
 
+// Get pitch for a sound
+float GetSoundPitch(Sound sound)
+{
+    return sound.stream.buffer->pitch;
+}
+
 // Set pitch for a sound
 void SetSoundPitch(Sound sound, float pitch)
 {
     SetAudioBufferPitch(sound.stream.buffer, pitch);
+}
+
+// Get pan for a sound
+float GetSoundPan(Sound sound)
+{
+    return sound.stream.buffer->pan;
 }
 
 // Set pan for a sound
@@ -2022,16 +2040,34 @@ bool IsMusicStreamPlaying(Music music)
     return IsAudioStreamPlaying(music.stream);
 }
 
+// Get volume for music
+float GetMusicVolume(Music music)
+{
+    return music.stream.buffer->volume;
+}
+
 // Set volume for music
 void SetMusicVolume(Music music, float volume)
 {
     SetAudioStreamVolume(music.stream, volume);
 }
 
+// Get pitch for music
+float GetMusicPitch(Music music)
+{
+    return music.stream.buffer->pitch;
+}
+
 // Set pitch for music
 void SetMusicPitch(Music music, float pitch)
 {
     SetAudioBufferPitch(music.stream.buffer, pitch);
+}
+
+// Get pan for a music
+float GetMusicPan(Music music)
+{
+    return music.stream.buffer->pan;
 }
 
 // Set pan for a music
@@ -2185,16 +2221,34 @@ void StopAudioStream(AudioStream stream)
     StopAudioBuffer(stream.buffer);
 }
 
+// Get volume for audio stream (1.0 is max level)
+float GetAudioStreamVolume(AudioStream stream)
+{
+    return stream.buffer->volume;
+}
+
 // Set volume for audio stream (1.0 is max level)
 void SetAudioStreamVolume(AudioStream stream, float volume)
 {
     SetAudioBufferVolume(stream.buffer, volume);
 }
 
+// Get pitch for audio stream (1.0 is base level)
+float GetAudioStreamPitch(AudioStream stream)
+{
+    return stream.buffer->pitch;
+}
+
 // Set pitch for audio stream (1.0 is base level)
 void SetAudioStreamPitch(AudioStream stream, float pitch)
 {
     SetAudioBufferPitch(stream.buffer, pitch);
+}
+
+// Get pan for audio stream
+float GetAudioStreamPan(AudioStream stream)
+{
+    return stream.buffer->pan;
 }
 
 // Set pan for audio stream
