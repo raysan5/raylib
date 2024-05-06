@@ -771,7 +771,7 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
 RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { 0 };
-    
+
     float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
     float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
 
@@ -788,7 +788,7 @@ RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
 RMAPI Vector3 Vector3Reject(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { 0 };
-    
+
     float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
     float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
 
@@ -945,6 +945,22 @@ RMAPI Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
     result.x = v1.x + amount*(v2.x - v1.x);
     result.y = v1.y + amount*(v2.y - v1.y);
     result.z = v1.z + amount*(v2.z - v1.z);
+
+    return result;
+}
+
+// Calculate cubic hermite interpolation between two vectors and their tangents
+// as described in the GLTF 2.0 specification: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#interpolation-cubic
+RMAPI Vector3 Vector3CubicHermite(Vector3 v1, Vector3 tangent1, Vector3 v2, Vector3 tangent2, float amount)
+{
+    Vector3 result = { 0 };
+
+    float amountPow2 = amount * amount;
+    float amountPow3 = amount * amount * amount;
+
+    result.x = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.x + (amountPow3 - 2 * amountPow2 + amount) * tangent1.x + (-2 * amountPow3 + 3 * amountPow2) * v2.x + (amountPow3 - amountPow2) * tangent2.x;
+    result.y = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.y + (amountPow3 - 2 * amountPow2 + amount) * tangent1.y + (-2 * amountPow3 + 3 * amountPow2) * v2.y + (amountPow3 - amountPow2) * tangent2.y;
+    result.z = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.z + (amountPow3 - 2 * amountPow2 + amount) * tangent1.z + (-2 * amountPow3 + 3 * amountPow2) * v2.z + (amountPow3 - amountPow2) * tangent2.z;
 
     return result;
 }
@@ -1205,7 +1221,7 @@ RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 RMAPI Vector4 Vector4Zero(void)
 {
     Vector4 result = { 0.0f, 0.0f, 0.0f, 0.0f };
-    return result;   
+    return result;
 }
 
 RMAPI Vector4 Vector4One(void)
@@ -1288,7 +1304,7 @@ RMAPI float Vector4Distance(Vector4 v1, Vector4 v2)
 // Calculate square distance between two vectors
 RMAPI float Vector4DistanceSqr(Vector4 v1, Vector4 v2)
 {
-    float result = 
+    float result =
         (v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y) +
         (v1.z - v2.z)*(v1.z - v2.z) + (v1.w - v2.w)*(v1.w - v2.w);
 
@@ -2187,6 +2203,32 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     return result;
 }
 
+// Calculate quaternion cubic spline interpolation using Cubic Hermite Spline algorithm
+// as described in the GLTF 2.0 specification: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#interpolation-cubic
+RMAPI Quaternion QuaternionCubicHermiteSpline(Quaternion q1, Quaternion outTangent1, Quaternion q2, Quaternion inTangent2, float t)
+{
+    float t2 = t * t;
+    float t3 = t2 * t;
+    float h00 = 2 * t3 - 3 * t2 + 1;
+    float h10 = t3 - 2 * t2 + t;    
+    float h01 = -2 * t3 + 3 * t2;   
+    float h11 = t3 - t2;            
+
+    Quaternion p0 = QuaternionScale(q1, h00);
+    Quaternion m0 = QuaternionScale(outTangent1, h10);
+    Quaternion p1 = QuaternionScale(q2, h01);
+    Quaternion m1 = QuaternionScale(inTangent2, h11);
+
+    Quaternion result = { 0 };
+
+    result = QuaternionAdd(p0, m0);
+    result = QuaternionAdd(result, p1);
+    result = QuaternionAdd(result, m1);
+    result = QuaternionNormalize(result);
+
+    return result;
+}
+
 // Calculate quaternion based on the rotation from one vector to another
 RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 {
@@ -2328,10 +2370,10 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
         float ilength = 0.0f;
 
         // Vector3Normalize(axis)
-        Vector3 v = axis;
-        lengthSq = v.x*v.x + v.y*v.y + v.z*v.z;
-        if (lengthSq == 0.0f) lengthSq = 1.0f;
-        ilength = 1.0f/sqrtf(lengthSq);
+        length = axisLength;
+        if (length == 0.0f) length = 1.0f;
+        ilength = 1.0f/length;
+
         axis.x *= ilength;
         axis.y *= ilength;
         axis.z *= ilength;

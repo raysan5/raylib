@@ -144,10 +144,8 @@ int main(void)
                     Matrix matrixTransform = QuaternionToMatrix(rotate);
                     // Translate socket to its position in the current animation
                     matrixTransform = MatrixMultiply(matrixTransform, MatrixTranslate(transform->translation.x, transform->translation.y, transform->translation.z));
-                    // Rotate socket by character angle
-                    matrixTransform = MatrixMultiply(matrixTransform, QuaternionToMatrix(characterRotate));
-                    // Translate socket to character position
-                    matrixTransform = MatrixMultiply(matrixTransform, MatrixTranslate(position.x, position.y + 0.0f, position.z));
+                    // Transform the socket using the transform of the character (angle and translate)
+                    matrixTransform = MatrixMultiply(matrixTransform, characterModel.transform);
                     
                     // Draw mesh at socket position with socket angle rotation
                     DrawMesh(equipModel[i].meshes[0], equipModel[i].materials[1], matrixTransform);

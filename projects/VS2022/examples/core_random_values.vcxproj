@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}</ProjectGuid>
+    <ProjectGuid>{B332DCA8-3599-4A99-917A-82261BDC27AC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>core_random_values</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

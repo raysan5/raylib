@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
-    <Defines count="56">
+    <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
@@ -57,6 +57,7 @@
         <Define name="MATERIAL_MAP_SPECULAR" type="UNKNOWN" value="MATERIAL_MAP_METALNESS" desc="" />
         <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" value="SHADER_LOC_MAP_ALBEDO" desc="" />
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
+        <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
     <Structs count="34">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
@@ -470,12 +471,12 @@
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_DOWN" integer="3" desc="Gamepad left DPAD down button" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_LEFT" integer="4" desc="Gamepad left DPAD left button" />
             <Value name="GAMEPAD_BUTTON_RIGHT_FACE_UP" integer="5" desc="Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_RIGHT" integer="6" desc="Gamepad right button right (i.e. PS3: Square, Xbox: X)" />
+            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_RIGHT" integer="6" desc="Gamepad right button right (i.e. PS3: Circle, Xbox: B)" />
             <Value name="GAMEPAD_BUTTON_RIGHT_FACE_DOWN" integer="7" desc="Gamepad right button down (i.e. PS3: Cross, Xbox: A)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_LEFT" integer="8" desc="Gamepad right button left (i.e. PS3: Circle, Xbox: B)" />
+            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_LEFT" integer="8" desc="Gamepad right button left (i.e. PS3: Square, Xbox: X)" />
             <Value name="GAMEPAD_BUTTON_LEFT_TRIGGER_1" integer="9" desc="Gamepad top/back trigger left (first), it could be a trailing button" />
             <Value name="GAMEPAD_BUTTON_LEFT_TRIGGER_2" integer="10" desc="Gamepad top/back trigger left (second), it could be a trailing button" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_TRIGGER_1" integer="11" desc="Gamepad top/back trigger right (one), it could be a trailing button" />
+            <Value name="GAMEPAD_BUTTON_RIGHT_TRIGGER_1" integer="11" desc="Gamepad top/back trigger right (first), it could be a trailing button" />
             <Value name="GAMEPAD_BUTTON_RIGHT_TRIGGER_2" integer="12" desc="Gamepad top/back trigger right (second), it could be a trailing button" />
             <Value name="GAMEPAD_BUTTON_MIDDLE_LEFT" integer="13" desc="Gamepad center buttons, left one (i.e. PS3: Select)" />
             <Value name="GAMEPAD_BUTTON_MIDDLE" integer="14" desc="Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)" />
@@ -626,11 +627,11 @@
             <Value name="GESTURE_PINCH_OUT" integer="512" desc="Pinch out gesture" />
         </Enum>
         <Enum name="CameraMode" valueCount="5" desc="Camera system modes">
-            <Value name="CAMERA_CUSTOM" integer="0" desc="Custom camera" />
-            <Value name="CAMERA_FREE" integer="1" desc="Free camera" />
-            <Value name="CAMERA_ORBITAL" integer="2" desc="Orbital camera" />
-            <Value name="CAMERA_FIRST_PERSON" integer="3" desc="First person camera" />
-            <Value name="CAMERA_THIRD_PERSON" integer="4" desc="Third person camera" />
+            <Value name="CAMERA_CUSTOM" integer="0" desc="Camera custom, controlled by user (UpdateCamera() does nothing)" />
+            <Value name="CAMERA_FREE" integer="1" desc="Camera free mode" />
+            <Value name="CAMERA_ORBITAL" integer="2" desc="Camera orbital, around target, zoom supported" />
+            <Value name="CAMERA_FIRST_PERSON" integer="3" desc="Camera first person" />
+            <Value name="CAMERA_THIRD_PERSON" integer="4" desc="Camera third person" />
         </Enum>
         <Enum name="CameraProjection" valueCount="2" desc="Camera projection">
             <Value name="CAMERA_PERSPECTIVE" integer="0" desc="Perspective projection" />
@@ -669,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="560">
+    <Functions count="562">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -902,15 +903,15 @@
         <Function name="UnloadShader" retType="void" paramCount="1" desc="Unload shader from GPU memory (VRAM)">
             <Param type="Shader" name="shader" desc="" />
         </Function>
-        <Function name="GetMouseRay" retType="Ray" paramCount="2" desc="Get a ray trace from mouse position">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRay" retType="Ray" paramCount="2" desc="Get a ray trace from screen position (i.e mouse)">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
         </Function>
-        <Function name="GetViewRay" retType="Ray" paramCount="4" desc="Get a ray trace from mouse position in a viewport">
-            <Param type="Vector2" name="mousePosition" desc="" />
+        <Function name="GetScreenToWorldRayEx" retType="Ray" paramCount="4" desc="Get a ray trace from screen position (i.e mouse) in a viewport">
+            <Param type="Vector2" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
-            <Param type="float" name="width" desc="" />
-            <Param type="float" name="height" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
         </Function>
         <Function name="GetWorldToScreen" retType="Vector2" paramCount="2" desc="Get the screen space position for a 3d world space position">
             <Param type="Vector3" name="position" desc="" />
@@ -1463,7 +1464,13 @@
             <Param type="int" name="segments" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="5" desc="Draw rectangle with rounded edges outline">
+        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="4" desc="Draw rectangle lines with rounded edges">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="float" name="roundness" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleRoundedLinesEx" retType="void" paramCount="5" desc="Draw rectangle with rounded edges outline">
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="float" name="roundness" desc="" />
             <Param type="int" name="segments" desc="" />
@@ -2111,11 +2118,15 @@
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
+        <Function name="ColorIsEqual" retType="bool" paramCount="2" desc="Check if two colors are equal">
+            <Param type="Color" name="col1" desc="" />
+            <Param type="Color" name="col2" desc="" />
+        </Function>
         <Function name="Fade" retType="Color" paramCount="2" desc="Get color with alpha applied, alpha goes from 0.0f to 1.0f">
             <Param type="Color" name="color" desc="" />
             <Param type="float" name="alpha" desc="" />
         </Function>
-        <Function name="ColorToInt" retType="int" paramCount="1" desc="Get hexadecimal value for a Color">
+        <Function name="ColorToInt" retType="int" paramCount="1" desc="Get hexadecimal value for a Color (0xRRGGBBAA)">
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ColorNormalize" retType="Vector4" paramCount="1" desc="Get Color normalized as float [0..1]">
@@ -2983,7 +2994,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="callback" desc="" />
         </Function>
-        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream, receives the samples as <float>s">
+        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream, receives the samples as 'float'">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
@@ -2991,7 +3002,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
-        <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s">
+        <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'">
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
         <Function name="DetachAudioMixedProcessor" retType="void" paramCount="1" desc="Detach audio stream processor from the entire audio pipeline">

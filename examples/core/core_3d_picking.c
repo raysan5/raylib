@@ -60,7 +60,7 @@ int main(void)
         {
             if (!collision.hit)
             {
-                ray = GetMouseRay(GetMousePosition(), camera);
+                ray = GetScreenToWorldRay(GetMousePosition(), camera);
 
                 // Check collision between ray and box
                 collision = GetRayCollisionBox(ray,

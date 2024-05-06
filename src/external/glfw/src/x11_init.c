@@ -1,8 +1,9 @@
 //========================================================================
-// GLFW 3.4 X11 - www.glfw.org
+// GLFW 3.4 X11 (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,10 +25,10 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_X11)
 
 #include <stdlib.h>
 #include <string.h>
@@ -210,7 +211,7 @@ static int translateKeySyms(const KeySym* keysyms, int width)
 
 // Create key code translation tables
 //
-static void createKeyTables(void)
+static void createKeyTablesX11(void)
 {
     int scancodeMin, scancodeMax;
 
@@ -908,7 +909,7 @@ static GLFWbool initExtensions(void)
     // Update the key code LUT
     // FIXME: We should listen to XkbMapNotify events to track changes to
     // the keyboard mapping.
-    createKeyTables();
+    createKeyTablesX11();
 
     // String format atoms
     _glfw.x11.NULL_ = XInternAtom(_glfw.x11.display, "NULL", False);
@@ -1166,86 +1167,86 @@ GLFWbool _glfwConnectX11(int platformID, _GLFWplatform* platform)
 {
     const _GLFWplatform x11 =
     {
-        GLFW_PLATFORM_X11,
-        _glfwInitX11,
-        _glfwTerminateX11,
-        _glfwGetCursorPosX11,
-        _glfwSetCursorPosX11,
-        _glfwSetCursorModeX11,
-        _glfwSetRawMouseMotionX11,
-        _glfwRawMouseMotionSupportedX11,
-        _glfwCreateCursorX11,
-        _glfwCreateStandardCursorX11,
-        _glfwDestroyCursorX11,
-        _glfwSetCursorX11,
-        _glfwGetScancodeNameX11,
-        _glfwGetKeyScancodeX11,
-        _glfwSetClipboardStringX11,
-        _glfwGetClipboardStringX11,
-#if defined(__linux__)
-        _glfwInitJoysticksLinux,
-        _glfwTerminateJoysticksLinux,
-        _glfwPollJoystickLinux,
-        _glfwGetMappingNameLinux,
-        _glfwUpdateGamepadGUIDLinux,
+        .platformID = GLFW_PLATFORM_X11,
+        .init = _glfwInitX11,
+        .terminate = _glfwTerminateX11,
+        .getCursorPos = _glfwGetCursorPosX11,
+        .setCursorPos = _glfwSetCursorPosX11,
+        .setCursorMode = _glfwSetCursorModeX11,
+        .setRawMouseMotion = _glfwSetRawMouseMotionX11,
+        .rawMouseMotionSupported = _glfwRawMouseMotionSupportedX11,
+        .createCursor = _glfwCreateCursorX11,
+        .createStandardCursor = _glfwCreateStandardCursorX11,
+        .destroyCursor = _glfwDestroyCursorX11,
+        .setCursor = _glfwSetCursorX11,
+        .getScancodeName = _glfwGetScancodeNameX11,
+        .getKeyScancode = _glfwGetKeyScancodeX11,
+        .setClipboardString = _glfwSetClipboardStringX11,
+        .getClipboardString = _glfwGetClipboardStringX11,
+#if defined(GLFW_BUILD_LINUX_JOYSTICK)
+        .initJoysticks = _glfwInitJoysticksLinux,
+        .terminateJoysticks = _glfwTerminateJoysticksLinux,
+        .pollJoystick = _glfwPollJoystickLinux,
+        .getMappingName = _glfwGetMappingNameLinux,
+        .updateGamepadGUID = _glfwUpdateGamepadGUIDLinux,
 #else
-        _glfwInitJoysticksNull,
-        _glfwTerminateJoysticksNull,
-        _glfwPollJoystickNull,
-        _glfwGetMappingNameNull,
-        _glfwUpdateGamepadGUIDNull,
+        .initJoysticks = _glfwInitJoysticksNull,
+        .terminateJoysticks = _glfwTerminateJoysticksNull,
+        .pollJoystick = _glfwPollJoystickNull,
+        .getMappingName = _glfwGetMappingNameNull,
+        .updateGamepadGUID = _glfwUpdateGamepadGUIDNull,
 #endif
-        _glfwFreeMonitorX11,
-        _glfwGetMonitorPosX11,
-        _glfwGetMonitorContentScaleX11,
-        _glfwGetMonitorWorkareaX11,
-        _glfwGetVideoModesX11,
-        _glfwGetVideoModeX11,
-        _glfwGetGammaRampX11,
-        _glfwSetGammaRampX11,
-        _glfwCreateWindowX11,
-        _glfwDestroyWindowX11,
-        _glfwSetWindowTitleX11,
-        _glfwSetWindowIconX11,
-        _glfwGetWindowPosX11,
-        _glfwSetWindowPosX11,
-        _glfwGetWindowSizeX11,
-        _glfwSetWindowSizeX11,
-        _glfwSetWindowSizeLimitsX11,
-        _glfwSetWindowAspectRatioX11,
-        _glfwGetFramebufferSizeX11,
-        _glfwGetWindowFrameSizeX11,
-        _glfwGetWindowContentScaleX11,
-        _glfwIconifyWindowX11,
-        _glfwRestoreWindowX11,
-        _glfwMaximizeWindowX11,
-        _glfwShowWindowX11,
-        _glfwHideWindowX11,
-        _glfwRequestWindowAttentionX11,
-        _glfwFocusWindowX11,
-        _glfwSetWindowMonitorX11,
-        _glfwWindowFocusedX11,
-        _glfwWindowIconifiedX11,
-        _glfwWindowVisibleX11,
-        _glfwWindowMaximizedX11,
-        _glfwWindowHoveredX11,
-        _glfwFramebufferTransparentX11,
-        _glfwGetWindowOpacityX11,
-        _glfwSetWindowResizableX11,
-        _glfwSetWindowDecoratedX11,
-        _glfwSetWindowFloatingX11,
-        _glfwSetWindowOpacityX11,
-        _glfwSetWindowMousePassthroughX11,
-        _glfwPollEventsX11,
-        _glfwWaitEventsX11,
-        _glfwWaitEventsTimeoutX11,
-        _glfwPostEmptyEventX11,
-        _glfwGetEGLPlatformX11,
-        _glfwGetEGLNativeDisplayX11,
-        _glfwGetEGLNativeWindowX11,
-        _glfwGetRequiredInstanceExtensionsX11,
-        _glfwGetPhysicalDevicePresentationSupportX11,
-        _glfwCreateWindowSurfaceX11,
+        .freeMonitor = _glfwFreeMonitorX11,
+        .getMonitorPos = _glfwGetMonitorPosX11,
+        .getMonitorContentScale = _glfwGetMonitorContentScaleX11,
+        .getMonitorWorkarea = _glfwGetMonitorWorkareaX11,
+        .getVideoModes = _glfwGetVideoModesX11,
+        .getVideoMode = _glfwGetVideoModeX11,
+        .getGammaRamp = _glfwGetGammaRampX11,
+        .setGammaRamp = _glfwSetGammaRampX11,
+        .createWindow = _glfwCreateWindowX11,
+        .destroyWindow = _glfwDestroyWindowX11,
+        .setWindowTitle = _glfwSetWindowTitleX11,
+        .setWindowIcon = _glfwSetWindowIconX11,
+        .getWindowPos = _glfwGetWindowPosX11,
+        .setWindowPos = _glfwSetWindowPosX11,
+        .getWindowSize = _glfwGetWindowSizeX11,
+        .setWindowSize = _glfwSetWindowSizeX11,
+        .setWindowSizeLimits = _glfwSetWindowSizeLimitsX11,
+        .setWindowAspectRatio = _glfwSetWindowAspectRatioX11,
+        .getFramebufferSize = _glfwGetFramebufferSizeX11,
+        .getWindowFrameSize = _glfwGetWindowFrameSizeX11,
+        .getWindowContentScale = _glfwGetWindowContentScaleX11,
+        .iconifyWindow = _glfwIconifyWindowX11,
+        .restoreWindow = _glfwRestoreWindowX11,
+        .maximizeWindow = _glfwMaximizeWindowX11,
+        .showWindow = _glfwShowWindowX11,
+        .hideWindow = _glfwHideWindowX11,
+        .requestWindowAttention = _glfwRequestWindowAttentionX11,
+        .focusWindow = _glfwFocusWindowX11,
+        .setWindowMonitor = _glfwSetWindowMonitorX11,
+        .windowFocused = _glfwWindowFocusedX11,
+        .windowIconified = _glfwWindowIconifiedX11,
+        .windowVisible = _glfwWindowVisibleX11,
+        .windowMaximized = _glfwWindowMaximizedX11,
+        .windowHovered = _glfwWindowHoveredX11,
+        .framebufferTransparent = _glfwFramebufferTransparentX11,
+        .getWindowOpacity = _glfwGetWindowOpacityX11,
+        .setWindowResizable = _glfwSetWindowResizableX11,
+        .setWindowDecorated = _glfwSetWindowDecoratedX11,
+        .setWindowFloating = _glfwSetWindowFloatingX11,
+        .setWindowOpacity = _glfwSetWindowOpacityX11,
+        .setWindowMousePassthrough = _glfwSetWindowMousePassthroughX11,
+        .pollEvents = _glfwPollEventsX11,
+        .waitEvents = _glfwWaitEventsX11,
+        .waitEventsTimeout = _glfwWaitEventsTimeoutX11,
+        .postEmptyEvent = _glfwPostEmptyEventX11,
+        .getEGLPlatform = _glfwGetEGLPlatformX11,
+        .getEGLNativeDisplay = _glfwGetEGLNativeDisplayX11,
+        .getEGLNativeWindow = _glfwGetEGLNativeWindowX11,
+        .getRequiredInstanceExtensions = _glfwGetRequiredInstanceExtensionsX11,
+        .getPhysicalDevicePresentationSupport = _glfwGetPhysicalDevicePresentationSupportX11,
+        .createWindowSurface = _glfwCreateWindowSurfaceX11
     };
 
     // HACK: If the application has left the locale as "C" then both wide
@@ -1651,4 +1652,6 @@ void _glfwTerminateX11(void)
         close(_glfw.x11.emptyEventPipe[1]);
     }
 }
+
+#endif // _GLFW_X11
 

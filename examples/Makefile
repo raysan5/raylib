@@ -453,6 +453,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_loading_thread \
+    core/core_random_sequence \
     core/core_random_values \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \

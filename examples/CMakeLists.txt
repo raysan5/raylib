@@ -115,6 +115,12 @@ elseif ("${PLATFORM}" STREQUAL "DRM")
 
 endif ()
 
+# The rlgl_standalone example only targets desktop, without shared libraries.
+if (BUILD_SHARED_LIBS OR NOT ${PLATFORM} MATCHES "Desktop")
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+
+endif()
+
 include_directories(BEFORE SYSTEM others/external/include)
 
 if (NOT TARGET raylib)

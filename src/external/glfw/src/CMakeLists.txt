@@ -72,47 +72,38 @@ if (GLFW_BUILD_WAYLAND)
     endif()
 
     find_program(WAYLAND_SCANNER_EXECUTABLE NAMES wayland-scanner)
+    if (NOT WAYLAND_SCANNER_EXECUTABLE)
+        message(FATAL_ERROR "Failed to find wayland-scanner")
+    endif()
 
-    include(FindPkgConfig)
-    pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols>=1.15)
-    pkg_get_variable(WAYLAND_PROTOCOLS_BASE wayland-protocols pkgdatadir)
-    pkg_get_variable(WAYLAND_CLIENT_PKGDATADIR wayland-client pkgdatadir)
+    macro(generate_wayland_protocol protocol_file)
+        set(protocol_path "${GLFW_SOURCE_DIR}/deps/wayland/${protocol_file}")
 
-    macro(wayland_generate protocol_file output_file)
-        add_custom_command(OUTPUT "${output_file}.h"
-            COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" client-header "${protocol_file}" "${output_file}.h"
-            DEPENDS "${protocol_file}"
+        string(REGEX REPLACE "\\.xml$" "-client-protocol.h" header_file ${protocol_file})
+        string(REGEX REPLACE "\\.xml$" "-client-protocol-code.h" code_file ${protocol_file})
+
+        add_custom_command(OUTPUT ${header_file}
+            COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" client-header "${protocol_path}" ${header_file}
+            DEPENDS "${protocol_path}"
             VERBATIM)
 
-        add_custom_command(OUTPUT "${output_file}-code.h"
-            COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" private-code "${protocol_file}" "${output_file}-code.h"
-            DEPENDS "${protocol_file}"
+        add_custom_command(OUTPUT ${code_file}
+            COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" private-code "${protocol_path}" ${code_file}
+            DEPENDS "${protocol_path}"
             VERBATIM)
 
-        target_sources(glfw PRIVATE "${output_file}.h" "${output_file}-code.h")
+        target_sources(glfw PRIVATE ${header_file} ${code_file})
     endmacro()
 
-    wayland_generate(
-        "${WAYLAND_CLIENT_PKGDATADIR}/wayland.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-client-protocol")
-    wayland_generate(
-        "${WAYLAND_PROTOCOLS_BASE}/stable/xdg-shell/xdg-shell.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-xdg-shell-client-protocol")
-    wayland_generate(
-        "${WAYLAND_PROTOCOLS_BASE}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-xdg-decoration-client-protocol")
-    wayland_generate(
-        "${WAYLAND_PROTOCOLS_BASE}/stable/viewporter/viewporter.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-viewporter-client-protocol")
-    wayland_generate(
-        "${WAYLAND_PROTOCOLS_BASE}/unstable/relative-pointer/relative-pointer-unstable-v1.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-relative-pointer-unstable-v1-client-protocol")
-    wayland_generate(
-        "${WAYLAND_PROTOCOLS_BASE}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-pointer-constraints-unstable-v1-client-protocol")
-    wayland_generate(
-        "${WAYLAND_PROTOCOLS_BASE}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml"
-        "${GLFW_BINARY_DIR}/src/wayland-idle-inhibit-unstable-v1-client-protocol")
+    generate_wayland_protocol("wayland.xml")
+    generate_wayland_protocol("viewporter.xml")
+    generate_wayland_protocol("xdg-shell.xml")
+    generate_wayland_protocol("idle-inhibit-unstable-v1.xml")
+    generate_wayland_protocol("pointer-constraints-unstable-v1.xml")
+    generate_wayland_protocol("relative-pointer-unstable-v1.xml")
+    generate_wayland_protocol("fractional-scale-v1.xml")
+    generate_wayland_protocol("xdg-activation-v1.xml")
+    generate_wayland_protocol("xdg-decoration-unstable-v1.xml")
 endif()
 
 if (WIN32 AND GLFW_BUILD_SHARED_LIBRARY)
@@ -126,6 +117,7 @@ if (UNIX AND GLFW_BUILD_SHARED_LIBRARY)
 else()
     set(GLFW_LIB_NAME glfw3)
 endif()
+set(GLFW_LIB_NAME_SUFFIX "")
 
 set_target_properties(glfw PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
@@ -166,6 +158,8 @@ if (GLFW_BUILD_COCOA)
 endif()
 
 if (GLFW_BUILD_WAYLAND)
+    include(FindPkgConfig)
+
     pkg_check_modules(Wayland REQUIRED
         wayland-client>=0.2.7
         wayland-cursor>=0.2.7
@@ -245,17 +239,6 @@ if (UNIX AND NOT APPLE)
     endif()
 endif()
 
-# Make GCC warn about declarations that VS 2010 and 2012 won't accept for all
-# source files that VS will build (Clang ignores this because we set -std=c99)
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    set_source_files_properties(context.c init.c input.c monitor.c platform.c vulkan.c
-                                window.c null_init.c null_joystick.c null_monitor.c
-                                null_window.c win32_init.c win32_joystick.c win32_module.c
-                                win32_monitor.c win32_time.c win32_thread.c win32_window.c
-                                wgl_context.c egl_context.c osmesa_context.c PROPERTIES
-                                COMPILE_FLAGS -Wdeclaration-after-statement)
-endif()
-
 if (WIN32)
     if (GLFW_USE_HYBRID_HPG)
         target_compile_definitions(glfw PRIVATE _GLFW_USE_HYBRID_HPG)
@@ -300,25 +283,9 @@ if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     target_compile_definitions(glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
-# Workaround for VS 2008 not shipping with stdint.h
-if (MSVC90)
-    target_include_directories(glfw PUBLIC "${GLFW_SOURCE_DIR}/deps/vs2008")
-endif()
-
-# Check for the DirectX 9 SDK as it is not included with VS 2008
-if (MSVC90)
-    include(CheckIncludeFile)
-    check_include_file(dinput.h DINPUT_H_FOUND)
-    if (NOT DINPUT_H_FOUND)
-        message(FATAL_ERROR "DirectX 9 headers not found; install DirectX 9 SDK")
-    endif()
-endif()
-
 # Workaround for -std=c99 on Linux disabling _DEFAULT_SOURCE (POSIX 2008 and more)
-if (GLFW_BUILD_X11 OR GLFW_BUILD_WAYLAND)
-    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_compile_definitions(glfw PRIVATE _DEFAULT_SOURCE)
-    endif()
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_compile_definitions(glfw PRIVATE _DEFAULT_SOURCE)
 endif()
 
 if (GLFW_BUILD_SHARED_LIBRARY)
@@ -337,6 +304,7 @@ if (GLFW_BUILD_SHARED_LIBRARY)
             # Add a suffix to the import library to avoid naming conflicts
             set_target_properties(glfw PROPERTIES IMPORT_SUFFIX "dll.lib")
         endif()
+        set (GLFW_LIB_NAME_SUFFIX "dll")
 
         target_compile_definitions(glfw INTERFACE GLFW_DLL)
     endif()

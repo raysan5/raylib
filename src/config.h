@@ -112,14 +112,22 @@
 #define RL_CULL_DISTANCE_NEAR               0.01      // Default projection matrix near cull distance
 #define RL_CULL_DISTANCE_FAR              1000.0      // Default projection matrix far cull distance
 
+// Default shader vertex attribute locations
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT   4
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
+
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: 0
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: 1
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: 2
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: 3
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: 4
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: 5
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
 
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
@@ -180,9 +188,9 @@
 // NOTE: If enabled, uses external module functions to load default raylib font
 #define SUPPORT_DEFAULT_FONT            1
 // Selected desired font fileformats to be supported for loading
-#define SUPPORT_FILEFORMAT_FNT          1
 #define SUPPORT_FILEFORMAT_TTF          1
-#define SUPPORT_FILEFORMAT_BDF          1
+//#define SUPPORT_FILEFORMAT_FNT          1
+//#define SUPPORT_FILEFORMAT_BDF          1
 
 // Support text management functions
 // If not defined, still some functions are supported: TextLength(), TextFormat()
