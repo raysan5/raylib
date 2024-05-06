@@ -5121,14 +5121,6 @@ static Model LoadGLTF(const char *fileName)
                     {
                         // Support up to 2 texture coordinates attributes
                         float *texcoordPtr = NULL;
-                        int index = data->meshes[i].primitives[p].attributes[j].index;
-                        if (index == 0) texcoordPtr = model.meshes[meshIndex].texcoords;
-                        else if (index == 1) texcoordPtr = model.meshes[meshIndex].texcoords2;
-                        else
-                        {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] No more than 2 texture coordinates attributes supported", fileName);
-                            continue;
-                        }
 
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
 
@@ -5137,7 +5129,7 @@ static Model LoadGLTF(const char *fileName)
                             if (attribute->component_type == cgltf_component_type_r_32f)  // vec2, float
                             {
                                 // Init raylib mesh texcoords to copy glTF attribute data
-                                texcoordPtr = RL_MALLOC(attribute->count*2*sizeof(float));
+                                texcoordPtr = (float *)RL_MALLOC(attribute->count*2*sizeof(float));
 
                                 // Load 3 components of float data type into mesh.texcoords
                                 LOAD_ATTRIBUTE(attribute, 2, float, texcoordPtr)
@@ -5145,10 +5137,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_8u) // vec2, u8n
                             {
                                 // Init raylib mesh texcoords to copy glTF attribute data
-                                texcoordPtr = RL_MALLOC(attribute->count*2*sizeof(float));
+                                texcoordPtr = (float *)RL_MALLOC(attribute->count*2*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = RL_MALLOC(attribute->count*2*sizeof(unsigned char));
+                                unsigned char *temp = (unsigned char *)RL_MALLOC(attribute->count*2*sizeof(unsigned char));
                                 LOAD_ATTRIBUTE(attribute, 2, unsigned char, temp);
 
                                 // Convert data to raylib texcoord data type (float)
@@ -5159,10 +5151,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_16u) // vec2, u16n
                             {
                                 // Init raylib mesh texcoords to copy glTF attribute data
-                                texcoordPtr = RL_MALLOC(attribute->count*2*sizeof(float));
+                                texcoordPtr = (float *)RL_MALLOC(attribute->count*2*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = RL_MALLOC(attribute->count*2*sizeof(unsigned short));
+                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*2*sizeof(unsigned short));
                                 LOAD_ATTRIBUTE(attribute, 2, unsigned short, temp);
 
                                 // Convert data to raylib texcoord data type (float)
@@ -5173,6 +5165,15 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported", fileName);
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported, use vec2 float", fileName);
+                    
+                        int index = data->meshes[i].primitives[p].attributes[j].index;
+                        if (index == 0) model.meshes[meshIndex].texcoords = texcoordPtr;
+                        else if (index == 1) model.meshes[meshIndex].texcoords2 = texcoordPtr;
+                        else
+                        {
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] No more than 2 texture coordinates attributes supported", fileName);
+                            if (texcoordPtr != NULL) RL_FREE(texcoordPtr);
+                        }
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)    // COLOR_n, vec3/vec4, float/u8n/u16n
                     {

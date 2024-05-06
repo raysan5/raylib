@@ -53,7 +53,6 @@ int main(void)
     
     int targetFPS = 60;                 // Our initial target fps
     //--------------------------------------------------------------------------------------
-
     // Main game loop
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {

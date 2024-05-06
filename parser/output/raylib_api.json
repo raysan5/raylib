@@ -2957,27 +2957,27 @@
         {
           "name": "CAMERA_CUSTOM",
           "value": 0,
-          "description": "Custom camera"
+          "description": "Camera custom, controlled by user (UpdateCamera() does nothing)"
         },
         {
           "name": "CAMERA_FREE",
           "value": 1,
-          "description": "Free camera"
+          "description": "Camera free mode"
         },
         {
           "name": "CAMERA_ORBITAL",
           "value": 2,
-          "description": "Orbital camera"
+          "description": "Camera orbital, around target, zoom supported"
         },
         {
           "name": "CAMERA_FIRST_PERSON",
           "value": 3,
-          "description": "First person camera"
+          "description": "Camera first person"
         },
         {
           "name": "CAMERA_THIRD_PERSON",
           "value": 4,
-          "description": "Third person camera"
+          "description": "Camera third person"
         }
       ]
     },
