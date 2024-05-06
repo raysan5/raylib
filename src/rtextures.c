@@ -314,7 +314,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     if (fileData != NULL)
     {
         unsigned char *dataPtr = fileData;
-        unsigned int size = GetPixelDataSize(width, height, format);
+        int size = GetPixelDataSize(width, height, format);
 
         if (size <= dataSize)   // Security check
         {
@@ -697,8 +697,8 @@ Image LoadImageFromScreen(void)
     Vector2 scale = GetWindowScaleDPI();
     Image image = { 0 };
 
-    image.width = GetScreenWidth()*scale.x;
-    image.height = GetScreenHeight()*scale.y;
+    image.width = (int)(GetScreenWidth()*scale.x);
+    image.height = (int)(GetScreenHeight()*scale.y);
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);

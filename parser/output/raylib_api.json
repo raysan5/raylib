@@ -2254,7 +2254,7 @@
         {
           "name": "GAMEPAD_BUTTON_RIGHT_TRIGGER_1",
           "value": 11,
-          "description": "Gamepad top/back trigger right (one), it could be a trailing button"
+          "description": "Gamepad top/back trigger right (first), it could be a trailing button"
         },
         {
           "name": "GAMEPAD_BUTTON_RIGHT_TRIGGER_2",
