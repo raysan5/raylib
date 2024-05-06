@@ -4701,7 +4701,6 @@ static HMODULE wglinstance = NULL;
 
 		char* icon = MAKEINTRESOURCEA(mouse);
 
-		RGFW_window_showMouse(win, 1);
 		SetClassLongPtrA(win->src.window, GCLP_HCURSOR, (LPARAM) LoadCursorA(NULL, icon));
 		SetCursor(LoadCursorA(NULL, icon));
 	}
