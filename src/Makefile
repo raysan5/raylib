@@ -56,7 +56,7 @@
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP_RGFW
+PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 RAYLIB_VERSION        = 5.0.0
@@ -119,7 +119,7 @@ HOST_PLATFORM_OS ?= WINDOWS
 PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS when required
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_ANDROID))
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_ANDROID PLATFORM_DESKTOP_RGFW))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -589,6 +589,31 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # Libraries for Windows desktop compilation
+        LDLIBS = ..\src\libraylib.a -lgdi32 -lwinmm -lopengl32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # Libraries for Debian GNU/Linux desktop compipling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = ../src/libraylib.a -lGL -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -lpthread -ldl -lrt
+
+        # Explicit link to libc
+        ifeq ($(RAYLIB_LIBTYPE),SHARED)
+            LDLIBS += -lc
+        endif
+
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
+        LDLIBS += -latomic
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # Libraries for Debian GNU/Linux desktop compiling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = ../src/libraylib.a -lm 
+        LDLIBS += -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
+    endif
+endif
 
 # Define source code object files required
 #------------------------------------------------------------------------------------------------
@@ -633,7 +658,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL))
+        ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))
             ifeq ($(PLATFORM_OS),WINDOWS)
                 # NOTE: Linking with provided resource file
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/$(RAYLIB_LIB_NAME).dll $(OBJS) $(RAYLIB_RES_FILE) $(LDFLAGS) $(LDLIBS)
