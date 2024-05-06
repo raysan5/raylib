@@ -2366,14 +2366,13 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
     {
         angle *= 0.5f;
 
-        float lengthSq = 0.0f;
+        float length = 0.0f;
         float ilength = 0.0f;
 
         // Vector3Normalize(axis)
         length = axisLength;
         if (length == 0.0f) length = 1.0f;
         ilength = 1.0f/length;
-
         axis.x *= ilength;
         axis.y *= ilength;
         axis.z *= ilength;
