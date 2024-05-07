@@ -814,7 +814,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #endif
 
     #include <GL/gl.h>              // OpenGL 1.1 library
+
+    #ifndef _MSC_VER
     #include <GL/glext.h>
+    #endif
 #endif
 
 #ifndef GL_TEXTURE_SWIZZLE_RGBA
