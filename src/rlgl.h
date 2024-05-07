@@ -789,19 +789,6 @@ RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);        // Set
 RLAPI void rlLoadDrawCube(void);     // Load and draw a cube
 RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
-#if defined(__cplusplus)
-}
-#endif
-
-#endif // RLGL_H
-
-/***********************************************************************************
-*
-*   RLGL IMPLEMENTATION
-*
-************************************************************************************/
-
-#if defined(RLGL_IMPLEMENTATION)
 
 // Expose OpenGL functions from glad in raylib
 #if defined(BUILD_LIBTYPE_SHARED)
@@ -928,6 +915,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     typedef void (*glCompressedTexImage2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
     typedef void (*glFramebufferTexture2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
     typedef void (*glUniform1fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (*glUniform1fPROC) (GLint location, const GLfloat value);
     typedef void (*glUniform2fvPROC) (GLint location, GLsizei count, const GLfloat *value);
     typedef void (*glUniform1ivPROC) (GLint location, GLsizei count, const GLint *value);
     typedef void (*glUniform2ivPROC) (GLint location, GLsizei count, const GLint *value);
@@ -935,79 +923,86 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     typedef void (*glVertexAttrib2fvPROC) (GLuint index, const GLfloat *v);
     typedef const GLubyte* (*glGetStringiPROC) (GLenum name, GLuint index);
 
-    glShaderSourcePROC glShaderSourceSRC = NULL;
-    glCreateShaderPROC glCreateShaderSRC = NULL;
-    glCompileShaderPROC glCompileShaderSRC = NULL;
-    glCreateProgramPROC glCreateProgramSRC = NULL;
-    glAttachShaderPROC glAttachShaderSRC = NULL;
-    glBindAttribLocationPROC glBindAttribLocationSRC = NULL;
-    glLinkProgramPROC glLinkProgramSRC = NULL;
-    glBindBufferPROC glBindBufferSRC = NULL;
-    glBufferDataPROC glBufferDataSRC = NULL;
-    glEnableVertexAttribArrayPROC glEnableVertexAttribArraySRC = NULL;
-    glVertexAttribPointerPROC glVertexAttribPointerSRC = NULL;
-    glDisableVertexAttribArrayPROC glDisableVertexAttribArraySRC = NULL;
-    glDeleteBuffersPROC glDeleteBuffersSRC = NULL;
-    glUseProgramPROC glUseProgramSRC = NULL;
-    glDetachShaderPROC glDetachShaderSRC = NULL;
-    glDeleteShaderPROC glDeleteShaderSRC = NULL;
-    glDeleteProgramPROC glDeleteProgramSRC = NULL;
-    glBufferSubDataPROC glBufferSubDataSRC = NULL;
-    glGetShaderivPROC glGetShaderivSRC = NULL;
-    glGetShaderInfoLogPROC glGetShaderInfoLogSRC = NULL;
-    glGetProgramivPROC glGetProgramivSRC = NULL;
-    glGetProgramInfoLogPROC glGetProgramInfoLogSRC = NULL;
-    glGenBuffersPROC glGenBuffersSRC = NULL;
-    glGetUniformLocationPROC glGetUniformLocationSRC = NULL;
-    glUniformMatrix4fvPROC glUniformMatrix4fvSRC = NULL;
-    glActiveTexturePROC glActiveTextureSRC = NULL;
-    glGenVertexArraysPROC glGenVertexArraysSRC = NULL;
-    glBindVertexArrayPROC glBindVertexArraySRC = NULL;
-    glDeleteVertexArraysPROC glDeleteVertexArraysSRC = NULL;
-    glBindFramebufferPROC glBindFramebufferSRC = NULL;
-    glBlitFramebufferPROC glBlitFramebufferSRC = NULL;
-    glDrawBuffersPROC glDrawBuffersSRC = NULL;
-    glBlendEquationPROC glBlendEquationSRC = NULL;
-    glBlendFuncSeparatePROC glBlendFuncSeparateSRC = NULL;
-    glBlendEquationSeparatePROC glBlendEquationSeparateSRC = NULL;
-    glUniform4fPROC glUniform4fSRC = NULL;
-    glUniformiPROC glUniformiSRC = NULL;
-    glCompressedTexImageDPROC glCompressedTexImageDSRC = NULL;
-    glLoadTextureDepthPROC glLoadTextureDepthSRC = NULL;
-    glGenRenderbuffersPROC glGenRenderbuffersSRC = NULL;
-    glBindRenderbufferPROC glBindRenderbufferSRC = NULL;
-    glRenderbufferStoragePROC glRenderbufferStorageSRC = NULL;
-    glGenerateMipmapPROC glGenerateMipmapSRC = NULL;
-    glGenFramebuffersPROC glGenFramebuffersSRC = NULL;
-    glFramebufferTextureDPROC glFramebufferTextureDSRC = NULL;
-    glFramebufferRenderbufferPROC glFramebufferRenderbufferSRC = NULL;
-    glCheckFramebufferStatusPROC glCheckFramebufferStatusSRC = NULL;
-    glGetFramebufferAttachmentParameterivPROC glGetFramebufferAttachmentParameterivSRC = NULL;
-    glDeleteRenderbuffersPROC glDeleteRenderbuffersSRC = NULL;
-    glDeleteFramebuffersPROC glDeleteFramebuffersSRC = NULL;
-    glDrawArraysInstancedPROC glDrawArraysInstancedSRC = NULL;
-    glDrawElementsInstancedPROC glDrawElementsInstancedSRC = NULL;
-    glVertexAttribDivisorPROC glVertexAttribDivisorSRC = NULL;
-    glGetAttribLocationPROC glGetAttribLocationSRC = NULL;
-    glUniformfvPROC glUniformfvSRC = NULL;
-    glUniform3fvPROC glUniform3fvSRC = NULL;
-    glUniform4fvPROC glUniform4fvSRC = NULL;
-    glUniformivPROC glUniformivSRC = NULL;
-    glUniform3ivPROC glUniform3ivSRC = NULL;
-    glUniform4ivPROC glUniform4ivSRC = NULL;
-    glVertexAttribfvPROC glVertexAttribfvSRC = NULL;
-    glVertexAttrib3fvPROC glVertexAttrib3fvSRC = NULL;
-    glVertexAttrib4fvPROC glVertexAttrib4fvSRC = NULL;
-    glUniform1iPROC glUniform1iSRC = NULL;
-    glCompressedTexImage2DPROC glCompressedTexImage2DSRC = NULL;
-    glFramebufferTexture2DPROC glFramebufferTexture2DSRC = NULL;
-    glUniform1fvPROC glUniform1fvSRC = NULL;
-    glUniform2fvPROC glUniform2fvSRC = NULL;
-    glUniform1ivPROC glUniform1ivSRC = NULL;
-    glUniform2ivPROC glUniform2ivSRC = NULL;
-    glVertexAttrib1fvPROC glVertexAttrib1fvSRC = NULL;
-    glVertexAttrib2fvPROC glVertexAttrib2fvSRC = NULL;
-    glGetStringiPROC glGetStringiSRC = NULL;
+    #ifndef RLGL_IMPLEMENTATION
+    #define RLGL_GL extern
+    #else
+    #define RLGL_GL
+    #endif
+
+    RLGL_GL glShaderSourcePROC glShaderSourceSRC;
+    RLGL_GL glCreateShaderPROC glCreateShaderSRC;
+    RLGL_GL glCompileShaderPROC glCompileShaderSRC;
+    RLGL_GL glCreateProgramPROC glCreateProgramSRC;
+    RLGL_GL glAttachShaderPROC glAttachShaderSRC;
+    RLGL_GL glBindAttribLocationPROC glBindAttribLocationSRC;
+    RLGL_GL glLinkProgramPROC glLinkProgramSRC;
+    RLGL_GL glBindBufferPROC glBindBufferSRC;
+    RLGL_GL glBufferDataPROC glBufferDataSRC;
+    RLGL_GL glEnableVertexAttribArrayPROC glEnableVertexAttribArraySRC;
+    RLGL_GL glVertexAttribPointerPROC glVertexAttribPointerSRC;
+    RLGL_GL glDisableVertexAttribArrayPROC glDisableVertexAttribArraySRC;
+    RLGL_GL glDeleteBuffersPROC glDeleteBuffersSRC;
+    RLGL_GL glUseProgramPROC glUseProgramSRC;
+    RLGL_GL glDetachShaderPROC glDetachShaderSRC;
+    RLGL_GL glDeleteShaderPROC glDeleteShaderSRC;
+    RLGL_GL glDeleteProgramPROC glDeleteProgramSRC;
+    RLGL_GL glBufferSubDataPROC glBufferSubDataSRC;
+    RLGL_GL glGetShaderivPROC glGetShaderivSRC;
+    RLGL_GL glGetShaderInfoLogPROC glGetShaderInfoLogSRC;
+    RLGL_GL glGetProgramivPROC glGetProgramivSRC;
+    RLGL_GL glGetProgramInfoLogPROC glGetProgramInfoLogSRC;
+    RLGL_GL glGenBuffersPROC glGenBuffersSRC;
+    RLGL_GL glGetUniformLocationPROC glGetUniformLocationSRC;
+    RLGL_GL glUniformMatrix4fvPROC glUniformMatrix4fvSRC;
+    RLGL_GL glActiveTexturePROC glActiveTextureSRC;
+    RLGL_GL glGenVertexArraysPROC glGenVertexArraysSRC;
+    RLGL_GL glBindVertexArrayPROC glBindVertexArraySRC;
+    RLGL_GL glDeleteVertexArraysPROC glDeleteVertexArraysSRC;
+    RLGL_GL glBindFramebufferPROC glBindFramebufferSRC;
+    RLGL_GL glBlitFramebufferPROC glBlitFramebufferSRC;
+    RLGL_GL glDrawBuffersPROC glDrawBuffersSRC;
+    RLGL_GL glBlendEquationPROC glBlendEquationSRC;
+    RLGL_GL glBlendFuncSeparatePROC glBlendFuncSeparateSRC;
+    RLGL_GL glBlendEquationSeparatePROC glBlendEquationSeparateSRC;
+    RLGL_GL glUniform4fPROC glUniform4fSRC;
+    RLGL_GL glUniformiPROC glUniformiSRC;
+    RLGL_GL glCompressedTexImageDPROC glCompressedTexImageDSRC;
+    RLGL_GL glLoadTextureDepthPROC glLoadTextureDepthSRC;
+    RLGL_GL glGenRenderbuffersPROC glGenRenderbuffersSRC;
+    RLGL_GL glBindRenderbufferPROC glBindRenderbufferSRC;
+    RLGL_GL glRenderbufferStoragePROC glRenderbufferStorageSRC;
+    RLGL_GL glGenerateMipmapPROC glGenerateMipmapSRC;
+    RLGL_GL glGenFramebuffersPROC glGenFramebuffersSRC;
+    RLGL_GL glFramebufferTextureDPROC glFramebufferTextureDSRC;
+    RLGL_GL glFramebufferRenderbufferPROC glFramebufferRenderbufferSRC;
+    RLGL_GL glCheckFramebufferStatusPROC glCheckFramebufferStatusSRC;
+    RLGL_GL glGetFramebufferAttachmentParameterivPROC glGetFramebufferAttachmentParameterivSRC;
+    RLGL_GL glDeleteRenderbuffersPROC glDeleteRenderbuffersSRC;
+    RLGL_GL glDeleteFramebuffersPROC glDeleteFramebuffersSRC;
+    RLGL_GL glDrawArraysInstancedPROC glDrawArraysInstancedSRC;
+    RLGL_GL glDrawElementsInstancedPROC glDrawElementsInstancedSRC;
+    RLGL_GL glVertexAttribDivisorPROC glVertexAttribDivisorSRC;
+    RLGL_GL glGetAttribLocationPROC glGetAttribLocationSRC;
+    RLGL_GL glUniformfvPROC glUniformfvSRC;
+    RLGL_GL glUniform3fvPROC glUniform3fvSRC;
+    RLGL_GL glUniform4fvPROC glUniform4fvSRC;
+    RLGL_GL glUniformivPROC glUniformivSRC;
+    RLGL_GL glUniform3ivPROC glUniform3ivSRC;
+    RLGL_GL  glUniform4ivPROC glUniform4ivSRC;
+    RLGL_GL glVertexAttribfvPROC glVertexAttribfvSRC;
+    RLGL_GL glVertexAttrib3fvPROC glVertexAttrib3fvSRC;
+    RLGL_GL glVertexAttrib4fvPROC glVertexAttrib4fvSRC;
+    RLGL_GL glUniform1iPROC glUniform1iSRC;
+    RLGL_GL glCompressedTexImage2DPROC glCompressedTexImage2DSRC;
+    RLGL_GL glFramebufferTexture2DPROC glFramebufferTexture2DSRC;
+    RLGL_GL glUniform1fvPROC glUniform1fvSRC;
+    RLGL_GL glUniform1fPROC glUniform1fSRC;
+    RLGL_GL glUniform2fvPROC glUniform2fvSRC;
+    RLGL_GL glUniform1ivPROC glUniform1ivSRC;
+    RLGL_GL glUniform2ivPROC glUniform2ivSRC;
+    RLGL_GL glVertexAttrib1fvPROC glVertexAttrib1fvSRC;
+    RLGL_GL glVertexAttrib2fvPROC glVertexAttrib2fvSRC;
+    RLGL_GL glGetStringiPROC glGetStringiSRC;
 
     #define glActiveTexture glActiveTextureSRC
     #define glShaderSource glShaderSourceSRC
@@ -1076,6 +1071,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define glCompressedTexImage2D glCompressedTexImage2DSRC
     #define glFramebufferTexture2D glFramebufferTexture2DSRC
     #define glUniform1fv glUniform1fvSRC
+    #define glUniform1f glUniform1fSRC
     #define glUniform2fv glUniform2fvSRC
     #define glUniform1iv glUniform1ivSRC
     #define glUniform2iv glUniform2ivSRC
@@ -1083,29 +1079,43 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define glVertexAttrib2fv glVertexAttrib2fvSRC
     #define glGetStringi glGetStringiSRC
 
-    int RLGL_GL_ARB_vertex_array_object = 0;
-    int RLGL_GL_EXT_draw_instanced = 0;
-    int RLGL_GL_ARB_instanced_arrays = 0;
-    int RLGL_GL_ARB_texture_non_power_of_two = 0;
+    RLGL_GL int RLGL_GL_ARB_vertex_array_object;
+    RLGL_GL int RLGL_GL_EXT_draw_instanced;
+    RLGL_GL int RLGL_GL_ARB_instanced_arrays;
+    RLGL_GL int RLGL_GL_ARB_texture_non_power_of_two;
 
-    int RLGL_GL_ARB_texture_float = 0;
-    int RLGL_GL_ARB_depth_texture = 0;
+    RLGL_GL int RLGL_GL_ARB_texture_float;
+    RLGL_GL int RLGL_GL_ARB_depth_texture;
 
-    int RLGL_GL_EXT_texture_filter_anisotropic = 0;
-    int RLGL_GL_EXT_texture_mirror_clamp = 0;
+    RLGL_GL int RLGL_GL_EXT_texture_filter_anisotropic;
+    RLGL_GL int RLGL_GL_EXT_texture_mirror_clamp;
 
-    int RLGL_GL_KHR_texture_compression_astc_hdr = 0;
-    int RLGL_GL_KHR_texture_compression_astc_ldr = 0;
-    int RLGL_GL_EXT_texture_compression_s3tc = 0;  // Texture compression: DXT
-    int RLGL_GL_ARB_ES3_compatibility = 0;        // Texture compression: ETC2/EAC
+    RLGL_GL int RLGL_GL_KHR_texture_compression_astc_hdr;
+    RLGL_GL int RLGL_GL_KHR_texture_compression_astc_ldr;
+    RLGL_GL int RLGL_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
+    RLGL_GL int RLGL_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
 
     #if defined(GRAPHICS_API_OPENGL_43)
-    int RLGL_GL_ARB_compute_shader = 0;
-    int RLGL_GL_ARB_shader_storage_buffer_object = 0;
+    RLGL_GL int RLGL_GL_ARB_compute_shader;
+    RLGL_GL int RLGL_GL_ARB_shader_storage_buffer_object;
     #endif
 
     int rlLoadGL(RLGLloadfunc proc);
 #endif
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif // RLGL_H
+
+/***********************************************************************************
+*
+*   RLGL IMPLEMENTATION
+*
+************************************************************************************/
+
+#if defined(RLGL_IMPLEMENTATION)
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
     #include <GLES3/gl3.h>              // OpenGL ES 3.0 library
@@ -5586,6 +5596,7 @@ int rlLoadGL(RLGLloadfunc proc) {
     RLGL_PROC_DEF(proc, glCompressedTexImage2D);
     RLGL_PROC_DEF(proc, glFramebufferTexture2D);
     RLGL_PROC_DEF(proc, glUniform1fv);
+    RLGL_PROC_DEF(proc, glUniform1f);
     RLGL_PROC_DEF(proc, glUniform2fv);
     RLGL_PROC_DEF(proc, glUniform1iv);
     RLGL_PROC_DEF(proc, glUniform2iv);

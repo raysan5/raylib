@@ -38,8 +38,6 @@
             #define GL_SILENCE_DEPRECATION // Silence Opengl API deprecation warnings 
             #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
             #include <OpenGL/gl3ext.h>  // OpenGL 3 extensions library for OSX
-        #else
-            #include "glad.h"       // Required for: OpenGL functionality 
         #endif
         #define GLSL_VERSION            330
     #endif
