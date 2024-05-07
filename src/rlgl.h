@@ -322,26 +322,6 @@
 #define RL_READ_FRAMEBUFFER                     0x8CA8      // GL_READ_FRAMEBUFFER
 #define RL_DRAW_FRAMEBUFFER                     0x8CA9      // GL_DRAW_FRAMEBUFFER
 
-// Default shader vertex attribute locations
-#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
-#endif
-#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
-#endif
-#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
-#endif
-#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
-#endif
-    #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT       4
-#endif
-#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
-#endif
-
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -809,34 +789,302 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define GLAD_API_CALL_EXPORT_BUILD
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_11)
-    #if defined(__APPLE__)
-        #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
-        #include <OpenGL/glext.h>       // OpenGL extensions library
-    #else
-        // APIENTRY for OpenGL function pointer declarations is required
-        #if !defined(APIENTRY)
-            #if defined(_WIN32)
-                #define APIENTRY __stdcall
-            #else
-                #define APIENTRY
-            #endif
+#if defined(__APPLE__)
+    #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
+    #include <OpenGL/glext.h>       // OpenGL extensions library
+#else
+    // APIENTRY for OpenGL function pointer declarations is required
+    #if !defined(APIENTRY)
+        #if defined(_WIN32)
+            #define APIENTRY __stdcall
+        #else
+            #define APIENTRY
         #endif
-        // WINGDIAPI definition. Some Windows OpenGL headers need it
-        #if !defined(WINGDIAPI) && defined(_WIN32)
-            #define WINGDIAPI __declspec(dllimport)
-        #endif
-
-        #include <GL/gl.h>              // OpenGL 1.1 library
     #endif
+    // WINGDIAPI definition. Some Windows OpenGL headers need it
+    #if !defined(WINGDIAPI) && defined(_WIN32)
+        #define WINGDIAPI __declspec(dllimport)
+    #endif
+
+    #include <GL/gl.h>              // OpenGL 1.1 library
+    #include <GL/glext.h>
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_33)
-    #define GLAD_MALLOC RL_MALLOC
-    #define GLAD_FREE RL_FREE
+#ifndef GL_TEXTURE_SWIZZLE_RGBA
+#define GL_TEXTURE_SWIZZLE_RGBA 0x8E46
+#endif
 
-    #define GLAD_GL_IMPLEMENTATION
-    #include "external/glad.h"          // GLAD extensions loading library, includes OpenGL headers
+#ifndef GL_NUM_EXTENSIONS
+#define GL_NUM_EXTENSIONS 0x821D
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21)
+/* 
+    load OpenGL 2.1 and 3.3
+*/
+    #if defined(__WIN32) && !defined(__linux__) && !defined(GL_VERTEX_SHADER)
+    typedef char GLchar;
+    typedef int   GLsizei;
+    typedef uintptr_t GLsizeiptr;
+    typedef intptr_t  GLintptr;
+
+    #define GL_VERTEX_SHADER   0x8B31
+    #define GL_FRAGMENT_SHADER 0x8B30
+    #define GL_ARRAY_BUFFER         0x8892
+    #define GL_ELEMENT_ARRAY_BUFFER 0x8893
+    #define GL_STATIC_DRAW  0x88E4
+    #define GL_DYNAMIC_DRAW 0x88E8
+    #define GL_TEXTURE0 0x84C0
+    #endif
+
+    typedef void (*RLGLapiproc)(void);
+    typedef RLGLapiproc (*RLGLloadfunc)(const char *name);
+
+    typedef void (*glShaderSourcePROC) (GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
+    typedef GLuint (*glCreateShaderPROC) (GLenum type);
+    typedef void (*glCompileShaderPROC) (GLuint shader);
+    typedef GLuint (*glCreateProgramPROC) (void);
+    typedef void (*glAttachShaderPROC) (GLuint program, GLuint shader);
+    typedef void (*glBindAttribLocationPROC) (GLuint program, GLuint index, const GLchar *name);
+    typedef void (*glLinkProgramPROC) (GLuint program);
+    typedef void (*glBindBufferPROC) (GLenum target, GLuint buffer);
+    typedef void (*glBufferDataPROC) (GLenum target, GLsizeiptr size, const void *data, GLenum usage);
+    typedef void (*glEnableVertexAttribArrayPROC) (GLuint index);
+    typedef void (*glVertexAttribPointerPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+    typedef void (*glDisableVertexAttribArrayPROC) (GLuint index);
+    typedef void (*glDeleteBuffersPROC) (GLsizei n, const GLuint *buffers);
+    typedef void (*glDeleteVertexArraysPROC) (GLsizei n, const GLuint *arrays);
+    typedef void (*glUseProgramPROC) (GLuint program);
+    typedef void (*glDetachShaderPROC) (GLuint program, GLuint shader);
+    typedef void (*glDeleteShaderPROC) (GLuint shader);
+    typedef void (*glDeleteProgramPROC) (GLuint program);
+    typedef void (*glBufferSubDataPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
+    typedef void (*glGetShaderivPROC)(GLuint shader, GLenum pname, GLint *params);
+    typedef void (*glGetShaderInfoLogPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+    typedef void (*glGetProgramivPROC)(GLuint program, GLenum pname, GLint *params);
+    typedef void (*glGetProgramInfoLogPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+    typedef void (*glGenVertexArraysPROC)(GLsizei n, GLuint *arrays);
+    typedef void (*glGenBuffersPROC)(GLsizei n, GLuint *buffers);
+    typedef void (*glBindVertexArrayPROC)(GLuint array);
+    typedef GLint (*glGetUniformLocationPROC)(GLuint program, const GLchar *name);
+    typedef void (*glUniformMatrix4fvPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+    typedef void (*glTexImage2DPROC)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels);
+    typedef void (*glActiveTexturePROC) (GLenum texture);
+    typedef void (*glBindFramebufferPROC) (GLenum target, GLuint framebuffer);
+    typedef void (*glBlitFramebufferPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+    typedef void (*glDrawBuffersPROC) (GLsizei n, const GLenum *bufs);
+    typedef void (*glBlendEquationPROC) (GLenum mode);
+    typedef void (*glBlendFuncSeparatePROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+    typedef void (*glBlendEquationSeparatePROC) (GLenum modeRGB, GLenum modeAlpha);
+    typedef void (*glUniform4fPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+    typedef void (*glUniformiPROC) (GLint location, GLint v0);
+    typedef void (*glCompressedTexImageDPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
+    typedef GLuint (*glLoadTextureDepthPROC) (const char *filename, int *width, int *height, int *depth);
+    typedef void (*glGenRenderbuffersPROC) (GLsizei n, GLuint *renderbuffers);
+    typedef void (*glBindRenderbufferPROC) (GLenum target, GLuint renderbuffer);
+    typedef void (*glRenderbufferStoragePROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+    typedef void (*glGenerateMipmapPROC) (GLenum target);
+    typedef void (*glGenFramebuffersPROC) (GLsizei n, GLuint *framebuffers);
+    typedef void (*glFramebufferTextureDPROC) (GLenum target, GLenum attachment, GLuint texture, GLint level);
+    typedef void (*glFramebufferRenderbufferPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+    typedef GLenum (*glCheckFramebufferStatusPROC) (GLenum target);
+    typedef void (*glGetFramebufferAttachmentParameterivPROC) (GLenum target, GLenum attachment, GLenum pname, GLint *params);
+    typedef void (*glDeleteRenderbuffersPROC) (GLsizei n, const GLuint *renderbuffers);
+    typedef void (*glDeleteFramebuffersPROC) (GLsizei n, const GLuint *framebuffers);
+    typedef void (*glDrawArraysInstancedPROC) (GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
+    typedef void (*glDrawElementsInstancedPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount);
+    typedef void (*glVertexAttribDivisorPROC) (GLuint index, GLuint divisor);
+    typedef GLint (*glGetAttribLocationPROC) (GLuint program, const GLchar *name);
+    typedef void (*glUniformfvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (*glUniform3fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (*glUniform4fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (*glUniformivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (*glUniform3ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (*glUniform4ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (*glVertexAttribfvPROC) (GLuint index, const GLfloat *v);
+    typedef void (*glVertexAttrib3fvPROC) (GLuint index, const GLfloat *v);
+    typedef void (*glVertexAttrib4fvPROC) (GLuint index, const GLfloat *v);
+    typedef void (*glUniform1iPROC) (GLint location, GLint v0);
+    typedef void (*glCompressedTexImage2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
+    typedef void (*glFramebufferTexture2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    typedef void (*glUniform1fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (*glUniform2fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (*glUniform1ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (*glUniform2ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (*glVertexAttrib1fvPROC) (GLuint index, const GLfloat *v);
+    typedef void (*glVertexAttrib2fvPROC) (GLuint index, const GLfloat *v);
+    typedef const GLubyte* (*glGetStringiPROC) (GLenum name, GLuint index);
+
+    glShaderSourcePROC glShaderSourceSRC = NULL;
+    glCreateShaderPROC glCreateShaderSRC = NULL;
+    glCompileShaderPROC glCompileShaderSRC = NULL;
+    glCreateProgramPROC glCreateProgramSRC = NULL;
+    glAttachShaderPROC glAttachShaderSRC = NULL;
+    glBindAttribLocationPROC glBindAttribLocationSRC = NULL;
+    glLinkProgramPROC glLinkProgramSRC = NULL;
+    glBindBufferPROC glBindBufferSRC = NULL;
+    glBufferDataPROC glBufferDataSRC = NULL;
+    glEnableVertexAttribArrayPROC glEnableVertexAttribArraySRC = NULL;
+    glVertexAttribPointerPROC glVertexAttribPointerSRC = NULL;
+    glDisableVertexAttribArrayPROC glDisableVertexAttribArraySRC = NULL;
+    glDeleteBuffersPROC glDeleteBuffersSRC = NULL;
+    glUseProgramPROC glUseProgramSRC = NULL;
+    glDetachShaderPROC glDetachShaderSRC = NULL;
+    glDeleteShaderPROC glDeleteShaderSRC = NULL;
+    glDeleteProgramPROC glDeleteProgramSRC = NULL;
+    glBufferSubDataPROC glBufferSubDataSRC = NULL;
+    glGetShaderivPROC glGetShaderivSRC = NULL;
+    glGetShaderInfoLogPROC glGetShaderInfoLogSRC = NULL;
+    glGetProgramivPROC glGetProgramivSRC = NULL;
+    glGetProgramInfoLogPROC glGetProgramInfoLogSRC = NULL;
+    glGenBuffersPROC glGenBuffersSRC = NULL;
+    glGetUniformLocationPROC glGetUniformLocationSRC = NULL;
+    glUniformMatrix4fvPROC glUniformMatrix4fvSRC = NULL;
+    glActiveTexturePROC glActiveTextureSRC = NULL;
+    glGenVertexArraysPROC glGenVertexArraysSRC = NULL;
+    glBindVertexArrayPROC glBindVertexArraySRC = NULL;
+    glDeleteVertexArraysPROC glDeleteVertexArraysSRC = NULL;
+    glBindFramebufferPROC glBindFramebufferSRC = NULL;
+    glBlitFramebufferPROC glBlitFramebufferSRC = NULL;
+    glDrawBuffersPROC glDrawBuffersSRC = NULL;
+    glBlendEquationPROC glBlendEquationSRC = NULL;
+    glBlendFuncSeparatePROC glBlendFuncSeparateSRC = NULL;
+    glBlendEquationSeparatePROC glBlendEquationSeparateSRC = NULL;
+    glUniform4fPROC glUniform4fSRC = NULL;
+    glUniformiPROC glUniformiSRC = NULL;
+    glCompressedTexImageDPROC glCompressedTexImageDSRC = NULL;
+    glLoadTextureDepthPROC glLoadTextureDepthSRC = NULL;
+    glGenRenderbuffersPROC glGenRenderbuffersSRC = NULL;
+    glBindRenderbufferPROC glBindRenderbufferSRC = NULL;
+    glRenderbufferStoragePROC glRenderbufferStorageSRC = NULL;
+    glGenerateMipmapPROC glGenerateMipmapSRC = NULL;
+    glGenFramebuffersPROC glGenFramebuffersSRC = NULL;
+    glFramebufferTextureDPROC glFramebufferTextureDSRC = NULL;
+    glFramebufferRenderbufferPROC glFramebufferRenderbufferSRC = NULL;
+    glCheckFramebufferStatusPROC glCheckFramebufferStatusSRC = NULL;
+    glGetFramebufferAttachmentParameterivPROC glGetFramebufferAttachmentParameterivSRC = NULL;
+    glDeleteRenderbuffersPROC glDeleteRenderbuffersSRC = NULL;
+    glDeleteFramebuffersPROC glDeleteFramebuffersSRC = NULL;
+    glDrawArraysInstancedPROC glDrawArraysInstancedSRC = NULL;
+    glDrawElementsInstancedPROC glDrawElementsInstancedSRC = NULL;
+    glVertexAttribDivisorPROC glVertexAttribDivisorSRC = NULL;
+    glGetAttribLocationPROC glGetAttribLocationSRC = NULL;
+    glUniformfvPROC glUniformfvSRC = NULL;
+    glUniform3fvPROC glUniform3fvSRC = NULL;
+    glUniform4fvPROC glUniform4fvSRC = NULL;
+    glUniformivPROC glUniformivSRC = NULL;
+    glUniform3ivPROC glUniform3ivSRC = NULL;
+    glUniform4ivPROC glUniform4ivSRC = NULL;
+    glVertexAttribfvPROC glVertexAttribfvSRC = NULL;
+    glVertexAttrib3fvPROC glVertexAttrib3fvSRC = NULL;
+    glVertexAttrib4fvPROC glVertexAttrib4fvSRC = NULL;
+    glUniform1iPROC glUniform1iSRC = NULL;
+    glCompressedTexImage2DPROC glCompressedTexImage2DSRC = NULL;
+    glFramebufferTexture2DPROC glFramebufferTexture2DSRC = NULL;
+    glUniform1fvPROC glUniform1fvSRC = NULL;
+    glUniform2fvPROC glUniform2fvSRC = NULL;
+    glUniform1ivPROC glUniform1ivSRC = NULL;
+    glUniform2ivPROC glUniform2ivSRC = NULL;
+    glVertexAttrib1fvPROC glVertexAttrib1fvSRC = NULL;
+    glVertexAttrib2fvPROC glVertexAttrib2fvSRC = NULL;
+    glGetStringiPROC glGetStringiSRC = NULL;
+
+    #define glActiveTexture glActiveTextureSRC
+    #define glShaderSource glShaderSourceSRC
+    #define glCreateShader glCreateShaderSRC
+    #define glCompileShader glCompileShaderSRC
+    #define glCreateProgram glCreateProgramSRC
+    #define glAttachShader glAttachShaderSRC
+    #define glBindAttribLocation glBindAttribLocationSRC
+    #define glLinkProgram glLinkProgramSRC
+    #define glBindBuffer glBindBufferSRC
+    #define glBufferData glBufferDataSRC
+    #define glEnableVertexAttribArray glEnableVertexAttribArraySRC
+    #define glVertexAttribPointer glVertexAttribPointerSRC
+    #define glDisableVertexAttribArray glDisableVertexAttribArraySRC
+    #define glDeleteBuffers glDeleteBuffersSRC
+    #define glDeleteVertexArrays glDeleteVertexArraysSRC
+    #define glUseProgram glUseProgramSRC
+    #define glDetachShader glDetachShaderSRC
+    #define glDeleteShader glDeleteShaderSRC
+    #define glDeleteProgram glDeleteProgramSRC
+    #define glBufferSubData glBufferSubDataSRC
+    #define glGetShaderiv glGetShaderivSRC
+    #define glGetShaderInfoLog glGetShaderInfoLogSRC
+    #define glGetProgramiv glGetProgramivSRC
+    #define glGetProgramInfoLog glGetProgramInfoLogSRC
+    #define glGenVertexArrays glGenVertexArraysSRC
+    #define glGenBuffers glGenBuffersSRC
+    #define glBindVertexArray glBindVertexArraySRC
+    #define glGetUniformLocation glGetUniformLocationSRC
+    #define glUniformMatrix4fv glUniformMatrix4fvSRC
+    #define glBindFramebuffer glBindFramebufferSRC
+    #define glBlitFramebuffer glBlitFramebufferSRC
+    #define glDrawBuffers glDrawBuffersSRC
+    #define glBlendEquation glBlendEquationSRC
+    #define glBlendFuncSeparate glBlendFuncSeparateSRC
+    #define glBlendEquationSeparate glBlendEquationSeparateSRC
+    #define glUniform4f glUniform4fSRC
+    #define glUniformi glUniformiSRC
+    #define glCompressedTexImageD glCompressedTexImageDSRC
+    #define glLoadTextureDepth glLoadTextureDepthSRC
+    #define glGenRenderbuffers glGenRenderbuffersSRC
+    #define glBindRenderbuffer glBindRenderbufferSRC
+    #define glRenderbufferStorage glRenderbufferStorageSRC
+    #define glGenerateMipmap glGenerateMipmapSRC
+    #define glGenFramebuffers glGenFramebuffersSRC
+    #define glFramebufferTextureD glFramebufferTextureDSRC
+    #define glFramebufferRenderbuffer glFramebufferRenderbufferSRC
+    #define glCheckFramebufferStatus glCheckFramebufferStatusSRC
+    #define glGetFramebufferAttachmentParameteriv glGetFramebufferAttachmentParameterivSRC
+    #define glDeleteRenderbuffers glDeleteRenderbuffersSRC
+    #define glDeleteFramebuffers glDeleteFramebuffersSRC
+    #define glDrawArraysInstanced glDrawArraysInstancedSRC
+    #define glDrawElementsInstanced glDrawElementsInstancedSRC
+    #define glVertexAttribDivisor glVertexAttribDivisorSRC
+    #define glGetAttribLocation glGetAttribLocationSRC
+    #define glUniformfv glUniformfvSRC
+    #define glUniform3fv glUniform3fvSRC
+    #define glUniform4fv glUniform4fvSRC
+    #define glUniformiv glUniformivSRC
+    #define glUniform3iv glUniform3ivSRC
+    #define glUniform4iv glUniform4ivSRC
+    #define glVertexAttribfv glVertexAttribfvSRC
+    #define glVertexAttrib3fv glVertexAttrib3fvSRC
+    #define glVertexAttrib4fv glVertexAttrib4fvSRC
+    #define glUniform1i glUniform1iSRC
+    #define glCompressedTexImage2D glCompressedTexImage2DSRC
+    #define glFramebufferTexture2D glFramebufferTexture2DSRC
+    #define glUniform1fv glUniform1fvSRC
+    #define glUniform2fv glUniform2fvSRC
+    #define glUniform1iv glUniform1ivSRC
+    #define glUniform2iv glUniform2ivSRC
+    #define glVertexAttrib1fv glVertexAttrib1fvSRC
+    #define glVertexAttrib2fv glVertexAttrib2fvSRC
+    #define glGetStringi glGetStringiSRC
+
+    int RLGL_GL_ARB_vertex_array_object = 0;
+    int RLGL_GL_EXT_draw_instanced = 0;
+    int RLGL_GL_ARB_instanced_arrays = 0;
+    int RLGL_GL_ARB_texture_non_power_of_two = 0;
+
+    int RLGL_GL_ARB_texture_float = 0;
+    int RLGL_GL_ARB_depth_texture = 0;
+
+    int RLGL_GL_EXT_texture_filter_anisotropic = 0;
+    int RLGL_GL_EXT_texture_mirror_clamp = 0;
+
+    int RLGL_GL_KHR_texture_compression_astc_hdr = 0;
+    int RLGL_GL_KHR_texture_compression_astc_ldr = 0;
+    int RLGL_GL_EXT_texture_compression_s3tc = 0;  // Texture compression: DXT
+    int RLGL_GL_ARB_ES3_compatibility = 0;        // Texture compression: ETC2/EAC
+
+    #if defined(GRAPHICS_API_OPENGL_43)
+    int RLGL_GL_ARB_compute_shader = 0;
+    int RLGL_GL_ARB_shader_storage_buffer_object = 0;
+    #endif
+
+    int rlLoadGL(RLGLloadfunc proc);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
@@ -846,7 +1094,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
-    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
+    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL) || defined(PLATFORM_DESKTOP_RGFW)
         #define GLAD_GLES2_IMPLEMENTATION
         #include "external/glad_gles2.h"
     #else
@@ -952,6 +1200,26 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
         #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
     #endif
+#endif
+
+// Default shader vertex attribute locations
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT   4
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
 #endif
 
 // Default shader vertex attribute names to set location points
@@ -1296,7 +1564,7 @@ void rlMultMatrixf(const float *matf)
                    matf[2], matf[6], matf[10], matf[14],
                    matf[3], matf[7], matf[11], matf[15] };
 
-    *RLGL.State.currentMatrix = rlMatrixMultiply(mat, *RLGL.State.currentMatrix);
+    *RLGL.State.currentMatrix = rlMatrixMultiply(*RLGL.State.currentMatrix, mat);
 }
 
 // Multiply the current matrix by a perspective matrix generated by parameters
@@ -2313,7 +2581,7 @@ void rlLoadExtensions(void *loader)
 {
 #if defined(GRAPHICS_API_OPENGL_33)     // Also defined for GRAPHICS_API_OPENGL_21
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
-    if (gladLoadGL((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
+    if (rlLoadGL(loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
     else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
 
     // Get number of supported extensions
@@ -2331,15 +2599,15 @@ void rlLoadExtensions(void *loader)
 #if defined(GRAPHICS_API_OPENGL_21)
     // Register supported extensions flags
     // Optional OpenGL 2.1 extensions
-    RLGL.ExtSupported.vao = GLAD_GL_ARB_vertex_array_object;
-    RLGL.ExtSupported.instancing = (GLAD_GL_EXT_draw_instanced && GLAD_GL_ARB_instanced_arrays);
-    RLGL.ExtSupported.texNPOT = GLAD_GL_ARB_texture_non_power_of_two;
-    RLGL.ExtSupported.texFloat32 = GLAD_GL_ARB_texture_float;
-    RLGL.ExtSupported.texFloat16 = GLAD_GL_ARB_texture_float;
-    RLGL.ExtSupported.texDepth = GLAD_GL_ARB_depth_texture;
+    RLGL.ExtSupported.vao = RLGL_GL_ARB_vertex_array_object;
+    RLGL.ExtSupported.instancing = (RLGL_GL_EXT_draw_instanced && RLGL_GL_ARB_instanced_arrays);
+    RLGL.ExtSupported.texNPOT = RLGL_GL_ARB_texture_non_power_of_two;
+    RLGL.ExtSupported.texFloat32 = RLGL_GL_ARB_texture_float;
+    RLGL.ExtSupported.texFloat16 = RLGL_GL_ARB_texture_float;
+    RLGL.ExtSupported.texDepth = RLGL_GL_ARB_depth_texture;
     RLGL.ExtSupported.maxDepthBits = 32;
-    RLGL.ExtSupported.texAnisoFilter = GLAD_GL_EXT_texture_filter_anisotropic;
-    RLGL.ExtSupported.texMirrorClamp = GLAD_GL_EXT_texture_mirror_clamp;
+    RLGL.ExtSupported.texAnisoFilter = RLGL_GL_EXT_texture_filter_anisotropic;
+    RLGL.ExtSupported.texMirrorClamp = RLGL_GL_EXT_texture_mirror_clamp;
 #else
     // Register supported extensions flags
     // OpenGL 3.3 extensions supported by default (core)
@@ -2355,12 +2623,12 @@ void rlLoadExtensions(void *loader)
 #endif
 
     // Optional OpenGL 3.3 extensions
-    RLGL.ExtSupported.texCompASTC = GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr;
-    RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
-    RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
+    RLGL.ExtSupported.texCompASTC = RLGL_GL_KHR_texture_compression_astc_hdr && RLGL_GL_KHR_texture_compression_astc_ldr;
+    RLGL.ExtSupported.texCompDXT = RLGL_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
+    RLGL.ExtSupported.texCompETC2 = RLGL_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
     #if defined(GRAPHICS_API_OPENGL_43)
-    RLGL.ExtSupported.computeShader = GLAD_GL_ARB_compute_shader;
-    RLGL.ExtSupported.ssbo = GLAD_GL_ARB_shader_storage_buffer_object;
+    RLGL.ExtSupported.computeShader = RLGL_GL_ARB_compute_shader;
+    RLGL.ExtSupported.ssbo = RLGL_GL_ARB_shader_storage_buffer_object;
     #endif
 
 #endif  // GRAPHICS_API_OPENGL_33
@@ -2390,7 +2658,7 @@ void rlLoadExtensions(void *loader)
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
 
-    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
+    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL) || defined(PLATFORM_DESKTOP_RGFW)
     // TODO: Support GLAD loader for OpenGL ES 3.0
     if (gladLoadGLES2((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL ES2.0 functions");
     else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL ES 2.0 loaded successfully");
@@ -3405,6 +3673,14 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format)
 
     return id;
 }
+
+#ifndef GL_RGB565
+#define GL_RGB565 0x8D62
+#define GL_RGB32F 0x8815
+#define GL_RGBA32F 0x8814
+#define GL_RGB16F 0x881B
+#define GL_RGBA16F 0x881A
+#endif
 
 // Update already loaded texture in GPU with new data
 // NOTE: We don't know safely if internal texture format is the expected one...
@@ -5117,5 +5393,290 @@ static Matrix rlMatrixInvert(Matrix mat)
 
     return result;
 }
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21)
+/*          
+    these glad_ functions are sourced from GLAD.h
+    These are sourced from a generated glad.h file and are thereby Public Domain
+*/
+
+#if defined(GL_ES_VERSION_3_0) || defined(GL_VERSION_3_0)
+#define GLAD_GL_IS_SOME_NEW_VERSION 1
+#else
+#define GLAD_GL_IS_SOME_NEW_VERSION 0
+#endif
+
+static int glad_gl_has_extension(int version, const char *exts, unsigned int num_exts_i, char **exts_i, const char *ext) {
+    if(!GLAD_GL_IS_SOME_NEW_VERSION) {
+        const char *extensions;
+        const char *loc;
+        const char *terminator;
+        extensions = exts;
+        if(extensions == NULL || ext == NULL) {
+            return 0;
+        }
+        while(1) {
+            loc = strstr(extensions, ext);
+            if(loc == NULL) {
+                return 0;
+            }
+            terminator = loc + strlen(ext);
+            if((loc == extensions || *(loc - 1) == ' ') &&
+                (*terminator == ' ' || *terminator == '\0')) {
+                return 1;
+            }
+            extensions = terminator;
+        }
+    } else {
+        unsigned int index;
+        for(index = 0; index < num_exts_i; index++) {
+            const char *e = exts_i[index];
+            if(strcmp(e, ext) == 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+#define GLAD_MAKE_VERSION(major, minor) (major * 10000 + minor)
+#define GLAD_VERSION_MAJOR(version) (version / 10000)
+#define GLAD_VERSION_MINOR(version) (version % 10000)
+
+static int glad_gl_find_core_gl(void) {
+    int i;
+    const char* version;
+    const char* prefixes[] = {
+        "OpenGL ES-CM ",
+        "OpenGL ES-CL ",
+        "OpenGL ES ",
+        "OpenGL SC ",
+        NULL
+    };
+    int major = 0;
+    int minor = 0;
+    version = (const char*) glGetString(GL_VERSION);
+    if (!version) return 0;
+    for (i = 0;  prefixes[i];  i++) {
+        const size_t length = strlen(prefixes[i]);
+        if (strncmp(version, prefixes[i], length) == 0) {
+            version += length;
+            break;
+        }
+    }
+
+    #ifdef _MSC_VER
+    sscanf_s(version, "%d.%d", &major, &minor);
+    #else
+    sscanf(version, "%d.%d", &major, &minor);
+    #endif
+    
+    return GLAD_MAKE_VERSION(major, minor);
+}
+
+static int glad_gl_get_extensions( int version, const char **out_exts, unsigned int *out_num_exts_i, char ***out_exts_i) {
+#if GLAD_GL_IS_SOME_NEW_VERSION
+    if(GLAD_VERSION_MAJOR(version) < 3) {
+#else
+    (void) version;
+    (void) out_num_exts_i;
+    (void) out_exts_i;
+#endif
+        *out_exts = (const char *)glGetString(GL_EXTENSIONS);
+#if GLAD_GL_IS_SOME_NEW_VERSION
+    } else {
+        unsigned int index = 0;
+        unsigned int num_exts_i = 0;
+        char **exts_i = NULL;
+        if (glGetStringi == NULL) {
+            return 0;
+        }
+        glGetIntegerv(GL_NUM_EXTENSIONS, (int*) &num_exts_i);
+        if (num_exts_i > 0) {
+            exts_i = (char **) RL_MALLOC(num_exts_i * (sizeof *exts_i));
+        }
+        if (exts_i == NULL) {
+            return 0;
+        }
+        for(index = 0; index < num_exts_i; index++) {
+            const char *gl_str_tmp = (const char*) glGetStringi(GL_EXTENSIONS, index);
+            size_t len = strlen(gl_str_tmp) + 1;
+
+            char *local_str = (char*) RL_MALLOC(len * sizeof(char));
+            if(local_str != NULL) {
+                memcpy(local_str, gl_str_tmp, len * sizeof(char));
+            }
+
+            exts_i[index] = local_str;
+        }
+
+        *out_num_exts_i = num_exts_i;
+        *out_exts_i = exts_i;
+    }
+#endif
+    return 1;
+}
+
+/* 
+    back to rlgl, no more glad sourced stuff
+*/
+
+int rlLoadGL(RLGLloadfunc proc) {
+    #define RLGL_PROC_DEF(proc, name) name##SRC = (name##PROC)proc(#name)
+
+    RLGL_PROC_DEF(proc, glShaderSource);
+    RLGL_PROC_DEF(proc, glCreateShader);
+    RLGL_PROC_DEF(proc, glCompileShader);
+    RLGL_PROC_DEF(proc, glCreateProgram);
+    RLGL_PROC_DEF(proc, glAttachShader);
+    RLGL_PROC_DEF(proc, glBindAttribLocation);
+    RLGL_PROC_DEF(proc, glLinkProgram);
+    RLGL_PROC_DEF(proc, glBindBuffer);
+    RLGL_PROC_DEF(proc, glBufferData);
+    RLGL_PROC_DEF(proc, glEnableVertexAttribArray);
+    RLGL_PROC_DEF(proc, glVertexAttribPointer);
+    RLGL_PROC_DEF(proc, glDisableVertexAttribArray);
+    RLGL_PROC_DEF(proc, glDeleteBuffers);
+    RLGL_PROC_DEF(proc, glUseProgram);
+    RLGL_PROC_DEF(proc, glDetachShader);
+    RLGL_PROC_DEF(proc, glDeleteShader);
+    RLGL_PROC_DEF(proc, glDeleteProgram);
+    RLGL_PROC_DEF(proc, glBufferSubData);
+    RLGL_PROC_DEF(proc, glGetShaderiv);
+    RLGL_PROC_DEF(proc, glGetShaderInfoLog);
+    RLGL_PROC_DEF(proc, glGetProgramiv);
+    RLGL_PROC_DEF(proc, glGetProgramInfoLog);
+    RLGL_PROC_DEF(proc, glGenBuffers);
+    #if defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_ES2) && !defined(RGL_OPENGL_ES3)
+    RLGL_PROC_DEF(proc, glBindVertexArray);
+    RLGL_PROC_DEF(proc, glGenVertexArrays);
+    RLGL_PROC_DEF(proc, glDeleteVertexArrays);
+    #endif
+    RLGL_PROC_DEF(proc, glGetUniformLocation);
+    RLGL_PROC_DEF(proc, glUniformMatrix4fv);
+    RLGL_PROC_DEF(proc, glActiveTexture);
+    RLGL_PROC_DEF(proc, glBindFramebuffer);
+    RLGL_PROC_DEF(proc, glBindFramebuffer);
+    RLGL_PROC_DEF(proc, glBlitFramebuffer);
+    RLGL_PROC_DEF(proc, glDrawBuffers);
+    RLGL_PROC_DEF(proc, glBlendEquation);
+    RLGL_PROC_DEF(proc, glBlendFuncSeparate);
+    RLGL_PROC_DEF(proc, glBlendEquationSeparate);
+    RLGL_PROC_DEF(proc, glUniform4f);
+    RLGL_PROC_DEF(proc, glUniformi);
+    RLGL_PROC_DEF(proc, glCompressedTexImageD);
+    RLGL_PROC_DEF(proc, glLoadTextureDepth);
+    RLGL_PROC_DEF(proc, glGenRenderbuffers);
+    RLGL_PROC_DEF(proc, glBindRenderbuffer);
+    RLGL_PROC_DEF(proc, glRenderbufferStorage);
+    RLGL_PROC_DEF(proc, glGenerateMipmap);
+    RLGL_PROC_DEF(proc, glGenFramebuffers);
+    RLGL_PROC_DEF(proc, glFramebufferTextureD);
+    RLGL_PROC_DEF(proc, glFramebufferRenderbuffer);
+    RLGL_PROC_DEF(proc, glCheckFramebufferStatus);
+    RLGL_PROC_DEF(proc, glGetFramebufferAttachmentParameteriv);
+    RLGL_PROC_DEF(proc, glDeleteRenderbuffers);
+    RLGL_PROC_DEF(proc, glDeleteFramebuffers);
+    RLGL_PROC_DEF(proc, glDrawArraysInstanced);
+    RLGL_PROC_DEF(proc, glDrawElementsInstanced);
+    RLGL_PROC_DEF(proc, glVertexAttribDivisor);
+    RLGL_PROC_DEF(proc, glGetAttribLocation);
+    RLGL_PROC_DEF(proc, glUniformfv);
+    RLGL_PROC_DEF(proc, glUniform3fv);
+    RLGL_PROC_DEF(proc, glUniform4fv);
+    RLGL_PROC_DEF(proc, glUniformiv);
+    RLGL_PROC_DEF(proc, glUniform3iv);
+    RLGL_PROC_DEF(proc, glUniform4iv);
+    RLGL_PROC_DEF(proc, glVertexAttribfv);
+    RLGL_PROC_DEF(proc, glVertexAttrib3fv);
+    RLGL_PROC_DEF(proc, glVertexAttrib4fv);
+    RLGL_PROC_DEF(proc, glUniform1i);
+    RLGL_PROC_DEF(proc, glCompressedTexImage2D);
+    RLGL_PROC_DEF(proc, glFramebufferTexture2D);
+    RLGL_PROC_DEF(proc, glUniform1fv);
+    RLGL_PROC_DEF(proc, glUniform2fv);
+    RLGL_PROC_DEF(proc, glUniform1iv);
+    RLGL_PROC_DEF(proc, glUniform2iv);
+    RLGL_PROC_DEF(proc, glVertexAttrib1fv);
+    RLGL_PROC_DEF(proc, glVertexAttrib2fv);
+    RLGL_PROC_DEF(proc, glGetStringi);
+
+    if (
+        glShaderSourceSRC == NULL ||
+        glCreateShaderSRC == NULL ||
+        glCompileShaderSRC == NULL ||
+        glCreateProgramSRC == NULL ||
+        glAttachShaderSRC == NULL ||
+        glBindAttribLocationSRC == NULL ||
+        glLinkProgramSRC == NULL ||
+        glBindBufferSRC == NULL ||
+        glBufferDataSRC == NULL ||
+        glVertexAttribPointerSRC == NULL ||
+        glDisableVertexAttribArraySRC == NULL ||
+        glDeleteBuffersSRC == NULL ||
+        glUseProgramSRC == NULL ||
+        glDetachShaderSRC == NULL ||
+        glDeleteShaderSRC == NULL ||
+        glDeleteProgramSRC == NULL ||
+        glBufferSubDataSRC == NULL ||
+        glGetShaderivSRC == NULL ||
+        glGetShaderInfoLogSRC == NULL ||
+        glGetProgramivSRC == NULL ||
+        glGetProgramInfoLogSRC == NULL ||
+        glGenBuffersSRC == NULL ||
+        glGetUniformLocationSRC == NULL ||
+        glUniformMatrix4fvSRC == NULL
+    )
+        return 1;
+
+    TRACELOG(RL_LOG_INFO, "RLGL: Finished loading GL functions");
+        
+    #if !defined(GRAPHICS_API_OPENGL_21) && !defined(GRAPHICS_API_OPENGL_ES3) && !defined(GRAPHICS_API_OPENGL_ES2)
+    /* quick check to make sure things work */
+    GLuint vao;
+    glGenVertexArraysSRC(1, &vao);
+    
+    if (vao == 0)
+        return 0;
+    
+    glDeleteVertexArraysSRC(1, &vao);
+    #endif
+    
+    TRACELOG(RL_LOG_INFO, "RLGL: Loaded GL functions successfully");
+    
+    #define RLGL_GL_CHECK_FOR(gl_var) gl_var = glad_gl_has_extension(version, exts, num_exts_i, exts_i, #gl_var)
+
+    int version = glad_gl_find_core_gl();
+    const char *exts = NULL;
+    unsigned int num_exts_i = 0;
+    char **exts_i = NULL;
+    if (!glad_gl_get_extensions(version, &exts, &num_exts_i, &exts_i)) return 0;
+
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_vertex_array_object);
+    RLGL_GL_CHECK_FOR(RLGL_GL_EXT_draw_instanced);
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_instanced_arrays);
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_instanced_arrays);
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_texture_non_power_of_two);
+
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_texture_float);
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_texture_float);
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_depth_texture);
+
+    RLGL_GL_CHECK_FOR(RLGL_GL_EXT_texture_filter_anisotropic);
+    RLGL_GL_CHECK_FOR(RLGL_GL_EXT_texture_mirror_clamp);
+
+    RLGL_GL_CHECK_FOR(RLGL_GL_KHR_texture_compression_astc_hdr);
+    RLGL_GL_CHECK_FOR(RLGL_GL_KHR_texture_compression_astc_ldr);
+    RLGL_GL_CHECK_FOR(RLGL_GL_EXT_texture_compression_s3tc);  // Texture compression: DXT
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_ES3_compatibility);        // Texture compression: ETC2/EAC
+
+    #if defined(GRAPHICS_API_OPENGL_43)
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_compute_shader);
+    RLGL_GL_CHECK_FOR(RLGL_GL_ARB_shader_storage_buffer_object);
+    #endif
+
+    return 1;
+}
+#endif
 
 #endif  // RLGL_IMPLEMENTATION
