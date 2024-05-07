@@ -388,29 +388,69 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on target platform");
-    return 0;
+    int width = 0;
+
+    if (monitor != 0)
+    {
+        TRACELOG(LOG_WARNING, "GetMonitorWidth() implemented for first monitor only");
+    }
+    else if ((platform.connector) && (platform.modeIndex >= 0))
+    {
+        width = platform.connector->modes[platform.modeIndex].hdisplay;
+    }
+    
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on target platform");
-    return 0;
+    int height = 0;
+
+    if (monitor != 0)
+    {
+        TRACELOG(LOG_WARNING, "GetMonitorHeight() implemented for first monitor only");
+    }
+    else if ((platform.connector) && (platform.modeIndex >= 0))
+    {
+        height = platform.connector->modes[platform.modeIndex].vdisplay;
+    }
+    
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
-    return 0;
+    int physicalWidth = 0;
+
+    if (monitor != 0)
+    {
+        TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() implemented for first monitor only");
+    }
+    else if ((platform.connector) && (platform.modeIndex >= 0))
+    {
+        physicalWidth = platform.connector->mmWidth;
+    }
+
+    return physicalWidth;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
-    return 0;
+    int physicalHeight = 0;
+
+    if (monitor != 0)
+    {
+        TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() implemented for first monitor only");
+    }
+    else if ((platform.connector) && (platform.modeIndex >= 0))
+    {
+        physicalHeight = platform.connector->mmHeight;
+    }
+
+    return physicalHeight;
 }
 
 // Get selected monitor refresh rate
@@ -429,8 +469,18 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on target platform");
-    return "";
+    const char *name = "";
+
+    if (monitor != 0)
+    {
+        TRACELOG(LOG_WARNING, "GetMonitorName() implemented for first monitor only");
+    }
+    else if ((platform.connector) && (platform.modeIndex >= 0))
+    {
+        name = platform.connector->modes[platform.modeIndex].name;
+    }
+    
+    return name;
 }
 
 // Get window position XY on monitor
