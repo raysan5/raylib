@@ -154,13 +154,15 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if defined(_WIN32)
+#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
     #ifndef MAX_PATH
         #define MAX_PATH 1025
     #endif
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
+unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
     #include <unistd.h>
 #elif defined(__APPLE__)
@@ -482,7 +484,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *li
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
@@ -496,6 +498,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_desktop.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
+#elif defined(PLATFORM_DESKTOP_RGFW)
+    #include "platforms/rcore_desktop_rgfw.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
