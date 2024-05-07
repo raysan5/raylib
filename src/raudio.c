@@ -1416,7 +1416,7 @@ Music LoadMusicStream(const char *fileName)
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
-        else{}
+        else{} //No uninit required
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
@@ -1612,7 +1612,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
-        else{}
+        else{} //No uninit required
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
