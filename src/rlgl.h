@@ -5445,6 +5445,8 @@ static int glad_gl_has_extension(int version, const char *exts, unsigned int num
 #define GLAD_VERSION_MAJOR(version) (version / 10000)
 #define GLAD_VERSION_MINOR(version) (version % 10000)
 
+#include <stdio.h> /* sscanf */
+
 static int glad_gl_find_core_gl(void) {
     int i;
     const char* version;
