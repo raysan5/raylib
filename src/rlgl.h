@@ -843,94 +843,102 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     typedef int   GLsizei;
     typedef uintptr_t GLsizeiptr;
     typedef intptr_t  GLintptr;
-
     #define GL_VERTEX_SHADER   0x8B31
+    #endif
+
     #define GL_FRAGMENT_SHADER 0x8B30
     #define GL_ARRAY_BUFFER         0x8892
     #define GL_ELEMENT_ARRAY_BUFFER 0x8893
     #define GL_STATIC_DRAW  0x88E4
     #define GL_DYNAMIC_DRAW 0x88E8
     #define GL_TEXTURE0 0x84C0
-    #endif
 
     typedef void (*RLGLapiproc)(void);
     typedef RLGLapiproc (*RLGLloadfunc)(const char *name);
 
-    typedef void (*glShaderSourcePROC) (GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
-    typedef GLuint (*glCreateShaderPROC) (GLenum type);
-    typedef void (*glCompileShaderPROC) (GLuint shader);
-    typedef GLuint (*glCreateProgramPROC) (void);
-    typedef void (*glAttachShaderPROC) (GLuint program, GLuint shader);
-    typedef void (*glBindAttribLocationPROC) (GLuint program, GLuint index, const GLchar *name);
-    typedef void (*glLinkProgramPROC) (GLuint program);
-    typedef void (*glBindBufferPROC) (GLenum target, GLuint buffer);
-    typedef void (*glBufferDataPROC) (GLenum target, GLsizeiptr size, const void *data, GLenum usage);
-    typedef void (*glEnableVertexAttribArrayPROC) (GLuint index);
-    typedef void (*glVertexAttribPointerPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
-    typedef void (*glDisableVertexAttribArrayPROC) (GLuint index);
-    typedef void (*glDeleteBuffersPROC) (GLsizei n, const GLuint *buffers);
-    typedef void (*glDeleteVertexArraysPROC) (GLsizei n, const GLuint *arrays);
-    typedef void (*glUseProgramPROC) (GLuint program);
-    typedef void (*glDetachShaderPROC) (GLuint program, GLuint shader);
-    typedef void (*glDeleteShaderPROC) (GLuint shader);
-    typedef void (*glDeleteProgramPROC) (GLuint program);
-    typedef void (*glBufferSubDataPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
-    typedef void (*glGetShaderivPROC)(GLuint shader, GLenum pname, GLint *params);
-    typedef void (*glGetShaderInfoLogPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-    typedef void (*glGetProgramivPROC)(GLuint program, GLenum pname, GLint *params);
-    typedef void (*glGetProgramInfoLogPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-    typedef void (*glGenVertexArraysPROC)(GLsizei n, GLuint *arrays);
-    typedef void (*glGenBuffersPROC)(GLsizei n, GLuint *buffers);
-    typedef void (*glBindVertexArrayPROC)(GLuint array);
-    typedef GLint (*glGetUniformLocationPROC)(GLuint program, const GLchar *name);
-    typedef void (*glUniformMatrix4fvPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-    typedef void (*glTexImage2DPROC)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels);
-    typedef void (*glActiveTexturePROC) (GLenum texture);
-    typedef void (*glBindFramebufferPROC) (GLenum target, GLuint framebuffer);
-    typedef void (*glBlitFramebufferPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-    typedef void (*glDrawBuffersPROC) (GLsizei n, const GLenum *bufs);
-    typedef void (*glBlendEquationPROC) (GLenum mode);
-    typedef void (*glBlendFuncSeparatePROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
-    typedef void (*glBlendEquationSeparatePROC) (GLenum modeRGB, GLenum modeAlpha);
-    typedef void (*glUniform4fPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
-    typedef void (*glUniformiPROC) (GLint location, GLint v0);
-    typedef void (*glCompressedTexImageDPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
-    typedef GLuint (*glLoadTextureDepthPROC) (const char *filename, int *width, int *height, int *depth);
-    typedef void (*glGenRenderbuffersPROC) (GLsizei n, GLuint *renderbuffers);
-    typedef void (*glBindRenderbufferPROC) (GLenum target, GLuint renderbuffer);
-    typedef void (*glRenderbufferStoragePROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-    typedef void (*glGenerateMipmapPROC) (GLenum target);
-    typedef void (*glGenFramebuffersPROC) (GLsizei n, GLuint *framebuffers);
-    typedef void (*glFramebufferTextureDPROC) (GLenum target, GLenum attachment, GLuint texture, GLint level);
-    typedef void (*glFramebufferRenderbufferPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-    typedef GLenum (*glCheckFramebufferStatusPROC) (GLenum target);
-    typedef void (*glGetFramebufferAttachmentParameterivPROC) (GLenum target, GLenum attachment, GLenum pname, GLint *params);
-    typedef void (*glDeleteRenderbuffersPROC) (GLsizei n, const GLuint *renderbuffers);
-    typedef void (*glDeleteFramebuffersPROC) (GLsizei n, const GLuint *framebuffers);
-    typedef void (*glDrawArraysInstancedPROC) (GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
-    typedef void (*glDrawElementsInstancedPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount);
-    typedef void (*glVertexAttribDivisorPROC) (GLuint index, GLuint divisor);
-    typedef GLint (*glGetAttribLocationPROC) (GLuint program, const GLchar *name);
-    typedef void (*glUniformfvPROC) (GLint location, GLsizei count, const GLfloat *value);
-    typedef void (*glUniform3fvPROC) (GLint location, GLsizei count, const GLfloat *value);
-    typedef void (*glUniform4fvPROC) (GLint location, GLsizei count, const GLfloat *value);
-    typedef void (*glUniformivPROC) (GLint location, GLsizei count, const GLint *value);
-    typedef void (*glUniform3ivPROC) (GLint location, GLsizei count, const GLint *value);
-    typedef void (*glUniform4ivPROC) (GLint location, GLsizei count, const GLint *value);
-    typedef void (*glVertexAttribfvPROC) (GLuint index, const GLfloat *v);
-    typedef void (*glVertexAttrib3fvPROC) (GLuint index, const GLfloat *v);
-    typedef void (*glVertexAttrib4fvPROC) (GLuint index, const GLfloat *v);
-    typedef void (*glUniform1iPROC) (GLint location, GLint v0);
-    typedef void (*glCompressedTexImage2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
-    typedef void (*glFramebufferTexture2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-    typedef void (*glUniform1fvPROC) (GLint location, GLsizei count, const GLfloat *value);
-    typedef void (*glUniform1fPROC) (GLint location, const GLfloat value);
-    typedef void (*glUniform2fvPROC) (GLint location, GLsizei count, const GLfloat *value);
-    typedef void (*glUniform1ivPROC) (GLint location, GLsizei count, const GLint *value);
-    typedef void (*glUniform2ivPROC) (GLint location, GLsizei count, const GLint *value);
-    typedef void (*glVertexAttrib1fvPROC) (GLuint index, const GLfloat *v);
-    typedef void (*glVertexAttrib2fvPROC) (GLuint index, const GLfloat *v);
-    typedef const GLubyte* (*glGetStringiPROC) (GLenum name, GLuint index);
+    #ifdef APIENTRY
+    #define RLGL_API_PTR APIENTRY
+    #elif RLGL_PLATFORM_WIN32
+    #define GLAD_API_PTR __stdcall
+    #else
+    #define RLGL_API_PTR
+    #endif
+
+    typedef void (RLGL_API_PTR *glShaderSourcePROC) (GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
+    typedef GLuint (RLGL_API_PTR *glCreateShaderPROC) (GLenum type);
+    typedef void (RLGL_API_PTR *glCompileShaderPROC) (GLuint shader);
+    typedef GLuint (RLGL_API_PTR *glCreateProgramPROC) (void);
+    typedef void (RLGL_API_PTR *glAttachShaderPROC) (GLuint program, GLuint shader);
+    typedef void (RLGL_API_PTR *glBindAttribLocationPROC) (GLuint program, GLuint index, const GLchar *name);
+    typedef void (RLGL_API_PTR *glLinkProgramPROC) (GLuint program);
+    typedef void (RLGL_API_PTR *glBindBufferPROC) (GLenum target, GLuint buffer);
+    typedef void (RLGL_API_PTR *glBufferDataPROC) (GLenum target, GLsizeiptr size, const void *data, GLenum usage);
+    typedef void (RLGL_API_PTR *glEnableVertexAttribArrayPROC) (GLuint index);
+    typedef void (RLGL_API_PTR *glVertexAttribPointerPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+    typedef void (RLGL_API_PTR *glDisableVertexAttribArrayPROC) (GLuint index);
+    typedef void (RLGL_API_PTR *glDeleteBuffersPROC) (GLsizei n, const GLuint *buffers);
+    typedef void (RLGL_API_PTR *glDeleteVertexArraysPROC) (GLsizei n, const GLuint *arrays);
+    typedef void (RLGL_API_PTR *glUseProgramPROC) (GLuint program);
+    typedef void (RLGL_API_PTR *glDetachShaderPROC) (GLuint program, GLuint shader);
+    typedef void (RLGL_API_PTR *glDeleteShaderPROC) (GLuint shader);
+    typedef void (RLGL_API_PTR *glDeleteProgramPROC) (GLuint program);
+    typedef void (RLGL_API_PTR *glBufferSubDataPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
+    typedef void (RLGL_API_PTR *glGetShaderivPROC)(GLuint shader, GLenum pname, GLint *params);
+    typedef void (RLGL_API_PTR *glGetShaderInfoLogPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+    typedef void (RLGL_API_PTR *glGetProgramivPROC)(GLuint program, GLenum pname, GLint *params);
+    typedef void (RLGL_API_PTR *glGetProgramInfoLogPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+    typedef void (RLGL_API_PTR *glGenVertexArraysPROC)(GLsizei n, GLuint *arrays);
+    typedef void (RLGL_API_PTR *glGenBuffersPROC)(GLsizei n, GLuint *buffers);
+    typedef void (RLGL_API_PTR *glBindVertexArrayPROC)(GLuint array);
+    typedef GLint (RLGL_API_PTR *glGetUniformLocationPROC)(GLuint program, const GLchar *name);
+    typedef void (RLGL_API_PTR *glUniformMatrix4fvPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+    typedef void (RLGL_API_PTR *glTexImage2DPROC)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels);
+    typedef void (RLGL_API_PTR *glActiveTexturePROC) (GLenum texture);
+    typedef void (RLGL_API_PTR *glBindFramebufferPROC) (GLenum target, GLuint framebuffer);
+    typedef void (RLGL_API_PTR *glBlitFramebufferPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+    typedef void (RLGL_API_PTR *glDrawBuffersPROC) (GLsizei n, const GLenum *bufs);
+    typedef void (RLGL_API_PTR *glBlendEquationPROC) (GLenum mode);
+    typedef void (RLGL_API_PTR *glBlendFuncSeparatePROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+    typedef void (RLGL_API_PTR *glBlendEquationSeparatePROC) (GLenum modeRGB, GLenum modeAlpha);
+    typedef void (RLGL_API_PTR *glUniform4fPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+    typedef void (RLGL_API_PTR *glUniformiPROC) (GLint location, GLint v0);
+    typedef void (RLGL_API_PTR *glCompressedTexImageDPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
+    typedef GLuint (RLGL_API_PTR *glLoadTextureDepthPROC) (const char *filename, int *width, int *height, int *depth);
+    typedef void (RLGL_API_PTR *glGenRenderbuffersPROC) (GLsizei n, GLuint *renderbuffers);
+    typedef void (RLGL_API_PTR *glBindRenderbufferPROC) (GLenum target, GLuint renderbuffer);
+    typedef void (RLGL_API_PTR *glRenderbufferStoragePROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+    typedef void (RLGL_API_PTR *glGenerateMipmapPROC) (GLenum target);
+    typedef void (RLGL_API_PTR *glGenFramebuffersPROC) (GLsizei n, GLuint *framebuffers);
+    typedef void (RLGL_API_PTR *glFramebufferTextureDPROC) (GLenum target, GLenum attachment, GLuint texture, GLint level);
+    typedef void (RLGL_API_PTR *glFramebufferRenderbufferPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+    typedef GLenum (RLGL_API_PTR *glCheckFramebufferStatusPROC) (GLenum target);
+    typedef void (RLGL_API_PTR *glGetFramebufferAttachmentParameterivPROC) (GLenum target, GLenum attachment, GLenum pname, GLint *params);
+    typedef void (RLGL_API_PTR *glDeleteRenderbuffersPROC) (GLsizei n, const GLuint *renderbuffers);
+    typedef void (RLGL_API_PTR *glDeleteFramebuffersPROC) (GLsizei n, const GLuint *framebuffers);
+    typedef void (RLGL_API_PTR *glDrawArraysInstancedPROC) (GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
+    typedef void (RLGL_API_PTR *glDrawElementsInstancedPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount);
+    typedef void (RLGL_API_PTR *glVertexAttribDivisorPROC) (GLuint index, GLuint divisor);
+    typedef GLint (RLGL_API_PTR *glGetAttribLocationPROC) (GLuint program, const GLchar *name);
+    typedef void (RLGL_API_PTR *glUniformfvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (RLGL_API_PTR *glUniform3fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (RLGL_API_PTR *glUniform4fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (RLGL_API_PTR *glUniformivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (RLGL_API_PTR *glUniform3ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (RLGL_API_PTR *glUniform4ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (RLGL_API_PTR *glVertexAttribfvPROC) (GLuint index, const GLfloat *v);
+    typedef void (RLGL_API_PTR *glVertexAttrib3fvPROC) (GLuint index, const GLfloat *v);
+    typedef void (RLGL_API_PTR *glVertexAttrib4fvPROC) (GLuint index, const GLfloat *v);
+    typedef void (RLGL_API_PTR *glUniform1iPROC) (GLint location, GLint v0);
+    typedef void (RLGL_API_PTR *glCompressedTexImage2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
+    typedef void (RLGL_API_PTR *glFramebufferTexture2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    typedef void (RLGL_API_PTR *glUniform1fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (RLGL_API_PTR *glUniform1fPROC) (GLint location, const GLfloat value);
+    typedef void (RLGL_API_PTR *glUniform2fvPROC) (GLint location, GLsizei count, const GLfloat *value);
+    typedef void (RLGL_API_PTR *glUniform1ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (RLGL_API_PTR *glUniform2ivPROC) (GLint location, GLsizei count, const GLint *value);
+    typedef void (RLGL_API_PTR *glVertexAttrib1fvPROC) (GLuint index, const GLfloat *v);
+    typedef void (RLGL_API_PTR *glVertexAttrib2fvPROC) (GLuint index, const GLfloat *v);
+    typedef const GLubyte* (RLGL_API_PTR *glGetStringiPROC) (GLenum name, GLuint index);
 
     #ifndef RLGL_IMPLEMENTATION
     #define RLGL_GL extern
