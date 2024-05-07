@@ -814,10 +814,6 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #endif
 
     #include <GL/gl.h>              // OpenGL 1.1 library
-
-    #ifndef _MSC_VER
-    #include <GL/glext.h>
-    #endif
 #endif
 
 #ifndef GL_TEXTURE_SWIZZLE_RGBA
@@ -835,6 +831,8 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #define GL_RGB16F 0x881B
 #define GL_RGBA16F 0x881A
 #endif
+
+
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21)
 /* 
@@ -1161,6 +1159,51 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+
+#ifndef __gl_glext_h_
+/* these can be found in glext.h */
+
+#define GL_TEXTURE_CUBE_MAP 0x8513
+#define GL_TEXTURE_LOD_BIAS 0x8501
+#define GL_FRAMEBUFFER 0x8D40
+#define GL_DRAW_FRAMEBUFFER_BINDING 0x8CA6
+#define GL_COLOR_ATTACHMENT0 0x8CE0
+#define GL_COLOR_ATTACHMENT1 0x8CE1
+#define GL_COLOR_ATTACHMENT2 0x8CE2
+#define GL_COLOR_ATTACHMENT3 0x8CE3
+#define GL_COLOR_ATTACHMENT4 0x8CE4
+#define GL_COLOR_ATTACHMENT5 0x8CE5
+#define GL_COLOR_ATTACHMENT6 0x8CE6
+#define GL_COLOR_ATTACHMENT7 0x8CE7
+#define GL_FUNC_ADD 0x8006
+#define GL_FUNC_SUBTRACT 0x800A
+#define GL_TEXTURE_CUBE_MAP_SEAMLESS 0x884F
+#define GL_CLAMP_TO_EDGE 0x812F
+#define GL_RENDERBUFFER 0x8D41
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_X 0x8515
+#define GL_TEXTURE_WRAP_R 0x8072
+#define GL_R8 0x8229
+#define GL_RG8 0x822B
+#define GL_RG 0x8227
+#define GL_UNSIGNED_SHORT_5_6_5 0x8363
+#define GL_UNSIGNED_SHORT_5_5_5_1 0x8034
+#define GL_UNSIGNED_SHORT_4_4_4_4 0x8033
+#define GL_R32F 0x822E
+#define GL_R16F 0x822D
+#define GL_HALF_FLOAT 0x140B
+#define GL_FRAMEBUFFER_COMPLETE 0x8CD5
+#define GL_FRAMEBUFFER_UNSUPPORTED 0x8CDD
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT 0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT 0x8CD7
+#define GL_COMPILE_STATUS 0x8B81
+#define GL_INFO_LOG_LENGTH 0x8B84
+#define GL_LINK_STATUS 0x8B82
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE 0x8CD0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME 0x8CD1
+#define GL_DEPTH_ATTACHMENT 0x8D00
+#define GL_STENCIL_ATTACHMENT 0x8D20
+#endif
+
 #ifndef PI
     #define PI 3.14159265358979323846f
 #endif
