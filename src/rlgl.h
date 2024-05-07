@@ -858,7 +858,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
     #ifdef APIENTRY
     #define RLGL_API_PTR APIENTRY
-    #elif RLGL_PLATFORM_WIN32
+    #elif __WIN32
     #define GLAD_API_PTR __stdcall
     #else
     #define RLGL_API_PTR
@@ -939,7 +939,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     typedef void (RLGL_API_PTR *glVertexAttrib1fvPROC) (GLuint index, const GLfloat *v);
     typedef void (RLGL_API_PTR *glVertexAttrib2fvPROC) (GLuint index, const GLfloat *v);
     typedef const GLubyte* (RLGL_API_PTR *glGetStringiPROC) (GLenum name, GLuint index);
-    
+
     #ifndef RLGL_IMPLEMENTATION
     #define RLGL_GL extern
     #else
