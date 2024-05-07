@@ -389,18 +389,16 @@ Vector2 GetMonitorPosition(int monitor)
 int GetMonitorWidth(int monitor)
 {
     int width = 0;
-    if (monitor > 0)
+
+    if (monitor != 0)
     {
         TRACELOG(LOG_WARNING, "GetMonitorWidth() implemented for first monitor only");
     }
-    else
+    else if ((platform.connector) && (platform.modeIndex >= 0))
     {
-        if ((platform.connector) && (platform.modeIndex >= 0))
-        {
-            width = platform.connector->modes[platform.modeIndex].hdisplay;
-        }
+        width = platform.connector->modes[platform.modeIndex].hdisplay;
     }
-
+    
     return width;
 }
 
@@ -408,18 +406,16 @@ int GetMonitorWidth(int monitor)
 int GetMonitorHeight(int monitor)
 {
     int height = 0;
-    if (monitor > 0)
+
+    if (monitor != 0)
     {
         TRACELOG(LOG_WARNING, "GetMonitorHeight() implemented for first monitor only");
     }
-    else
+    else if ((platform.connector) && (platform.modeIndex >= 0))
     {
-        if ((platform.connector) && (platform.modeIndex >= 0))
-        {
-            height = platform.connector->modes[platform.modeIndex].vdisplay;
-        }
+        height = platform.connector->modes[platform.modeIndex].vdisplay;
     }
-
+    
     return height;
 }
 
@@ -427,16 +423,14 @@ int GetMonitorHeight(int monitor)
 int GetMonitorPhysicalWidth(int monitor)
 {
     int physicalWidth = 0;
-    if (monitor > 0)
+
+    if (monitor != 0)
     {
         TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() implemented for first monitor only");
     }
-    else
+    else if ((platform.connector) && (platform.modeIndex >= 0))
     {
-        if ((platform.connector) && (platform.modeIndex >= 0))
-        {
-            physicalWidth = platform.connector->mmWidth;
-        }
+        physicalWidth = platform.connector->mmWidth;
     }
 
     return physicalWidth;
@@ -446,16 +440,14 @@ int GetMonitorPhysicalWidth(int monitor)
 int GetMonitorPhysicalHeight(int monitor)
 {
     int physicalHeight = 0;
-    if (monitor > 0)
+
+    if (monitor != 0)
     {
         TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() implemented for first monitor only");
     }
-    else
+    else if ((platform.connector) && (platform.modeIndex >= 0))
     {
-        if ((platform.connector) && (platform.modeIndex >= 0))
-        {
-            physicalHeight = platform.connector->mmHeight;
-        }
+        physicalHeight = platform.connector->mmHeight;
     }
 
     return physicalHeight;
@@ -477,13 +469,17 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    const char *name = NULL;
+    const char *name = "";
 
-    if ((platform.connector) && (platform.modeIndex >= 0))
+    if (monitor != 0)
+    {
+        TRACELOG(LOG_WARNING, "GetMonitorName() implemented for first monitor only");
+    }
+    else if ((platform.connector) && (platform.modeIndex >= 0))
     {
         name = platform.connector->modes[platform.modeIndex].name;
     }
-
+    
     return name;
 }
 
