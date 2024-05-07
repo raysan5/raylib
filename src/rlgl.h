@@ -825,6 +825,14 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #define GL_NUM_EXTENSIONS 0x821D
 #endif
 
+#ifndef GL_RGB565
+#define GL_RGB565 0x8D62
+#define GL_RGB32F 0x8815
+#define GL_RGBA32F 0x8814
+#define GL_RGB16F 0x881B
+#define GL_RGBA16F 0x881A
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21)
 /* 
     load OpenGL 2.1 and 3.3
