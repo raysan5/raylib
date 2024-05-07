@@ -50,7 +50,7 @@
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM              ?= PLATFORM_DESKTOP_RGFW
+PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
