@@ -83,9 +83,9 @@ jobs:
         x86_64-w64-mingw32-gcc.exe --version
         windres.exe --version
         dir C:\msys64\mingw64\bin
-        make PLATFORM=PLATFORM_DESKTOP CC=x86_64-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CUSTOM_CFLAGS=-m32
+        make PLATFORM=PLATFORM_DESKTOP_RGFW CC=x86_64-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CUSTOM_CFLAGS=-m32
         //windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
-        //make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        //make PLATFORM=PLATFORM_DESKTOP_RGFW CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
       if: |
@@ -98,9 +98,9 @@ jobs:
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
         windres.exe --version
         dir C:\msys64\mingw64\bin
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP_RGFW CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_DESKTOP_RGFW CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
       if: |
