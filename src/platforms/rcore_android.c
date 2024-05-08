@@ -613,6 +613,12 @@ int SetGamepadMappings(const char *mappings)
     return 0;
 }
 
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
+{
+    TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
@@ -645,6 +651,16 @@ void PollInputEvents(void)
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
 
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (CORE.Input.Gamepad.ready[i])     // Check if gamepad is available
+        {
+            // Register previous gamepad states
+            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++)
+                CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
+        }
+    }
+    
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 

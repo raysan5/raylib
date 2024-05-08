@@ -23,10 +23,10 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_WAYLAND)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,18 +116,17 @@ static void outputHandleScale(void* userData,
 
     for (_GLFWwindow* window = _glfw.windowListHead; window; window = window->next)
     {
-        for (int i = 0; i < window->wl.monitorsCount; i++)
+        for (size_t i = 0; i < window->wl.outputScaleCount; i++)
         {
-            if (window->wl.monitors[i] == monitor)
+            if (window->wl.outputScales[i].output == monitor->wl.output)
             {
-                _glfwUpdateContentScaleWayland(window);
+                window->wl.outputScales[i].factor = monitor->wl.scale;
+                _glfwUpdateBufferScaleFromOutputsWayland(window);
                 break;
             }
         }
     }
 }
-
-#ifdef WL_OUTPUT_NAME_SINCE_VERSION
 
 void outputHandleName(void* userData, struct wl_output* wl_output, const char* name)
 {
@@ -142,18 +141,14 @@ void outputHandleDescription(void* userData,
 {
 }
 
-#endif // WL_OUTPUT_NAME_SINCE_VERSION
-
 static const struct wl_output_listener outputListener =
 {
     outputHandleGeometry,
     outputHandleMode,
     outputHandleDone,
     outputHandleScale,
-#ifdef WL_OUTPUT_NAME_SINCE_VERSION
     outputHandleName,
     outputHandleDescription,
-#endif
 };
 
 
@@ -170,11 +165,7 @@ void _glfwAddOutputWayland(uint32_t name, uint32_t version)
         return;
     }
 
-#ifdef WL_OUTPUT_NAME_SINCE_VERSION
     version = _glfw_min(version, WL_OUTPUT_NAME_SINCE_VERSION);
-#else
-    version = 2;
-#endif
 
     struct wl_output* output = wl_registry_bind(_glfw.wl.registry,
                                                 name,
@@ -189,6 +180,7 @@ void _glfwAddOutputWayland(uint32_t name, uint32_t version)
     monitor->wl.output = output;
     monitor->wl.name = name;
 
+    wl_proxy_set_tag((struct wl_proxy*) output, &_glfw.wl.tag);
     wl_output_add_listener(output, &outputListener, monitor);
 }
 
@@ -240,9 +232,10 @@ GLFWvidmode* _glfwGetVideoModesWayland(_GLFWmonitor* monitor, int* found)
     return monitor->modes;
 }
 
-void _glfwGetVideoModeWayland(_GLFWmonitor* monitor, GLFWvidmode* mode)
+GLFWbool _glfwGetVideoModeWayland(_GLFWmonitor* monitor, GLFWvidmode* mode)
 {
     *mode = monitor->modes[monitor->wl.currentMode];
+    return GLFW_TRUE;
 }
 
 GLFWbool _glfwGetGammaRampWayland(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
@@ -267,6 +260,15 @@ GLFWAPI struct wl_output* glfwGetWaylandMonitor(GLFWmonitor* handle)
 {
     _GLFWmonitor* monitor = (_GLFWmonitor*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+
+    if (_glfw.platform.platformID != GLFW_PLATFORM_WAYLAND)
+    {
+        _glfwInputError(GLFW_PLATFORM_UNAVAILABLE, "Wayland: Platform not initialized");
+        return NULL;
+    }
+
     return monitor->wl.output;
 }
+
+#endif // _GLFW_WAYLAND
 

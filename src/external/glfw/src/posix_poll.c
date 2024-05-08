@@ -23,12 +23,12 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #define _GNU_SOURCE
 
 #include "internal.h"
+
+#if defined(GLFW_BUILD_POSIX_POLL)
 
 #include <signal.h>
 #include <time.h>
@@ -78,4 +78,6 @@ GLFWbool _glfwPollPOSIX(struct pollfd* fds, nfds_t count, double* timeout)
         }
     }
 }
+
+#endif // GLFW_BUILD_POSIX_POLL
 

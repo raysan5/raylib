@@ -721,12 +721,12 @@ typedef enum {
     GAMEPAD_BUTTON_LEFT_FACE_DOWN,      // Gamepad left DPAD down button
     GAMEPAD_BUTTON_LEFT_FACE_LEFT,      // Gamepad left DPAD left button
     GAMEPAD_BUTTON_RIGHT_FACE_UP,       // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
-    GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,    // Gamepad right button right (i.e. PS3: Square, Xbox: X)
+    GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,    // Gamepad right button right (i.e. PS3: Circle, Xbox: B)
     GAMEPAD_BUTTON_RIGHT_FACE_DOWN,     // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
-    GAMEPAD_BUTTON_RIGHT_FACE_LEFT,     // Gamepad right button left (i.e. PS3: Circle, Xbox: B)
+    GAMEPAD_BUTTON_RIGHT_FACE_LEFT,     // Gamepad right button left (i.e. PS3: Square, Xbox: X)
     GAMEPAD_BUTTON_LEFT_TRIGGER_1,      // Gamepad top/back trigger left (first), it could be a trailing button
     GAMEPAD_BUTTON_LEFT_TRIGGER_2,      // Gamepad top/back trigger left (second), it could be a trailing button
-    GAMEPAD_BUTTON_RIGHT_TRIGGER_1,     // Gamepad top/back trigger right (one), it could be a trailing button
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_1,     // Gamepad top/back trigger right (first), it could be a trailing button
     GAMEPAD_BUTTON_RIGHT_TRIGGER_2,     // Gamepad top/back trigger right (second), it could be a trailing button
     GAMEPAD_BUTTON_MIDDLE_LEFT,         // Gamepad center buttons, left one (i.e. PS3: Select)
     GAMEPAD_BUTTON_MIDDLE,              // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
@@ -913,11 +913,11 @@ typedef enum {
 
 // Camera system modes
 typedef enum {
-    CAMERA_CUSTOM = 0,              // Custom camera
-    CAMERA_FREE,                    // Free camera
-    CAMERA_ORBITAL,                 // Orbital camera
-    CAMERA_FIRST_PERSON,            // First person camera
-    CAMERA_THIRD_PERSON             // Third person camera
+    CAMERA_CUSTOM = 0,              // Camera custom, controlled by user (UpdateCamera() does nothing)
+    CAMERA_FREE,                    // Camera free mode
+    CAMERA_ORBITAL,                 // Camera orbital, around target, zoom supported
+    CAMERA_FIRST_PERSON,            // Camera first person
+    CAMERA_THIRD_PERSON             // Camera third person
 } CameraMode;
 
 // Camera projection
@@ -1049,8 +1049,9 @@ RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 RLAPI void UnloadShader(Shader shader);                                    // Unload shader from GPU memory (VRAM)
 
 // Screen-space-related functions
-RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);            // Get a ray trace from mouse position
-RLAPI Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height); // Get a ray trace from mouse position in a viewport
+#define GetMouseRay GetScreenToWorldRay     // Compatibility hack for previous raylib versions
+RLAPI Ray GetScreenToWorldRay(Vector2 position, Camera camera);         // Get a ray trace from screen position (i.e mouse)
+RLAPI Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height); // Get a ray trace from screen position (i.e mouse) in a viewport
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);        // Get the screen space position for a 3d world space position
 RLAPI Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height); // Get size position for a 3d world space position
 RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera);    // Get the screen space position for a 2d camera world space position
@@ -1162,16 +1163,17 @@ RLAPI int GetCharPressed(void);                               // Get char presse
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
 // Input-related functions: gamepads
-RLAPI bool IsGamepadAvailable(int gamepad);                   // Check if a gamepad is available
-RLAPI const char *GetGamepadName(int gamepad);                // Get gamepad internal name id
-RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Check if a gamepad button has been pressed once
-RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Check if a gamepad button is being pressed
-RLAPI bool IsGamepadButtonReleased(int gamepad, int button);  // Check if a gamepad button has been released once
-RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Check if a gamepad button is NOT being pressed
-RLAPI int GetGamepadButtonPressed(void);                      // Get the last gamepad button pressed
-RLAPI int GetGamepadAxisCount(int gamepad);                   // Get gamepad axis count for a gamepad
-RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Get axis movement value for a gamepad axis
-RLAPI int SetGamepadMappings(const char *mappings);           // Set internal gamepad mappings (SDL_GameControllerDB)
+RLAPI bool IsGamepadAvailable(int gamepad);                                        // Check if a gamepad is available
+RLAPI const char *GetGamepadName(int gamepad);                                     // Get gamepad internal name id
+RLAPI bool IsGamepadButtonPressed(int gamepad, int button);                        // Check if a gamepad button has been pressed once
+RLAPI bool IsGamepadButtonDown(int gamepad, int button);                           // Check if a gamepad button is being pressed
+RLAPI bool IsGamepadButtonReleased(int gamepad, int button);                       // Check if a gamepad button has been released once
+RLAPI bool IsGamepadButtonUp(int gamepad, int button);                             // Check if a gamepad button is NOT being pressed
+RLAPI int GetGamepadButtonPressed(void);                                           // Get the last gamepad button pressed
+RLAPI int GetGamepadAxisCount(int gamepad);                                        // Get gamepad axis count for a gamepad
+RLAPI float GetGamepadAxisMovement(int gamepad, int axis);                         // Get axis movement value for a gamepad axis
+RLAPI int SetGamepadMappings(const char *mappings);                                // Set internal gamepad mappings (SDL_GameControllerDB)
+RLAPI void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor);    // Set gamepad vibration for both motors
 
 // Input-related functions: mouse
 RLAPI bool IsMouseButtonPressed(int button);                  // Check if a mouse button has been pressed once
@@ -1253,7 +1255,8 @@ RLAPI void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color 
 RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
 RLAPI void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color);                            // Draw rectangle outline with extended parameters
 RLAPI void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color);              // Draw rectangle with rounded edges
-RLAPI void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color); // Draw rectangle with rounded edges outline
+RLAPI void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color);         // Draw rectangle lines with rounded edges
+RLAPI void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color); // Draw rectangle with rounded edges outline
 RLAPI void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle (vertex in counter-clockwise order!)
 RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline (vertex in counter-clockwise order!)
 RLAPI void DrawTriangleFan(Vector2 *points, int pointCount, Color color);                                // Draw a triangle fan defined by points (first vertex is the center)
@@ -1407,8 +1410,9 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, V
 RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draws a texture (or part of it) that stretches or shrinks nicely
 
 // Color/pixel related functions
+RLAPI bool ColorIsEqual(Color col1, Color col2);                            // Check if two colors are equal
 RLAPI Color Fade(Color color, float alpha);                                 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
-RLAPI int ColorToInt(Color color);                                          // Get hexadecimal value for a Color
+RLAPI int ColorToInt(Color color);                                          // Get hexadecimal value for a Color (0xRRGGBBAA)
 RLAPI Vector4 ColorNormalize(Color color);                                  // Get Color normalized as float [0..1]
 RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Get Color from normalized values [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                                      // Get HSV values for a Color, hue [0..360], saturation/value [0..1]
@@ -1660,10 +1664,10 @@ RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 RLAPI void SetAudioStreamCallback(AudioStream stream, AudioCallback callback); // Audio thread callback to request new data
 
-RLAPI void AttachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Attach audio stream processor to stream, receives the samples as <float>s
+RLAPI void AttachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Attach audio stream processor to stream, receives the samples as 'float'
 RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Detach audio stream processor from stream
 
-RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s
+RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
 
 #if defined(__cplusplus)

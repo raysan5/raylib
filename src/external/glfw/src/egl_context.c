@@ -24,8 +24,6 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
 
@@ -88,13 +86,30 @@ static int getEGLConfigAttrib(EGLConfig config, int attrib)
 // Return the EGLConfig most closely matching the specified hints
 //
 static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
-                                const _GLFWfbconfig* desired,
+                                const _GLFWfbconfig* fbconfig,
                                 EGLConfig* result)
 {
     EGLConfig* nativeConfigs;
     _GLFWfbconfig* usableConfigs;
     const _GLFWfbconfig* closest;
-    int i, nativeCount, usableCount;
+    int i, nativeCount, usableCount, apiBit;
+    GLFWbool wrongApiAvailable = GLFW_FALSE;
+
+    if (ctxconfig->client == GLFW_OPENGL_ES_API)
+    {
+        if (ctxconfig->major == 1)
+            apiBit = EGL_OPENGL_ES_BIT;
+        else
+            apiBit = EGL_OPENGL_ES2_BIT;
+    }
+    else
+        apiBit = EGL_OPENGL_BIT;
+
+    if (fbconfig->stereo)
+    {
+        _glfwInputError(GLFW_FORMAT_UNAVAILABLE, "EGL: Stereo rendering not supported");
+        return GLFW_FALSE;
+    }
 
     eglGetConfigs(_glfw.egl.display, NULL, 0, &nativeCount);
     if (!nativeCount)
@@ -132,7 +147,7 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
             if (!vi.visualid)
                 continue;
 
-            if (desired->transparent)
+            if (fbconfig->transparent)
             {
                 int count;
                 XVisualInfo* vis =
@@ -146,23 +161,10 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
         }
 #endif // _GLFW_X11
 
-        if (ctxconfig->client == GLFW_OPENGL_ES_API)
+        if (!(getEGLConfigAttrib(n, EGL_RENDERABLE_TYPE) & apiBit))
         {
-            if (ctxconfig->major == 1)
-            {
-                if (!(getEGLConfigAttrib(n, EGL_RENDERABLE_TYPE) & EGL_OPENGL_ES_BIT))
-                    continue;
-            }
-            else
-            {
-                if (!(getEGLConfigAttrib(n, EGL_RENDERABLE_TYPE) & EGL_OPENGL_ES2_BIT))
-                    continue;
-            }
-        }
-        else if (ctxconfig->client == GLFW_OPENGL_API)
-        {
-            if (!(getEGLConfigAttrib(n, EGL_RENDERABLE_TYPE) & EGL_OPENGL_BIT))
-                continue;
+            wrongApiAvailable = GLFW_TRUE;
+            continue;
         }
 
         u->redBits = getEGLConfigAttrib(n, EGL_RED_SIZE);
@@ -182,22 +184,51 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
             //       with an alpha channel to ensure the buffer is opaque
             if (!_glfw.egl.EXT_present_opaque)
             {
-                if (!desired->transparent && u->alphaBits > 0)
+                if (!fbconfig->transparent && u->alphaBits > 0)
                     continue;
             }
         }
 #endif // _GLFW_WAYLAND
 
         u->samples = getEGLConfigAttrib(n, EGL_SAMPLES);
-        u->doublebuffer = desired->doublebuffer;
+        u->doublebuffer = fbconfig->doublebuffer;
 
         u->handle = (uintptr_t) n;
         usableCount++;
     }
 
-    closest = _glfwChooseFBConfig(desired, usableConfigs, usableCount);
+    closest = _glfwChooseFBConfig(fbconfig, usableConfigs, usableCount);
     if (closest)
         *result = (EGLConfig) closest->handle;
+    else
+    {
+        if (wrongApiAvailable)
+        {
+            if (ctxconfig->client == GLFW_OPENGL_ES_API)
+            {
+                if (ctxconfig->major == 1)
+                {
+                    _glfwInputError(GLFW_API_UNAVAILABLE,
+                                    "EGL: Failed to find support for OpenGL ES 1.x");
+                }
+                else
+                {
+                    _glfwInputError(GLFW_API_UNAVAILABLE,
+                                    "EGL: Failed to find support for OpenGL ES 2 or later");
+                }
+            }
+            else
+            {
+                _glfwInputError(GLFW_API_UNAVAILABLE,
+                                "EGL: Failed to find support for OpenGL");
+            }
+        }
+        else
+        {
+            _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
+                            "EGL: Failed to find a suitable EGLConfig");
+        }
+    }
 
     _glfw_free(nativeConfigs);
     _glfw_free(usableConfigs);
@@ -278,6 +309,7 @@ static int extensionSupportedEGL(const char* extension)
 static GLFWglproc getProcAddressEGL(const char* procname)
 {
     _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
+    assert(window != NULL);
 
     if (window->context.egl.client)
     {
@@ -550,11 +582,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
         share = ctxconfig->share->context.egl.handle;
 
     if (!chooseEGLConfig(ctxconfig, fbconfig, &config))
-    {
-        _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
-                        "EGL: Failed to find a suitable EGLConfig");
         return GLFW_FALSE;
-    }
 
     if (ctxconfig->client == GLFW_OPENGL_ES_API)
     {
@@ -611,16 +639,16 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
             flags |= EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR;
         }
 
-        if (ctxconfig->noerror)
-        {
-            if (_glfw.egl.KHR_create_context_no_error)
-                SET_ATTRIB(EGL_CONTEXT_OPENGL_NO_ERROR_KHR, GLFW_TRUE);
-        }
-
         if (ctxconfig->major != 1 || ctxconfig->minor != 0)
         {
             SET_ATTRIB(EGL_CONTEXT_MAJOR_VERSION_KHR, ctxconfig->major);
             SET_ATTRIB(EGL_CONTEXT_MINOR_VERSION_KHR, ctxconfig->minor);
+        }
+
+        if (ctxconfig->noerror)
+        {
+            if (_glfw.egl.KHR_create_context_no_error)
+                SET_ATTRIB(EGL_CONTEXT_OPENGL_NO_ERROR_KHR, GLFW_TRUE);
         }
 
         if (mask)
@@ -674,8 +702,11 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     if (!fbconfig->doublebuffer)
         SET_ATTRIB(EGL_RENDER_BUFFER, EGL_SINGLE_BUFFER);
 
-    if (_glfw.egl.EXT_present_opaque)
-        SET_ATTRIB(EGL_PRESENT_OPAQUE_EXT, !fbconfig->transparent);
+    if (_glfw.platform.platformID == GLFW_PLATFORM_WAYLAND)
+    {
+        if (_glfw.egl.EXT_present_opaque)
+            SET_ATTRIB(EGL_PRESENT_OPAQUE_EXT, !fbconfig->transparent);
+    }
 
     SET_ATTRIB(EGL_NONE, EGL_NONE);
 
@@ -815,11 +846,7 @@ GLFWbool _glfwChooseVisualEGL(const _GLFWwndconfig* wndconfig,
     const long vimask = VisualScreenMask | VisualIDMask;
 
     if (!chooseEGLConfig(ctxconfig, fbconfig, &native))
-    {
-        _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
-                        "EGL: Failed to find a suitable EGLConfig");
         return GLFW_FALSE;
-    }
 
     eglGetConfigAttrib(_glfw.egl.display, native,
                        EGL_NATIVE_VISUAL_ID, &visualID);

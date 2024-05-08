@@ -335,6 +335,12 @@ return {
       type = "UNKNOWN",
       value = "SHADER_LOC_MAP_METALNESS",
       description = ""
+    },
+    {
+      name = "GetMouseRay",
+      type = "UNKNOWN",
+      value = "GetScreenToWorldRay",
+      description = "Compatibility hack for previous raylib versions"
     }
   },
   structs = {
@@ -2223,7 +2229,7 @@ return {
         {
           name = "GAMEPAD_BUTTON_RIGHT_FACE_RIGHT",
           value = 6,
-          description = "Gamepad right button right (i.e. PS3: Square, Xbox: X)"
+          description = "Gamepad right button right (i.e. PS3: Circle, Xbox: B)"
         },
         {
           name = "GAMEPAD_BUTTON_RIGHT_FACE_DOWN",
@@ -2233,7 +2239,7 @@ return {
         {
           name = "GAMEPAD_BUTTON_RIGHT_FACE_LEFT",
           value = 8,
-          description = "Gamepad right button left (i.e. PS3: Circle, Xbox: B)"
+          description = "Gamepad right button left (i.e. PS3: Square, Xbox: X)"
         },
         {
           name = "GAMEPAD_BUTTON_LEFT_TRIGGER_1",
@@ -2248,7 +2254,7 @@ return {
         {
           name = "GAMEPAD_BUTTON_RIGHT_TRIGGER_1",
           value = 11,
-          description = "Gamepad top/back trigger right (one), it could be a trailing button"
+          description = "Gamepad top/back trigger right (first), it could be a trailing button"
         },
         {
           name = "GAMEPAD_BUTTON_RIGHT_TRIGGER_2",
@@ -2951,27 +2957,27 @@ return {
         {
           name = "CAMERA_CUSTOM",
           value = 0,
-          description = "Custom camera"
+          description = "Camera custom, controlled by user (UpdateCamera() does nothing)"
         },
         {
           name = "CAMERA_FREE",
           value = 1,
-          description = "Free camera"
+          description = "Camera free mode"
         },
         {
           name = "CAMERA_ORBITAL",
           value = 2,
-          description = "Orbital camera"
+          description = "Camera orbital, around target, zoom supported"
         },
         {
           name = "CAMERA_FIRST_PERSON",
           value = 3,
-          description = "First person camera"
+          description = "Camera first person"
         },
         {
           name = "CAMERA_THIRD_PERSON",
           value = 4,
-          description = "Third person camera"
+          description = "Camera third person"
         }
       }
     },
@@ -3635,23 +3641,23 @@ return {
       }
     },
     {
-      name = "GetMouseRay",
-      description = "Get a ray trace from mouse position",
+      name = "GetScreenToWorldRay",
+      description = "Get a ray trace from screen position (i.e mouse)",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "mousePosition"},
+        {type = "Vector2", name = "position"},
         {type = "Camera", name = "camera"}
       }
     },
     {
-      name = "GetViewRay",
-      description = "Get a ray trace from mouse position in a viewport",
+      name = "GetScreenToWorldRayEx",
+      description = "Get a ray trace from screen position (i.e mouse) in a viewport",
       returnType = "Ray",
       params = {
-        {type = "Vector2", name = "mousePosition"},
+        {type = "Vector2", name = "position"},
         {type = "Camera", name = "camera"},
-        {type = "float", name = "width"},
-        {type = "float", name = "height"}
+        {type = "int", name = "width"},
+        {type = "int", name = "height"}
       }
     },
     {
@@ -4343,6 +4349,16 @@ return {
       }
     },
     {
+      name = "SetGamepadVibration",
+      description = "Set gamepad vibration for both motors",
+      returnType = "void",
+      params = {
+        {type = "int", name = "gamepad"},
+        {type = "float", name = "leftMotor"},
+        {type = "float", name = "rightMotor"}
+      }
+    },
+    {
       name = "IsMouseButtonPressed",
       description = "Check if a mouse button has been pressed once",
       returnType = "bool",
@@ -4875,6 +4891,17 @@ return {
     },
     {
       name = "DrawRectangleRoundedLines",
+      description = "Draw rectangle lines with rounded edges",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "float", name = "roundness"},
+        {type = "int", name = "segments"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleRoundedLinesEx",
       description = "Draw rectangle with rounded edges outline",
       returnType = "void",
       params = {
@@ -6145,6 +6172,15 @@ return {
       }
     },
     {
+      name = "ColorIsEqual",
+      description = "Check if two colors are equal",
+      returnType = "bool",
+      params = {
+        {type = "Color", name = "col1"},
+        {type = "Color", name = "col2"}
+      }
+    },
+    {
       name = "Fade",
       description = "Get color with alpha applied, alpha goes from 0.0f to 1.0f",
       returnType = "Color",
@@ -6155,7 +6191,7 @@ return {
     },
     {
       name = "ColorToInt",
-      description = "Get hexadecimal value for a Color",
+      description = "Get hexadecimal value for a Color (0xRRGGBBAA)",
       returnType = "int",
       params = {
         {type = "Color", name = "color"}
@@ -7996,7 +8032,7 @@ return {
     },
     {
       name = "AttachAudioStreamProcessor",
-      description = "Attach audio stream processor to stream, receives the samples as <float>s",
+      description = "Attach audio stream processor to stream, receives the samples as 'float'",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
@@ -8014,7 +8050,7 @@ return {
     },
     {
       name = "AttachAudioMixedProcessor",
-      description = "Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s",
+      description = "Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'",
       returnType = "void",
       params = {
         {type = "AudioCallback", name = "processor"}

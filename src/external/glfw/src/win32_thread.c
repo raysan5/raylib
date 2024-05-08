@@ -24,10 +24,10 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
+
+#if defined(GLFW_BUILD_WIN32_THREAD)
 
 #include <assert.h>
 
@@ -95,4 +95,6 @@ void _glfwPlatformUnlockMutex(_GLFWmutex* mutex)
     assert(mutex->win32.allocated == GLFW_TRUE);
     LeaveCriticalSection(&mutex->win32.section);
 }
+
+#endif // GLFW_BUILD_WIN32_THREAD
 

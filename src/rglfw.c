@@ -34,8 +34,8 @@
 // _GLFW_X11        to use the X Window System
 // _GLFW_WAYLAND    to use the Wayland API (experimental and incomplete)
 // _GLFW_COCOA      to use the Cocoa frameworks
-// _GLFW_OSMESA     to use the OSMesa API (headless and non-interactive)
-// _GLFW_MIR        experimental, not supported at this moment
+//
+// On Linux, _GLFW_X11 and _GLFW_WAYLAND can be combined
 
 //----------------------------------------------------------------------------------
 // Feature Test Macros required for this module
@@ -53,8 +53,8 @@
     #define _GLFW_WIN32
 #endif
 #if defined(__linux__)
-    #if !defined(_GLFW_WAYLAND)     // Required for Wayland windowing
-        #define _GLFW_X11
+    #if !defined(_GLFW_WAYLAND) && !defined(_GLFW_X11)
+        #error "Cannot disable Wayland and X11 at the same time"
     #endif
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)

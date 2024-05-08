@@ -444,7 +444,8 @@ void UpdateCamera(Camera *camera, int mode)
     bool lockView = ((mode == CAMERA_FREE) || (mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool rotateUp = false;
 
-    if (mode == CAMERA_ORBITAL)
+    if (mode == CAMERA_CUSTOM) {}
+    else if (mode == CAMERA_ORBITAL)
     {
         // Orbital can just orbit
         Matrix rotation = MatrixRotate(GetCameraUp(camera), CAMERA_ORBITAL_SPEED*GetFrameTime());

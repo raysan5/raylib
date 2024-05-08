@@ -178,8 +178,9 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f((float)startPosX, (float)startPosY);
-        rlVertex2f((float)endPosX, (float)endPosY);
+        // WARNING: Adding 0.5f offset to "center" point on selected pixel
+        rlVertex2f((float)startPosX + 0.5f, (float)startPosY + 0.5f);
+        rlVertex2f((float)endPosX + 0.5f, (float)endPosY + 0.5f);
     rlEnd();
 }
 
@@ -188,26 +189,26 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(startPos.x, startPos.y);
-        rlVertex2f(endPos.x, endPos.y);
+        // WARNING: Adding 0.5f offset to "center" point on selected pixel
+        rlVertex2f(startPos.x + 0.5f, startPos.y + 0.5f);
+        rlVertex2f(endPos.x + 0.5f, endPos.y + 0.5f);
     rlEnd();
 }
 
 // Draw lines sequuence (using gl lines)
 void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
-    if (pointCount >= 2)
-    {
-        rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+    if (pointCount < 2) return; // Security check
 
-            for (int i = 0; i < pointCount - 1; i++)
-            {
-                rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-            }
-        rlEnd();
-    }
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < pointCount - 1; i++)
+        {
+            rlVertex2f(points[i].x, points[i].y);
+            rlVertex2f(points[i + 1].x, points[i + 1].y);
+        }
+    rlEnd();
 }
 
 // Draw line using cubic-bezier spline, in-out interpolation, no control points
@@ -338,7 +339,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
         }
 
         // NOTE: In case number of segments is odd, we add one last piece to the cake
-        if ((segments%2) == 1)
+        if (((unsigned int)segments%2) == 1)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -807,30 +808,25 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 }
 
 // Draw rectangle outline
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
+// WARNING: All Draw*Lines() functions use RL_LINES for drawing,
+// it implies flushing the current batch and changing draw mode to RL_LINES
+// but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-    DrawRectangle(posX, posY, width, 1, color);
-    DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
-    DrawRectangle(posX, posY + height - 1, width, 1, color);
-    DrawRectangle(posX, posY + 1, 1, height - 2, color);
-#else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(posX + 1, posY + 1);
-        rlVertex2f(posX + width, posY + 1);
+        rlVertex2f((float)posX, (float)posY);
+        rlVertex2f((float)posX + (float)width, (float)posY + 1);
 
-        rlVertex2f(posX + width, posY + 1);
-        rlVertex2f(posX + width, posY + height);
+        rlVertex2f((float)posX + (float)width, (float)posY + 1);
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
 
-        rlVertex2f(posX + width, posY + height);
-        rlVertex2f(posX + 1, posY + height);
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
+        rlVertex2f((float)posX + 1, (float)posY + (float)height);
 
-        rlVertex2f(posX + 1, posY + height);
-        rlVertex2f(posX + 1, posY + 1);
+        rlVertex2f((float)posX + 1, (float)posY + (float)height);
+        rlVertex2f((float)posX + 1, (float)posY + 1);
     rlEnd();
-#endif
 }
 
 // Draw rectangle outline with extended parameters
@@ -1090,8 +1086,15 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 #endif
 }
 
+// Draw rectangle with rounded edges
+// TODO: This function should be refactored to use RL_LINES, for consistency with other Draw*Lines()
+void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
+{
+    DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
+}
+
 // Draw rectangle with rounded edges outline
-void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color)
+void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color)
 {
     if (lineThick < 0) lineThick = 0;
 
@@ -1574,7 +1577,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 #if defined(SUPPORT_SPLINE_MITERS)
     Vector2 prevNormal = (Vector2){-(points[1].y - points[0].y), (points[1].x - points[0].x)};
     float prevLength = sqrtf(prevNormal.x*prevNormal.x + prevNormal.y*prevNormal.y);
-    
+
     if (prevLength > 0.0f)
     {
         prevNormal.x /= prevLength;
@@ -1587,7 +1590,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
     }
 
     Vector2 prevRadius = { 0.5f*thick*prevNormal.x, 0.5f*thick*prevNormal.y };
-    
+
     for (int i = 0; i < pointCount - 1; i++)
     {
         Vector2 normal = { 0 };
@@ -1596,7 +1599,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
         {
             normal = (Vector2){-(points[i + 2].y - points[i + 1].y), (points[i + 2].x - points[i + 1].x)};
             float normalLength = sqrtf(normal.x*normal.x + normal.y*normal.y);
-            
+
             if (normalLength > 0.0f)
             {
                 normal.x /= normalLength;
@@ -1615,7 +1618,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 
         Vector2 radius = { prevNormal.x + normal.x, prevNormal.y + normal.y };
         float radiusLength = sqrtf(radius.x*radius.x + radius.y*radius.y);
-        
+
         if (radiusLength > 0.0f)
         {
             radius.x /= radiusLength;
@@ -1639,7 +1642,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
             radius.x = 0.0f;
             radius.y = 0.0f;
         }
-        
+
         Vector2 strip[4] = {
             { points[i].x - prevRadius.x, points[i].y - prevRadius.y },
             { points[i].x + prevRadius.x, points[i].y + prevRadius.y },
@@ -1677,7 +1680,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
         DrawTriangleStrip(strip, 4, color);
     }
 #endif
-    
+
 #if defined(SUPPORT_SPLINE_SEGMENT_CAPS)
     // TODO: Add spline segment rounded caps at the begin/end of the spline
 #endif
@@ -2201,7 +2204,7 @@ bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
         for (int i = 0, j = pointCount - 1; i < pointCount; j = i++)
         {
             if ((points[i].y > point.y) != (points[j].y > point.y) &&
-                (point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+                (point.x < (points[j].x - points[i].x)*(point.y - points[i].y)/(points[j].y - points[i].y) + points[i].x))
             {
                 inside = !inside;
             }
@@ -2345,11 +2348,16 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 // NOTE: Used by DrawLineBezier() only
 static float EaseCubicInOut(float t, float b, float c, float d)
 {
-    if ((t /= 0.5f*d) < 1) return 0.5f*c*t*t*t + b;
+    float result = 0.0f;
 
-    t -= 2;
+    if ((t /= 0.5f*d) < 1) result = 0.5f*c*t*t*t + b;
+    else
+    {
+        t -= 2;
+        result = 0.5f*c*(t*t*t + 2.0f) + b;
+    }
 
-    return 0.5f*c*(t*t*t + 2.0f) + b;
+    return result;
 }
 
 #endif      // SUPPORT_MODULE_RSHAPES

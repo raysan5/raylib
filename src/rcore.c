@@ -118,12 +118,12 @@
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define RGESTURES_IMPLEMENTATION
-    #include "rgestures.h"           // Gestures detection functionality
+    #include "rgestures.h"          // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
     #define RCAMERA_IMPLEMENTATION
-    #include "rcamera.h"             // Camera system functionality
+    #include "rcamera.h"            // Camera system functionality
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -154,13 +154,15 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if defined(_WIN32)
+#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
     #ifndef MAX_PATH
         #define MAX_PATH 1025
     #endif
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
+unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
     #include <unistd.h>
 #elif defined(__APPLE__)
@@ -223,6 +225,9 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 #endif
 #ifndef MAX_GAMEPAD_BUTTONS
     #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
+#endif
+#ifndef MAX_GAMEPAD_VIBRATION_TIME
+    #define MAX_GAMEPAD_VIBRATION_TIME     2.0f     // Maximum vibration time in seconds
 #endif
 #ifndef MAX_TOUCH_POINTS
     #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
@@ -289,16 +294,16 @@ typedef struct CoreData {
     struct {
         struct {
             int exitKey;                    // Default exit key
-            char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
-            char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
+            char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
+            char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
 
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
-            char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame.
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame
 
-            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input keys queue
+            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
-            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
+            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
 
         } Keyboard;
@@ -328,7 +333,7 @@ typedef struct CoreData {
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
-            int axisCount[MAX_GAMEPADS];                  // Register number of available gamepad axis
+            int axisCount[MAX_GAMEPADS];    // Register number of available gamepad axis
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             char name[MAX_GAMEPADS][64];    // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
@@ -479,7 +484,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *li
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
@@ -493,6 +498,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_desktop.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
+#elif defined(PLATFORM_DESKTOP_RGFW)
+    #include "platforms/rcore_desktop_rgfw.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
@@ -803,7 +810,7 @@ bool IsCursorHidden(void)
     return CORE.Input.Mouse.cursorHidden;
 }
 
-// Check if cursor is on the current screen.
+// Check if cursor is on the current screen
 bool IsCursorOnScreen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
@@ -846,23 +853,33 @@ void EndDrawing(void)
     // Draw record indicator
     if (gifRecording)
     {
+        #ifndef GIF_RECORD_FRAMERATE
         #define GIF_RECORD_FRAMERATE    10
-        gifFrameCounter++;
+        #endif
+        gifFrameCounter += GetFrameTime()*1000;
 
-        // NOTE: We record one gif frame every 10 game frames
-        if ((gifFrameCounter%GIF_RECORD_FRAMERATE) == 0)
+        // NOTE: We record one gif frame depending on the desired gif framerate
+        if (gifFrameCounter > 1000/GIF_RECORD_FRAMERATE)
         {
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
             Vector2 scale = GetWindowScaleDPI();
             unsigned char *screenData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-            msf_gif_frame(&gifState, screenData, 10, 16, (int)((float)CORE.Window.render.width*scale.x)*4);
+
+            #ifndef GIF_RECORD_BITRATE
+            #define GIF_RECORD_BITRATE 16
+            #endif
+
+            // Add the frame to the gif recording, given how many frames have passed in centiseconds
+            msf_gif_frame(&gifState, screenData, gifFrameCounter/10, GIF_RECORD_BITRATE, (int)((float)CORE.Window.render.width*scale.x)*4);
+            gifFrameCounter -= 1000/GIF_RECORD_FRAMERATE;
 
             RL_FREE(screenData);    // Free image data
         }
 
     #if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MODULE_RTEXT)
-        if (((gifFrameCounter/15)%2) == 1)
+        // Display the recording indicator every half-second
+        if ((int)(GetTime()/0.5)%2 == 1)
         {
             DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);                 // WARNING: Module required: rshapes
             DrawText("GIF RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);     // WARNING: Module required: rtext
@@ -979,10 +996,10 @@ void BeginMode3D(Camera camera)
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Setup perspective projection
-        double top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
+        double top = rlGetCullDistanceNear()*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
-        rlFrustum(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlFrustum(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
@@ -990,7 +1007,7 @@ void BeginMode3D(Camera camera)
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
-        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlOrtho(-right, right, -top,top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
@@ -1194,15 +1211,15 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 
         // Compute camera projection matrices
         float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-        Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        Matrix proj = MatrixPerspective(fovy, aspect, rlGetCullDistanceNear(), rlGetCullDistanceFar());
 
         config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
         config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
         // Compute camera transformation matrices
-        // NOTE: Camera movement might seem more natural if we model the head.
+        // NOTE: Camera movement might seem more natural if we model the head
         // Our axis of rotation is the base of our head, so we might want to add
-        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions
         config.viewOffset[0] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
         config.viewOffset[1] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
@@ -1403,21 +1420,23 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 // Module Functions Definition: Screen-space Queries
 //----------------------------------------------------------------------------------
 
-// Get a ray trace from mouse position
-Ray GetMouseRay(Vector2 mousePosition, Camera camera)
+// Get a ray trace from screen position (i.e mouse)
+Ray GetScreenToWorldRay(Vector2 position, Camera camera)
 {
-    return GetViewRay(mousePosition, camera, (float)GetScreenWidth(), (float)GetScreenHeight());
+    Ray ray = GetScreenToWorldRayEx(position, camera, GetScreenWidth(), GetScreenHeight());
+
+    return ray;
 }
 
-// Get a ray trace from the mouse position within a specific section of the screen
-Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height)
+// Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
+Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height)
 {
     Ray ray = { 0 };
 
     // Calculate normalized device coordinates
     // NOTE: y value is negative
-    float x = (2.0f*mousePosition.x)/width - 1.0f;
-    float y = 1.0f - (2.0f*mousePosition.y)/height;
+    float x = (2.0f*position.x)/(float)width - 1.0f;
+    float y = 1.0f - (2.0f*position.y)/(float)height;
     float z = 1.0f;
 
     // Store values in a vector
@@ -1431,7 +1450,7 @@ Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height)
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
@@ -1447,9 +1466,10 @@ Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height)
     Vector3 nearPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
     Vector3 farPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
-    // Unproject the mouse cursor in the near plane.
-    // We need this as the source position because orthographic projects, compared to perspective doesn't have a
-    // convergence point, meaning that the "eye" of the camera is more like a plane than a point.
+    // Unproject the mouse cursor in the near plane
+    // We need this as the source position because orthographic projects,
+    // compared to perspective doesn't have a convergence point,
+    // meaning that the "eye" of the camera is more like a plane than a point
     Vector3 cameraPlanePointerPos = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, -1.0f }, matProj, matView);
 
     // Calculate normalized direction vector
@@ -1467,7 +1487,9 @@ Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height)
 // Get transform matrix for camera
 Matrix GetCameraMatrix(Camera camera)
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix mat = MatrixLookAt(camera.position, camera.target, camera.up);
+
+    return mat;
 }
 
 // Get camera 2d transform matrix
@@ -1478,12 +1500,12 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     //   1. Move it to target
     //   2. Rotate by -rotation and scale by (1/zoom)
     //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
-    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
+    //      not for the camera getting bigger, hence the invert. Same deal with rotation
     //   3. Move it by (-offset);
     //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
     //      we need to do it into opposite direction (inverse transform)
 
-    // Having camera transform in world-space, inverse of it gives the modelview transform.
+    // Having camera transform in world-space, inverse of it gives the modelview transform
     // Since (A*B*C)' = C'*B'*A', the modelview is
     //   1. Move to offset
     //   2. Rotate and Scale
@@ -1515,7 +1537,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
@@ -1524,7 +1546,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixOrtho(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     // Calculate view matrix from camera look at (and transpose it)
@@ -1648,7 +1670,7 @@ float GetFrameTime(void)
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
 void WaitTime(double seconds)
 {
-    if (seconds < 0) return;
+    if (seconds < 0) return;    // Security check
 
 #if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
     double destinationTime = GetTime() + seconds;
@@ -1674,7 +1696,7 @@ void WaitTime(double seconds)
         req.tv_sec = sec;
         req.tv_nsec = nsec;
 
-        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated
         while (nanosleep(&req, &req) == -1) continue;
     #endif
     #if defined(__APPLE__)
@@ -1741,7 +1763,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 #if defined(SUPPORT_RPRAND_GENERATOR)
     values = rprand_load_sequence(count, min, max);
 #else
-    if (count > ((unsigned int)abs(max - min) + 1)) return values;
+    if (count > ((unsigned int)abs(max - min) + 1)) return values;  // Security check
 
     values = (int *)RL_CALLOC(count, sizeof(int));
 
@@ -1796,7 +1818,7 @@ void TakeScreenshot(const char *fileName)
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
-    
+
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
@@ -1809,7 +1831,7 @@ void TakeScreenshot(const char *fileName)
 
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
-// because it sets up some flags for the window creation process.
+// because it sets up some flags for the window creation process
 // To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
@@ -1933,7 +1955,9 @@ const char *GetFileExtension(const char *fileName)
 static const char *strprbrk(const char *s, const char *charset)
 {
     const char *latestMatch = NULL;
+
     for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+
     return latestMatch;
 }
 
@@ -1941,9 +1965,10 @@ static const char *strprbrk(const char *s, const char *charset)
 const char *GetFileName(const char *filePath)
 {
     const char *fileName = NULL;
+
     if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
 
-    if (!fileName) return filePath;
+    if (fileName == NULL) return filePath;
 
     return fileName + 1;
 }
@@ -1952,7 +1977,7 @@ const char *GetFileName(const char *filePath)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
     #define MAX_FILENAME_LENGTH     256
-    
+
     static char fileName[MAX_FILENAME_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAME_LENGTH);
 
@@ -1960,7 +1985,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     {
         strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
         int size = (int)strlen(fileName); // Get size in bytes
-        
+
         for (int i = size; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
@@ -1971,7 +1996,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
             }
         }
     }
-    
+
     return fileName;
 }
 
@@ -2222,8 +2247,11 @@ bool IsPathFile(const char *path)
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
-    if (CORE.Window.dropFileCount > 0) return true;
-    else return false;
+    bool result = false;
+
+    if (CORE.Window.dropFileCount > 0) result = true;
+
+    return result;
 }
 
 // Load dropped filepaths
@@ -2257,15 +2285,16 @@ void UnloadDroppedFiles(FilePathList files)
 long GetFileModTime(const char *fileName)
 {
     struct stat result = { 0 };
+    long modTime = 0;
 
     if (stat(fileName, &result) == 0)
     {
         time_t mod = result.st_mtime;
 
-        return (long)mod;
+        modTime = (long)mod;
     }
 
-    return 0;
+    return modTime;
 }
 
 //----------------------------------------------------------------------------------
@@ -2334,7 +2363,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 
     char *encodedData = (char *)RL_MALLOC(*outputSize);
 
-    if (encodedData == NULL) return NULL;
+    if (encodedData == NULL) return NULL;   // Security check
 
     for (int i = 0, j = 0; i < dataSize;)
     {
@@ -2936,13 +2965,15 @@ bool IsMouseButtonUp(int button)
 // Get mouse position X
 int GetMouseX(void)
 {
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    int mouseX = (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    return mouseX;
 }
 
 // Get mouse position Y
 int GetMouseY(void)
 {
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    int mouseY = (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    return mouseY;
 }
 
 // Get mouse position XY
@@ -3009,13 +3040,15 @@ Vector2 GetMouseWheelMoveV(void)
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-    return (int)CORE.Input.Touch.position[0].x;
+    int touchX = (int)CORE.Input.Touch.position[0].x;
+    return touchX;
 }
 
 // Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-    return (int)CORE.Input.Touch.position[0].y;
+    int touchY = (int)CORE.Input.Touch.position[0].y;
+    return touchY;
 }
 
 // Get touch position XY for a touch point index (relative to screen size)
@@ -3057,10 +3090,10 @@ int GetTouchPointCount(void)
 // Initialize hi-resolution timer
 void InitTimer(void)
 {
-    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
-    // High resolutions can also prevent the CPU power management system from entering power-saving modes.
-    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions
+    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
+    // High resolutions can also prevent the CPU power management system from entering power-saving modes
+    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
@@ -3544,16 +3577,6 @@ static void RecordAutomationEvent(void)
     }
     //-------------------------------------------------------------------------------------
 #endif
-
-    // Window events recording
-    //-------------------------------------------------------------------------------------
-    // TODO.
-    //-------------------------------------------------------------------------------------
-
-    // Custom actions events recording
-    //-------------------------------------------------------------------------------------
-    // TODO.
-    //-------------------------------------------------------------------------------------
 }
 #endif
 
