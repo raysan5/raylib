@@ -592,12 +592,12 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
-        LDLIBS = ..\src\libraylib.a -lgdi32 -lwinmm -lopengl32
+        LDLIBS = -lgdi32 -lwinmm -lopengl32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compipling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = ../src/libraylib.a -lGL -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -lpthread -ldl -lrt
+        LDLIBS = -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lm -lpthread -ldl -lrt
 
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -608,10 +608,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
         LDLIBS += -latomic
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        # Libraries for Debian GNU/Linux desktop compiling
+        # Libraries for Debian MacOS desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = ../src/libraylib.a -lm 
-        LDLIBS += -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
+        LDLIBS += -lm -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
     endif
 endif
 
