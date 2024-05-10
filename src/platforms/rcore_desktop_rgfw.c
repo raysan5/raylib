@@ -55,35 +55,46 @@
 void ShowCursor(void);
 void CloseWindow(void);
 
+#ifdef __linux__
 #define _INPUT_EVENT_CODES_H
-#define _APISETSTRING_
-#define RGFWDEF
+#endif
+
+#if defined(__unix__) || defined(__linux__)
 #define _XTYPEDEF_FONT
+#endif
+
 #define RGFW_IMPLEMENTATION
 
+#if defined(__WIN32) || defined(__WIN64)
 #define WIN32_LEAN_AND_MEAN
 #define Rectangle rectangle_win32
 #define CloseWindow CloseWindow_win32
 #define ShowCursor __imp_ShowCursor
+#define _APISETSTRING_
+#endif
 
+#ifdef __APPLE__
 #define Point NSPOINT
 #define Size NSSIZE
+#endif
 
 #ifdef _MSC_VER
 __declspec(dllimport) int __stdcall  MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, wchar_t* lpWideCharStr, int cchWideChar);
 #endif
 
 #include "../external/RGFW.h"
+
+#if defined(__WIN32) || defined(__WIN64)
 #undef DrawText
 #undef ShowCursor
 #undef CloseWindow
+#undef Rectangle
+#endif
+
+#ifdef __APPLE__
 #undef Point
 #undef Size
-
-#define Rectangle struct Rectangle
-void CloseWindow(void);
-void ShowCursor(void);
-
+#endif
 
 #include <stdbool.h>
 
