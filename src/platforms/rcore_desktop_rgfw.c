@@ -111,6 +111,7 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
+#define CORE_WINDOW CORE.Window
 
 static PlatformData platform = { NULL };   // Platform specific 
 
@@ -132,9 +133,9 @@ bool InitGraphicsDevice(void);   // Initialize graphics device
 // Check if application should close
 bool WindowShouldClose(void)
 {   
-    if (CORE.Window.shouldClose == false)
-        CORE.Window.shouldClose = RGFW_window_shouldClose(platform.window);
-    if (CORE.Window.ready) return CORE.Window.shouldClose;
+    if (CORE_WINDOW.shouldClose == false)
+        CORE_WINDOW.shouldClose = RGFW_window_shouldClose(platform.window);
+    if (CORE_WINDOW.ready) return CORE_WINDOW.shouldClose;
     else return true;
 }
 
@@ -148,7 +149,7 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    CORE.Window.flags & FLAG_WINDOW_UNDECORATED;
+    CORE_WINDOW.flags & FLAG_WINDOW_UNDECORATED;
     
     if (platform.window != NULL)
         TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() after window creation not available on target platform");
@@ -175,7 +176,7 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    CORE.Window.flags |= flags;
+    CORE_WINDOW.flags |= flags;
 
     if (flags & FLAG_VSYNC_HINT)
     {
@@ -248,7 +249,7 @@ void SetWindowState(unsigned int flags)
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    CORE.Window.flags &= ~flags;
+    CORE_WINDOW.flags &= ~flags;
 
     if (flags & FLAG_VSYNC_HINT)
     {
@@ -258,7 +259,7 @@ void ClearWindowState(unsigned int flags)
     {
         ToggleBorderlessWindowed();
         RGFW_window_restore(platform.window);
-        CORE.Window.fullscreen = false;
+        CORE_WINDOW.fullscreen = false;
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -379,7 +380,7 @@ void SetWindowIcons(Image *images, int count)
 void SetWindowTitle(const char *title)
 {
     RGFW_window_setName(platform.window, title);
-    CORE.Window.title = title;
+    CORE_WINDOW.title = title;
 }
 
 // Set window position on screen (windowed mode)
@@ -398,16 +399,16 @@ void SetWindowMonitor(int monitor)
 void SetWindowMinSize(int width, int height)
 {
     RGFW_window_setMinSize(platform.window, RGFW_AREA(width, height));
-    CORE.Window.screenMin.width = width;
-    CORE.Window.screenMin.height = height;
+    CORE_WINDOW.screenMin.width = width;
+    CORE_WINDOW.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
     RGFW_window_setMaxSize(platform.window, RGFW_AREA(width, height));
-    CORE.Window.screenMax.width = width;
-    CORE.Window.screenMax.height = height;
+    CORE_WINDOW.screenMax.width = width;
+    CORE_WINDOW.screenMax.height = height;
 }
 
 // Set window dimensions
@@ -566,7 +567,7 @@ void EnableCursor(void)
     RGFW_window_mouseUnhold(platform.window);
 
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SetMousePosition(CORE_WINDOW.screen.width/2, CORE_WINDOW.screen.height/2);
     RGFW_window_showMouse(platform.window, true);
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -576,7 +577,7 @@ void DisableCursor(void)
 {
     RGFW_window_mouseHold(platform.window);
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SetMousePosition(CORE_WINDOW.screen.width/2, CORE_WINDOW.screen.height/2);
 
     HideCursor();
 }
@@ -727,7 +728,7 @@ void PollInputEvents(void)
 
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
-    CORE.Window.resizedLastFrame = false;
+    CORE_WINDOW.resizedLastFrame = false;
 
 
     #define RGFW_HOLD_MOUSE			(1L<<2)
@@ -761,30 +762,30 @@ void PollInputEvents(void)
         // All input events can be processed after polling
         switch (event->type)
         {
-            case RGFW_quit: CORE.Window.shouldClose = true; break;
+            case RGFW_quit: CORE_WINDOW.shouldClose = true; break;
 
             case RGFW_dnd:      // Dropped file
             {
                 size_t i; 
                 for (i = 0; i < event->droppedFilesCount; i++) {
-                    if (CORE.Window.dropFileCount == 0)
+                    if (CORE_WINDOW.dropFileCount == 0)
                     {
                         // When a new file is dropped, we reserve a fixed number of slots for all possible dropped files
                         // at the moment we limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
                         // TODO: Pointers should probably be reallocated for any new file added...
-                        CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
+                        CORE_WINDOW.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
-                        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event->droppedFiles[i]);
+                        CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+                        strcpy(CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount], event->droppedFiles[i]);
     
-                        CORE.Window.dropFileCount++;
+                        CORE_WINDOW.dropFileCount++;
                     }
-                    else if (CORE.Window.dropFileCount < 1024)
+                    else if (CORE_WINDOW.dropFileCount < 1024)
                     {
-                        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event->droppedFiles[i]);
+                        CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+                        strcpy(CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount], event->droppedFiles[i]);
 
-                        CORE.Window.dropFileCount++;
+                        CORE_WINDOW.dropFileCount++;
                     }
                     else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
                 }
@@ -794,13 +795,13 @@ void PollInputEvents(void)
             case RGFW_windowAttribsChange:
             {
                 SetupViewport(platform.window->r.w, platform.window->r.h);
-                CORE.Window.position.x = platform.window->r.x;
-                CORE.Window.position.y = platform.window->r.x;
-                CORE.Window.screen.width = platform.window->r.w;
-                CORE.Window.screen.height =  platform.window->r.h;
-                CORE.Window.currentFbo.width = platform.window->r.w;;
-                CORE.Window.currentFbo.height = platform.window->r.h;
-                CORE.Window.resizedLastFrame = true;
+                CORE_WINDOW.position.x = platform.window->r.x;
+                CORE_WINDOW.position.y = platform.window->r.x;
+                CORE_WINDOW.screen.width = platform.window->r.w;
+                CORE_WINDOW.screen.height =  platform.window->r.h;
+                CORE_WINDOW.currentFbo.width = platform.window->r.w;;
+                CORE_WINDOW.currentFbo.height = platform.window->r.h;
+                CORE_WINDOW.resizedLastFrame = true;
             } break;
 
             // Keyboard events
@@ -822,7 +823,7 @@ void PollInputEvents(void)
                 // TODO: Put exitKey verification outside the switch?
                 if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey])
                 {
-                    CORE.Window.shouldClose = true;
+                    CORE_WINDOW.shouldClose = true;
                 }
 
                 // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
@@ -1038,7 +1039,7 @@ void PollInputEvents(void)
             if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
             else gestureEvent.position[0] = GetMousePosition();
 
-            // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+            // Normalize gestureEvent.position[0] for CORE_WINDOW.screen.width and CORE_WINDOW.screen.height
             gestureEvent.position[0].x /= (float)GetScreenWidth();
             gestureEvent.position[0].y /= (float)GetScreenHeight();
 
@@ -1072,18 +1073,18 @@ int InitPlatform(void)
     unsigned int flags = RGFW_CENTER | RGFW_ALLOW_DND;
 
     // Check window creation flags
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
+    if ((CORE_WINDOW.flags & FLAG_FULLSCREEN_MODE) > 0)
     {
-        CORE.Window.fullscreen = true;
+        CORE_WINDOW.fullscreen = true;
         flags |= RGFW_FULLSCREEN;
     }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_NO_BORDER;
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_NO_RESIZE;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_NO_BORDER;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_NO_RESIZE;
 
-    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_TRANSPARENT_WINDOW;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_TRANSPARENT_WINDOW;
 
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_FULLSCREEN;
+    if ((CORE_WINDOW.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_FULLSCREEN;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
@@ -1101,14 +1102,14 @@ int InitPlatform(void)
         RGFW_setGLVersion(4, 1);
     }
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
     {
         RGFW_setGLSamples(4);
     }
 
-    platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
+    platform.window = RGFW_createWindow(CORE_WINDOW.title, RGFW_RECT(0, 0, CORE_WINDOW.screen.width, CORE_WINDOW.screen.height), flags);
 
-    if (CORE.Window.flags & FLAG_VSYNC_HINT)
+    if (CORE_WINDOW.flags & FLAG_VSYNC_HINT)
         RGFW_window_swapInterval(platform.window, 1);
     
     RGFW_window_makeCurrent(platform.window);
@@ -1116,18 +1117,18 @@ int InitPlatform(void)
     // Check surface and context activation
     if (platform.window != NULL)
     {
-        CORE.Window.ready = true;
+        CORE_WINDOW.ready = true;
         
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.currentFbo.width = CORE.Window.render.width;
-        CORE.Window.currentFbo.height = CORE.Window.render.height;
+        CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+        CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+        CORE_WINDOW.currentFbo.width = CORE_WINDOW.render.width;
+        CORE_WINDOW.currentFbo.height = CORE_WINDOW.render.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE_WINDOW.display.width, CORE_WINDOW.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE_WINDOW.renderOffset.x, CORE_WINDOW.renderOffset.y);
     }
     else
     {
@@ -1137,18 +1138,18 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
 
     // If everything work as expected, we can continue
-    CORE.Window.position.x = platform.window->r.x;
-    CORE.Window.position.y = platform.window->r.y;
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
-    CORE.Window.currentFbo.width = CORE.Window.render.width;
-    CORE.Window.currentFbo.height = CORE.Window.render.height;
+    CORE_WINDOW.position.x = platform.window->r.x;
+    CORE_WINDOW.position.y = platform.window->r.y;
+    CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+    CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+    CORE_WINDOW.currentFbo.width = CORE_WINDOW.render.width;
+    CORE_WINDOW.currentFbo.height = CORE_WINDOW.render.height;
 
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE_WINDOW.display.width, CORE_WINDOW.display.height);
+    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height);
+    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
+    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE_WINDOW.renderOffset.x, CORE_WINDOW.renderOffset.y);
 
     // TODO: Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions

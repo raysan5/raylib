@@ -74,6 +74,7 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
+#define CORE_WINDOW CORE.Window
 
 static PlatformData platform = { 0 };   // Platform specific data
 
@@ -308,7 +309,7 @@ struct android_app *GetAndroidApp(void)
 // Check if application should close
 bool WindowShouldClose(void)
 {
-    if (CORE.Window.ready) return CORE.Window.shouldClose;
+    if (CORE_WINDOW.ready) return CORE_WINDOW.shouldClose;
     else return true;
 }
 
@@ -369,7 +370,7 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    CORE.Window.title = title;
+    CORE_WINDOW.title = title;
 }
 
 // Set window position on screen (windowed mode)
@@ -387,15 +388,15 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.screenMin.width = width;
-    CORE.Window.screenMin.height = height;
+    CORE_WINDOW.screenMin.width = width;
+    CORE_WINDOW.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.screenMax.width = width;
-    CORE.Window.screenMax.height = height;
+    CORE_WINDOW.screenMax.width = width;
+    CORE_WINDOW.screenMax.height = height;
 }
 
 // Set window dimensions
@@ -530,7 +531,7 @@ void HideCursor(void)
 void EnableCursor(void)
 {
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SetMousePosition(CORE_WINDOW.screen.width/2, CORE_WINDOW.screen.height/2);
 
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -539,7 +540,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SetMousePosition(CORE_WINDOW.screen.width/2, CORE_WINDOW.screen.height/2);
 
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -689,7 +690,7 @@ void PollInputEvents(void)
         // NOTE: Never close window, native activity is controlled by the system!
         if (platform.app->destroyRequested != 0)
         {
-            //CORE.Window.shouldClose = true;
+            //CORE_WINDOW.shouldClose = true;
             //ANativeActivity_finish(platform.app->activity);
         }
     }
@@ -705,8 +706,8 @@ int InitPlatform(void)
 {
     // Initialize display basic configuration
     //----------------------------------------------------------------------------
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    CORE_WINDOW.currentFbo.width = CORE_WINDOW.screen.width;
+    CORE_WINDOW.currentFbo.height = CORE_WINDOW.screen.height;
 
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
@@ -717,7 +718,7 @@ int InitPlatform(void)
     else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as landscape");
 
     // TODO: Automatic orientation doesn't seem to work
-    if (CORE.Window.screen.width <= CORE.Window.screen.height)
+    if (CORE_WINDOW.screen.width <= CORE_WINDOW.screen.height)
     {
         AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_PORT);
         TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to portrait");
@@ -734,10 +735,10 @@ int InitPlatform(void)
     //AConfiguration_getScreenLong(platform.app->config);
 
     // Set some default window flags
-    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+    CORE_WINDOW.flags &= ~FLAG_WINDOW_HIDDEN;       // false
+    CORE_WINDOW.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
+    CORE_WINDOW.flags |= FLAG_WINDOW_MAXIMIZED;     // true
+    CORE_WINDOW.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
     //----------------------------------------------------------------------------
 
     // Initialize App command system
@@ -765,7 +766,7 @@ int InitPlatform(void)
     int pollEvents = 0;
 
     // Wait for window to be initialized (display and context)
-    while (!CORE.Window.ready)
+    while (!CORE_WINDOW.ready)
     {
         // Process events loop
         while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&platform.source)) >= 0)
@@ -774,7 +775,7 @@ int InitPlatform(void)
             if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
             // NOTE: Never close window, native activity is controlled by the system!
-            //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
+            //if (platform.app->destroyRequested != 0) CORE_WINDOW.shouldClose = true;
         }
     }
 
@@ -812,12 +813,12 @@ void ClosePlatform(void)
 // NOTE: returns false in case graphic device could not be created
 static int InitGraphicsDevice(void)
 {
-    CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    CORE_WINDOW.fullscreen = true;
+    CORE_WINDOW.flags |= FLAG_FULLSCREEN_MODE;
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
     {
         samples = 4;
         sampleBuffer = 1;
@@ -886,12 +887,12 @@ static int InitGraphicsDevice(void)
 
     // At this point we need to manage render size vs screen size
     // NOTE: This function use and modify global module variables:
-    //  -> CORE.Window.screen.width/CORE.Window.screen.height
-    //  -> CORE.Window.render.width/CORE.Window.render.height
-    //  -> CORE.Window.screenScale
-    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+    //  -> CORE_WINDOW.screen.width/CORE_WINDOW.screen.height
+    //  -> CORE_WINDOW.render.width/CORE_WINDOW.render.height
+    //  -> CORE_WINDOW.screenScale
+    SetupFramebuffer(CORE_WINDOW.display.width, CORE_WINDOW.display.height);
 
-    ANativeWindow_setBuffersGeometry(platform.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
+    ANativeWindow_setBuffersGeometry(platform.app->window, CORE_WINDOW.render.width, CORE_WINDOW.render.height, displayFormat);
     //ANativeWindow_setBuffersGeometry(platform.app->window, 0, 0, displayFormat);       // Force use of native display size
 
     platform.surface = eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
@@ -906,25 +907,25 @@ static int InitGraphicsDevice(void)
     }
     else
     {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.currentFbo.width = CORE.Window.render.width;
-        CORE.Window.currentFbo.height = CORE.Window.render.height;
+        CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+        CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+        CORE_WINDOW.currentFbo.width = CORE_WINDOW.render.width;
+        CORE_WINDOW.currentFbo.height = CORE_WINDOW.render.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE_WINDOW.display.width, CORE_WINDOW.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE_WINDOW.renderOffset.x, CORE_WINDOW.renderOffset.y);
     }
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 
-    CORE.Window.ready = true;
+    CORE_WINDOW.ready = true;
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
     return 0;
 }
@@ -953,8 +954,8 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // context rebinding if the screen is scaled unless offsets are added. There's probably a more
                     // appropriate way to fix this
                     ANativeWindow_setBuffersGeometry(app->window,
-                        CORE.Window.render.width + CORE.Window.renderOffset.x,
-                        CORE.Window.render.height + CORE.Window.renderOffset.y,
+                        CORE_WINDOW.render.width + CORE_WINDOW.renderOffset.x,
+                        CORE_WINDOW.render.height + CORE_WINDOW.renderOffset.y,
                         displayFormat);
 
                     // Recreate display surface and re-attach OpenGL context
@@ -965,19 +966,19 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 }
                 else
                 {
-                    CORE.Window.display.width = ANativeWindow_getWidth(platform.app->window);
-                    CORE.Window.display.height = ANativeWindow_getHeight(platform.app->window);
+                    CORE_WINDOW.display.width = ANativeWindow_getWidth(platform.app->window);
+                    CORE_WINDOW.display.height = ANativeWindow_getHeight(platform.app->window);
 
                     // Initialize graphics device (display device and OpenGL context)
                     InitGraphicsDevice();
 
                     // Initialize OpenGL context (states and resources)
-                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-                    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+                    // NOTE: CORE_WINDOW.currentFbo.width and CORE_WINDOW.currentFbo.height not used, just stored as globals in rlgl
+                    rlglInit(CORE_WINDOW.currentFbo.width, CORE_WINDOW.currentFbo.height);
 
                     // Setup default viewport
-                    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-                    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+                    // NOTE: It updated CORE_WINDOW.render.width and CORE_WINDOW.render.height
+                    SetupViewport(CORE_WINDOW.currentFbo.width, CORE_WINDOW.currentFbo.height);
 
                     // Initialize hi-res timer
                     InitTimer();
@@ -990,7 +991,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Set font white rectangle for shapes drawing, so shapes and text can be batched together
                     // WARNING: rshapes module is required, if not available, default internal white rectangle is used
                     Rectangle rec = GetFontDefault().recs[95];
-                    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+                    if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
                     {
                         // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
                         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
@@ -1033,14 +1034,14 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_GAINED_FOCUS:
         {
             platform.appEnabled = true;
-            CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
+            CORE_WINDOW.flags &= ~FLAG_WINDOW_UNFOCUSED;
             //ResumeMusicStream();
         } break;
         case APP_CMD_PAUSE: break;
         case APP_CMD_LOST_FOCUS:
         {
             platform.appEnabled = false;
-            CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+            CORE_WINDOW.flags |= FLAG_WINDOW_UNFOCUSED;
             //PauseMusicStream();
         } break;
         case APP_CMD_TERM_WINDOW:
@@ -1251,11 +1252,11 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         // Register touch points position
         CORE.Input.Touch.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
 
-        // Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
-        float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x) / (float)CORE.Window.display.width;
-        float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y) / (float)CORE.Window.display.height;
-        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x * widthRatio - (float)CORE.Window.renderOffset.x / 2;
-        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y * heightRatio - (float)CORE.Window.renderOffset.y / 2;
+        // Normalize CORE.Input.Touch.position[i] for CORE_WINDOW.screen.width and CORE_WINDOW.screen.height
+        float widthRatio = (float)(CORE_WINDOW.screen.width + CORE_WINDOW.renderOffset.x) / (float)CORE_WINDOW.display.width;
+        float heightRatio = (float)(CORE_WINDOW.screen.height + CORE_WINDOW.renderOffset.y) / (float)CORE_WINDOW.display.height;
+        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x * widthRatio - (float)CORE_WINDOW.renderOffset.x / 2;
+        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y * heightRatio - (float)CORE_WINDOW.renderOffset.y / 2;
     }
 
     int32_t action = AMotionEvent_getAction(event);

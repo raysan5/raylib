@@ -362,6 +362,8 @@ RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported s
 
 CoreData CORE = { 0 };               // Global CORE state context
 
+#define CORE_WINDOW CORE.Window
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;    // Screenshots counter
 #endif
@@ -610,11 +612,11 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
     // Initialize window data
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-    CORE.Window.eventWaiting = false;
-    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
-    if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
+    CORE_WINDOW.screen.width = width;
+    CORE_WINDOW.screen.height = height;
+    CORE_WINDOW.eventWaiting = false;
+    CORE_WINDOW.screenScale = MatrixIdentity();     // No draw scaling required by default
+    if ((title != NULL) && (title[0] != 0)) CORE_WINDOW.title = title;
 
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
@@ -629,11 +631,11 @@ void InitWindow(int width, int height, const char *title)
     //--------------------------------------------------------------
 
     // Initialize rlgl default data (buffers and shaders)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    // NOTE: CORE_WINDOW.currentFbo.width and CORE_WINDOW.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE_WINDOW.currentFbo.width, CORE_WINDOW.currentFbo.height);
 
     // Setup default viewport
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    SetupViewport(CORE_WINDOW.currentFbo.width, CORE_WINDOW.currentFbo.height);
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -643,7 +645,7 @@ void InitWindow(int width, int height, const char *title)
     // Set font white rectangle for shapes drawing, so shapes and text can be batched together
     // WARNING: rshapes module is required, if not available, default internal white rectangle is used
     Rectangle rec = GetFontDefault().recs[95];
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
     {
         // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
@@ -663,7 +665,7 @@ void InitWindow(int width, int height, const char *title)
     #endif
 #endif
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // Set default font texture filter for HighDPI (blurry)
         // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
@@ -673,7 +675,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
     CORE.Time.frameCounter = 0;
-    CORE.Window.shouldClose = false;
+    CORE_WINDOW.shouldClose = false;
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
@@ -702,68 +704,68 @@ void CloseWindow(void)
     ClosePlatform();
     //--------------------------------------------------------------
 
-    CORE.Window.ready = false;
+    CORE_WINDOW.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
 // Check if window has been initialized successfully
 bool IsWindowReady(void)
 {
-    return CORE.Window.ready;
+    return CORE_WINDOW.ready;
 }
 
 // Check if window is currently fullscreen
 bool IsWindowFullscreen(void)
 {
-    return CORE.Window.fullscreen;
+    return CORE_WINDOW.fullscreen;
 }
 
 // Check if window is currently hidden
 bool IsWindowHidden(void)
 {
-    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
+    return ((CORE_WINDOW.flags & FLAG_WINDOW_HIDDEN) > 0);
 }
 
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {
-    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
+    return ((CORE_WINDOW.flags & FLAG_WINDOW_MINIMIZED) > 0);
 }
 
 // Check if window has been maximized
 bool IsWindowMaximized(void)
 {
-    return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
+    return ((CORE_WINDOW.flags & FLAG_WINDOW_MAXIMIZED) > 0);
 }
 
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
-    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
+    return ((CORE_WINDOW.flags & FLAG_WINDOW_UNFOCUSED) == 0);
 }
 
 // Check if window has been resizedLastFrame
 bool IsWindowResized(void)
 {
-    return CORE.Window.resizedLastFrame;
+    return CORE_WINDOW.resizedLastFrame;
 }
 
 // Check if one specific window flag is enabled
 bool IsWindowState(unsigned int flag)
 {
-    return ((CORE.Window.flags & flag) > 0);
+    return ((CORE_WINDOW.flags & flag) > 0);
 }
 
 // Get current screen width
 int GetScreenWidth(void)
 {
-    return CORE.Window.screen.width;
+    return CORE_WINDOW.screen.width;
 }
 
 // Get current screen height
 int GetScreenHeight(void)
 {
-    return CORE.Window.screen.height;
+    return CORE_WINDOW.screen.height;
 }
 
 // Get current render width which is equal to screen width*dpi scale
@@ -772,9 +774,9 @@ int GetRenderWidth(void)
     int width = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
-    width = (int)((float)CORE.Window.render.width*scale.x);
+    width = (int)((float)CORE_WINDOW.render.width*scale.x);
 #else
-    width = CORE.Window.render.width;
+    width = CORE_WINDOW.render.width;
 #endif
     return width;
 }
@@ -785,9 +787,9 @@ int GetRenderHeight(void)
     int height = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
-    height = (int)((float)CORE.Window.render.height*scale.y);
+    height = (int)((float)CORE_WINDOW.render.height*scale.y);
 #else
-    height = CORE.Window.render.height;
+    height = CORE_WINDOW.render.height;
 #endif
     return height;
 }
@@ -795,13 +797,13 @@ int GetRenderHeight(void)
 // Enable waiting for events on EndDrawing(), no automatic event polling
 void EnableEventWaiting(void)
 {
-    CORE.Window.eventWaiting = true;
+    CORE_WINDOW.eventWaiting = true;
 }
 
 // Disable waiting for events on EndDrawing(), automatic events polling
 void DisableEventWaiting(void)
 {
-    CORE.Window.eventWaiting = false;
+    CORE_WINDOW.eventWaiting = false;
 }
 
 // Check if cursor is not visible
@@ -838,7 +840,7 @@ void BeginDrawing(void)
     CORE.Time.previous = CORE.Time.current;
 
     rlLoadIdentity();                   // Reset current matrix (modelview)
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling
+    rlMultMatrixf(MatrixToFloat(CORE_WINDOW.screenScale)); // Apply screen scaling
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
@@ -864,14 +866,14 @@ void EndDrawing(void)
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
             Vector2 scale = GetWindowScaleDPI();
-            unsigned char *screenData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+            unsigned char *screenData = rlReadScreenPixels((int)((float)CORE_WINDOW.render.width*scale.x), (int)((float)CORE_WINDOW.render.height*scale.y));
 
             #ifndef GIF_RECORD_BITRATE
             #define GIF_RECORD_BITRATE 16
             #endif
 
             // Add the frame to the gif recording, given how many frames have passed in centiseconds
-            msf_gif_frame(&gifState, screenData, gifFrameCounter/10, GIF_RECORD_BITRATE, (int)((float)CORE.Window.render.width*scale.x)*4);
+            msf_gif_frame(&gifState, screenData, gifFrameCounter/10, GIF_RECORD_BITRATE, (int)((float)CORE_WINDOW.render.width*scale.x)*4);
             gifFrameCounter -= 1000/GIF_RECORD_FRAMERATE;
 
             RL_FREE(screenData);    // Free image data
@@ -881,8 +883,8 @@ void EndDrawing(void)
         // Display the recording indicator every half-second
         if ((int)(GetTime()/0.5)%2 == 1)
         {
-            DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);                 // WARNING: Module required: rshapes
-            DrawText("GIF RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);     // WARNING: Module required: rtext
+            DrawCircle(30, CORE_WINDOW.screen.height - 20, 10, MAROON);                 // WARNING: Module required: rshapes
+            DrawText("GIF RECORDING", 50, CORE_WINDOW.screen.height - 25, 10, RED);     // WARNING: Module required: rtext
         }
     #endif
 
@@ -942,7 +944,7 @@ void EndDrawing(void)
                 gifFrameCounter = 0;
 
                 Vector2 scale = GetWindowScaleDPI();
-                msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+                msf_gif_begin(&gifState, (int)((float)CORE_WINDOW.render.width*scale.x), (int)((float)CORE_WINDOW.render.height*scale.y));
                 screenshotCounter++;
 
                 TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
@@ -978,7 +980,7 @@ void EndMode2D(void)
 
     rlLoadIdentity();               // Reset current matrix (modelview)
 
-    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE_WINDOW.screenScale)); // Apply screen scaling if required
 }
 
 // Initializes 3D mode with custom camera (3D)
@@ -990,7 +992,7 @@ void BeginMode3D(Camera camera)
     rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();               // Reset current matrix (projection)
 
-    float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
+    float aspect = (float)CORE_WINDOW.currentFbo.width/(float)CORE_WINDOW.currentFbo.height;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
     if (camera.projection == CAMERA_PERSPECTIVE)
@@ -1031,7 +1033,7 @@ void EndMode3D(void)
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
 
-    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE_WINDOW.screenScale)); // Apply screen scaling if required
 
     rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
 }
@@ -1062,9 +1064,9 @@ void BeginTextureMode(RenderTexture2D target)
 
     // Setup current width/height for proper aspect ratio
     // calculation when using BeginMode3D()
-    CORE.Window.currentFbo.width = target.texture.width;
-    CORE.Window.currentFbo.height = target.texture.height;
-    CORE.Window.usingFbo = true;
+    CORE_WINDOW.currentFbo.width = target.texture.width;
+    CORE_WINDOW.currentFbo.height = target.texture.height;
+    CORE_WINDOW.usingFbo = true;
 }
 
 // Ends drawing to render texture
@@ -1075,17 +1077,17 @@ void EndTextureMode(void)
     rlDisableFramebuffer();         // Disable render target (fbo)
 
     // Set viewport to default framebuffer size
-    SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
+    SetupViewport(CORE_WINDOW.render.width, CORE_WINDOW.render.height);
 
     // Go back to the modelview state from BeginDrawing since we are back to the default FBO
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    rlMultMatrixf(MatrixToFloat(CORE_WINDOW.screenScale)); // Apply screen scaling if required
 
     // Reset current fbo to screen size
-    CORE.Window.currentFbo.width = CORE.Window.render.width;
-    CORE.Window.currentFbo.height = CORE.Window.render.height;
-    CORE.Window.usingFbo = false;
+    CORE_WINDOW.currentFbo.width = CORE_WINDOW.render.width;
+    CORE_WINDOW.currentFbo.height = CORE_WINDOW.render.height;
+    CORE_WINDOW.usingFbo = false;
 }
 
 // Begin custom shader mode
@@ -1122,21 +1124,21 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlEnableScissorTest();
 
 #if defined(__APPLE__)
-    if (!CORE.Window.usingFbo)
+    if (!CORE_WINDOW.usingFbo)
     {
         Vector2 scale = GetWindowScaleDPI();
         rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
-    if (!CORE.Window.usingFbo && ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0))
+    if (!CORE_WINDOW.usingFbo && ((CORE_WINDOW.flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
         Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        rlScissor((int)(x*scale.x), (int)(CORE_WINDOW.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
     }
 #endif
     else
     {
-        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+        rlScissor(x, CORE_WINDOW.currentFbo.height - (y + height), width, height);
     }
 }
 
@@ -1813,8 +1815,8 @@ void TakeScreenshot(const char *fileName)
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
     Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE_WINDOW.render.width*scale.x), (int)((float)CORE_WINDOW.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE_WINDOW.render.width*scale.x), (int)((float)CORE_WINDOW.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
@@ -1837,7 +1839,7 @@ void SetConfigFlags(unsigned int flags)
 {
     // Selected flags are set but not evaluated at this point,
     // flag evaluation happens at InitWindow() or SetWindowState()
-    CORE.Window.flags |= flags;
+    CORE_WINDOW.flags |= flags;
 }
 
 //----------------------------------------------------------------------------------
@@ -2249,7 +2251,7 @@ bool IsFileDropped(void)
 {
     bool result = false;
 
-    if (CORE.Window.dropFileCount > 0) result = true;
+    if (CORE_WINDOW.dropFileCount > 0) result = true;
 
     return result;
 }
@@ -2259,8 +2261,8 @@ FilePathList LoadDroppedFiles(void)
 {
     FilePathList files = { 0 };
 
-    files.count = CORE.Window.dropFileCount;
-    files.paths = CORE.Window.dropFilepaths;
+    files.count = CORE_WINDOW.dropFileCount;
+    files.paths = CORE_WINDOW.dropFilepaths;
 
     return files;
 }
@@ -2276,8 +2278,8 @@ void UnloadDroppedFiles(FilePathList files)
 
         RL_FREE(files.paths);
 
-        CORE.Window.dropFileCount = 0;
-        CORE.Window.dropFilepaths = NULL;
+        CORE_WINDOW.dropFileCount = 0;
+        CORE_WINDOW.dropFilepaths = NULL;
     }
 }
 
@@ -2671,7 +2673,7 @@ void PlayAutomationEvent(AutomationEvent event)
             case INPUT_GESTURE: GESTURES.current = event.params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
     #endif
             // Window event
-            case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;
+            case WINDOW_CLOSE: CORE_WINDOW.shouldClose = true; break;
             case WINDOW_MAXIMIZE: MaximizeWindow(); break;
             case WINDOW_MINIMIZE: MinimizeWindow(); break;
             case WINDOW_RESIZE: SetWindowSize(event.params[0], event.params[1]); break;
@@ -3114,17 +3116,17 @@ void InitTimer(void)
 // Set viewport for a provided width and height
 void SetupViewport(int width, int height)
 {
-    CORE.Window.render.width = width;
-    CORE.Window.render.height = height;
+    CORE_WINDOW.render.width = width;
+    CORE_WINDOW.render.height = height;
 
     // Set viewport width and height
     // NOTE: We consider render size (scaled) and offset in case black bars are required and
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
-    rlViewport(CORE.Window.renderOffset.x/2*scale.x, CORE.Window.renderOffset.y/2*scale.y, (CORE.Window.render.width)*scale.x, (CORE.Window.render.height)*scale.y);
+    rlViewport(CORE_WINDOW.renderOffset.x/2*scale.x, CORE_WINDOW.renderOffset.y/2*scale.y, (CORE_WINDOW.render.width)*scale.x, (CORE_WINDOW.render.height)*scale.y);
 #else
-    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width, CORE.Window.render.height);
+    rlViewport(CORE_WINDOW.renderOffset.x/2, CORE_WINDOW.renderOffset.y/2, CORE_WINDOW.render.width, CORE_WINDOW.render.height);
 #endif
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
@@ -3132,87 +3134,87 @@ void SetupViewport(int width, int height)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
-    rlOrtho(0, CORE.Window.render.width, CORE.Window.render.height, 0, 0.0f, 1.0f);
+    rlOrtho(0, CORE_WINDOW.render.width, CORE_WINDOW.render.height, 0, 0.0f, 1.0f);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (modelview)
 }
 
 // Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
+// NOTE: Global variables CORE_WINDOW.render.width/CORE_WINDOW.render.height and CORE_WINDOW.renderOffset.x/CORE_WINDOW.renderOffset.y can be modified
 void SetupFramebuffer(int width, int height)
 {
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
-    if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
+    // Calculate CORE_WINDOW.render.width and CORE_WINDOW.render.height, we have the display size (input params) and the desired screen size (global var)
+    if ((CORE_WINDOW.screen.width > CORE_WINDOW.display.width) || (CORE_WINDOW.screen.height > CORE_WINDOW.display.height))
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, CORE_WINDOW.display.width, CORE_WINDOW.display.height);
 
         // Downscaling to fit display with border-bars
-        float widthRatio = (float)CORE.Window.display.width/(float)CORE.Window.screen.width;
-        float heightRatio = (float)CORE.Window.display.height/(float)CORE.Window.screen.height;
+        float widthRatio = (float)CORE_WINDOW.display.width/(float)CORE_WINDOW.screen.width;
+        float heightRatio = (float)CORE_WINDOW.display.height/(float)CORE_WINDOW.screen.height;
 
         if (widthRatio <= heightRatio)
         {
-            CORE.Window.render.width = CORE.Window.display.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
+            CORE_WINDOW.render.width = CORE_WINDOW.display.width;
+            CORE_WINDOW.render.height = (int)round((float)CORE_WINDOW.screen.height*widthRatio);
+            CORE_WINDOW.renderOffset.x = 0;
+            CORE_WINDOW.renderOffset.y = (CORE_WINDOW.display.height - CORE_WINDOW.render.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
-            CORE.Window.render.height = CORE.Window.display.height;
-            CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
-            CORE.Window.renderOffset.y = 0;
+            CORE_WINDOW.render.width = (int)round((float)CORE_WINDOW.screen.width*heightRatio);
+            CORE_WINDOW.render.height = CORE_WINDOW.display.height;
+            CORE_WINDOW.renderOffset.x = (CORE_WINDOW.display.width - CORE_WINDOW.render.width);
+            CORE_WINDOW.renderOffset.y = 0;
         }
 
         // Screen scaling required
-        float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
-        CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
+        float scaleRatio = (float)CORE_WINDOW.render.width/(float)CORE_WINDOW.screen.width;
+        CORE_WINDOW.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
 
         // NOTE: We render to full display resolution!
         // We just need to calculate above parameters for downscale matrix and offsets
-        CORE.Window.render.width = CORE.Window.display.width;
-        CORE.Window.render.height = CORE.Window.display.height;
+        CORE_WINDOW.render.width = CORE_WINDOW.display.width;
+        CORE_WINDOW.render.height = CORE_WINDOW.display.height;
 
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
     }
-    else if ((CORE.Window.screen.width < CORE.Window.display.width) || (CORE.Window.screen.height < CORE.Window.display.height))
+    else if ((CORE_WINDOW.screen.width < CORE_WINDOW.display.width) || (CORE_WINDOW.screen.height < CORE_WINDOW.display.height))
     {
         // Required screen size is smaller than display size
-        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, CORE_WINDOW.display.width, CORE_WINDOW.display.height);
 
-        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+        if ((CORE_WINDOW.screen.width == 0) || (CORE_WINDOW.screen.height == 0))
         {
-            CORE.Window.screen.width = CORE.Window.display.width;
-            CORE.Window.screen.height = CORE.Window.display.height;
+            CORE_WINDOW.screen.width = CORE_WINDOW.display.width;
+            CORE_WINDOW.screen.height = CORE_WINDOW.display.height;
         }
 
         // Upscaling to fit display with border-bars
-        float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
-        float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
+        float displayRatio = (float)CORE_WINDOW.display.width/(float)CORE_WINDOW.display.height;
+        float screenRatio = (float)CORE_WINDOW.screen.width/(float)CORE_WINDOW.screen.height;
 
         if (displayRatio <= screenRatio)
         {
-            CORE.Window.render.width = CORE.Window.screen.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.width/displayRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.render.height - CORE.Window.screen.height);
+            CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+            CORE_WINDOW.render.height = (int)round((float)CORE_WINDOW.screen.width/displayRatio);
+            CORE_WINDOW.renderOffset.x = 0;
+            CORE_WINDOW.renderOffset.y = (CORE_WINDOW.render.height - CORE_WINDOW.screen.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.height*displayRatio);
-            CORE.Window.render.height = CORE.Window.screen.height;
-            CORE.Window.renderOffset.x = (CORE.Window.render.width - CORE.Window.screen.width);
-            CORE.Window.renderOffset.y = 0;
+            CORE_WINDOW.render.width = (int)round((float)CORE_WINDOW.screen.height*displayRatio);
+            CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+            CORE_WINDOW.renderOffset.x = (CORE_WINDOW.render.width - CORE_WINDOW.screen.width);
+            CORE_WINDOW.renderOffset.y = 0;
         }
     }
     else
     {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.renderOffset.x = 0;
-        CORE.Window.renderOffset.y = 0;
+        CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+        CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+        CORE_WINDOW.renderOffset.x = 0;
+        CORE_WINDOW.renderOffset.y = 0;
     }
 }
 

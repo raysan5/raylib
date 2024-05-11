@@ -133,6 +133,7 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
+#define CORE_WINDOW CORE.Window
 
 static PlatformData platform = { 0 };   // Platform specific data
 
@@ -249,7 +250,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 // NOTE: By default, if KEY_ESCAPE pressed
 bool WindowShouldClose(void)
 {
-    if (CORE.Window.ready) return CORE.Window.shouldClose;
+    if (CORE_WINDOW.ready) return CORE_WINDOW.shouldClose;
     else return true;
 }
 
@@ -310,7 +311,7 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    CORE.Window.title = title;
+    CORE_WINDOW.title = title;
 }
 
 // Set window position on screen (windowed mode)
@@ -328,15 +329,15 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.screenMin.width = width;
-    CORE.Window.screenMin.height = height;
+    CORE_WINDOW.screenMin.width = width;
+    CORE_WINDOW.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.screenMax.width = width;
-    CORE.Window.screenMax.height = height;
+    CORE_WINDOW.screenMax.width = width;
+    CORE_WINDOW.screenMax.height = height;
 }
 
 // Set window dimensions
@@ -525,7 +526,7 @@ void HideCursor(void)
 void EnableCursor(void)
 {
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SetMousePosition(CORE_WINDOW.screen.width/2, CORE_WINDOW.screen.height/2);
 
     platform.cursorRelative = false;
     CORE.Input.Mouse.cursorHidden = false;
@@ -661,7 +662,7 @@ void PollInputEvents(void)
 #endif
 
     // Check exit key
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE_WINDOW.shouldClose = true;
 
     // Register previous mouse position
     if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -713,8 +714,8 @@ int InitPlatform(void)
 
     // Initialize graphic device: display/window and graphic context
     //----------------------------------------------------------------------------
-    CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    CORE_WINDOW.fullscreen = true;
+    CORE_WINDOW.flags |= FLAG_FULLSCREEN_MODE;
 
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     platform.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
@@ -795,7 +796,7 @@ int InitPlatform(void)
     }
 
     // If InitWindow should use the current mode find it in the connector's mode list
-    if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
+    if ((CORE_WINDOW.screen.width <= 0) || (CORE_WINDOW.screen.height <= 0))
     {
         TRACELOG(LOG_TRACE, "DISPLAY: Selecting DRM connector mode for current used mode...");
 
@@ -809,24 +810,24 @@ int InitPlatform(void)
             return -1;
         }
 
-        CORE.Window.screen.width = CORE.Window.display.width;
-        CORE.Window.screen.height = CORE.Window.display.height;
+        CORE_WINDOW.screen.width = CORE_WINDOW.display.width;
+        CORE_WINDOW.screen.height = CORE_WINDOW.display.height;
     }
 
-    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
+    const bool allowInterlaced = CORE_WINDOW.flags & FLAG_INTERLACED_HINT;
     const int fps = (CORE.Time.target > 0)? (1.0/CORE.Time.target) : 60;
 
     // Try to find an exact matching mode
-    platform.modeIndex = FindExactConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+    platform.modeIndex = FindExactConnectorMode(platform.connector, CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, fps, allowInterlaced);
 
     // If nothing found, try to find a nearly matching mode
-    if (platform.modeIndex < 0) platform.modeIndex = FindNearestConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+    if (platform.modeIndex < 0) platform.modeIndex = FindNearestConnectorMode(platform.connector, CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, fps, allowInterlaced);
 
     // If nothing found, try to find an exactly matching mode including interlaced
-    if (platform.modeIndex < 0) platform.modeIndex = FindExactConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    if (platform.modeIndex < 0) platform.modeIndex = FindExactConnectorMode(platform.connector, CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, fps, true);
 
     // If nothing found, try to find a nearly matching mode including interlaced
-    if (platform.modeIndex < 0) platform.modeIndex = FindNearestConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    if (platform.modeIndex < 0) platform.modeIndex = FindNearestConnectorMode(platform.connector, CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, fps, true);
 
     // If nothing found, there is no suitable mode
     if (platform.modeIndex < 0)
@@ -837,8 +838,8 @@ int InitPlatform(void)
         return -1;
     }
 
-    CORE.Window.display.width = platform.connector->modes[platform.modeIndex].hdisplay;
-    CORE.Window.display.height = platform.connector->modes[platform.modeIndex].vdisplay;
+    CORE_WINDOW.display.width = platform.connector->modes[platform.modeIndex].hdisplay;
+    CORE_WINDOW.display.height = platform.connector->modes[platform.modeIndex].vdisplay;
 
     TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", platform.connector->modes[platform.modeIndex].name,
         platform.connector->modes[platform.modeIndex].hdisplay, platform.connector->modes[platform.modeIndex].vdisplay,
@@ -846,8 +847,8 @@ int InitPlatform(void)
         platform.connector->modes[platform.modeIndex].vrefresh);
 
     // Use the width and height of the surface for render
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
+    CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+    CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
 
     drmModeFreeEncoder(enc);
     enc = NULL;
@@ -872,7 +873,7 @@ int InitPlatform(void)
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
     {
         samples = 4;
         sampleBuffer = 1;
@@ -992,10 +993,10 @@ int InitPlatform(void)
 
     // At this point we need to manage render size vs screen size
     // NOTE: This function use and modify global module variables:
-    //  -> CORE.Window.screen.width/CORE.Window.screen.height
-    //  -> CORE.Window.render.width/CORE.Window.render.height
-    //  -> CORE.Window.screenScale
-    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+    //  -> CORE_WINDOW.screen.width/CORE_WINDOW.screen.height
+    //  -> CORE_WINDOW.render.width/CORE_WINDOW.render.height
+    //  -> CORE_WINDOW.screenScale
+    SetupFramebuffer(CORE_WINDOW.display.width, CORE_WINDOW.display.height);
 
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(platform.device, 1);
@@ -1005,18 +1006,18 @@ int InitPlatform(void)
     // Check surface and context activation
     if (result != EGL_FALSE)
     {
-        CORE.Window.ready = true;
+        CORE_WINDOW.ready = true;
 
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.currentFbo.width = CORE.Window.render.width;
-        CORE.Window.currentFbo.height = CORE.Window.render.height;
+        CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+        CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+        CORE_WINDOW.currentFbo.width = CORE_WINDOW.render.width;
+        CORE_WINDOW.currentFbo.height = CORE_WINDOW.render.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE_WINDOW.display.width, CORE_WINDOW.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE_WINDOW.renderOffset.x, CORE_WINDOW.renderOffset.y);
     }
     else
     {
@@ -1024,17 +1025,17 @@ int InitPlatform(void)
         return -1;
     }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
+    if (!CORE_WINDOW.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE_WINDOW.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE_WINDOW.screen.height / 2);
 
     // Set some default window flags
-    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+    CORE_WINDOW.flags &= ~FLAG_WINDOW_HIDDEN;       // false
+    CORE_WINDOW.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
+    CORE_WINDOW.flags |= FLAG_WINDOW_MAXIMIZED;     // true
+    CORE_WINDOW.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
@@ -1132,7 +1133,7 @@ void ClosePlatform(void)
         platform.device = EGL_NO_DISPLAY;
     }
 
-    CORE.Window.shouldClose = true;   // Added to force threads to exit when the close window is called
+    CORE_WINDOW.shouldClose = true;   // Added to force threads to exit when the close window is called
 
     // Close the evdev devices
 
@@ -1723,16 +1724,16 @@ static void PollMouseEvents(void)
             // Basic movement
             if (event.code == ABS_X)
             {
-                CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
-                CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;        // Scale according to absRange
+                CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE_WINDOW.screen.width/platform.absRange.width;    // Scale according to absRange
+                CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE_WINDOW.screen.width/platform.absRange.width;        // Scale according to absRange
 
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
             if (event.code == ABS_Y)
             {
-                CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
-                CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;      // Scale according to absRange
+                CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE_WINDOW.screen.height/platform.absRange.height;  // Scale according to absRange
+                CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE_WINDOW.screen.height/platform.absRange.height;      // Scale according to absRange
 
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
@@ -1742,12 +1743,12 @@ static void PollMouseEvents(void)
 
             if (event.code == ABS_MT_POSITION_X)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
+                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE_WINDOW.screen.width/platform.absRange.width;    // Scale according to absRange
             }
 
             if (event.code == ABS_MT_POSITION_Y)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
+                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE_WINDOW.screen.height/platform.absRange.height;  // Scale according to absRange
             }
 
             if (event.code == ABS_MT_TRACKING_ID)
@@ -1804,10 +1805,10 @@ static void PollMouseEvents(void)
         if (!CORE.Input.Mouse.cursorHidden)
         {
             if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
-            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+            if (CORE.Input.Mouse.currentPosition.x > CORE_WINDOW.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE_WINDOW.screen.width/CORE.Input.Mouse.scale.x;
 
             if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
-            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+            if (CORE.Input.Mouse.currentPosition.y > CORE_WINDOW.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE_WINDOW.screen.height/CORE.Input.Mouse.scale.y;
         }
 
         // Update touch point count

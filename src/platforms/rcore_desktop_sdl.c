@@ -73,6 +73,7 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
+#define CORE_WINDOW CORE.Window
 
 static PlatformData platform = { 0 };   // Platform specific data
 
@@ -240,7 +241,7 @@ static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help conv
 // Check if application should close
 bool WindowShouldClose(void)
 {
-    if (CORE.Window.ready) return CORE.Window.shouldClose;
+    if (CORE_WINDOW.ready) return CORE_WINDOW.shouldClose;
     else return true;
 }
 
@@ -251,17 +252,17 @@ void ToggleFullscreen(void)
     const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
+        if ((CORE_WINDOW.flags & FLAG_FULLSCREEN_MODE) > 0)
         {
             SDL_SetWindowFullscreen(platform.window, 0);
-            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
-            CORE.Window.fullscreen = false;
+            CORE_WINDOW.flags &= ~FLAG_FULLSCREEN_MODE;
+            CORE_WINDOW.fullscreen = false;
         }
         else
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
-            CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
-            CORE.Window.fullscreen = true;
+            CORE_WINDOW.flags |= FLAG_FULLSCREEN_MODE;
+            CORE_WINDOW.fullscreen = true;
         }
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
@@ -274,15 +275,15 @@ void ToggleBorderlessWindowed(void)
     const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
+        if ((CORE_WINDOW.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
         {
             SDL_SetWindowFullscreen(platform.window, 0);
-            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+            CORE_WINDOW.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
         }
         else
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-            CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+            CORE_WINDOW.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
         }
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
@@ -292,14 +293,14 @@ void ToggleBorderlessWindowed(void)
 void MaximizeWindow(void)
 {
     SDL_MaximizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    CORE_WINDOW.flags |= FLAG_WINDOW_MAXIMIZED;
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
     SDL_MinimizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+    CORE_WINDOW.flags |= FLAG_WINDOW_MINIMIZED;
 }
 
 // Set window state: not minimized/maximized
@@ -311,7 +312,7 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    CORE.Window.flags |= flags;
+    CORE_WINDOW.flags |= flags;
 
     if (flags & FLAG_VSYNC_HINT)
     {
@@ -324,7 +325,7 @@ void SetWindowState(unsigned int flags)
         if ((monitor >= 0) && (monitor < monitorCount))
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
-            CORE.Window.fullscreen = true;
+            CORE_WINDOW.fullscreen = true;
         }
         else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
@@ -400,7 +401,7 @@ void SetWindowState(unsigned int flags)
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    CORE.Window.flags &= ~flags;
+    CORE_WINDOW.flags &= ~flags;
 
     if (flags & FLAG_VSYNC_HINT)
     {
@@ -409,7 +410,7 @@ void ClearWindowState(unsigned int flags)
     if (flags & FLAG_FULLSCREEN_MODE)
     {
         SDL_SetWindowFullscreen(platform.window, 0);
-        CORE.Window.fullscreen = false;
+        CORE_WINDOW.fullscreen = false;
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -577,7 +578,7 @@ void SetWindowTitle(const char *title)
 {
     SDL_SetWindowTitle(platform.window, title);
 
-    CORE.Window.title = title;
+    CORE_WINDOW.title = title;
 }
 
 // Set window position on screen (windowed mode)
@@ -585,8 +586,8 @@ void SetWindowPosition(int x, int y)
 {
     SDL_SetWindowPosition(platform.window, x, y);
 
-    CORE.Window.position.x = x;
-    CORE.Window.position.y = y;
+    CORE_WINDOW.position.x = x;
+    CORE_WINDOW.position.y = y;
 }
 
 // Set monitor for the current window
@@ -599,10 +600,10 @@ void SetWindowMonitor(int monitor)
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
         // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
-        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
+        const bool wasFullscreen = ((CORE_WINDOW.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
 
-        const int screenWidth = CORE.Window.screen.width;
-        const int screenHeight = CORE.Window.screen.height;
+        const int screenWidth = CORE_WINDOW.screen.width;
+        const int screenHeight = CORE_WINDOW.screen.height;
         SDL_Rect usableBounds;
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
         {
@@ -620,16 +621,16 @@ void SetWindowMonitor(int monitor)
                 // 3. It wasn't done here because we can't assume changing the window size automatically
                 //    is acceptable behavior by the user.
                 SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
-                CORE.Window.position.x = usableBounds.x;
-                CORE.Window.position.y = usableBounds.y;
+                CORE_WINDOW.position.x = usableBounds.x;
+                CORE_WINDOW.position.y = usableBounds.y;
             }
             else
             {
                 const int x = usableBounds.x + (usableBounds.w/2) - (screenWidth/2);
                 const int y = usableBounds.y + (usableBounds.h/2) - (screenHeight/2);
                 SDL_SetWindowPosition(platform.window, x, y);
-                CORE.Window.position.x = x;
-                CORE.Window.position.y = y;
+                CORE_WINDOW.position.x = x;
+                CORE_WINDOW.position.y = y;
             }
 
             if (wasFullscreen == 1) ToggleFullscreen(); // Re-enter fullscreen
@@ -644,8 +645,8 @@ void SetWindowMinSize(int width, int height)
 {
     SDL_SetWindowMinimumSize(platform.window, width, height);
 
-    CORE.Window.screenMin.width = width;
-    CORE.Window.screenMin.height = height;
+    CORE_WINDOW.screenMin.width = width;
+    CORE_WINDOW.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -653,8 +654,8 @@ void SetWindowMaxSize(int width, int height)
 {
     SDL_SetWindowMaximumSize(platform.window, width, height);
 
-    CORE.Window.screenMax.width = width;
-    CORE.Window.screenMax.height = height;
+    CORE_WINDOW.screenMax.width = width;
+    CORE_WINDOW.screenMax.height = height;
 }
 
 // Set window dimensions
@@ -662,8 +663,8 @@ void SetWindowSize(int width, int height)
 {
     SDL_SetWindowSize(platform.window, width, height);
 
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    CORE_WINDOW.screen.width = width;
+    CORE_WINDOW.screen.height = height;
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
@@ -979,8 +980,8 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
     {
         SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
         CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.position[i].x = finger->x*CORE_WINDOW.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE_WINDOW.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
     }
 
@@ -1054,7 +1055,7 @@ void PollInputEvents(void)
     }
     */
 
-    CORE.Window.resizedLastFrame = false;
+    CORE_WINDOW.resizedLastFrame = false;
 
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)
@@ -1062,30 +1063,30 @@ void PollInputEvents(void)
         // All input events can be processed after polling
         switch (event.type)
         {
-            case SDL_QUIT: CORE.Window.shouldClose = true; break;
+            case SDL_QUIT: CORE_WINDOW.shouldClose = true; break;
 
             case SDL_DROPFILE:      // Dropped file
             {
-                if (CORE.Window.dropFileCount == 0)
+                if (CORE_WINDOW.dropFileCount == 0)
                 {
                     // When a new file is dropped, we reserve a fixed number of slots for all possible dropped files
                     // at the moment we limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
                     // TODO: Pointers should probably be reallocated for any new file added...
-                    CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
+                    CORE_WINDOW.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
-                    CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+                    strcpy(CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount], event.drop.file);
                     SDL_free(event.drop.file);
 
-                    CORE.Window.dropFileCount++;
+                    CORE_WINDOW.dropFileCount++;
                 }
-                else if (CORE.Window.dropFileCount < 1024)
+                else if (CORE_WINDOW.dropFileCount < 1024)
                 {
-                    CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+                    strcpy(CORE_WINDOW.dropFilepaths[CORE_WINDOW.dropFileCount], event.drop.file);
                     SDL_free(event.drop.file);
 
-                    CORE.Window.dropFileCount++;
+                    CORE_WINDOW.dropFileCount++;
                 }
                 else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
 
@@ -1102,11 +1103,11 @@ void PollInputEvents(void)
                         const int width = event.window.data1;
                         const int height = event.window.data2;
                         SetupViewport(width, height);
-                        CORE.Window.screen.width = width;
-                        CORE.Window.screen.height = height;
-                        CORE.Window.currentFbo.width = width;
-                        CORE.Window.currentFbo.height = height;
-                        CORE.Window.resizedLastFrame = true;
+                        CORE_WINDOW.screen.width = width;
+                        CORE_WINDOW.screen.height = height;
+                        CORE_WINDOW.currentFbo.width = width;
+                        CORE_WINDOW.currentFbo.height = height;
+                        CORE_WINDOW.resizedLastFrame = true;
                     } break;
                     case SDL_WINDOWEVENT_ENTER:
                     {
@@ -1148,7 +1149,7 @@ void PollInputEvents(void)
                 // TODO: Put exitKey verification outside the switch?
                 if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey])
                 {
-                    CORE.Window.shouldClose = true;
+                    CORE_WINDOW.shouldClose = true;
                 }
             } break;
 
@@ -1400,7 +1401,7 @@ void PollInputEvents(void)
             if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
             else gestureEvent.position[0] = GetMousePosition();
 
-            // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+            // Normalize gestureEvent.position[0] for CORE_WINDOW.screen.width and CORE_WINDOW.screen.height
             gestureEvent.position[0].x /= (float)GetScreenWidth();
             gestureEvent.position[0].y /= (float)GetScreenHeight();
 
@@ -1436,32 +1437,32 @@ int InitPlatform(void)
     flags |= SDL_WINDOW_MOUSE_CAPTURE;  // Window has mouse captured
 
     // Check window creation flags
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
+    if ((CORE_WINDOW.flags & FLAG_FULLSCREEN_MODE) > 0)
     {
-        CORE.Window.fullscreen = true;
+        CORE_WINDOW.fullscreen = true;
         flags |= SDL_WINDOW_FULLSCREEN;
     }
 
-    //if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) == 0) flags |= SDL_WINDOW_HIDDEN;
-    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= SDL_WINDOW_BORDERLESS;
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) flags |= SDL_WINDOW_RESIZABLE;
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) flags |= SDL_WINDOW_MINIMIZED;
-    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) flags |= SDL_WINDOW_MAXIMIZED;
+    //if ((CORE_WINDOW.flags & FLAG_WINDOW_HIDDEN) == 0) flags |= SDL_WINDOW_HIDDEN;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= SDL_WINDOW_BORDERLESS;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_RESIZABLE) > 0) flags |= SDL_WINDOW_RESIZABLE;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_MINIMIZED) > 0) flags |= SDL_WINDOW_MINIMIZED;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_MAXIMIZED) > 0) flags |= SDL_WINDOW_MAXIMIZED;
 
-    if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_UNFOCUSED) > 0)
     {
         flags &= ~SDL_WINDOW_INPUT_FOCUS;
         flags &= ~SDL_WINDOW_MOUSE_FOCUS;
     }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
-    if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) flags &= ~SDL_WINDOW_MOUSE_CAPTURE;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_TOPMOST) > 0) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) flags &= ~SDL_WINDOW_MOUSE_CAPTURE;
 
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) flags |= SDL_WINDOW_ALLOW_HIGHDPI;
+    if ((CORE_WINDOW.flags & FLAG_WINDOW_HIGHDPI) > 0) flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 
-    //if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= SDL_WINDOW_TRANSPARENT;     // Alternative: SDL_GL_ALPHA_SIZE = 8
+    //if ((CORE_WINDOW.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= SDL_WINDOW_TRANSPARENT;     // Alternative: SDL_GL_ALPHA_SIZE = 8
 
-    //if ((CORE.Window.flags & FLAG_FULLSCREEN_DESKTOP) > 0) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    //if ((CORE_WINDOW.flags & FLAG_FULLSCREEN_DESKTOP) > 0) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
@@ -1499,19 +1500,19 @@ int InitPlatform(void)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     }
 
-    if (CORE.Window.flags & FLAG_VSYNC_HINT)
+    if (CORE_WINDOW.flags & FLAG_VSYNC_HINT)
     {
         SDL_GL_SetSwapInterval(1);
     }
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
     }
 
     // Init window
-    platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
+    platform.window = SDL_CreateWindow(CORE_WINDOW.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE_WINDOW.screen.width, CORE_WINDOW.screen.height, flags);
 
     // Init OpenGL context
     platform.glContext = SDL_GL_CreateContext(platform.window);
@@ -1519,24 +1520,24 @@ int InitPlatform(void)
     // Check window and glContext have been initialized successfully
     if ((platform.window != NULL) && (platform.glContext != NULL))
     {
-        CORE.Window.ready = true;
+        CORE_WINDOW.ready = true;
 
         SDL_DisplayMode displayMode = { 0 };
         SDL_GetCurrentDisplayMode(GetCurrentMonitor(), &displayMode);
 
-        CORE.Window.display.width = displayMode.w;
-        CORE.Window.display.height = displayMode.h;
+        CORE_WINDOW.display.width = displayMode.w;
+        CORE_WINDOW.display.height = displayMode.h;
 
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.currentFbo.width = CORE.Window.render.width;
-        CORE.Window.currentFbo.height = CORE.Window.render.height;
+        CORE_WINDOW.render.width = CORE_WINDOW.screen.width;
+        CORE_WINDOW.render.height = CORE_WINDOW.screen.height;
+        CORE_WINDOW.currentFbo.width = CORE_WINDOW.render.width;
+        CORE_WINDOW.currentFbo.height = CORE_WINDOW.render.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE_WINDOW.display.width, CORE_WINDOW.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE_WINDOW.renderOffset.x, CORE_WINDOW.renderOffset.y);
     }
     else
     {

@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\raudio.c" />
+    <ClCompile Include="..\..\..\src\rcore.c" />
+    <ClCompile Include="..\..\..\src\rmodels.c" />
+    <ClCompile Include="..\..\..\src\rglfw.c" />
+    <ClCompile Include="..\..\..\src\rshapes.c" />
+    <ClCompile Include="..\..\..\src\rtext.c" />
+    <ClCompile Include="..\..\..\src\rtextures.c" />
+    <ClCompile Include="..\..\..\src\utils.c" />
+    <ClCompile Include="..\..\..\src\platforms\rcore_android.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platforms\rcore_desktop.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platforms\rcore_desktop_rgfw.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platforms\rcore_desktop_sdl.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platforms\rcore_drm.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platforms\rcore_template.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platforms\rcore_web.c">
+      <Filter>platforms</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\external\cgltf.h" />
+    <ClInclude Include="..\..\..\src\rcamera.h" />
+    <ClInclude Include="..\..\..\src\config.h" />
+    <ClInclude Include="..\..\..\src\external\glad.h" />
+    <ClInclude Include="..\..\..\src\external\jar_mod.h" />
+    <ClInclude Include="..\..\..\src\external\jar_xm.h" />
+    <ClInclude Include="..\..\..\src\external\miniaudio.h" />
+    <ClInclude Include="..\..\..\src\external\stb_image.h" />
+    <ClInclude Include="..\..\..\src\external\stb_image_resize.h" />
+    <ClInclude Include="..\..\..\src\external\stb_image_write.h" />
+    <ClInclude Include="..\..\..\src\external\stb_rect_pack.h" />
+    <ClInclude Include="..\..\..\src\external\stb_truetype.h" />
+    <ClInclude Include="..\..\..\src\external\stb_vorbis.h" />
+    <ClInclude Include="..\..\..\src\rgestures.h" />
+    <ClInclude Include="..\..\..\src\raylib.h" />
+    <ClInclude Include="..\..\..\src\raymath.h" />
+    <ClInclude Include="..\..\..\src\rlgl.h" />
+    <ClInclude Include="..\..\..\src\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\..\src\raylib.dll.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="platforms">
+      <UniqueIdentifier>{8bf2e34f-69a8-4a61-94bd-3611a50d0100}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
