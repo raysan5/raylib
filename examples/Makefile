@@ -13,6 +13,11 @@
 #         - Windows (Win32, Win64)
 #         - Linux (X11/Wayland desktop mode)
 #         - Others (not tested)
+#     > PLATFORM_DESKTOP_RGFW (RGFW backend):
+#         - Windows (Win32, Win64)
+#         - Linux (X11 desktop mode)
+#         - macOS/OSX (x64, arm64 (not tested))
+#         - Others (not tested)
 #     > PLATFORM_WEB:
 #         - HTML5 (WebAssembly)
 #     > PLATFORM_DRM:
@@ -86,7 +91,7 @@ BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 
 # Determine PLATFORM_OS when required
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB))
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_DESKTOP_RGFW))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -414,6 +419,31 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
 
         # NOTE: On ARM 32bit arch, miniaudio requires atomics library
         LDLIBS += -latomic
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # Libraries for Windows desktop compilation
+        LDLIBS = ..\src\libraylib.a -lgdi32 -lwinmm -lopengl32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # Libraries for Debian GNU/Linux desktop compipling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = ../src/libraylib.a -lGL -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -lpthread -ldl -lrt
+
+        # Explicit link to libc
+        ifeq ($(RAYLIB_LIBTYPE),SHARED)
+            LDLIBS += -lc
+        endif
+
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
+        LDLIBS += -latomic
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # Libraries for Debian GNU/Linux desktop compiling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = ../src/libraylib.a -lm 
+        LDLIBS += -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)

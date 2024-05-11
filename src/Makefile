@@ -13,6 +13,11 @@
 #         - Windows (Win32, Win64)
 #         - Linux (X11/Wayland desktop mode)
 #         - Others (not tested)
+#     > PLATFORM_DESKTOP_RGFW (RGFW backend):
+#         - Windows (Win32, Win64)
+#         - Linux (X11 desktop mode)
+#         - macOS/OSX (x64, arm64 (not tested))
+#         - Others (not tested)
 #     > PLATFORM_WEB:
 #         - HTML5 (WebAssembly)
 #     > PLATFORM_DRM:
@@ -114,7 +119,7 @@ HOST_PLATFORM_OS ?= WINDOWS
 PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS when required
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_ANDROID))
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_ANDROID PLATFORM_DESKTOP_RGFW))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -217,6 +222,14 @@ endif
 
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # By default use OpenGL 3.3 on desktop platforms
+    GRAPHICS ?= GRAPHICS_API_OPENGL_33
+    #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_21      # Uncomment to use OpenGL 2.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_43      # Uncomment to use OpenGL 4.3
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES2     # Uncomment to use OpenGL ES 2.0 (ANGLE)
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
     # By default use OpenGL 3.3 on desktop platforms
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
     #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
@@ -576,6 +589,30 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # Libraries for Windows desktop compilation
+        LDLIBS = -lgdi32 -lwinmm -lopengl32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # Libraries for Debian GNU/Linux desktop compipling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lm -lpthread -ldl -lrt
+
+        # Explicit link to libc
+        ifeq ($(RAYLIB_LIBTYPE),SHARED)
+            LDLIBS += -lc
+        endif
+
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
+        LDLIBS += -latomic
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # Libraries for Debian MacOS desktop compiling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS += -lm -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
+    endif
+endif
 
 # Define source code object files required
 #------------------------------------------------------------------------------------------------
@@ -583,7 +620,8 @@ OBJS = rcore.o \
        rshapes.o \
        rtextures.o \
        rtext.o \
-       utils.o
+       utils.o 
+
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(USE_EXTERNAL_GLFW),FALSE)
@@ -619,7 +657,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL))
+        ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))
             ifeq ($(PLATFORM_OS),WINDOWS)
                 # NOTE: Linking with provided resource file
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/$(RAYLIB_LIB_NAME).dll $(OBJS) $(RAYLIB_RES_FILE) $(LDFLAGS) $(LDLIBS)
