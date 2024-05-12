@@ -111,7 +111,6 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
-#define CORE_WINDOW CORE.Window
 
 static PlatformData platform = { NULL };   // Platform specific 
 
