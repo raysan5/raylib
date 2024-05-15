@@ -63,10 +63,9 @@ int main ()
             camera.target = mouseWorldPos;
 
             // Zoom increment
-            const float zoomIncrement = 0.125f;
-
-            camera.zoom += (wheel*zoomIncrement);
-            if (camera.zoom < zoomIncrement) camera.zoom = zoomIncrement;
+            float scaleFactor = 1.0f + (0.25f * fabsf(wheel));
+            if (wheel < 0) scaleFactor = 1.0f / scaleFactor;
+            camera.zoom = Clamp(camera.zoom * scaleFactor, 0.125, 64);
         }
 
         //----------------------------------------------------------------------------------
