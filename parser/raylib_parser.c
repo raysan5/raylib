@@ -1243,7 +1243,7 @@ static char **GetTextLines(const char *buffer, int length, int *linesCount)
         while ((bufferPtr[index] == ' ') || (bufferPtr[index] == '\t')) index++;
 
         int j = 0;
-        while (bufferPtr[index + j] != '\n')
+        while (bufferPtr[index + j] != '\n' && bufferPtr[index + j] != '\0')
         {
             lines[i][j] = bufferPtr[index + j];
             j++;
