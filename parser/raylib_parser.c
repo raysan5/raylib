@@ -1006,8 +1006,14 @@ int main(int argc, char* argv[])
             {
                 funcEnd = c + 2;
 
-                // Check if previous word is void
-                if ((linePtr[c - 4] == 'v') && (linePtr[c - 3] == 'o') && (linePtr[c - 2] == 'i') && (linePtr[c - 1] == 'd')) break;
+                // Check if there are no parameters
+                if ((funcEnd - funcParamsStart == 2) ||
+                    ((linePtr[c - 4] == 'v') &&
+                     (linePtr[c - 3] == 'o') &&
+                     (linePtr[c - 2] == 'i') &&
+                     (linePtr[c - 1] == 'd'))) {
+                  break;
+                }
 
                 // Get parameter type + name, extract info
                 char funcParamTypeName[128] = { 0 };
@@ -1237,7 +1243,7 @@ static char **GetTextLines(const char *buffer, int length, int *linesCount)
         while ((bufferPtr[index] == ' ') || (bufferPtr[index] == '\t')) index++;
 
         int j = 0;
-        while (bufferPtr[index + j] != '\n')
+        while (bufferPtr[index + j] != '\n' && bufferPtr[index + j] != '\0')
         {
             lines[i][j] = bufferPtr[index + j];
             j++;
