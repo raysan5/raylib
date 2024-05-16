@@ -1269,6 +1269,15 @@ int InitPlatform(void)
     // Check window creation flags
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
 
+    if(CORE.Window.flags & FLAG_NOERROR_CONTEXT)
+    {
+      if(rlGetVersion() == RL_OPENGL_46)
+      {
+        TRACELOG(LOG_INFO, "CONTEXT: Trying to enable NOERROR context");
+        glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
+      }else TRACELOG(LOG_WARNING, "NOERROR contexts are only supported in OpenGL 4.6");
+    }
+
     if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Visible window
     else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);     // Window initially hidden
 
@@ -1358,9 +1367,6 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
 #if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);   // Enable OpenGL Debug Context
-#endif
-#if defined(RLGL_ENABLE_NOERROR_CONTEXT)
-        glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
 #endif
     }
     else if (rlGetVersion() == RL_OPENGL_ES_20)                 // Request OpenGL ES 2.0 context
