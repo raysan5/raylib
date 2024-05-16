@@ -78,10 +78,6 @@
 #endif
 
 
-#if defined(__cplusplus)
-extern "C" {            // Prevents name mangling of functions
-#endif
-
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -2528,8 +2524,5 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 
     return result;
 }
-#if defined(__cplusplus)
-}
-#endif
 
 #endif  // RAYMATH_H
