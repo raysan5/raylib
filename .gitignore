@@ -56,6 +56,9 @@ packages/
 *.so.*
 *.dll
 
+# Emscripten
+emsdk
+
 # Ignore wasm data in examples/
 examples/**/*.wasm
 examples/**/*.data
