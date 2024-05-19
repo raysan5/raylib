@@ -1348,7 +1348,6 @@ Music LoadMusicStream(const char *fileName)
         }
         else
         {
-            drwav_uninit(ctxWav);
             RL_FREE(ctxWav);
         }
     }
