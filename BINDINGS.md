@@ -62,7 +62,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylibr            | 4.0     | [R](https://www.r-project.org)       | MIT | https://github.com/jeroenjanssens/raylibr         |
 | raylib-ffi          | 4.5     | [Rust](https://www.rust-lang.org/)   | GPLv3 | https://github.com/ewpratten/raylib-ffi        |
-| raylib-rs          | 3.5     | [Rust](https://www.rust-lang.org/)   | Zlib | https://github.com/deltaphc/raylib-rs        |
+| raylib-rs          | 5.0     | [Rust](https://www.rust-lang.org/)   | Zlib | https://github.com/raylib-rs/raylib-rs        |
 | Relib              | 3.5     | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | ?   | https://github.com/RedCubeDev-ByteSpace/Relib |
 | racket-raylib      | 4.0     | [Racket](https://racket-lang.org/) | MIT/Apache-2.0 | https://github.com/eutro/racket-raylib |
 | raylib-swift       | 4.0     | [Swift](https://swift.org/)          | MIT | https://github.com/STREGAsGate/Raylib          |
