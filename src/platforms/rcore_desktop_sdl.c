@@ -1533,14 +1533,8 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
-        if (CORE.Window.flags & FLAG_VSYNC_HINT)
-        {
-            SDL_GL_SetSwapInterval(1);
-        }
-        else
-        {
-            SDL_GL_SetSwapInterval(0);
-        }
+        if (CORE.Window.flags & FLAG_VSYNC_HINT) SDL_GL_SetSwapInterval(1);
+        else SDL_GL_SetSwapInterval(0);
     }
     else
     {
