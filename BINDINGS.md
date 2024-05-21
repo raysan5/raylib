@@ -112,6 +112,9 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [raylib-nim](https://github.com/Skrylar/raylib-nim)                                | 2.0            | [Nim](https://nim-lang.org)                                             |
 | [raylib-Nim](https://gitlab.com/define-private-public/raylib-Nim)                  | 1.7            | [Nim](https://nim-lang.org)                                             |
 | [nim-raylib](https://github.com/tomc1998/nim-raylib)                               | 3.1-dev        | [Nim](https://nim-lang.org)                                             |
+| [raylib-Forever](https://github.com/Guevara-chan/Raylib-Forever)                   | auto           | [Nim](https://nim-lang.org)                                             |
+| [NimraylibNow!](https://github.com/greenfork/nimraylib_now)                        | 4.2            | [Nim](https://nim-lang.org)                                            
+ |
 | [raylib-haskell](https://github.com/DevJac/raylib-haskell)                         | 2.0            | [Haskell](https://www.haskell.org)                                      |
 | [raylib-cr](https://github.com/AregevDev/raylib-cr)                                | 2.5-dev        | [Crystal](https://crystal-lang.org)                                     |
 | [raylib.cr](https://github.com/sam0x17/raylib.cr)                                  | 2.0            | [Crystal](https://crystal-lang.org)                                     |
