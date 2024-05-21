@@ -45,9 +45,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | [raylib-matte](https://github.com/jcorks/raylib-matte)                                   | 4.6-dev          | [Matte](https://github.com/jcorks/matte)                             | MIT                  |
 | [Raylib.nelua](https://github.com/AuzFox/Raylib.nelua)                                   | **5.0**          | [nelua](https://nelua.io)                                            | Zlib                 |
 | [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 4.5              | [Ruby](https://www.ruby-lang.org/en)                                 | Zlib                 |
-| [NimraylibNow!](https://github.com/greenfork/nimraylib_now)                              | 4.2              | [Nim](https://nim-lang.org)                                          | MIT                  |
-| [raylib-Forever](https://github.com/Guevara-chan/Raylib-Forever)                         | auto             | [Nim](https://nim-lang.org)                                          | **???**              |
-| [naylib](https://github.com/planetis-m/naylib)                                           | auto             | [Nim](https://nim-lang.org)                                          | MIT                  |
+| [naylib](https://github.com/planetis-m/naylib)                                           | **5.1-dev**      | [Nim](https://nim-lang.org)                                          | MIT                  |
 | [node-raylib](https://github.com/RobLoach/node-raylib)                                   | 4.5              | [Node.js](https://nodejs.org/en)                                     | Zlib                 |
 | [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.0**          | [Odin](https://odin-lang.org)                                        | BSD-3Clause          |
 | [raylib_odin_bindings](https://github.com/Deathbat2190/raylib_odin_bindings)             | 4.0-dev          | [Odin](https://odin-lang.org)                                        | MIT                  |
@@ -114,6 +112,8 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [raylib-nim](https://github.com/Skrylar/raylib-nim)                                | 2.0            | [Nim](https://nim-lang.org)                                             |
 | [raylib-Nim](https://gitlab.com/define-private-public/raylib-Nim)                  | 1.7            | [Nim](https://nim-lang.org)                                             |
 | [nim-raylib](https://github.com/tomc1998/nim-raylib)                               | 3.1-dev        | [Nim](https://nim-lang.org)                                             |
+| [raylib-Forever](https://github.com/Guevara-chan/Raylib-Forever)                   | auto           | [Nim](https://nim-lang.org)                                             |
+| [NimraylibNow!](https://github.com/greenfork/nimraylib_now)                        | 4.2            | [Nim](https://nim-lang.org)                                            |
 | [raylib-haskell](https://github.com/DevJac/raylib-haskell)                         | 2.0            | [Haskell](https://www.haskell.org)                                      |
 | [raylib-cr](https://github.com/AregevDev/raylib-cr)                                | 2.5-dev        | [Crystal](https://crystal-lang.org)                                     |
 | [raylib.cr](https://github.com/sam0x17/raylib.cr)                                  | 2.0            | [Crystal](https://crystal-lang.org)                                     |
