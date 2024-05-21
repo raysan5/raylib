@@ -1274,17 +1274,17 @@ Wave WaveCopy(Wave wave)
     return newWave;
 }
 
-// Crop a wave to defined samples range
+// Crop a wave to defined frames range
 // NOTE: Security check in case of out-of-range
-void WaveCrop(Wave *wave, int initSample, int finalSample)
+void WaveCrop(Wave *wave, int initFrame, int finalFrame)
 {
-    if ((initSample >= 0) && (initSample < finalSample) && ((unsigned int)finalSample < (wave->frameCount*wave->channels)))
+    if ((initFrame >= 0) && (initFrame < finalFrame) && ((unsigned int)finalFrame < wave->frameCount))
     {
-        int sampleCount = finalSample - initSample;
+        int frameCount = finalFrame - initFrame;
 
-        void *data = RL_MALLOC(sampleCount*wave->sampleSize/8);
+        void *data = RL_MALLOC(frameCount*wave->channels*wave->sampleSize/8);
 
-        memcpy(data, (unsigned char *)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->sampleSize/8);
+        memcpy(data, (unsigned char *)wave->data + (initFrame*wave->channels*wave->sampleSize/8), frameCount*wave->channels*wave->sampleSize/8);
 
         RL_FREE(wave->data);
         wave->data = data;
