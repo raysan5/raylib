@@ -4510,9 +4510,7 @@ Color Fade(Color color, float alpha)
 // Get hexadecimal value for a Color
 int ColorToInt(Color color)
 {
-    int result = (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-
-    return result;
+    return (int)(((unsigned)color.r << 24) | ((unsigned)color.g << 16) | ((unsigned)color.b << 8) | color.a);
 }
 
 // Get color normalized as float [0..1]
