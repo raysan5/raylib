@@ -5,7 +5,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 ### Language Bindings
 
 | Name                                                                                     | raylib Version   | Language                                                             | License              |
-| ---------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------- | -------------------- |
+| :--------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------: | :------------------: |
 | [raylib](https://github.com/raysan5/raylib)                                              | **5.0**          | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))      | Zlib                 |
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.0**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
 | [raylib-boo](https://github.com/Rabios/raylib-boo)                                       | 3.7              | [Boo](http://boo-language.github.io)                                 | MIT                  |
@@ -89,7 +89,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
 | Name                                                 | raylib Version | Language                                     | License |
-| ---------------------------------------------------- | -------------- | -------------------------------------------- | ------- |
+| ---------------------------------------------------- | :------------: | :------------------------------------------: | :-----: |
 | [raylib-cpp](https://github.com/robloach/raylib-cpp) | **5.0**        | [C++](https://en.wikipedia.org/wiki/C%2B%2B) | Zlib    |
 | [claylib](https://github.com/defun-games/claylib)    | 4.5            | [Common Lisp](https://common-lisp.net)       | Zlib    |
 
@@ -97,7 +97,7 @@ These are utility wrappers for specific languages, they are not required to use 
 
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
 | Name                                                                               | raylib Version | Language                                                                |
-| ---------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------- |
+| ---------------------------------------------------------------------------------- | :------------: | :---------------------------------------------------------------------: |
 | [raylib-cppsharp](https://github.com/phxvyper/raylib-cppsharp)                     | 2.5            | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))    |
 | [RaylibFS](https://github.com/dallinbeutler/RaylibFS)                              | 2.5            | [F#](https://fsharp.org)                                                |
 | [raylib\*d](https://github.com/Sepheus/raylib_d)                                   | 2.5            | [D](https://dlang.org)                                                  |
