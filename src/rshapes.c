@@ -2266,6 +2266,27 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     return collision;
 }
 
+// Check collision between line and circle
+bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 startPos, Vector2 endPos)
+{
+    float dx = endPos.x - startPos.x;
+    float dy = endPos.y - startPos.y;
+
+    float fx = center.x - startPos.x;
+    float fy = center.y - startPos.y;
+
+    float t = (fx * dx + fy * dy) / (dx * dx + dy * dy);
+
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+
+    Vector2 closestPoint = { startPos.x + t * dx, startPos.y + t * dy };
+
+    float distanceSq = ((closestPoint.x - center.x)*(closestPoint.x - center.x) + (closestPoint.y - center.y)*(closestPoint.y - center.y));
+
+    return distanceSq <= (radius * radius);
+}
+
 // Check the collision between two lines defined by two points each, returns collision point by reference
 bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint)
 {
