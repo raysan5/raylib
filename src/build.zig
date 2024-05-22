@@ -88,6 +88,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         try c_source_files.append("rtextures.c");
     }
 
+    if (options.opengl_version != .auto) {
+        raylib.defineCMacro(options.opengl_version.toCMacroStr(), null);
+    }
+
     switch (target.result.os.tag) {
         .windows => {
             try c_source_files.append("rglfw.c");
@@ -134,7 +138,11 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                 raylib.defineCMacro("PLATFORM_DESKTOP", null);
             } else {
-                raylib.linkSystemLibrary("GLESv2");
+                if (options.opengl_version == .auto) {
+                    raylib.linkSystemLibrary("GLESv2");
+                    raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                }
+
                 raylib.linkSystemLibrary("EGL");
                 raylib.linkSystemLibrary("drm");
                 raylib.linkSystemLibrary("gbm");
@@ -145,7 +153,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include/libdrm" });
 
                 raylib.defineCMacro("PLATFORM_DRM", null);
-                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
                 raylib.defineCMacro("EGL_NO_X11", null);
                 raylib.defineCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
             }
@@ -183,7 +190,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         },
         .emscripten => {
             raylib.defineCMacro("PLATFORM_WEB", null);
-            raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+            if (options.opengl_version == .auto) {
+                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+            }
 
             if (b.sysroot == null) {
                 @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
@@ -195,7 +204,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
             dir.close();
 
-            raylib.addIncludePath(.{ .path = cache_include });
+            raylib.addIncludePath(b.path(cache_include));
         },
         else => {
             @panic("Unsupported OS");
@@ -239,9 +248,32 @@ pub const Options = struct {
     platform_drm: bool = false,
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .X11,
+    opengl_version: OpenglVersion = .auto,
 
     raylib_dependency_name: []const u8 = "raylib",
     raygui_dependency_name: []const u8 = "raygui",
+};
+
+pub const OpenglVersion = enum {
+    auto,
+    gl_1_1,
+    gl_2_1,
+    gl_3_3,
+    gl_4_3,
+    gles_2,
+    gles_3,
+
+    pub fn toCMacroStr(self: @This()) []const u8 {
+        switch (self) {
+            .auto    => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
+            .gl_1_1   => return "GRAPHICS_API_OPENGL_11",
+            .gl_2_1   => return "GRAPHICS_API_OPENGL_21",
+            .gl_3_3   => return "GRAPHICS_API_OPENGL_33",
+            .gl_4_3   => return "GRAPHICS_API_OPENGL_43",
+            .gles_2 => return "GRAPHICS_API_OPENGL_ES2",
+            .gles_3 => return "GRAPHICS_API_OPENGL_ES3",
+        }
+    }
 };
 
 pub const LinuxDisplayBackend = enum {
@@ -270,6 +302,7 @@ pub fn build(b: *std.Build) !void {
         .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
         .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
+        .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
     };
 
     const lib = try compileRaylib(b, target, optimize, options);

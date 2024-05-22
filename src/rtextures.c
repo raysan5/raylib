@@ -4510,8 +4510,13 @@ Color Fade(Color color, float alpha)
 // Get hexadecimal value for a Color
 int ColorToInt(Color color)
 {
-    int result = (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-
+    int result = 0;
+    
+    result = (int)(((unsigned int)color.r << 24) | 
+                   ((unsigned int)color.g << 16) | 
+                   ((unsigned int)color.b << 8) | 
+                    (unsigned int)color.a);
+    
     return result;
 }
 

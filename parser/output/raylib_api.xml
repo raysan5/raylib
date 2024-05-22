@@ -2870,10 +2870,10 @@
         <Function name="WaveCopy" retType="Wave" paramCount="1" desc="Copy a wave to a new wave">
             <Param type="Wave" name="wave" desc="" />
         </Function>
-        <Function name="WaveCrop" retType="void" paramCount="3" desc="Crop a wave to defined samples range">
+        <Function name="WaveCrop" retType="void" paramCount="3" desc="Crop a wave to defined frames range">
             <Param type="Wave *" name="wave" desc="" />
-            <Param type="int" name="initSample" desc="" />
-            <Param type="int" name="finalSample" desc="" />
+            <Param type="int" name="initFrame" desc="" />
+            <Param type="int" name="finalFrame" desc="" />
         </Function>
         <Function name="WaveFormat" retType="void" paramCount="4" desc="Convert wave data to desired format">
             <Param type="Wave *" name="wave" desc="" />

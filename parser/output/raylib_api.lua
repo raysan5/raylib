@@ -7733,12 +7733,12 @@ return {
     },
     {
       name = "WaveCrop",
-      description = "Crop a wave to defined samples range",
+      description = "Crop a wave to defined frames range",
       returnType = "void",
       params = {
         {type = "Wave *", name = "wave"},
-        {type = "int", name = "initSample"},
-        {type = "int", name = "finalSample"}
+        {type = "int", name = "initFrame"},
+        {type = "int", name = "finalFrame"}
       }
     },
     {

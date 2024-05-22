@@ -11231,7 +11231,7 @@
     },
     {
       "name": "WaveCrop",
-      "description": "Crop a wave to defined samples range",
+      "description": "Crop a wave to defined frames range",
       "returnType": "void",
       "params": [
         {
@@ -11240,11 +11240,11 @@
         },
         {
           "type": "int",
-          "name": "initSample"
+          "name": "initFrame"
         },
         {
           "type": "int",
-          "name": "finalSample"
+          "name": "finalFrame"
         }
       ]
     },
