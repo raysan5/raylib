@@ -4314,10 +4314,10 @@ Function 523: WaveCopy() (1 input parameters)
 Function 524: WaveCrop() (3 input parameters)
   Name: WaveCrop
   Return type: void
-  Description: Crop a wave to defined samples range
+  Description: Crop a wave to defined frames range
   Param[1]: wave (type: Wave *)
-  Param[2]: initSample (type: int)
-  Param[3]: finalSample (type: int)
+  Param[2]: initFrame (type: int)
+  Param[3]: finalFrame (type: int)
 Function 525: WaveFormat() (4 input parameters)
   Name: WaveFormat
   Return type: void

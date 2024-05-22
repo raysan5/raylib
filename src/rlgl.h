@@ -591,8 +591,8 @@ RLAPI void rlFrustum(double left, double right, double bottom, double top, doubl
 RLAPI void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar);
 RLAPI void rlViewport(int x, int y, int width, int height); // Set the viewport area
 RLAPI void rlSetClipPlanes(double near, double far);    // Set clip planes distances
-RLAPI double rlGetCullDistanceNear();                   // Get cull plane distance near
-RLAPI double rlGetCullDistanceFar();                    // Get cull plane distance far
+RLAPI double rlGetCullDistanceNear(void);               // Get cull plane distance near
+RLAPI double rlGetCullDistanceFar(void);                // Get cull plane distance far
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
@@ -2038,7 +2038,7 @@ void rlClearScreenBuffers(void)
 }
 
 // Check and log OpenGL error codes
-void rlCheckErrors()
+void rlCheckErrors(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int check = 1;
