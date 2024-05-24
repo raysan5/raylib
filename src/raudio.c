@@ -1278,7 +1278,7 @@ Wave WaveCopy(Wave wave)
 // NOTE: Security check in case of out-of-range
 void WaveCrop(Wave *wave, int initFrame, int finalFrame)
 {
-    if ((initFrame >= 0) && (initFrame < finalFrame) && ((unsigned int)finalFrame < wave->frameCount))
+    if ((initFrame >= 0) && (initFrame < finalFrame) && ((unsigned int)finalFrame <= wave->frameCount))
     {
         int frameCount = finalFrame - initFrame;
 
@@ -1288,6 +1288,7 @@ void WaveCrop(Wave *wave, int initFrame, int finalFrame)
 
         RL_FREE(wave->data);
         wave->data = data;
+        wave->frameCount = (unsigned int)frameCount;
     }
     else TRACELOG(LOG_WARNING, "WAVE: Crop range out of bounds");
 }
