@@ -3546,10 +3546,10 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         Color color = model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color;
 
         Color colorTint = WHITE;
-        colorTint.r = (unsigned char)((color.r*tint.r)/255);
-        colorTint.g = (unsigned char)((color.g*tint.g)/255);
-        colorTint.b = (unsigned char)((color.b*tint.b)/255);
-        colorTint.a = (unsigned char)((color.a*tint.a)/255);
+        colorTint.r = (unsigned char)(((int)color.r*(int)tint.r)/255);
+        colorTint.g = (unsigned char)(((int)color.g*(int)tint.g)/255);
+        colorTint.b = (unsigned char)(((int)color.b*(int)tint.b)/255);
+        colorTint.a = (unsigned char)(((int)color.a*(int)tint.a)/255);
 
         model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = colorTint;
         DrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
