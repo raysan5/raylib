@@ -198,6 +198,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
             }
 
+            const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
+            defer b.allocator.free(cache_include);
+
             if (comptime builtin.zig_version.minor > 12) {
                 var dir = std.fs.cwd().openDir(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
                 dir.close();
