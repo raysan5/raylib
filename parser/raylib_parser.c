@@ -202,9 +202,12 @@ int main(int argc, char* argv[])
 {
     if (argc > 1) ProcessCommandLine(argc, argv);
 
-    if (inFileName[0] == '\0') MemoryCopy(inFileName, "../src/raylib.h\0", 16);
-    if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
-    if (apiDefine[0] == '\0') MemoryCopy(apiDefine, "RLAPI\0", 6);
+    const char *raylibhPath = "../src/raylib.h\0";
+    const char *raylibapiPath = "raylib_api.txt\0";
+    const char *rlapiPath = "RLAPI\0";
+    if (inFileName[0] == '\0') MemoryCopy(inFileName, raylibhPath, TextLength(raylibhPath) + 1);
+    if (outFileName[0] == '\0') MemoryCopy(outFileName, raylibapiPath, TextLength(raylibapiPath) + 1);
+    if (apiDefine[0] == '\0') MemoryCopy(apiDefine, rlapiPath, TextLength(rlapiPath) + 1);
 
     int length = 0;
     char *buffer = LoadFileText(inFileName, &length);
@@ -1277,8 +1280,10 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
         }
         else if ((typeName[k] == '.') && (typeNameLen == 3)) // Handle varargs ...);
         {
-            MemoryCopy(type, "...", 3);
-            MemoryCopy(name, "args", 4);
+	    const char *varargsDots = "...";
+	    const char *varargsArg = "args";
+            MemoryCopy(type, varargsDots, TextLength(varargsDots));
+            MemoryCopy(name, varargsArg, TextLength(varargsArg));
             break;
         }
     }
