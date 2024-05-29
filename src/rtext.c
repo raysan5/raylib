@@ -1093,8 +1093,8 @@ bool ExportFontAsCode(Font font, const char *fileName)
 #else
     byteCount += sprintf(txtData + byteCount, "    // Assign glyph recs and info data directly\n");
     byteCount += sprintf(txtData + byteCount, "    // WARNING: This font data must not be unloaded\n");
-    byteCount += sprintf(txtData + byteCount, "    font.recs = fontRecs_%s;\n", fileNamePascal);
-    byteCount += sprintf(txtData + byteCount, "    font.glyphs = fontGlyphs_%s;\n\n", fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "    font.recs = (Rectangle *)fontRecs_%s;\n", fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "    font.glyphs = (GlyphInfo *)fontGlyphs_%s;\n\n", fileNamePascal);
 #endif
     byteCount += sprintf(txtData + byteCount, "    return font;\n");
     byteCount += sprintf(txtData + byteCount, "}\n");
