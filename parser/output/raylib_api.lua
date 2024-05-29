@@ -4059,6 +4059,14 @@ return {
       }
     },
     {
+      name = "IsFileNameValid",
+      description = "Check if fileName is valid for the platform/OS",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
       name = "LoadDirectoryFiles",
       description = "Load directory filepaths",
       returnType = "FilePathList",
