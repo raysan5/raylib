@@ -2320,8 +2320,8 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
 {
     float dx = p1.x - p2.x;
     float dy = p1.y - p2.y;
-    float length_sqr = ((dx * dx) + (dy * dy));
-    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (length_sqr);
+    float lengthSQ = ((dx * dx) + (dy * dy));
+    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (lengthSQ);
 
     if (dotProduct > 1.0f)
     {
@@ -2334,9 +2334,9 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
 
     float dx2 = (p1.x - (dotProduct * (dx))) - center.x;
     float dy2 = (p1.y - (dotProduct * (dy))) - center.y;
-    float distance_sqr = ((dx2 * dx2) + (dy2 * dy2));
+    float distanceSQ = ((dx2 * dx2) + (dy2 * dy2));
 
-    return (distance_sqr <= radius * radius);
+    return (distanceSQ <= radius * radius);
 }
 
 // Get collision rectangle for two rectangles collision
