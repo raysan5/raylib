@@ -2315,6 +2315,38 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
     return collision;
 }
 
+RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2)
+{
+    //test if end points are in circle
+    bool inside1 = CheckCollisionPointCircle(p1, center, radius);
+    bool inside2 = CheckCollisionPointCircle(p2, center, radius);
+    if (inside1 || inside2) return true;
+
+    // get length of line
+    float dx = p1.x - p2.x;
+    float dy = p1.y - p2.y;
+    float length = sqrtf((dx * dx) + (dy * dy));
+
+    // dot product
+    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (length * length);
+
+    // closest point on line
+    float closeX = p1.x + (dotProduct * (p2.x - p1.x));
+    float closeY = p1.y + (dotProduct * (p2.y - p1.y));
+
+    bool onSegment = CheckCollisionPointLine((Vector2) { closeX, closeY }, p1, p2, 0);
+    if (!onSegment) return false;
+
+    //distnce from circle to closest point
+
+    dx = closeX - center.x;
+    dy = closeY - center.y;
+    float distance = sqrtf((dx * dx) + (dy * dy));
+
+    if (distance <= radius) return true;
+    return false;
+}
+
 // Get collision rectangle for two rectangles collision
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
