@@ -2335,8 +2335,7 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
     float dy2 = (p1.y - (dotProduct * (dy))) - center.y;
     float distance_sqr = ((dx2 * dx2) + (dy2 * dy2));
 
-    if (distance_sqr <= radius * radius) return true;
-    return false;
+    return (distance_sqr <= radius * radius);
 }
 
 // Get collision rectangle for two rectangles collision
