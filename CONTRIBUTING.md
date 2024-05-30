@@ -11,7 +11,7 @@ Do you enjoy raylib and want to contribute? Nice! You can help with the followin
 - `Testing` - Can you find some bugs in raylib?
 
 This document contains a set of guidelines to contribute to the project. These are mostly guidelines, not rules. 
-Use your best judgement, and feel free to propose changes to this document in a pull request.
+Use your best judgment, and feel free to propose changes to this document in a pull request.
 
 ### raylib philosophy
 
@@ -28,14 +28,14 @@ Use your best judgement, and feel free to propose changes to this document in a 
  - [raylib license](LICENSE)
  - [raylib roadmap](ROADMAP.md)
  
-[raylib Wiki](https://github.com/raysan5/raylib/wiki) contains some information about the library and is open to anyone for edit. 
+[raylib Wiki](https://github.com/raysan5/raylib/wiki) contains some information about the library and is open to anyone to edit. 
 Feel free to review it if required, just take care not to break something.
 
 ### raylib C coding conventions
 
 Despite being written in C, raylib does not follow the standard Hungarian notation for C, 
 it [follows Pascal-case/camel-case notation](https://github.com/raysan5/raylib/wiki/raylib-coding-conventions), 
-more common on C# language. All code formatting decisions have been carefully taken
+more common in C# language. All code formatting decisions have been carefully taken
 to make it easier for students/users to read, write and understand code.
 
 Source code is extensively commented for that purpose, raylib primary learning method is:
@@ -46,12 +46,12 @@ For detailed information on building raylib and examples, please check [raylib W
 
 ### Opening new Issues
 
-To open new issue for raylib (bug, enhancement, discussion...), just try to follow these rules:
+To open new issues for raylib (bug, enhancement, discussion...), just try to follow these rules:
 
  - Make sure the issue has not already been reported before by searching on GitHub under Issues.
  - If you're unable to find an open issue addressing the problem, open a new one. Be sure to include a 
  title and clear description, as much relevant information as possible, and a code sample demonstrating the unexpected behavior.
- - If applies, attach some screenshot of the issue and a .zip file with the code sample and required resources.
+ - If applicable, attach some screenshot of the issue and a .zip file with the code sample and required resources.
  - On issue description, add a brackets tag about the raylib module that relates to this issue. 
  If don't know which module, just report the issue, I will review it.
  - You can check other issues to see how is being done!
@@ -60,7 +60,7 @@ To open new issue for raylib (bug, enhancement, discussion...), just try to foll
 
  - Make sure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
  - Don't send big pull requests (lots of changelists), they are difficult to review. It's better to send small pull requests, one at a time.
- - Verify that changes don't break the build (at least on Windows platform). As many platforms where you can test it, the better, but don't worry
+ - Verify that changes don't break the build (at least on Windows platform). The more platforms where you can test it, the better, but don't worry
  if you cannot test all the platforms.
 
 ### Contact information

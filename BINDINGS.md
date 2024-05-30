@@ -1,6 +1,6 @@
 # raylib bindings and wrappers
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
+Some people ported raylib to other languages in the form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
 
 ### Language Bindings
 
