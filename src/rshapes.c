@@ -2334,7 +2334,10 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
     float closeX = p1.x + (dotProduct * (p2.x - p1.x));
     float closeY = p1.y + (dotProduct * (p2.y - p1.y));
 
-    bool onSegment = CheckCollisionPointLine((Vector2) { closeX, closeY }, p1, p2, 0);
+
+    Vector2 close = { closeX, closeY };
+
+    bool onSegment = CheckCollisionPointLine(close, p1, p2, 1);
     if (!onSegment) return false;
 
     //distnce from circle to closest point
