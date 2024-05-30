@@ -2315,6 +2315,30 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
     return collision;
 }
 
+// Check if circle collides with a line created betweeen two points [p1] and [p2]
+RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2)
+{
+    float dx = p1.x - p2.x;
+    float dy = p1.y - p2.y;
+
+    if ((fabsf(dx) + fabsf(dy)) <= FLT_EPSILON)
+    {
+        return CheckCollisionCircles(p1, 0, center, radius);
+    }
+
+    float lengthSQ = ((dx * dx) + (dy * dy));
+    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (lengthSQ);
+
+    if (dotProduct > 1.0f) dotProduct = 1.0f;
+    else if (dotProduct < 0.0f) dotProduct = 0.0f;
+
+    float dx2 = (p1.x - (dotProduct * (dx))) - center.x;
+    float dy2 = (p1.y - (dotProduct * (dy))) - center.y;
+    float distanceSQ = ((dx2 * dx2) + (dy2 * dy2));
+
+    return (distanceSQ <= radius * radius);
+}
+
 // Get collision rectangle for two rectangles collision
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
