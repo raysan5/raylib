@@ -2317,12 +2317,9 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
 
 RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2)
 {
-    // get length of line
     float dx = p1.x - p2.x;
     float dy = p1.y - p2.y;
     float length_sqr = ((dx * dx) + (dy * dy));
-
-    // dot product
     float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (length_sqr);
 
     if (dotProduct > 1.0f)
@@ -2334,17 +2331,9 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
         dotProduct = 0.0f;
     }
 
-    // closest point on line
-    float closeX = p1.x - (dotProduct * (dx));
-    float closeY = p1.y - (dotProduct * (dy));
-
-    Vector2 close = { closeX, closeY };
-
-    //distnce from circle to closest point
-
-    dx = closeX - center.x;
-    dy = closeY - center.y;
-    float distance_sqr = ((dx * dx) + (dy * dy));
+    float dx2 = (p1.x - (dotProduct * (dx))) - center.x;
+    float dy2 = (p1.y - (dotProduct * (dy))) - center.y;
+    float distance_sqr = ((dx2 * dx2) + (dy2 * dy2));
 
     if (distance_sqr <= radius * radius) return true;
     return false;
