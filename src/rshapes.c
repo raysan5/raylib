@@ -2325,18 +2325,18 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
     // get length of line
     float dx = p1.x - p2.x;
     float dy = p1.y - p2.y;
-    float length = sqrtf((dx * dx) + (dy * dy));
+    float length_sqr = ((dx * dx) + (dy * dy));
 
     // dot product
-    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (length * length);
+    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (length_sqr);
 
     // closest point on line
     float closeX = p1.x + (dotProduct * (p2.x - p1.x));
     float closeY = p1.y + (dotProduct * (p2.y - p1.y));
 
-
     Vector2 close = { closeX, closeY };
 
+    //is the point on the segment?
     bool onSegment = CheckCollisionPointLine(close, p1, p2, 1);
     if (!onSegment) return false;
 
@@ -2344,9 +2344,9 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
 
     dx = closeX - center.x;
     dy = closeY - center.y;
-    float distance = sqrtf((dx * dx) + (dy * dy));
+    float distance_sqr = ((dx * dx) + (dy * dy));
 
-    if (distance <= radius) return true;
+    if (distance_sqr <= radius * radius) return true;
     return false;
 }
 
