@@ -2335,8 +2335,9 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
     }
 
     // closest point on line
-    float closeX = p1.x + (dotProduct * (p2.x - p1.x));
-    float closeY = p1.y + (dotProduct * (p2.y - p1.y));
+    float closeX = p1.x - (dotProduct * (dx));
+    float closeY = p1.y - (dotProduct * (dy));
+
     Vector2 close = { closeX, closeY };
 
     //distnce from circle to closest point
