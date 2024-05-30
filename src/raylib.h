@@ -934,7 +934,7 @@ typedef enum {
 } NPatchLayout;
 
 // Callbacks to hook some internal functions
-// WARNING: These callbacks are intended for advance users
+// WARNING: These callbacks are intended for advanced users
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
 typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
@@ -1066,7 +1066,7 @@ RLAPI double GetTime(void);                                       // Get elapsed
 RLAPI int GetFPS(void);                                           // Get current FPS
 
 // Custom frame control functions
-// NOTE: Those functions are intended for advance users that want full control over the frame processing
+// NOTE: Those functions are intended for advanced users that want full control over the frame processing
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
 RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
@@ -1093,7 +1093,7 @@ RLAPI void *MemRealloc(void *ptr, unsigned int size);             // Internal me
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
 // Set custom callbacks
-// WARNING: Callbacks setup is intended for advance users
+// WARNING: Callbacks setup is intended for advanced users
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);         // Set custom trace log
 RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback); // Set custom file binary data loader
 RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback); // Set custom file binary data saver
