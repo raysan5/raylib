@@ -4301,6 +4301,9 @@ static Model LoadIQM(const char *fileName)
     char name[MESH_NAME_LENGTH] = { 0 };
     char material[MATERIAL_NAME_LENGTH] = { 0 };
 
+    char* cwd = GetWorkingDirectory();
+    ChangeDirectory(GetDirectoryPath(fileName));
+
     for (int i = 0; i < model.meshCount; i++)
     {
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[i].name, SEEK_SET);
@@ -4314,6 +4317,7 @@ static Model LoadIQM(const char *fileName)
         model.materials[i] = LoadMaterialDefault();
 
         TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
+        model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(material);
 
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
@@ -4332,6 +4336,7 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
     }
+    ChangeDirectory(cwd);
 
     // Triangles data processing
     tri = RL_MALLOC(iqmHeader->num_triangles*sizeof(IQMTriangle));
@@ -4621,6 +4626,8 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         animations[a].boneCount = iqmHeader->num_poses;
         animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
+        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here 
+        TraceLog(LOG_INFO, "IQM Anim %s", animations[a].name);
         // animations[a].framerate = anim.framerate;     // TODO: Use animation framerate data?
 
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
