@@ -4268,6 +4268,8 @@ static Model LoadIQM(const char *fileName)
     // In case file can not be read, return an empty model
     if (fileDataPtr == NULL) return model;
 
+    const char* basePath = GetDirectoryPath(fileName);
+
     // Read IQM header
     IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;
 
@@ -4312,6 +4314,7 @@ static Model LoadIQM(const char *fileName)
         memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
 
         model.materials[i] = LoadMaterialDefault();
+        model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
 
         TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
 
