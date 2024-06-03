@@ -9,11 +9,11 @@
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
-        <Define name="DEG2RAD" type="FLOAT_MATH" value="(PI/180.0f)" desc="" />
-        <Define name="RAD2DEG" type="FLOAT_MATH" value="(180.0f/PI)" desc="" />
+        <Define name="DEG2RAD" type="FLOAT_MATH" value="(PI / 180.0f)" desc="" />
+        <Define name="RAD2DEG" type="FLOAT_MATH" value="(180.0f / PI)" desc="" />
         <Define name="RL_MALLOC(sz)" type="MACRO" value="malloc(sz)" desc="" />
-        <Define name="RL_CALLOC(n,sz)" type="MACRO" value="calloc(n,sz)" desc="" />
-        <Define name="RL_REALLOC(ptr,sz)" type="MACRO" value="realloc(ptr,sz)" desc="" />
+        <Define name="RL_CALLOC(n, sz)" type="MACRO" value="calloc(n, sz)" desc="" />
+        <Define name="RL_REALLOC(ptr, sz)" type="MACRO" value="realloc(ptr, sz)" desc="" />
         <Define name="RL_FREE(ptr)" type="MACRO" value="free(ptr)" desc="" />
         <Define name="CLITERAL(type)" type="MACRO" value="type" desc="" />
         <Define name="RL_COLOR_TYPE" type="GUARD" value="" desc="" />
@@ -23,32 +23,32 @@
         <Define name="RL_VECTOR4_TYPE" type="GUARD" value="" desc="" />
         <Define name="RL_QUATERNION_TYPE" type="GUARD" value="" desc="" />
         <Define name="RL_MATRIX_TYPE" type="GUARD" value="" desc="" />
-        <Define name="LIGHTGRAY" type="COLOR" value="CLITERAL(Color){ 200, 200, 200, 255 }" desc="Light Gray" />
-        <Define name="GRAY" type="COLOR" value="CLITERAL(Color){ 130, 130, 130, 255 }" desc="Gray" />
-        <Define name="DARKGRAY" type="COLOR" value="CLITERAL(Color){ 80, 80, 80, 255 }" desc="Dark Gray" />
-        <Define name="YELLOW" type="COLOR" value="CLITERAL(Color){ 253, 249, 0, 255 }" desc="Yellow" />
-        <Define name="GOLD" type="COLOR" value="CLITERAL(Color){ 255, 203, 0, 255 }" desc="Gold" />
-        <Define name="ORANGE" type="COLOR" value="CLITERAL(Color){ 255, 161, 0, 255 }" desc="Orange" />
-        <Define name="PINK" type="COLOR" value="CLITERAL(Color){ 255, 109, 194, 255 }" desc="Pink" />
-        <Define name="RED" type="COLOR" value="CLITERAL(Color){ 230, 41, 55, 255 }" desc="Red" />
-        <Define name="MAROON" type="COLOR" value="CLITERAL(Color){ 190, 33, 55, 255 }" desc="Maroon" />
-        <Define name="GREEN" type="COLOR" value="CLITERAL(Color){ 0, 228, 48, 255 }" desc="Green" />
-        <Define name="LIME" type="COLOR" value="CLITERAL(Color){ 0, 158, 47, 255 }" desc="Lime" />
-        <Define name="DARKGREEN" type="COLOR" value="CLITERAL(Color){ 0, 117, 44, 255 }" desc="Dark Green" />
-        <Define name="SKYBLUE" type="COLOR" value="CLITERAL(Color){ 102, 191, 255, 255 }" desc="Sky Blue" />
-        <Define name="BLUE" type="COLOR" value="CLITERAL(Color){ 0, 121, 241, 255 }" desc="Blue" />
-        <Define name="DARKBLUE" type="COLOR" value="CLITERAL(Color){ 0, 82, 172, 255 }" desc="Dark Blue" />
-        <Define name="PURPLE" type="COLOR" value="CLITERAL(Color){ 200, 122, 255, 255 }" desc="Purple" />
-        <Define name="VIOLET" type="COLOR" value="CLITERAL(Color){ 135, 60, 190, 255 }" desc="Violet" />
-        <Define name="DARKPURPLE" type="COLOR" value="CLITERAL(Color){ 112, 31, 126, 255 }" desc="Dark Purple" />
-        <Define name="BEIGE" type="COLOR" value="CLITERAL(Color){ 211, 176, 131, 255 }" desc="Beige" />
-        <Define name="BROWN" type="COLOR" value="CLITERAL(Color){ 127, 106, 79, 255 }" desc="Brown" />
-        <Define name="DARKBROWN" type="COLOR" value="CLITERAL(Color){ 76, 63, 47, 255 }" desc="Dark Brown" />
-        <Define name="WHITE" type="COLOR" value="CLITERAL(Color){ 255, 255, 255, 255 }" desc="White" />
-        <Define name="BLACK" type="COLOR" value="CLITERAL(Color){ 0, 0, 0, 255 }" desc="Black" />
-        <Define name="BLANK" type="COLOR" value="CLITERAL(Color){ 0, 0, 0, 0 }" desc="Blank (Transparent)" />
-        <Define name="MAGENTA" type="COLOR" value="CLITERAL(Color){ 255, 0, 255, 255 }" desc="Magenta" />
-        <Define name="RAYWHITE" type="COLOR" value="CLITERAL(Color){ 245, 245, 245, 255 }" desc="My own White (raylib logo)" />
+        <Define name="LIGHTGRAY" type="UNKNOWN" value="" desc="" />
+        <Define name="GRAY" type="UNKNOWN" value="" desc="" />
+        <Define name="DARKGRAY" type="UNKNOWN" value="" desc="" />
+        <Define name="YELLOW" type="UNKNOWN" value="" desc="" />
+        <Define name="GOLD" type="UNKNOWN" value="" desc="" />
+        <Define name="ORANGE" type="UNKNOWN" value="" desc="" />
+        <Define name="PINK" type="UNKNOWN" value="" desc="" />
+        <Define name="RED" type="UNKNOWN" value="" desc="" />
+        <Define name="MAROON" type="UNKNOWN" value="" desc="" />
+        <Define name="GREEN" type="UNKNOWN" value="" desc="" />
+        <Define name="LIME" type="UNKNOWN" value="" desc="" />
+        <Define name="DARKGREEN" type="UNKNOWN" value="" desc="" />
+        <Define name="SKYBLUE" type="UNKNOWN" value="" desc="" />
+        <Define name="BLUE" type="UNKNOWN" value="" desc="" />
+        <Define name="DARKBLUE" type="UNKNOWN" value="" desc="" />
+        <Define name="PURPLE" type="UNKNOWN" value="" desc="" />
+        <Define name="VIOLET" type="UNKNOWN" value="" desc="" />
+        <Define name="DARKPURPLE" type="UNKNOWN" value="" desc="" />
+        <Define name="BEIGE" type="UNKNOWN" value="" desc="" />
+        <Define name="BROWN" type="UNKNOWN" value="" desc="" />
+        <Define name="DARKBROWN" type="UNKNOWN" value="" desc="" />
+        <Define name="WHITE" type="UNKNOWN" value="" desc="" />
+        <Define name="BLACK" type="UNKNOWN" value="" desc="" />
+        <Define name="BLANK" type="UNKNOWN" value="" desc="" />
+        <Define name="MAGENTA" type="UNKNOWN" value="" desc="" />
+        <Define name="RAYWHITE" type="UNKNOWN" value="" desc="" />
         <Define name="RL_BOOL_TYPE" type="GUARD" value="" desc="" />
         <Define name="MOUSE_LEFT_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_LEFT" desc="" />
         <Define name="MOUSE_RIGHT_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_RIGHT" desc="" />
@@ -59,240 +59,7 @@
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
         <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
-    <Structs count="34">
-        <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
-            <Field type="float" name="x" desc="Vector x component" />
-            <Field type="float" name="y" desc="Vector y component" />
-        </Struct>
-        <Struct name="Vector3" fieldCount="3" desc="Vector3, 3 components">
-            <Field type="float" name="x" desc="Vector x component" />
-            <Field type="float" name="y" desc="Vector y component" />
-            <Field type="float" name="z" desc="Vector z component" />
-        </Struct>
-        <Struct name="Vector4" fieldCount="4" desc="Vector4, 4 components">
-            <Field type="float" name="x" desc="Vector x component" />
-            <Field type="float" name="y" desc="Vector y component" />
-            <Field type="float" name="z" desc="Vector z component" />
-            <Field type="float" name="w" desc="Vector w component" />
-        </Struct>
-        <Struct name="Matrix" fieldCount="16" desc="Matrix, 4x4 components, column major, OpenGL style, right-handed">
-            <Field type="float" name="m0" desc="Matrix first row (4 components)" />
-            <Field type="float" name="m4" desc="Matrix first row (4 components)" />
-            <Field type="float" name="m8" desc="Matrix first row (4 components)" />
-            <Field type="float" name="m12" desc="Matrix first row (4 components)" />
-            <Field type="float" name="m1" desc="Matrix second row (4 components)" />
-            <Field type="float" name="m5" desc="Matrix second row (4 components)" />
-            <Field type="float" name="m9" desc="Matrix second row (4 components)" />
-            <Field type="float" name="m13" desc="Matrix second row (4 components)" />
-            <Field type="float" name="m2" desc="Matrix third row (4 components)" />
-            <Field type="float" name="m6" desc="Matrix third row (4 components)" />
-            <Field type="float" name="m10" desc="Matrix third row (4 components)" />
-            <Field type="float" name="m14" desc="Matrix third row (4 components)" />
-            <Field type="float" name="m3" desc="Matrix fourth row (4 components)" />
-            <Field type="float" name="m7" desc="Matrix fourth row (4 components)" />
-            <Field type="float" name="m11" desc="Matrix fourth row (4 components)" />
-            <Field type="float" name="m15" desc="Matrix fourth row (4 components)" />
-        </Struct>
-        <Struct name="Color" fieldCount="4" desc="Color, 4 components, R8G8B8A8 (32bit)">
-            <Field type="unsigned char" name="r" desc="Color red value" />
-            <Field type="unsigned char" name="g" desc="Color green value" />
-            <Field type="unsigned char" name="b" desc="Color blue value" />
-            <Field type="unsigned char" name="a" desc="Color alpha value" />
-        </Struct>
-        <Struct name="Rectangle" fieldCount="4" desc="Rectangle, 4 components">
-            <Field type="float" name="x" desc="Rectangle top-left corner position x" />
-            <Field type="float" name="y" desc="Rectangle top-left corner position y" />
-            <Field type="float" name="width" desc="Rectangle width" />
-            <Field type="float" name="height" desc="Rectangle height" />
-        </Struct>
-        <Struct name="Image" fieldCount="5" desc="Image, pixel data stored in CPU memory (RAM)">
-            <Field type="void *" name="data" desc="Image raw data" />
-            <Field type="int" name="width" desc="Image base width" />
-            <Field type="int" name="height" desc="Image base height" />
-            <Field type="int" name="mipmaps" desc="Mipmap levels, 1 by default" />
-            <Field type="int" name="format" desc="Data format (PixelFormat type)" />
-        </Struct>
-        <Struct name="Texture" fieldCount="5" desc="Texture, tex data stored in GPU memory (VRAM)">
-            <Field type="unsigned int" name="id" desc="OpenGL texture id" />
-            <Field type="int" name="width" desc="Texture base width" />
-            <Field type="int" name="height" desc="Texture base height" />
-            <Field type="int" name="mipmaps" desc="Mipmap levels, 1 by default" />
-            <Field type="int" name="format" desc="Data format (PixelFormat type)" />
-        </Struct>
-        <Struct name="RenderTexture" fieldCount="3" desc="RenderTexture, fbo for texture rendering">
-            <Field type="unsigned int" name="id" desc="OpenGL framebuffer object id" />
-            <Field type="Texture" name="texture" desc="Color buffer attachment texture" />
-            <Field type="Texture" name="depth" desc="Depth buffer attachment texture" />
-        </Struct>
-        <Struct name="NPatchInfo" fieldCount="6" desc="NPatchInfo, n-patch layout info">
-            <Field type="Rectangle" name="source" desc="Texture source rectangle" />
-            <Field type="int" name="left" desc="Left border offset" />
-            <Field type="int" name="top" desc="Top border offset" />
-            <Field type="int" name="right" desc="Right border offset" />
-            <Field type="int" name="bottom" desc="Bottom border offset" />
-            <Field type="int" name="layout" desc="Layout of the n-patch: 3x3, 1x3 or 3x1" />
-        </Struct>
-        <Struct name="GlyphInfo" fieldCount="5" desc="GlyphInfo, font characters glyphs info">
-            <Field type="int" name="value" desc="Character value (Unicode)" />
-            <Field type="int" name="offsetX" desc="Character offset X when drawing" />
-            <Field type="int" name="offsetY" desc="Character offset Y when drawing" />
-            <Field type="int" name="advanceX" desc="Character advance position X" />
-            <Field type="Image" name="image" desc="Character image data" />
-        </Struct>
-        <Struct name="Font" fieldCount="6" desc="Font, font texture and GlyphInfo array data">
-            <Field type="int" name="baseSize" desc="Base size (default chars height)" />
-            <Field type="int" name="glyphCount" desc="Number of glyph characters" />
-            <Field type="int" name="glyphPadding" desc="Padding around the glyph characters" />
-            <Field type="Texture2D" name="texture" desc="Texture atlas containing the glyphs" />
-            <Field type="Rectangle *" name="recs" desc="Rectangles in texture for the glyphs" />
-            <Field type="GlyphInfo *" name="glyphs" desc="Glyphs info data" />
-        </Struct>
-        <Struct name="Camera3D" fieldCount="5" desc="Camera, defines position/orientation in 3d space">
-            <Field type="Vector3" name="position" desc="Camera position" />
-            <Field type="Vector3" name="target" desc="Camera target it looks-at" />
-            <Field type="Vector3" name="up" desc="Camera up vector (rotation over its axis)" />
-            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic" />
-            <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
-        </Struct>
-        <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
-            <Field type="Vector2" name="offset" desc="Camera offset (displacement from target)" />
-            <Field type="Vector2" name="target" desc="Camera target (rotation and zoom origin)" />
-            <Field type="float" name="rotation" desc="Camera rotation in degrees" />
-            <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
-        </Struct>
-        <Struct name="Mesh" fieldCount="15" desc="Mesh, vertex data and vao/vbo">
-            <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
-            <Field type="int" name="triangleCount" desc="Number of triangles stored (indexed or not)" />
-            <Field type="float *" name="vertices" desc="Vertex position (XYZ - 3 components per vertex) (shader-location = 0)" />
-            <Field type="float *" name="texcoords" desc="Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)" />
-            <Field type="float *" name="texcoords2" desc="Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)" />
-            <Field type="float *" name="normals" desc="Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)" />
-            <Field type="float *" name="tangents" desc="Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)" />
-            <Field type="unsigned char *" name="colors" desc="Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)" />
-            <Field type="unsigned short *" name="indices" desc="Vertex indices (in case vertex data comes indexed)" />
-            <Field type="float *" name="animVertices" desc="Animated vertex positions (after bones transformations)" />
-            <Field type="float *" name="animNormals" desc="Animated normals (after bones transformations)" />
-            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)" />
-            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning)" />
-            <Field type="unsigned int" name="vaoId" desc="OpenGL Vertex Array Object id" />
-            <Field type="unsigned int *" name="vboId" desc="OpenGL Vertex Buffer Objects id (default vertex data)" />
-        </Struct>
-        <Struct name="Shader" fieldCount="2" desc="Shader">
-            <Field type="unsigned int" name="id" desc="Shader program id" />
-            <Field type="int *" name="locs" desc="Shader locations array (RL_MAX_SHADER_LOCATIONS)" />
-        </Struct>
-        <Struct name="MaterialMap" fieldCount="3" desc="MaterialMap">
-            <Field type="Texture2D" name="texture" desc="Material map texture" />
-            <Field type="Color" name="color" desc="Material map color" />
-            <Field type="float" name="value" desc="Material map value" />
-        </Struct>
-        <Struct name="Material" fieldCount="3" desc="Material, includes shader and maps">
-            <Field type="Shader" name="shader" desc="Material shader" />
-            <Field type="MaterialMap *" name="maps" desc="Material maps array (MAX_MATERIAL_MAPS)" />
-            <Field type="float[4]" name="params" desc="Material generic parameters (if required)" />
-        </Struct>
-        <Struct name="Transform" fieldCount="3" desc="Transform, vertex transformation data">
-            <Field type="Vector3" name="translation" desc="Translation" />
-            <Field type="Quaternion" name="rotation" desc="Rotation" />
-            <Field type="Vector3" name="scale" desc="Scale" />
-        </Struct>
-        <Struct name="BoneInfo" fieldCount="2" desc="Bone, skeletal animation bone">
-            <Field type="char[32]" name="name" desc="Bone name" />
-            <Field type="int" name="parent" desc="Bone parent" />
-        </Struct>
-        <Struct name="Model" fieldCount="9" desc="Model, meshes, materials and animation data">
-            <Field type="Matrix" name="transform" desc="Local transform matrix" />
-            <Field type="int" name="meshCount" desc="Number of meshes" />
-            <Field type="int" name="materialCount" desc="Number of materials" />
-            <Field type="Mesh *" name="meshes" desc="Meshes array" />
-            <Field type="Material *" name="materials" desc="Materials array" />
-            <Field type="int *" name="meshMaterial" desc="Mesh material number" />
-            <Field type="int" name="boneCount" desc="Number of bones" />
-            <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
-            <Field type="Transform *" name="bindPose" desc="Bones base transformation (pose)" />
-        </Struct>
-        <Struct name="ModelAnimation" fieldCount="5" desc="ModelAnimation">
-            <Field type="int" name="boneCount" desc="Number of bones" />
-            <Field type="int" name="frameCount" desc="Number of animation frames" />
-            <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
-            <Field type="Transform **" name="framePoses" desc="Poses array by frame" />
-            <Field type="char[32]" name="name" desc="Animation name" />
-        </Struct>
-        <Struct name="Ray" fieldCount="2" desc="Ray, ray for raycasting">
-            <Field type="Vector3" name="position" desc="Ray position (origin)" />
-            <Field type="Vector3" name="direction" desc="Ray direction" />
-        </Struct>
-        <Struct name="RayCollision" fieldCount="4" desc="RayCollision, ray hit information">
-            <Field type="bool" name="hit" desc="Did the ray hit something?" />
-            <Field type="float" name="distance" desc="Distance to the nearest hit" />
-            <Field type="Vector3" name="point" desc="Point of the nearest hit" />
-            <Field type="Vector3" name="normal" desc="Surface normal of hit" />
-        </Struct>
-        <Struct name="BoundingBox" fieldCount="2" desc="BoundingBox">
-            <Field type="Vector3" name="min" desc="Minimum vertex box-corner" />
-            <Field type="Vector3" name="max" desc="Maximum vertex box-corner" />
-        </Struct>
-        <Struct name="Wave" fieldCount="5" desc="Wave, audio wave data">
-            <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
-            <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
-            <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
-            <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
-            <Field type="void *" name="data" desc="Buffer data pointer" />
-        </Struct>
-        <Struct name="AudioStream" fieldCount="5" desc="AudioStream, custom audio stream">
-            <Field type="rAudioBuffer *" name="buffer" desc="Pointer to internal data used by the audio system" />
-            <Field type="rAudioProcessor *" name="processor" desc="Pointer to internal data processor, useful for audio effects" />
-            <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
-            <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
-            <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
-        </Struct>
-        <Struct name="Sound" fieldCount="2" desc="Sound">
-            <Field type="AudioStream" name="stream" desc="Audio stream" />
-            <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
-        </Struct>
-        <Struct name="Music" fieldCount="5" desc="Music, audio stream, anything longer than ~10 seconds should be streamed">
-            <Field type="AudioStream" name="stream" desc="Audio stream" />
-            <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
-            <Field type="bool" name="looping" desc="Music looping enable" />
-            <Field type="int" name="ctxType" desc="Type of music context (audio filetype)" />
-            <Field type="void *" name="ctxData" desc="Audio context data, depends on type" />
-        </Struct>
-        <Struct name="VrDeviceInfo" fieldCount="9" desc="VrDeviceInfo, Head-Mounted-Display device parameters">
-            <Field type="int" name="hResolution" desc="Horizontal resolution in pixels" />
-            <Field type="int" name="vResolution" desc="Vertical resolution in pixels" />
-            <Field type="float" name="hScreenSize" desc="Horizontal size in meters" />
-            <Field type="float" name="vScreenSize" desc="Vertical size in meters" />
-            <Field type="float" name="eyeToScreenDistance" desc="Distance between eye and display in meters" />
-            <Field type="float" name="lensSeparationDistance" desc="Lens separation distance in meters" />
-            <Field type="float" name="interpupillaryDistance" desc="IPD (distance between pupils) in meters" />
-            <Field type="float[4]" name="lensDistortionValues" desc="Lens distortion constant parameters" />
-            <Field type="float[4]" name="chromaAbCorrection" desc="Chromatic aberration correction parameters" />
-        </Struct>
-        <Struct name="VrStereoConfig" fieldCount="8" desc="VrStereoConfig, VR stereo rendering configuration for simulator">
-            <Field type="Matrix[2]" name="projection" desc="VR projection matrices (per eye)" />
-            <Field type="Matrix[2]" name="viewOffset" desc="VR view offset matrices (per eye)" />
-            <Field type="float[2]" name="leftLensCenter" desc="VR left lens center" />
-            <Field type="float[2]" name="rightLensCenter" desc="VR right lens center" />
-            <Field type="float[2]" name="leftScreenCenter" desc="VR left screen center" />
-            <Field type="float[2]" name="rightScreenCenter" desc="VR right screen center" />
-            <Field type="float[2]" name="scale" desc="VR distortion scale" />
-            <Field type="float[2]" name="scaleIn" desc="VR distortion scale in" />
-        </Struct>
-        <Struct name="FilePathList" fieldCount="3" desc="File path list">
-            <Field type="unsigned int" name="capacity" desc="Filepaths max entries" />
-            <Field type="unsigned int" name="count" desc="Filepaths entries count" />
-            <Field type="char **" name="paths" desc="Filepaths entries" />
-        </Struct>
-        <Struct name="AutomationEvent" fieldCount="3" desc="Automation event">
-            <Field type="unsigned int" name="frame" desc="Event frame" />
-            <Field type="unsigned int" name="type" desc="Event type (AutomationEventType)" />
-            <Field type="int[4]" name="params" desc="Event parameters (if required)" />
-        </Struct>
-        <Struct name="AutomationEventList" fieldCount="3" desc="Automation event list">
-            <Field type="unsigned int" name="capacity" desc="Events max entries (MAX_AUTOMATION_EVENTS)" />
-            <Field type="unsigned int" name="count" desc="Events entries count" />
-            <Field type="AutomationEvent *" name="events" desc="Events entries" />
-        </Struct>
+    <Structs count="0">
     </Structs>
     <Aliases count="5">
         <Alias type="Quaternion" name="Vector4" desc="Quaternion, 4 components (Vector4 alias)" />
@@ -301,347 +68,7 @@
         <Alias type="RenderTexture2D" name="RenderTexture" desc="RenderTexture2D, same as RenderTexture" />
         <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
     </Aliases>
-    <Enums count="21">
-        <Enum name="ConfigFlags" valueCount="16" desc="System/Window config flags">
-            <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
-            <Value name="FLAG_FULLSCREEN_MODE" integer="2" desc="Set to run program in fullscreen" />
-            <Value name="FLAG_WINDOW_RESIZABLE" integer="4" desc="Set to allow resizable window" />
-            <Value name="FLAG_WINDOW_UNDECORATED" integer="8" desc="Set to disable window decoration (frame and buttons)" />
-            <Value name="FLAG_WINDOW_HIDDEN" integer="128" desc="Set to hide window" />
-            <Value name="FLAG_WINDOW_MINIMIZED" integer="512" desc="Set to minimize window (iconify)" />
-            <Value name="FLAG_WINDOW_MAXIMIZED" integer="1024" desc="Set to maximize window (expanded to monitor)" />
-            <Value name="FLAG_WINDOW_UNFOCUSED" integer="2048" desc="Set to window non focused" />
-            <Value name="FLAG_WINDOW_TOPMOST" integer="4096" desc="Set to window always on top" />
-            <Value name="FLAG_WINDOW_ALWAYS_RUN" integer="256" desc="Set to allow windows running while minimized" />
-            <Value name="FLAG_WINDOW_TRANSPARENT" integer="16" desc="Set to allow transparent framebuffer" />
-            <Value name="FLAG_WINDOW_HIGHDPI" integer="8192" desc="Set to support HighDPI" />
-            <Value name="FLAG_WINDOW_MOUSE_PASSTHROUGH" integer="16384" desc="Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED" />
-            <Value name="FLAG_BORDERLESS_WINDOWED_MODE" integer="32768" desc="Set to run program in borderless windowed mode" />
-            <Value name="FLAG_MSAA_4X_HINT" integer="32" desc="Set to try enabling MSAA 4X" />
-            <Value name="FLAG_INTERLACED_HINT" integer="65536" desc="Set to try enabling interlaced video format (for V3D)" />
-        </Enum>
-        <Enum name="TraceLogLevel" valueCount="8" desc="Trace log level">
-            <Value name="LOG_ALL" integer="0" desc="Display all logs" />
-            <Value name="LOG_TRACE" integer="1" desc="Trace logging, intended for internal use only" />
-            <Value name="LOG_DEBUG" integer="2" desc="Debug logging, used for internal debugging, it should be disabled on release builds" />
-            <Value name="LOG_INFO" integer="3" desc="Info logging, used for program execution info" />
-            <Value name="LOG_WARNING" integer="4" desc="Warning logging, used on recoverable failures" />
-            <Value name="LOG_ERROR" integer="5" desc="Error logging, used on unrecoverable failures" />
-            <Value name="LOG_FATAL" integer="6" desc="Fatal logging, used to abort program: exit(EXIT_FAILURE)" />
-            <Value name="LOG_NONE" integer="7" desc="Disable logging" />
-        </Enum>
-        <Enum name="KeyboardKey" valueCount="110" desc="Keyboard keys (US keyboard layout)">
-            <Value name="KEY_NULL" integer="0" desc="Key: NULL, used for no key pressed" />
-            <Value name="KEY_APOSTROPHE" integer="39" desc="Key: '" />
-            <Value name="KEY_COMMA" integer="44" desc="Key: ," />
-            <Value name="KEY_MINUS" integer="45" desc="Key: -" />
-            <Value name="KEY_PERIOD" integer="46" desc="Key: ." />
-            <Value name="KEY_SLASH" integer="47" desc="Key: /" />
-            <Value name="KEY_ZERO" integer="48" desc="Key: 0" />
-            <Value name="KEY_ONE" integer="49" desc="Key: 1" />
-            <Value name="KEY_TWO" integer="50" desc="Key: 2" />
-            <Value name="KEY_THREE" integer="51" desc="Key: 3" />
-            <Value name="KEY_FOUR" integer="52" desc="Key: 4" />
-            <Value name="KEY_FIVE" integer="53" desc="Key: 5" />
-            <Value name="KEY_SIX" integer="54" desc="Key: 6" />
-            <Value name="KEY_SEVEN" integer="55" desc="Key: 7" />
-            <Value name="KEY_EIGHT" integer="56" desc="Key: 8" />
-            <Value name="KEY_NINE" integer="57" desc="Key: 9" />
-            <Value name="KEY_SEMICOLON" integer="59" desc="Key: ;" />
-            <Value name="KEY_EQUAL" integer="61" desc="Key: =" />
-            <Value name="KEY_A" integer="65" desc="Key: A | a" />
-            <Value name="KEY_B" integer="66" desc="Key: B | b" />
-            <Value name="KEY_C" integer="67" desc="Key: C | c" />
-            <Value name="KEY_D" integer="68" desc="Key: D | d" />
-            <Value name="KEY_E" integer="69" desc="Key: E | e" />
-            <Value name="KEY_F" integer="70" desc="Key: F | f" />
-            <Value name="KEY_G" integer="71" desc="Key: G | g" />
-            <Value name="KEY_H" integer="72" desc="Key: H | h" />
-            <Value name="KEY_I" integer="73" desc="Key: I | i" />
-            <Value name="KEY_J" integer="74" desc="Key: J | j" />
-            <Value name="KEY_K" integer="75" desc="Key: K | k" />
-            <Value name="KEY_L" integer="76" desc="Key: L | l" />
-            <Value name="KEY_M" integer="77" desc="Key: M | m" />
-            <Value name="KEY_N" integer="78" desc="Key: N | n" />
-            <Value name="KEY_O" integer="79" desc="Key: O | o" />
-            <Value name="KEY_P" integer="80" desc="Key: P | p" />
-            <Value name="KEY_Q" integer="81" desc="Key: Q | q" />
-            <Value name="KEY_R" integer="82" desc="Key: R | r" />
-            <Value name="KEY_S" integer="83" desc="Key: S | s" />
-            <Value name="KEY_T" integer="84" desc="Key: T | t" />
-            <Value name="KEY_U" integer="85" desc="Key: U | u" />
-            <Value name="KEY_V" integer="86" desc="Key: V | v" />
-            <Value name="KEY_W" integer="87" desc="Key: W | w" />
-            <Value name="KEY_X" integer="88" desc="Key: X | x" />
-            <Value name="KEY_Y" integer="89" desc="Key: Y | y" />
-            <Value name="KEY_Z" integer="90" desc="Key: Z | z" />
-            <Value name="KEY_LEFT_BRACKET" integer="91" desc="Key: [" />
-            <Value name="KEY_BACKSLASH" integer="92" desc="Key: '\'" />
-            <Value name="KEY_RIGHT_BRACKET" integer="93" desc="Key: ]" />
-            <Value name="KEY_GRAVE" integer="96" desc="Key: `" />
-            <Value name="KEY_SPACE" integer="32" desc="Key: Space" />
-            <Value name="KEY_ESCAPE" integer="256" desc="Key: Esc" />
-            <Value name="KEY_ENTER" integer="257" desc="Key: Enter" />
-            <Value name="KEY_TAB" integer="258" desc="Key: Tab" />
-            <Value name="KEY_BACKSPACE" integer="259" desc="Key: Backspace" />
-            <Value name="KEY_INSERT" integer="260" desc="Key: Ins" />
-            <Value name="KEY_DELETE" integer="261" desc="Key: Del" />
-            <Value name="KEY_RIGHT" integer="262" desc="Key: Cursor right" />
-            <Value name="KEY_LEFT" integer="263" desc="Key: Cursor left" />
-            <Value name="KEY_DOWN" integer="264" desc="Key: Cursor down" />
-            <Value name="KEY_UP" integer="265" desc="Key: Cursor up" />
-            <Value name="KEY_PAGE_UP" integer="266" desc="Key: Page up" />
-            <Value name="KEY_PAGE_DOWN" integer="267" desc="Key: Page down" />
-            <Value name="KEY_HOME" integer="268" desc="Key: Home" />
-            <Value name="KEY_END" integer="269" desc="Key: End" />
-            <Value name="KEY_CAPS_LOCK" integer="280" desc="Key: Caps lock" />
-            <Value name="KEY_SCROLL_LOCK" integer="281" desc="Key: Scroll down" />
-            <Value name="KEY_NUM_LOCK" integer="282" desc="Key: Num lock" />
-            <Value name="KEY_PRINT_SCREEN" integer="283" desc="Key: Print screen" />
-            <Value name="KEY_PAUSE" integer="284" desc="Key: Pause" />
-            <Value name="KEY_F1" integer="290" desc="Key: F1" />
-            <Value name="KEY_F2" integer="291" desc="Key: F2" />
-            <Value name="KEY_F3" integer="292" desc="Key: F3" />
-            <Value name="KEY_F4" integer="293" desc="Key: F4" />
-            <Value name="KEY_F5" integer="294" desc="Key: F5" />
-            <Value name="KEY_F6" integer="295" desc="Key: F6" />
-            <Value name="KEY_F7" integer="296" desc="Key: F7" />
-            <Value name="KEY_F8" integer="297" desc="Key: F8" />
-            <Value name="KEY_F9" integer="298" desc="Key: F9" />
-            <Value name="KEY_F10" integer="299" desc="Key: F10" />
-            <Value name="KEY_F11" integer="300" desc="Key: F11" />
-            <Value name="KEY_F12" integer="301" desc="Key: F12" />
-            <Value name="KEY_LEFT_SHIFT" integer="340" desc="Key: Shift left" />
-            <Value name="KEY_LEFT_CONTROL" integer="341" desc="Key: Control left" />
-            <Value name="KEY_LEFT_ALT" integer="342" desc="Key: Alt left" />
-            <Value name="KEY_LEFT_SUPER" integer="343" desc="Key: Super left" />
-            <Value name="KEY_RIGHT_SHIFT" integer="344" desc="Key: Shift right" />
-            <Value name="KEY_RIGHT_CONTROL" integer="345" desc="Key: Control right" />
-            <Value name="KEY_RIGHT_ALT" integer="346" desc="Key: Alt right" />
-            <Value name="KEY_RIGHT_SUPER" integer="347" desc="Key: Super right" />
-            <Value name="KEY_KB_MENU" integer="348" desc="Key: KB menu" />
-            <Value name="KEY_KP_0" integer="320" desc="Key: Keypad 0" />
-            <Value name="KEY_KP_1" integer="321" desc="Key: Keypad 1" />
-            <Value name="KEY_KP_2" integer="322" desc="Key: Keypad 2" />
-            <Value name="KEY_KP_3" integer="323" desc="Key: Keypad 3" />
-            <Value name="KEY_KP_4" integer="324" desc="Key: Keypad 4" />
-            <Value name="KEY_KP_5" integer="325" desc="Key: Keypad 5" />
-            <Value name="KEY_KP_6" integer="326" desc="Key: Keypad 6" />
-            <Value name="KEY_KP_7" integer="327" desc="Key: Keypad 7" />
-            <Value name="KEY_KP_8" integer="328" desc="Key: Keypad 8" />
-            <Value name="KEY_KP_9" integer="329" desc="Key: Keypad 9" />
-            <Value name="KEY_KP_DECIMAL" integer="330" desc="Key: Keypad ." />
-            <Value name="KEY_KP_DIVIDE" integer="331" desc="Key: Keypad /" />
-            <Value name="KEY_KP_MULTIPLY" integer="332" desc="Key: Keypad *" />
-            <Value name="KEY_KP_SUBTRACT" integer="333" desc="Key: Keypad -" />
-            <Value name="KEY_KP_ADD" integer="334" desc="Key: Keypad +" />
-            <Value name="KEY_KP_ENTER" integer="335" desc="Key: Keypad Enter" />
-            <Value name="KEY_KP_EQUAL" integer="336" desc="Key: Keypad =" />
-            <Value name="KEY_BACK" integer="4" desc="Key: Android back button" />
-            <Value name="KEY_MENU" integer="5" desc="Key: Android menu button" />
-            <Value name="KEY_VOLUME_UP" integer="24" desc="Key: Android volume up button" />
-            <Value name="KEY_VOLUME_DOWN" integer="25" desc="Key: Android volume down button" />
-        </Enum>
-        <Enum name="MouseButton" valueCount="7" desc="Mouse buttons">
-            <Value name="MOUSE_BUTTON_LEFT" integer="0" desc="Mouse button left" />
-            <Value name="MOUSE_BUTTON_RIGHT" integer="1" desc="Mouse button right" />
-            <Value name="MOUSE_BUTTON_MIDDLE" integer="2" desc="Mouse button middle (pressed wheel)" />
-            <Value name="MOUSE_BUTTON_SIDE" integer="3" desc="Mouse button side (advanced mouse device)" />
-            <Value name="MOUSE_BUTTON_EXTRA" integer="4" desc="Mouse button extra (advanced mouse device)" />
-            <Value name="MOUSE_BUTTON_FORWARD" integer="5" desc="Mouse button forward (advanced mouse device)" />
-            <Value name="MOUSE_BUTTON_BACK" integer="6" desc="Mouse button back (advanced mouse device)" />
-        </Enum>
-        <Enum name="MouseCursor" valueCount="11" desc="Mouse cursor">
-            <Value name="MOUSE_CURSOR_DEFAULT" integer="0" desc="Default pointer shape" />
-            <Value name="MOUSE_CURSOR_ARROW" integer="1" desc="Arrow shape" />
-            <Value name="MOUSE_CURSOR_IBEAM" integer="2" desc="Text writing cursor shape" />
-            <Value name="MOUSE_CURSOR_CROSSHAIR" integer="3" desc="Cross shape" />
-            <Value name="MOUSE_CURSOR_POINTING_HAND" integer="4" desc="Pointing hand cursor" />
-            <Value name="MOUSE_CURSOR_RESIZE_EW" integer="5" desc="Horizontal resize/move arrow shape" />
-            <Value name="MOUSE_CURSOR_RESIZE_NS" integer="6" desc="Vertical resize/move arrow shape" />
-            <Value name="MOUSE_CURSOR_RESIZE_NWSE" integer="7" desc="Top-left to bottom-right diagonal resize/move arrow shape" />
-            <Value name="MOUSE_CURSOR_RESIZE_NESW" integer="8" desc="The top-right to bottom-left diagonal resize/move arrow shape" />
-            <Value name="MOUSE_CURSOR_RESIZE_ALL" integer="9" desc="The omnidirectional resize/move cursor shape" />
-            <Value name="MOUSE_CURSOR_NOT_ALLOWED" integer="10" desc="The operation-not-allowed shape" />
-        </Enum>
-        <Enum name="GamepadButton" valueCount="18" desc="Gamepad buttons">
-            <Value name="GAMEPAD_BUTTON_UNKNOWN" integer="0" desc="Unknown button, just for error checking" />
-            <Value name="GAMEPAD_BUTTON_LEFT_FACE_UP" integer="1" desc="Gamepad left DPAD up button" />
-            <Value name="GAMEPAD_BUTTON_LEFT_FACE_RIGHT" integer="2" desc="Gamepad left DPAD right button" />
-            <Value name="GAMEPAD_BUTTON_LEFT_FACE_DOWN" integer="3" desc="Gamepad left DPAD down button" />
-            <Value name="GAMEPAD_BUTTON_LEFT_FACE_LEFT" integer="4" desc="Gamepad left DPAD left button" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_UP" integer="5" desc="Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_RIGHT" integer="6" desc="Gamepad right button right (i.e. PS3: Circle, Xbox: B)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_DOWN" integer="7" desc="Gamepad right button down (i.e. PS3: Cross, Xbox: A)" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_FACE_LEFT" integer="8" desc="Gamepad right button left (i.e. PS3: Square, Xbox: X)" />
-            <Value name="GAMEPAD_BUTTON_LEFT_TRIGGER_1" integer="9" desc="Gamepad top/back trigger left (first), it could be a trailing button" />
-            <Value name="GAMEPAD_BUTTON_LEFT_TRIGGER_2" integer="10" desc="Gamepad top/back trigger left (second), it could be a trailing button" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_TRIGGER_1" integer="11" desc="Gamepad top/back trigger right (first), it could be a trailing button" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_TRIGGER_2" integer="12" desc="Gamepad top/back trigger right (second), it could be a trailing button" />
-            <Value name="GAMEPAD_BUTTON_MIDDLE_LEFT" integer="13" desc="Gamepad center buttons, left one (i.e. PS3: Select)" />
-            <Value name="GAMEPAD_BUTTON_MIDDLE" integer="14" desc="Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)" />
-            <Value name="GAMEPAD_BUTTON_MIDDLE_RIGHT" integer="15" desc="Gamepad center buttons, right one (i.e. PS3: Start)" />
-            <Value name="GAMEPAD_BUTTON_LEFT_THUMB" integer="16" desc="Gamepad joystick pressed button left" />
-            <Value name="GAMEPAD_BUTTON_RIGHT_THUMB" integer="17" desc="Gamepad joystick pressed button right" />
-        </Enum>
-        <Enum name="GamepadAxis" valueCount="6" desc="Gamepad axis">
-            <Value name="GAMEPAD_AXIS_LEFT_X" integer="0" desc="Gamepad left stick X axis" />
-            <Value name="GAMEPAD_AXIS_LEFT_Y" integer="1" desc="Gamepad left stick Y axis" />
-            <Value name="GAMEPAD_AXIS_RIGHT_X" integer="2" desc="Gamepad right stick X axis" />
-            <Value name="GAMEPAD_AXIS_RIGHT_Y" integer="3" desc="Gamepad right stick Y axis" />
-            <Value name="GAMEPAD_AXIS_LEFT_TRIGGER" integer="4" desc="Gamepad back trigger left, pressure level: [1..-1]" />
-            <Value name="GAMEPAD_AXIS_RIGHT_TRIGGER" integer="5" desc="Gamepad back trigger right, pressure level: [1..-1]" />
-        </Enum>
-        <Enum name="MaterialMapIndex" valueCount="11" desc="Material map index">
-            <Value name="MATERIAL_MAP_ALBEDO" integer="0" desc="Albedo material (same as: MATERIAL_MAP_DIFFUSE)" />
-            <Value name="MATERIAL_MAP_METALNESS" integer="1" desc="Metalness material (same as: MATERIAL_MAP_SPECULAR)" />
-            <Value name="MATERIAL_MAP_NORMAL" integer="2" desc="Normal material" />
-            <Value name="MATERIAL_MAP_ROUGHNESS" integer="3" desc="Roughness material" />
-            <Value name="MATERIAL_MAP_OCCLUSION" integer="4" desc="Ambient occlusion material" />
-            <Value name="MATERIAL_MAP_EMISSION" integer="5" desc="Emission material" />
-            <Value name="MATERIAL_MAP_HEIGHT" integer="6" desc="Heightmap material" />
-            <Value name="MATERIAL_MAP_CUBEMAP" integer="7" desc="Cubemap material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
-            <Value name="MATERIAL_MAP_IRRADIANCE" integer="8" desc="Irradiance material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
-            <Value name="MATERIAL_MAP_PREFILTER" integer="9" desc="Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
-            <Value name="MATERIAL_MAP_BRDF" integer="10" desc="Brdf material" />
-        </Enum>
-        <Enum name="ShaderLocationIndex" valueCount="26" desc="Shader location index">
-            <Value name="SHADER_LOC_VERTEX_POSITION" integer="0" desc="Shader location: vertex attribute: position" />
-            <Value name="SHADER_LOC_VERTEX_TEXCOORD01" integer="1" desc="Shader location: vertex attribute: texcoord01" />
-            <Value name="SHADER_LOC_VERTEX_TEXCOORD02" integer="2" desc="Shader location: vertex attribute: texcoord02" />
-            <Value name="SHADER_LOC_VERTEX_NORMAL" integer="3" desc="Shader location: vertex attribute: normal" />
-            <Value name="SHADER_LOC_VERTEX_TANGENT" integer="4" desc="Shader location: vertex attribute: tangent" />
-            <Value name="SHADER_LOC_VERTEX_COLOR" integer="5" desc="Shader location: vertex attribute: color" />
-            <Value name="SHADER_LOC_MATRIX_MVP" integer="6" desc="Shader location: matrix uniform: model-view-projection" />
-            <Value name="SHADER_LOC_MATRIX_VIEW" integer="7" desc="Shader location: matrix uniform: view (camera transform)" />
-            <Value name="SHADER_LOC_MATRIX_PROJECTION" integer="8" desc="Shader location: matrix uniform: projection" />
-            <Value name="SHADER_LOC_MATRIX_MODEL" integer="9" desc="Shader location: matrix uniform: model (transform)" />
-            <Value name="SHADER_LOC_MATRIX_NORMAL" integer="10" desc="Shader location: matrix uniform: normal" />
-            <Value name="SHADER_LOC_VECTOR_VIEW" integer="11" desc="Shader location: vector uniform: view" />
-            <Value name="SHADER_LOC_COLOR_DIFFUSE" integer="12" desc="Shader location: vector uniform: diffuse color" />
-            <Value name="SHADER_LOC_COLOR_SPECULAR" integer="13" desc="Shader location: vector uniform: specular color" />
-            <Value name="SHADER_LOC_COLOR_AMBIENT" integer="14" desc="Shader location: vector uniform: ambient color" />
-            <Value name="SHADER_LOC_MAP_ALBEDO" integer="15" desc="Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)" />
-            <Value name="SHADER_LOC_MAP_METALNESS" integer="16" desc="Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)" />
-            <Value name="SHADER_LOC_MAP_NORMAL" integer="17" desc="Shader location: sampler2d texture: normal" />
-            <Value name="SHADER_LOC_MAP_ROUGHNESS" integer="18" desc="Shader location: sampler2d texture: roughness" />
-            <Value name="SHADER_LOC_MAP_OCCLUSION" integer="19" desc="Shader location: sampler2d texture: occlusion" />
-            <Value name="SHADER_LOC_MAP_EMISSION" integer="20" desc="Shader location: sampler2d texture: emission" />
-            <Value name="SHADER_LOC_MAP_HEIGHT" integer="21" desc="Shader location: sampler2d texture: height" />
-            <Value name="SHADER_LOC_MAP_CUBEMAP" integer="22" desc="Shader location: samplerCube texture: cubemap" />
-            <Value name="SHADER_LOC_MAP_IRRADIANCE" integer="23" desc="Shader location: samplerCube texture: irradiance" />
-            <Value name="SHADER_LOC_MAP_PREFILTER" integer="24" desc="Shader location: samplerCube texture: prefilter" />
-            <Value name="SHADER_LOC_MAP_BRDF" integer="25" desc="Shader location: sampler2d texture: brdf" />
-        </Enum>
-        <Enum name="ShaderUniformDataType" valueCount="9" desc="Shader uniform data type">
-            <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
-            <Value name="SHADER_UNIFORM_VEC2" integer="1" desc="Shader uniform type: vec2 (2 float)" />
-            <Value name="SHADER_UNIFORM_VEC3" integer="2" desc="Shader uniform type: vec3 (3 float)" />
-            <Value name="SHADER_UNIFORM_VEC4" integer="3" desc="Shader uniform type: vec4 (4 float)" />
-            <Value name="SHADER_UNIFORM_INT" integer="4" desc="Shader uniform type: int" />
-            <Value name="SHADER_UNIFORM_IVEC2" integer="5" desc="Shader uniform type: ivec2 (2 int)" />
-            <Value name="SHADER_UNIFORM_IVEC3" integer="6" desc="Shader uniform type: ivec3 (3 int)" />
-            <Value name="SHADER_UNIFORM_IVEC4" integer="7" desc="Shader uniform type: ivec4 (4 int)" />
-            <Value name="SHADER_UNIFORM_SAMPLER2D" integer="8" desc="Shader uniform type: sampler2d" />
-        </Enum>
-        <Enum name="ShaderAttributeDataType" valueCount="4" desc="Shader attribute data types">
-            <Value name="SHADER_ATTRIB_FLOAT" integer="0" desc="Shader attribute type: float" />
-            <Value name="SHADER_ATTRIB_VEC2" integer="1" desc="Shader attribute type: vec2 (2 float)" />
-            <Value name="SHADER_ATTRIB_VEC3" integer="2" desc="Shader attribute type: vec3 (3 float)" />
-            <Value name="SHADER_ATTRIB_VEC4" integer="3" desc="Shader attribute type: vec4 (4 float)" />
-        </Enum>
-        <Enum name="PixelFormat" valueCount="24" desc="Pixel formats">
-            <Value name="PIXELFORMAT_UNCOMPRESSED_GRAYSCALE" integer="1" desc="8 bit per pixel (no alpha)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA" integer="2" desc="8*2 bpp (2 channels)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R5G6B5" integer="3" desc="16 bpp" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R8G8B8" integer="4" desc="24 bpp" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R5G5B5A1" integer="5" desc="16 bpp (1 bit alpha)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R4G4B4A4" integer="6" desc="16 bpp (4 bit alpha)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R8G8B8A8" integer="7" desc="32 bpp" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R32" integer="8" desc="32 bpp (1 channel - float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32" integer="9" desc="32*3 bpp (3 channels - float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32A32" integer="10" desc="32*4 bpp (4 channels - float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R16" integer="11" desc="16 bpp (1 channel - half float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16" integer="12" desc="16*3 bpp (3 channels - half float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16A16" integer="13" desc="16*4 bpp (4 channels - half float)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGB" integer="14" desc="4 bpp (no alpha)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGBA" integer="15" desc="4 bpp (1 bit alpha)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT3_RGBA" integer="16" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT5_RGBA" integer="17" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC1_RGB" integer="18" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC2_RGB" integer="19" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA" integer="20" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGB" integer="21" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGBA" integer="22" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA" integer="23" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="24" desc="2 bpp" />
-        </Enum>
-        <Enum name="TextureFilter" valueCount="6" desc="Texture parameters: filter mode">
-            <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, just pixel approximation" />
-            <Value name="TEXTURE_FILTER_BILINEAR" integer="1" desc="Linear filtering" />
-            <Value name="TEXTURE_FILTER_TRILINEAR" integer="2" desc="Trilinear filtering (linear with mipmaps)" />
-            <Value name="TEXTURE_FILTER_ANISOTROPIC_4X" integer="3" desc="Anisotropic filtering 4x" />
-            <Value name="TEXTURE_FILTER_ANISOTROPIC_8X" integer="4" desc="Anisotropic filtering 8x" />
-            <Value name="TEXTURE_FILTER_ANISOTROPIC_16X" integer="5" desc="Anisotropic filtering 16x" />
-        </Enum>
-        <Enum name="TextureWrap" valueCount="4" desc="Texture parameters: wrap mode">
-            <Value name="TEXTURE_WRAP_REPEAT" integer="0" desc="Repeats texture in tiled mode" />
-            <Value name="TEXTURE_WRAP_CLAMP" integer="1" desc="Clamps texture to edge pixel in tiled mode" />
-            <Value name="TEXTURE_WRAP_MIRROR_REPEAT" integer="2" desc="Mirrors and repeats the texture in tiled mode" />
-            <Value name="TEXTURE_WRAP_MIRROR_CLAMP" integer="3" desc="Mirrors and clamps to border the texture in tiled mode" />
-        </Enum>
-        <Enum name="CubemapLayout" valueCount="6" desc="Cubemap layouts">
-            <Value name="CUBEMAP_LAYOUT_AUTO_DETECT" integer="0" desc="Automatically detect layout type" />
-            <Value name="CUBEMAP_LAYOUT_LINE_VERTICAL" integer="1" desc="Layout is defined by a vertical line with faces" />
-            <Value name="CUBEMAP_LAYOUT_LINE_HORIZONTAL" integer="2" desc="Layout is defined by a horizontal line with faces" />
-            <Value name="CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR" integer="3" desc="Layout is defined by a 3x4 cross with cubemap faces" />
-            <Value name="CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE" integer="4" desc="Layout is defined by a 4x3 cross with cubemap faces" />
-            <Value name="CUBEMAP_LAYOUT_PANORAMA" integer="5" desc="Layout is defined by a panorama image (equirrectangular map)" />
-        </Enum>
-        <Enum name="FontType" valueCount="3" desc="Font type, defines generation method">
-            <Value name="FONT_DEFAULT" integer="0" desc="Default font generation, anti-aliased" />
-            <Value name="FONT_BITMAP" integer="1" desc="Bitmap font generation, no anti-aliasing" />
-            <Value name="FONT_SDF" integer="2" desc="SDF font generation, requires external shader" />
-        </Enum>
-        <Enum name="BlendMode" valueCount="8" desc="Color blending modes (pre-defined)">
-            <Value name="BLEND_ALPHA" integer="0" desc="Blend textures considering alpha (default)" />
-            <Value name="BLEND_ADDITIVE" integer="1" desc="Blend textures adding colors" />
-            <Value name="BLEND_MULTIPLIED" integer="2" desc="Blend textures multiplying colors" />
-            <Value name="BLEND_ADD_COLORS" integer="3" desc="Blend textures adding colors (alternative)" />
-            <Value name="BLEND_SUBTRACT_COLORS" integer="4" desc="Blend textures subtracting colors (alternative)" />
-            <Value name="BLEND_ALPHA_PREMULTIPLY" integer="5" desc="Blend premultiplied textures considering alpha" />
-            <Value name="BLEND_CUSTOM" integer="6" desc="Blend textures using custom src/dst factors (use rlSetBlendFactors())" />
-            <Value name="BLEND_CUSTOM_SEPARATE" integer="7" desc="Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())" />
-        </Enum>
-        <Enum name="Gesture" valueCount="11" desc="Gesture">
-            <Value name="GESTURE_NONE" integer="0" desc="No gesture" />
-            <Value name="GESTURE_TAP" integer="1" desc="Tap gesture" />
-            <Value name="GESTURE_DOUBLETAP" integer="2" desc="Double tap gesture" />
-            <Value name="GESTURE_HOLD" integer="4" desc="Hold gesture" />
-            <Value name="GESTURE_DRAG" integer="8" desc="Drag gesture" />
-            <Value name="GESTURE_SWIPE_RIGHT" integer="16" desc="Swipe right gesture" />
-            <Value name="GESTURE_SWIPE_LEFT" integer="32" desc="Swipe left gesture" />
-            <Value name="GESTURE_SWIPE_UP" integer="64" desc="Swipe up gesture" />
-            <Value name="GESTURE_SWIPE_DOWN" integer="128" desc="Swipe down gesture" />
-            <Value name="GESTURE_PINCH_IN" integer="256" desc="Pinch in gesture" />
-            <Value name="GESTURE_PINCH_OUT" integer="512" desc="Pinch out gesture" />
-        </Enum>
-        <Enum name="CameraMode" valueCount="5" desc="Camera system modes">
-            <Value name="CAMERA_CUSTOM" integer="0" desc="Camera custom, controlled by user (UpdateCamera() does nothing)" />
-            <Value name="CAMERA_FREE" integer="1" desc="Camera free mode" />
-            <Value name="CAMERA_ORBITAL" integer="2" desc="Camera orbital, around target, zoom supported" />
-            <Value name="CAMERA_FIRST_PERSON" integer="3" desc="Camera first person" />
-            <Value name="CAMERA_THIRD_PERSON" integer="4" desc="Camera third person" />
-        </Enum>
-        <Enum name="CameraProjection" valueCount="2" desc="Camera projection">
-            <Value name="CAMERA_PERSPECTIVE" integer="0" desc="Perspective projection" />
-            <Value name="CAMERA_ORTHOGRAPHIC" integer="1" desc="Orthographic projection" />
-        </Enum>
-        <Enum name="NPatchLayout" valueCount="3" desc="N-patch layout">
-            <Value name="NPATCH_NINE_PATCH" integer="0" desc="Npatch layout: 3x3 tiles" />
-            <Value name="NPATCH_THREE_PATCH_VERTICAL" integer="1" desc="Npatch layout: 1x3 tiles" />
-            <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="Npatch layout: 3x1 tiles" />
-        </Enum>
+    <Enums count="0">
     </Enums>
     <Callbacks count="6">
         <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
@@ -670,7 +97,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="565">
+    <Functions count="566">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1844,7 +1271,7 @@
         </Function>
         <Function name="ImageKernelConvolution" retType="void" paramCount="3" desc="Apply Custom Square image convolution kernel">
             <Param type="Image *" name="image" desc="" />
-            <Param type="float*" name="kernel" desc="" />
+            <Param type="float *" name="kernel" desc="" />
             <Param type="int" name="kernelSize" desc="" />
         </Function>
         <Function name="ImageResize" retType="void" paramCount="3" desc="Resize image (Bicubic scaling algorithm)">
@@ -2406,6 +1833,9 @@
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="TextToSnake" retType="const char *" paramCount="1" desc="Get Snake case notation version of provided string">
+            <Param type="const char *" name="text" desc="" />
+        </Function>
+        <Function name="TextToCamel" retType="const char *" paramCount="1" desc="Get Camel case notation version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text (negative values not supported)">

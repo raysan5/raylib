@@ -44,27 +44,27 @@ Define 008: PI
 Define 009: DEG2RAD
   Name: DEG2RAD
   Type: FLOAT_MATH
-  Value: (PI/180.0f)
+  Value: (PI / 180.0f)
   Description: 
 Define 010: RAD2DEG
   Name: RAD2DEG
   Type: FLOAT_MATH
-  Value: (180.0f/PI)
+  Value: (180.0f / PI)
   Description: 
 Define 011: RL_MALLOC(sz)
   Name: RL_MALLOC(sz)
   Type: MACRO
   Value: malloc(sz)
   Description: 
-Define 012: RL_CALLOC(n,sz)
-  Name: RL_CALLOC(n,sz)
+Define 012: RL_CALLOC(n, sz)
+  Name: RL_CALLOC(n, sz)
   Type: MACRO
-  Value: calloc(n,sz)
+  Value: calloc(n, sz)
   Description: 
-Define 013: RL_REALLOC(ptr,sz)
-  Name: RL_REALLOC(ptr,sz)
+Define 013: RL_REALLOC(ptr, sz)
+  Name: RL_REALLOC(ptr, sz)
   Type: MACRO
-  Value: realloc(ptr,sz)
+  Value: realloc(ptr, sz)
   Description: 
 Define 014: RL_FREE(ptr)
   Name: RL_FREE(ptr)
@@ -113,134 +113,134 @@ Define 022: RL_MATRIX_TYPE
   Description: 
 Define 023: LIGHTGRAY
   Name: LIGHTGRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 200, 200, 200, 255 }
-  Description: Light Gray
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 024: GRAY
   Name: GRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 130, 130, 130, 255 }
-  Description: Gray
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 025: DARKGRAY
   Name: DARKGRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 80, 80, 80, 255 }
-  Description: Dark Gray
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 026: YELLOW
   Name: YELLOW
-  Type: COLOR
-  Value: CLITERAL(Color){ 253, 249, 0, 255 }
-  Description: Yellow
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 027: GOLD
   Name: GOLD
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 203, 0, 255 }
-  Description: Gold
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 028: ORANGE
   Name: ORANGE
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 161, 0, 255 }
-  Description: Orange
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 029: PINK
   Name: PINK
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 109, 194, 255 }
-  Description: Pink
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 030: RED
   Name: RED
-  Type: COLOR
-  Value: CLITERAL(Color){ 230, 41, 55, 255 }
-  Description: Red
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 031: MAROON
   Name: MAROON
-  Type: COLOR
-  Value: CLITERAL(Color){ 190, 33, 55, 255 }
-  Description: Maroon
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 032: GREEN
   Name: GREEN
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 228, 48, 255 }
-  Description: Green
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 033: LIME
   Name: LIME
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 158, 47, 255 }
-  Description: Lime
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 034: DARKGREEN
   Name: DARKGREEN
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 117, 44, 255 }
-  Description: Dark Green
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 035: SKYBLUE
   Name: SKYBLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 102, 191, 255, 255 }
-  Description: Sky Blue
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 036: BLUE
   Name: BLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 121, 241, 255 }
-  Description: Blue
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 037: DARKBLUE
   Name: DARKBLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 82, 172, 255 }
-  Description: Dark Blue
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 038: PURPLE
   Name: PURPLE
-  Type: COLOR
-  Value: CLITERAL(Color){ 200, 122, 255, 255 }
-  Description: Purple
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 039: VIOLET
   Name: VIOLET
-  Type: COLOR
-  Value: CLITERAL(Color){ 135, 60, 190, 255 }
-  Description: Violet
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 040: DARKPURPLE
   Name: DARKPURPLE
-  Type: COLOR
-  Value: CLITERAL(Color){ 112, 31, 126, 255 }
-  Description: Dark Purple
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 041: BEIGE
   Name: BEIGE
-  Type: COLOR
-  Value: CLITERAL(Color){ 211, 176, 131, 255 }
-  Description: Beige
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 042: BROWN
   Name: BROWN
-  Type: COLOR
-  Value: CLITERAL(Color){ 127, 106, 79, 255 }
-  Description: Brown
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 043: DARKBROWN
   Name: DARKBROWN
-  Type: COLOR
-  Value: CLITERAL(Color){ 76, 63, 47, 255 }
-  Description: Dark Brown
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 044: WHITE
   Name: WHITE
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 255, 255, 255 }
-  Description: White
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 045: BLACK
   Name: BLACK
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 0, 0, 255 }
-  Description: Black
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 046: BLANK
   Name: BLANK
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 0, 0, 0 }
-  Description: Blank (Transparent)
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 047: MAGENTA
   Name: MAGENTA
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 0, 255, 255 }
-  Description: Magenta
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 048: RAYWHITE
   Name: RAYWHITE
-  Type: COLOR
-  Value: CLITERAL(Color){ 245, 245, 245, 255 }
-  Description: My own White (raylib logo)
+  Type: UNKNOWN
+  Value: 
+  Description: 
 Define 049: RL_BOOL_TYPE
   Name: RL_BOOL_TYPE
   Type: GUARD
@@ -287,275 +287,8 @@ Define 057: GetMouseRay
   Value: GetScreenToWorldRay
   Description: Compatibility hack for previous raylib versions
 
-Structures found: 34
+Structures found: 0
 
-Struct 01: Vector2 (2 fields)
-  Name: Vector2
-  Description: Vector2, 2 components
-  Field[1]: float x // Vector x component
-  Field[2]: float y // Vector y component
-Struct 02: Vector3 (3 fields)
-  Name: Vector3
-  Description: Vector3, 3 components
-  Field[1]: float x // Vector x component
-  Field[2]: float y // Vector y component
-  Field[3]: float z // Vector z component
-Struct 03: Vector4 (4 fields)
-  Name: Vector4
-  Description: Vector4, 4 components
-  Field[1]: float x // Vector x component
-  Field[2]: float y // Vector y component
-  Field[3]: float z // Vector z component
-  Field[4]: float w // Vector w component
-Struct 04: Matrix (16 fields)
-  Name: Matrix
-  Description: Matrix, 4x4 components, column major, OpenGL style, right-handed
-  Field[1]: float m0 // Matrix first row (4 components)
-  Field[2]: float m4 // Matrix first row (4 components)
-  Field[3]: float m8 // Matrix first row (4 components)
-  Field[4]: float m12 // Matrix first row (4 components)
-  Field[5]: float m1 // Matrix second row (4 components)
-  Field[6]: float m5 // Matrix second row (4 components)
-  Field[7]: float m9 // Matrix second row (4 components)
-  Field[8]: float m13 // Matrix second row (4 components)
-  Field[9]: float m2 // Matrix third row (4 components)
-  Field[10]: float m6 // Matrix third row (4 components)
-  Field[11]: float m10 // Matrix third row (4 components)
-  Field[12]: float m14 // Matrix third row (4 components)
-  Field[13]: float m3 // Matrix fourth row (4 components)
-  Field[14]: float m7 // Matrix fourth row (4 components)
-  Field[15]: float m11 // Matrix fourth row (4 components)
-  Field[16]: float m15 // Matrix fourth row (4 components)
-Struct 05: Color (4 fields)
-  Name: Color
-  Description: Color, 4 components, R8G8B8A8 (32bit)
-  Field[1]: unsigned char r // Color red value
-  Field[2]: unsigned char g // Color green value
-  Field[3]: unsigned char b // Color blue value
-  Field[4]: unsigned char a // Color alpha value
-Struct 06: Rectangle (4 fields)
-  Name: Rectangle
-  Description: Rectangle, 4 components
-  Field[1]: float x // Rectangle top-left corner position x
-  Field[2]: float y // Rectangle top-left corner position y
-  Field[3]: float width // Rectangle width
-  Field[4]: float height // Rectangle height
-Struct 07: Image (5 fields)
-  Name: Image
-  Description: Image, pixel data stored in CPU memory (RAM)
-  Field[1]: void * data // Image raw data
-  Field[2]: int width // Image base width
-  Field[3]: int height // Image base height
-  Field[4]: int mipmaps // Mipmap levels, 1 by default
-  Field[5]: int format // Data format (PixelFormat type)
-Struct 08: Texture (5 fields)
-  Name: Texture
-  Description: Texture, tex data stored in GPU memory (VRAM)
-  Field[1]: unsigned int id // OpenGL texture id
-  Field[2]: int width // Texture base width
-  Field[3]: int height // Texture base height
-  Field[4]: int mipmaps // Mipmap levels, 1 by default
-  Field[5]: int format // Data format (PixelFormat type)
-Struct 09: RenderTexture (3 fields)
-  Name: RenderTexture
-  Description: RenderTexture, fbo for texture rendering
-  Field[1]: unsigned int id // OpenGL framebuffer object id
-  Field[2]: Texture texture // Color buffer attachment texture
-  Field[3]: Texture depth // Depth buffer attachment texture
-Struct 10: NPatchInfo (6 fields)
-  Name: NPatchInfo
-  Description: NPatchInfo, n-patch layout info
-  Field[1]: Rectangle source // Texture source rectangle
-  Field[2]: int left // Left border offset
-  Field[3]: int top // Top border offset
-  Field[4]: int right // Right border offset
-  Field[5]: int bottom // Bottom border offset
-  Field[6]: int layout // Layout of the n-patch: 3x3, 1x3 or 3x1
-Struct 11: GlyphInfo (5 fields)
-  Name: GlyphInfo
-  Description: GlyphInfo, font characters glyphs info
-  Field[1]: int value // Character value (Unicode)
-  Field[2]: int offsetX // Character offset X when drawing
-  Field[3]: int offsetY // Character offset Y when drawing
-  Field[4]: int advanceX // Character advance position X
-  Field[5]: Image image // Character image data
-Struct 12: Font (6 fields)
-  Name: Font
-  Description: Font, font texture and GlyphInfo array data
-  Field[1]: int baseSize // Base size (default chars height)
-  Field[2]: int glyphCount // Number of glyph characters
-  Field[3]: int glyphPadding // Padding around the glyph characters
-  Field[4]: Texture2D texture // Texture atlas containing the glyphs
-  Field[5]: Rectangle * recs // Rectangles in texture for the glyphs
-  Field[6]: GlyphInfo * glyphs // Glyphs info data
-Struct 13: Camera3D (5 fields)
-  Name: Camera3D
-  Description: Camera, defines position/orientation in 3d space
-  Field[1]: Vector3 position // Camera position
-  Field[2]: Vector3 target // Camera target it looks-at
-  Field[3]: Vector3 up // Camera up vector (rotation over its axis)
-  Field[4]: float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
-  Field[5]: int projection // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
-Struct 14: Camera2D (4 fields)
-  Name: Camera2D
-  Description: Camera2D, defines position/orientation in 2d space
-  Field[1]: Vector2 offset // Camera offset (displacement from target)
-  Field[2]: Vector2 target // Camera target (rotation and zoom origin)
-  Field[3]: float rotation // Camera rotation in degrees
-  Field[4]: float zoom // Camera zoom (scaling), should be 1.0f by default
-Struct 15: Mesh (15 fields)
-  Name: Mesh
-  Description: Mesh, vertex data and vao/vbo
-  Field[1]: int vertexCount // Number of vertices stored in arrays
-  Field[2]: int triangleCount // Number of triangles stored (indexed or not)
-  Field[3]: float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-  Field[4]: float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-  Field[5]: float * texcoords2 // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
-  Field[6]: float * normals // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-  Field[7]: float * tangents // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
-  Field[8]: unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-  Field[9]: unsigned short * indices // Vertex indices (in case vertex data comes indexed)
-  Field[10]: float * animVertices // Animated vertex positions (after bones transformations)
-  Field[11]: float * animNormals // Animated normals (after bones transformations)
-  Field[12]: unsigned char * boneIds // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)
-  Field[13]: float * boneWeights // Vertex bone weight, up to 4 bones influence by vertex (skinning)
-  Field[14]: unsigned int vaoId // OpenGL Vertex Array Object id
-  Field[15]: unsigned int * vboId // OpenGL Vertex Buffer Objects id (default vertex data)
-Struct 16: Shader (2 fields)
-  Name: Shader
-  Description: Shader
-  Field[1]: unsigned int id // Shader program id
-  Field[2]: int * locs // Shader locations array (RL_MAX_SHADER_LOCATIONS)
-Struct 17: MaterialMap (3 fields)
-  Name: MaterialMap
-  Description: MaterialMap
-  Field[1]: Texture2D texture // Material map texture
-  Field[2]: Color color // Material map color
-  Field[3]: float value // Material map value
-Struct 18: Material (3 fields)
-  Name: Material
-  Description: Material, includes shader and maps
-  Field[1]: Shader shader // Material shader
-  Field[2]: MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
-  Field[3]: float[4] params // Material generic parameters (if required)
-Struct 19: Transform (3 fields)
-  Name: Transform
-  Description: Transform, vertex transformation data
-  Field[1]: Vector3 translation // Translation
-  Field[2]: Quaternion rotation // Rotation
-  Field[3]: Vector3 scale // Scale
-Struct 20: BoneInfo (2 fields)
-  Name: BoneInfo
-  Description: Bone, skeletal animation bone
-  Field[1]: char[32] name // Bone name
-  Field[2]: int parent // Bone parent
-Struct 21: Model (9 fields)
-  Name: Model
-  Description: Model, meshes, materials and animation data
-  Field[1]: Matrix transform // Local transform matrix
-  Field[2]: int meshCount // Number of meshes
-  Field[3]: int materialCount // Number of materials
-  Field[4]: Mesh * meshes // Meshes array
-  Field[5]: Material * materials // Materials array
-  Field[6]: int * meshMaterial // Mesh material number
-  Field[7]: int boneCount // Number of bones
-  Field[8]: BoneInfo * bones // Bones information (skeleton)
-  Field[9]: Transform * bindPose // Bones base transformation (pose)
-Struct 22: ModelAnimation (5 fields)
-  Name: ModelAnimation
-  Description: ModelAnimation
-  Field[1]: int boneCount // Number of bones
-  Field[2]: int frameCount // Number of animation frames
-  Field[3]: BoneInfo * bones // Bones information (skeleton)
-  Field[4]: Transform ** framePoses // Poses array by frame
-  Field[5]: char[32] name // Animation name
-Struct 23: Ray (2 fields)
-  Name: Ray
-  Description: Ray, ray for raycasting
-  Field[1]: Vector3 position // Ray position (origin)
-  Field[2]: Vector3 direction // Ray direction
-Struct 24: RayCollision (4 fields)
-  Name: RayCollision
-  Description: RayCollision, ray hit information
-  Field[1]: bool hit // Did the ray hit something?
-  Field[2]: float distance // Distance to the nearest hit
-  Field[3]: Vector3 point // Point of the nearest hit
-  Field[4]: Vector3 normal // Surface normal of hit
-Struct 25: BoundingBox (2 fields)
-  Name: BoundingBox
-  Description: BoundingBox
-  Field[1]: Vector3 min // Minimum vertex box-corner
-  Field[2]: Vector3 max // Maximum vertex box-corner
-Struct 26: Wave (5 fields)
-  Name: Wave
-  Description: Wave, audio wave data
-  Field[1]: unsigned int frameCount // Total number of frames (considering channels)
-  Field[2]: unsigned int sampleRate // Frequency (samples per second)
-  Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-  Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
-  Field[5]: void * data // Buffer data pointer
-Struct 27: AudioStream (5 fields)
-  Name: AudioStream
-  Description: AudioStream, custom audio stream
-  Field[1]: rAudioBuffer * buffer // Pointer to internal data used by the audio system
-  Field[2]: rAudioProcessor * processor // Pointer to internal data processor, useful for audio effects
-  Field[3]: unsigned int sampleRate // Frequency (samples per second)
-  Field[4]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-  Field[5]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
-Struct 28: Sound (2 fields)
-  Name: Sound
-  Description: Sound
-  Field[1]: AudioStream stream // Audio stream
-  Field[2]: unsigned int frameCount // Total number of frames (considering channels)
-Struct 29: Music (5 fields)
-  Name: Music
-  Description: Music, audio stream, anything longer than ~10 seconds should be streamed
-  Field[1]: AudioStream stream // Audio stream
-  Field[2]: unsigned int frameCount // Total number of frames (considering channels)
-  Field[3]: bool looping // Music looping enable
-  Field[4]: int ctxType // Type of music context (audio filetype)
-  Field[5]: void * ctxData // Audio context data, depends on type
-Struct 30: VrDeviceInfo (9 fields)
-  Name: VrDeviceInfo
-  Description: VrDeviceInfo, Head-Mounted-Display device parameters
-  Field[1]: int hResolution // Horizontal resolution in pixels
-  Field[2]: int vResolution // Vertical resolution in pixels
-  Field[3]: float hScreenSize // Horizontal size in meters
-  Field[4]: float vScreenSize // Vertical size in meters
-  Field[5]: float eyeToScreenDistance // Distance between eye and display in meters
-  Field[6]: float lensSeparationDistance // Lens separation distance in meters
-  Field[7]: float interpupillaryDistance // IPD (distance between pupils) in meters
-  Field[8]: float[4] lensDistortionValues // Lens distortion constant parameters
-  Field[9]: float[4] chromaAbCorrection // Chromatic aberration correction parameters
-Struct 31: VrStereoConfig (8 fields)
-  Name: VrStereoConfig
-  Description: VrStereoConfig, VR stereo rendering configuration for simulator
-  Field[1]: Matrix[2] projection // VR projection matrices (per eye)
-  Field[2]: Matrix[2] viewOffset // VR view offset matrices (per eye)
-  Field[3]: float[2] leftLensCenter // VR left lens center
-  Field[4]: float[2] rightLensCenter // VR right lens center
-  Field[5]: float[2] leftScreenCenter // VR left screen center
-  Field[6]: float[2] rightScreenCenter // VR right screen center
-  Field[7]: float[2] scale // VR distortion scale
-  Field[8]: float[2] scaleIn // VR distortion scale in
-Struct 32: FilePathList (3 fields)
-  Name: FilePathList
-  Description: File path list
-  Field[1]: unsigned int capacity // Filepaths max entries
-  Field[2]: unsigned int count // Filepaths entries count
-  Field[3]: char ** paths // Filepaths entries
-Struct 33: AutomationEvent (3 fields)
-  Name: AutomationEvent
-  Description: Automation event
-  Field[1]: unsigned int frame // Event frame
-  Field[2]: unsigned int type // Event type (AutomationEventType)
-  Field[3]: int[4] params // Event parameters (if required)
-Struct 34: AutomationEventList (3 fields)
-  Name: AutomationEventList
-  Description: Automation event list
-  Field[1]: unsigned int capacity // Events max entries (MAX_AUTOMATION_EVENTS)
-  Field[2]: unsigned int count // Events entries count
-  Field[3]: AutomationEvent * events // Events entries
 
 Aliases found: 5
 
@@ -580,369 +313,8 @@ Alias 005: Camera
   Name: Camera
   Description: Camera type fallback, defaults to Camera3D
 
-Enums found: 21
+Enums found: 0
 
-Enum 01: ConfigFlags (16 values)
-  Name: ConfigFlags
-  Description: System/Window config flags
-  Value[FLAG_VSYNC_HINT]: 64
-  Value[FLAG_FULLSCREEN_MODE]: 2
-  Value[FLAG_WINDOW_RESIZABLE]: 4
-  Value[FLAG_WINDOW_UNDECORATED]: 8
-  Value[FLAG_WINDOW_HIDDEN]: 128
-  Value[FLAG_WINDOW_MINIMIZED]: 512
-  Value[FLAG_WINDOW_MAXIMIZED]: 1024
-  Value[FLAG_WINDOW_UNFOCUSED]: 2048
-  Value[FLAG_WINDOW_TOPMOST]: 4096
-  Value[FLAG_WINDOW_ALWAYS_RUN]: 256
-  Value[FLAG_WINDOW_TRANSPARENT]: 16
-  Value[FLAG_WINDOW_HIGHDPI]: 8192
-  Value[FLAG_WINDOW_MOUSE_PASSTHROUGH]: 16384
-  Value[FLAG_BORDERLESS_WINDOWED_MODE]: 32768
-  Value[FLAG_MSAA_4X_HINT]: 32
-  Value[FLAG_INTERLACED_HINT]: 65536
-Enum 02: TraceLogLevel (8 values)
-  Name: TraceLogLevel
-  Description: Trace log level
-  Value[LOG_ALL]: 0
-  Value[LOG_TRACE]: 1
-  Value[LOG_DEBUG]: 2
-  Value[LOG_INFO]: 3
-  Value[LOG_WARNING]: 4
-  Value[LOG_ERROR]: 5
-  Value[LOG_FATAL]: 6
-  Value[LOG_NONE]: 7
-Enum 03: KeyboardKey (110 values)
-  Name: KeyboardKey
-  Description: Keyboard keys (US keyboard layout)
-  Value[KEY_NULL]: 0
-  Value[KEY_APOSTROPHE]: 39
-  Value[KEY_COMMA]: 44
-  Value[KEY_MINUS]: 45
-  Value[KEY_PERIOD]: 46
-  Value[KEY_SLASH]: 47
-  Value[KEY_ZERO]: 48
-  Value[KEY_ONE]: 49
-  Value[KEY_TWO]: 50
-  Value[KEY_THREE]: 51
-  Value[KEY_FOUR]: 52
-  Value[KEY_FIVE]: 53
-  Value[KEY_SIX]: 54
-  Value[KEY_SEVEN]: 55
-  Value[KEY_EIGHT]: 56
-  Value[KEY_NINE]: 57
-  Value[KEY_SEMICOLON]: 59
-  Value[KEY_EQUAL]: 61
-  Value[KEY_A]: 65
-  Value[KEY_B]: 66
-  Value[KEY_C]: 67
-  Value[KEY_D]: 68
-  Value[KEY_E]: 69
-  Value[KEY_F]: 70
-  Value[KEY_G]: 71
-  Value[KEY_H]: 72
-  Value[KEY_I]: 73
-  Value[KEY_J]: 74
-  Value[KEY_K]: 75
-  Value[KEY_L]: 76
-  Value[KEY_M]: 77
-  Value[KEY_N]: 78
-  Value[KEY_O]: 79
-  Value[KEY_P]: 80
-  Value[KEY_Q]: 81
-  Value[KEY_R]: 82
-  Value[KEY_S]: 83
-  Value[KEY_T]: 84
-  Value[KEY_U]: 85
-  Value[KEY_V]: 86
-  Value[KEY_W]: 87
-  Value[KEY_X]: 88
-  Value[KEY_Y]: 89
-  Value[KEY_Z]: 90
-  Value[KEY_LEFT_BRACKET]: 91
-  Value[KEY_BACKSLASH]: 92
-  Value[KEY_RIGHT_BRACKET]: 93
-  Value[KEY_GRAVE]: 96
-  Value[KEY_SPACE]: 32
-  Value[KEY_ESCAPE]: 256
-  Value[KEY_ENTER]: 257
-  Value[KEY_TAB]: 258
-  Value[KEY_BACKSPACE]: 259
-  Value[KEY_INSERT]: 260
-  Value[KEY_DELETE]: 261
-  Value[KEY_RIGHT]: 262
-  Value[KEY_LEFT]: 263
-  Value[KEY_DOWN]: 264
-  Value[KEY_UP]: 265
-  Value[KEY_PAGE_UP]: 266
-  Value[KEY_PAGE_DOWN]: 267
-  Value[KEY_HOME]: 268
-  Value[KEY_END]: 269
-  Value[KEY_CAPS_LOCK]: 280
-  Value[KEY_SCROLL_LOCK]: 281
-  Value[KEY_NUM_LOCK]: 282
-  Value[KEY_PRINT_SCREEN]: 283
-  Value[KEY_PAUSE]: 284
-  Value[KEY_F1]: 290
-  Value[KEY_F2]: 291
-  Value[KEY_F3]: 292
-  Value[KEY_F4]: 293
-  Value[KEY_F5]: 294
-  Value[KEY_F6]: 295
-  Value[KEY_F7]: 296
-  Value[KEY_F8]: 297
-  Value[KEY_F9]: 298
-  Value[KEY_F10]: 299
-  Value[KEY_F11]: 300
-  Value[KEY_F12]: 301
-  Value[KEY_LEFT_SHIFT]: 340
-  Value[KEY_LEFT_CONTROL]: 341
-  Value[KEY_LEFT_ALT]: 342
-  Value[KEY_LEFT_SUPER]: 343
-  Value[KEY_RIGHT_SHIFT]: 344
-  Value[KEY_RIGHT_CONTROL]: 345
-  Value[KEY_RIGHT_ALT]: 346
-  Value[KEY_RIGHT_SUPER]: 347
-  Value[KEY_KB_MENU]: 348
-  Value[KEY_KP_0]: 320
-  Value[KEY_KP_1]: 321
-  Value[KEY_KP_2]: 322
-  Value[KEY_KP_3]: 323
-  Value[KEY_KP_4]: 324
-  Value[KEY_KP_5]: 325
-  Value[KEY_KP_6]: 326
-  Value[KEY_KP_7]: 327
-  Value[KEY_KP_8]: 328
-  Value[KEY_KP_9]: 329
-  Value[KEY_KP_DECIMAL]: 330
-  Value[KEY_KP_DIVIDE]: 331
-  Value[KEY_KP_MULTIPLY]: 332
-  Value[KEY_KP_SUBTRACT]: 333
-  Value[KEY_KP_ADD]: 334
-  Value[KEY_KP_ENTER]: 335
-  Value[KEY_KP_EQUAL]: 336
-  Value[KEY_BACK]: 4
-  Value[KEY_MENU]: 5
-  Value[KEY_VOLUME_UP]: 24
-  Value[KEY_VOLUME_DOWN]: 25
-Enum 04: MouseButton (7 values)
-  Name: MouseButton
-  Description: Mouse buttons
-  Value[MOUSE_BUTTON_LEFT]: 0
-  Value[MOUSE_BUTTON_RIGHT]: 1
-  Value[MOUSE_BUTTON_MIDDLE]: 2
-  Value[MOUSE_BUTTON_SIDE]: 3
-  Value[MOUSE_BUTTON_EXTRA]: 4
-  Value[MOUSE_BUTTON_FORWARD]: 5
-  Value[MOUSE_BUTTON_BACK]: 6
-Enum 05: MouseCursor (11 values)
-  Name: MouseCursor
-  Description: Mouse cursor
-  Value[MOUSE_CURSOR_DEFAULT]: 0
-  Value[MOUSE_CURSOR_ARROW]: 1
-  Value[MOUSE_CURSOR_IBEAM]: 2
-  Value[MOUSE_CURSOR_CROSSHAIR]: 3
-  Value[MOUSE_CURSOR_POINTING_HAND]: 4
-  Value[MOUSE_CURSOR_RESIZE_EW]: 5
-  Value[MOUSE_CURSOR_RESIZE_NS]: 6
-  Value[MOUSE_CURSOR_RESIZE_NWSE]: 7
-  Value[MOUSE_CURSOR_RESIZE_NESW]: 8
-  Value[MOUSE_CURSOR_RESIZE_ALL]: 9
-  Value[MOUSE_CURSOR_NOT_ALLOWED]: 10
-Enum 06: GamepadButton (18 values)
-  Name: GamepadButton
-  Description: Gamepad buttons
-  Value[GAMEPAD_BUTTON_UNKNOWN]: 0
-  Value[GAMEPAD_BUTTON_LEFT_FACE_UP]: 1
-  Value[GAMEPAD_BUTTON_LEFT_FACE_RIGHT]: 2
-  Value[GAMEPAD_BUTTON_LEFT_FACE_DOWN]: 3
-  Value[GAMEPAD_BUTTON_LEFT_FACE_LEFT]: 4
-  Value[GAMEPAD_BUTTON_RIGHT_FACE_UP]: 5
-  Value[GAMEPAD_BUTTON_RIGHT_FACE_RIGHT]: 6
-  Value[GAMEPAD_BUTTON_RIGHT_FACE_DOWN]: 7
-  Value[GAMEPAD_BUTTON_RIGHT_FACE_LEFT]: 8
-  Value[GAMEPAD_BUTTON_LEFT_TRIGGER_1]: 9
-  Value[GAMEPAD_BUTTON_LEFT_TRIGGER_2]: 10
-  Value[GAMEPAD_BUTTON_RIGHT_TRIGGER_1]: 11
-  Value[GAMEPAD_BUTTON_RIGHT_TRIGGER_2]: 12
-  Value[GAMEPAD_BUTTON_MIDDLE_LEFT]: 13
-  Value[GAMEPAD_BUTTON_MIDDLE]: 14
-  Value[GAMEPAD_BUTTON_MIDDLE_RIGHT]: 15
-  Value[GAMEPAD_BUTTON_LEFT_THUMB]: 16
-  Value[GAMEPAD_BUTTON_RIGHT_THUMB]: 17
-Enum 07: GamepadAxis (6 values)
-  Name: GamepadAxis
-  Description: Gamepad axis
-  Value[GAMEPAD_AXIS_LEFT_X]: 0
-  Value[GAMEPAD_AXIS_LEFT_Y]: 1
-  Value[GAMEPAD_AXIS_RIGHT_X]: 2
-  Value[GAMEPAD_AXIS_RIGHT_Y]: 3
-  Value[GAMEPAD_AXIS_LEFT_TRIGGER]: 4
-  Value[GAMEPAD_AXIS_RIGHT_TRIGGER]: 5
-Enum 08: MaterialMapIndex (11 values)
-  Name: MaterialMapIndex
-  Description: Material map index
-  Value[MATERIAL_MAP_ALBEDO]: 0
-  Value[MATERIAL_MAP_METALNESS]: 1
-  Value[MATERIAL_MAP_NORMAL]: 2
-  Value[MATERIAL_MAP_ROUGHNESS]: 3
-  Value[MATERIAL_MAP_OCCLUSION]: 4
-  Value[MATERIAL_MAP_EMISSION]: 5
-  Value[MATERIAL_MAP_HEIGHT]: 6
-  Value[MATERIAL_MAP_CUBEMAP]: 7
-  Value[MATERIAL_MAP_IRRADIANCE]: 8
-  Value[MATERIAL_MAP_PREFILTER]: 9
-  Value[MATERIAL_MAP_BRDF]: 10
-Enum 09: ShaderLocationIndex (26 values)
-  Name: ShaderLocationIndex
-  Description: Shader location index
-  Value[SHADER_LOC_VERTEX_POSITION]: 0
-  Value[SHADER_LOC_VERTEX_TEXCOORD01]: 1
-  Value[SHADER_LOC_VERTEX_TEXCOORD02]: 2
-  Value[SHADER_LOC_VERTEX_NORMAL]: 3
-  Value[SHADER_LOC_VERTEX_TANGENT]: 4
-  Value[SHADER_LOC_VERTEX_COLOR]: 5
-  Value[SHADER_LOC_MATRIX_MVP]: 6
-  Value[SHADER_LOC_MATRIX_VIEW]: 7
-  Value[SHADER_LOC_MATRIX_PROJECTION]: 8
-  Value[SHADER_LOC_MATRIX_MODEL]: 9
-  Value[SHADER_LOC_MATRIX_NORMAL]: 10
-  Value[SHADER_LOC_VECTOR_VIEW]: 11
-  Value[SHADER_LOC_COLOR_DIFFUSE]: 12
-  Value[SHADER_LOC_COLOR_SPECULAR]: 13
-  Value[SHADER_LOC_COLOR_AMBIENT]: 14
-  Value[SHADER_LOC_MAP_ALBEDO]: 15
-  Value[SHADER_LOC_MAP_METALNESS]: 16
-  Value[SHADER_LOC_MAP_NORMAL]: 17
-  Value[SHADER_LOC_MAP_ROUGHNESS]: 18
-  Value[SHADER_LOC_MAP_OCCLUSION]: 19
-  Value[SHADER_LOC_MAP_EMISSION]: 20
-  Value[SHADER_LOC_MAP_HEIGHT]: 21
-  Value[SHADER_LOC_MAP_CUBEMAP]: 22
-  Value[SHADER_LOC_MAP_IRRADIANCE]: 23
-  Value[SHADER_LOC_MAP_PREFILTER]: 24
-  Value[SHADER_LOC_MAP_BRDF]: 25
-Enum 10: ShaderUniformDataType (9 values)
-  Name: ShaderUniformDataType
-  Description: Shader uniform data type
-  Value[SHADER_UNIFORM_FLOAT]: 0
-  Value[SHADER_UNIFORM_VEC2]: 1
-  Value[SHADER_UNIFORM_VEC3]: 2
-  Value[SHADER_UNIFORM_VEC4]: 3
-  Value[SHADER_UNIFORM_INT]: 4
-  Value[SHADER_UNIFORM_IVEC2]: 5
-  Value[SHADER_UNIFORM_IVEC3]: 6
-  Value[SHADER_UNIFORM_IVEC4]: 7
-  Value[SHADER_UNIFORM_SAMPLER2D]: 8
-Enum 11: ShaderAttributeDataType (4 values)
-  Name: ShaderAttributeDataType
-  Description: Shader attribute data types
-  Value[SHADER_ATTRIB_FLOAT]: 0
-  Value[SHADER_ATTRIB_VEC2]: 1
-  Value[SHADER_ATTRIB_VEC3]: 2
-  Value[SHADER_ATTRIB_VEC4]: 3
-Enum 12: PixelFormat (24 values)
-  Name: PixelFormat
-  Description: Pixel formats
-  Value[PIXELFORMAT_UNCOMPRESSED_GRAYSCALE]: 1
-  Value[PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA]: 2
-  Value[PIXELFORMAT_UNCOMPRESSED_R5G6B5]: 3
-  Value[PIXELFORMAT_UNCOMPRESSED_R8G8B8]: 4
-  Value[PIXELFORMAT_UNCOMPRESSED_R5G5B5A1]: 5
-  Value[PIXELFORMAT_UNCOMPRESSED_R4G4B4A4]: 6
-  Value[PIXELFORMAT_UNCOMPRESSED_R8G8B8A8]: 7
-  Value[PIXELFORMAT_UNCOMPRESSED_R32]: 8
-  Value[PIXELFORMAT_UNCOMPRESSED_R32G32B32]: 9
-  Value[PIXELFORMAT_UNCOMPRESSED_R32G32B32A32]: 10
-  Value[PIXELFORMAT_UNCOMPRESSED_R16]: 11
-  Value[PIXELFORMAT_UNCOMPRESSED_R16G16B16]: 12
-  Value[PIXELFORMAT_UNCOMPRESSED_R16G16B16A16]: 13
-  Value[PIXELFORMAT_COMPRESSED_DXT1_RGB]: 14
-  Value[PIXELFORMAT_COMPRESSED_DXT1_RGBA]: 15
-  Value[PIXELFORMAT_COMPRESSED_DXT3_RGBA]: 16
-  Value[PIXELFORMAT_COMPRESSED_DXT5_RGBA]: 17
-  Value[PIXELFORMAT_COMPRESSED_ETC1_RGB]: 18
-  Value[PIXELFORMAT_COMPRESSED_ETC2_RGB]: 19
-  Value[PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA]: 20
-  Value[PIXELFORMAT_COMPRESSED_PVRT_RGB]: 21
-  Value[PIXELFORMAT_COMPRESSED_PVRT_RGBA]: 22
-  Value[PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA]: 23
-  Value[PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA]: 24
-Enum 13: TextureFilter (6 values)
-  Name: TextureFilter
-  Description: Texture parameters: filter mode
-  Value[TEXTURE_FILTER_POINT]: 0
-  Value[TEXTURE_FILTER_BILINEAR]: 1
-  Value[TEXTURE_FILTER_TRILINEAR]: 2
-  Value[TEXTURE_FILTER_ANISOTROPIC_4X]: 3
-  Value[TEXTURE_FILTER_ANISOTROPIC_8X]: 4
-  Value[TEXTURE_FILTER_ANISOTROPIC_16X]: 5
-Enum 14: TextureWrap (4 values)
-  Name: TextureWrap
-  Description: Texture parameters: wrap mode
-  Value[TEXTURE_WRAP_REPEAT]: 0
-  Value[TEXTURE_WRAP_CLAMP]: 1
-  Value[TEXTURE_WRAP_MIRROR_REPEAT]: 2
-  Value[TEXTURE_WRAP_MIRROR_CLAMP]: 3
-Enum 15: CubemapLayout (6 values)
-  Name: CubemapLayout
-  Description: Cubemap layouts
-  Value[CUBEMAP_LAYOUT_AUTO_DETECT]: 0
-  Value[CUBEMAP_LAYOUT_LINE_VERTICAL]: 1
-  Value[CUBEMAP_LAYOUT_LINE_HORIZONTAL]: 2
-  Value[CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR]: 3
-  Value[CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE]: 4
-  Value[CUBEMAP_LAYOUT_PANORAMA]: 5
-Enum 16: FontType (3 values)
-  Name: FontType
-  Description: Font type, defines generation method
-  Value[FONT_DEFAULT]: 0
-  Value[FONT_BITMAP]: 1
-  Value[FONT_SDF]: 2
-Enum 17: BlendMode (8 values)
-  Name: BlendMode
-  Description: Color blending modes (pre-defined)
-  Value[BLEND_ALPHA]: 0
-  Value[BLEND_ADDITIVE]: 1
-  Value[BLEND_MULTIPLIED]: 2
-  Value[BLEND_ADD_COLORS]: 3
-  Value[BLEND_SUBTRACT_COLORS]: 4
-  Value[BLEND_ALPHA_PREMULTIPLY]: 5
-  Value[BLEND_CUSTOM]: 6
-  Value[BLEND_CUSTOM_SEPARATE]: 7
-Enum 18: Gesture (11 values)
-  Name: Gesture
-  Description: Gesture
-  Value[GESTURE_NONE]: 0
-  Value[GESTURE_TAP]: 1
-  Value[GESTURE_DOUBLETAP]: 2
-  Value[GESTURE_HOLD]: 4
-  Value[GESTURE_DRAG]: 8
-  Value[GESTURE_SWIPE_RIGHT]: 16
-  Value[GESTURE_SWIPE_LEFT]: 32
-  Value[GESTURE_SWIPE_UP]: 64
-  Value[GESTURE_SWIPE_DOWN]: 128
-  Value[GESTURE_PINCH_IN]: 256
-  Value[GESTURE_PINCH_OUT]: 512
-Enum 19: CameraMode (5 values)
-  Name: CameraMode
-  Description: Camera system modes
-  Value[CAMERA_CUSTOM]: 0
-  Value[CAMERA_FREE]: 1
-  Value[CAMERA_ORBITAL]: 2
-  Value[CAMERA_FIRST_PERSON]: 3
-  Value[CAMERA_THIRD_PERSON]: 4
-Enum 20: CameraProjection (2 values)
-  Name: CameraProjection
-  Description: Camera projection
-  Value[CAMERA_PERSPECTIVE]: 0
-  Value[CAMERA_ORTHOGRAPHIC]: 1
-Enum 21: NPatchLayout (3 values)
-  Name: NPatchLayout
-  Description: N-patch layout
-  Value[NPATCH_NINE_PATCH]: 0
-  Value[NPATCH_THREE_PATCH_VERTICAL]: 1
-  Value[NPATCH_THREE_PATCH_HORIZONTAL]: 2
 
 Callbacks found: 6
 
@@ -984,7 +356,7 @@ Callback 006: AudioCallback() (2 input parameters)
   Param[1]: bufferData (type: void *)
   Param[2]: frames (type: unsigned int)
 
-Functions found: 565
+Functions found: 566
 
 Function 001: InitWindow() (3 input parameters)
   Name: InitWindow
@@ -2842,7 +2214,7 @@ Function 304: ImageKernelConvolution() (3 input parameters)
   Return type: void
   Description: Apply Custom Square image convolution kernel
   Param[1]: image (type: Image *)
-  Param[2]: kernel (type: float*)
+  Param[2]: kernel (type: float *)
   Param[3]: kernelSize (type: int)
 Function 305: ImageResize() (3 input parameters)
   Name: ImageResize
@@ -3646,30 +3018,35 @@ Function 424: TextToSnake() (1 input parameters)
   Return type: const char *
   Description: Get Snake case notation version of provided string
   Param[1]: text (type: const char *)
-Function 425: TextToInteger() (1 input parameters)
+Function 425: TextToCamel() (1 input parameters)
+  Name: TextToCamel
+  Return type: const char *
+  Description: Get Camel case notation version of provided string
+  Param[1]: text (type: const char *)
+Function 426: TextToInteger() (1 input parameters)
   Name: TextToInteger
   Return type: int
   Description: Get integer value from text (negative values not supported)
   Param[1]: text (type: const char *)
-Function 426: TextToFloat() (1 input parameters)
+Function 427: TextToFloat() (1 input parameters)
   Name: TextToFloat
   Return type: float
   Description: Get float value from text (negative values not supported)
   Param[1]: text (type: const char *)
-Function 427: DrawLine3D() (3 input parameters)
+Function 428: DrawLine3D() (3 input parameters)
   Name: DrawLine3D
   Return type: void
   Description: Draw a line in 3D world space
   Param[1]: startPos (type: Vector3)
   Param[2]: endPos (type: Vector3)
   Param[3]: color (type: Color)
-Function 428: DrawPoint3D() (2 input parameters)
+Function 429: DrawPoint3D() (2 input parameters)
   Name: DrawPoint3D
   Return type: void
   Description: Draw a point in 3D space, actually a small line
   Param[1]: position (type: Vector3)
   Param[2]: color (type: Color)
-Function 429: DrawCircle3D() (5 input parameters)
+Function 430: DrawCircle3D() (5 input parameters)
   Name: DrawCircle3D
   Return type: void
   Description: Draw a circle in 3D world space
@@ -3678,7 +3055,7 @@ Function 429: DrawCircle3D() (5 input parameters)
   Param[3]: rotationAxis (type: Vector3)
   Param[4]: rotationAngle (type: float)
   Param[5]: color (type: Color)
-Function 430: DrawTriangle3D() (4 input parameters)
+Function 431: DrawTriangle3D() (4 input parameters)
   Name: DrawTriangle3D
   Return type: void
   Description: Draw a color-filled triangle (vertex in counter-clockwise order!)
@@ -3686,14 +3063,14 @@ Function 430: DrawTriangle3D() (4 input parameters)
   Param[2]: v2 (type: Vector3)
   Param[3]: v3 (type: Vector3)
   Param[4]: color (type: Color)
-Function 431: DrawTriangleStrip3D() (3 input parameters)
+Function 432: DrawTriangleStrip3D() (3 input parameters)
   Name: DrawTriangleStrip3D
   Return type: void
   Description: Draw a triangle strip defined by points
   Param[1]: points (type: Vector3 *)
   Param[2]: pointCount (type: int)
   Param[3]: color (type: Color)
-Function 432: DrawCube() (5 input parameters)
+Function 433: DrawCube() (5 input parameters)
   Name: DrawCube
   Return type: void
   Description: Draw cube
@@ -3702,14 +3079,14 @@ Function 432: DrawCube() (5 input parameters)
   Param[3]: height (type: float)
   Param[4]: length (type: float)
   Param[5]: color (type: Color)
-Function 433: DrawCubeV() (3 input parameters)
+Function 434: DrawCubeV() (3 input parameters)
   Name: DrawCubeV
   Return type: void
   Description: Draw cube (Vector version)
   Param[1]: position (type: Vector3)
   Param[2]: size (type: Vector3)
   Param[3]: color (type: Color)
-Function 434: DrawCubeWires() (5 input parameters)
+Function 435: DrawCubeWires() (5 input parameters)
   Name: DrawCubeWires
   Return type: void
   Description: Draw cube wires
@@ -3718,21 +3095,21 @@ Function 434: DrawCubeWires() (5 input parameters)
   Param[3]: height (type: float)
   Param[4]: length (type: float)
   Param[5]: color (type: Color)
-Function 435: DrawCubeWiresV() (3 input parameters)
+Function 436: DrawCubeWiresV() (3 input parameters)
   Name: DrawCubeWiresV
   Return type: void
   Description: Draw cube wires (Vector version)
   Param[1]: position (type: Vector3)
   Param[2]: size (type: Vector3)
   Param[3]: color (type: Color)
-Function 436: DrawSphere() (3 input parameters)
+Function 437: DrawSphere() (3 input parameters)
   Name: DrawSphere
   Return type: void
   Description: Draw sphere
   Param[1]: centerPos (type: Vector3)
   Param[2]: radius (type: float)
   Param[3]: color (type: Color)
-Function 437: DrawSphereEx() (5 input parameters)
+Function 438: DrawSphereEx() (5 input parameters)
   Name: DrawSphereEx
   Return type: void
   Description: Draw sphere with extended parameters
@@ -3741,7 +3118,7 @@ Function 437: DrawSphereEx() (5 input parameters)
   Param[3]: rings (type: int)
   Param[4]: slices (type: int)
   Param[5]: color (type: Color)
-Function 438: DrawSphereWires() (5 input parameters)
+Function 439: DrawSphereWires() (5 input parameters)
   Name: DrawSphereWires
   Return type: void
   Description: Draw sphere wires
@@ -3750,7 +3127,7 @@ Function 438: DrawSphereWires() (5 input parameters)
   Param[3]: rings (type: int)
   Param[4]: slices (type: int)
   Param[5]: color (type: Color)
-Function 439: DrawCylinder() (6 input parameters)
+Function 440: DrawCylinder() (6 input parameters)
   Name: DrawCylinder
   Return type: void
   Description: Draw a cylinder/cone
@@ -3760,7 +3137,7 @@ Function 439: DrawCylinder() (6 input parameters)
   Param[4]: height (type: float)
   Param[5]: slices (type: int)
   Param[6]: color (type: Color)
-Function 440: DrawCylinderEx() (6 input parameters)
+Function 441: DrawCylinderEx() (6 input parameters)
   Name: DrawCylinderEx
   Return type: void
   Description: Draw a cylinder with base at startPos and top at endPos
@@ -3770,7 +3147,7 @@ Function 440: DrawCylinderEx() (6 input parameters)
   Param[4]: endRadius (type: float)
   Param[5]: sides (type: int)
   Param[6]: color (type: Color)
-Function 441: DrawCylinderWires() (6 input parameters)
+Function 442: DrawCylinderWires() (6 input parameters)
   Name: DrawCylinderWires
   Return type: void
   Description: Draw a cylinder/cone wires
@@ -3780,7 +3157,7 @@ Function 441: DrawCylinderWires() (6 input parameters)
   Param[4]: height (type: float)
   Param[5]: slices (type: int)
   Param[6]: color (type: Color)
-Function 442: DrawCylinderWiresEx() (6 input parameters)
+Function 443: DrawCylinderWiresEx() (6 input parameters)
   Name: DrawCylinderWiresEx
   Return type: void
   Description: Draw a cylinder wires with base at startPos and top at endPos
@@ -3790,7 +3167,7 @@ Function 442: DrawCylinderWiresEx() (6 input parameters)
   Param[4]: endRadius (type: float)
   Param[5]: sides (type: int)
   Param[6]: color (type: Color)
-Function 443: DrawCapsule() (6 input parameters)
+Function 444: DrawCapsule() (6 input parameters)
   Name: DrawCapsule
   Return type: void
   Description: Draw a capsule with the center of its sphere caps at startPos and endPos
@@ -3800,7 +3177,7 @@ Function 443: DrawCapsule() (6 input parameters)
   Param[4]: slices (type: int)
   Param[5]: rings (type: int)
   Param[6]: color (type: Color)
-Function 444: DrawCapsuleWires() (6 input parameters)
+Function 445: DrawCapsuleWires() (6 input parameters)
   Name: DrawCapsuleWires
   Return type: void
   Description: Draw capsule wireframe with the center of its sphere caps at startPos and endPos
@@ -3810,51 +3187,51 @@ Function 444: DrawCapsuleWires() (6 input parameters)
   Param[4]: slices (type: int)
   Param[5]: rings (type: int)
   Param[6]: color (type: Color)
-Function 445: DrawPlane() (3 input parameters)
+Function 446: DrawPlane() (3 input parameters)
   Name: DrawPlane
   Return type: void
   Description: Draw a plane XZ
   Param[1]: centerPos (type: Vector3)
   Param[2]: size (type: Vector2)
   Param[3]: color (type: Color)
-Function 446: DrawRay() (2 input parameters)
+Function 447: DrawRay() (2 input parameters)
   Name: DrawRay
   Return type: void
   Description: Draw a ray line
   Param[1]: ray (type: Ray)
   Param[2]: color (type: Color)
-Function 447: DrawGrid() (2 input parameters)
+Function 448: DrawGrid() (2 input parameters)
   Name: DrawGrid
   Return type: void
   Description: Draw a grid (centered at (0, 0, 0))
   Param[1]: slices (type: int)
   Param[2]: spacing (type: float)
-Function 448: LoadModel() (1 input parameters)
+Function 449: LoadModel() (1 input parameters)
   Name: LoadModel
   Return type: Model
   Description: Load model from files (meshes and materials)
   Param[1]: fileName (type: const char *)
-Function 449: LoadModelFromMesh() (1 input parameters)
+Function 450: LoadModelFromMesh() (1 input parameters)
   Name: LoadModelFromMesh
   Return type: Model
   Description: Load model from generated mesh (default material)
   Param[1]: mesh (type: Mesh)
-Function 450: IsModelReady() (1 input parameters)
+Function 451: IsModelReady() (1 input parameters)
   Name: IsModelReady
   Return type: bool
   Description: Check if a model is ready
   Param[1]: model (type: Model)
-Function 451: UnloadModel() (1 input parameters)
+Function 452: UnloadModel() (1 input parameters)
   Name: UnloadModel
   Return type: void
   Description: Unload model (including meshes) from memory (RAM and/or VRAM)
   Param[1]: model (type: Model)
-Function 452: GetModelBoundingBox() (1 input parameters)
+Function 453: GetModelBoundingBox() (1 input parameters)
   Name: GetModelBoundingBox
   Return type: BoundingBox
   Description: Compute model bounding box limits (considers all meshes)
   Param[1]: model (type: Model)
-Function 453: DrawModel() (4 input parameters)
+Function 454: DrawModel() (4 input parameters)
   Name: DrawModel
   Return type: void
   Description: Draw a model (with texture if set)
@@ -3862,7 +3239,7 @@ Function 453: DrawModel() (4 input parameters)
   Param[2]: position (type: Vector3)
   Param[3]: scale (type: float)
   Param[4]: tint (type: Color)
-Function 454: DrawModelEx() (6 input parameters)
+Function 455: DrawModelEx() (6 input parameters)
   Name: DrawModelEx
   Return type: void
   Description: Draw a model with extended parameters
@@ -3872,7 +3249,7 @@ Function 454: DrawModelEx() (6 input parameters)
   Param[4]: rotationAngle (type: float)
   Param[5]: scale (type: Vector3)
   Param[6]: tint (type: Color)
-Function 455: DrawModelWires() (4 input parameters)
+Function 456: DrawModelWires() (4 input parameters)
   Name: DrawModelWires
   Return type: void
   Description: Draw a model wires (with texture if set)
@@ -3880,7 +3257,7 @@ Function 455: DrawModelWires() (4 input parameters)
   Param[2]: position (type: Vector3)
   Param[3]: scale (type: float)
   Param[4]: tint (type: Color)
-Function 456: DrawModelWiresEx() (6 input parameters)
+Function 457: DrawModelWiresEx() (6 input parameters)
   Name: DrawModelWiresEx
   Return type: void
   Description: Draw a model wires (with texture if set) with extended parameters
@@ -3890,13 +3267,13 @@ Function 456: DrawModelWiresEx() (6 input parameters)
   Param[4]: rotationAngle (type: float)
   Param[5]: scale (type: Vector3)
   Param[6]: tint (type: Color)
-Function 457: DrawBoundingBox() (2 input parameters)
+Function 458: DrawBoundingBox() (2 input parameters)
   Name: DrawBoundingBox
   Return type: void
   Description: Draw bounding box (wires)
   Param[1]: box (type: BoundingBox)
   Param[2]: color (type: Color)
-Function 458: DrawBillboard() (5 input parameters)
+Function 459: DrawBillboard() (5 input parameters)
   Name: DrawBillboard
   Return type: void
   Description: Draw a billboard texture
@@ -3905,7 +3282,7 @@ Function 458: DrawBillboard() (5 input parameters)
   Param[3]: position (type: Vector3)
   Param[4]: size (type: float)
   Param[5]: tint (type: Color)
-Function 459: DrawBillboardRec() (6 input parameters)
+Function 460: DrawBillboardRec() (6 input parameters)
   Name: DrawBillboardRec
   Return type: void
   Description: Draw a billboard texture defined by source
@@ -3915,7 +3292,7 @@ Function 459: DrawBillboardRec() (6 input parameters)
   Param[4]: position (type: Vector3)
   Param[5]: size (type: Vector2)
   Param[6]: tint (type: Color)
-Function 460: DrawBillboardPro() (9 input parameters)
+Function 461: DrawBillboardPro() (9 input parameters)
   Name: DrawBillboardPro
   Return type: void
   Description: Draw a billboard texture defined by source and rotation
@@ -3928,13 +3305,13 @@ Function 460: DrawBillboardPro() (9 input parameters)
   Param[7]: origin (type: Vector2)
   Param[8]: rotation (type: float)
   Param[9]: tint (type: Color)
-Function 461: UploadMesh() (2 input parameters)
+Function 462: UploadMesh() (2 input parameters)
   Name: UploadMesh
   Return type: void
   Description: Upload mesh vertex data in GPU and provide VAO/VBO ids
   Param[1]: mesh (type: Mesh *)
   Param[2]: dynamic (type: bool)
-Function 462: UpdateMeshBuffer() (5 input parameters)
+Function 463: UpdateMeshBuffer() (5 input parameters)
   Name: UpdateMeshBuffer
   Return type: void
   Description: Update mesh vertex data in GPU for a specific buffer index
@@ -3943,19 +3320,19 @@ Function 462: UpdateMeshBuffer() (5 input parameters)
   Param[3]: data (type: const void *)
   Param[4]: dataSize (type: int)
   Param[5]: offset (type: int)
-Function 463: UnloadMesh() (1 input parameters)
+Function 464: UnloadMesh() (1 input parameters)
   Name: UnloadMesh
   Return type: void
   Description: Unload mesh data from CPU and GPU
   Param[1]: mesh (type: Mesh)
-Function 464: DrawMesh() (3 input parameters)
+Function 465: DrawMesh() (3 input parameters)
   Name: DrawMesh
   Return type: void
   Description: Draw a 3d mesh with material and transform
   Param[1]: mesh (type: Mesh)
   Param[2]: material (type: Material)
   Param[3]: transform (type: Matrix)
-Function 465: DrawMeshInstanced() (4 input parameters)
+Function 466: DrawMeshInstanced() (4 input parameters)
   Name: DrawMeshInstanced
   Return type: void
   Description: Draw multiple mesh instances with material and different transforms
@@ -3963,35 +3340,35 @@ Function 465: DrawMeshInstanced() (4 input parameters)
   Param[2]: material (type: Material)
   Param[3]: transforms (type: const Matrix *)
   Param[4]: instances (type: int)
-Function 466: GetMeshBoundingBox() (1 input parameters)
+Function 467: GetMeshBoundingBox() (1 input parameters)
   Name: GetMeshBoundingBox
   Return type: BoundingBox
   Description: Compute mesh bounding box limits
   Param[1]: mesh (type: Mesh)
-Function 467: GenMeshTangents() (1 input parameters)
+Function 468: GenMeshTangents() (1 input parameters)
   Name: GenMeshTangents
   Return type: void
   Description: Compute mesh tangents
   Param[1]: mesh (type: Mesh *)
-Function 468: ExportMesh() (2 input parameters)
+Function 469: ExportMesh() (2 input parameters)
   Name: ExportMesh
   Return type: bool
   Description: Export mesh data to file, returns true on success
   Param[1]: mesh (type: Mesh)
   Param[2]: fileName (type: const char *)
-Function 469: ExportMeshAsCode() (2 input parameters)
+Function 470: ExportMeshAsCode() (2 input parameters)
   Name: ExportMeshAsCode
   Return type: bool
   Description: Export mesh as code file (.h) defining multiple arrays of vertex attributes
   Param[1]: mesh (type: Mesh)
   Param[2]: fileName (type: const char *)
-Function 470: GenMeshPoly() (2 input parameters)
+Function 471: GenMeshPoly() (2 input parameters)
   Name: GenMeshPoly
   Return type: Mesh
   Description: Generate polygonal mesh
   Param[1]: sides (type: int)
   Param[2]: radius (type: float)
-Function 471: GenMeshPlane() (4 input parameters)
+Function 472: GenMeshPlane() (4 input parameters)
   Name: GenMeshPlane
   Return type: Mesh
   Description: Generate plane mesh (with subdivisions)
@@ -3999,42 +3376,42 @@ Function 471: GenMeshPlane() (4 input parameters)
   Param[2]: length (type: float)
   Param[3]: resX (type: int)
   Param[4]: resZ (type: int)
-Function 472: GenMeshCube() (3 input parameters)
+Function 473: GenMeshCube() (3 input parameters)
   Name: GenMeshCube
   Return type: Mesh
   Description: Generate cuboid mesh
   Param[1]: width (type: float)
   Param[2]: height (type: float)
   Param[3]: length (type: float)
-Function 473: GenMeshSphere() (3 input parameters)
+Function 474: GenMeshSphere() (3 input parameters)
   Name: GenMeshSphere
   Return type: Mesh
   Description: Generate sphere mesh (standard sphere)
   Param[1]: radius (type: float)
   Param[2]: rings (type: int)
   Param[3]: slices (type: int)
-Function 474: GenMeshHemiSphere() (3 input parameters)
+Function 475: GenMeshHemiSphere() (3 input parameters)
   Name: GenMeshHemiSphere
   Return type: Mesh
   Description: Generate half-sphere mesh (no bottom cap)
   Param[1]: radius (type: float)
   Param[2]: rings (type: int)
   Param[3]: slices (type: int)
-Function 475: GenMeshCylinder() (3 input parameters)
+Function 476: GenMeshCylinder() (3 input parameters)
   Name: GenMeshCylinder
   Return type: Mesh
   Description: Generate cylinder mesh
   Param[1]: radius (type: float)
   Param[2]: height (type: float)
   Param[3]: slices (type: int)
-Function 476: GenMeshCone() (3 input parameters)
+Function 477: GenMeshCone() (3 input parameters)
   Name: GenMeshCone
   Return type: Mesh
   Description: Generate cone/pyramid mesh
   Param[1]: radius (type: float)
   Param[2]: height (type: float)
   Param[3]: slices (type: int)
-Function 477: GenMeshTorus() (4 input parameters)
+Function 478: GenMeshTorus() (4 input parameters)
   Name: GenMeshTorus
   Return type: Mesh
   Description: Generate torus mesh
@@ -4042,7 +3419,7 @@ Function 477: GenMeshTorus() (4 input parameters)
   Param[2]: size (type: float)
   Param[3]: radSeg (type: int)
   Param[4]: sides (type: int)
-Function 478: GenMeshKnot() (4 input parameters)
+Function 479: GenMeshKnot() (4 input parameters)
   Name: GenMeshKnot
   Return type: Mesh
   Description: Generate trefoil knot mesh
@@ -4050,84 +3427,84 @@ Function 478: GenMeshKnot() (4 input parameters)
   Param[2]: size (type: float)
   Param[3]: radSeg (type: int)
   Param[4]: sides (type: int)
-Function 479: GenMeshHeightmap() (2 input parameters)
+Function 480: GenMeshHeightmap() (2 input parameters)
   Name: GenMeshHeightmap
   Return type: Mesh
   Description: Generate heightmap mesh from image data
   Param[1]: heightmap (type: Image)
   Param[2]: size (type: Vector3)
-Function 480: GenMeshCubicmap() (2 input parameters)
+Function 481: GenMeshCubicmap() (2 input parameters)
   Name: GenMeshCubicmap
   Return type: Mesh
   Description: Generate cubes-based map mesh from image data
   Param[1]: cubicmap (type: Image)
   Param[2]: cubeSize (type: Vector3)
-Function 481: LoadMaterials() (2 input parameters)
+Function 482: LoadMaterials() (2 input parameters)
   Name: LoadMaterials
   Return type: Material *
   Description: Load materials from model file
   Param[1]: fileName (type: const char *)
   Param[2]: materialCount (type: int *)
-Function 482: LoadMaterialDefault() (0 input parameters)
+Function 483: LoadMaterialDefault() (0 input parameters)
   Name: LoadMaterialDefault
   Return type: Material
   Description: Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
   No input parameters
-Function 483: IsMaterialReady() (1 input parameters)
+Function 484: IsMaterialReady() (1 input parameters)
   Name: IsMaterialReady
   Return type: bool
   Description: Check if a material is ready
   Param[1]: material (type: Material)
-Function 484: UnloadMaterial() (1 input parameters)
+Function 485: UnloadMaterial() (1 input parameters)
   Name: UnloadMaterial
   Return type: void
   Description: Unload material from GPU memory (VRAM)
   Param[1]: material (type: Material)
-Function 485: SetMaterialTexture() (3 input parameters)
+Function 486: SetMaterialTexture() (3 input parameters)
   Name: SetMaterialTexture
   Return type: void
   Description: Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
   Param[1]: material (type: Material *)
   Param[2]: mapType (type: int)
   Param[3]: texture (type: Texture2D)
-Function 486: SetModelMeshMaterial() (3 input parameters)
+Function 487: SetModelMeshMaterial() (3 input parameters)
   Name: SetModelMeshMaterial
   Return type: void
   Description: Set material for a mesh
   Param[1]: model (type: Model *)
   Param[2]: meshId (type: int)
   Param[3]: materialId (type: int)
-Function 487: LoadModelAnimations() (2 input parameters)
+Function 488: LoadModelAnimations() (2 input parameters)
   Name: LoadModelAnimations
   Return type: ModelAnimation *
   Description: Load model animations from file
   Param[1]: fileName (type: const char *)
   Param[2]: animCount (type: int *)
-Function 488: UpdateModelAnimation() (3 input parameters)
+Function 489: UpdateModelAnimation() (3 input parameters)
   Name: UpdateModelAnimation
   Return type: void
   Description: Update model animation pose
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
   Param[3]: frame (type: int)
-Function 489: UnloadModelAnimation() (1 input parameters)
+Function 490: UnloadModelAnimation() (1 input parameters)
   Name: UnloadModelAnimation
   Return type: void
   Description: Unload animation data
   Param[1]: anim (type: ModelAnimation)
-Function 490: UnloadModelAnimations() (2 input parameters)
+Function 491: UnloadModelAnimations() (2 input parameters)
   Name: UnloadModelAnimations
   Return type: void
   Description: Unload animation array data
   Param[1]: animations (type: ModelAnimation *)
   Param[2]: animCount (type: int)
-Function 491: IsModelAnimationValid() (2 input parameters)
+Function 492: IsModelAnimationValid() (2 input parameters)
   Name: IsModelAnimationValid
   Return type: bool
   Description: Check model animation skeleton match
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
-Function 492: CheckCollisionSpheres() (4 input parameters)
+Function 493: CheckCollisionSpheres() (4 input parameters)
   Name: CheckCollisionSpheres
   Return type: bool
   Description: Check collision between two spheres
@@ -4135,40 +3512,40 @@ Function 492: CheckCollisionSpheres() (4 input parameters)
   Param[2]: radius1 (type: float)
   Param[3]: center2 (type: Vector3)
   Param[4]: radius2 (type: float)
-Function 493: CheckCollisionBoxes() (2 input parameters)
+Function 494: CheckCollisionBoxes() (2 input parameters)
   Name: CheckCollisionBoxes
   Return type: bool
   Description: Check collision between two bounding boxes
   Param[1]: box1 (type: BoundingBox)
   Param[2]: box2 (type: BoundingBox)
-Function 494: CheckCollisionBoxSphere() (3 input parameters)
+Function 495: CheckCollisionBoxSphere() (3 input parameters)
   Name: CheckCollisionBoxSphere
   Return type: bool
   Description: Check collision between box and sphere
   Param[1]: box (type: BoundingBox)
   Param[2]: center (type: Vector3)
   Param[3]: radius (type: float)
-Function 495: GetRayCollisionSphere() (3 input parameters)
+Function 496: GetRayCollisionSphere() (3 input parameters)
   Name: GetRayCollisionSphere
   Return type: RayCollision
   Description: Get collision info between ray and sphere
   Param[1]: ray (type: Ray)
   Param[2]: center (type: Vector3)
   Param[3]: radius (type: float)
-Function 496: GetRayCollisionBox() (2 input parameters)
+Function 497: GetRayCollisionBox() (2 input parameters)
   Name: GetRayCollisionBox
   Return type: RayCollision
   Description: Get collision info between ray and box
   Param[1]: ray (type: Ray)
   Param[2]: box (type: BoundingBox)
-Function 497: GetRayCollisionMesh() (3 input parameters)
+Function 498: GetRayCollisionMesh() (3 input parameters)
   Name: GetRayCollisionMesh
   Return type: RayCollision
   Description: Get collision info between ray and mesh
   Param[1]: ray (type: Ray)
   Param[2]: mesh (type: Mesh)
   Param[3]: transform (type: Matrix)
-Function 498: GetRayCollisionTriangle() (4 input parameters)
+Function 499: GetRayCollisionTriangle() (4 input parameters)
   Name: GetRayCollisionTriangle
   Return type: RayCollision
   Description: Get collision info between ray and triangle
@@ -4176,7 +3553,7 @@ Function 498: GetRayCollisionTriangle() (4 input parameters)
   Param[2]: p1 (type: Vector3)
   Param[3]: p2 (type: Vector3)
   Param[4]: p3 (type: Vector3)
-Function 499: GetRayCollisionQuad() (5 input parameters)
+Function 500: GetRayCollisionQuad() (5 input parameters)
   Name: GetRayCollisionQuad
   Return type: RayCollision
   Description: Get collision info between ray and quad
@@ -4185,158 +3562,158 @@ Function 499: GetRayCollisionQuad() (5 input parameters)
   Param[3]: p2 (type: Vector3)
   Param[4]: p3 (type: Vector3)
   Param[5]: p4 (type: Vector3)
-Function 500: InitAudioDevice() (0 input parameters)
+Function 501: InitAudioDevice() (0 input parameters)
   Name: InitAudioDevice
   Return type: void
   Description: Initialize audio device and context
   No input parameters
-Function 501: CloseAudioDevice() (0 input parameters)
+Function 502: CloseAudioDevice() (0 input parameters)
   Name: CloseAudioDevice
   Return type: void
   Description: Close the audio device and context
   No input parameters
-Function 502: IsAudioDeviceReady() (0 input parameters)
+Function 503: IsAudioDeviceReady() (0 input parameters)
   Name: IsAudioDeviceReady
   Return type: bool
   Description: Check if audio device has been initialized successfully
   No input parameters
-Function 503: SetMasterVolume() (1 input parameters)
+Function 504: SetMasterVolume() (1 input parameters)
   Name: SetMasterVolume
   Return type: void
   Description: Set master volume (listener)
   Param[1]: volume (type: float)
-Function 504: GetMasterVolume() (0 input parameters)
+Function 505: GetMasterVolume() (0 input parameters)
   Name: GetMasterVolume
   Return type: float
   Description: Get master volume (listener)
   No input parameters
-Function 505: LoadWave() (1 input parameters)
+Function 506: LoadWave() (1 input parameters)
   Name: LoadWave
   Return type: Wave
   Description: Load wave data from file
   Param[1]: fileName (type: const char *)
-Function 506: LoadWaveFromMemory() (3 input parameters)
+Function 507: LoadWaveFromMemory() (3 input parameters)
   Name: LoadWaveFromMemory
   Return type: Wave
   Description: Load wave from memory buffer, fileType refers to extension: i.e. '.wav'
   Param[1]: fileType (type: const char *)
   Param[2]: fileData (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 507: IsWaveReady() (1 input parameters)
+Function 508: IsWaveReady() (1 input parameters)
   Name: IsWaveReady
   Return type: bool
   Description: Checks if wave data is ready
   Param[1]: wave (type: Wave)
-Function 508: LoadSound() (1 input parameters)
+Function 509: LoadSound() (1 input parameters)
   Name: LoadSound
   Return type: Sound
   Description: Load sound from file
   Param[1]: fileName (type: const char *)
-Function 509: LoadSoundFromWave() (1 input parameters)
+Function 510: LoadSoundFromWave() (1 input parameters)
   Name: LoadSoundFromWave
   Return type: Sound
   Description: Load sound from wave data
   Param[1]: wave (type: Wave)
-Function 510: LoadSoundAlias() (1 input parameters)
+Function 511: LoadSoundAlias() (1 input parameters)
   Name: LoadSoundAlias
   Return type: Sound
   Description: Create a new sound that shares the same sample data as the source sound, does not own the sound data
   Param[1]: source (type: Sound)
-Function 511: IsSoundReady() (1 input parameters)
+Function 512: IsSoundReady() (1 input parameters)
   Name: IsSoundReady
   Return type: bool
   Description: Checks if a sound is ready
   Param[1]: sound (type: Sound)
-Function 512: UpdateSound() (3 input parameters)
+Function 513: UpdateSound() (3 input parameters)
   Name: UpdateSound
   Return type: void
   Description: Update sound buffer with new data
   Param[1]: sound (type: Sound)
   Param[2]: data (type: const void *)
   Param[3]: sampleCount (type: int)
-Function 513: UnloadWave() (1 input parameters)
+Function 514: UnloadWave() (1 input parameters)
   Name: UnloadWave
   Return type: void
   Description: Unload wave data
   Param[1]: wave (type: Wave)
-Function 514: UnloadSound() (1 input parameters)
+Function 515: UnloadSound() (1 input parameters)
   Name: UnloadSound
   Return type: void
   Description: Unload sound
   Param[1]: sound (type: Sound)
-Function 515: UnloadSoundAlias() (1 input parameters)
+Function 516: UnloadSoundAlias() (1 input parameters)
   Name: UnloadSoundAlias
   Return type: void
   Description: Unload a sound alias (does not deallocate sample data)
   Param[1]: alias (type: Sound)
-Function 516: ExportWave() (2 input parameters)
+Function 517: ExportWave() (2 input parameters)
   Name: ExportWave
   Return type: bool
   Description: Export wave data to file, returns true on success
   Param[1]: wave (type: Wave)
   Param[2]: fileName (type: const char *)
-Function 517: ExportWaveAsCode() (2 input parameters)
+Function 518: ExportWaveAsCode() (2 input parameters)
   Name: ExportWaveAsCode
   Return type: bool
   Description: Export wave sample data to code (.h), returns true on success
   Param[1]: wave (type: Wave)
   Param[2]: fileName (type: const char *)
-Function 518: PlaySound() (1 input parameters)
+Function 519: PlaySound() (1 input parameters)
   Name: PlaySound
   Return type: void
   Description: Play a sound
   Param[1]: sound (type: Sound)
-Function 519: StopSound() (1 input parameters)
+Function 520: StopSound() (1 input parameters)
   Name: StopSound
   Return type: void
   Description: Stop playing a sound
   Param[1]: sound (type: Sound)
-Function 520: PauseSound() (1 input parameters)
+Function 521: PauseSound() (1 input parameters)
   Name: PauseSound
   Return type: void
   Description: Pause a sound
   Param[1]: sound (type: Sound)
-Function 521: ResumeSound() (1 input parameters)
+Function 522: ResumeSound() (1 input parameters)
   Name: ResumeSound
   Return type: void
   Description: Resume a paused sound
   Param[1]: sound (type: Sound)
-Function 522: IsSoundPlaying() (1 input parameters)
+Function 523: IsSoundPlaying() (1 input parameters)
   Name: IsSoundPlaying
   Return type: bool
   Description: Check if a sound is currently playing
   Param[1]: sound (type: Sound)
-Function 523: SetSoundVolume() (2 input parameters)
+Function 524: SetSoundVolume() (2 input parameters)
   Name: SetSoundVolume
   Return type: void
   Description: Set volume for a sound (1.0 is max level)
   Param[1]: sound (type: Sound)
   Param[2]: volume (type: float)
-Function 524: SetSoundPitch() (2 input parameters)
+Function 525: SetSoundPitch() (2 input parameters)
   Name: SetSoundPitch
   Return type: void
   Description: Set pitch for a sound (1.0 is base level)
   Param[1]: sound (type: Sound)
   Param[2]: pitch (type: float)
-Function 525: SetSoundPan() (2 input parameters)
+Function 526: SetSoundPan() (2 input parameters)
   Name: SetSoundPan
   Return type: void
   Description: Set pan for a sound (0.5 is center)
   Param[1]: sound (type: Sound)
   Param[2]: pan (type: float)
-Function 526: WaveCopy() (1 input parameters)
+Function 527: WaveCopy() (1 input parameters)
   Name: WaveCopy
   Return type: Wave
   Description: Copy a wave to a new wave
   Param[1]: wave (type: Wave)
-Function 527: WaveCrop() (3 input parameters)
+Function 528: WaveCrop() (3 input parameters)
   Name: WaveCrop
   Return type: void
   Description: Crop a wave to defined frames range
   Param[1]: wave (type: Wave *)
   Param[2]: initFrame (type: int)
   Param[3]: finalFrame (type: int)
-Function 528: WaveFormat() (4 input parameters)
+Function 529: WaveFormat() (4 input parameters)
   Name: WaveFormat
   Return type: void
   Description: Convert wave data to desired format
@@ -4344,203 +3721,203 @@ Function 528: WaveFormat() (4 input parameters)
   Param[2]: sampleRate (type: int)
   Param[3]: sampleSize (type: int)
   Param[4]: channels (type: int)
-Function 529: LoadWaveSamples() (1 input parameters)
+Function 530: LoadWaveSamples() (1 input parameters)
   Name: LoadWaveSamples
   Return type: float *
   Description: Load samples data from wave as a 32bit float data array
   Param[1]: wave (type: Wave)
-Function 530: UnloadWaveSamples() (1 input parameters)
+Function 531: UnloadWaveSamples() (1 input parameters)
   Name: UnloadWaveSamples
   Return type: void
   Description: Unload samples data loaded with LoadWaveSamples()
   Param[1]: samples (type: float *)
-Function 531: LoadMusicStream() (1 input parameters)
+Function 532: LoadMusicStream() (1 input parameters)
   Name: LoadMusicStream
   Return type: Music
   Description: Load music stream from file
   Param[1]: fileName (type: const char *)
-Function 532: LoadMusicStreamFromMemory() (3 input parameters)
+Function 533: LoadMusicStreamFromMemory() (3 input parameters)
   Name: LoadMusicStreamFromMemory
   Return type: Music
   Description: Load music stream from data
   Param[1]: fileType (type: const char *)
   Param[2]: data (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 533: IsMusicReady() (1 input parameters)
+Function 534: IsMusicReady() (1 input parameters)
   Name: IsMusicReady
   Return type: bool
   Description: Checks if a music stream is ready
   Param[1]: music (type: Music)
-Function 534: UnloadMusicStream() (1 input parameters)
+Function 535: UnloadMusicStream() (1 input parameters)
   Name: UnloadMusicStream
   Return type: void
   Description: Unload music stream
   Param[1]: music (type: Music)
-Function 535: PlayMusicStream() (1 input parameters)
+Function 536: PlayMusicStream() (1 input parameters)
   Name: PlayMusicStream
   Return type: void
   Description: Start music playing
   Param[1]: music (type: Music)
-Function 536: IsMusicStreamPlaying() (1 input parameters)
+Function 537: IsMusicStreamPlaying() (1 input parameters)
   Name: IsMusicStreamPlaying
   Return type: bool
   Description: Check if music is playing
   Param[1]: music (type: Music)
-Function 537: UpdateMusicStream() (1 input parameters)
+Function 538: UpdateMusicStream() (1 input parameters)
   Name: UpdateMusicStream
   Return type: void
   Description: Updates buffers for music streaming
   Param[1]: music (type: Music)
-Function 538: StopMusicStream() (1 input parameters)
+Function 539: StopMusicStream() (1 input parameters)
   Name: StopMusicStream
   Return type: void
   Description: Stop music playing
   Param[1]: music (type: Music)
-Function 539: PauseMusicStream() (1 input parameters)
+Function 540: PauseMusicStream() (1 input parameters)
   Name: PauseMusicStream
   Return type: void
   Description: Pause music playing
   Param[1]: music (type: Music)
-Function 540: ResumeMusicStream() (1 input parameters)
+Function 541: ResumeMusicStream() (1 input parameters)
   Name: ResumeMusicStream
   Return type: void
   Description: Resume playing paused music
   Param[1]: music (type: Music)
-Function 541: SeekMusicStream() (2 input parameters)
+Function 542: SeekMusicStream() (2 input parameters)
   Name: SeekMusicStream
   Return type: void
   Description: Seek music to a position (in seconds)
   Param[1]: music (type: Music)
   Param[2]: position (type: float)
-Function 542: SetMusicVolume() (2 input parameters)
+Function 543: SetMusicVolume() (2 input parameters)
   Name: SetMusicVolume
   Return type: void
   Description: Set volume for music (1.0 is max level)
   Param[1]: music (type: Music)
   Param[2]: volume (type: float)
-Function 543: SetMusicPitch() (2 input parameters)
+Function 544: SetMusicPitch() (2 input parameters)
   Name: SetMusicPitch
   Return type: void
   Description: Set pitch for a music (1.0 is base level)
   Param[1]: music (type: Music)
   Param[2]: pitch (type: float)
-Function 544: SetMusicPan() (2 input parameters)
+Function 545: SetMusicPan() (2 input parameters)
   Name: SetMusicPan
   Return type: void
   Description: Set pan for a music (0.5 is center)
   Param[1]: music (type: Music)
   Param[2]: pan (type: float)
-Function 545: GetMusicTimeLength() (1 input parameters)
+Function 546: GetMusicTimeLength() (1 input parameters)
   Name: GetMusicTimeLength
   Return type: float
   Description: Get music time length (in seconds)
   Param[1]: music (type: Music)
-Function 546: GetMusicTimePlayed() (1 input parameters)
+Function 547: GetMusicTimePlayed() (1 input parameters)
   Name: GetMusicTimePlayed
   Return type: float
   Description: Get current music time played (in seconds)
   Param[1]: music (type: Music)
-Function 547: LoadAudioStream() (3 input parameters)
+Function 548: LoadAudioStream() (3 input parameters)
   Name: LoadAudioStream
   Return type: AudioStream
   Description: Load audio stream (to stream raw audio pcm data)
   Param[1]: sampleRate (type: unsigned int)
   Param[2]: sampleSize (type: unsigned int)
   Param[3]: channels (type: unsigned int)
-Function 548: IsAudioStreamReady() (1 input parameters)
+Function 549: IsAudioStreamReady() (1 input parameters)
   Name: IsAudioStreamReady
   Return type: bool
   Description: Checks if an audio stream is ready
   Param[1]: stream (type: AudioStream)
-Function 549: UnloadAudioStream() (1 input parameters)
+Function 550: UnloadAudioStream() (1 input parameters)
   Name: UnloadAudioStream
   Return type: void
   Description: Unload audio stream and free memory
   Param[1]: stream (type: AudioStream)
-Function 550: UpdateAudioStream() (3 input parameters)
+Function 551: UpdateAudioStream() (3 input parameters)
   Name: UpdateAudioStream
   Return type: void
   Description: Update audio stream buffers with data
   Param[1]: stream (type: AudioStream)
   Param[2]: data (type: const void *)
   Param[3]: frameCount (type: int)
-Function 551: IsAudioStreamProcessed() (1 input parameters)
+Function 552: IsAudioStreamProcessed() (1 input parameters)
   Name: IsAudioStreamProcessed
   Return type: bool
   Description: Check if any audio stream buffers requires refill
   Param[1]: stream (type: AudioStream)
-Function 552: PlayAudioStream() (1 input parameters)
+Function 553: PlayAudioStream() (1 input parameters)
   Name: PlayAudioStream
   Return type: void
   Description: Play audio stream
   Param[1]: stream (type: AudioStream)
-Function 553: PauseAudioStream() (1 input parameters)
+Function 554: PauseAudioStream() (1 input parameters)
   Name: PauseAudioStream
   Return type: void
   Description: Pause audio stream
   Param[1]: stream (type: AudioStream)
-Function 554: ResumeAudioStream() (1 input parameters)
+Function 555: ResumeAudioStream() (1 input parameters)
   Name: ResumeAudioStream
   Return type: void
   Description: Resume audio stream
   Param[1]: stream (type: AudioStream)
-Function 555: IsAudioStreamPlaying() (1 input parameters)
+Function 556: IsAudioStreamPlaying() (1 input parameters)
   Name: IsAudioStreamPlaying
   Return type: bool
   Description: Check if audio stream is playing
   Param[1]: stream (type: AudioStream)
-Function 556: StopAudioStream() (1 input parameters)
+Function 557: StopAudioStream() (1 input parameters)
   Name: StopAudioStream
   Return type: void
   Description: Stop audio stream
   Param[1]: stream (type: AudioStream)
-Function 557: SetAudioStreamVolume() (2 input parameters)
+Function 558: SetAudioStreamVolume() (2 input parameters)
   Name: SetAudioStreamVolume
   Return type: void
   Description: Set volume for audio stream (1.0 is max level)
   Param[1]: stream (type: AudioStream)
   Param[2]: volume (type: float)
-Function 558: SetAudioStreamPitch() (2 input parameters)
+Function 559: SetAudioStreamPitch() (2 input parameters)
   Name: SetAudioStreamPitch
   Return type: void
   Description: Set pitch for audio stream (1.0 is base level)
   Param[1]: stream (type: AudioStream)
   Param[2]: pitch (type: float)
-Function 559: SetAudioStreamPan() (2 input parameters)
+Function 560: SetAudioStreamPan() (2 input parameters)
   Name: SetAudioStreamPan
   Return type: void
   Description: Set pan for audio stream (0.5 is centered)
   Param[1]: stream (type: AudioStream)
   Param[2]: pan (type: float)
-Function 560: SetAudioStreamBufferSizeDefault() (1 input parameters)
+Function 561: SetAudioStreamBufferSizeDefault() (1 input parameters)
   Name: SetAudioStreamBufferSizeDefault
   Return type: void
   Description: Default size for new audio streams
   Param[1]: size (type: int)
-Function 561: SetAudioStreamCallback() (2 input parameters)
+Function 562: SetAudioStreamCallback() (2 input parameters)
   Name: SetAudioStreamCallback
   Return type: void
   Description: Audio thread callback to request new data
   Param[1]: stream (type: AudioStream)
   Param[2]: callback (type: AudioCallback)
-Function 562: AttachAudioStreamProcessor() (2 input parameters)
+Function 563: AttachAudioStreamProcessor() (2 input parameters)
   Name: AttachAudioStreamProcessor
   Return type: void
   Description: Attach audio stream processor to stream, receives the samples as 'float'
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 563: DetachAudioStreamProcessor() (2 input parameters)
+Function 564: DetachAudioStreamProcessor() (2 input parameters)
   Name: DetachAudioStreamProcessor
   Return type: void
   Description: Detach audio stream processor from stream
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 564: AttachAudioMixedProcessor() (1 input parameters)
+Function 565: AttachAudioMixedProcessor() (1 input parameters)
   Name: AttachAudioMixedProcessor
   Return type: void
   Description: Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
   Param[1]: processor (type: AudioCallback)
-Function 565: DetachAudioMixedProcessor() (1 input parameters)
+Function 566: DetachAudioMixedProcessor() (1 input parameters)
   Name: DetachAudioMixedProcessor
   Return type: void
   Description: Detach audio stream processor from the entire audio pipeline
