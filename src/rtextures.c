@@ -4029,6 +4029,21 @@ void GenTextureMipmaps(Texture2D *texture)
     rlGenTextureMipmaps(texture->id, texture->width, texture->height, texture->format, &texture->mipmaps);
 }
 
+// Generate GPU mipmaps for all textures used in a model, as well
+// as enable appropriate texture filtering
+void GenModelMipmaps(Model model)
+{
+    for (int i = 0; i < model.materialCount; i++)
+    {
+        Material *material = &(model.materials[i]);
+        for (int m = 0; m < MAX_MATERIAL_MAPS; m++)
+        {
+            GenTextureMipmaps(&(material->maps[m].texture));
+            SetTextureFilter(material->maps[m].texture, TEXTURE_FILTER_TRILINEAR);
+        }
+    }
+}
+
 // Set texture scaling filter mode
 void SetTextureFilter(Texture2D texture, int filter)
 {
