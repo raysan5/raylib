@@ -1786,6 +1786,78 @@ const char *TextToPascal(const char *text)
     return buffer;
 }
 
+// Get snake case notation version of provided string
+// WARNING: Limited functionality, only basic characters set
+const char *TextToSnake(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Check for next separator to upper case another character
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        {
+            if ((text[j] >= 'A') && (text[j] <= 'Z'))
+            {
+                if (i >= 1)
+                {
+                    buffer[i] = '_';
+                    i++;
+                }
+                buffer[i] = text[j] + 32;
+            }
+            else
+            {
+                buffer[i] = text[j];
+            }
+        }
+    }
+
+    return buffer;
+}
+
+// Get Camel case notation version of provided string
+// WARNING: Limited functionality, only basic characters set
+const char *TextToCamel(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Lower case first character
+        if ((text[0] >= 'A') && (text[0] <= 'Z'))
+            buffer[0] = text[0] + 32;
+        else
+            buffer[0] = text[0];
+
+        // Check for next separator to upper case another character
+        for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        {
+            if (text[j] != '_')
+                buffer[i] = text[j];
+            else
+            {
+                j++;
+                if ((text[j] >= 'a') && (text[j] <= 'z'))
+                {
+                    if (i == 0)
+                    {
+                        buffer[i] = text[j];
+                    }
+                    else
+                    {
+                        buffer[i] = text[j] - 32;
+                    }
+                }
+            }
+        }
+    }
+
+    return buffer;
+}
+
 // Encode text codepoint into UTF-8 text
 // REQUIRES: memcpy()
 // WARNING: Allocated memory must be manually freed
