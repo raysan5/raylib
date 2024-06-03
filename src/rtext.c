@@ -1,119 +1,119 @@
 /**********************************************************************************************
-*
-*   rtext - Basic functions to load fonts and draw text
-*
-*   CONFIGURATION:
-*       #define SUPPORT_MODULE_RTEXT
-*           rtext module is included in the build
-*
-*       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
-*
-*       #define SUPPORT_FILEFORMAT_FNT
-*       #define SUPPORT_FILEFORMAT_TTF
-*       #define SUPPORT_FILEFORMAT_BDF
-*           Selected desired fileformats to be supported for loading. Some of those formats are
-*           supported by default, to remove support, just comment unrequired #define in this module
-*
-*       #define SUPPORT_FONT_ATLAS_WHITE_REC
-*           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
-*           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-*           drawing text and shapes with a single draw call [SetShapesTexture()].
-*
-*       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
-*           TextSplit() function static buffer max size
-*
-*       #define MAX_TEXTSPLIT_COUNT
-*           TextSplit() function static substrings pointers array (pointing to static buffer)
-*
-*   DEPENDENCIES:
-*       stb_truetype  - Load TTF file and rasterize characters data
-*       stb_rect_pack - Rectangles packing algorithms, required for font atlas generation
-*
-*
-*   LICENSE: zlib/libpng
-*
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
-*
-*   This software is provided "as-is", without any express or implied warranty. In no event
-*   will the authors be held liable for any damages arising from the use of this software.
-*
-*   Permission is granted to anyone to use this software for any purpose, including commercial
-*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
-*
-*     1. The origin of this software must not be misrepresented; you must not claim that you
-*     wrote the original software. If you use this software in a product, an acknowledgment
-*     in the product documentation would be appreciated but is not required.
-*
-*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
-*     as being the original software.
-*
-*     3. This notice may not be removed or altered from any source distribution.
-*
-**********************************************************************************************/
+ *
+ *   rtext - Basic functions to load fonts and draw text
+ *
+ *   CONFIGURATION:
+ *       #define SUPPORT_MODULE_RTEXT
+ *           rtext module is included in the build
+ *
+ *       #define SUPPORT_DEFAULT_FONT
+ *           Load default raylib font on initialization to be used by DrawText() and MeasureText().
+ *           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+ *
+ *       #define SUPPORT_FILEFORMAT_FNT
+ *       #define SUPPORT_FILEFORMAT_TTF
+ *       #define SUPPORT_FILEFORMAT_BDF
+ *           Selected desired fileformats to be supported for loading. Some of those formats are
+ *           supported by default, to remove support, just comment unrequired #define in this module
+ *
+ *       #define SUPPORT_FONT_ATLAS_WHITE_REC
+ *           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
+ *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
+ *           drawing text and shapes with a single draw call [SetShapesTexture()].
+ *
+ *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
+ *           TextSplit() function static buffer max size
+ *
+ *       #define MAX_TEXTSPLIT_COUNT
+ *           TextSplit() function static substrings pointers array (pointing to static buffer)
+ *
+ *   DEPENDENCIES:
+ *       stb_truetype  - Load TTF file and rasterize characters data
+ *       stb_rect_pack - Rectangles packing algorithms, required for font atlas generation
+ *
+ *
+ *   LICENSE: zlib/libpng
+ *
+ *   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+ *
+ *   This software is provided "as-is", without any express or implied warranty. In no event
+ *   will the authors be held liable for any damages arising from the use of this software.
+ *
+ *   Permission is granted to anyone to use this software for any purpose, including commercial
+ *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+ *
+ *     1. The origin of this software must not be misrepresented; you must not claim that you
+ *     wrote the original software. If you use this software in a product, an acknowledgment
+ *     in the product documentation would be appreciated but is not required.
+ *
+ *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+ *     as being the original software.
+ *
+ *     3. This notice may not be removed or altered from any source distribution.
+ *
+ **********************************************************************************************/
 
-#include "raylib.h"         // Declares module functions
+#include "raylib.h" // Declares module functions
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"     // Defines module configuration flags
+#include "config.h" // Defines module configuration flags
 #endif
 
 #if defined(SUPPORT_MODULE_RTEXT)
 
-#include "utils.h"          // Required for: LoadFile*()
-#include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
+#include "utils.h" // Required for: LoadFile*()
+#include "rlgl.h"  // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
 
-#include <stdlib.h>         // Required for: malloc(), free()
-#include <stdio.h>          // Required for: vsprintf()
-#include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy() [Used in TextReplace()], sscanf() [Used in LoadBMFont()]
-#include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
-#include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
+#include <stdlib.h> // Required for: malloc(), free()
+#include <stdio.h>  // Required for: vsprintf()
+#include <string.h> // Required for: strcmp(), strstr(), strcpy(), strncpy() [Used in TextReplace()], sscanf() [Used in LoadBMFont()]
+#include <stdarg.h> // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
+#include <ctype.h>  // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
 #if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-function"
-    #endif
+#if defined(__GNUC__) // GCC and Clang
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 
-    #define STB_RECT_PACK_IMPLEMENTATION
-    #include "external/stb_rect_pack.h"     // Required for: ttf/bdf font rectangles packaging
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "external/stb_rect_pack.h" // Required for: ttf/bdf font rectangles packaging
 
-    #include <math.h>   // Required for: ttf/bdf font rectangles packaging
+#include <math.h> // Required for: ttf/bdf font rectangles packaging
 
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic pop
-    #endif
+#if defined(__GNUC__) // GCC and Clang
+#pragma GCC diagnostic pop
+#endif
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-function"
-    #endif
+#if defined(__GNUC__) // GCC and Clang
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 
-    #define STBTT_STATIC
-    #define STB_TRUETYPE_IMPLEMENTATION
-    #include "external/stb_truetype.h"      // Required for: ttf font data reading
+#define STBTT_STATIC
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "external/stb_truetype.h" // Required for: ttf font data reading
 
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic pop
-    #endif
+#if defined(__GNUC__) // GCC and Clang
+#pragma GCC diagnostic pop
+#endif
 #endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef MAX_TEXT_BUFFER_LENGTH
-    #define MAX_TEXT_BUFFER_LENGTH              1024        // Size of internal static buffers used on some functions:
-                                                            // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
+#define MAX_TEXT_BUFFER_LENGTH 1024 // Size of internal static buffers used on some functions:
+                                    // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
 #endif
 #ifndef MAX_TEXT_UNICODE_CHARS
-    #define MAX_TEXT_UNICODE_CHARS               512        // Maximum number of unicode codepoints: GetCodepoints()
+#define MAX_TEXT_UNICODE_CHARS 512 // Maximum number of unicode codepoints: GetCodepoints()
 #endif
 #ifndef MAX_TEXTSPLIT_COUNT
-    #define MAX_TEXTSPLIT_COUNT                  128        // Maximum number of substrings to split: TextSplit()
+#define MAX_TEXTSPLIT_COUNT 128 // Maximum number of substrings to split: TextSplit()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -127,7 +127,7 @@
 #if defined(SUPPORT_DEFAULT_FONT)
 // Default font provided by raylib
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
-static Font defaultFont = { 0 };
+static Font defaultFont = {0};
 #endif
 
 //----------------------------------------------------------------------------------
@@ -139,12 +139,12 @@ static Font defaultFont = { 0 };
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
-static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
+static Font LoadBMFont(const char *fileName); // Load a BMFont file (AngelCode font file)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
-static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
+static int textLineSpacing = 2; // Text vertical line spacing in pixels (between lines)
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
@@ -158,13 +158,13 @@ extern void UnloadFontDefault(void);
 // Load raylib default font
 extern void LoadFontDefault(void)
 {
-    #define BIT_CHECK(a,b) ((a) & (1u << (b)))
+#define BIT_CHECK(a, b) ((a) & (1u << (b)))
 
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
-    defaultFont.glyphCount = 224;   // Number of chars included in our default font
-    defaultFont.glyphPadding = 0;   // Characters padding
+    defaultFont.glyphCount = 224; // Number of chars included in our default font
+    defaultFont.glyphPadding = 0; // Characters padding
 
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct Font without creating large global variables
@@ -212,31 +212,30 @@ extern void LoadFontDefault(void)
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000};
 
     int charsHeight = 10;
-    int charsDivisor = 1;    // Every char is separated from the consecutive by a 1 pixel divisor, horizontally and vertically
+    int charsDivisor = 1; // Every char is separated from the consecutive by a 1 pixel divisor, horizontally and vertically
 
-    int charsWidth[224] = { 3, 1, 4, 6, 5, 7, 6, 2, 3, 3, 5, 5, 2, 4, 1, 7, 5, 2, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 3, 4, 3, 6,
-                            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 5, 6, 5, 7, 6, 6, 6, 6, 6, 6, 7, 6, 7, 7, 6, 6, 6, 2, 7, 2, 3, 5,
-                            2, 5, 5, 5, 5, 5, 4, 5, 5, 1, 2, 5, 2, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 3, 1, 3, 4, 4,
-                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 5, 5, 5, 7, 1, 5, 3, 7, 3, 5, 4, 1, 7, 4, 3, 5, 3, 3, 2, 5, 6, 1, 2, 2, 3, 5, 6, 6, 6, 6,
-                            6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6, 3, 3, 3, 3, 7, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 4, 6,
-                            5, 5, 5, 5, 5, 5, 9, 5, 5, 5, 5, 5, 2, 2, 3, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 5 };
+    int charsWidth[224] = {3, 1, 4, 6, 5, 7, 6, 2, 3, 3, 5, 5, 2, 4, 1, 7, 5, 2, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 3, 4, 3, 6,
+                           7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 5, 6, 5, 7, 6, 6, 6, 6, 6, 6, 7, 6, 7, 7, 6, 6, 6, 2, 7, 2, 3, 5,
+                           2, 5, 5, 5, 5, 5, 4, 5, 5, 1, 2, 5, 2, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 3, 1, 3, 4, 4,
+                           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                           1, 1, 5, 5, 5, 7, 1, 5, 3, 7, 3, 5, 4, 1, 7, 4, 3, 5, 3, 3, 2, 5, 6, 1, 2, 2, 3, 5, 6, 6, 6, 6,
+                           6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6, 3, 3, 3, 3, 7, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 4, 6,
+                           5, 5, 5, 5, 5, 5, 9, 5, 5, 5, 5, 5, 2, 2, 3, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 5};
 
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
     Image imFont = {
-        .data = RL_CALLOC(128*128, 2),  // 2 bytes per pixel (gray + alpha)
+        .data = RL_CALLOC(128 * 128, 2), // 2 bytes per pixel (gray + alpha)
         .width = 128,
         .height = 128,
         .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
-    };
+        .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA};
 
     // Fill image.data with defaultFontData (convert from bit to pixel!)
-    for (int i = 0, counter = 0; i < imFont.width*imFont.height; i += 32)
+    for (int i = 0, counter = 0; i < imFont.width * imFont.height; i += 32)
     {
         for (int j = 31; j >= 0; j--)
         {
@@ -246,7 +245,8 @@ extern void LoadFontDefault(void)
                 // we must consider data as little-endian order (alpha + gray)
                 ((unsigned short *)imFont.data)[i + j] = 0xffff;
             }
-            else ((unsigned short *)imFont.data)[i + j] = 0x00ff;
+            else
+                ((unsigned short *)imFont.data)[i + j] = 0x00ff;
         }
 
         counter++;
@@ -259,8 +259,8 @@ extern void LoadFontDefault(void)
 
     // Allocate space for our characters info data
     // NOTE: This memory must be freed at end! --> Done by CloseWindow()
-    defaultFont.glyphs = (GlyphInfo *)RL_MALLOC(defaultFont.glyphCount*sizeof(GlyphInfo));
-    defaultFont.recs = (Rectangle *)RL_MALLOC(defaultFont.glyphCount*sizeof(Rectangle));
+    defaultFont.glyphs = (GlyphInfo *)RL_MALLOC(defaultFont.glyphCount * sizeof(GlyphInfo));
+    defaultFont.recs = (Rectangle *)RL_MALLOC(defaultFont.glyphCount * sizeof(Rectangle));
 
     int currentLine = 0;
     int currentPosX = charsDivisor;
@@ -268,10 +268,10 @@ extern void LoadFontDefault(void)
 
     for (int i = 0; i < defaultFont.glyphCount; i++)
     {
-        defaultFont.glyphs[i].value = 32 + i;  // First char is 32
+        defaultFont.glyphs[i].value = 32 + i; // First char is 32
 
         defaultFont.recs[i].x = (float)currentPosX;
-        defaultFont.recs[i].y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
+        defaultFont.recs[i].y = (float)(charsDivisor + currentLine * (charsHeight + charsDivisor));
         defaultFont.recs[i].width = (float)charsWidth[i];
         defaultFont.recs[i].height = (float)charsHeight;
 
@@ -280,13 +280,14 @@ extern void LoadFontDefault(void)
         if (testPosX >= defaultFont.texture.width)
         {
             currentLine++;
-            currentPosX = 2*charsDivisor + charsWidth[i];
+            currentPosX = 2 * charsDivisor + charsWidth[i];
             testPosX = currentPosX;
 
             defaultFont.recs[i].x = (float)charsDivisor;
-            defaultFont.recs[i].y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
+            defaultFont.recs[i].y = (float)(charsDivisor + currentLine * (charsHeight + charsDivisor));
         }
-        else currentPosX = testPosX;
+        else
+            currentPosX = testPosX;
 
         // NOTE: On default font character offsets and xAdvance are not required
         defaultFont.glyphs[i].offsetX = 0;
@@ -307,12 +308,13 @@ extern void LoadFontDefault(void)
 // Unload raylib default font
 extern void UnloadFontDefault(void)
 {
-    for (int i = 0; i < defaultFont.glyphCount; i++) UnloadImage(defaultFont.glyphs[i].image);
+    for (int i = 0; i < defaultFont.glyphCount; i++)
+        UnloadImage(defaultFont.glyphs[i].image);
     UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
     RL_FREE(defaultFont.recs);
 }
-#endif      // SUPPORT_DEFAULT_FONT
+#endif // SUPPORT_DEFAULT_FONT
 
 // Get the default font, useful to be used with extended parameters
 Font GetFontDefault()
@@ -320,7 +322,7 @@ Font GetFontDefault()
 #if defined(SUPPORT_DEFAULT_FONT)
     return defaultFont;
 #else
-    Font font = { 0 };
+    Font font = {0};
     return font;
 #endif
 }
@@ -330,35 +332,39 @@ Font LoadFont(const char *fileName)
 {
     // Default values for ttf font generation
 #ifndef FONT_TTF_DEFAULT_SIZE
-    #define FONT_TTF_DEFAULT_SIZE           32      // TTF font generation default char size (char-height)
+#define FONT_TTF_DEFAULT_SIZE 32 // TTF font generation default char size (char-height)
 #endif
 #ifndef FONT_TTF_DEFAULT_NUMCHARS
-    #define FONT_TTF_DEFAULT_NUMCHARS       95      // TTF font generation default charset: 95 glyphs (ASCII 32..126)
+#define FONT_TTF_DEFAULT_NUMCHARS 95 // TTF font generation default charset: 95 glyphs (ASCII 32..126)
 #endif
 #ifndef FONT_TTF_DEFAULT_FIRST_CHAR
-    #define FONT_TTF_DEFAULT_FIRST_CHAR     32      // TTF font generation default first char for image sprite font (32-Space)
+#define FONT_TTF_DEFAULT_FIRST_CHAR 32 // TTF font generation default first char for image sprite font (32-Space)
 #endif
 #ifndef FONT_TTF_DEFAULT_CHARS_PADDING
-    #define FONT_TTF_DEFAULT_CHARS_PADDING   4      // TTF font generation default chars padding
+#define FONT_TTF_DEFAULT_CHARS_PADDING 4 // TTF font generation default chars padding
 #endif
 
-    Font font = { 0 };
+    Font font = {0};
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
+    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf"))
+        font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    if (IsFileExtension(fileName, ".fnt")) font = LoadBMFont(fileName);
+        if (IsFileExtension(fileName, ".fnt"))
+        font = LoadBMFont(fileName);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
-    if (IsFileExtension(fileName, ".bdf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
+        if (IsFileExtension(fileName, ".bdf"))
+        font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
     {
         Image image = LoadImage(fileName);
-        if (image.data != NULL) font = LoadFontFromImage(image, MAGENTA, FONT_TTF_DEFAULT_FIRST_CHAR);
+        if (image.data != NULL)
+            font = LoadFontFromImage(image, MAGENTA, FONT_TTF_DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
 
@@ -369,7 +375,7 @@ Font LoadFont(const char *fileName)
     }
     else
     {
-        SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
+        SetTextureFilter(font.texture, TEXTURE_FILTER_POINT); // By default, we set point filter (the best performance)
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", FONT_TTF_DEFAULT_SIZE, FONT_TTF_DEFAULT_NUMCHARS);
     }
 
@@ -381,7 +387,7 @@ Font LoadFont(const char *fileName)
 // if array is NULL, default char set is selected 32..126
 Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount)
 {
-    Font font = { 0 };
+    Font font = {0};
 
     // Loading file to memory
     int dataSize = 0;
@@ -394,7 +400,8 @@ Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepoi
 
         UnloadFileData(fileData);
     }
-    else font = GetFontDefault();
+    else
+        font = GetFontDefault();
 
     return font;
 }
@@ -403,10 +410,10 @@ Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepoi
 Font LoadFontFromImage(Image image, Color key, int firstChar)
 {
 #ifndef MAX_GLYPHS_FROM_IMAGE
-    #define MAX_GLYPHS_FROM_IMAGE   256     // Maximum number of glyphs supported on image scan
+#define MAX_GLYPHS_FROM_IMAGE 256 // Maximum number of glyphs supported on image scan
 #endif
 
-    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r) && (col1.g == col2.g) && (col1.b == col2.b) && (col1.a == col2.a))
+#define COLOR_EQUAL(col1, col2) ((col1.r == col2.r) && (col1.g == col2.g) && (col1.b == col2.b) && (col1.a == col2.a))
 
     Font font = GetFontDefault();
 
@@ -418,8 +425,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // We allocate a temporal arrays for chars data measures,
     // once we get the actual number of chars, we copy data to a sized arrays
-    int tempCharValues[MAX_GLYPHS_FROM_IMAGE] = { 0 };
-    Rectangle tempCharRecs[MAX_GLYPHS_FROM_IMAGE] = { 0 };
+    int tempCharValues[MAX_GLYPHS_FROM_IMAGE] = {0};
+    Rectangle tempCharRecs[MAX_GLYPHS_FROM_IMAGE] = {0};
 
     Color *pixels = LoadImageColors(image);
 
@@ -428,13 +435,16 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     {
         for (x = 0; x < image.width; x++)
         {
-            if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
+            if (!COLOR_EQUAL(pixels[y * image.width + x], key))
+                break;
         }
 
-        if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
+        if (!COLOR_EQUAL(pixels[y * image.width + x], key))
+            break;
     }
 
-    if ((x == 0) || (y == 0)) return font; // Security check
+    if ((x == 0) || (y == 0))
+        return font; // Security check
 
     charSpacing = x;
     lineSpacing = y;
@@ -442,7 +452,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int charHeight = 0;
     int j = 0;
 
-    while (!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
+    while (!COLOR_EQUAL(pixels[(lineSpacing + j) * image.width + charSpacing], key))
+        j++;
 
     charHeight = j;
 
@@ -452,20 +463,21 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int xPosToRead = charSpacing;
 
     // Parse image data to get rectangle sizes
-    while ((lineSpacing + lineToRead*(charHeight + lineSpacing)) < image.height)
+    while ((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
     {
         while ((xPosToRead < image.width) &&
-              !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
+               !COLOR_EQUAL((pixels[(lineSpacing + (charHeight + lineSpacing) * lineToRead) * image.width + xPosToRead]), key))
         {
             tempCharValues[index] = firstChar + index;
 
             tempCharRecs[index].x = (float)xPosToRead;
-            tempCharRecs[index].y = (float)(lineSpacing + lineToRead*(charHeight + lineSpacing));
+            tempCharRecs[index].y = (float)(lineSpacing + lineToRead * (charHeight + lineSpacing));
             tempCharRecs[index].height = (float)charHeight;
 
             int charWidth = 0;
 
-            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
+            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight + lineSpacing) * lineToRead) * image.width + xPosToRead + charWidth], key))
+                charWidth++;
 
             tempCharRecs[index].width = (float)charWidth;
 
@@ -480,7 +492,9 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using TEXTURE_FILTER_BILINEAR or TEXTURE_FILTER_TRILINEAR
-    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+    for (int i = 0; i < image.height * image.width; i++)
+        if (COLOR_EQUAL(pixels[i], key))
+            pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)
     Image fontClear = {
@@ -488,8 +502,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         .width = image.width,
         .height = image.height,
         .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
-    };
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8};
 
     // Set font with all data parsed from image
     font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
@@ -498,8 +511,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
-    font.glyphs = (GlyphInfo *)RL_MALLOC(font.glyphCount*sizeof(GlyphInfo));
-    font.recs = (Rectangle *)RL_MALLOC(font.glyphCount*sizeof(Rectangle));
+    font.glyphs = (GlyphInfo *)RL_MALLOC(font.glyphCount * sizeof(GlyphInfo));
+    font.recs = (Rectangle *)RL_MALLOC(font.glyphCount * sizeof(Rectangle));
 
     for (int i = 0; i < font.glyphCount; i++)
     {
@@ -517,7 +530,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         font.glyphs[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
     }
 
-    UnloadImage(fontClear);     // Unload processed image once converted to texture
+    UnloadImage(fontClear); // Unload processed image once converted to texture
 
     font.baseSize = (int)font.recs[0].height;
 
@@ -527,13 +540,13 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 // Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
 Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount)
 {
-    Font font = { 0 };
+    Font font = {0};
 
-    char fileExtLower[16] = { 0 };
+    char fileExtLower[16] = {0};
     strncpy(fileExtLower, TextToLower(fileType), 16 - 1);
 
     font.baseSize = fontSize;
-    font.glyphCount = (codepointCount > 0)? codepointCount : 95;
+    font.glyphCount = (codepointCount > 0) ? codepointCount : 95;
     font.glyphPadding = 0;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
@@ -545,7 +558,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
-    if (TextIsEqual(fileExtLower, ".bdf"))
+        if (TextIsEqual(fileExtLower, ".bdf"))
     {
         font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, font.glyphCount, &font.baseSize);
     }
@@ -574,7 +587,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
-    else font = GetFontDefault();
+    else
+        font = GetFontDefault();
 #else
     font = GetFontDefault();
 #endif
@@ -585,11 +599,11 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 // Check if a font is ready
 bool IsFontReady(Font font)
 {
-    return ((font.texture.id > 0) &&    // Validate OpenGL id fot font texture atlas
-            (font.baseSize > 0) &&      // Validate font size
-            (font.glyphCount > 0) &&    // Validate font contains some glyph
-            (font.recs != NULL) &&      // Validate font recs defining glyphs on texture atlas
-            (font.glyphs != NULL));     // Validate glyph data is loaded
+    return ((font.texture.id > 0) && // Validate OpenGL id fot font texture atlas
+            (font.baseSize > 0) &&   // Validate font size
+            (font.glyphCount > 0) && // Validate font contains some glyph
+            (font.recs != NULL) &&   // Validate font recs defining glyphs on texture atlas
+            (font.glyphs != NULL));  // Validate glyph data is loaded
 
     // NOTE: Further validations could be done to verify if recs count and glyphs count
     // match glyphCount and to verify that data contained is valid (glyphs values, metrics...)
@@ -602,16 +616,16 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
 #ifndef FONT_SDF_CHAR_PADDING
-    #define FONT_SDF_CHAR_PADDING            4      // SDF font generation char padding
+#define FONT_SDF_CHAR_PADDING 4 // SDF font generation char padding
 #endif
 #ifndef FONT_SDF_ON_EDGE_VALUE
-    #define FONT_SDF_ON_EDGE_VALUE         128      // SDF font generation on edge value
+#define FONT_SDF_ON_EDGE_VALUE 128 // SDF font generation on edge value
 #endif
 #ifndef FONT_SDF_PIXEL_DIST_SCALE
-    #define FONT_SDF_PIXEL_DIST_SCALE     64.0f     // SDF font generation pixel distance scale
+#define FONT_SDF_PIXEL_DIST_SCALE 64.0f // SDF font generation pixel distance scale
 #endif
 #ifndef FONT_BITMAP_ALPHA_THRESHOLD
-    #define FONT_BITMAP_ALPHA_THRESHOLD     80      // Bitmap (B&W) font generation alpha threshold
+#define FONT_BITMAP_ALPHA_THRESHOLD 80 // Bitmap (B&W) font generation alpha threshold
 #endif
 
     GlyphInfo *chars = NULL;
@@ -622,9 +636,9 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
     if (fileData != NULL)
     {
         bool genFontChars = false;
-        stbtt_fontinfo fontInfo = { 0 };
+        stbtt_fontinfo fontInfo = {0};
 
-        if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0))     // Initialize font for data reading
+        if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0)) // Initialize font for data reading
         {
             // Calculate font scale factor
             float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
@@ -635,14 +649,15 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
 
             // In case no chars count provided, default to 95
-            codepointCount = (codepointCount > 0)? codepointCount : 95;
+            codepointCount = (codepointCount > 0) ? codepointCount : 95;
 
             // Fill fontChars in case not provided externally
             // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
             if (codepoints == NULL)
             {
-                codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
-                for (int i = 0; i < codepointCount; i++) codepoints[i] = i + 32;
+                codepoints = (int *)RL_MALLOC(codepointCount * sizeof(int));
+                for (int i = 0; i < codepointCount; i++)
+                    codepoints[i] = i + 32;
                 genFontChars = true;
             }
 
@@ -652,7 +667,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
             for (int i = 0; i < codepointCount; i++)
             {
                 int chw = 0, chh = 0;   // Character width and height (on generation)
-                int ch = codepoints[i];  // Character value to get info for
+                int ch = codepoints[i]; // Character value to get info for
                 chars[i].value = ch;
 
                 //  Render a unicode codepoint to a bitmap
@@ -668,16 +683,22 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 {
                     switch (type)
                     {
-                        case FONT_DEFAULT:
-                        case FONT_BITMAP: chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY); break;
-                        case FONT_SDF: if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY); break;
-                        default: break;
+                    case FONT_DEFAULT:
+                    case FONT_BITMAP:
+                        chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+                        break;
+                    case FONT_SDF:
+                        if (ch != 32)
+                            chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+                        break;
+                    default:
+                        break;
                     }
 
-                    if (chars[i].image.data != NULL)    // Glyph data has been found in the font
+                    if (chars[i].image.data != NULL) // Glyph data has been found in the font
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-                        chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+                        chars[i].advanceX = (int)((float)chars[i].advanceX * scaleFactor);
 
                         // Load characters images
                         chars[i].image.width = chw;
@@ -685,7 +706,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                         chars[i].image.mipmaps = 1;
                         chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
 
-                        chars[i].offsetY += (int)((float)ascent*scaleFactor);
+                        chars[i].offsetY += (int)((float)ascent * scaleFactor);
                     }
 
                     // NOTE: We create an empty image for space character,
@@ -693,15 +714,14 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     if (ch == 32)
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-                        chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+                        chars[i].advanceX = (int)((float)chars[i].advanceX * scaleFactor);
 
                         Image imSpace = {
-                            .data = RL_CALLOC(chars[i].advanceX*fontSize, 2),
+                            .data = RL_CALLOC(chars[i].advanceX * fontSize, 2),
                             .width = chars[i].advanceX,
                             .height = fontSize,
                             .mipmaps = 1,
-                            .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
-                        };
+                            .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE};
 
                         chars[i].image = imSpace;
                     }
@@ -710,10 +730,12 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     {
                         // Aliased bitmap (black & white) font generation, avoiding anti-aliasing
                         // NOTE: For optimum results, bitmap font should be generated at base pixel size
-                        for (int p = 0; p < chw*chh; p++)
+                        for (int p = 0; p < chw * chh; p++)
                         {
-                            if (((unsigned char *)chars[i].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
-                            else ((unsigned char *)chars[i].image.data)[p] = 255;
+                            if (((unsigned char *)chars[i].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD)
+                                ((unsigned char *)chars[i].image.data)[p] = 0;
+                            else
+                                ((unsigned char *)chars[i].image.data)[p] = 255;
                         }
                     }
                 }
@@ -723,9 +745,11 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 }
             }
         }
-        else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
+        else
+            TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
 
-        if (genFontChars) RL_FREE(codepoints);
+        if (genFontChars)
+            RL_FREE(codepoints);
     }
 #endif
 
@@ -737,7 +761,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 #if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
 Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod)
 {
-    Image atlas = { 0 };
+    Image atlas = {0};
 
     if (glyphs == NULL)
     {
@@ -748,10 +772,10 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     *glyphRecs = NULL;
 
     // In case no chars count provided we suppose default of 95
-    glyphCount = (glyphCount > 0)? glyphCount : 95;
+    glyphCount = (glyphCount > 0) ? glyphCount : 95;
 
     // NOTE: Rectangles memory is loaded here!
-    Rectangle *recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
+    Rectangle *recs = (Rectangle *)RL_MALLOC(glyphCount * sizeof(Rectangle));
 
     // Calculate image size based on total glyph width and glyph row count
     int totalWidth = 0;
@@ -759,51 +783,52 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 
     for (int i = 0; i < glyphCount; i++)
     {
-        if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
-        totalWidth += glyphs[i].image.width + 2*padding;
+        if (glyphs[i].image.width > maxGlyphWidth)
+            maxGlyphWidth = glyphs[i].image.width;
+        totalWidth += glyphs[i].image.width + 2 * padding;
     }
 
-//#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
+// #define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
 #if defined(SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE)
     int rowCount = 0;
-    int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
+    int imageSize = 64; // Define minimum starting value to avoid unnecessary calculation steps for very small images
 
     // NOTE: maxGlyphWidth is maximum possible space left at the end of row
-    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount)
+    while (totalWidth > (imageSize - maxGlyphWidth) * rowCount)
     {
-        imageSize *= 2;                                 // Double the size of image (to keep POT)
-        rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
+        imageSize *= 2;                                  // Double the size of image (to keep POT)
+        rowCount = imageSize / (fontSize + 2 * padding); // Calculate new row count for the new image size
     }
 
-    atlas.width = imageSize;   // Atlas bitmap width
-    atlas.height = imageSize;  // Atlas bitmap height
+    atlas.width = imageSize;  // Atlas bitmap width
+    atlas.height = imageSize; // Atlas bitmap height
 #else
-    int paddedFontSize = fontSize + 2*padding;
+    int paddedFontSize = fontSize + 2 * padding;
     // No need for a so-conservative atlas generation
-    float totalArea = totalWidth*paddedFontSize*1.2f;
+    float totalArea = totalWidth * paddedFontSize * 1.2f;
     float imageMinSize = sqrtf(totalArea);
-    int imageSize = (int)powf(2, ceilf(logf(imageMinSize)/logf(2)));
+    int imageSize = (int)powf(2, ceilf(logf(imageMinSize) / logf(2)));
 
-    if (totalArea < ((imageSize*imageSize)/2))
+    if (totalArea < ((imageSize * imageSize) / 2))
     {
-        atlas.width = imageSize;    // Atlas bitmap width
-        atlas.height = imageSize/2; // Atlas bitmap height
+        atlas.width = imageSize;      // Atlas bitmap width
+        atlas.height = imageSize / 2; // Atlas bitmap height
     }
     else
     {
-        atlas.width = imageSize;   // Atlas bitmap width
-        atlas.height = imageSize;  // Atlas bitmap height
+        atlas.width = imageSize;  // Atlas bitmap width
+        atlas.height = imageSize; // Atlas bitmap height
     }
 #endif
 
-    atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);   // Create a bitmap to store characters (8 bpp)
+    atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width * atlas.height); // Create a bitmap to store characters (8 bpp)
     atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
 
     // DEBUG: We can see padding in the generated image setting a gray background...
-    //for (int i = 0; i < atlas.width*atlas.height; i++) ((unsigned char *)atlas.data)[i] = 100;
+    // for (int i = 0; i < atlas.width*atlas.height; i++) ((unsigned char *)atlas.data)[i] = 100;
 
-    if (packMethod == 0)   // Use basic packing algorithm
+    if (packMethod == 0) // Use basic packing algorithm
     {
         int offsetX = padding;
         int offsetY = padding;
@@ -812,14 +837,14 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         for (int i = 0; i < glyphCount; i++)
         {
             // Check remaining space for glyph
-            if (offsetX >= (atlas.width - glyphs[i].image.width - 2*padding))
+            if (offsetX >= (atlas.width - glyphs[i].image.width - 2 * padding))
             {
                 offsetX = padding;
 
                 // NOTE: Be careful on offsetY for SDF fonts, by default SDF
                 // use an internal padding of 4 pixels, it means char rectangle
                 // height is bigger than fontSize, it could be up to (fontSize + 8)
-                offsetY += (fontSize + 2*padding);
+                offsetY += (fontSize + 2 * padding);
 
                 if (offsetY > (atlas.height - fontSize - padding))
                 {
@@ -841,7 +866,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
             {
                 for (int x = 0; x < glyphs[i].image.width; x++)
                 {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
+                    ((unsigned char *)atlas.data)[(offsetY + y) * atlas.width + (offsetX + x)] = ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
                 }
             }
 
@@ -852,23 +877,23 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
             recs[i].height = (float)glyphs[i].image.height;
 
             // Move atlas position X for next character drawing
-            offsetX += (glyphs[i].image.width + 2*padding);
+            offsetX += (glyphs[i].image.width + 2 * padding);
         }
     }
-    else if (packMethod == 1)  // Use Skyline rect packing algorithm (stb_pack_rect)
+    else if (packMethod == 1) // Use Skyline rect packing algorithm (stb_pack_rect)
     {
         stbrp_context *context = (stbrp_context *)RL_MALLOC(sizeof(*context));
-        stbrp_node *nodes = (stbrp_node *)RL_MALLOC(glyphCount*sizeof(*nodes));
+        stbrp_node *nodes = (stbrp_node *)RL_MALLOC(glyphCount * sizeof(*nodes));
 
         stbrp_init_target(context, atlas.width, atlas.height, nodes, glyphCount);
-        stbrp_rect *rects = (stbrp_rect *)RL_MALLOC(glyphCount*sizeof(stbrp_rect));
+        stbrp_rect *rects = (stbrp_rect *)RL_MALLOC(glyphCount * sizeof(stbrp_rect));
 
         // Fill rectangles for packaging
         for (int i = 0; i < glyphCount; i++)
         {
             rects[i].id = i;
-            rects[i].w = glyphs[i].image.width + 2*padding;
-            rects[i].h = glyphs[i].image.height + 2*padding;
+            rects[i].w = glyphs[i].image.width + 2 * padding;
+            rects[i].h = glyphs[i].image.height + 2 * padding;
         }
 
         // Package rectangles into atlas
@@ -889,11 +914,12 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 {
                     for (int x = 0; x < glyphs[i].image.width; x++)
                     {
-                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
+                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y) * atlas.width + (rects[i].x + padding + x)] = ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
                     }
                 }
             }
-            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", i);
+            else
+                TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", i);
         }
 
         RL_FREE(rects);
@@ -905,7 +931,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
     // useful to use as the white texture to draw shapes with raylib, using this rectangle
     // shapes and text can be backed into a single draw call: SetShapesTexture()
-    for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
+    for (int i = 0, k = atlas.width * atlas.height - 1; i < 3; i++)
     {
         ((unsigned char *)atlas.data)[k - 0] = 255;
         ((unsigned char *)atlas.data)[k - 1] = 255;
@@ -915,9 +941,9 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 #endif
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
-    unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
+    unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width * atlas.height * sizeof(unsigned char) * 2); // Two channels
 
-    for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
+    for (int i = 0, k = 0; i < atlas.width * atlas.height; i++, k += 2)
     {
         dataGrayAlpha[k] = 255;
         dataGrayAlpha[k + 1] = ((unsigned char *)atlas.data)[i];
@@ -938,7 +964,8 @@ void UnloadFontData(GlyphInfo *glyphs, int glyphCount)
 {
     if (glyphs != NULL)
     {
-        for (int i = 0; i < glyphCount; i++) UnloadImage(glyphs[i].image);
+        for (int i = 0; i < glyphCount; i++)
+            UnloadImage(glyphs[i].image);
 
         RL_FREE(glyphs);
     }
@@ -964,13 +991,13 @@ bool ExportFontAsCode(Font font, const char *fileName)
     bool success = false;
 
 #ifndef TEXT_BYTES_PER_LINE
-    #define TEXT_BYTES_PER_LINE     20
+#define TEXT_BYTES_PER_LINE 20
 #endif
 
-    #define MAX_FONT_DATA_SIZE      1024*1024       // 1 MB
+#define MAX_FONT_DATA_SIZE 1024 * 1024 // 1 MB
 
     // Get file name from path
-    char fileNamePascal[256] = { 0 };
+    char fileNamePascal[256] = {0};
     strncpy(fileNamePascal, TextToPascal(GetFileNameWithoutExt(fileName)), 256 - 1);
 
     // NOTE: Text data buffer size is estimated considering image data size in bytes
@@ -1000,11 +1027,12 @@ bool ExportFontAsCode(Font font, const char *fileName)
     // Support font export and initialization
     // NOTE: This mechanism is highly coupled to raylib
     Image image = LoadImageFromTexture(font.texture);
-    if (image.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) TRACELOG(LOG_WARNING, "Font export as code: Font image format is not GRAY+ALPHA!");
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA)
+        TRACELOG(LOG_WARNING, "Font export as code: Font image format is not GRAY+ALPHA!");
     int imageDataSize = GetPixelDataSize(image.width, image.height, image.format);
 
     // Image data is usually GRAYSCALE + ALPHA and can be reduced to GRAYSCALE
-    //ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
+    // ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
 #define SUPPORT_COMPRESSED_FONT_ATLAS
 #if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
@@ -1021,7 +1049,8 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// Font image pixels data compressed (DEFLATE)\n");
     byteCount += sprintf(txtData + byteCount, "// NOTE: Original pixel data simplified to GRAYSCALE\n");
     byteCount += sprintf(txtData + byteCount, "static unsigned char fontData_%s[COMPRESSED_DATA_SIZE_FONT_%s] = { ", fileNamePascal, TextToUpper(fileNamePascal));
-    for (int i = 0; i < compDataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%02x,\n    " : "0x%02x, "), compData[i]);
+    for (int i = 0; i < compDataSize - 1; i++)
+        byteCount += sprintf(txtData + byteCount, ((i % TEXT_BYTES_PER_LINE == 0) ? "0x%02x,\n    " : "0x%02x, "), compData[i]);
     byteCount += sprintf(txtData + byteCount, "0x%02x };\n\n", compData[compDataSize - 1]);
     RL_FREE(compData);
 #else
@@ -1029,7 +1058,8 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// Font image pixels data\n");
     byteCount += sprintf(txtData + byteCount, "// NOTE: 2 bytes per pixel, GRAY + ALPHA channels\n");
     byteCount += sprintf(txtData + byteCount, "static unsigned char fontImageData_%s[%i] = { ", fileNamePascal, imageDataSize);
-    for (int i = 0; i < imageDataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%02x,\n    " : "0x%02x, "), ((unsigned char *)imFont.data)[i]);
+    for (int i = 0; i < imageDataSize - 1; i++)
+        byteCount += sprintf(txtData + byteCount, ((i % TEXT_BYTES_PER_LINE == 0) ? "0x%02x,\n    " : "0x%02x, "), ((unsigned char *)imFont.data)[i]);
     byteCount += sprintf(txtData + byteCount, "0x%02x };\n\n", ((unsigned char *)imFont.data)[imageDataSize - 1]);
 #endif
 
@@ -1079,7 +1109,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     // that data is already available as global arrays, we two options to assign that data:
     //  - 1. Data copy. This option consumes more memory and Font MUST be unloaded by user, requiring additional code
     //  - 2. Data assignment. This option consumes less memory and Font MUST NOT be unloaded by user because data is on protected DATA segment
-//#define SUPPORT_FONT_DATA_COPY
+// #define SUPPORT_FONT_DATA_COPY
 #if defined(SUPPORT_FONT_DATA_COPY)
     byteCount += sprintf(txtData + byteCount, "    // Copy glyph recs data from global fontRecs\n");
     byteCount += sprintf(txtData + byteCount, "    // NOTE: Required to avoid issues if trying to free font\n");
@@ -1106,8 +1136,10 @@ bool ExportFontAsCode(Font font, const char *fileName)
 
     RL_FREE(txtData);
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Font as code exported successfully", fileName);
-    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export font as code", fileName);
+    if (success != 0)
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Font as code exported successfully", fileName);
+    else
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export font as code", fileName);
 
     return success;
 }
@@ -1116,11 +1148,13 @@ bool ExportFontAsCode(Font font, const char *fileName)
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    Color color = LIME;                         // Good FPS
+    Color color = LIME; // Good FPS
     int fps = GetFPS();
 
-    if ((fps < 30) && (fps >= 15)) color = ORANGE;  // Warning FPS
-    else if (fps < 15) color = RED;             // Low FPS
+    if ((fps < 30) && (fps >= 15))
+        color = ORANGE; // Warning FPS
+    else if (fps < 15)
+        color = RED; // Low FPS
 
     DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, color);
 }
@@ -1133,11 +1167,12 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
     // Check if default font has been loaded
     if (GetFontDefault().texture.id != 0)
     {
-        Vector2 position = { (float)posX, (float)posY };
+        Vector2 position = {(float)posX, (float)posY};
 
-        int defaultFontSize = 10;   // Default Font chars height in pixel
-        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-        int spacing = fontSize/defaultFontSize;
+        int defaultFontSize = 10; // Default Font chars height in pixel
+        if (fontSize < defaultFontSize)
+            fontSize = defaultFontSize;
+        int spacing = fontSize / defaultFontSize;
 
         DrawTextEx(GetFontDefault(), text, position, (float)fontSize, (float)spacing, color);
     }
@@ -1147,14 +1182,15 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 // NOTE: chars spacing is NOT proportional to fontSize
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
-    if (font.texture.id == 0) font = GetFontDefault();  // Security check in case of not valid font
+    if (font.texture.id == 0)
+        font = GetFontDefault(); // Security check in case of not valid font
 
-    int size = TextLength(text);    // Total size in bytes of the text, scanned by codepoints in loop
+    int size = TextLength(text); // Total size in bytes of the text, scanned by codepoints in loop
 
-    float textOffsetY = 0;          // Offset between lines (on linebreak '\n')
-    float textOffsetX = 0.0f;       // Offset X to next character to draw
+    float textOffsetY = 0;    // Offset between lines (on linebreak '\n')
+    float textOffsetX = 0.0f; // Offset X to next character to draw
 
-    float scaleFactor = fontSize/font.baseSize;         // Character quad scaling factor
+    float scaleFactor = fontSize / font.baseSize; // Character quad scaling factor
 
     for (int i = 0; i < size;)
     {
@@ -1173,14 +1209,16 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
+                DrawTextCodepoint(font, codepoint, (Vector2){position.x + textOffsetX, position.y + textOffsetY}, fontSize, tint);
             }
 
-            if (font.glyphs[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
-            else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
+            if (font.glyphs[index].advanceX == 0)
+                textOffsetX += ((float)font.recs[index].width * scaleFactor + spacing);
+            else
+                textOffsetX += ((float)font.glyphs[index].advanceX * scaleFactor + spacing);
         }
 
-        i += codepointByteCount;   // Move text bytes counter to next codepoint
+        i += codepointByteCount; // Move text bytes counter to next codepoint
     }
 }
 
@@ -1189,11 +1227,11 @@ void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, 
 {
     rlPushMatrix();
 
-        rlTranslatef(position.x, position.y, 0.0f);
-        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-        rlTranslatef(-origin.x, -origin.y, 0.0f);
+    rlTranslatef(position.x, position.y, 0.0f);
+    rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+    rlTranslatef(-origin.x, -origin.y, 0.0f);
 
-        DrawTextEx(font, text, (Vector2){ 0.0f, 0.0f }, fontSize, spacing, tint);
+    DrawTextEx(font, text, (Vector2){0.0f, 0.0f}, fontSize, spacing, tint);
 
     rlPopMatrix();
 }
@@ -1204,31 +1242,31 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
     // Character index position in sprite font
     // NOTE: In case a codepoint is not available in the font, index returned points to '?'
     int index = GetGlyphIndex(font, codepoint);
-    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
+    float scaleFactor = fontSize / font.baseSize; // Character quad scaling factor
 
     // Character destination rectangle on screen
     // NOTE: We consider glyphPadding on drawing
-    Rectangle dstRec = { position.x + font.glyphs[index].offsetX*scaleFactor - (float)font.glyphPadding*scaleFactor,
-                      position.y + font.glyphs[index].offsetY*scaleFactor - (float)font.glyphPadding*scaleFactor,
-                      (font.recs[index].width + 2.0f*font.glyphPadding)*scaleFactor,
-                      (font.recs[index].height + 2.0f*font.glyphPadding)*scaleFactor };
+    Rectangle dstRec = {position.x + font.glyphs[index].offsetX * scaleFactor - (float)font.glyphPadding * scaleFactor,
+                        position.y + font.glyphs[index].offsetY * scaleFactor - (float)font.glyphPadding * scaleFactor,
+                        (font.recs[index].width + 2.0f * font.glyphPadding) * scaleFactor,
+                        (font.recs[index].height + 2.0f * font.glyphPadding) * scaleFactor};
 
     // Character source rectangle from font texture atlas
     // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
-    Rectangle srcRec = { font.recs[index].x - (float)font.glyphPadding, font.recs[index].y - (float)font.glyphPadding,
-                         font.recs[index].width + 2.0f*font.glyphPadding, font.recs[index].height + 2.0f*font.glyphPadding };
+    Rectangle srcRec = {font.recs[index].x - (float)font.glyphPadding, font.recs[index].y - (float)font.glyphPadding,
+                        font.recs[index].width + 2.0f * font.glyphPadding, font.recs[index].height + 2.0f * font.glyphPadding};
 
     // Draw the character texture on the screen
-    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
+    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){0, 0}, 0.0f, tint);
 }
 
 // Draw multiple character (codepoints)
 void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint)
 {
-    float textOffsetY = 0;          // Offset between lines (on linebreak '\n')
-    float textOffsetX = 0.0f;       // Offset X to next character to draw
+    float textOffsetY = 0;    // Offset between lines (on linebreak '\n')
+    float textOffsetX = 0.0f; // Offset X to next character to draw
 
-    float scaleFactor = fontSize/font.baseSize;         // Character quad scaling factor
+    float scaleFactor = fontSize / font.baseSize; // Character quad scaling factor
 
     for (int i = 0; i < codepointCount; i++)
     {
@@ -1244,11 +1282,13 @@ void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Ve
         {
             if ((codepoints[i] != ' ') && (codepoints[i] != '\t'))
             {
-                DrawTextCodepoint(font, codepoints[i], (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
+                DrawTextCodepoint(font, codepoints[i], (Vector2){position.x + textOffsetX, position.y + textOffsetY}, fontSize, tint);
             }
 
-            if (font.glyphs[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
-            else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
+            if (font.glyphs[index].advanceX == 0)
+                textOffsetX += ((float)font.recs[index].width * scaleFactor + spacing);
+            else
+                textOffsetX += ((float)font.glyphs[index].advanceX * scaleFactor + spacing);
         }
     }
 }
@@ -1262,14 +1302,15 @@ void SetTextLineSpacing(int spacing)
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {
-    Vector2 textSize = { 0.0f, 0.0f };
+    Vector2 textSize = {0.0f, 0.0f};
 
     // Check if default font has been loaded
     if (GetFontDefault().texture.id != 0)
     {
-        int defaultFontSize = 10;   // Default Font chars height in pixel
-        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-        int spacing = fontSize/defaultFontSize;
+        int defaultFontSize = 10; // Default Font chars height in pixel
+        if (fontSize < defaultFontSize)
+            fontSize = defaultFontSize;
+        int spacing = fontSize / defaultFontSize;
 
         textSize = MeasureTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing);
     }
@@ -1280,22 +1321,23 @@ int MeasureText(const char *text, int fontSize)
 // Measure string size for Font
 Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {
-    Vector2 textSize = { 0 };
+    Vector2 textSize = {0};
 
-    if ((font.texture.id == 0) || (text == NULL)) return textSize; // Security check
+    if ((font.texture.id == 0) || (text == NULL))
+        return textSize; // Security check
 
-    int size = TextLength(text);    // Get size in bytes of text
-    int tempByteCounter = 0;        // Used to count longer text line num chars
+    int size = TextLength(text); // Get size in bytes of text
+    int tempByteCounter = 0;     // Used to count longer text line num chars
     int byteCounter = 0;
 
     float textWidth = 0.0f;
-    float tempTextWidth = 0.0f;     // Used to count longer text line width
+    float tempTextWidth = 0.0f; // Used to count longer text line width
 
     float textHeight = fontSize;
-    float scaleFactor = fontSize/(float)font.baseSize;
+    float scaleFactor = fontSize / (float)font.baseSize;
 
-    int letter = 0;                 // Current character
-    int index = 0;                  // Index position in sprite font
+    int letter = 0; // Current character
+    int index = 0;  // Index position in sprite font
 
     for (int i = 0; i < size;)
     {
@@ -1309,12 +1351,15 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
         if (letter != '\n')
         {
-            if (font.glyphs[index].advanceX != 0) textWidth += font.glyphs[index].advanceX;
-            else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
+            if (font.glyphs[index].advanceX != 0)
+                textWidth += font.glyphs[index].advanceX;
+            else
+                textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
         }
         else
         {
-            if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+            if (tempTextWidth < textWidth)
+                tempTextWidth = textWidth;
             byteCounter = 0;
             textWidth = 0;
 
@@ -1322,12 +1367,14 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
             textHeight += (fontSize + textLineSpacing);
         }
 
-        if (tempByteCounter < byteCounter) tempByteCounter = byteCounter;
+        if (tempByteCounter < byteCounter)
+            tempByteCounter = byteCounter;
     }
 
-    if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+    if (tempTextWidth < textWidth)
+        tempTextWidth = textWidth;
 
-    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing);
+    textSize.x = tempTextWidth * scaleFactor + (float)((tempByteCounter - 1) * spacing);
     textSize.y = textHeight;
 
     return textSize;
@@ -1341,12 +1388,13 @@ int GetGlyphIndex(Font font, int codepoint)
 
 #define SUPPORT_UNORDERED_CHARSET
 #if defined(SUPPORT_UNORDERED_CHARSET)
-    int fallbackIndex = 0;      // Get index of fallback glyph '?'
+    int fallbackIndex = 0; // Get index of fallback glyph '?'
 
     // Look for character index in the unordered charset
     for (int i = 0; i < font.glyphCount; i++)
     {
-        if (font.glyphs[i].value == 63) fallbackIndex = i;
+        if (font.glyphs[i].value == 63)
+            fallbackIndex = i;
 
         if (font.glyphs[i].value == codepoint)
         {
@@ -1355,7 +1403,8 @@ int GetGlyphIndex(Font font, int codepoint)
         }
     }
 
-    if ((index == 0) && (font.glyphs[0].value != codepoint)) index = fallbackIndex;
+    if ((index == 0) && (font.glyphs[0].value != codepoint))
+        index = fallbackIndex;
 #else
     index = codepoint - 32;
 #endif
@@ -1367,7 +1416,7 @@ int GetGlyphIndex(Font font, int codepoint)
 // NOTE: If codepoint is not found in the font it fallbacks to '?'
 GlyphInfo GetGlyphInfo(Font font, int codepoint)
 {
-    GlyphInfo info = { 0 };
+    GlyphInfo info = {0};
 
     info = font.glyphs[GetGlyphIndex(font, codepoint)];
 
@@ -1378,7 +1427,7 @@ GlyphInfo GetGlyphInfo(Font font, int codepoint)
 // NOTE: If codepoint is not found in the font it fallbacks to '?'
 Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 {
-    Rectangle rec = { 0 };
+    Rectangle rec = {0};
 
     rec = font.recs[GetGlyphIndex(font, codepoint)];
 
@@ -1397,7 +1446,8 @@ unsigned int TextLength(const char *text)
     {
         // NOTE: Alternative: use strlen(text)
 
-        while (*text++) length++;
+        while (*text++)
+            length++;
     }
 
     return length;
@@ -1408,15 +1458,15 @@ unsigned int TextLength(const char *text)
 const char *TextFormat(const char *text, ...)
 {
 #ifndef MAX_TEXTFORMAT_BUFFERS
-    #define MAX_TEXTFORMAT_BUFFERS 4        // Maximum number of static buffers for text formatting
+#define MAX_TEXTFORMAT_BUFFERS 4 // Maximum number of static buffers for text formatting
 #endif
 
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
-    static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = {0};
     static int index = 0;
 
     char *currentBuffer = buffers[index];
-    memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
+    memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH); // Clear buffer before using
 
     va_list args;
     va_start(args, text);
@@ -1431,8 +1481,9 @@ const char *TextFormat(const char *text, ...)
         sprintf(truncBuffer, "...");
     }
 
-    index += 1;     // Move to next buffer for next function call
-    if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
+    index += 1; // Move to next buffer for next function call
+    if (index >= MAX_TEXTFORMAT_BUFFERS)
+        index = 0;
 
     return currentBuffer;
 }
@@ -1446,13 +1497,15 @@ int TextToInteger(const char *text)
 
     if ((text[0] == '+') || (text[0] == '-'))
     {
-        if (text[0] == '-') sign = -1;
+        if (text[0] == '-')
+            sign = -1;
         text++;
     }
 
-    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10 + (int)(text[i] - '0');
+    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++)
+        value = value * 10 + (int)(text[i] - '0');
 
-    return value*sign;
+    return value * sign;
 }
 
 // Get float value from text
@@ -1465,21 +1518,24 @@ float TextToFloat(const char *text)
 
     if ((text[0] == '+') || (text[0] == '-'))
     {
-        if (text[0] == '-') sign = -1.0f;
+        if (text[0] == '-')
+            sign = -1.0f;
         text++;
     }
 
     int i = 0;
-    for (; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
+    for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
+        value = value * 10.0f + (float)(text[i] - '0');
 
-    if (text[i++] != '.') value *= sign;
+    if (text[i++] != '.')
+        value *= sign;
     else
     {
         float divisor = 10.0f;
         for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
         {
-            value += ((float)(text[i] - '0'))/divisor;
-            divisor = divisor*10.0f;
+            value += ((float)(text[i] - '0')) / divisor;
+            divisor = divisor * 10.0f;
         }
     }
 
@@ -1519,7 +1575,8 @@ bool TextIsEqual(const char *text1, const char *text2)
 
     if ((text1 != NULL) && (text2 != NULL))
     {
-        if (strcmp(text1, text2) == 0) result = true;
+        if (strcmp(text1, text2) == 0)
+            result = true;
     }
 
     return result;
@@ -1528,7 +1585,7 @@ bool TextIsEqual(const char *text1, const char *text2)
 // Get a piece of a text string
 const char *TextSubtext(const char *text, int position, int length)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     int textLength = TextLength(text);
@@ -1539,11 +1596,12 @@ const char *TextSubtext(const char *text, int position, int length)
         length = 0;
     }
 
-    if (length >= textLength) length = textLength;
+    if (length >= textLength)
+        length = textLength;
 
     // NOTE: Alternative: memcpy(buffer, text + position, length)
 
-    for (int c = 0 ; c < length ; c++)
+    for (int c = 0; c < length; c++)
     {
         *(buffer + c) = *(text + position);
         text++;
@@ -1560,30 +1618,34 @@ const char *TextSubtext(const char *text, int position, int length)
 char *TextReplace(const char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
-    if (!text || !replace || !by) return NULL;
+    if (!text || !replace || !by)
+        return NULL;
 
     char *result = NULL;
 
-    char *insertPoint = NULL;   // Next insert point
-    char *temp = NULL;          // Temp pointer
-    int replaceLen = 0;         // Replace string length of (the string to remove)
-    int byLen = 0;              // Replacement length (the string to replace by)
-    int lastReplacePos = 0;     // Distance between replace and end of last replace
-    int count = 0;              // Number of replacements
+    char *insertPoint = NULL; // Next insert point
+    char *temp = NULL;        // Temp pointer
+    int replaceLen = 0;       // Replace string length of (the string to remove)
+    int byLen = 0;            // Replacement length (the string to replace by)
+    int lastReplacePos = 0;   // Distance between replace and end of last replace
+    int count = 0;            // Number of replacements
 
     replaceLen = TextLength(replace);
-    if (replaceLen == 0) return NULL;  // Empty replace causes infinite loop during count
+    if (replaceLen == 0)
+        return NULL; // Empty replace causes infinite loop during count
 
     byLen = TextLength(by);
 
     // Count the number of replacements needed
-    insertPoint = (char*)text;
-    for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
+    insertPoint = (char *)text;
+    for (count = 0; (temp = strstr(insertPoint, replace)); count++)
+        insertPoint = temp + replaceLen;
 
     // Allocate returning string and point temp to it
-    temp = result = (char *)RL_MALLOC(TextLength(text) + (byLen - replaceLen)*count + 1);
+    temp = result = (char *)RL_MALLOC(TextLength(text) + (byLen - replaceLen) * count + 1);
 
-    if (!result) return NULL;   // Memory could not be allocated
+    if (!result)
+        return NULL; // Memory could not be allocated
 
     // First time through the loop, all the variable are set correctly from here on,
     //  - 'temp' points to the end of the result string
@@ -1613,11 +1675,14 @@ char *TextInsert(const char *text, const char *insert, int position)
 
     char *result = (char *)RL_MALLOC(textLen + insertLen + 1);
 
-    for (int i = 0; i < position; i++) result[i] = text[i];
-    for (int i = position; i < insertLen + position; i++) result[i] = insert[i];
-    for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i];
+    for (int i = 0; i < position; i++)
+        result[i] = text[i];
+    for (int i = position; i < insertLen + position; i++)
+        result[i] = insert[i];
+    for (int i = (insertLen + position); i < (textLen + insertLen); i++)
+        result[i] = text[i];
 
-    result[textLen + insertLen] = '\0';     // Make sure text string is valid!
+    result[textLen + insertLen] = '\0'; // Make sure text string is valid!
 
     return result;
 }
@@ -1626,7 +1691,7 @@ char *TextInsert(const char *text, const char *insert, int position)
 // REQUIRES: memset(), memcpy()
 const char *TextJoin(const char **textList, int count, const char *delimiter)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
     char *textPtr = buffer;
 
@@ -1666,8 +1731,8 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     //      1. Maximum number of possible split strings is set by MAX_TEXTSPLIT_COUNT
     //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
 
-    static const char *result[MAX_TEXTSPLIT_COUNT] = { NULL };
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static const char *result[MAX_TEXTSPLIT_COUNT] = {NULL};
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     result[0] = buffer;
@@ -1681,14 +1746,16 @@ const char **TextSplit(const char *text, char delimiter, int *count)
         for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
         {
             buffer[i] = text[i];
-            if (buffer[i] == '\0') break;
+            if (buffer[i] == '\0')
+                break;
             else if (buffer[i] == delimiter)
             {
-                buffer[i] = '\0';   // Set an end of string at this point
+                buffer[i] = '\0'; // Set an end of string at this point
                 result[counter] = buffer + i + 1;
                 counter++;
 
-                if (counter == MAX_TEXTSPLIT_COUNT) break;
+                if (counter == MAX_TEXTSPLIT_COUNT)
+                    break;
             }
         }
     }
@@ -1714,7 +1781,8 @@ int TextFindIndex(const char *text, const char *find)
 
     char *ptr = strstr(text, find);
 
-    if (ptr != NULL) position = (int)(ptr - text);
+    if (ptr != NULL)
+        position = (int)(ptr - text);
 
     return position;
 }
@@ -1724,15 +1792,17 @@ int TextFindIndex(const char *text, const char *find)
 // TODO: Support UTF-8 diacritics to upper-case, check codepoints
 const char *TextToUpper(const char *text)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
         for (int i = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
-            if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
-            else buffer[i] = text[i];
+            if ((text[i] >= 'a') && (text[i] <= 'z'))
+                buffer[i] = text[i] - 32;
+            else
+                buffer[i] = text[i];
         }
     }
 
@@ -1743,15 +1813,17 @@ const char *TextToUpper(const char *text)
 // WARNING: Limited functionality, only basic characters set
 const char *TextToLower(const char *text)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
         for (int i = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
-            if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
-            else buffer[i] = text[i];
+            if ((text[i] >= 'A') && (text[i] <= 'Z'))
+                buffer[i] = text[i] + 32;
+            else
+                buffer[i] = text[i];
         }
     }
 
@@ -1762,23 +1834,99 @@ const char *TextToLower(const char *text)
 // WARNING: Limited functionality, only basic characters set
 const char *TextToPascal(const char *text)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
         // Upper case first character
-        if ((text[0] >= 'a') && (text[0] <= 'z')) buffer[0] = text[0] - 32;
-        else buffer[0] = text[0];
+        if ((text[0] >= 'a') && (text[0] <= 'z'))
+            buffer[0] = text[0] - 32;
+        else
+            buffer[0] = text[0];
 
         // Check for next separator to upper case another character
         for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
         {
-            if (text[j] != '_') buffer[i] = text[j];
+            if (text[j] != '_')
+                buffer[i] = text[j];
             else
             {
                 j++;
-                if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
+                if ((text[j] >= 'a') && (text[j] <= 'z'))
+                    buffer[i] = text[j] - 32;
+            }
+        }
+    }
+
+    return buffer;
+}
+
+// Get snake case notation version of provided string
+// WARNING: Limited functionality, only basic characters set
+const char *TextToSnake(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Check for next separator to upper case another character
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        {
+            if ((text[j] >= 'A') && (text[j] <= 'Z'))
+            {
+                if (i >= 1)
+                {
+                    buffer[i] = '_';
+                    i++;
+                }
+                buffer[i] = text[j] + 32;
+            }
+            else
+            {
+                buffer[i] = text[j];
+            }
+        }
+    }
+
+    return buffer;
+}
+
+// Get Camel case notation version of provided string
+// WARNING: Limited functionality, only basic characters set
+const char *TextToCamel(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Lower case first character
+        if ((text[0] >= 'A') && (text[0] <= 'Z'))
+            buffer[0] = text[0] + 32;
+        else
+            buffer[0] = text[0];
+
+        // Check for next separator to upper case another character
+        for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        {
+            if (text[j] != '_')
+                buffer[i] = text[j];
+            else
+            {
+                j++;
+                if ((text[j] >= 'a') && (text[j] <= 'z'))
+                {
+                    if (i == 0)
+                    {
+                        buffer[i] = text[j];
+                    }
+                    else
+                    {
+                        buffer[i] = text[j] - 32;
+                    }
+                }
             }
         }
     }
@@ -1793,7 +1941,7 @@ char *LoadUTF8(const int *codepoints, int length)
 {
     // We allocate enough memory to fit all possible codepoints
     // NOTE: 5 bytes for every codepoint should be enough
-    char *text = (char *)RL_CALLOC(length*5, 1);
+    char *text = (char *)RL_CALLOC(length * 5, 1);
     const char *utf8 = NULL;
     int size = 0;
 
@@ -1807,7 +1955,8 @@ char *LoadUTF8(const int *codepoints, int length)
     // Resize memory to text length + string NULL terminator
     void *ptr = RL_REALLOC(text, size + 1);
 
-    if (ptr != NULL) text = (char *)ptr;
+    if (ptr != NULL)
+        text = (char *)ptr;
 
     return text;
 }
@@ -1836,8 +1985,9 @@ int *LoadCodepoints(const char *text, int *count)
     }
 
     // Re-allocate buffer to the actual number of codepoints loaded
-    int *temp = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
-    if (temp != NULL) codepoints = temp;
+    int *temp = (int *)RL_REALLOC(codepoints, codepointCount * sizeof(int));
+    if (temp != NULL)
+        codepoints = temp;
 
     *count = codepointCount;
 
@@ -1874,8 +2024,8 @@ int GetCodepointCount(const char *text)
 // NOTE: It uses a static array to store UTF-8 bytes
 const char *CodepointToUTF8(int codepoint, int *utf8Size)
 {
-    static char utf8[6] = { 0 };
-    int size = 0;   // Byte size of codepoint
+    static char utf8[6] = {0};
+    int size = 0; // Byte size of codepoint
 
     if (codepoint <= 0x7f)
     {
@@ -1891,7 +2041,7 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
     else if (codepoint <= 0xffff)
     {
         utf8[0] = (char)(((codepoint >> 12) & 0x0f) | 0xe0);
-        utf8[1] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
+        utf8[1] = (char)(((codepoint >> 6) & 0x3f) | 0x80);
         utf8[2] = (char)((codepoint & 0x3f) | 0x80);
         size = 3;
     }
@@ -1899,7 +2049,7 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
     {
         utf8[0] = (char)(((codepoint >> 18) & 0x07) | 0xf0);
         utf8[1] = (char)(((codepoint >> 12) & 0x3f) | 0x80);
-        utf8[2] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
+        utf8[2] = (char)(((codepoint >> 6) & 0x3f) | 0x80);
         utf8[3] = (char)((codepoint & 0x3f) | 0x80);
         size = 4;
     }
@@ -1908,7 +2058,7 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
 
     return utf8;
 }
-#endif      // SUPPORT_TEXT_MANIPULATION
+#endif // SUPPORT_TEXT_MANIPULATION
 
 // Get next codepoint in a UTF-8 encoded text, scanning until '\0' is found
 // When an invalid UTF-8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
@@ -1917,20 +2067,20 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
 // but that character is not supported by the default font in raylib
 int GetCodepoint(const char *text, int *codepointSize)
 {
-/*
-    UTF-8 specs from https://www.ietf.org/rfc/rfc3629.txt
+    /*
+        UTF-8 specs from https://www.ietf.org/rfc/rfc3629.txt
 
-    Char. number range  |        UTF-8 octet sequence
-      (hexadecimal)    |              (binary)
-    --------------------+---------------------------------------------
-    0000 0000-0000 007F | 0xxxxxxx
-    0000 0080-0000 07FF | 110xxxxx 10xxxxxx
-    0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
-    0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-*/
+        Char. number range  |        UTF-8 octet sequence
+          (hexadecimal)    |              (binary)
+        --------------------+---------------------------------------------
+        0000 0000-0000 007F | 0xxxxxxx
+        0000 0080-0000 07FF | 110xxxxx 10xxxxxx
+        0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
+        0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    */
     // NOTE: on decode errors we return as soon as possible
 
-    int codepoint = 0x3f;   // Codepoint (defaults to '?')
+    int codepoint = 0x3f;                 // Codepoint (defaults to '?')
     int octet = (unsigned char)(text[0]); // The first UTF8 octet
     *codepointSize = 1;
 
@@ -1946,7 +2096,11 @@ int GetCodepoint(const char *text, int *codepointSize)
         // [0]xC2-DF    [1]UTF8-tail(x80-BF)
         unsigned char octet1 = text[1];
 
-        if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *codepointSize = 2; return codepoint; } // Unexpected sequence
+        if ((octet1 == '\0') || ((octet1 >> 6) != 2))
+        {
+            *codepointSize = 2;
+            return codepoint;
+        } // Unexpected sequence
 
         if ((octet >= 0xc2) && (octet <= 0xdf))
         {
@@ -1960,11 +2114,19 @@ int GetCodepoint(const char *text, int *codepointSize)
         unsigned char octet1 = text[1];
         unsigned char octet2 = '\0';
 
-        if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *codepointSize = 2; return codepoint; } // Unexpected sequence
+        if ((octet1 == '\0') || ((octet1 >> 6) != 2))
+        {
+            *codepointSize = 2;
+            return codepoint;
+        } // Unexpected sequence
 
         octet2 = text[2];
 
-        if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *codepointSize = 3; return codepoint; } // Unexpected sequence
+        if ((octet2 == '\0') || ((octet2 >> 6) != 2))
+        {
+            *codepointSize = 3;
+            return codepoint;
+        } // Unexpected sequence
 
         // [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
         // [0]xE1-EC [1]UTF8-tail    [2]UTF8-tail(x80-BF)
@@ -1972,7 +2134,11 @@ int GetCodepoint(const char *text, int *codepointSize)
         // [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
 
         if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) ||
-            ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f)))) { *codepointSize = 2; return codepoint; }
+            ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f))))
+        {
+            *codepointSize = 2;
+            return codepoint;
+        }
 
         if ((octet >= 0xe0) && (octet <= 0xef))
         {
@@ -1983,28 +2149,45 @@ int GetCodepoint(const char *text, int *codepointSize)
     else if ((octet & 0xf8) == 0xf0)
     {
         // Four octets
-        if (octet > 0xf4) return codepoint;
+        if (octet > 0xf4)
+            return codepoint;
 
         unsigned char octet1 = text[1];
         unsigned char octet2 = '\0';
         unsigned char octet3 = '\0';
 
-        if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *codepointSize = 2; return codepoint; }  // Unexpected sequence
+        if ((octet1 == '\0') || ((octet1 >> 6) != 2))
+        {
+            *codepointSize = 2;
+            return codepoint;
+        } // Unexpected sequence
 
         octet2 = text[2];
 
-        if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *codepointSize = 3; return codepoint; }  // Unexpected sequence
+        if ((octet2 == '\0') || ((octet2 >> 6) != 2))
+        {
+            *codepointSize = 3;
+            return codepoint;
+        } // Unexpected sequence
 
         octet3 = text[3];
 
-        if ((octet3 == '\0') || ((octet3 >> 6) != 2)) { *codepointSize = 4; return codepoint; }  // Unexpected sequence
+        if ((octet3 == '\0') || ((octet3 >> 6) != 2))
+        {
+            *codepointSize = 4;
+            return codepoint;
+        } // Unexpected sequence
 
         // [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
         // [0]xF1-F3    [1]UTF8-tail    [2]UTF8-tail  [3]UTF8-tail
         // [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
 
         if (((octet == 0xf0) && !((octet1 >= 0x90) && (octet1 <= 0xbf))) ||
-            ((octet == 0xf4) && !((octet1 >= 0x80) && (octet1 <= 0x8f)))) { *codepointSize = 2; return codepoint; } // Unexpected sequence
+            ((octet == 0xf4) && !((octet1 >= 0x80) && (octet1 <= 0x8f))))
+        {
+            *codepointSize = 2;
+            return codepoint;
+        } // Unexpected sequence
 
         if (octet >= 0xf0)
         {
@@ -2013,7 +2196,8 @@ int GetCodepoint(const char *text, int *codepointSize)
         }
     }
 
-    if (codepoint > 0x10ffff) codepoint = 0x3f;     // Codepoints after U+10ffff are invalid
+    if (codepoint > 0x10ffff)
+        codepoint = 0x3f; // Codepoints after U+10ffff are invalid
 
     return codepoint;
 }
@@ -2022,28 +2206,37 @@ int GetCodepoint(const char *text, int *codepointSize)
 int GetCodepointNext(const char *text, int *codepointSize)
 {
     const char *ptr = text;
-    int codepoint = 0x3f;       // Codepoint (defaults to '?')
+    int codepoint = 0x3f; // Codepoint (defaults to '?')
     *codepointSize = 1;
 
     // Get current codepoint and bytes processed
     if (0xf0 == (0xf8 & ptr[0]))
     {
         // 4 byte UTF-8 codepoint
-        if (((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80) || ((ptr[3] & 0xC0) ^ 0x80)) { return codepoint; } // 10xxxxxx checks
+        if (((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80) || ((ptr[3] & 0xC0) ^ 0x80))
+        {
+            return codepoint;
+        } // 10xxxxxx checks
         codepoint = ((0x07 & ptr[0]) << 18) | ((0x3f & ptr[1]) << 12) | ((0x3f & ptr[2]) << 6) | (0x3f & ptr[3]);
         *codepointSize = 4;
     }
     else if (0xe0 == (0xf0 & ptr[0]))
     {
         // 3 byte UTF-8 codepoint */
-        if (((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80)) { return codepoint; } // 10xxxxxx checks
+        if (((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80))
+        {
+            return codepoint;
+        } // 10xxxxxx checks
         codepoint = ((0x0f & ptr[0]) << 12) | ((0x3f & ptr[1]) << 6) | (0x3f & ptr[2]);
         *codepointSize = 3;
     }
     else if (0xc0 == (0xe0 & ptr[0]))
     {
         // 2 byte UTF-8 codepoint
-        if ((ptr[1] & 0xC0) ^ 0x80) { return codepoint; } // 10xxxxxx checks
+        if ((ptr[1] & 0xC0) ^ 0x80)
+        {
+            return codepoint;
+        } // 10xxxxxx checks
         codepoint = ((0x1f & ptr[0]) << 6) | (0x3f & ptr[1]);
         *codepointSize = 2;
     }
@@ -2061,17 +2254,19 @@ int GetCodepointNext(const char *text, int *codepointSize)
 int GetCodepointPrevious(const char *text, int *codepointSize)
 {
     const char *ptr = text;
-    int codepoint = 0x3f;       // Codepoint (defaults to '?')
+    int codepoint = 0x3f; // Codepoint (defaults to '?')
     int cpSize = 0;
     *codepointSize = 0;
 
     // Move to previous codepoint
-    do ptr--;
-    while (((0x80 & ptr[0]) != 0) && ((0xc0 & ptr[0]) ==  0x80));
+    do
+        ptr--;
+    while (((0x80 & ptr[0]) != 0) && ((0xc0 & ptr[0]) == 0x80));
 
     codepoint = GetCodepointNext(ptr, &cpSize);
 
-    if (codepoint != 0) *codepointSize = cpSize;
+    if (codepoint != 0)
+        *codepointSize = cpSize;
 
     return codepoint;
 }
@@ -2086,7 +2281,9 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 static int GetLine(const char *origin, char *buffer, int maxLength)
 {
     int count = 0;
-    for (; count < maxLength - 1; count++) if (origin[count] == '\n') break;
+    for (; count < maxLength - 1; count++)
+        if (origin[count] == '\n')
+            break;
     memcpy(buffer, origin, count);
     buffer[count] = '\0';
     return count;
@@ -2098,12 +2295,12 @@ static int GetLine(const char *origin, char *buffer, int maxLength)
 // REQUIRES: strstr(), sscanf(), strrchr(), memcpy()
 static Font LoadBMFont(const char *fileName)
 {
-    #define MAX_BUFFER_SIZE       256
-    #define MAX_FONT_IMAGE_PAGES    8
+#define MAX_BUFFER_SIZE 256
+#define MAX_FONT_IMAGE_PAGES 8
 
-    Font font = { 0 };
+    Font font = {0};
 
-    char buffer[MAX_BUFFER_SIZE] = { 0 };
+    char buffer[MAX_BUFFER_SIZE] = {0};
     char *searchPoint = NULL;
 
     int fontSize = 0;
@@ -2112,15 +2309,16 @@ static Font LoadBMFont(const char *fileName)
     int imWidth = 0;
     int imHeight = 0;
     int pageCount = 1;
-    char imFileName[MAX_FONT_IMAGE_PAGES][129] = { 0 };
+    char imFileName[MAX_FONT_IMAGE_PAGES][129] = {0};
 
-    int base = 0;       // Useless data
-    int readBytes = 0;  // Data bytes read
-    int readVars = 0;   // Variables filled by sscanf()
+    int base = 0;      // Useless data
+    int readBytes = 0; // Data bytes read
+    int readVars = 0;  // Variables filled by sscanf()
 
     char *fileText = LoadFileText(fileName);
 
-    if (fileText == NULL) return font;
+    if (fileText == NULL)
+        return font;
 
     char *fileTextPtr = fileText;
 
@@ -2134,7 +2332,11 @@ static Font LoadBMFont(const char *fileName)
     readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i pages=%i", &fontSize, &base, &imWidth, &imHeight, &pageCount);
     fileTextPtr += (readBytes + 1);
 
-    if (readVars < 4) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
+    if (readVars < 4)
+    {
+        UnloadFileText(fileText);
+        return font;
+    } // Some data not available, file malformed
 
     if (pageCount > MAX_FONT_IMAGE_PAGES)
     {
@@ -2149,7 +2351,11 @@ static Font LoadBMFont(const char *fileName)
         readVars = sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName[i]);
         fileTextPtr += (readBytes + 1);
 
-        if (readVars < 1) { UnloadFileText(fileText); return font; } // No fileName read
+        if (readVars < 1)
+        {
+            UnloadFileText(fileText);
+            return font;
+        } // No fileName read
     }
 
     readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
@@ -2157,7 +2363,11 @@ static Font LoadBMFont(const char *fileName)
     readVars = sscanf(searchPoint, "count=%i", &glyphCount);
     fileTextPtr += (readBytes + 1);
 
-    if (readVars < 1) { UnloadFileText(fileText); return font; } // No glyphCount read
+    if (readVars < 1)
+    {
+        UnloadFileText(fileText);
+        return font;
+    } // No glyphCount read
 
     // Load all required images for further compose
     Image *imFonts = (Image *)RL_CALLOC(pageCount, sizeof(Image)); // Font atlases, multiple images
@@ -2170,14 +2380,13 @@ static Font LoadBMFont(const char *fileName)
         {
             // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
             Image imFontAlpha = {
-                .data = RL_CALLOC(imFonts[i].width*imFonts[i].height, 2),
+                .data = RL_CALLOC(imFonts[i].width * imFonts[i].height, 2),
                 .width = imFonts[i].width,
                 .height = imFonts[i].height,
                 .mipmaps = 1,
-                .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
-            };
+                .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA};
 
-            for (int p = 0, pi = 0; p < (imFonts[i].width*imFonts[i].height*2); p += 2, pi++)
+            for (int p = 0, pi = 0; p < (imFonts[i].width * imFonts[i].height * 2); p += 2, pi++)
             {
                 ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
                 ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi];
@@ -2189,19 +2398,20 @@ static Font LoadBMFont(const char *fileName)
     }
 
     Image fullFont = imFonts[0];
-    for (int i = 1; i < pageCount; i++) UnloadImage(imFonts[i]);
+    for (int i = 1; i < pageCount; i++)
+        UnloadImage(imFonts[i]);
 
     // If multiple atlas, then merge atlas
     // NOTE: WARNING: This process could be really slow!
     if (pageCount > 1)
     {
         // Resize font atlas to draw additional images
-        ImageResizeCanvas(&fullFont, imWidth, imHeight*pageCount, 0, 0, BLACK);
+        ImageResizeCanvas(&fullFont, imWidth, imHeight * pageCount, 0, 0, BLACK);
 
         for (int i = 1; i < pageCount; i++)
         {
-            Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
-            Rectangle destRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
+            Rectangle srcRec = {0.0f, 0.0f, (float)imWidth, (float)imHeight};
+            Rectangle destRec = {0.0f, (float)imHeight * (float)i, (float)imWidth, (float)imHeight};
             ImageDraw(&fullFont, imFonts[i], srcRec, destRec, WHITE);
         }
     }
@@ -2214,8 +2424,8 @@ static Font LoadBMFont(const char *fileName)
     font.baseSize = fontSize;
     font.glyphCount = glyphCount;
     font.glyphPadding = 0;
-    font.glyphs = (GlyphInfo *)RL_MALLOC(glyphCount*sizeof(GlyphInfo));
-    font.recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
+    font.glyphs = (GlyphInfo *)RL_MALLOC(glyphCount * sizeof(GlyphInfo));
+    font.recs = (Rectangle *)RL_MALLOC(glyphCount * sizeof(Rectangle));
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX, pageID;
 
@@ -2223,13 +2433,13 @@ static Font LoadBMFont(const char *fileName)
     {
         readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
         readVars = sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i page=%i",
-                       &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX, &pageID);
+                          &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX, &pageID);
         fileTextPtr += (readBytes + 1);
 
-        if (readVars == 9)  // Make sure all char data has been properly read
+        if (readVars == 9) // Make sure all char data has been properly read
         {
             // Get character rectangle in the font atlas texture
-            font.recs[i] = (Rectangle){ (float)charX, (float)charY + (float)imHeight*pageID, (float)charWidth, (float)charHeight };
+            font.recs[i] = (Rectangle){(float)charX, (float)charY + (float)imHeight * pageID, (float)charWidth, (float)charHeight};
 
             // Save data properly in sprite font
             font.glyphs[i].value = charId;
@@ -2256,7 +2466,8 @@ static Font LoadBMFont(const char *fileName)
         font = GetFontDefault();
         TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load texture, reverted to default font", fileName);
     }
-    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
+    else
+        TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
 
     return font;
 }
@@ -2268,61 +2479,67 @@ static Font LoadBMFont(const char *fileName)
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)
 {
-    if (hex >= '0' && hex <= '9') return hex - '0';
-    else if (hex >= 'a' && hex <= 'f') return hex - 'a' + 10;
-    else if (hex >= 'A' && hex <= 'F') return hex - 'A' + 10;
-    else return 0;
+    if (hex >= '0' && hex <= '9')
+        return hex - '0';
+    else if (hex >= 'a' && hex <= 'f')
+        return hex - 'a' + 10;
+    else if (hex >= 'A' && hex <= 'F')
+        return hex - 'A' + 10;
+    else
+        return 0;
 }
 
 // Load font data for further use
 // NOTE: Requires BDF font memory data
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize)
 {
-    #define MAX_BUFFER_SIZE 256
+#define MAX_BUFFER_SIZE 256
 
-    char buffer[MAX_BUFFER_SIZE] = { 0 };
+    char buffer[MAX_BUFFER_SIZE] = {0};
 
     GlyphInfo *glyphs = NULL;
     bool genFontChars = false;
 
-    int totalReadBytes = 0;         // Data bytes read (total)
-    int readBytes = 0;              // Data bytes read (line)
-    int readVars = 0;               // Variables filled by sscanf()
+    int totalReadBytes = 0; // Data bytes read (total)
+    int readBytes = 0;      // Data bytes read (line)
+    int readVars = 0;       // Variables filled by sscanf()
 
-    const char *fileText = (const char*)fileData;
+    const char *fileText = (const char *)fileData;
     const char *fileTextPtr = fileText;
 
-    bool fontMalformed = false;     // Is the font malformed
-    bool fontStarted = false;       // Has font started (STARTFONT)
-    int fontBBw = 0;                // Font base character bounding box width
-    int fontBBh = 0;                // Font base character bounding box height
-    int fontBBxoff0 = 0;            // Font base character bounding box X0 offset
-    int fontBByoff0 = 0;            // Font base character bounding box Y0 offset
-    int fontAscent = 0;             // Font ascent
+    bool fontMalformed = false; // Is the font malformed
+    bool fontStarted = false;   // Has font started (STARTFONT)
+    int fontBBw = 0;            // Font base character bounding box width
+    int fontBBh = 0;            // Font base character bounding box height
+    int fontBBxoff0 = 0;        // Font base character bounding box X0 offset
+    int fontBByoff0 = 0;        // Font base character bounding box Y0 offset
+    int fontAscent = 0;         // Font ascent
 
-    bool charStarted = false;       // Has character started (STARTCHAR)
-    bool charBitmapStarted = false; // Has bitmap data started (BITMAP)
-    int charBitmapNextRow = 0;      // Y position for the next row of bitmap data
-    int charEncoding = -1;          // The unicode value of the character (-1 if not set)
-    int charBBw = 0;                // Character bounding box width
-    int charBBh = 0;                // Character bounding box height
-    int charBBxoff0 = 0;            // Character bounding box X0 offset
-    int charBByoff0 = 0;            // Character bounding box Y0 offset
-    int charDWidthX = 0;            // Character advance X
-    int charDWidthY = 0;            // Character advance Y (unused)
+    bool charStarted = false;        // Has character started (STARTCHAR)
+    bool charBitmapStarted = false;  // Has bitmap data started (BITMAP)
+    int charBitmapNextRow = 0;       // Y position for the next row of bitmap data
+    int charEncoding = -1;           // The unicode value of the character (-1 if not set)
+    int charBBw = 0;                 // Character bounding box width
+    int charBBh = 0;                 // Character bounding box height
+    int charBBxoff0 = 0;             // Character bounding box X0 offset
+    int charBByoff0 = 0;             // Character bounding box Y0 offset
+    int charDWidthX = 0;             // Character advance X
+    int charDWidthY = 0;             // Character advance Y (unused)
     GlyphInfo *charGlyphInfo = NULL; // Pointer to output glyph info (NULL if not set)
 
-    if (fileData == NULL) return glyphs;
+    if (fileData == NULL)
+        return glyphs;
 
     // In case no chars count provided, default to 95
-    codepointCount = (codepointCount > 0)? codepointCount : 95;
+    codepointCount = (codepointCount > 0) ? codepointCount : 95;
 
     // Fill fontChars in case not provided externally
     // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
     if (codepoints == NULL)
     {
-        codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
-        for (int i = 0; i < codepointCount; i++) codepoints[i] = i + 32;
+        codepoints = (int *)RL_MALLOC(codepointCount * sizeof(int));
+        for (int i = 0; i < codepointCount; i++)
+            codepoints[i] = i + 32;
         genFontChars = true;
     }
 
@@ -2335,7 +2552,8 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
         fileTextPtr += (readBytes + 1);
 
         // Line: COMMENT
-        if (strstr(buffer, "COMMENT") != NULL) continue; // Ignore line
+        if (strstr(buffer, "COMMENT") != NULL)
+            continue; // Ignore line
 
         if (charStarted)
         {
@@ -2352,7 +2570,8 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
                 {
                     int pixelY = charBitmapNextRow++;
 
-                    if (pixelY >= charGlyphInfo->image.height) break;
+                    if (pixelY >= charGlyphInfo->image.height)
+                        break;
 
                     for (int x = 0; x < readBytes; x++)
                     {
@@ -2360,11 +2579,13 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
 
                         for (int bitX = 0; bitX < 4; bitX++)
                         {
-                            int pixelX = ((x*4) + bitX);
+                            int pixelX = ((x * 4) + bitX);
 
-                            if (pixelX >= charGlyphInfo->image.width) break;
+                            if (pixelX >= charGlyphInfo->image.width)
+                                break;
 
-                            if ((byte & (8 >> bitX)) > 0) ((unsigned char *)charGlyphInfo->image.data)[(pixelY*charGlyphInfo->image.width) + pixelX] = 255;
+                            if ((byte & (8 >> bitX)) > 0)
+                                ((unsigned char *)charGlyphInfo->image.data)[(pixelY * charGlyphInfo->image.width) + pixelX] = 255;
                         }
                     }
                 }
@@ -2415,7 +2636,7 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
                     charGlyphInfo->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
                     charGlyphInfo->advanceX = charDWidthX;
 
-                    charGlyphInfo->image.data = RL_CALLOC(charBBw*charBBh, 1);
+                    charGlyphInfo->image.data = RL_CALLOC(charBBw * charBBh, 1);
                     charGlyphInfo->image.width = charBBw;
                     charGlyphInfo->image.height = charBBh;
                     charGlyphInfo->image.mipmaps = 1;
@@ -2440,14 +2661,16 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
             // Line: SIZE
             if (strstr(buffer, "SIZE") != NULL)
             {
-                if (outFontSize != NULL) readVars = sscanf(buffer, "SIZE %i", outFontSize);
+                if (outFontSize != NULL)
+                    readVars = sscanf(buffer, "SIZE %i", outFontSize);
                 continue;
             }
 
             // PIXEL_SIZE
             if (strstr(buffer, "PIXEL_SIZE") != NULL)
             {
-                if (outFontSize != NULL) readVars = sscanf(buffer, "PIXEL_SIZE %i", outFontSize);
+                if (outFontSize != NULL)
+                    readVars = sscanf(buffer, "PIXEL_SIZE %i", outFontSize);
                 continue;
             }
 
@@ -2502,7 +2725,8 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
         }
     }
 
-    if (genFontChars) RL_FREE(codepoints);
+    if (genFontChars)
+        RL_FREE(codepoints);
 
     if (fontMalformed)
     {
@@ -2512,6 +2736,6 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
 
     return glyphs;
 }
-#endif      // SUPPORT_FILEFORMAT_BDF
+#endif // SUPPORT_FILEFORMAT_BDF
 
-#endif      // SUPPORT_MODULE_RTEXT
+#endif // SUPPORT_MODULE_RTEXT
