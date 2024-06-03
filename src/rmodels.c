@@ -508,6 +508,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 {
     if (sides < 3) sides = 3;
 
+    const float angle_step = 360.0f / sides;
+
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
@@ -517,43 +519,44 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             if (radiusTop > 0)
             {
                 // Draw Body -------------------------------------------------------------------------------------
-                for (int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < sides; i++)
                 {
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom); //Bottom Right
-                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*i*angle_step)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angle_step)*radiusBottom); //Bottom Right
+                    rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusTop, height, cosf(DEG2RAD*(i+1)*angle_step)*radiusTop); //Top Right
 
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop); //Top Left
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusTop, height, cosf(DEG2RAD*i*angle_step)*radiusTop); //Top Left
+                    rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*i*angle_step)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusTop, height, cosf(DEG2RAD*(i+1)*angle_step)*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
-                for (int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < sides; i++)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
-                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusTop, height, cosf(DEG2RAD*i*angle_step)*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusTop, height, cosf(DEG2RAD*(i+1)*angle_step)*radiusTop);
                 }
             }
             else
             {
                 // Draw Cone -------------------------------------------------------------------------------------
-                for (int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < sides; i++)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*i*angle_step)*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angle_step)*radiusBottom);
                 }
             }
 
             // Draw Base -----------------------------------------------------------------------------------------
-            for (int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < sides; i++)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angle_step)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*i*angle_step)*radiusBottom);
             }
+
         rlEnd();
     rlPopMatrix();
 }
@@ -623,25 +626,27 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 {
     if (sides < 3) sides = 3;
 
+    const float angle_step = 360.0f / sides;
+
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < sides; i++)
             {
-                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*i*angle_step)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angle_step)*radiusBottom);
 
-                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angle_step)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusTop, height, cosf(DEG2RAD*(i+1)*angle_step)*radiusTop);
 
-                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
-                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i+1)*angle_step)*radiusTop, height, cosf(DEG2RAD*(i+1)*angle_step)*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusTop, height, cosf(DEG2RAD*i*angle_step)*radiusTop);
 
-                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
-                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusTop, height, cosf(DEG2RAD*i*angle_step)*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*i*angle_step)*radiusBottom, 0, cosf(DEG2RAD*i*angle_step)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
