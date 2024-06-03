@@ -1842,14 +1842,7 @@ const char *TextToCamel(const char *text)
                 j++;
                 if ((text[j] >= 'a') && (text[j] <= 'z'))
                 {
-                    if (i == 0)
-                    {
-                        buffer[i] = text[j];
-                    }
-                    else
-                    {
-                        buffer[i] = text[j] - 32;
-                    }
+                    buffer[i] = text[j] - 32;
                 }
             }
         }
