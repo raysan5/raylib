@@ -4895,7 +4895,8 @@ static Model LoadGLTF(const char *fileName)
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
           - Supports basic animations
-          - Node hierarchy and mesh transforms are applied, but the hierarchy is flattened.
+          - Transforms, including parent-child relations, are applied on the mesh data, but the 
+            hierarchy is not kept (as it can't be represented).
           - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
             are turned into separate raylib Meshes.
 
@@ -4907,6 +4908,8 @@ static Model LoadGLTF(const char *fileName)
               > Texcoords: vec2: float
               > Colors: vec4: u8, u16, f32 (normalized)
               > Indices: u16, u32 (truncated to u16)
+          - Scenes defined in the glTF file are ignored. All nodes in the file
+            are used.
 
     ***********************************************************************************************/
 
@@ -5089,17 +5092,17 @@ static Model LoadGLTF(const char *fileName)
             if (!mesh)
                 continue;
 
-            cgltf_float world_transform[16];
-            cgltf_node_transform_world(node, world_transform);
+            cgltf_float worldTransform[16];
+            cgltf_node_transform_world(node, worldTransform);
 
-            Matrix world_matrix = {
-                world_transform[0], world_transform[4], world_transform[8], world_transform[12],
-                world_transform[1], world_transform[5], world_transform[9], world_transform[13],
-                world_transform[2], world_transform[6], world_transform[10], world_transform[14],
-                world_transform[3], world_transform[7], world_transform[11], world_transform[15]
+            Matrix worldMatrix = {
+                worldTransform[0], worldTransform[4], worldTransform[8], worldTransform[12],
+                worldTransform[1], worldTransform[5], worldTransform[9], worldTransform[13],
+                worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
+                worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
             };
 
-            Matrix world_matrix_normals = MatrixTranspose(MatrixInvert(world_matrix));
+            Matrix worldMatrixNormals = MatrixTranspose(MatrixInvert(worldMatrix));
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
@@ -5132,7 +5135,7 @@ static Model LoadGLTF(const char *fileName)
                             float *vertices = model.meshes[meshIndex].vertices;
                             for (int k = 0; k < attribute->count; k++)
                             {
-                                Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k+1], vertices[3*k+2] }, world_matrix);
+                                Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k+1], vertices[3*k+2] }, worldMatrix);
                                 vertices[3*k] = vt.x;
                                 vertices[3*k+1] = vt.y;
                                 vertices[3*k+2] = vt.z;
@@ -5156,7 +5159,7 @@ static Model LoadGLTF(const char *fileName)
                             float *normals = model.meshes[meshIndex].normals;
                             for (int k = 0; k < attribute->count; k++)
                             {
-                                Vector3 nt = Vector3Transform((Vector3){ normals[3*k], normals[3*k+1], normals[3*k+2] }, world_matrix_normals);
+                                Vector3 nt = Vector3Transform((Vector3){ normals[3*k], normals[3*k+1], normals[3*k+2] }, worldMatrixNormals);
                                 normals[3*k] = nt.x;
                                 normals[3*k+1] = nt.y;
                                 normals[3*k+2] = nt.z;
@@ -5180,7 +5183,7 @@ static Model LoadGLTF(const char *fileName)
                             float *tangents = model.meshes[meshIndex].tangents;
                             for (int k = 0; k < attribute->count; k++)
                             {
-                                Vector3 tt = Vector3Transform((Vector3){ tangents[3*k], tangents[3*k+1], tangents[3*k+2] }, world_matrix);
+                                Vector3 tt = Vector3Transform((Vector3){ tangents[3*k], tangents[3*k+1], tangents[3*k+2] }, worldMatrix);
                                 tangents[3*k] = tt.x;
                                 tangents[3*k+1] = tt.y;
                                 tangents[3*k+2] = tt.z;
