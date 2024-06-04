@@ -5465,22 +5465,27 @@ static Model LoadGLTF(const char *fileName)
             TRACELOG(LOG_ERROR, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
 
-        // XXX this is currently broken, due to the changes above
-
-        for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
+        meshIndex = 0;
+        for (unsigned int i = 0; i < data->nodes_count; i++)
         {
-            for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
+            cgltf_node *node = &(data->nodes[i]);
+
+            cgltf_mesh *mesh = node->mesh;
+            if (!mesh)
+                continue;
+
+            for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
                 // NOTE: We only support primitives defined by triangles
-                if (data->meshes[i].primitives[p].type != cgltf_primitive_type_triangles) continue;
+                if (mesh->primitives[p].type != cgltf_primitive_type_triangles) continue;
 
-                for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
+                for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
                 {
                     // NOTE: JOINTS_1 + WEIGHT_1 will be used for +4 joints influencing a vertex -> Not supported by raylib
 
-                    if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_joints) // JOINTS_n (vec4: 4 bones max per vertex / u8, u16)
+                    if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints) // JOINTS_n (vec4: 4 bones max per vertex / u8, u16)
                     {
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // NOTE: JOINTS_n can only be vec4 and u8/u16
                         // SPECS: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
@@ -5528,9 +5533,9 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint attribute data format not supported", fileName);
                     }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)  // WEIGHTS_n (vec4, u8n/u16n/f32)
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)  // WEIGHTS_n (vec4, u8n/u16n/f32)
                     {
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         if (attribute->type == cgltf_type_vec4)
                         {
