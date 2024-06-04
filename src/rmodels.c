@@ -4969,9 +4969,14 @@ static Model LoadGLTF(const char *fileName)
             cgltf_mesh *mesh = node->mesh;
             if (!mesh)
                 continue;
-            primitivesCount += mesh->primitives_count;
+
+            for (unsigned int p = 0; p < mesh->primitives_count; p++)
+            {
+                if (mesh->primitives[p].type == cgltf_primitive_type_triangles)
+                    primitivesCount++;
+            }
         }
-        TRACELOG(LOG_DEBUG, "    > Primitives count based on hierarchy: %i", primitivesCount);
+        TRACELOG(LOG_DEBUG, "    > Primitives (triangles only) count based on hierarchy : %i", primitivesCount);
 
         // Load our model data: meshes and materials
         model.meshCount = primitivesCount;
