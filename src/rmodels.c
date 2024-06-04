@@ -4885,6 +4885,7 @@ static Model LoadGLTF(const char *fileName)
     /*********************************************************************************************
 
         Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend)
+        Transform handling implemented by Paul Melis (@paulmelis).
         Reviewed by Ramon Santamaria (@raysan5)
 
         FEATURES:
@@ -4894,6 +4895,9 @@ static Model LoadGLTF(const char *fileName)
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
           - Supports basic animations
+          - Node hierarchy and mesh transforms are applied, but the hierarchy is flattened.
+          - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
+            are turned into separate raylib Meshes.
 
         RESTRICTIONS:
           - Only triangle meshes supported
@@ -4903,7 +4907,6 @@ static Model LoadGLTF(const char *fileName)
               > Texcoords: vec2: float
               > Colors: vec4: u8, u16, f32 (normalized)
               > Indices: u16, u32 (truncated to u16)
-          - Node hierarchies or transforms not supported
 
     ***********************************************************************************************/
 
@@ -4955,8 +4958,17 @@ static Model LoadGLTF(const char *fileName)
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
         int primitivesCount = 0;
-        // NOTE: We will load every primitive in the glTF as a separate raylib mesh
-        for (unsigned int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
+        // NOTE: We will load every primitive in the glTF as a separate raylib Mesh.
+        // Determine total number of meshes needed from the node hierarchy.
+        for (unsigned int i = 0; i < data->nodes_count; i++)
+        {
+            cgltf_node *node = &(data->nodes[i]);
+            cgltf_mesh *mesh = node->mesh;
+            if (!mesh)
+                continue;
+            primitivesCount += mesh->primitives_count;
+        }
+        TRACELOG(LOG_DEBUG, "    > Primitives count based on hierarchy: %i", primitivesCount);
 
         // Load our model data: meshes and materials
         model.meshCount = primitivesCount;
@@ -5059,27 +5071,51 @@ static Model LoadGLTF(const char *fileName)
             // has_clearcoat, has_transmission, has_volume, has_ior, has specular, has_sheen
         }
 
-        // Load meshes data
+        // Visit each node in the hierarchy and process any mesh linked from it.
+        // Each primitive within a glTF node becomes a Raylib Mesh.
+        // The local-to-world transform of each node is used to transform the
+        // points/normals/tangents of the created Mesh(es).
+        // Any glTF mesh linked from more than one Node (i.e. instancing) 
+        // is turned into multiple Mesh's, as each Node will have its own
+        // transform applied.
+        // Note: the code below disregards the scenes defined in the file, all nodes are used.
         //----------------------------------------------------------------------------------------------------
-        for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
+        int meshIndex = 0;
+        for (unsigned int i = 0; i < data->nodes_count; i++)
         {
-            // NOTE: meshIndex accumulates primitives
+            cgltf_node *node = &(data->nodes[i]);
 
-            for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
+            cgltf_mesh *mesh = node->mesh;
+            if (!mesh)
+                continue;
+
+            cgltf_float world_transform[16];
+            cgltf_node_transform_world(node, world_transform);
+
+            Matrix world_matrix = {
+                world_transform[0], world_transform[4], world_transform[8], world_transform[12],
+                world_transform[1], world_transform[5], world_transform[9], world_transform[13],
+                world_transform[2], world_transform[6], world_transform[10], world_transform[14],
+                world_transform[3], world_transform[7], world_transform[11], world_transform[15]
+            };
+
+            Matrix world_matrix_normals = MatrixTranspose(MatrixInvert(world_matrix));
+
+            for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
                 // NOTE: We only support primitives defined by triangles
                 // Other alternatives: points, lines, line_strip, triangle_strip
-                if (data->meshes[i].primitives[p].type != cgltf_primitive_type_triangles) continue;
+                if (mesh->primitives[p].type != cgltf_primitive_type_triangles) continue;
 
                 // NOTE: Attributes data could be provided in several data formats (8, 8u, 16u, 32...),
                 // Only some formats for each attribute type are supported, read info at the top of this function!
 
-                for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
+                for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
                 {
                     // Check the different attributes for every primitive
-                    if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)      // POSITION, vec3, float
+                    if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_position)      // POSITION, vec3, float
                     {
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined
 
@@ -5091,12 +5127,22 @@ static Model LoadGLTF(const char *fileName)
 
                             // Load 3 components of float data type into mesh.vertices
                             LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].vertices)
+
+                            // Transform the vertices
+                            float *vertices = model.meshes[meshIndex].vertices;
+                            for (int k = 0; k < attribute->count; k++)
+                            {
+                                Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k+1], vertices[3*k+2] }, world_matrix);
+                                vertices[3*k] = vt.x;
+                                vertices[3*k+1] = vt.y;
+                                vertices[3*k+2] = vt.z;
+                            }
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data format not supported, use vec3 float", fileName);
                     }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)   // NORMAL, vec3, float
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_normal)   // NORMAL, vec3, float
                     {
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
@@ -5105,12 +5151,22 @@ static Model LoadGLTF(const char *fileName)
 
                             // Load 3 components of float data type into mesh.normals
                             LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].normals)
+
+                            // Transform the normals
+                            float *normals = model.meshes[meshIndex].normals;
+                            for (int k = 0; k < attribute->count; k++)
+                            {
+                                Vector3 nt = Vector3Transform((Vector3){ normals[3*k], normals[3*k+1], normals[3*k+2] }, world_matrix_normals);
+                                normals[3*k] = nt.x;
+                                normals[3*k+1] = nt.y;
+                                normals[3*k+2] = nt.z;
+                            }
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Normal attribute data format not supported, use vec3 float", fileName);
                     }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec3, float
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec3, float
                     {
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         if ((attribute->type == cgltf_type_vec4) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
@@ -5119,15 +5175,25 @@ static Model LoadGLTF(const char *fileName)
 
                             // Load 4 components of float data type into mesh.tangents
                             LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].tangents)
+
+                            // Transform the tangents
+                            float *tangents = model.meshes[meshIndex].tangents;
+                            for (int k = 0; k < attribute->count; k++)
+                            {
+                                Vector3 tt = Vector3Transform((Vector3){ tangents[3*k], tangents[3*k+1], tangents[3*k+2] }, world_matrix);
+                                tangents[3*k] = tt.x;
+                                tangents[3*k+1] = tt.y;
+                                tangents[3*k+2] = tt.z;
+                            }
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangent attribute data format not supported, use vec4 float", fileName);
                     }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord) // TEXCOORD_n, vec2, float/u8n/u16n
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_texcoord) // TEXCOORD_n, vec2, float/u8n/u16n
                     {
                         // Support up to 2 texture coordinates attributes
                         float *texcoordPtr = NULL;
 
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         if (attribute->type == cgltf_type_vec2)
                         {
@@ -5171,7 +5237,7 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported, use vec2 float", fileName);
                     
-                        int index = data->meshes[i].primitives[p].attributes[j].index;
+                        int index = mesh->primitives[p].attributes[j].index;
                         if (index == 0) model.meshes[meshIndex].texcoords = texcoordPtr;
                         else if (index == 1) model.meshes[meshIndex].texcoords2 = texcoordPtr;
                         else
@@ -5180,9 +5246,9 @@ static Model LoadGLTF(const char *fileName)
                             if (texcoordPtr != NULL) RL_FREE(texcoordPtr);
                         }
                     }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)    // COLOR_n, vec3/vec4, float/u8n/u16n
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_color)    // COLOR_n, vec3/vec4, float/u8n/u16n
                     {
-                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // WARNING: SPECS: All components of each COLOR_n accessor element MUST be clamped to [0.0, 1.0] range
 
@@ -5299,9 +5365,9 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Load primitive indices data (if provided)
-                if (data->meshes[i].primitives[p].indices != NULL)
+                if (mesh->primitives[p].indices != NULL)
                 {
-                    cgltf_accessor *attribute = data->meshes[i].primitives[p].indices;
+                    cgltf_accessor *attribute = mesh->primitives[p].indices;
 
                     model.meshes[meshIndex].triangleCount = (int)attribute->count/3;
 
@@ -5341,7 +5407,7 @@ static Model LoadGLTF(const char *fileName)
                     // raylib instead assigns to the mesh the by its index, as loaded in model.materials array
                     // To get the index, we check if material pointers match, and we assign the corresponding index,
                     // skipping index 0, the default material
-                    if (&data->materials[m] == data->meshes[i].primitives[p].material)
+                    if (&data->materials[m] == mesh->primitives[p].material)
                     {
                         model.meshMaterial[meshIndex] = m + 1;
                         break;
@@ -5390,6 +5456,8 @@ static Model LoadGLTF(const char *fileName)
         {
             TRACELOG(LOG_ERROR, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
+
+        // XXX this is currently broken, due to the changes above
 
         for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
         {
