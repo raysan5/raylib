@@ -1,0 +1,6 @@
+module(name = "raylib_examples")
+
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "raylib")
+local_path_override(module_name = "raylib", path = "..")

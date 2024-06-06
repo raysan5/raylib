@@ -46,7 +46,7 @@ cc_library(
         ":bundled_glfw",
         ":bundled_external_misc",
     ],
-    local_defines = select({
+    defines = select({
         "@platforms//os:android": ["PLATFORM_ANDROID"],
         "@platforms//os:wasi": ["PLATFORM_WEB"],
         "@platforms//os:emscripten": ["PLATFORM_WEB"],
@@ -58,8 +58,18 @@ cc_library(
     name = "raylib",
     visibility = ["//visibility:public"],
     strip_include_prefix = "src",
+    srcs = [
+        "src/rglfw.c",
+        "src/rtext.c",
+        "src/utils.c",
+        "src/rshapes.c",
+        "src/rtextures.c",
+        "src/raudio.c",
+        "src/rmodels.c",
+    ],
     hdrs = [
         "src/raylib.h",
+        "src/rcamera.h",
         "src/raymath.h",
         "src/rlgl.h",
     ],
@@ -69,6 +79,12 @@ cc_library(
         ":bundled_glfw_sources",
         ":bundled_external_misc",
     ],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "/DEFAULTLIB:winmm",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_binary(
@@ -77,6 +93,9 @@ cc_binary(
     linkshared = True,
     target_compatible_with = [
         "@platforms//os:windows",
+    ],
+    linkopts = [
+        "/DEFAULTLIB:winmm",
     ],
     deps = [
         ":rcore",

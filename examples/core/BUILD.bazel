@@ -1,0 +1,176 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "core_2d_camera",
+    srcs = ["core_2d_camera.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_2d_camera_mouse_zoom",
+    srcs = ["core_2d_camera_mouse_zoom.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_2d_camera_platformer",
+    srcs = ["core_2d_camera_platformer.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_2d_camera_split_screen",
+    srcs = ["core_2d_camera_split_screen.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_3d_camera_first_person",
+    srcs = ["core_3d_camera_first_person.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_3d_camera_free",
+    srcs = ["core_3d_camera_free.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_3d_camera_mode",
+    srcs = ["core_3d_camera_mode.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_3d_camera_split_screen",
+    srcs = ["core_3d_camera_split_screen.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_3d_picking",
+    srcs = ["core_3d_picking.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_automation_events",
+    srcs = ["core_automation_events.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_basic_screen_manager",
+    srcs = ["core_basic_screen_manager.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_basic_window",
+    srcs = ["core_basic_window.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_basic_window_web",
+    srcs = ["core_basic_window_web.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_custom_frame_control",
+    srcs = ["core_custom_frame_control.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_custom_logging",
+    srcs = ["core_custom_logging.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_drop_files",
+    srcs = ["core_drop_files.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_gamepad",
+    srcs = ["core_input_gamepad.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_gamepad_info",
+    srcs = ["core_input_gamepad_info.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_gestures",
+    srcs = ["core_input_gestures.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_gestures_web",
+    srcs = ["core_input_gestures_web.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_keys",
+    srcs = ["core_input_keys.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_mouse",
+    srcs = ["core_input_mouse.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_mouse_wheel",
+    srcs = ["core_input_mouse_wheel.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_input_multitouch",
+    srcs = ["core_input_multitouch.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_loading_thread",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    linkopts = ["-pthread"],
+    srcs = ["core_loading_thread.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_random_values",
+    srcs = ["core_random_values.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_scissor_test",
+    srcs = ["core_scissor_test.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_smooth_pixelperfect",
+    srcs = ["core_smooth_pixelperfect.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_storage_values",
+    srcs = ["core_storage_values.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_vr_simulator",
+    srcs = ["core_vr_simulator.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_window_flags",
+    srcs = ["core_window_flags.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_window_letterbox",
+    srcs = ["core_window_letterbox.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_window_should_close",
+    srcs = ["core_window_should_close.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "core_world_screen",
+    srcs = ["core_world_screen.c"],
+    deps = ["@raylib"],
+)
