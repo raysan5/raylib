@@ -1,0 +1,110 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "bundled_glfw",
+    strip_include_prefix = "src/external/glfw/include",
+    hdrs = glob([
+        "src/external/glfw/include/**/*.h",
+    ]),
+    linkopts = select({
+        "@platforms//os:windows": [
+            "/DEFAULTLIB:user32",
+            "/DEFAULTLIB:gdi32",
+            "/DEFAULTLIB:shell32",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "bundled_glfw_sources",
+    deps = [":bundled_glfw"],
+    hdrs = glob([
+        "src/external/glfw/src/**/*.h",
+        "src/external/glfw/src/**/*.c",
+    ]),
+)
+
+cc_library(
+    name = "bundled_external_misc",
+    includes = ["src/external"],
+    hdrs = glob(["src/external/*.h"], exclude = ["src/external/dirent.h"]) + [
+        # awkward "headers"
+        "src/external/qoaplay.c",
+    ] + select({
+        "@platforms//os:windows": ["src/external/dirent.h"],
+        "//conditions:default": [],
+    }),
+    srcs = glob(["src/external/*.c"], exclude = ["src/external/qoaplay.c"]),
+)
+
+cc_library(
+    name = "rcore",
+    hdrs = glob(["src/platforms/*.c"]),
+    srcs = ["src/rcore.c"] + glob(["src/*.h"]),
+    deps = [
+        ":bundled_glfw",
+        ":bundled_external_misc",
+    ],
+    local_defines = select({
+        "@platforms//os:android": ["PLATFORM_ANDROID"],
+        "@platforms//os:wasi": ["PLATFORM_WEB"],
+        "@platforms//os:emscripten": ["PLATFORM_WEB"],
+        "//conditions:default": ["PLATFORM_DESKTOP"],
+    }),
+)
+
+cc_library(
+    name = "raylib",
+    visibility = ["//visibility:public"],
+    strip_include_prefix = "src",
+    hdrs = [
+        "src/raylib.h",
+        "src/raymath.h",
+        "src/rlgl.h",
+    ],
+    deps = [
+        ":rcore",
+        ":bundled_glfw",
+        ":bundled_glfw_sources",
+        ":bundled_external_misc",
+    ],
+)
+
+cc_binary(
+    name = "raylib.dll",
+    visibility = ["//visibility:public"],
+    linkshared = True,
+    target_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    deps = [
+        ":rcore",
+        ":bundled_glfw",
+        ":bundled_glfw_sources",
+        ":bundled_external_misc",
+    ],
+)
+
+cc_binary(
+    name = "libraylib.so",
+    visibility = ["//visibility:public"],
+    linkshared = True,
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    deps = [
+        ":rcore",
+        ":bundled_glfw",
+        ":bundled_glfw_sources",
+        ":bundled_external_misc",
+    ],
+)
+
+alias(
+    name = "raylib_shared",
+    actual = select({
+        "@platforms//os:windows": ":raylib.dll",
+        "@platforms//os:linux": ":libraylib.so",
+    }),
+)
