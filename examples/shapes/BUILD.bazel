@@ -1,0 +1,117 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+cc_library(
+    name = "reasings",
+    hdrs = ["reasings.h"],
+)
+cc_library(
+    name = "raygui",
+    hdrs = ["raygui.h"],
+)
+
+cc_binary(
+    name = "shapes_basic_shapes",
+    srcs = ["shapes_basic_shapes.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_bouncing_ball",
+    srcs = ["shapes_bouncing_ball.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_collision_area",
+    srcs = ["shapes_collision_area.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_colors_palette",
+    srcs = ["shapes_colors_palette.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_draw_circle_sector",
+    srcs = ["shapes_draw_circle_sector.c"],
+    deps = [
+        ":raygui",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_draw_rectangle_rounded",
+    srcs = ["shapes_draw_rectangle_rounded.c"],
+    deps = [
+        ":raygui",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_draw_ring",
+    srcs = ["shapes_draw_ring.c"],
+    deps = [
+        ":raygui",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_easings_ball_anim",
+    srcs = ["shapes_easings_ball_anim.c"],
+    deps = [
+        ":reasings",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_easings_box_anim",
+    srcs = ["shapes_easings_box_anim.c"],
+    deps = [
+        ":reasings",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_easings_rectangle_array",
+    srcs = ["shapes_easings_rectangle_array.c"],
+    deps = [
+        ":reasings",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_following_eyes",
+    srcs = ["shapes_following_eyes.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_lines_bezier",
+    srcs = ["shapes_lines_bezier.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_logo_raylib",
+    srcs = ["shapes_logo_raylib.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_logo_raylib_anim",
+    srcs = ["shapes_logo_raylib_anim.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_rectangle_scaling",
+    srcs = ["shapes_rectangle_scaling.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "shapes_splines_drawing",
+    srcs = ["shapes_splines_drawing.c"],
+    deps = [
+        ":raygui",
+        "@raylib",
+    ],
+)
+cc_binary(
+    name = "shapes_top_down_lights",
+    srcs = ["shapes_top_down_lights.c"],
+    deps = ["@raylib"],
+)
