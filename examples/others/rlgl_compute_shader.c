@@ -104,7 +104,7 @@ int main(void)
         else if (transfertBuffer.count > 0)  // Process transfert buffer
         {
             // Send SSBO buffer to GPU
-            rlUpdateShaderBuffer(ssboTransfert, &transfertBuffer, sizeof(GolUpdateSSBO), 0);
+            rlUpdateShaderBuffer(ssboTransfert, &transfertBuffer, sizeof(GolUpdateSSBO), RL_DYNAMIC_COPY, 0);
 
             // Process SSBO commands on GPU
             rlEnableShader(golTransfertProgram);
