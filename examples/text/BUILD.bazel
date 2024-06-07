@@ -1,0 +1,103 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "text_codepoints_loading",
+    srcs = ["text_codepoints_loading.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/DotGothic16-Regular.ttf",
+    ],
+)
+cc_binary(
+    name = "text_draw_3d",
+    srcs = ["text_draw_3d.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/alpha_discard.fs",
+    ],
+)
+cc_binary(
+    name = "text_font_filters",
+    srcs = ["text_font_filters.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/KAISG.ttf",
+    ],
+)
+cc_binary(
+    name = "text_font_loading",
+    srcs = ["text_font_loading.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/pixantiqua.png",
+        "resources/pixantiqua.fnt",
+        "resources/pixantiqua.ttf",
+    ],
+)
+cc_binary(
+    name = "text_font_sdf",
+    srcs = ["text_font_sdf.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/anonymous_pro_bold.ttf",
+        "resources/shaders/glsl330/sdf.fs",
+    ],
+)
+cc_binary(
+    name = "text_font_spritefont",
+    srcs = ["text_font_spritefont.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/custom_mecha.png",
+        "resources/custom_alagard.png",
+        "resources/custom_jupiter_crash.png",
+    ],
+)
+cc_binary(
+    name = "text_format_text",
+    srcs = ["text_format_text.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "text_input_box",
+    srcs = ["text_input_box.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "text_raylib_fonts",
+    srcs = ["text_raylib_fonts.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/fonts/alagard.png",
+        "resources/fonts/pixelplay.png",
+        "resources/fonts/mecha.png",
+        "resources/fonts/setback.png",
+        "resources/fonts/romulus.png",
+        "resources/fonts/pixantiqua.png",
+        "resources/fonts/alpha_beta.png",
+        "resources/fonts/jupiter_crash.png",
+    ],
+)
+cc_binary(
+    name = "text_rectangle_bounds",
+    srcs = ["text_rectangle_bounds.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "text_unicode",
+    srcs = ["text_unicode.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/dejavu.fnt",
+        "resources/noto_cjk.fnt",
+        "resources/symbola.fnt",
+        "resources/symbola.png",
+        "resources/noto_cjk.png",
+        "resources/dejavu.png",
+    ],
+)
+cc_binary(
+    name = "text_writing_anim",
+    srcs = ["text_writing_anim.c"],
+    deps = ["@raylib"],
+)
