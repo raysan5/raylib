@@ -1,0 +1,57 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "audio_mixed_processor",
+    srcs = ["audio_mixed_processor.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/country.mp3",
+        "resources/coin.wav",
+    ],
+)
+cc_binary(
+    name = "audio_module_playing",
+    srcs = ["audio_module_playing.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/mini1111.xm",
+    ],
+)
+cc_binary(
+    name = "audio_music_stream",
+    srcs = ["audio_music_stream.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/country.mp3",
+    ],
+)
+cc_binary(
+    name = "audio_raw_stream",
+    srcs = ["audio_raw_stream.c"],
+    deps = ["@raylib"],
+)
+cc_binary(
+    name = "audio_sound_loading",
+    srcs = ["audio_sound_loading.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/sound.wav",
+        "resources/target.ogg",
+    ],
+)
+cc_binary(
+    name = "audio_sound_multi",
+    srcs = ["audio_sound_multi.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/sound.wav",
+    ],
+)
+cc_binary(
+    name = "audio_stream_effects",
+    srcs = ["audio_stream_effects.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/country.mp3",
+    ],
+)
