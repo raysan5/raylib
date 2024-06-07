@@ -1,0 +1,239 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+cc_library(
+    name = "rlights",
+    hdrs = ["rlights.h"],
+    deps = ["@raylib"],
+)
+
+cc_binary(
+    name = "shaders_basic_lighting",
+    srcs = ["shaders_basic_lighting.c"],
+    deps = [
+        ":rlights",
+        "@raylib",
+    ],
+    data = [
+        "resources/shaders/glsl330/lighting.vs",
+        "resources/shaders/glsl330/lighting.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_custom_uniform",
+    srcs = ["shaders_custom_uniform.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/models/barracks.obj",
+        "resources/models/barracks_diffuse.png",
+        "resources/shaders/glsl330/swirl.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_deferred_render",
+    srcs = ["shaders_deferred_render.c"],
+    deps = [
+        ":rlights",
+        "@raylib",
+    ],
+    data = [
+        "resources/shaders/glsl330/gbuffer.vs",
+        "resources/shaders/glsl330/gbuffer.fs",
+        "resources/shaders/glsl330/deferred_shading.vs",
+        "resources/shaders/glsl330/deferred_shading.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_eratosthenes",
+    srcs = ["shaders_eratosthenes.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/eratosthenes.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_fog",
+    srcs = ["shaders_fog.c"],
+    deps = [
+        ":rlights",
+        "@raylib",
+    ],
+    data = [
+        "resources/texel_checker.png",
+        "resources/shaders/glsl330/lighting.vs",
+        "resources/shaders/glsl330/fog.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_hot_reloading",
+    srcs = ["shaders_hot_reloading.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/reload.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_hybrid_render",
+    srcs = ["shaders_hybrid_render.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/hybrid_raymarch.fs",
+        "resources/shaders/glsl330/hybrid_raster.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_julia_set",
+    srcs = ["shaders_julia_set.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/julia_set.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_lightmap",
+    srcs = ["shaders_lightmap.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/lightmap.vs",
+        "resources/shaders/glsl330/lightmap.fs",
+        "resources/cubicmap_atlas.png",
+        "resources/spark_flame.png",
+    ],
+)
+cc_binary(
+    name = "shaders_mesh_instancing",
+    srcs = ["shaders_mesh_instancing.c"],
+    deps = [
+        ":rlights",
+        "@raylib",
+    ],
+    data = [
+        "resources/shaders/glsl330/lighting_instancing.vs",
+        "resources/shaders/glsl330/lighting.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_model_shader",
+    srcs = ["shaders_model_shader.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/models/watermill.obj",
+        "resources/models/watermill_diffuse.png",
+        "resources/shaders/glsl330/grayscale.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_multi_sample2d",
+    srcs = ["shaders_multi_sample2d.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/color_mix.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_palette_switch",
+    srcs = ["shaders_palette_switch.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/palette_switch.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_postprocessing",
+    srcs = ["shaders_postprocessing.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/models/church.obj",
+        "resources/models/church_diffuse.png",
+        "resources/shaders/glsl330/grayscale.fs",
+        "resources/shaders/glsl330/posterization.fs",
+        "resources/shaders/glsl330/dream_vision.fs",
+        "resources/shaders/glsl330/pixelizer.fs",
+        "resources/shaders/glsl330/cross_hatching.fs",
+        "resources/shaders/glsl330/cross_stitching.fs",
+        "resources/shaders/glsl330/predator.fs",
+        "resources/shaders/glsl330/scanlines.fs",
+        "resources/shaders/glsl330/fisheye.fs",
+        "resources/shaders/glsl330/sobel.fs",
+        "resources/shaders/glsl330/bloom.fs",
+        "resources/shaders/glsl330/blur.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_raymarching",
+    srcs = ["shaders_raymarching.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/raymarching.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_shapes_textures",
+    srcs = ["shaders_shapes_textures.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/fudesumi.png",
+        "resources/shaders/glsl330/grayscale.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_simple_mask",
+    srcs = ["shaders_simple_mask.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/mask.fs",
+        "resources/plasma.png",
+        "resources/mask.png",
+    ],
+)
+cc_binary(
+    name = "shaders_spotlight",
+    srcs = ["shaders_spotlight.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/raysan.png",
+        "resources/shaders/glsl330/spotlight.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_texture_drawing",
+    srcs = ["shaders_texture_drawing.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/cubes_panning.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_texture_outline",
+    srcs = ["shaders_texture_outline.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/fudesumi.png",
+        "resources/shaders/glsl330/outline.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_texture_tiling",
+    srcs = ["shaders_texture_tiling.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/cubicmap_atlas.png",
+        "resources/shaders/glsl330/tiling.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_texture_waves",
+    srcs = ["shaders_texture_waves.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/space.png",
+        "resources/shaders/glsl330/wave.fs",
+    ],
+)
+cc_binary(
+    name = "shaders_write_depth",
+    srcs = ["shaders_write_depth.c"],
+    deps = ["@raylib"],
+    data = [
+        "resources/shaders/glsl330/write_depth.fs",
+    ],
+)
