@@ -1,28 +1,39 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
-# NOTE: cc_binary runs in a different location meaning these examples cannot
-#       find the resources to run. Instead you must manually execute the built
-#       executable.
-
 cc_binary(
     name = "textures_background_scrolling",
     srcs = ["textures_background_scrolling.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/cyberpunk_street_background.png",
+        "resources/cyberpunk_street_midground.png",
+        "resources/cyberpunk_street_foreground.png",
+    ],
 )
 cc_binary(
     name = "textures_blend_modes",
     srcs = ["textures_blend_modes.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/cyberpunk_street_background.png",
+        "resources/cyberpunk_street_foreground.png",
+    ],
 )
 cc_binary(
     name = "textures_bunnymark",
     srcs = ["textures_bunnymark.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/wabbit_alpha.png",
+    ],
 )
 cc_binary(
     name = "textures_draw_tiled",
     srcs = ["textures_draw_tiled.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/patterns.png",
+    ],
 )
 cc_binary(
     name = "textures_fog_of_war",
@@ -33,11 +44,19 @@ cc_binary(
     name = "textures_gif_player",
     srcs = ["textures_gif_player.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/scarfy_run.gif",
+    ],
 )
 cc_binary(
     name = "textures_image_drawing",
     srcs = ["textures_image_drawing.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/cat.png",
+        "resources/parrots.png",
+        "resources/custom_jupiter_crash.png",
+    ],
 )
 cc_binary(
     name = "textures_image_generation",
@@ -48,26 +67,42 @@ cc_binary(
     name = "textures_image_loading",
     srcs = ["textures_image_loading.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/raylib_logo.png",
+    ],
 )
 cc_binary(
     name = "textures_image_processing",
     srcs = ["textures_image_processing.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/parrots.png",
+    ],
 )
 cc_binary(
     name = "textures_image_rotate",
     srcs = ["textures_image_rotate.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/raylib_logo.png",
+    ],
 )
 cc_binary(
     name = "textures_image_text",
     srcs = ["textures_image_text.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/parrots.png",
+        "resources/KAISG.ttf",
+    ],
 )
 cc_binary(
     name = "textures_logo_raylib",
     srcs = ["textures_logo_raylib.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/raylib_logo.png",
+    ],
 )
 cc_binary(
     name = "textures_mouse_painting",
@@ -78,54 +113,89 @@ cc_binary(
     name = "textures_npatch_drawing",
     srcs = ["textures_npatch_drawing.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/ninepatch_button.png",
+    ],
 )
 cc_binary(
     name = "textures_particles_blending",
     srcs = ["textures_particles_blending.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/spark_flame.png",
+    ],
 )
 cc_binary(
     name = "textures_polygon",
     srcs = ["textures_polygon.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/cat.png",
+    ],
 )
 cc_binary(
     name = "textures_raw_data",
     srcs = ["textures_raw_data.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/fudesumi.raw",
+    ],
 )
 cc_binary(
     name = "textures_sprite_anim",
     srcs = ["textures_sprite_anim.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/scarfy.png",
+    ],
 )
 cc_binary(
     name = "textures_sprite_button",
     srcs = ["textures_sprite_button.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/buttonfx.wav",
+        "resources/button.png",
+    ],
 )
 cc_binary(
     name = "textures_sprite_explosion",
     srcs = ["textures_sprite_explosion.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/boom.wav",
+        "resources/explosion.png",
+    ],
 )
 cc_binary(
     name = "textures_srcrec_dstrec",
     srcs = ["textures_srcrec_dstrec.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/scarfy.png",
+    ],
 )
 cc_binary(
     name = "textures_svg_loading",
     srcs = ["textures_svg_loading.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/test.svg",
+    ],
 )
 cc_binary(
     name = "textures_textured_curve",
     srcs = ["textures_textured_curve.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/road.png",
+    ],
 )
 cc_binary(
     name = "textures_to_image",
     srcs = ["textures_to_image.c"],
     deps = ["@raylib"],
+    data = [
+        "resources/raylib_logo.png",
+    ],
 )
