@@ -4384,10 +4384,12 @@ void rlUnloadShaderBuffer(unsigned int ssboId)
 }
 
 // Update SSBO buffer data
-void rlUpdateShaderBuffer(unsigned int id, const void *data, unsigned int dataSize, unsigned int offset)
+void rlUpdateShaderBuffer(unsigned int id, const void *data, unsigned int dataSize, int usageHint, unsigned int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, dataSize, NULL, usageHint? usageHint : RL_STREAM_COPY);
+    if (data == NULL) glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE, NULL);    // Clear buffer data to 0
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, dataSize, data);
 #endif
 }
