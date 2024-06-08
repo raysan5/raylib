@@ -431,7 +431,11 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return platform.window->src.window;
+    #ifndef RGFW_WINDOWS
+    return (void*)platform.window->src.window;
+    #else
+    return platform.window->src.hwnd;
+    #endif
 }
 
 // Get number of monitors
