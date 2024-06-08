@@ -1,6 +1,6 @@
 # raylib bindings and wrappers
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
+Some people ported raylib to other languages in the form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
 
 ### Language Bindings
 
@@ -12,7 +12,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | [Raylib-cs](https://github.com/ChrisDill/Raylib-cs)                                      | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
 | [Raylib-CsLo](https://github.com/NotNotTech/Raylib-CsLo)                                 | 4.2              | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
 | [Raylib-CSharp-Vinculum](https://github.com/ZeroElectric/Raylib-CSharp-Vinculum)         | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
-| [Raylib-CSharp](https://github.com/MrScautHD/Raylib-CSharp)                              | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MIT                  |
+| [Raylib-CSharp](https://github.com/MrScautHD/Raylib-CSharp)                              | **5.1-dev**      | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MIT                  |
 | [Raylib.NET](https://github.com/Odex64/Raylib.NET)                                       | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MIT                  |
 | [cl-raylib](https://github.com/longlene/cl-raylib)                                       | 4.0              | [Common Lisp](https://common-lisp.net)                               | MIT                  |
 | [claylib/wrap](https://github.com/defun-games/claylib)                                   | 4.5              | [Common Lisp](https://common-lisp.net)                               | Zlib                 |
@@ -75,6 +75,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | [raylib-wren](https://github.com/TSnake41/raylib-wren)                                   | 4.0              | [Wren](http://wren.io)                                               | ISC                  |
 | [raylib-zig](https://github.com/Not-Nik/raylib-zig)                                      | **5.0**          | [Zig](https://ziglang.org)                                           | MIT                  |
 | [raylib.zig](https://github.com/ryupold/raylib.zig)                                      | **5.1-dev**      | [Zig](https://ziglang.org)                                           | MIT                  |
+| [raylib-zig-bindings](https://github.com/L-Briand/raylib-zig-bindings)                   | **5.0**          | [Zig](https://ziglang.org)                                           | Zlib                 |
 | [hare-raylib](https://git.sr.ht/~evantj/hare-raylib)                                     | **auto**         | [Hare](https://harelang.org)                                         | Zlib                 |
 | [raylib-sunder](https://github.com/ashn-dot-dev/raylib-sunder)                           | **auto**         | [Sunder](https://github.com/ashn-dot-dev/sunder)                     | 0BSD                 |
 | [rayed-bqn](https://github.com/Brian-ED/rayed-bqn)                                       | **auto**         | [BQN](https://mlochbaum.github.io/BQN)                               | MIT                  |

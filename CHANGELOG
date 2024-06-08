@@ -642,7 +642,7 @@ Release:     raylib 4.0 - 8th Anniversary Edition (05 November 2021)
 KEY CHANGES:
  - Naming consistency and coherency: Complete review of the library: syntax, naming, comments, decriptions, logs...
  - Event Automation System: Support for input events recording and automatic re-playing, useful for automated testing and more!
- - Custom game-loop control: Intended for advance users that want to control the events polling and the timming mechanisms
+ - Custom game-loop control: Intended for advanced users that want to control the events polling and the timming mechanisms
  - rlgl 4.0: Completely decoupling from platform layer and raylib, intended for standalone usage as single-file header-only
  - raymath 1.5: Complete review following new conventions, to make it more portable and self-contained
  - raygui 3.0: Complete review and official new release, more portable and self-contained, intended for tools development
