@@ -177,7 +177,13 @@ typedef struct tagBITMAPINFOHEADER {
 
 #define MINIAUDIO_IMPLEMENTATION
 //#define MA_DEBUG_OUTPUT
-#include "external/miniaudio.h"         // Audio device initialization and management
+
+#if defined(PLATFORM_DESKTOP_SDL)
+    #include "external/miniaudio_sdl.h"
+#else
+    #include "external/miniaudio.h"         // Audio device initialization and management
+#endif  /* PLATFORM_DESKTOP_SDL */
+
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
 #include <stdlib.h>                     // Required for: malloc(), free()
@@ -299,6 +305,7 @@ typedef struct tagBITMAPINFOHEADER {
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
 
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -379,7 +386,9 @@ struct rAudioProcessor {
 typedef struct AudioData {
     struct {
         ma_context context;         // miniaudio context data
+	    char _context_ext[128];     // extended contexts use more space, so add some padding.
         ma_device device;           // miniaudio device
+	    char _device_ext[128];      // extended devices use more space, so add some padding.
         ma_mutex lock;              // miniaudio mutex lock
         bool isReady;               // Check if audio device is ready
         size_t pcmBufferSize;       // Pre-allocated buffer size
@@ -458,11 +467,28 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 // Initialize audio device
 void InitAudioDevice(void)
 {
+    ma_log log;
+    ma_log_init(NULL, &log);
+    ma_log_register_callback(&log, ma_log_callback_init(OnLog, NULL));
+
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
-    ma_log_callback_init(OnLog, NULL);
+    ctxConfig.pLog = &log; // Specify a custom log object in the config so any logs that are posted from ma_context_init() are captured.
+
+#if defined(PLATFORM_DESKTOP_SDL)
+
+    ma_backend backends[] = { ma_backend_custom };
+
+    ctxConfig.custom.onContextInit = ma_context_init__custom_loader__sdl;
+    
+    ma_result result = ma_context_init(backends, sizeof(backends)/sizeof(backends[0]), &ctxConfig, &AUDIO.System.context);
+
+#else
 
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
+
+#endif
+
     if (result != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
