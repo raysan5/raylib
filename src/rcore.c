@@ -2251,7 +2251,7 @@ bool IsFileNameValid(const char *fileName)
 
     if ((fileName != NULL) && (fileName[0] != '\0'))
     {
-        int length = strlen(fileName);
+        int length = (int)strlen(fileName);
         bool allPeriods = true;
 
         for (int i = 0; i < length; i++)

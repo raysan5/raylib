@@ -1807,10 +1807,7 @@ const char *TextToSnake(const char *text)
                 }
                 buffer[i] = text[j] + 32;
             }
-            else
-            {
-                buffer[i] = text[j];
-            }
+            else buffer[i] = text[j];
         }
     }
 
@@ -1827,23 +1824,17 @@ const char *TextToCamel(const char *text)
     if (text != NULL)
     {
         // Lower case first character
-        if ((text[0] >= 'A') && (text[0] <= 'Z'))
-            buffer[0] = text[0] + 32;
-        else
-            buffer[0] = text[0];
+        if ((text[0] >= 'A') && (text[0] <= 'Z')) buffer[0] = text[0] + 32;
+        else buffer[0] = text[0];
 
         // Check for next separator to upper case another character
         for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
         {
-            if (text[j] != '_')
-                buffer[i] = text[j];
+            if (text[j] != '_') buffer[i] = text[j];
             else
             {
                 j++;
-                if ((text[j] >= 'a') && (text[j] <= 'z'))
-                {
-                    buffer[i] = text[j] - 32;
-                }
+                if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
             }
         }
     }
