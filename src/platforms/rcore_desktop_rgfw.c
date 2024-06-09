@@ -431,7 +431,11 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return platform.window->src.window;
+    #ifndef RGFW_WINDOWS
+    return (void*)platform.window->src.window;
+    #else
+    return platform.window->src.hwnd;
+    #endif
 }
 
 // Get number of monitors
@@ -890,8 +894,6 @@ void PollInputEvents(void)
 
                     CORE.Input.Mouse.currentPosition.x = (event->point.x - (platform.window->r.w / 2)) * 2;
                     CORE.Input.Mouse.currentPosition.y = (event->point.y - (platform.window->r.h / 2)) * 2;
-
-                    RGFW_window_showMouse(platform.window, 1);
                 }
                 else {
                     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;    

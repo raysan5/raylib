@@ -66,7 +66,7 @@
 #define SUPPORT_COMPRESSION_API         1
 // Support automatic generated events, loading and recording of those events when required
 #define SUPPORT_AUTOMATION_EVENTS       1
-// Support custom frame control, only for advance users
+// Support custom frame control, only for advanced users
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
 //#define SUPPORT_CUSTOM_FRAME_CONTROL    1
@@ -189,7 +189,7 @@
 #define SUPPORT_DEFAULT_FONT            1
 // Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_TTF          1
-//#define SUPPORT_FILEFORMAT_FNT          1
+#define SUPPORT_FILEFORMAT_FNT          1
 //#define SUPPORT_FILEFORMAT_BDF          1
 
 // Support text management functions

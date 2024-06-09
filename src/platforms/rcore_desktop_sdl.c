@@ -1499,10 +1499,6 @@ int InitPlatform(void)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     }
 
-    if (CORE_WINDOW.flags & FLAG_VSYNC_HINT)
-    {
-        SDL_GL_SetSwapInterval(1);
-    }
 
     if (CORE_WINDOW.flags & FLAG_MSAA_4X_HINT)
     {
@@ -1537,6 +1533,9 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE_WINDOW.screen.width, CORE_WINDOW.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE_WINDOW.render.width, CORE_WINDOW.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE_WINDOW.renderOffset.x, CORE_WINDOW.renderOffset.y);
+
+        if (CORE.Window.flags & FLAG_VSYNC_HINT) SDL_GL_SetSwapInterval(1);
+        else SDL_GL_SetSwapInterval(0);
     }
     else
     {

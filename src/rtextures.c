@@ -2667,17 +2667,12 @@ void ImageColorTint(Image *image, Color color)
 
     Color *pixels = LoadImageColors(*image);
 
-    float cR = (float)color.r/255;
-    float cG = (float)color.g/255;
-    float cB = (float)color.b/255;
-    float cA = (float)color.a/255;
-
     for (int i = 0; i < image->width*image->height; i++)
     {
-        unsigned char r = (unsigned char)(((float)pixels[i].r/255*cR)*255.0f);
-        unsigned char g = (unsigned char)(((float)pixels[i].g/255*cG)*255.0f);
-        unsigned char b = (unsigned char)(((float)pixels[i].b/255*cB)*255.0f);
-        unsigned char a = (unsigned char)(((float)pixels[i].a/255*cA)*255.0f);
+        unsigned char r = (unsigned char)(((int)pixels[i].r*(int)color.r)/255);
+        unsigned char g = (unsigned char)(((int)pixels[i].g*(int)color.g)/255);
+        unsigned char b = (unsigned char)(((int)pixels[i].b*(int)color.b)/255);
+        unsigned char a = (unsigned char)(((int)pixels[i].a*(int)color.a)/255);
 
         pixels[i].r = r;
         pixels[i].g = g;
@@ -4510,8 +4505,13 @@ Color Fade(Color color, float alpha)
 // Get hexadecimal value for a Color
 int ColorToInt(Color color)
 {
-    int result = (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-
+    int result = 0;
+    
+    result = (int)(((unsigned int)color.r << 24) | 
+                   ((unsigned int)color.g << 16) | 
+                   ((unsigned int)color.b << 8) | 
+                    (unsigned int)color.a);
+    
     return result;
 }
 
@@ -4634,15 +4634,10 @@ Color ColorTint(Color color, Color tint)
 {
     Color result = color;
 
-    float cR = (float)tint.r/255;
-    float cG = (float)tint.g/255;
-    float cB = (float)tint.b/255;
-    float cA = (float)tint.a/255;
-
-    unsigned char r = (unsigned char)(((float)color.r/255*cR)*255.0f);
-    unsigned char g = (unsigned char)(((float)color.g/255*cG)*255.0f);
-    unsigned char b = (unsigned char)(((float)color.b/255*cB)*255.0f);
-    unsigned char a = (unsigned char)(((float)color.a/255*cA)*255.0f);
+    unsigned char r = (unsigned char)(((int)color.r*(int)tint.r)/255);
+    unsigned char g = (unsigned char)(((int)color.g*(int)tint.g)/255);
+    unsigned char b = (unsigned char)(((int)color.b*(int)tint.b)/255);
+    unsigned char a = (unsigned char)(((int)color.a*(int)tint.a)/255);
 
     result.r = r;
     result.g = g;

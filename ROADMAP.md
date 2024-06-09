@@ -1,6 +1,6 @@
 # raylib roadmap
 
-Here it is a wishlist with features and ideas to improve the library. Note that features listed here are usually long term improvements or just describe a route to follow for the library. There are also some additional places to look for raylib improvements and ideas:
+Here is a wishlist with features and ideas to improve the library. Note that features listed here are usually long term improvements or just describe a route to follow for the library. There are also some additional places to look for raylib improvements and ideas:
 
  - [GitHub Issues](https://github.com/raysan5/raylib/issues) has several open issues for possible improvements or bugs to fix.
  - [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has multiple *TODO* comments around code with pending things to review or improve.
@@ -73,7 +73,7 @@ _Current version of raylib is complete and functional but there is always room f
 **raylib 1.5**
  - [x] Support Oculus Rift CV1 and VR stereo rendering (simulator)
  - [x] Redesign Shaders/Textures system -> New Materials system
- - [x] Support lighting: Omni, Directional and Spot lights
+ - [x] Support lighting: Omni, Directional and Spotlights
  - [x] Redesign physics module (physac)
  - [x] Chiptunes audio modules support
 

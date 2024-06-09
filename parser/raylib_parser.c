@@ -202,9 +202,12 @@ int main(int argc, char* argv[])
 {
     if (argc > 1) ProcessCommandLine(argc, argv);
 
-    if (inFileName[0] == '\0') MemoryCopy(inFileName, "../src/raylib.h\0", 16);
-    if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
-    if (apiDefine[0] == '\0') MemoryCopy(apiDefine, "RLAPI\0", 6);
+    const char *raylibhPath = "../src/raylib.h\0";
+    const char *raylibapiPath = "raylib_api.txt\0";
+    const char *rlapiPath = "RLAPI\0";
+    if (inFileName[0] == '\0') MemoryCopy(inFileName, raylibhPath, TextLength(raylibhPath) + 1);
+    if (outFileName[0] == '\0') MemoryCopy(outFileName, raylibapiPath, TextLength(raylibapiPath) + 1);
+    if (apiDefine[0] == '\0') MemoryCopy(apiDefine, rlapiPath, TextLength(rlapiPath) + 1);
 
     int length = 0;
     char *buffer = LoadFileText(inFileName, &length);
@@ -1006,8 +1009,14 @@ int main(int argc, char* argv[])
             {
                 funcEnd = c + 2;
 
-                // Check if previous word is void
-                if ((linePtr[c - 4] == 'v') && (linePtr[c - 3] == 'o') && (linePtr[c - 2] == 'i') && (linePtr[c - 1] == 'd')) break;
+                // Check if there are no parameters
+                if ((funcEnd - funcParamsStart == 2) ||
+                    ((linePtr[c - 4] == 'v') &&
+                     (linePtr[c - 3] == 'o') &&
+                     (linePtr[c - 2] == 'i') &&
+                     (linePtr[c - 1] == 'd'))) {
+                  break;
+                }
 
                 // Get parameter type + name, extract info
                 char funcParamTypeName[128] = { 0 };
@@ -1237,7 +1246,7 @@ static char **GetTextLines(const char *buffer, int length, int *linesCount)
         while ((bufferPtr[index] == ' ') || (bufferPtr[index] == '\t')) index++;
 
         int j = 0;
-        while (bufferPtr[index + j] != '\n')
+        while (bufferPtr[index + j] != '\n' && bufferPtr[index + j] != '\0')
         {
             lines[i][j] = bufferPtr[index + j];
             j++;
@@ -1271,8 +1280,10 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
         }
         else if ((typeName[k] == '.') && (typeNameLen == 3)) // Handle varargs ...);
         {
-            MemoryCopy(type, "...", 3);
-            MemoryCopy(name, "args", 4);
+	    const char *varargsDots = "...";
+	    const char *varargsArg = "args";
+            MemoryCopy(type, varargsDots, TextLength(varargsDots));
+            MemoryCopy(name, varargsArg, TextLength(varargsArg));
             break;
         }
     }
