@@ -22,7 +22,7 @@
 // NOTE: Gamepad name ID depends on drivers and OS
 #define XBOX360_LEGACY_NAME_ID  "Xbox Controller"
 #define XBOX360_NAME_ID     "Xbox 360 Controller"
-#define PS3_NAME_ID         "PLAYSTATION(R)3 Controller"
+#define PS3_NAME_ID         "Sony PLAYSTATION(R)3 Controller"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -67,7 +67,7 @@ int main(void)
             {
                 DrawText(TextFormat("GP%d: %s", gamepad, GetGamepadName(gamepad)), 10, 10, 10, BLACK);
 
-                if (true)
+                if (TextIsEqual(GetGamepadName(gamepad), XBOX360_LEGACY_NAME_ID) || TextIsEqual(GetGamepadName(gamepad), XBOX360_NAME_ID))
                 {
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);
 
