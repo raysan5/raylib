@@ -5345,7 +5345,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6022,7 +6022,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6041,7 +6041,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6145,7 +6145,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6168,7 +6168,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6191,7 +6191,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6214,7 +6214,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6237,7 +6237,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -6644,7 +6644,7 @@
           "name": "point"
         },
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -9613,7 +9613,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "Vector3 *",
+          "type": "const Vector3 *",
           "name": "points"
         },
         {
