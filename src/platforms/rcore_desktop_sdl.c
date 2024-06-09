@@ -1499,11 +1499,6 @@ int InitPlatform(void)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     }
 
-    if (CORE.Window.flags & FLAG_VSYNC_HINT)
-    {
-        SDL_GL_SetSwapInterval(1);
-    }
-
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -1537,6 +1532,9 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+
+        if (CORE.Window.flags & FLAG_VSYNC_HINT) SDL_GL_SetSwapInterval(1);
+        else SDL_GL_SetSwapInterval(0);
     }
     else
     {
