@@ -75,6 +75,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.Reso
         const install_cmd = b.addInstallArtifact(exe, .{});
 
         const run_cmd = b.addRunArtifact(exe);
+        run_cmd.cwd = b.path(module);
         run_cmd.step.dependOn(&install_cmd.step);
 
         const run_step = b.step(name, name);
