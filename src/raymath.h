@@ -2387,7 +2387,7 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 
         // QuaternionNormalize(q);
         Quaternion q = result;
-        lengthSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+        float lengthSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
         if (lengthSq == 0.0f) lengthSq = 1.0f;
         ilength = 1.0f/sqrtf(lengthSq);
         result.x = q.x*ilength;
