@@ -36,7 +36,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [jaylib](https://github.com/janet-lang/jaylib)                                           | **5.0**          | [Janet](https://janet-lang.org)                                      | MIT                  |
 | [jaylib](https://github.com/electronstudio/jaylib/)                                      | 4.5              | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))    | GPLv3+CE             |
 | [raylib-j](https://github.com/CreedVI/Raylib-J)                                          | 4.0              | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))    | Zlib                 |
-| [raylib.jl](https://github.com/irishgreencitrus/raylib.jl)                               | 4.2              | [Julia](https://julialang.org)                                       | Zlib                 |
+| [Raylib.jl](https://github.com/chengchingwen/Raylib.jl)                               | 4.2              | [Julia](https://julialang.org)                                       | Zlib                 |
 | [kaylib](https://github.com/electronstudio/kaylib)                                       | 3.7              | [Kotlin/native](https://kotlinlang.org)                              | **???**              |
 | [KaylibKit](https://codeberg.org/Kenta/KaylibKit)                                        | 4.5              | [Kotlin/native](https://kotlinlang.org)                              | Zlib                 |
 | [raylib-lua](https://github.com/TSnake41/raylib-lua)                                     | 4.5              | [Lua](http://www.lua.org)                                            | ISC                  |
