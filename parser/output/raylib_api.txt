@@ -2130,7 +2130,7 @@ Function 212: DrawLineStrip() (3 input parameters)
   Name: DrawLineStrip
   Return type: void
   Description: Draw lines sequence (using gl lines)
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: color (type: Color)
 Function 213: DrawLineBezier() (4 input parameters)
@@ -2360,14 +2360,14 @@ Function 239: DrawTriangleFan() (3 input parameters)
   Name: DrawTriangleFan
   Return type: void
   Description: Draw a triangle fan defined by points (first vertex is the center)
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: color (type: Color)
 Function 240: DrawTriangleStrip() (3 input parameters)
   Name: DrawTriangleStrip
   Return type: void
   Description: Draw a triangle strip defined by points
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: color (type: Color)
 Function 241: DrawPoly() (5 input parameters)
@@ -2402,7 +2402,7 @@ Function 244: DrawSplineLinear() (4 input parameters)
   Name: DrawSplineLinear
   Return type: void
   Description: Draw spline: Linear, minimum 2 points
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
@@ -2410,7 +2410,7 @@ Function 245: DrawSplineBasis() (4 input parameters)
   Name: DrawSplineBasis
   Return type: void
   Description: Draw spline: B-Spline, minimum 4 points
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
@@ -2418,7 +2418,7 @@ Function 246: DrawSplineCatmullRom() (4 input parameters)
   Name: DrawSplineCatmullRom
   Return type: void
   Description: Draw spline: Catmull-Rom, minimum 4 points
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
@@ -2426,7 +2426,7 @@ Function 247: DrawSplineBezierQuadratic() (4 input parameters)
   Name: DrawSplineBezierQuadratic
   Return type: void
   Description: Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
@@ -2434,7 +2434,7 @@ Function 248: DrawSplineBezierCubic() (4 input parameters)
   Name: DrawSplineBezierCubic
   Return type: void
   Description: Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
-  Param[1]: points (type: Vector2 *)
+  Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
@@ -2574,7 +2574,7 @@ Function 265: CheckCollisionPointPoly() (3 input parameters)
   Return type: bool
   Description: Check if point is within a polygon described by array of vertices
   Param[1]: point (type: Vector2)
-  Param[2]: points (type: Vector2 *)
+  Param[2]: points (type: const Vector2 *)
   Param[3]: pointCount (type: int)
 Function 266: CheckCollisionLines() (5 input parameters)
   Name: CheckCollisionLines
@@ -3695,7 +3695,7 @@ Function 432: DrawTriangleStrip3D() (3 input parameters)
   Name: DrawTriangleStrip3D
   Return type: void
   Description: Draw a triangle strip defined by points
-  Param[1]: points (type: Vector3 *)
+  Param[1]: points (type: const Vector3 *)
   Param[2]: pointCount (type: int)
   Param[3]: color (type: Color)
 Function 433: DrawCube() (5 input parameters)
