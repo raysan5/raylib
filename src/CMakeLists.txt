@@ -29,7 +29,6 @@ set(raylib_public_headers
 
 # Sources to be compiled
 set(raylib_sources
-    raudio.c
     rcore.c
     rmodels.c
     rshapes.c
@@ -42,6 +41,14 @@ set(raylib_sources
 if (NOT ${PLATFORM} MATCHES "Web")
     include(GlfwImport)
 endif ()
+
+if (USE_AUDIO)
+    MESSAGE(STATUS "Audio Backend: miniaudio")
+    list(APPEND raylib_sources raudio.c)
+else ()
+    MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
+endif ()
+
 
 add_library(raylib ${raylib_sources} ${raylib_public_headers})
 
