@@ -1,9 +1,9 @@
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/config.h" CONFIG_HEADER_CONTENT)
 
-set(BLANK_OR_BACKSLASH_PATTERN "[ \t\r\n\\]+")
+set(BLANK_OR_BACKSLASH_PATTERN "[ \t\r\n\\]")
 set(VALID_IDENTIFIER_PATTERN "[A-Za-z_]+[A-Za-z_0-9]*")
 set(VALID_VALUE_PATTERN [=["?[A-Za-z_0-9.-]+"?]=]) # not really correct but does the job since the config.h file hopefully will have been checked by a C preprocessor.
-set(MACRO_REGEX "(// )?\#define${BLANK_OR_BACKSLASH_PATTERN}(${VALID_IDENTIFIER_PATTERN})${BLANK_OR_BACKSLASH_PATTERN}(${VALID_VALUE_PATTERN})")
+set(MACRO_REGEX "(//${BLANK_OR_BACKSLASH_PATTERN}*)?\#define${BLANK_OR_BACKSLASH_PATTERN}+(${VALID_IDENTIFIER_PATTERN})${BLANK_OR_BACKSLASH_PATTERN}+(${VALID_VALUE_PATTERN})")
 
 string(REGEX MATCHALL ${MACRO_REGEX} MACRO_LIST ${CONFIG_HEADER_CONTENT})
 
