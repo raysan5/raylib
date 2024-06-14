@@ -3436,7 +3436,11 @@ void GenMeshTangents(Mesh *mesh)
     Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
     Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
 
-    assert(mesh->vertexCount % 3 == 0);
+    if (mesh->vertexCount % 3 != 0)
+    {
+        TRACELOG(LOG_WARNING, "MESH: vertexCount expected to be a multiple of 3. Expect uninitialized values.");
+    }
+
     for (int i = 0; i <= mesh->vertexCount - 3; i += 3)
     {
         // Get triangle vertices
