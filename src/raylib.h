@@ -790,7 +790,9 @@ typedef enum {
     SHADER_LOC_MAP_CUBEMAP,         // Shader location: samplerCube texture: cubemap
     SHADER_LOC_MAP_IRRADIANCE,      // Shader location: samplerCube texture: irradiance
     SHADER_LOC_MAP_PREFILTER,       // Shader location: samplerCube texture: prefilter
-    SHADER_LOC_MAP_BRDF             // Shader location: sampler2d texture: brdf
+	SHADER_LOC_MAP_BRDF,            // Shader location: sampler2d texture: brdf
+
+	SHADER_LOC_USER
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
