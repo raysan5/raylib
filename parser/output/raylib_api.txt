@@ -2842,7 +2842,7 @@ Function 304: ImageKernelConvolution() (3 input parameters)
   Return type: void
   Description: Apply Custom Square image convolution kernel
   Param[1]: image (type: Image *)
-  Param[2]: kernel (type: float*)
+  Param[2]: kernel (type: float *)
   Param[3]: kernelSize (type: int)
 Function 305: ImageResize() (3 input parameters)
   Name: ImageResize

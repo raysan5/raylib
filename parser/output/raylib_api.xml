@@ -1844,7 +1844,7 @@
         </Function>
         <Function name="ImageKernelConvolution" retType="void" paramCount="3" desc="Apply Custom Square image convolution kernel">
             <Param type="Image *" name="image" desc="" />
-            <Param type="float*" name="kernel" desc="" />
+            <Param type="float *" name="kernel" desc="" />
             <Param type="int" name="kernelSize" desc="" />
         </Function>
         <Function name="ImageResize" retType="void" paramCount="3" desc="Resize image (Bicubic scaling algorithm)">
