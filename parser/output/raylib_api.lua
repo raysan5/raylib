@@ -5621,7 +5621,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "image"},
-        {type = "float*", name = "kernel"},
+        {type = "float *", name = "kernel"},
         {type = "int", name = "kernelSize"}
       }
     },
