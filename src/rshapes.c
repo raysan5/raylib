@@ -1759,7 +1759,8 @@ void DrawSplineBasis(const Vector2 *points, int pointCount, float thick, Color c
         DrawTriangleStrip(vertices, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
     }
 
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
+    // Cap circle drawing at the end of every segment
+    DrawCircleV(currentPoint, thick/2.0f, color);
 }
 
 // Draw spline: Catmull-Rom, minimum 4 points
@@ -1825,34 +1826,31 @@ void DrawSplineCatmullRom(const Vector2 *points, int pointCount, float thick, Co
         DrawTriangleStrip(vertices, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
     }
 
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
+    // Cap circle drawing at the end of every segment
+    DrawCircleV(currentPoint, thick/2.0f, color);
 }
 
 // Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
 void DrawSplineBezierQuadratic(const Vector2 *points, int pointCount, float thick, Color color)
 {
-    if (pointCount < 3) return;
-    for (int i = 2; i < pointCount - 2; i += 2)
+    if (pointCount >= 3)
     {
-        DrawCircleV(points[i], thick/2.0f, color);
-    }
-    for (int i = 0; i < pointCount - 2; i += 2)
-    {
-        DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
+        for (int i = 0; i < pointCount - 2; i += 2) DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
+        
+        // Cap circle drawing at the end of every segment
+        //for (int i = 2; i < pointCount - 2; i += 2) DrawCircleV(points[i], thick/2.0f, color);
     }
 }
 
 // Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
 void DrawSplineBezierCubic(const Vector2 *points, int pointCount, float thick, Color color)
 {
-    if (pointCount < 4) return;
-    for (int i = 3; i < pointCount - 3; i += 3)
+    if (pointCount >= 4)
     {
-        DrawCircleV(points[i], thick/2.0f, color);
-    }
-    for (int i = 0; i < pointCount - 3; i += 3)
-    {
-        DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
+        for (int i = 0; i < pointCount - 3; i += 3) DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
+        
+        // Cap circle drawing at the end of every segment
+        //for (int i = 3; i < pointCount - 3; i += 3) DrawCircleV(points[i], thick/2.0f, color);
     }
 }
 

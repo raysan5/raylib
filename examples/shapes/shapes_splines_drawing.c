@@ -56,6 +56,10 @@ int main(void)
         { 710.0f, 260.0f },
     };
     
+    // Array required for spline bezier-cubic, 
+    // including control points interleaved with start-end segment points
+    Vector2 pointsInterleaved[3*(MAX_SPLINE_POINTS - 1) + 1] = { 0 };
+    
     int pointCount = 5;
     int selectedPoint = -1;
     int focusedPoint = -1;
@@ -188,23 +192,32 @@ int main(void)
             }
             else if (splineTypeActive == SPLINE_BEZIER)
             {
-                // Draw spline: cubic-bezier (with control points)
-
-                Vector2 fullPoints[3*(MAX_SPLINE_POINTS-1)+1] = {0};
-                for (int i = 0; i < pointCount-1; i++) {
-                    fullPoints[3*i] = points[i];
-                    fullPoints[3*i+1] = control[i].start;
-                    fullPoints[3*i+2] = control[i].end;
+                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be 
+                // provided interleaved with the start and end point of every segment
+                for (int i = 0; i < (pointCount - 1); i++) 
+                {
+                    pointsInterleaved[3*i] = points[i];
+                    pointsInterleaved[3*i + 1] = control[i].start;
+                    pointsInterleaved[3*i + 2] = control[i].end;
                 }
-                fullPoints[3*(pointCount-1)] = points[pointCount-1],
-                DrawSplineBezierCubic(fullPoints, 3*(pointCount-1)+1, splineThickness, RED);
+                
+                pointsInterleaved[3*(pointCount - 1)] = points[pointCount - 1];
 
-                for (int i = 0; i < pointCount - 1; i++)
+                // Draw spline: cubic-bezier (with control points)
+                DrawSplineBezierCubic(pointsInterleaved, 3*(pointCount - 1) + 1, splineThickness, RED);
+                
+                /*
+                for (int i = 0; i < 3*(pointCount - 1); i += 3)
                 {
                     // Drawing individual segments, not considering thickness connection compensation
-                    // DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], splineThickness, RED);
+                    DrawSplineSegmentBezierCubic(pointsInterleaved[i], pointsInterleaved[i + 1], pointsInterleaved[i + 2], pointsInterleaved[i + 3], splineThickness, MAROON);
+                }
+                */
 
-                    // Every cubic bezier point should have two control points
+                // Draw spline control points
+                for (int i = 0; i < pointCount - 1; i++)
+                {
+                    // Every cubic bezier point have two control points
                     DrawCircleV(control[i].start, 6, GOLD);
                     DrawCircleV(control[i].end, 6, GOLD);
                     if (focusedControlPoint == &control[i].start) DrawCircleV(control[i].start, 8, GREEN);
