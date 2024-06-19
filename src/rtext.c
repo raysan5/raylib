@@ -394,7 +394,6 @@ Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepoi
 
         UnloadFileData(fileData);
     }
-    else font = GetFontDefault();
 
     return font;
 }
