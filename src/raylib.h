@@ -1596,6 +1596,8 @@ RLAPI RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
 typedef void (*AudioCallback)(void *bufferData, unsigned int frames);
+typedef void (*AudioThreadEntryCallback)(void);
+typedef void (*AudioThreadExitCallback)(void);
 
 // Audio device management functions
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
@@ -1674,6 +1676,9 @@ RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processo
 
 RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
+
+RLAPI void SetAudioThreadEntryCallback(AudioThreadEntryCallback callback); // Audio thread creation callback (usually should be called before audio device initialization, can be NULL)
+RLAPI void SetAudioThreadExitCallback(AudioThreadExitCallback callback); // Audio thread destruction callback (can be NULL)
 
 #if defined(__cplusplus)
 }

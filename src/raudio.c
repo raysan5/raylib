@@ -175,6 +175,12 @@ typedef struct tagBITMAPINFOHEADER {
 // Threading model: Default: [0] COINIT_MULTITHREADED: COM calls objects on any thread (free threading)
 #define MA_COINIT_VALUE  2              // [2] COINIT_APARTMENTTHREADED: Each object has its own thread (apartment model)
 
+static void CallAudioThreadEntryCallback(void);
+static void CallAudioThreadExitCallback(void);
+
+#define MA_ON_THREAD_ENTRY CallAudioThreadEntryCallback();
+#define MA_ON_THREAD_EXIT CallAudioThreadExitCallback();
+
 #define MINIAUDIO_IMPLEMENTATION
 //#define MA_DEBUG_OUTPUT
 #include "external/miniaudio.h"         // Audio device initialization and management
@@ -391,6 +397,8 @@ typedef struct AudioData {
         int defaultSize;            // Default audio buffer size for audio streams
     } Buffer;
     rAudioProcessor *mixedProcessor;
+    AudioThreadEntryCallback threadEntryCallback;
+    AudioThreadExitCallback threadExitCallback;
 } AudioData;
 
 //----------------------------------------------------------------------------------
@@ -403,7 +411,9 @@ static AudioData AUDIO = {          // Global AUDIO context
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, just increase this number
     .Buffer.defaultSize = 0,
-    .mixedProcessor = NULL
+    .mixedProcessor = NULL,
+    .threadEntryCallback = NULL,
+    .threadExitCallback = NULL
 };
 
 //----------------------------------------------------------------------------------
@@ -2327,6 +2337,14 @@ void DetachAudioMixedProcessor(AudioCallback process)
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
+void SetAudioThreadEntryCallback(AudioThreadEntryCallback callback) {
+    AUDIO.threadEntryCallback = callback;
+}
+
+void SetAudioThreadExitCallback(AudioThreadExitCallback callback) {
+    AUDIO.threadExitCallback = callback;
+}
+
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -2697,6 +2715,19 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
         else TRACELOG(LOG_WARNING, "STREAM: Buffer not available for updating");
     }
 }
+
+static void CallAudioThreadEntryCallback(void) {
+    if (AUDIO.threadEntryCallback) {
+        AUDIO.threadEntryCallback();
+    }
+}
+
+static void CallAudioThreadExitCallback(void) {
+    if (AUDIO.threadExitCallback) {
+        AUDIO.threadExitCallback();
+    }
+}
+
 
 // Some required functions for audio standalone module version
 #if defined(RAUDIO_STANDALONE)
