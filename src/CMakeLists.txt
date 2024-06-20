@@ -70,6 +70,9 @@ endif()
 
 if (${PLATFORM} MATCHES "Web")
     target_link_options(raylib PUBLIC "-sUSE_GLFW=3")
+    if(${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_ES3")
+        target_link_options(raylib PUBLIC "-sFULL_ES3=1")
+    endif()
 endif()
 
 set_target_properties(raylib PROPERTIES
