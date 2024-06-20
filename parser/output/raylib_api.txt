@@ -944,7 +944,7 @@ Enum 21: NPatchLayout (3 values)
   Value[NPATCH_THREE_PATCH_VERTICAL]: 1
   Value[NPATCH_THREE_PATCH_HORIZONTAL]: 2
 
-Callbacks found: 6
+Callbacks found: 8
 
 Callback 001: TraceLogCallback() (3 input parameters)
   Name: TraceLogCallback
@@ -983,8 +983,18 @@ Callback 006: AudioCallback() (2 input parameters)
   Description: 
   Param[1]: bufferData (type: void *)
   Param[2]: frames (type: unsigned int)
+Callback 007: AudioThreadEntryCallback() (1 input parameters)
+  Name: AudioThreadEntryCallback
+  Return type: void
+  Description: 
+  Param[1]:  (type: )
+Callback 008: AudioThreadExitCallback() (1 input parameters)
+  Name: AudioThreadExitCallback
+  Return type: void
+  Description: 
+  Param[1]:  (type: )
 
-Functions found: 566
+Functions found: 568
 
 Function 001: InitWindow() (3 input parameters)
   Name: InitWindow
@@ -4550,3 +4560,13 @@ Function 566: DetachAudioMixedProcessor() (1 input parameters)
   Return type: void
   Description: Detach audio stream processor from the entire audio pipeline
   Param[1]: processor (type: AudioCallback)
+Function 567: SetAudioThreadEntryCallback() (1 input parameters)
+  Name: SetAudioThreadEntryCallback
+  Return type: void
+  Description: Audio thread creation callback (usually should be called before audio device initialization, can be NULL)
+  Param[1]: callback (type: AudioThreadEntryCallback)
+Function 568: SetAudioThreadExitCallback() (1 input parameters)
+  Name: SetAudioThreadExitCallback
+  Return type: void
+  Description: Audio thread destruction callback (can be NULL)
+  Param[1]: callback (type: AudioThreadExitCallback)

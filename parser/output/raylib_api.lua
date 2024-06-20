@@ -3074,6 +3074,22 @@ return {
         {type = "void *", name = "bufferData"},
         {type = "unsigned int", name = "frames"}
       }
+    },
+    {
+      name = "AudioThreadEntryCallback",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "", name = ""}
+      }
+    },
+    {
+      name = "AudioThreadExitCallback",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "", name = ""}
+      }
     }
   },
   functions = {
@@ -8097,6 +8113,22 @@ return {
       returnType = "void",
       params = {
         {type = "AudioCallback", name = "processor"}
+      }
+    },
+    {
+      name = "SetAudioThreadEntryCallback",
+      description = "Audio thread creation callback (usually should be called before audio device initialization, can be NULL)",
+      returnType = "void",
+      params = {
+        {type = "AudioThreadEntryCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetAudioThreadExitCallback",
+      description = "Audio thread destruction callback (can be NULL)",
+      returnType = "void",
+      params = {
+        {type = "AudioThreadExitCallback", name = "callback"}
       }
     }
   }

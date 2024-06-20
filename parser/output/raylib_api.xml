@@ -643,7 +643,7 @@
             <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="Npatch layout: 3x1 tiles" />
         </Enum>
     </Enums>
-    <Callbacks count="6">
+    <Callbacks count="8">
         <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
             <Param type="int" name="logLevel" desc="" />
             <Param type="const char *" name="text" desc="" />
@@ -669,8 +669,14 @@
             <Param type="void *" name="bufferData" desc="" />
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
+        <Callback name="AudioThreadEntryCallback" retType="void" paramCount="1" desc="">
+            <Param type="" name="" desc="" />
+        </Callback>
+        <Callback name="AudioThreadExitCallback" retType="void" paramCount="1" desc="">
+            <Param type="" name="" desc="" />
+        </Callback>
     </Callbacks>
-    <Functions count="566">
+    <Functions count="568">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -3022,6 +3028,12 @@
         </Function>
         <Function name="DetachAudioMixedProcessor" retType="void" paramCount="1" desc="Detach audio stream processor from the entire audio pipeline">
             <Param type="AudioCallback" name="processor" desc="" />
+        </Function>
+        <Function name="SetAudioThreadEntryCallback" retType="void" paramCount="1" desc="Audio thread creation callback (usually should be called before audio device initialization, can be NULL)">
+            <Param type="AudioThreadEntryCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetAudioThreadExitCallback" retType="void" paramCount="1" desc="Audio thread destruction callback (can be NULL)">
+            <Param type="AudioThreadExitCallback" name="callback" desc="" />
         </Function>
     </Functions>
 </raylibAPI>
