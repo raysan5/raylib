@@ -2337,11 +2337,13 @@ void DetachAudioMixedProcessor(AudioCallback process)
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
-void SetAudioThreadEntryCallback(AudioThreadEntryCallback callback) {
+void SetAudioThreadEntryCallback(AudioThreadEntryCallback callback)
+{
     AUDIO.threadEntryCallback = callback;
 }
 
-void SetAudioThreadExitCallback(AudioThreadExitCallback callback) {
+void SetAudioThreadExitCallback(AudioThreadExitCallback callback)
+{
     AUDIO.threadExitCallback = callback;
 }
 
@@ -2716,14 +2718,18 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
     }
 }
 
-static void CallAudioThreadEntryCallback(void) {
-    if (AUDIO.threadEntryCallback) {
+static void CallAudioThreadEntryCallback(void)
+{
+    if (AUDIO.threadEntryCallback)
+    {
         AUDIO.threadEntryCallback();
     }
 }
 
-static void CallAudioThreadExitCallback(void) {
-    if (AUDIO.threadExitCallback) {
+static void CallAudioThreadExitCallback(void)
+{
+    if (AUDIO.threadExitCallback)
+    {
         AUDIO.threadExitCallback();
     }
 }
