@@ -58,7 +58,9 @@ if (${PLATFORM} MATCHES "Desktop")
 
 elseif (${PLATFORM} MATCHES "Web")
     set(PLATFORM_CPP "PLATFORM_WEB")
-    set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+    if(NOT GRAPHICS)
+        set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+    endif()
     set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
 
 elseif (${PLATFORM} MATCHES "Android")
