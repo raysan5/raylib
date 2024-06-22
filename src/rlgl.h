@@ -4251,13 +4251,7 @@ void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType
 void rlSetUniformMatrix(int locIndex, Matrix mat)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    float matfloat[16] = {
-        mat.m0, mat.m1, mat.m2, mat.m3,
-        mat.m4, mat.m5, mat.m6, mat.m7,
-        mat.m8, mat.m9, mat.m10, mat.m11,
-        mat.m12, mat.m13, mat.m14, mat.m15
-    };
-    glUniformMatrix4fv(locIndex, 1, false, matfloat);
+    glUniformMatrix4fv(locIndex, 1, true, &mat.m0);
 #endif
 }
 
