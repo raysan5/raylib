@@ -3795,9 +3795,9 @@ void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color col
 {
     if (pointCount >= 3)
     {
-        for (int i = 1; i < pointCount; i++)
+        for (int i = 1; i < pointCount - 1; i++)
         {
-            ImageDrawTriangle(dst, points[0], points[i + 1], points[i + 2], color);
+            ImageDrawTriangle(dst, points[0], points[i], points[i + 1], color);
         }
     }
 }
