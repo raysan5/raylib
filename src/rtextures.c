@@ -3459,8 +3459,8 @@ void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
     // Round start and end positions to nearest integer coordinates
     int x1 = (int)(start.x + 0.5f);
     int y1 = (int)(start.y + 0.5f);
-    int x2 = (int)(start.x + 0.5f);
-    int y2 = (int)(start.y + 0.5f);
+    int x2 = (int)(end.x + 0.5f);
+    int y2 = (int)(end.y + 0.5f);
 
     // Draw a vertical line using ImageDrawLine function
     ImageDrawLine(dst, x1, y1, x2, y2, color);
