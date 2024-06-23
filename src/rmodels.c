@@ -4326,6 +4326,8 @@ static Model LoadIQM(const char *fileName)
         model.materials[i] = LoadMaterialDefault();
         model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
 
+        model.meshMaterial[i] = i;
+        
         TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
 
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
