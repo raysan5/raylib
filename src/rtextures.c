@@ -3793,7 +3793,7 @@ void ImageDrawTriangleLines(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Colo
 // Draw a triangle fan defined by points within an image (first vertex is the center)
 void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color color)
 {
-    if (pointCount >= 3 && (pointCount%3) == 0)
+    if (pointCount >= 3)
     {
         for (int i = 1; i < pointCount; i++)
         {
@@ -3805,7 +3805,7 @@ void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color col
 // Draw a triangle strip defined by points within an image
 void ImageDrawTriangleStrip(Image *dst, Vector2 *points, int pointCount, Color color)
 {
-    if (pointCount >= 3 && (pointCount%3) == 0)
+    if (pointCount >= 3)
     {
         for (int i = 2; i < pointCount; i++)
         {
