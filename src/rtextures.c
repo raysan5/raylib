@@ -3403,98 +3403,112 @@ void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
 // Draw line within an image
 void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
-    // Using Bresenham's algorithm as described in
-    // Drawing Lines with Pixels - Joshua Scott - March 2012
-    // https://classic.csunplugged.org/wp-content/uploads/2014/12/Lines.pdf
+    // Calculate differences in coordinates
+    int shortLen = endPosY - startPosY;
+    int longLen = endPosX - startPosX;
+    bool yLonger = false;
 
-    int changeInX = (endPosX - startPosX);
-    int absChangeInX = (changeInX < 0)? -changeInX : changeInX;
-    int changeInY = (endPosY - startPosY);
-    int absChangeInY = (changeInY < 0)? -changeInY : changeInY;
-
-    int startU, startV, endU, stepV; // Substitutions, either U = X, V = Y or vice versa. See loop at end of function
-    //int endV;     // Not needed but left for better understanding, check code below
-    int A, B, P;    // See linked paper above, explained down in the main loop
-    int reversedXY = (absChangeInY < absChangeInX);
-
-    if (reversedXY)
+    // Determine if the line is more vertical than horizontal
+    if (abs(shortLen) > abs(longLen))
     {
-        A = 2*absChangeInY;
-        B = A - 2*absChangeInX;
-        P = A - absChangeInX;
+        // Swap the lengths if the line is more vertical
+        int temp = shortLen;
+        shortLen = longLen;
+        longLen = temp;
+        yLonger = true;
+    }
 
-        if (changeInX > 0)
+    // Initialize variables for drawing loop
+    int endVal = longLen;
+    int sgnInc = 1;
+
+    // Adjust direction increment based on longLen sign
+    if (longLen < 0)
+    {
+        longLen = -longLen;
+        sgnInc = -1;
+    }
+
+    // Calculate fixed-point increment for shorter length
+    int decInc = (longLen == 0)? 0 : (shortLen<<16) / longLen;
+
+    // Draw the line pixel by pixel
+    if (yLonger)
+    {
+        // If line is more vertical, iterate over y-axis
+        for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
         {
-            startU = startPosX;
-            startV = startPosY;
-            endU = endPosX;
-            //endV = endPosY;
+            // Calculate pixel position and draw it
+            ImageDrawPixel(dst, startPosX + (j>>16), startPosY + i, color);
         }
-        else
-        {
-            startU = endPosX;
-            startV = endPosY;
-            endU = startPosX;
-            //endV = startPosY;
-
-            // Since start and end are reversed
-            changeInX = -changeInX;
-            changeInY = -changeInY;
-        }
-
-        stepV = (changeInY < 0)? -1 : 1;
-
-        ImageDrawPixel(dst, startU, startV, color);     // At this point they are correctly ordered...
     }
     else
     {
-        A = 2*absChangeInX;
-        B = A - 2*absChangeInY;
-        P = A - absChangeInY;
-
-        if (changeInY > 0)
+        // If line is more horizontal, iterate over x-axis
+        for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
         {
-            startU = startPosY;
-            startV = startPosX;
-            endU = endPosY;
-            //endV = endPosX;
+            // Calculate pixel position and draw it
+            ImageDrawPixel(dst, startPosX + i, startPosY + (j>>16), color);
         }
-        else
-        {
-            startU = endPosY;
-            startV = endPosX;
-            endU = startPosY;
-            //endV = startPosX;
-
-            // Since start and end are reversed
-            changeInX = -changeInX;
-            changeInY = -changeInY;
-        }
-
-        stepV = (changeInX < 0)? -1 : 1;
-
-        ImageDrawPixel(dst, startV, startU, color);     // ... but need to be reversed here. Repeated in the main loop below
-    }
-
-    // We already drew the start point. If we started at startU + 0, the line would be crooked and too short
-    for (int u = startU + 1, v = startV; u <= endU; u++)
-    {
-        if (P >= 0)
-        {
-            v += stepV;     // Adjusts whenever we stray too far from the direct line. Details in the linked paper above
-            P += B;         // Remembers that we corrected our path
-        }
-        else P += A;        // Remembers how far we are from the direct line
-
-        if (reversedXY) ImageDrawPixel(dst, u, v, color);
-        else ImageDrawPixel(dst, v, u, color);
     }
 }
 
 // Draw line within an image (Vector version)
 void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
 {
-    ImageDrawLine(dst, (int)start.x, (int)start.y, (int)end.x, (int)end.y, color);
+    // Round start and end positions to nearest integer coordinates
+    int x1 = (int)(start.x + 0.5f);
+    int y1 = (int)(start.y + 0.5f);
+    int x2 = (int)(start.x + 0.5f);
+    int y2 = (int)(start.y + 0.5f);
+
+    // Draw a vertical line using ImageDrawLine function
+    ImageDrawLine(dst, x1, y1, x2, y2, color);
+}
+
+// Draw a line defining thickness within an image
+void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color color)
+{
+    // Round start and end positions to nearest integer coordinates
+    int x1 = (int)(start.x + 0.5f);
+    int y1 = (int)(start.y + 0.5f);
+    int x2 = (int)(end.x + 0.5f);
+    int y2 = (int)(end.y + 0.5f);
+
+    // Calculate differences in x and y coordinates
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    // Draw the main line between (x1, y1) and (x2, y2)
+    ImageDrawLine(dst, x1, y1, x2, y2, color);
+
+    // Determine if the line is more horizontal or vertical
+    if (dx != 0 && abs(dy/dx) < 1)
+    {
+        // Line is more horizontal
+        // Calculate half the width of the line
+        int wy = (thick - 1)*sqrtf(dx*dx + dy*dy)/(2*abs(dx));
+
+        // Draw additional lines above and below the main line
+        for (int i = 1; i <= wy; i++)
+        {
+            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); // Draw above the main line
+            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); // Draw below the main line
+        }
+    }
+    else if (dy != 0)
+    {
+        // Line is more vertical or perfectly horizontal
+        // Calculate half the width of the line
+        int wx = (thick - 1)*sqrtf(dx*dx + dy*dy)/(2*abs(dy));
+
+        // Draw additional lines to the left and right of the main line
+        for (int i = 1; i <= wx; i++)
+        {
+            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); // Draw left of the main line
+            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); // Draw right of the main line
+        }
+    }
 }
 
 // Draw circle within an image
