@@ -4518,7 +4518,7 @@ Matrix rlGetMatrixTransform(void)
 }
 
 // Get internal projection matrix for stereo render (selected eye)
-RLAPI Matrix rlGetMatrixProjectionStereo(int eye)
+Matrix rlGetMatrixProjectionStereo(int eye)
 {
     Matrix mat = rlMatrixIdentity();
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -4528,7 +4528,7 @@ RLAPI Matrix rlGetMatrixProjectionStereo(int eye)
 }
 
 // Get internal view offset matrix for stereo render (selected eye)
-RLAPI Matrix rlGetMatrixViewOffsetStereo(int eye)
+Matrix rlGetMatrixViewOffsetStereo(int eye)
 {
     Matrix mat = rlMatrixIdentity();
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

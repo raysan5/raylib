@@ -670,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="566">
+    <Functions count="571">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1317,7 +1317,7 @@
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawLineStrip" retType="void" paramCount="3" desc="Draw lines sequence (using gl lines)">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
@@ -1493,12 +1493,12 @@
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawTriangleFan" retType="void" paramCount="3" desc="Draw a triangle fan defined by points (first vertex is the center)">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawTriangleStrip" retType="void" paramCount="3" desc="Draw a triangle strip defined by points">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
@@ -1525,31 +1525,31 @@
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineLinear" retType="void" paramCount="4" desc="Draw spline: Linear, minimum 2 points">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineBasis" retType="void" paramCount="4" desc="Draw spline: B-Spline, minimum 4 points">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineCatmullRom" retType="void" paramCount="4" desc="Draw spline: Catmull-Rom, minimum 4 points">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineBezierQuadratic" retType="void" paramCount="4" desc="Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineBezierCubic" retType="void" paramCount="4" desc="Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]">
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
@@ -1655,7 +1655,7 @@
         </Function>
         <Function name="CheckCollisionPointPoly" retType="bool" paramCount="3" desc="Check if point is within a polygon described by array of vertices">
             <Param type="Vector2" name="point" desc="" />
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
         </Function>
         <Function name="CheckCollisionLines" retType="bool" paramCount="5" desc="Check the collision between two lines defined by two points each, returns collision point by reference">
@@ -1844,7 +1844,7 @@
         </Function>
         <Function name="ImageKernelConvolution" retType="void" paramCount="3" desc="Apply Custom Square image convolution kernel">
             <Param type="Image *" name="image" desc="" />
-            <Param type="float*" name="kernel" desc="" />
+            <Param type="float *" name="kernel" desc="" />
             <Param type="int" name="kernelSize" desc="" />
         </Function>
         <Function name="ImageResize" retType="void" paramCount="3" desc="Resize image (Bicubic scaling algorithm)">
@@ -2015,6 +2015,41 @@
             <Param type="Image *" name="dst" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="int" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawTriangle" retType="void" paramCount="5" desc="Draw triangle within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawTriangleEx" retType="void" paramCount="7" desc="Draw triangle with interpolated colors within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="c1" desc="" />
+            <Param type="Color" name="c2" desc="" />
+            <Param type="Color" name="c3" desc="" />
+        </Function>
+        <Function name="ImageDrawTriangleLines" retType="void" paramCount="5" desc="Draw triangle outline within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawTriangleFan" retType="void" paramCount="4" desc="Draw a triangle fan defined by points within an image (first vertex is the center)">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawTriangleStrip" retType="void" paramCount="4" desc="Draw a triangle strip defined by points within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ImageDraw" retType="void" paramCount="5" desc="Draw a source image within a destination image (tint applied to source)">
@@ -2440,7 +2475,7 @@
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawTriangleStrip3D" retType="void" paramCount="3" desc="Draw a triangle strip defined by points">
-            <Param type="Vector3 *" name="points" desc="" />
+            <Param type="const Vector3 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>

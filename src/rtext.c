@@ -1892,8 +1892,7 @@ int *LoadCodepoints(const char *text, int *count)
     }
 
     // Re-allocate buffer to the actual number of codepoints loaded
-    int *temp = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
-    if (temp != NULL) codepoints = temp;
+    codepoints = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
 
     *count = codepointCount;
 

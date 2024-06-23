@@ -3627,6 +3627,194 @@ void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
     ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
 }
 
+// Draw triangle within an image
+void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
+{
+    // Calculate the 2D bounding box of the triangle
+    // Determine the minimum and maximum x and y coordinates of the triangle vertices
+    int xMin = (v1.x < v2.x)? ((v1.x < v3.x)? v1.x : v3.x) : ((v2.x < v3.x)? v2.x : v3.x);
+    int yMin = (v1.y < v2.y)? ((v1.y < v3.y)? v1.y : v3.y) : ((v2.y < v3.y)? v2.y : v3.y);
+    int xMax = (v1.x > v2.x)? ((v1.x > v3.x)? v1.x : v3.x) : ((v2.x > v3.x)? v2.x : v3.x);
+    int yMax = (v1.y > v2.y)? ((v1.y > v3.y)? v1.y : v3.y) : ((v2.y > v3.y)? v2.y : v3.y);
+
+    // Clamp the bounding box to the image dimensions
+    if (xMin < 0) xMin = 0;
+    if (yMin < 0) yMin = 0;
+    if (xMax > dst->width) xMax = dst->width;
+    if (yMax > dst->height) yMax = dst->height;
+
+    // Check the order of the vertices to determine if it's a front or back face
+    // NOTE: if signedArea is equal to 0, the face is degenerate
+    float signedArea = (v2.x - v1.x)*(v3.y - v1.y) - (v3.x - v1.x)*(v2.y - v1.y);
+    bool isBackFace = (signedArea > 0);
+
+    // Barycentric interpolation setup
+    // Calculate the step increments for the barycentric coordinates
+    int w1XStep = v3.y - v2.y, w1YStep = v2.x - v3.x;
+    int w2XStep = v1.y - v3.y, w2YStep = v3.x - v1.x;
+    int w3XStep = v2.y - v1.y, w3YStep = v1.x - v2.x;
+
+    // If the triangle is a back face, invert the steps
+    if (isBackFace)
+    {
+        w1XStep = -w1XStep, w1YStep = -w1YStep;
+        w2XStep = -w2XStep, w2YStep = -w2YStep;
+        w3XStep = -w3XStep, w3YStep = -w3YStep;
+    }
+
+    // Calculate the initial barycentric coordinates for the top-left point of the bounding box
+    int w1Row = (xMin - v2.x)*w1XStep + w1YStep*(yMin - v2.y);
+    int w2Row = (xMin - v3.x)*w2XStep + w2YStep*(yMin - v3.y);
+    int w3Row = (xMin - v1.x)*w3XStep + w3YStep*(yMin - v1.y);
+
+    // Rasterization loop
+    // Iterate through each pixel in the bounding box
+    for (int y = yMin; y <= yMax; y++)
+    {
+        int w1 = w1Row;
+        int w2 = w2Row;
+        int w3 = w3Row;
+
+        for (int x = xMin; x <= xMax; x++)
+        {
+            // Check if the pixel is inside the triangle using barycentric coordinates
+            // If it is then we can draw the pixel with the given color
+            if ((w1 | w2 | w3) >= 0) ImageDrawPixel(dst, x, y, color);
+
+            // Increment the barycentric coordinates for the next pixel
+            w1 += w1XStep;
+            w2 += w2XStep;
+            w3 += w3XStep;
+        }
+
+        // Move to the next row in the bounding box
+        w1Row += w1YStep;
+        w2Row += w2YStep;
+        w3Row += w3YStep;
+    }
+}
+
+// Draw triangle with interpolated colors within an image
+void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3)
+{
+    // Calculate the 2D bounding box of the triangle
+    // Determine the minimum and maximum x and y coordinates of the triangle vertices
+    int xMin = (v1.x < v2.x)? ((v1.x < v3.x)? v1.x : v3.x) : ((v2.x < v3.x)? v2.x : v3.x);
+    int yMin = (v1.y < v2.y)? ((v1.y < v3.y)? v1.y : v3.y) : ((v2.y < v3.y)? v2.y : v3.y);
+    int xMax = (v1.x > v2.x)? ((v1.x > v3.x)? v1.x : v3.x) : ((v2.x > v3.x)? v2.x : v3.x);
+    int yMax = (v1.y > v2.y)? ((v1.y > v3.y)? v1.y : v3.y) : ((v2.y > v3.y)? v2.y : v3.y);
+
+    // Clamp the bounding box to the image dimensions
+    if (xMin < 0) xMin = 0;
+    if (yMin < 0) yMin = 0;
+    if (xMax > dst->width) xMax = dst->width;
+    if (yMax > dst->height) yMax = dst->height;
+
+    // Check the order of the vertices to determine if it's a front or back face
+    // NOTE: if signedArea is equal to 0, the face is degenerate
+    float signedArea = (v2.x - v1.x)*(v3.y - v1.y) - (v3.x - v1.x)*(v2.y - v1.y);
+    bool isBackFace = (signedArea > 0);
+
+    // Barycentric interpolation setup
+    // Calculate the step increments for the barycentric coordinates
+    int w1XStep = v3.y - v2.y, w1YStep = v2.x - v3.x;
+    int w2XStep = v1.y - v3.y, w2YStep = v3.x - v1.x;
+    int w3XStep = v2.y - v1.y, w3YStep = v1.x - v2.x;
+
+    // If the triangle is a back face, invert the steps
+    if (isBackFace)
+    {
+        w1XStep = -w1XStep, w1YStep = -w1YStep;
+        w2XStep = -w2XStep, w2YStep = -w2YStep;
+        w3XStep = -w3XStep, w3YStep = -w3YStep;
+    }
+
+    // Calculate the initial barycentric coordinates for the top-left point of the bounding box
+    int w1Row = (xMin - v2.x)*w1XStep + w1YStep*(yMin - v2.y);
+    int w2Row = (xMin - v3.x)*w2XStep + w2YStep*(yMin - v3.y);
+    int w3Row = (xMin - v1.x)*w3XStep + w3YStep*(yMin - v1.y);
+
+    // Calculate the inverse of the sum of the barycentric coordinates for normalization
+    // NOTE 1: Here, we act as if we multiply by 255 the reciprocal, which avoids additional
+    //         calculations in the loop. This is acceptable because we are only interpolating colors.
+    // NOTE 2: This sum remains constant throughout the triangle
+    float wInvSum = 255.0f/(w1Row + w2Row + w3Row);
+
+    // Rasterization loop
+    // Iterate through each pixel in the bounding box
+    for (int y = yMin; y <= yMax; y++)
+    {
+        int w1 = w1Row;
+        int w2 = w2Row;
+        int w3 = w3Row;
+
+        for (int x = xMin; x <= xMax; x++)
+        {
+            // Check if the pixel is inside the triangle using barycentric coordinates
+            if ((w1 | w2 | w3) >= 0)
+            {
+                // Compute the normalized barycentric coordinates
+                unsigned char aW1 = (unsigned char)((float)w1*wInvSum);
+                unsigned char aW2 = (unsigned char)((float)w2*wInvSum);
+                unsigned char aW3 = (unsigned char)((float)w3*wInvSum);
+
+                // Interpolate the color using the barycentric coordinates
+                Color finalColor = { 0 };
+                finalColor.r = (c1.r*aW1 + c2.r*aW2 + c3.r*aW3)/255;
+                finalColor.g = (c1.g*aW1 + c2.g*aW2 + c3.g*aW3)/255;
+                finalColor.b = (c1.b*aW1 + c2.b*aW2 + c3.b*aW3)/255;
+                finalColor.a = (c1.a*aW1 + c2.a*aW2 + c3.a*aW3)/255;
+
+                // Draw the pixel with the interpolated color
+                ImageDrawPixel(dst, x, y, finalColor);
+            }
+
+            // Increment the barycentric coordinates for the next pixel
+            w1 += w1XStep;
+            w2 += w2XStep;
+            w3 += w3XStep;
+        }
+
+        // Move to the next row in the bounding box
+        w1Row += w1YStep;
+        w2Row += w2YStep;
+        w3Row += w3YStep;
+    }
+}
+
+// Draw triangle outline within an image
+void ImageDrawTriangleLines(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
+{
+    ImageDrawLine(dst, v1.x, v1.y, v2.x, v2.y, color);
+    ImageDrawLine(dst, v2.x, v2.y, v3.x, v3.y, color);
+    ImageDrawLine(dst, v3.x, v3.y, v1.x, v1.y, color);
+}
+
+// Draw a triangle fan defined by points within an image (first vertex is the center)
+void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color color)
+{
+    if (pointCount >= 3)
+    {
+        for (int i = 1; i < pointCount - 1; i++)
+        {
+            ImageDrawTriangle(dst, points[0], points[i], points[i + 1], color);
+        }
+    }
+}
+
+// Draw a triangle strip defined by points within an image
+void ImageDrawTriangleStrip(Image *dst, Vector2 *points, int pointCount, Color color)
+{
+    if (pointCount >= 3)
+    {
+        for (int i = 2; i < pointCount; i++)
+        {
+            if ((i%2) == 0) ImageDrawTriangle(dst, points[i], points[i - 2], points[i - 1], color);
+            else ImageDrawTriangle(dst, points[i], points[i - 1], points[i - 2], color);
+        }
+    }
+}
+
 // Draw an image (source) within an image (destination)
 // NOTE: Color tint is applied to source image
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)

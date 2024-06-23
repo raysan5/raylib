@@ -217,6 +217,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         },
     }
 
+    raylib.addIncludePath(b.path("src"));
     raylib.root_module.addCSourceFiles(.{
         .root = b.path("src"),
         .files = c_source_files.items,

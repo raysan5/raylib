@@ -4636,7 +4636,7 @@ return {
       description = "Draw lines sequence (using gl lines)",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -4947,7 +4947,7 @@ return {
       description = "Draw a triangle fan defined by points (first vertex is the center)",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -4957,7 +4957,7 @@ return {
       description = "Draw a triangle strip defined by points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -5004,7 +5004,7 @@ return {
       description = "Draw spline: Linear, minimum 2 points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5015,7 +5015,7 @@ return {
       description = "Draw spline: B-Spline, minimum 4 points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5026,7 +5026,7 @@ return {
       description = "Draw spline: Catmull-Rom, minimum 4 points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5037,7 +5037,7 @@ return {
       description = "Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5048,7 +5048,7 @@ return {
       description = "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5239,7 +5239,7 @@ return {
       returnType = "bool",
       params = {
         {type = "Vector2", name = "point"},
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"}
       }
     },
@@ -5621,7 +5621,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "image"},
-        {type = "float*", name = "kernel"},
+        {type = "float *", name = "kernel"},
         {type = "int", name = "kernelSize"}
       }
     },
@@ -5967,6 +5967,66 @@ return {
         {type = "Image *", name = "dst"},
         {type = "Rectangle", name = "rec"},
         {type = "int", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangle",
+      description = "Draw triangle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleEx",
+      description = "Draw triangle with interpolated colors within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "c1"},
+        {type = "Color", name = "c2"},
+        {type = "Color", name = "c3"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleLines",
+      description = "Draw triangle outline within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleFan",
+      description = "Draw a triangle fan defined by points within an image (first vertex is the center)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleStrip",
+      description = "Draw a triangle strip defined by points within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
     },
@@ -6855,7 +6915,7 @@ return {
       description = "Draw a triangle strip defined by points",
       returnType = "void",
       params = {
-        {type = "Vector3 *", name = "points"},
+        {type = "const Vector3 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
