@@ -7351,7 +7351,7 @@
     },
     {
       "name": "ImageKernelConvolution",
-      "description": "Apply Custom Square image convolution kernel",
+      "description": "Apply custom square convolution kernel to image",
       "returnType": "void",
       "params": [
         {
@@ -7359,7 +7359,7 @@
           "name": "image"
         },
         {
-          "type": "float *",
+          "type": "const float *",
           "name": "kernel"
         },
         {

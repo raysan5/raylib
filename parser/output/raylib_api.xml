@@ -1842,9 +1842,9 @@
             <Param type="Image *" name="image" desc="" />
             <Param type="int" name="blurSize" desc="" />
         </Function>
-        <Function name="ImageKernelConvolution" retType="void" paramCount="3" desc="Apply Custom Square image convolution kernel">
+        <Function name="ImageKernelConvolution" retType="void" paramCount="3" desc="Apply custom square convolution kernel to image">
             <Param type="Image *" name="image" desc="" />
-            <Param type="float *" name="kernel" desc="" />
+            <Param type="const float *" name="kernel" desc="" />
             <Param type="int" name="kernelSize" desc="" />
         </Function>
         <Function name="ImageResize" retType="void" paramCount="3" desc="Resize image (Bicubic scaling algorithm)">

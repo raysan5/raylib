@@ -2840,9 +2840,9 @@ Function 303: ImageBlurGaussian() (2 input parameters)
 Function 304: ImageKernelConvolution() (3 input parameters)
   Name: ImageKernelConvolution
   Return type: void
-  Description: Apply Custom Square image convolution kernel
+  Description: Apply custom square convolution kernel to image
   Param[1]: image (type: Image *)
-  Param[2]: kernel (type: float *)
+  Param[2]: kernel (type: const float *)
   Param[3]: kernelSize (type: int)
 Function 305: ImageResize() (3 input parameters)
   Name: ImageResize
