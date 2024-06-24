@@ -1630,6 +1630,44 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     return imText;
 }
 
+Image ImageMaskFromImage(const Image image, const Color color, float threshold)
+{
+    Image mask = { 0 };
+
+    // Security check to avoid program crash
+    if ((image.data == NULL) || (image.width == 0) || (image.height == 0))
+        return mask;
+
+    // Set threshold to at least 0.0f
+    if (threshold < 0.0f) {
+        threshold = 0.0f;
+    }
+
+    Vector4 *pixels = LoadImageDataNormalized(image);
+
+    mask.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    mask.height = image.height;
+    mask.width = image.width;
+    mask.mipmaps = 1;
+
+    Color *new_pixels = (Color *) RL_CALLOC(image.width * image.height, sizeof(Color));
+
+    for (int i = 0; i < mask.width * mask.height; i++)
+    {
+        if (pixels[i].w > threshold)
+            new_pixels[i] = color;
+        else
+            new_pixels[i] = (Color) { 0 };
+    }
+
+    mask.data = new_pixels;
+
+    RL_FREE(pixels);
+    pixels = NULL;
+
+    return mask;
+}
+
 // Resize and image to new size using Nearest-Neighbor scaling algorithm
 void ImageResizeNN(Image *image,int newWidth,int newHeight)
 {
@@ -3979,22 +4017,29 @@ Texture2D LoadTexture(const char *fileName)
 
 // Load a texture from image data
 // NOTE: image is not unloaded, it must be done manually
-Texture2D LoadTextureFromImage(Image image)
+Texture2D LoadTextureFromImage(Image image) {
+  Texture2D texture = {0};
+
+  if ((image.width != 0) && (image.height != 0)) {
+    texture.id = rlLoadTexture(image.data, image.width, image.height,
+                               image.format, image.mipmaps);
+  } else
+    TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
+
+  texture.width = image.width;
+  texture.height = image.height;
+  texture.mipmaps = image.mipmaps;
+  texture.format = image.format;
+
+  return texture;
+}
+
+Texture2D LoadTextureMaskFromImage(Image image, Color color, float threshold)
 {
-    Texture2D texture = { 0 };
-
-    if ((image.width != 0) && (image.height != 0))
-    {
-        texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
-
-    texture.width = image.width;
-    texture.height = image.height;
-    texture.mipmaps = image.mipmaps;
-    texture.format = image.format;
-
-    return texture;
+    const Image mask = ImageMaskFromImage(image, color, threshold);
+    const Texture result = LoadTextureFromImage(mask);
+    UnloadImage(mask);
+    return result;
 }
 
 // Load cubemap from image, multiple image cubemap layouts supported
