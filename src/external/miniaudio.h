@@ -21399,7 +21399,9 @@ static ma_result ma_context_create_IMMDeviceEnumerator__wasapi(ma_context* pCont
 
     *ppDeviceEnumerator = NULL; /* Safety. */
 
+    ma_CoInitializeEx(pContext, NULL, MA_COINIT_VALUE);
     hr = ma_CoCreateInstance(pContext, &MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    ma_CoUninitialize(pContext);
     if (FAILED(hr)) {
         ma_log_postf(ma_context_get_log(pContext), MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create device enumerator.");
         return ma_result_from_HRESULT(hr);
@@ -21473,7 +21475,9 @@ static ma_result ma_context_get_MMDevice__wasapi(ma_context* pContext, ma_device
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(ppMMDevice != NULL);
 
+    ma_CoInitializeEx(pContext, NULL, MA_COINIT_VALUE);
     hr = ma_CoCreateInstance(pContext, &MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    ma_CoUninitialize(pContext);
     if (FAILED(hr)) {
         ma_log_postf(ma_context_get_log(pContext), MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create IMMDeviceEnumerator.\n");
         return ma_result_from_HRESULT(hr);
@@ -21851,7 +21855,9 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
     HRESULT hr;
     ma_IMMDeviceEnumerator* pDeviceEnumerator;
 
+    ma_CoInitializeEx(pContext, NULL, MA_COINIT_VALUE);
     hr = ma_CoCreateInstance(pContext, &MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    ma_CoUninitialize(pContext);
     if (FAILED(hr)) {
         ma_log_postf(ma_context_get_log(pContext), MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create device enumerator.");
         return ma_result_from_HRESULT(hr);
@@ -22835,7 +22841,9 @@ static ma_result ma_device_init__wasapi(ma_device* pDevice, const ma_device_conf
 
     ma_mutex_init(&pDevice->wasapi.rerouteLock);
 
+    ma_CoInitializeEx(pDevice->pContext, NULL, MA_COINIT_VALUE);
     hr = ma_CoCreateInstance(pDevice->pContext, &MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    ma_CoUninitialize(pDevice->pContext);
     if (FAILED(hr)) {
         ma_device_uninit__wasapi(pDevice);
         ma_log_post(ma_device_get_log(pDevice), MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create device enumerator.");
