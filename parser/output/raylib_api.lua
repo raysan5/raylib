@@ -5880,6 +5880,18 @@ return {
       }
     },
     {
+      name = "ImageDrawLineEx",
+      description = "Draw a line defining thickness within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "start"},
+        {type = "Vector2", name = "end"},
+        {type = "int", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "ImageDrawCircle",
       description = "Draw a filled circle within an image",
       returnType = "void",
