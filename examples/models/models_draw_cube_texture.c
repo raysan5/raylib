@@ -67,7 +67,7 @@ int main(void)
                 DrawCubeTexture(texture, (Vector3){ -2.0f, 2.0f, 0.0f }, 2.0f, 4.0f, 2.0f, WHITE);
 
                 // Draw cube with an applied texture, but only a defined rectangle piece of the texture
-                DrawCubeTextureRec(texture, (Rectangle){ 0, texture.height/2, texture.width/2, texture.height/2 }, 
+                DrawCubeTextureRec(texture, (Rectangle){ 0.0f, texture.height/2.0f, texture.width/2.0f, texture.height/2.0f }, 
                     (Vector3){ 2.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, WHITE);
 
                 DrawGrid(10, 1.0f);        // Draw a grid

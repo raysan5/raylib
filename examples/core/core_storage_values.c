@@ -177,7 +177,7 @@ int LoadStorageValue(unsigned int position)
 
     if (fileData != NULL)
     {
-        if (dataSize < (position*4)) TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to find storage position: %i", STORAGE_DATA_FILE, position);
+        if (dataSize < ((int)(position*4))) TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to find storage position: %i", STORAGE_DATA_FILE, position);
         else
         {
             int *dataPtr = (int *)fileData;

@@ -242,7 +242,7 @@ int main(void)
                         (splineTypeActive != SPLINE_BEZIER) &&
                         (i < pointCount - 1)) DrawLineV(points[i], points[i + 1], GRAY);
 
-                    DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), points[i].x, points[i].y + 10, 10, BLACK);
+                    DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), (int)points[i].x, (int)points[i].y + 10, 10, BLACK);
                 }
             }
 
