@@ -1406,7 +1406,7 @@ void rlBegin(int mode)
     }
 }
 
-void rlEnd() { glEnd(); }
+void rlEnd(void) { glEnd(); }
 void rlVertex2i(int x, int y) { glVertex2i(x, y); }
 void rlVertex2f(float x, float y) { glVertex2f(x, y); }
 void rlVertex3f(float x, float y, float z) { glVertex3f(x, y, z); }
