@@ -2,9 +2,10 @@
 *
 *   raylib [shapes] example - draw rectangle rounded (with gui options)
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   Example originally created with raylib 2.5, last time updated with raylib 5.1
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
+*   Example extended to DrawRectangleRoundedPro and DrawRectangleRoundedLinesPro by Bruno Cabral (github.com/brccabral)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -26,7 +27,7 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenHeight = 550;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw rectangle rounded");
 
@@ -39,6 +40,11 @@ int main(void)
     bool drawRect = false;
     bool drawRoundedRect = true;
     bool drawRoundedLines = false;
+
+    bool topLeft = true;
+    bool topRight = true;
+    bool bottomLeft = true;
+    bool bottomRight = true;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -61,8 +67,8 @@ int main(void)
             DrawRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
             if (drawRect) DrawRectangleRec(rec, Fade(GOLD, 0.6f));
-            if (drawRoundedRect) DrawRectangleRounded(rec, roundness, (int)segments, Fade(MAROON, 0.2f));
-            if (drawRoundedLines) DrawRectangleRoundedLinesEx(rec, roundness, (int)segments, lineThick, Fade(MAROON, 0.4f));
+            if (drawRoundedRect) DrawRectangleRoundedPro(rec, roundness, (int)segments, Fade(MAROON, 0.2f), topLeft, topRight, bottomLeft, bottomRight);
+            if (drawRoundedLines) DrawRectangleRoundedLinesPro(rec, roundness, (int)segments, lineThick, Fade(MAROON, 0.4f), topLeft, topRight, bottomLeft, bottomRight);
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
@@ -75,6 +81,11 @@ int main(void)
             GuiCheckBox((Rectangle){ 640, 320, 20, 20 }, "DrawRoundedRect", &drawRoundedRect);
             GuiCheckBox((Rectangle){ 640, 350, 20, 20 }, "DrawRoundedLines", &drawRoundedLines);
             GuiCheckBox((Rectangle){ 640, 380, 20, 20}, "DrawRect", &drawRect);
+
+            GuiCheckBox((Rectangle){ 640, 410, 20, 20 }, "TopLeft", &topLeft);
+            GuiCheckBox((Rectangle){ 640, 440, 20, 20 }, "TopRight", &topRight);
+            GuiCheckBox((Rectangle){ 640, 470, 20, 20 }, "BottomLeft", &bottomLeft);
+            GuiCheckBox((Rectangle){ 640, 500, 20, 20 }, "BottomRight", &bottomRight);
             //------------------------------------------------------------------------------
 
             DrawText(TextFormat("MODE: %s", (segments >= 4)? "MANUAL" : "AUTO"), 640, 280, 10, (segments >= 4)? MAROON : DARKGRAY);

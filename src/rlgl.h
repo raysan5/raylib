@@ -789,6 +789,15 @@ RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);        // Set
 RLAPI void rlLoadDrawCube(void);     // Load and draw a cube
 RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
+// Shapes
+RLAPI void rlLine(Vector2 p1, Vector2 p2, Color color);
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+RLAPI void rlRectangle(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Color color, Rectangle shapeRect, Texture2D texShapes);
+#else
+RLAPI void rlRectangle(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Color color);
+#endif
+
+
 #if defined(__cplusplus)
 }
 #endif
@@ -5117,5 +5126,38 @@ static Matrix rlMatrixInvert(Matrix mat)
 
     return result;
 }
+
+void rlLine(Vector2 p1, Vector2 p2, Color color)
+{
+    rlColor4ub(color.r, color.g, color.b, color.a);
+    rlVertex2f(p1.x, p1.y);
+    rlVertex2f(p2.x, p2.y);
+}
+
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+void rlRectangle(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Color color, Rectangle shapeRect, Texture2D texShapes)
+{
+    rlColor4ub(color.r, color.g, color.b, color.a);
+    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+    rlVertex2f(p1.x, p1.y);
+    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+    rlVertex2f(p2.x, p2.y);
+    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+    rlVertex2f(p3.x, p3.y);
+    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+    rlVertex2f(p4.x, p4.y);
+}
+#else
+void rlRectangle(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Color color)
+{
+    rlColor4ub(color.r, color.g, color.b, color.a);
+    rlVertex2f(p1.x, p1.y);
+    rlVertex2f(p2.x, p2.y);
+    rlVertex2f(p3.x, p3.y);
+    rlVertex2f(p4.x, p4.y);
+    rlVertex2f(p1.x, p1.y);
+    rlVertex2f(p3.x, p3.y);
+}
+#endif
 
 #endif  // RLGL_IMPLEMENTATION
