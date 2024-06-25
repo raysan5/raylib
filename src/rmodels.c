@@ -4878,13 +4878,13 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
         }
 
         // Find parent bone index
-        unsigned int parentIndex = -1;
+        int parentIndex = -1;
 
         for (unsigned int j = 0; j < skin.joints_count; j++)
         {
             if (skin.joints[j] == node.parent)
             {
-                parentIndex = j;
+                parentIndex = (int)j;
                 break;
             }
         }
@@ -5459,22 +5459,17 @@ static Model LoadGLTF(const char *fileName)
 
             for (int i = 0; i < model.boneCount; i++)
             {
-                cgltf_node node = *skin.joints[i];
-                model.bindPose[i].translation.x = node.translation[0];
-                model.bindPose[i].translation.y = node.translation[1];
-                model.bindPose[i].translation.z = node.translation[2];
-
-                model.bindPose[i].rotation.x = node.rotation[0];
-                model.bindPose[i].rotation.y = node.rotation[1];
-                model.bindPose[i].rotation.z = node.rotation[2];
-                model.bindPose[i].rotation.w = node.rotation[3];
-
-                model.bindPose[i].scale.x = node.scale[0];
-                model.bindPose[i].scale.y = node.scale[1];
-                model.bindPose[i].scale.z = node.scale[2];
+                cgltf_node* node = skin.joints[i];
+                cgltf_float worldTransform[16];
+                cgltf_node_transform_world(node, worldTransform);
+                Matrix worldMatrix = {
+                    worldTransform[0], worldTransform[4], worldTransform[8], worldTransform[12],
+                    worldTransform[1], worldTransform[5], worldTransform[9], worldTransform[13],
+                    worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
+                    worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
+                };
+                MatrixDecompose(worldMatrix, &(model.bindPose[i].translation), &(model.bindPose[i].rotation), &(model.bindPose[i].scale));
             }
-
-            BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
         }
         else if (data->skins_count > 1)
         {
@@ -5650,6 +5645,9 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
             break;
         }
     }
+
+    // Constant animation, no need to interpolate
+    if (FloatEquals(tend, tstart)) return false;
 
     float duration = fmaxf((tend - tstart), EPSILON);
     float t = (time - tstart)/duration;
@@ -5880,9 +5878,9 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                     for (int k = 0; k < animations[i].boneCount; k++)
                     {
-                        Vector3 translation = {0, 0, 0};
-                        Quaternion rotation = {0, 0, 0, 1};
-                        Vector3 scale = {1, 1, 1};
+                        Vector3 translation = {skin.joints[k]->translation[0], skin.joints[k]->translation[1], skin.joints[k]->translation[2]};
+                        Quaternion rotation = {skin.joints[k]->rotation[0], skin.joints[k]->rotation[1], skin.joints[k]->rotation[2], skin.joints[k]->rotation[3]};
+                        Vector3 scale = {skin.joints[k]->scale[0], skin.joints[k]->scale[1], skin.joints[k]->scale[2]};
 
                         if (boneChannels[k].translate)
                         {
