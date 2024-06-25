@@ -4871,7 +4871,11 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
     for (unsigned int i = 0; i < skin.joints_count; i++)
     {
         cgltf_node node = *skin.joints[i];
-        if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name));
+        if (node.name != NULL)
+        {
+            strncpy(bones[i].name, node.name, sizeof(bones[i].name));
+            bones[i].name[sizeof(bones[i].name) - 1] = '\0';
+        }
 
         // Find parent bone index
         unsigned int parentIndex = -1;

@@ -5617,11 +5617,11 @@ return {
     },
     {
       name = "ImageKernelConvolution",
-      description = "Apply Custom Square image convolution kernel",
+      description = "Apply custom square convolution kernel to image",
       returnType = "void",
       params = {
         {type = "Image *", name = "image"},
-        {type = "float *", name = "kernel"},
+        {type = "const float *", name = "kernel"},
         {type = "int", name = "kernelSize"}
       }
     },
@@ -5876,6 +5876,18 @@ return {
         {type = "Image *", name = "dst"},
         {type = "Vector2", name = "start"},
         {type = "Vector2", name = "end"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawLineEx",
+      description = "Draw a line defining thickness within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "start"},
+        {type = "Vector2", name = "end"},
+        {type = "int", name = "thick"},
         {type = "Color", name = "color"}
       }
     },
