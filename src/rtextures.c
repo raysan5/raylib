@@ -1630,6 +1630,241 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     return imText;
 }
 
+Image ImageFromChannel(Image image, int selected_channel, float threshold)
+{
+    Image result = { 0 };
+
+    // Security check to avoid program crash
+    if ((image.data == NULL) || (image.width == 0) || (image.height == 0))
+        return result;
+
+    // Check thresholds limits
+    if (threshold < 0.0f)
+    {
+        TRACELOG(LOG_WARNING, "Threshold is from 0 to 1, changing to 0.");
+        threshold = 0.0f;
+    }
+    if (threshold > 1.0f)
+    {
+        TRACELOG(LOG_WARNING, "Threshold is from 0 to 1, changing to 1.");
+        threshold = 1.0f;
+    }
+
+    // Check selected channel
+    if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
+            || image.format == PIXELFORMAT_UNCOMPRESSED_R32
+            || image.format == PIXELFORMAT_UNCOMPRESSED_R16
+            )
+    {
+        if (selected_channel > 0)
+        {
+            TRACELOG(LOG_WARNING, "This image has only 1 channel. Setting channel to it.");
+            selected_channel = 0;
+        }
+    }
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA)
+    {
+        if (selected_channel > 1)
+        {
+            TRACELOG(LOG_WARNING, "This image has only 2 channels. Setting channel to alpha.");
+            selected_channel = 1;
+        }
+    }
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R5G6B5
+            || image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8
+            || image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32
+            || image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16
+            )
+    {
+        if (selected_channel > 2)
+        {
+            TRACELOG(LOG_WARNING, "This image has only 3 channels. Setting channel to red.");
+            selected_channel = 0;
+        }
+    }
+
+    // formats rgba
+    if (selected_channel > 3 || selected_channel < 0)
+    {
+        TRACELOG(LOG_WARNING, "ImageFromChannel supports channels 0 to 3 (rgba). Setting channel to alpha.");
+        selected_channel = 3;
+    }
+
+    result.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+    result.height = image.height;
+    result.width = image.width;
+    result.mipmaps = 1;
+
+    unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width * 2 * image.height, sizeof(unsigned char)); // values 0 to 255
+
+    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    else
+    {
+        for (int i = 0, k = 0; i < image.width*2*image.height; i+=2)
+        {
+            float image_value = -1;
+            float image_alpha = 0;
+            switch (image.format)
+            {
+                case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+                {
+                    image_value = (float)((unsigned char *)image.data)[i + selected_channel]/255.0f;
+                    image_alpha = 1;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+                {
+                    image_value = (float)((unsigned char *)image.data)[k + selected_channel]/255.0f;
+                    image_alpha = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+
+                    k += 2;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    if (selected_channel == 0)
+                    {
+                        image_value = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    }
+                    else if (selected_channel == 1)
+                    {
+                        image_value = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
+                    }
+                    else if (selected_channel == 2)
+                    {
+                        image_value = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
+                    }
+                    else if (selected_channel == 3)
+                    {
+                        image_value = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
+                    }
+                    image_alpha = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    if (selected_channel == 0)
+                    {
+                        image_value = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    }
+                    else if (selected_channel == 1)
+                    {
+                        image_value = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
+                    }
+                    else if (selected_channel == 2)
+                    {
+                        image_value = (float)(pixel & 0b0000000000011111)*(1.0f/31);
+                    }
+                    image_alpha = 1;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    if (selected_channel == 0)
+                    {
+                        image_value = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
+                    }
+                    else if (selected_channel == 1)
+                    {
+                        image_value = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
+                    }
+                    else if (selected_channel == 2)
+                    {
+                        image_value = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
+                    }
+                    else if (selected_channel == 3)
+                    {
+                        image_value = (float)(pixel & 0b0000000000001111)*(1.0f/15);
+                    }
+                    image_alpha = (float)(pixel & 0b0000000000001111)*(1.0f/15);
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
+                {
+                    image_value = (float)((unsigned char *)image.data)[k + selected_channel]/255.0f;
+                    image_alpha = (float)((unsigned char *)image.data)[k + 3]/255.0f;
+
+                    k += 4;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
+                {
+                    image_value = (float)((unsigned char *)image.data)[k + selected_channel]/255.0f;
+                    image_alpha = 1;
+
+                    k += 3;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32:
+                {
+                    image_value = ((float *)image.data)[k];
+                    image_alpha = 1;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+                {
+                    image_value = ((float *)image.data)[k + selected_channel];
+                    image_alpha = 1;
+
+                    k += 3;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+                {
+                    image_value = ((float *)image.data)[k + selected_channel];
+                    image_alpha = ((float *)image.data)[k + 3];
+
+                    k += 4;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16:
+                {
+                    image_value = HalfToFloat(((unsigned short *)image.data)[k]);
+                    image_alpha = 1;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+                {
+                    image_value = HalfToFloat(((unsigned short *)image.data)[k+selected_channel]);
+                    image_alpha = 1;
+
+                    k += 3;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+                {
+                    image_value = HalfToFloat(((unsigned short *)image.data)[k + selected_channel]);
+                    image_alpha = HalfToFloat(((unsigned short *)image.data)[k + 3]);
+
+                    k += 4;
+                } break;
+                default: break;
+            }
+
+            // verify threshold
+            unsigned char result_value = 0;
+            unsigned char result_alpha = 0;
+            if (image_value >= threshold)
+            {
+                result_value = image_value * 255;
+                if (image_alpha)
+                {
+                    result_alpha = 255;
+                }
+            }
+
+            pixels[i] = result_value;
+            pixels[i + 1] = result_alpha;
+        }
+    }
+
+    result.data = pixels;
+
+    return result;
+}
+
 // Resize and image to new size using Nearest-Neighbor scaling algorithm
 void ImageResizeNN(Image *image,int newWidth,int newHeight)
 {

@@ -1334,6 +1334,7 @@ RLAPI Image ImageCopy(Image image);                                             
 RLAPI Image ImageFromImage(Image image, Rectangle rec);                                                  // Create an image from another image piece
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
 RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);         // Create an image from text (custom sprite font)
+RLAPI Image ImageFromChannel(Image image, int selected_channel, float threshold);                        // Create an image from a selected channel of another image (Gray Alpha or RGBA)
 RLAPI void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
 RLAPI void ImageToPOT(Image *image, Color fill);                                                         // Convert image to POT (power-of-two)
 RLAPI void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
