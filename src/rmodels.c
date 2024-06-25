@@ -436,16 +436,16 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
             float *sinring;
             float *cosslice;
             float *sinslice;
-            cosring = (float *)RL_CALLOC(rings + 2, sizeof(float));
-            sinring = (float *)RL_CALLOC(rings + 2, sizeof(float));
-            cosslice = (float *)RL_CALLOC(slices, sizeof(float));
-            sinslice = (float *)RL_CALLOC(slices, sizeof(float));
-            for (int i = 0; i < (rings + 2); i++)
+            cosring = (float *)RL_CALLOC(rings + 2 + 1, sizeof(float));
+            sinring = (float *)RL_CALLOC(rings + 2 + 1, sizeof(float));
+            cosslice = (float *)RL_CALLOC(slices + 1, sizeof(float));
+            sinslice = (float *)RL_CALLOC(slices + 1, sizeof(float));
+            for (int i = 0; i < (rings + 2 + 1); i++)
             {
                 cosring[i] = cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)); // Precalculate position on unit circle required for each ring
                 sinring[i] = sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i));
             }
-            for (int j = 0; j < slices; j++)
+            for (int j = 0; j < slices + 1; j++)
             {
                 cosslice[j] = cosf(DEG2RAD*(360.0f*j/slices)); // Precalculate position on unit circle required for each slice
                 sinslice[j] = sinf(DEG2RAD*(360.0f*j/slices));
