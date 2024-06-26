@@ -3292,7 +3292,7 @@ RGFW_UNUSED(win); /* if buffer rendering is not being used */
 					index++;
 					line++;
 				}
-
+				path[index] = '\0';
 				strcpy(win->event.droppedFiles[win->event.droppedFilesCount - 1], path);
 			}
 
