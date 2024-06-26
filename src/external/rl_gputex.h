@@ -171,6 +171,10 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
 
             *width = header->width;
             *height = header->height;
+
+            if (*width % 4 != 0) LOG("WARNING: IMAGE: DDS file width must be multiple of 4. Image will not display correctly");
+            if (*height % 4 != 0) LOG("WARNING: IMAGE: DDS file height must be multiple of 4. Image will not display correctly");
+
             image_pixel_size = header->width*header->height;
 
             if (header->mipmap_count == 0) *mips = 1;   // Parameter not used

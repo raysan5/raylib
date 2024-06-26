@@ -133,10 +133,10 @@ int main(void)
 
                 for (int i = 0; i < envItemsLength; i++) DrawRectangleRec(envItems[i].rect, envItems[i].color);
 
-                Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
+                Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40.0f, 40.0f };
                 DrawRectangleRec(playerRect, RED);
                 
-                DrawCircle(player.position.x, player.position.y, 5, GOLD);
+                DrawCircleV(player.position, 5.0f, GOLD);
 
             EndMode2D();
 

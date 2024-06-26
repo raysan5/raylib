@@ -22,6 +22,7 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .platform_drm = options.platform_drm,
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
+        .opengl_version = options.opengl_version,
     });
     const raylib = raylib_dep.artifact("raylib");
 
@@ -216,6 +217,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         },
     }
 
+    raylib.addIncludePath(b.path("src"));
     raylib.root_module.addCSourceFiles(.{
         .root = b.path("src"),
         .files = c_source_files.items,

@@ -856,7 +856,7 @@ void EndDrawing(void)
         #ifndef GIF_RECORD_FRAMERATE
         #define GIF_RECORD_FRAMERATE    10
         #endif
-        gifFrameCounter += GetFrameTime()*1000;
+        gifFrameCounter += (unsigned int)(GetFrameTime()*1000);
 
         // NOTE: We record one gif frame depending on the desired gif framerate
         if (gifFrameCounter > 1000/GIF_RECORD_FRAMERATE)
@@ -2251,7 +2251,7 @@ bool IsFileNameValid(const char *fileName)
 
     if ((fileName != NULL) && (fileName[0] != '\0'))
     {
-        int length = strlen(fileName);
+        int length = (int)strlen(fileName);
         bool allPeriods = true;
 
         for (int i = 0; i < length; i++)
