@@ -41,7 +41,7 @@ int main(void) {
 
   int rectCount = 20;
   float rectSize = (float)screenWidth/rectCount;
-  ColorRect* rectangles = GenerateRandomColorRectSequence(rectCount, rectSize, screenWidth, 0.75f * screenHeight);
+  ColorRect* rectangles = GenerateRandomColorRectSequence((float)rectCount, rectSize, (float)screenWidth, 0.75f * screenHeight);
 
   SetTargetFPS(60);
   //--------------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ int main(void) {
       rectCount++;
       rectSize = (float)screenWidth/rectCount;
       free(rectangles);
-      rectangles = GenerateRandomColorRectSequence(rectCount, rectSize, screenWidth, 0.75f * screenHeight);
+      rectangles = GenerateRandomColorRectSequence((float)rectCount, rectSize, (float)screenWidth, 0.75f * screenHeight);
     }
 
     if(IsKeyPressed(KEY_DOWN))
@@ -71,7 +71,7 @@ int main(void) {
         rectCount--;
         rectSize = (float)screenWidth/rectCount;
         free(rectangles);
-        rectangles = GenerateRandomColorRectSequence(rectCount, rectSize, screenWidth, 0.75f * screenHeight);
+        rectangles = GenerateRandomColorRectSequence((float)rectCount, rectSize, (float)screenWidth, 0.75f * screenHeight);
       }
     }
 
@@ -121,17 +121,17 @@ static Color GenerateRandomColor()
 }
 
 static ColorRect* GenerateRandomColorRectSequence(float rectCount, float rectWidth, float screenWidth, float screenHeight){
-  int *seq = LoadRandomSequence(rectCount, 0, rectCount-1);
-  ColorRect* rectangles = (ColorRect *)malloc(rectCount*sizeof(ColorRect));
+  int *seq = LoadRandomSequence((unsigned int)rectCount, 0, (unsigned int)rectCount-1);
+  ColorRect* rectangles = (ColorRect *)malloc((int)rectCount*sizeof(ColorRect));
 
   float rectSeqWidth = rectCount * rectWidth;
-  int startX = (screenWidth - rectSeqWidth) * 0.5f;
+  float startX = (screenWidth - rectSeqWidth) * 0.5f;
 
   for(int x=0;x<rectCount;x++){
-    int rectHeight = Remap(seq[x], 0, rectCount-1, 0, screenHeight);
+    int rectHeight = (int)Remap((float)seq[x], 0, rectCount-1, 0, screenHeight);
     rectangles[x].c = GenerateRandomColor();
     rectangles[x].r = CLITERAL(Rectangle){
-      startX + x * rectWidth, screenHeight - rectHeight, rectWidth, rectHeight
+      startX + x * rectWidth, screenHeight - rectHeight, rectWidth, (float)rectHeight
     };
   }
   UnloadRandomSequence(seq);

@@ -1837,32 +1837,32 @@ RMAPI Matrix MatrixScale(float x, float y, float z)
 }
 
 // Get perspective projection matrix
-RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far)
+RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
-    result.m0 = ((float)near*2.0f)/rl;
+    result.m0 = ((float)nearPlane*2.0f)/rl;
     result.m1 = 0.0f;
     result.m2 = 0.0f;
     result.m3 = 0.0f;
 
     result.m4 = 0.0f;
-    result.m5 = ((float)near*2.0f)/tb;
+    result.m5 = ((float)nearPlane*2.0f)/tb;
     result.m6 = 0.0f;
     result.m7 = 0.0f;
 
     result.m8 = ((float)right + (float)left)/rl;
     result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)far + (float)near)/fn;
+    result.m10 = -((float)farPlane + (float)nearPlane)/fn;
     result.m11 = -1.0f;
 
     result.m12 = 0.0f;
     result.m13 = 0.0f;
-    result.m14 = -((float)far*(float)near*2.0f)/fn;
+    result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
     result.m15 = 0.0f;
 
     return result;

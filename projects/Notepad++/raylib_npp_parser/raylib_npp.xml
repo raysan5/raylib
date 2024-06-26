@@ -509,7 +509,7 @@
         </KeyWord>
 
         <!-- Set custom callbacks -->
-        <!-- WARNING: Callbacks setup is intended for advance users -->
+        <!-- WARNING: Callbacks setup is intended for advanced users -->
         <KeyWord name="SetTraceLogCallback" func="yes">
             <Overload retVal="void" descr="Set custom trace log">
                 <Param name="TraceLogCallback callback" />
@@ -2822,7 +2822,7 @@
                 <Param name="Vector2 size" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
-                <Param name="0ó¿8± " />
+                <Param name="0ï¿½8ï¿½ " />
             </Overload>
         </KeyWord>
 

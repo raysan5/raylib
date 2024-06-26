@@ -1278,7 +1278,7 @@ Wave WaveCopy(Wave wave)
 // NOTE: Security check in case of out-of-range
 void WaveCrop(Wave *wave, int initFrame, int finalFrame)
 {
-    if ((initFrame >= 0) && (initFrame < finalFrame) && ((unsigned int)finalFrame < wave->frameCount))
+    if ((initFrame >= 0) && (initFrame < finalFrame) && ((unsigned int)finalFrame <= wave->frameCount))
     {
         int frameCount = finalFrame - initFrame;
 
@@ -1288,6 +1288,7 @@ void WaveCrop(Wave *wave, int initFrame, int finalFrame)
 
         RL_FREE(wave->data);
         wave->data = data;
+        wave->frameCount = (unsigned int)frameCount;
     }
     else TRACELOG(LOG_WARNING, "WAVE: Crop range out of bounds");
 }
@@ -1303,8 +1304,8 @@ float *LoadWaveSamples(Wave wave)
 
     for (unsigned int i = 0; i < wave.frameCount*wave.channels; i++)
     {
-        if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
-        else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32767.0f;
+        if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 128)/128.0f;
+        else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32768.0f;
         else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
     }
 
@@ -1427,7 +1428,9 @@ Music LoadMusicStream(const char *fileName)
         {
             music.ctxType = MUSIC_AUDIO_FLAC;
             music.ctxData = ctxFlac;
-            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            int sampleSize = ctxFlac->bitsPerSample;
+            if (ctxFlac->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, sampleSize, ctxFlac->channels);
             music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;

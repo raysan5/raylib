@@ -666,6 +666,9 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+
     glfwSetWindowSize(platform.handle, width, height);
 }
 
@@ -1443,15 +1446,12 @@ int InitPlatform(void)
     else
     {
         // No-fullscreen window creation
-        bool wantWindowedFullscreen = (CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0);
+        bool requestWindowedFullscreen = (CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0);
 
         // If we are windowed fullscreen, ensures that window does not minimize when focus is lost.
         // This hinting code will not work if the user already specified the correct monitor dimensions;
         // at this point we don't know the monitor's dimensions. (Though, how did the user then?)
-        if (wantWindowedFullscreen)
-        {
-            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
-        }
+        if (requestWindowedFullscreen) glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
 
         // Default to at least one pixel in size, as creation with a zero dimension is not allowed.
         int creationWidth = CORE.Window.screen.width != 0 ? CORE.Window.screen.width : 1;
@@ -1471,11 +1471,7 @@ int InitPlatform(void)
             monitor = monitors[monitorIndex];
             SetDimensionsFromMonitor(monitor);
 
-            TRACELOG(LOG_INFO, "wantWindowed: %d, size: %dx%d", wantWindowedFullscreen, CORE.Window.screen.width, CORE.Window.screen.height);
-            if (wantWindowedFullscreen)
-            {
-                glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
-            }
+            if (requestWindowedFullscreen) glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
         }
         else
         {

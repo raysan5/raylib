@@ -362,11 +362,7 @@ Font LoadFont(const char *fileName)
         UnloadImage(image);
     }
 
-    if (font.texture.id == 0)
-    {
-        TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
-        font = GetFontDefault();
-    }
+    if (font.texture.id == 0) TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
     else
     {
         SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
@@ -394,7 +390,6 @@ Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepoi
 
         UnloadFileData(fileData);
     }
-    else font = GetFontDefault();
 
     return font;
 }
@@ -1035,7 +1030,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
 
     // Save font recs data
     byteCount += sprintf(txtData + byteCount, "// Font characters rectangles data\n");
-    byteCount += sprintf(txtData + byteCount, "static const Rectangle fontRecs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
+    byteCount += sprintf(txtData + byteCount, "static Rectangle fontRecs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
     for (int i = 0; i < font.glyphCount; i++)
     {
         byteCount += sprintf(txtData + byteCount, "    { %1.0f, %1.0f, %1.0f , %1.0f },\n", font.recs[i].x, font.recs[i].y, font.recs[i].width, font.recs[i].height);
@@ -1047,7 +1042,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     // it could be generated from image and recs
     byteCount += sprintf(txtData + byteCount, "// Font glyphs info data\n");
     byteCount += sprintf(txtData + byteCount, "// NOTE: No glyphs.image data provided\n");
-    byteCount += sprintf(txtData + byteCount, "static const GlyphInfo fontGlyphs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
+    byteCount += sprintf(txtData + byteCount, "static GlyphInfo fontGlyphs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
     for (int i = 0; i < font.glyphCount; i++)
     {
         byteCount += sprintf(txtData + byteCount, "    { %i, %i, %i, %i, { 0 }},\n", font.glyphs[i].value, font.glyphs[i].offsetX, font.glyphs[i].offsetY, font.glyphs[i].advanceX);
@@ -1786,6 +1781,62 @@ const char *TextToPascal(const char *text)
     return buffer;
 }
 
+// Get snake case notation version of provided string
+// WARNING: Limited functionality, only basic characters set
+const char *TextToSnake(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Check for next separator to upper case another character
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        {
+            if ((text[j] >= 'A') && (text[j] <= 'Z'))
+            {
+                if (i >= 1)
+                {
+                    buffer[i] = '_';
+                    i++;
+                }
+                buffer[i] = text[j] + 32;
+            }
+            else buffer[i] = text[j];
+        }
+    }
+
+    return buffer;
+}
+
+// Get Camel case notation version of provided string
+// WARNING: Limited functionality, only basic characters set
+const char *TextToCamel(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Lower case first character
+        if ((text[0] >= 'A') && (text[0] <= 'Z')) buffer[0] = text[0] + 32;
+        else buffer[0] = text[0];
+
+        // Check for next separator to upper case another character
+        for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        {
+            if (text[j] != '_') buffer[i] = text[j];
+            else
+            {
+                j++;
+                if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
+            }
+        }
+    }
+
+    return buffer;
+}
+
 // Encode text codepoint into UTF-8 text
 // REQUIRES: memcpy()
 // WARNING: Allocated memory must be manually freed
@@ -1836,8 +1887,7 @@ int *LoadCodepoints(const char *text, int *count)
     }
 
     // Re-allocate buffer to the actual number of codepoints loaded
-    int *temp = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
-    if (temp != NULL) codepoints = temp;
+    codepoints = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
 
     *count = codepointCount;
 
@@ -2242,7 +2292,7 @@ static Font LoadBMFont(const char *fileName)
         }
         else
         {
-            font.glyphs[i].image = GenImageColor(font.recs[i].width, font.recs[i].height, BLACK);
+            font.glyphs[i].image = GenImageColor((int)font.recs[i].width, (int)font.recs[i].height, BLACK);
             TRACELOG(LOG_WARNING, "FONT: [%s] Some characters data not correctly provided", fileName);
         }
     }

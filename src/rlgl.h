@@ -590,7 +590,7 @@ RLAPI void rlMultMatrixf(const float *matf);            // Multiply the current 
 RLAPI void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar);
 RLAPI void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar);
 RLAPI void rlViewport(int x, int y, int width, int height); // Set the viewport area
-RLAPI void rlSetClipPlanes(double near, double far);    // Set clip planes distances
+RLAPI void rlSetClipPlanes(double nearPlane, double farPlane);    // Set clip planes distances
 RLAPI double rlGetCullDistanceNear(void);               // Get cull plane distance near
 RLAPI double rlGetCullDistanceFar(void);                // Get cull plane distance far
 
@@ -1371,10 +1371,10 @@ void rlViewport(int x, int y, int width, int height)
 }
 
 // Set clip planes distances
-void rlSetClipPlanes(double near, double far)
+void rlSetClipPlanes(double nearPlane, double farPlane)
 {
-    rlCullDistanceNear = near;
-    rlCullDistanceFar = far;
+    rlCullDistanceNear = nearPlane;
+    rlCullDistanceFar = farPlane;
 }
 
 // Get cull plane distance near
@@ -1406,7 +1406,7 @@ void rlBegin(int mode)
     }
 }
 
-void rlEnd() { glEnd(); }
+void rlEnd(void) { glEnd(); }
 void rlVertex2i(int x, int y) { glVertex2i(x, y); }
 void rlVertex2f(float x, float y) { glVertex2f(x, y); }
 void rlVertex3f(float x, float y, float z) { glVertex3f(x, y, z); }
@@ -3945,7 +3945,9 @@ void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool norma
     // Additional types (depends on OpenGL version or extensions):
     //  - GL_HALF_FLOAT, GL_FLOAT, GL_DOUBLE, GL_FIXED,
     //  - GL_INT_2_10_10_10_REV, GL_UNSIGNED_INT_2_10_10_10_REV, GL_UNSIGNED_INT_10F_11F_11F_REV
-    glVertexAttribPointer(index, compSize, type, normalized, stride, (void *)offset);
+
+    size_t offsetNative = offset;
+    glVertexAttribPointer(index, compSize, type, normalized, stride, (void *)offsetNative);
 #endif
 }
 
@@ -4518,7 +4520,7 @@ Matrix rlGetMatrixTransform(void)
 }
 
 // Get internal projection matrix for stereo render (selected eye)
-RLAPI Matrix rlGetMatrixProjectionStereo(int eye)
+Matrix rlGetMatrixProjectionStereo(int eye)
 {
     Matrix mat = rlMatrixIdentity();
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -4528,7 +4530,7 @@ RLAPI Matrix rlGetMatrixProjectionStereo(int eye)
 }
 
 // Get internal view offset matrix for stereo render (selected eye)
-RLAPI Matrix rlGetMatrixViewOffsetStereo(int eye)
+Matrix rlGetMatrixViewOffsetStereo(int eye)
 {
     Matrix mat = rlMatrixIdentity();
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

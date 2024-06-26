@@ -4059,6 +4059,14 @@ return {
       }
     },
     {
+      name = "IsFileNameValid",
+      description = "Check if fileName is valid for the platform/OS",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
       name = "LoadDirectoryFiles",
       description = "Load directory filepaths",
       returnType = "FilePathList",
@@ -4628,7 +4636,7 @@ return {
       description = "Draw lines sequence (using gl lines)",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -4939,7 +4947,7 @@ return {
       description = "Draw a triangle fan defined by points (first vertex is the center)",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -4949,7 +4957,7 @@ return {
       description = "Draw a triangle strip defined by points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -4996,7 +5004,7 @@ return {
       description = "Draw spline: Linear, minimum 2 points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5007,7 +5015,7 @@ return {
       description = "Draw spline: B-Spline, minimum 4 points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5018,7 +5026,7 @@ return {
       description = "Draw spline: Catmull-Rom, minimum 4 points",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5029,7 +5037,7 @@ return {
       description = "Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5040,7 +5048,7 @@ return {
       description = "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]",
       returnType = "void",
       params = {
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
@@ -5231,7 +5239,7 @@ return {
       returnType = "bool",
       params = {
         {type = "Vector2", name = "point"},
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"}
       }
     },
@@ -5256,6 +5264,17 @@ return {
         {type = "Vector2", name = "p1"},
         {type = "Vector2", name = "p2"},
         {type = "int", name = "threshold"}
+      }
+    },
+    {
+      name = "CheckCollisionCircleLine",
+      description = "Check if circle collides with a line created betweeen two points [p1] and [p2]",
+      returnType = "bool",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"}
       }
     },
     {
@@ -5598,11 +5617,11 @@ return {
     },
     {
       name = "ImageKernelConvolution",
-      description = "Apply Custom Square image convolution kernel",
+      description = "Apply custom square convolution kernel to image",
       returnType = "void",
       params = {
         {type = "Image *", name = "image"},
-        {type = "float*", name = "kernel"},
+        {type = "const float *", name = "kernel"},
         {type = "int", name = "kernelSize"}
       }
     },
@@ -5861,6 +5880,18 @@ return {
       }
     },
     {
+      name = "ImageDrawLineEx",
+      description = "Draw a line defining thickness within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "start"},
+        {type = "Vector2", name = "end"},
+        {type = "int", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "ImageDrawCircle",
       description = "Draw a filled circle within an image",
       returnType = "void",
@@ -5948,6 +5979,66 @@ return {
         {type = "Image *", name = "dst"},
         {type = "Rectangle", name = "rec"},
         {type = "int", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangle",
+      description = "Draw triangle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleEx",
+      description = "Draw triangle with interpolated colors within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "c1"},
+        {type = "Color", name = "c2"},
+        {type = "Color", name = "c3"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleLines",
+      description = "Draw triangle outline within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleFan",
+      description = "Draw a triangle fan defined by points within an image (first vertex is the center)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawTriangleStrip",
+      description = "Draw a triangle strip defined by points within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
     },
@@ -6758,6 +6849,22 @@ return {
       }
     },
     {
+      name = "TextToSnake",
+      description = "Get Snake case notation version of provided string",
+      returnType = "const char *",
+      params = {
+        {type = "const char *", name = "text"}
+      }
+    },
+    {
+      name = "TextToCamel",
+      description = "Get Camel case notation version of provided string",
+      returnType = "const char *",
+      params = {
+        {type = "const char *", name = "text"}
+      }
+    },
+    {
       name = "TextToInteger",
       description = "Get integer value from text (negative values not supported)",
       returnType = "int",
@@ -6820,7 +6927,7 @@ return {
       description = "Draw a triangle strip defined by points",
       returnType = "void",
       params = {
-        {type = "Vector3 *", name = "points"},
+        {type = "const Vector3 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
