@@ -464,12 +464,12 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
                     rlVertex3f(cosring[i+1]*sinslice[j+1], sinring[i+1], cosring[i+1]*cosslice[j+1]);
                 }
             }
-			
-			RL_FREE(cosring);
-			RL_FREE(sinring);
-			RL_FREE(cosslice);
-			RL_FREE(sinslice);
-			
+
+            RL_FREE(cosring);
+            RL_FREE(sinring);
+            RL_FREE(cosslice);
+            RL_FREE(sinslice);
+
         rlEnd();
     rlPopMatrix();
 }
