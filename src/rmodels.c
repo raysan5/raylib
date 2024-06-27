@@ -4815,9 +4815,9 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             else
             {
                 int base64Size = (int)strlen(cgltfImage->uri + i + 1);
-                while (cgltfImage->uri[i + base64Size] == '=') base64Size--; // remove optional paddings
-                int numberOfEncodedBits = base64Size*6 - (base64Size*6) % 8 ; // ignore extra bits
-                int outSize = numberOfEncodedBits/8 ; // actual encoded bytes
+                while (cgltfImage->uri[i + base64Size] == '=') base64Size--;    // Ignore optional paddings
+                int numberOfEncodedBits = base64Size*6 - (base64Size*6) % 8 ;   // Encoded bits minus extra bits, so it becomes a multiple of 8 bits
+                int outSize = numberOfEncodedBits/8 ;                           // Actual encoded bytes
                 void *data = NULL;
 
                 cgltf_options options = { 0 };
