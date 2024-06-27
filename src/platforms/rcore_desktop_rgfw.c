@@ -116,7 +116,7 @@ extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { NULL };   // Platform specific 
 
-static const u16 RGFWKeyToRayKey[] = {
+static const unsigned short RGFWKeyToRayKey[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
     [RGFW_Quote] = KEY_APOSTROPHE,
     [RGFW_Comma] = KEY_COMMA,
@@ -548,7 +548,7 @@ void *GetWindowHandle(void)
 int GetMonitorCount(void)
 {
     RGFW_monitor* mons = RGFW_getMonitors();
-    u32 i;
+    size_t i;
     for (i = 0; i < 6; i++) {
         if (!mons[i].rect.x && !mons[i].rect.y && !mons[i].rect.w && mons[i].rect.h)
             return i;
@@ -563,7 +563,7 @@ int GetCurrentMonitor(void)
     RGFW_monitor* mons = RGFW_getMonitors();
     RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
 
-    u32 i;
+    size_t i;
     for (i = 0; i < 6; i++) {
         if (mons[i].rect.x ==  mon.rect.x && 
             mons[i].rect.y ==  mon.rect.y)
@@ -1286,7 +1286,7 @@ void ClosePlatform(void)
 
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode) {
-    if (keycode > sizeof(RGFWKeyToRayKey) / sizeof(u16))
+    if (keycode > sizeof(RGFWKeyToRayKey) / sizeof(unsigned short))
         return 0;
 
     return RGFWKeyToRayKey[keycode];
