@@ -33,19 +33,19 @@ int main(void)
     Image fudesumiImage = LoadImage("resources/fudesumi.png");
     Texture2D fudesumiTexture = LoadTextureFromImage(fudesumiImage);
 
-    Image imageRed = ImageFromChannel(fudesumiImage, 0, 0.0f);
+    Image imageRed = ImageFromChannel(fudesumiImage, 0);
     Texture2D textureRed = LoadTextureFromImage(imageRed);
     UnloadImage(imageRed);
 
-    Image imageGreen = ImageFromChannel(fudesumiImage, 1, 0.0f);
+    Image imageGreen = ImageFromChannel(fudesumiImage, 1);
     Texture2D textureGreen = LoadTextureFromImage(imageGreen);
     UnloadImage(imageGreen);
 
-    Image imageBlue = ImageFromChannel(fudesumiImage, 2, 0.0f);
+    Image imageBlue = ImageFromChannel(fudesumiImage, 2);
     Texture2D textureBlue = LoadTextureFromImage(imageBlue);
     UnloadImage(imageBlue);
 
-    Image imageAlpha = ImageFromChannel(fudesumiImage, 3, 0.0f);
+    Image imageAlpha = ImageFromChannel(fudesumiImage, 3);
     Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
     UnloadImage(imageAlpha);
 

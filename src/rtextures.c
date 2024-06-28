@@ -1630,25 +1630,14 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     return imText;
 }
 
-Image ImageFromChannel(Image image, int selectedChannel, float threshold)
+// Create an image from a selected channel of another image
+Image ImageFromChannel(Image image, int selectedChannel)
 {
     Image result = { 0 };
 
     // Security check to avoid program crash
     if ((image.data == NULL) || (image.width == 0) || (image.height == 0))
         return result;
-
-    // Check thresholds limits
-    if (threshold < 0.0f)
-    {
-        TRACELOG(LOG_WARNING, "Threshold is from 0 to 1, changing to 0.");
-        threshold = 0.0f;
-    }
-    if (threshold > 1.0f)
-    {
-        TRACELOG(LOG_WARNING, "Threshold is from 0 to 1, changing to 1.");
-        threshold = 1.0f;
-    }
 
     // Check selected channel
     if (selectedChannel < 0)
@@ -1851,13 +1840,10 @@ Image ImageFromChannel(Image image, int selectedChannel, float threshold)
             // verify threshold
             unsigned char resultValue = 0;
             unsigned char resultAlpha = 0;
-            if (imageValue >= threshold)
+            resultValue = imageValue * 255;
+            if (imageAlpha)
             {
-                resultValue = imageValue * 255;
-                if (imageAlpha)
-                {
-                    resultAlpha = 255;
-                }
+                resultAlpha = 255;
             }
 
             pixels[i] = resultValue;
