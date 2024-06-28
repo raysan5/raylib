@@ -26,7 +26,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     const int screenWidth = 800;
-    const int screenHeight = 612;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - extract channel from image");
 
@@ -57,10 +57,12 @@ int main(void)
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
     Rectangle fudesumiRec = {0, 0, fudesumiImage.width, fudesumiImage.height};
-    Rectangle redPos = { 410, 50, fudesumiImage.width / 2, fudesumiImage.height / 2 };
-    Rectangle greenPos = { 600, 50, fudesumiImage.width / 2, fudesumiImage.height / 2 };
-    Rectangle bluePos = { 410, 310, fudesumiImage.width / 2, fudesumiImage.height / 2 };
-    Rectangle alphaPos = { 600, 310, fudesumiImage.width / 2, fudesumiImage.height / 2 };
+
+    Rectangle fudesumiPos = {50, 10, fudesumiImage.width*0.8f, fudesumiImage.height*0.8f};
+    Rectangle redPos = { 410, 10, fudesumiPos.width / 2, fudesumiPos.height / 2 };
+    Rectangle greenPos = { 600, 10, fudesumiPos.width / 2, fudesumiPos.height / 2 };
+    Rectangle bluePos = { 410, 230, fudesumiPos.width / 2, fudesumiPos.height / 2 };
+    Rectangle alphaPos = { 600, 230, fudesumiPos.width / 2, fudesumiPos.height / 2 };
 
     //--------------------------------------------------------------------------------------
 
@@ -72,7 +74,7 @@ int main(void)
         BeginDrawing();
 
             DrawTexture(backgroundTexture, 0, 0, WHITE);
-            DrawTexture(fudesumiTexture, 50, 50, WHITE);
+            DrawTexturePro(fudesumiTexture, fudesumiRec, fudesumiPos, (Vector2) {0, 0}, 0, WHITE);
 
             DrawTexturePro(textureRed, fudesumiRec, redPos, (Vector2) {0, 0}, 0, RED);
             DrawTexturePro(textureGreen, fudesumiRec, greenPos, (Vector2) {0, 0}, 0, GREEN);
