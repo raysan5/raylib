@@ -31,31 +31,33 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - extract channel from image");
 
     Image fudesumiImage = LoadImage("resources/fudesumi.png");
-    Texture2D fudesumiTexture = LoadTextureFromImage(fudesumiImage);
 
     Image imageAlpha = ImageFromChannel(fudesumiImage, 3);
     ImageAlphaMask(&imageAlpha, imageAlpha);
-    Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
 
     Image imageRed = ImageFromChannel(fudesumiImage, 0);
     ImageAlphaMask(&imageRed, imageAlpha);
-    Texture2D textureRed = LoadTextureFromImage(imageRed);
-    UnloadImage(imageRed);
 
     Image imageGreen = ImageFromChannel(fudesumiImage, 1);
     ImageAlphaMask(&imageGreen, imageAlpha);
-    Texture2D textureGreen = LoadTextureFromImage(imageGreen);
-    UnloadImage(imageGreen);
 
     Image imageBlue = ImageFromChannel(fudesumiImage, 2);
     ImageAlphaMask(&imageBlue, imageAlpha);
-    Texture2D textureBlue = LoadTextureFromImage(imageBlue);
-    UnloadImage(imageBlue);
 
     Image backgroundImage = GenImageChecked(screenWidth, screenHeight, screenWidth/20, screenHeight/20, ORANGE, YELLOW);
+
+    Texture2D fudesumiTexture = LoadTextureFromImage(fudesumiImage);
+    Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
+    Texture2D textureRed = LoadTextureFromImage(imageRed);
+    Texture2D textureGreen = LoadTextureFromImage(imageGreen);
+    Texture2D textureBlue = LoadTextureFromImage(imageBlue);
     Texture2D backgroundTexture = LoadTextureFromImage(backgroundImage);
 
+    UnloadImage(fudesumiImage);
     UnloadImage(imageAlpha);
+    UnloadImage(imageRed);
+    UnloadImage(imageGreen);
+    UnloadImage(imageBlue);
     UnloadImage(backgroundImage);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -92,7 +94,6 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(backgroundTexture);
-    UnloadImage(fudesumiImage);
     UnloadTexture(fudesumiTexture);
     UnloadTexture(textureRed);
     UnloadTexture(textureGreen);
