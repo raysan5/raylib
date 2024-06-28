@@ -33,25 +33,29 @@ int main(void)
     Image fudesumiImage = LoadImage("resources/fudesumi.png");
     Texture2D fudesumiTexture = LoadTextureFromImage(fudesumiImage);
 
+    Image imageAlpha = ImageFromChannel(fudesumiImage, 3);
+    ImageAlphaMask(&imageAlpha, imageAlpha);
+    Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
+
     Image imageRed = ImageFromChannel(fudesumiImage, 0);
+    ImageAlphaMask(&imageRed, imageAlpha);
     Texture2D textureRed = LoadTextureFromImage(imageRed);
     UnloadImage(imageRed);
 
     Image imageGreen = ImageFromChannel(fudesumiImage, 1);
+    ImageAlphaMask(&imageGreen, imageAlpha);
     Texture2D textureGreen = LoadTextureFromImage(imageGreen);
     UnloadImage(imageGreen);
 
     Image imageBlue = ImageFromChannel(fudesumiImage, 2);
+    ImageAlphaMask(&imageBlue, imageAlpha);
     Texture2D textureBlue = LoadTextureFromImage(imageBlue);
     UnloadImage(imageBlue);
 
-    Image imageAlpha = ImageFromChannel(fudesumiImage, 3);
-    Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
-    UnloadImage(imageAlpha);
-
-
     Image backgroundImage = GenImageChecked(screenWidth, screenHeight, screenWidth/20, screenHeight/20, ORANGE, YELLOW);
     Texture2D backgroundTexture = LoadTextureFromImage(backgroundImage);
+
+    UnloadImage(imageAlpha);
     UnloadImage(backgroundImage);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second

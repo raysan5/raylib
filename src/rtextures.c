@@ -1684,32 +1684,29 @@ Image ImageFromChannel(Image image, int selectedChannel)
         selectedChannel = 3;
     }
 
-    result.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+    result.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     result.height = image.height;
     result.width = image.width;
     result.mipmaps = 1;
 
-    unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width * 2 * image.height, sizeof(unsigned char)); // values 0 to 255
+    unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width * image.height, sizeof(unsigned char)); // values 0 to 255
 
     if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
-        for (int i = 0, k = 0; i < image.width*2*image.height; i+=2)
+        for (int i = 0, k = 0; i < image.width * image.height; ++i)
         {
             float imageValue = -1;
-            float imageAlpha = 0;
             switch (image.format)
             {
                 case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
                 {
                     imageValue = (float)((unsigned char *)image.data)[i + selectedChannel]/255.0f;
-                    imageAlpha = 1;
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
                 {
                     imageValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
-                    imageAlpha = (float)((unsigned char *)image.data)[k + 1]/255.0f;
 
                     k += 2;
                 } break;
@@ -1733,7 +1730,6 @@ Image ImageFromChannel(Image image, int selectedChannel)
                     {
                         imageValue = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
                     }
-                    imageAlpha = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
@@ -1752,7 +1748,6 @@ Image ImageFromChannel(Image image, int selectedChannel)
                     {
                         imageValue = (float)(pixel & 0b0000000000011111)*(1.0f/31);
                     }
-                    imageAlpha = 1;
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
@@ -1775,79 +1770,60 @@ Image ImageFromChannel(Image image, int selectedChannel)
                     {
                         imageValue = (float)(pixel & 0b0000000000001111)*(1.0f/15);
                     }
-                    imageAlpha = (float)(pixel & 0b0000000000001111)*(1.0f/15);
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
                 {
                     imageValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
-                    imageAlpha = (float)((unsigned char *)image.data)[k + 3]/255.0f;
 
                     k += 4;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
                     imageValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
-                    imageAlpha = 1;
 
                     k += 3;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
                     imageValue = ((float *)image.data)[k];
-                    imageAlpha = 1;
 
                     k += 1;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     imageValue = ((float *)image.data)[k + selectedChannel];
-                    imageAlpha = 1;
 
                     k += 3;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
                     imageValue = ((float *)image.data)[k + selectedChannel];
-                    imageAlpha = ((float *)image.data)[k + 3];
 
                     k += 4;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16:
                 {
                     imageValue = HalfToFloat(((unsigned short *)image.data)[k]);
-                    imageAlpha = 1;
 
                     k += 1;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
                 {
                     imageValue = HalfToFloat(((unsigned short *)image.data)[k+selectedChannel]);
-                    imageAlpha = 1;
 
                     k += 3;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
                 {
                     imageValue = HalfToFloat(((unsigned short *)image.data)[k + selectedChannel]);
-                    imageAlpha = HalfToFloat(((unsigned short *)image.data)[k + 3]);
 
                     k += 4;
                 } break;
                 default: break;
             }
 
-            // verify threshold
-            unsigned char resultValue = 0;
-            unsigned char resultAlpha = 0;
-            resultValue = imageValue * 255;
-            if (imageAlpha)
-            {
-                resultAlpha = 255;
-            }
-
-            pixels[i] = resultValue;
-            pixels[i + 1] = resultAlpha;
+            pixels[i] = imageValue * 255;
         }
     }
 
