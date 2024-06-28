@@ -1524,9 +1524,12 @@ RLAPI void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBott
 RLAPI void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int sides, Color color); // Draw a cylinder wires with base at startPos and top at endPos
 RLAPI void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color); // Draw a capsule with the center of its sphere caps at startPos and endPos
 RLAPI void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color); // Draw capsule wireframe with the center of its sphere caps at startPos and endPos
-RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
+RLAPI void DrawPlaneXZ(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
+RLAPI void DrawPlaneXY(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XY
+RLAPI void DrawPlaneYZ(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane YZ
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
-RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
+RLAPI void DrawGridXZ(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0)) on the XZ plane
+RLAPI void DrawGridXY(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0)) on the XY plane
 
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)

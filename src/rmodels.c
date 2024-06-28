@@ -977,8 +977,8 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
     rlEnd();
 }
 
-// Draw a plane
-void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
+// Draw an XZ plane
+void DrawPlaneXZ(Vector3 centerPos, Vector2 size, Color color)
 {
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
@@ -996,6 +996,53 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
         rlEnd();
     rlPopMatrix();
 }
+// Might want to add this to raylib
+
+void DrawPlaneXY(Vector3 centerPos, Vector2 size, Color color)
+{
+	// Draw rectangle
+	rlPushMatrix();
+		rlBegin(RL_QUADS);
+			rlColor4ub(color.r, color.g, color.b, color.a);
+			rlNormal3f(0.0f, 0.0f, 1.0f);
+
+			rlTexCoord2f(0.0f, 0.0f);
+			rlVertex3f(centerPos.x - size.x/2, centerPos.y - size.y/2, centerPos.z);
+
+			rlTexCoord2f(1.0f, 0.0f);
+			rlVertex3f(centerPos.x + size.x/2, centerPos.y - size.y/2, centerPos.z);
+
+			rlTexCoord2f(1.0f, 1.0f);
+			rlVertex3f(centerPos.x + size.x/2, centerPos.y + size.y/2, centerPos.z);
+
+			rlTexCoord2f(0.0f, 1.0f);
+			rlVertex3f(centerPos.x - size.x/2, centerPos.y + size.y/2, centerPos.z);
+		rlEnd();
+	rlPopMatrix();
+}
+
+void DrawPlaneYZ(Vector3 centerPos, Vector2 size, Color color)
+{
+	rlPushMatrix();
+		rlBegin(RL_QUADS);
+
+			rlColor4ub(color.r, color.g, color.b, color.a);
+			rlNormal3f(1.0f, 0.0f, 0.0f);
+
+			rlTexCoord2f(0.0f, 0.0f);
+			rlVertex3f(centerPos.x, centerPos.y - size.y/2, centerPos.z - size.x/2);
+
+			rlTexCoord2f(1.0f, 0.0f);
+			rlVertex3f(centerPos.x, centerPos.y - size.y/2, centerPos.z + size.x/2);
+
+			rlTexCoord2f(1.0f, 1.0f);
+			rlVertex3f(centerPos.x, centerPos.y + size.y/2, centerPos.z + size.x/2);
+
+			rlTexCoord2f(0.0f, 1.0f);
+			rlVertex3f(centerPos.x, centerPos.y + size.y/2, centerPos.z - size.x/2);
+		rlEnd();
+	rlPopMatrix();
+}
 
 // Draw a ray line
 void DrawRay(Ray ray, Color color)
@@ -1011,8 +1058,8 @@ void DrawRay(Ray ray, Color color)
     rlEnd();
 }
 
-// Draw a grid centered at (0, 0, 0)
-void DrawGrid(int slices, float spacing)
+// Draw a grid centered at (0, 0, 0) on XZ plane
+void DrawGridXZ(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
@@ -1041,6 +1088,30 @@ void DrawGrid(int slices, float spacing)
             rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
         }
     rlEnd();
+}
+
+// Draw a grid centered at (0, 0, 0) on XY plane
+void DrawGridXY(int slice, float spacing)
+{
+	int halfSlices = slice/2;
+
+	rlPushMatrix();
+		rlBegin(RL_LINES);
+
+			for (int i = -halfSlices; i <= halfSlices; ++i)
+			{
+				if (i == 0) rlColor4ub(255, 255, 255, 255);
+				else rlColor4ub(100, 100, 100, 255);
+
+				rlVertex3f(-halfSlices*spacing, i*spacing, 0.0f);
+				rlVertex3f(halfSlices*spacing, i*spacing, 0.0f);
+
+				rlVertex3f(i*spacing, -halfSlices*spacing, 0.0f);
+				rlVertex3f(i*spacing, halfSlices*spacing, 0.0f);
+			}
+
+		rlEnd();
+	rlPopMatrix();
 }
 
 // Load model from files (mesh and material)
@@ -4327,7 +4398,7 @@ static Model LoadIQM(const char *fileName)
         model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
 
         model.meshMaterial[i] = i;
-        
+
         TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
 
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
@@ -4636,7 +4707,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         animations[a].boneCount = iqmHeader->num_poses;
         animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
-        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here 
+        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here
         TraceLog(LOG_INFO, "IQM Anim %s", animations[a].name);
         // animations[a].framerate = anim.framerate;     // TODO: Use animation framerate data?
 
@@ -4913,7 +4984,7 @@ static Model LoadGLTF(const char *fileName)
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
           - Supports basic animations
-          - Transforms, including parent-child relations, are applied on the mesh data, but the 
+          - Transforms, including parent-child relations, are applied on the mesh data, but the
             hierarchy is not kept (as it can't be represented).
           - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
             are turned into separate raylib Meshes.
@@ -5101,7 +5172,7 @@ static Model LoadGLTF(const char *fileName)
         // Each primitive within a glTF node becomes a Raylib Mesh.
         // The local-to-world transform of each node is used to transform the
         // points/normals/tangents of the created Mesh(es).
-        // Any glTF mesh linked from more than one Node (i.e. instancing) 
+        // Any glTF mesh linked from more than one Node (i.e. instancing)
         // is turned into multiple Mesh's, as each Node will have its own
         // transform applied.
         // Note: the code below disregards the scenes defined in the file, all nodes are used.
@@ -5262,7 +5333,7 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported", fileName);
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported, use vec2 float", fileName);
-                    
+
                         int index = mesh->primitives[p].attributes[j].index;
                         if (index == 0) model.meshes[meshIndex].texcoords = texcoordPtr;
                         else if (index == 1) model.meshes[meshIndex].texcoords2 = texcoordPtr;
