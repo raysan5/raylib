@@ -84,6 +84,8 @@ __declspec(dllimport) int __stdcall  MultiByteToWideChar(unsigned int CodePage, 
 
 #include "../external/RGFW.h"
 
+
+
 #if defined(__WIN32) || defined(__WIN64)
 #undef DrawText
 #undef ShowCursor
@@ -113,6 +115,110 @@ typedef struct {
 extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { NULL };   // Platform specific 
+
+static const unsigned short RGFWKeyToRayKey[] = {
+    [RGFW_KEY_NULL] = KEY_NULL,
+    [RGFW_Quote] = KEY_APOSTROPHE,
+    [RGFW_Comma] = KEY_COMMA,
+    [RGFW_Minus] = KEY_MINUS,
+    [RGFW_Period] = KEY_PERIOD,
+    [RGFW_Slash] = KEY_SLASH,
+    [RGFW_Escape] = KEY_ESCAPE,
+    [RGFW_F1] = KEY_F1,
+    [RGFW_F2] = KEY_F2,
+    [RGFW_F3] = KEY_F3,
+    [RGFW_F4] = KEY_F4,
+    [RGFW_F5] = KEY_F5,
+    [RGFW_F6] = KEY_F6,
+    [RGFW_F7] = KEY_F7,
+    [RGFW_F8] = KEY_F8,
+    [RGFW_F9] = KEY_F9,
+    [RGFW_F10] = KEY_F10,
+    [RGFW_F11] = KEY_F11,
+    [RGFW_F12] = KEY_F12,
+    [RGFW_Backtick] = KEY_GRAVE,
+    [RGFW_0] = KEY_ZERO,
+    [RGFW_1] = KEY_ONE,
+    [RGFW_2] = KEY_TWO,
+    [RGFW_3] = KEY_THREE,
+    [RGFW_4] = KEY_FOUR,
+    [RGFW_5] = KEY_FIVE,
+    [RGFW_6] = KEY_SIX,
+    [RGFW_7] = KEY_SEVEN,
+    [RGFW_8] = KEY_EIGHT,
+    [RGFW_9] = KEY_NINE,
+    [RGFW_Equals] = KEY_EQUAL,
+    [RGFW_BackSpace] = KEY_BACKSPACE,
+    [RGFW_Tab] = KEY_TAB,
+    [RGFW_CapsLock] = KEY_CAPS_LOCK,
+    [RGFW_ShiftL] = KEY_LEFT_SHIFT,
+    [RGFW_ControlL] = KEY_LEFT_CONTROL,
+    [RGFW_AltL] = KEY_LEFT_ALT,
+    [RGFW_SuperL] = KEY_LEFT_SUPER,
+    #ifndef RGFW_MACOS
+    [RGFW_ShiftR] = KEY_RIGHT_SHIFT,
+    
+    [RGFW_AltR] = KEY_RIGHT_ALT,
+    #endif
+    [RGFW_Space] = KEY_SPACE,
+
+    [RGFW_a] = KEY_A,
+    [RGFW_b] = KEY_B,
+    [RGFW_c] = KEY_C,
+    [RGFW_d] = KEY_D,
+    [RGFW_e] = KEY_E,
+    [RGFW_f] = KEY_F,
+    [RGFW_g] = KEY_G,
+    [RGFW_h] = KEY_H,
+    [RGFW_i] = KEY_I,
+    [RGFW_j] = KEY_J,
+    [RGFW_k] = KEY_K,
+    [RGFW_l] = KEY_L,
+    [RGFW_m] = KEY_M,
+    [RGFW_n] = KEY_N,
+    [RGFW_o] = KEY_O,
+    [RGFW_p] = KEY_P,
+    [RGFW_q] = KEY_Q,
+    [RGFW_r] = KEY_R,
+    [RGFW_s] = KEY_S,
+    [RGFW_t] = KEY_T,
+    [RGFW_u] = KEY_U,
+    [RGFW_v] = KEY_V,
+    [RGFW_w] = KEY_W,
+    [RGFW_x] KEY_X,
+    [RGFW_y] = KEY_Y,
+    [RGFW_z] = KEY_Z,
+    [RGFW_Bracket] = KEY_LEFT_BRACKET,
+    [RGFW_BackSlash] = KEY_BACKSLASH,
+    [RGFW_CloseBracket] = KEY_RIGHT_BRACKET,
+    [RGFW_Semicolon] = KEY_SEMICOLON,
+    [RGFW_Insert] = KEY_INSERT,
+    [RGFW_Home] = KEY_HOME,
+    [RGFW_PageUp] = KEY_PAGE_UP,
+    [RGFW_Delete] = KEY_DELETE,
+    [RGFW_End] = KEY_END,
+    [RGFW_PageDown] = KEY_PAGE_DOWN,
+    [RGFW_Right] = KEY_RIGHT,
+    [RGFW_Left] = KEY_LEFT,
+    [RGFW_Down] = KEY_DOWN,
+    [RGFW_Up] = KEY_UP,
+    [RGFW_Numlock] = KEY_NUM_LOCK,
+    [RGFW_KP_Slash] = KEY_KP_DIVIDE,
+    [RGFW_Multiply] = KEY_KP_MULTIPLY,
+    [RGFW_KP_Minus] = KEY_KP_SUBTRACT,
+    [RGFW_KP_Return] = KEY_KP_ENTER,
+    [RGFW_KP_1] = KEY_KP_1,
+    [RGFW_KP_2] = KEY_KP_2,
+    [RGFW_KP_3] = KEY_KP_3,
+    [RGFW_KP_4] = KEY_KP_4,
+    [RGFW_KP_5] = KEY_KP_5,
+    [RGFW_KP_6] = KEY_KP_6,
+    [RGFW_KP_7] = KEY_KP_7,
+    [RGFW_KP_8] = KEY_KP_8,
+    [RGFW_KP_9] = KEY_KP_9,
+    [RGFW_KP_0] = KEY_KP_0,
+    [RGFW_KP_Period] = KEY_KP_DECIMAL
+};
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -442,7 +548,7 @@ void *GetWindowHandle(void)
 int GetMonitorCount(void)
 {
     RGFW_monitor* mons = RGFW_getMonitors();
-    u32 i;
+    size_t i;
     for (i = 0; i < 6; i++) {
         if (!mons[i].rect.x && !mons[i].rect.y && !mons[i].rect.w && mons[i].rect.h)
             return i;
@@ -457,7 +563,7 @@ int GetCurrentMonitor(void)
     RGFW_monitor* mons = RGFW_getMonitors();
     RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
 
-    u32 i;
+    size_t i;
     for (i = 0; i < 6; i++) {
         if (mons[i].rect.x ==  mon.rect.x && 
             mons[i].rect.y ==  mon.rect.y)
@@ -564,9 +670,12 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+bool RGFW_disableCursor = false;
+
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
+    RGFW_disableCursor = false;
     RGFW_window_mouseUnhold(platform.window);
 
     // Set cursor position in the middle
@@ -578,7 +687,7 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    RGFW_window_mouseHold(platform.window);
+    RGFW_disableCursor = true;
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
@@ -642,34 +751,7 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    switch (cursor) {
-        case MOUSE_CURSOR_DEFAULT:
-            return RGFW_window_setMouseDefault(platform.window);
-        case MOUSE_CURSOR_ARROW:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_ARROW);
-        case MOUSE_CURSOR_IBEAM:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_IBEAM);
-        case MOUSE_CURSOR_CROSSHAIR:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_CROSSHAIR);
-        case MOUSE_CURSOR_POINTING_HAND:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_POINTING_HAND);
-        case MOUSE_CURSOR_RESIZE_EW:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_RESIZE_EW);
-        case MOUSE_CURSOR_RESIZE_NS:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_RESIZE_NS);
-        #ifndef RGFW_MACOS
-        case MOUSE_CURSOR_RESIZE_NWSE:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_RESIZE_NWSE);
-        case MOUSE_CURSOR_RESIZE_NESW:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_RESIZE_NESW);
-        #endif
-        case MOUSE_CURSOR_RESIZE_ALL:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_RESIZE_ALL);
-        case MOUSE_CURSOR_NOT_ALLOWED:
-            return RGFW_window_setMouseStandard(platform.window, RGFW_MOUSE_NOT_ALLOWED);
-        default:
-            break;
-    }
+    RGFW_window_setMouseStandard(platform.window, cursor);
 }
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
@@ -795,16 +877,19 @@ void PollInputEvents(void)
             } break;
 
             // Window events are also polled (Minimized, maximized, close...)
-            case RGFW_windowAttribsChange:
+            case RGFW_windowResized:
             {
                 SetupViewport(platform.window->r.w, platform.window->r.h);
-                CORE.Window.position.x = platform.window->r.x;
-                CORE.Window.position.y = platform.window->r.x;
                 CORE.Window.screen.width = platform.window->r.w;
                 CORE.Window.screen.height =  platform.window->r.h;
                 CORE.Window.currentFbo.width = platform.window->r.w;;
                 CORE.Window.currentFbo.height = platform.window->r.h;
                 CORE.Window.resizedLastFrame = true;
+            } break;
+            case RGFW_windowMoved:
+            {
+                CORE.Window.position.x = platform.window->r.x;
+                CORE.Window.position.y = platform.window->r.x;
             } break;
 
             // Keyboard events
@@ -1051,6 +1136,10 @@ void PollInputEvents(void)
         }
 #endif
     }
+
+    if (RGFW_disableCursor && platform.window->event.inFocus)
+        RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
+    
     //-----------------------------------------------------------------------------
 }
 
@@ -1197,336 +1286,9 @@ void ClosePlatform(void)
 
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode) {
-    switch (keycode) {
-        case RGFW_Quote:
-            return KEY_APOSTROPHE;
-        case RGFW_Comma:
-            return KEY_COMMA;
-        case RGFW_Minus:
-            return KEY_MINUS;
-        case RGFW_Period:
-            return KEY_PERIOD;
-        case RGFW_Slash:
-            return KEY_SLASH;
-        case RGFW_Escape:
-            return KEY_ESCAPE;
-        case RGFW_F1:
-            return KEY_F1;
-        case RGFW_F2:
-            return KEY_F2;
-        case RGFW_F3:
-            return KEY_F3;
-        case RGFW_F4:
-            return KEY_F4;
-        case RGFW_F5:
-            return KEY_F5;
-        case RGFW_F6:
-            return KEY_F6;
-        case RGFW_F7:
-            return KEY_F7;
-        case RGFW_F8:
-            return KEY_F8;
-        case RGFW_F9:
-            return KEY_F9;
-        case RGFW_F10:
-            return KEY_F10;
-        case RGFW_F11:
-            return KEY_F11;
-        case RGFW_F12:
-            return KEY_F12;
-        case RGFW_Backtick:
-            return KEY_GRAVE;
-        case RGFW_0:
-            return KEY_ZERO;
-        case RGFW_1:
-            return KEY_ONE;
-        case RGFW_2:
-            return KEY_TWO;
-        case RGFW_3:
-            return KEY_THREE;
-        case RGFW_4:
-            return KEY_FOUR;
-        case RGFW_5:
-            return KEY_FIVE;
-        case RGFW_6:
-            return KEY_SIX;
-        case RGFW_7:
-            return KEY_SEVEN;
-        case RGFW_8:
-            return KEY_EIGHT;
-        case RGFW_9:
-            return KEY_NINE;
-        case RGFW_Equals:
-            return KEY_EQUAL;
-        case RGFW_BackSpace:
-            return KEY_BACKSPACE;
-        case RGFW_Tab:
-            return KEY_TAB;
-        case RGFW_CapsLock:
-            return KEY_CAPS_LOCK;
-        case RGFW_ShiftL:
-            return KEY_LEFT_SHIFT;
-        case RGFW_ControlL:
-            return KEY_LEFT_CONTROL;
-        case RGFW_AltL:
-            return KEY_LEFT_ALT;
-        case RGFW_SuperL:
-            return KEY_LEFT_SUPER;
-        #ifndef RGFW_MACOS
-        case RGFW_ShiftR:
-            return KEY_RIGHT_SHIFT;
-        
-        case RGFW_AltR:
-            return KEY_RIGHT_ALT;
-        #endif
-        case RGFW_Space:
-            return KEY_SPACE;
+    if (keycode > sizeof(RGFWKeyToRayKey) / sizeof(unsigned short))
+        return 0;
 
-        #ifdef RGFW_X11
-        case RGFW_a:
-        #endif
-
-        case RGFW_A:
-            return KEY_A;
-
-        #ifdef RGFW_X11
-        case RGFW_b:
-        #endif
-
-        case RGFW_B:
-            return KEY_B;
-
-        #ifdef RGFW_X11
-        case RGFW_c:
-        #endif
-
-        case RGFW_C:
-            return KEY_C;
-
-        #ifdef RGFW_X11
-        case RGFW_d:
-        #endif
-
-        case RGFW_D:
-            return KEY_D;
-
-        #ifdef RGFW_X11
-        case RGFW_e:
-        #endif
-
-        case RGFW_E:
-            return KEY_E;
-
-        #ifdef RGFW_X11
-        case RGFW_f:
-        #endif
-
-        case RGFW_F:
-            return KEY_F;
-
-        #ifdef RGFW_X11
-        case RGFW_g:
-        #endif
-
-        case RGFW_G:
-            return KEY_G;
-        
-        #ifdef RGFW_X11
-        case RGFW_h:
-        #endif
-
-        case RGFW_H:
-            return KEY_H;
-
-        #ifdef RGFW_X11
-        case RGFW_i:
-        #endif
-
-        case RGFW_I:
-            return KEY_I;
-
-        #ifdef RGFW_X11
-        case RGFW_j:
-        #endif
-
-        case RGFW_J:
-            return KEY_J;
-
-        #ifdef RGFW_X11
-        case RGFW_k:
-        #endif
-
-        case RGFW_K:
-            return KEY_K;
-
-        #ifdef RGFW_X11
-        case RGFW_l:
-        #endif
-
-        case RGFW_L:
-            return KEY_L;
-        
-        #ifdef RGFW_X11
-        case RGFW_m:
-        #endif
-
-        case RGFW_M:
-            return KEY_M;
-        
-        #ifdef RGFW_X11
-        case RGFW_n:
-        #endif
-
-        case RGFW_N:
-            return KEY_N;
-
-        #ifdef RGFW_X11
-        case RGFW_o:
-        #endif
-
-        case RGFW_O:
-            return KEY_O;
-
-        #ifdef RGFW_X11
-        case RGFW_p:
-        #endif
-
-        case RGFW_P:
-            return KEY_P;
-
-        #ifdef RGFW_X11
-        case RGFW_q:
-        #endif
-
-        case RGFW_Q:
-            return KEY_Q;
-
-        #ifdef RGFW_X11
-        case RGFW_r:
-        #endif
-
-        case RGFW_R:
-            return KEY_R;
-
-        #ifdef RGFW_X11
-        case RGFW_s:
-        #endif
-
-        case RGFW_S:
-            return KEY_S;
-
-        #ifdef RGFW_X11
-        case RGFW_t:
-        #endif
-
-        case RGFW_T:
-            return KEY_T;
-
-        #ifdef RGFW_X11
-        case RGFW_u:
-        #endif
-
-        case RGFW_U:
-            return KEY_U;
-
-        #ifdef RGFW_X11
-        case RGFW_v:
-        #endif
-
-        case RGFW_V:
-            return KEY_V;
-
-        #ifdef RGFW_X11
-        case RGFW_w:
-        #endif
-
-        case RGFW_W:
-            return KEY_W;
-
-        #ifdef RGFW_X11
-        case RGFW_x:
-        #endif
-
-        case RGFW_X:
-            return KEY_X;
-
-        #ifdef RGFW_X11
-        case RGFW_y:
-        #endif
-
-        case RGFW_Y:
-            return KEY_Y;
-
-        #ifdef RGFW_X11
-        case RGFW_z:
-        #endif
-
-        case RGFW_Z:
-            return KEY_Z;
-        case RGFW_Bracket:
-            return KEY_LEFT_BRACKET;
-        case RGFW_BackSlash:
-            return KEY_BACKSLASH;
-        case RGFW_CloseBracket:
-            return KEY_RIGHT_BRACKET;
-        case RGFW_Semicolon:
-            return KEY_SEMICOLON;
-        case RGFW_Insert:
-            return KEY_INSERT;
-        case RGFW_Home:
-            return KEY_HOME;
-        case RGFW_PageUp:
-            return KEY_PAGE_UP;
-        case RGFW_Delete:
-            return KEY_DELETE;
-        case RGFW_End:
-            return KEY_END;
-        case RGFW_PageDown:
-            return KEY_PAGE_DOWN;
-        case RGFW_Right:
-            return KEY_RIGHT;
-        case RGFW_Left:
-            return KEY_LEFT;
-        case RGFW_Down:
-            return KEY_DOWN;
-        case RGFW_Up:
-            return KEY_UP;
-        case RGFW_Numlock:
-            return KEY_NUM_LOCK;
-        case RGFW_KP_Slash:
-            return KEY_KP_DIVIDE;
-        case RGFW_Multiply:
-            return KEY_KP_MULTIPLY;
-        case RGFW_KP_Minus:
-            return KEY_KP_SUBTRACT;
-        case RGFW_KP_Return:
-            return KEY_KP_ENTER;
-        case RGFW_KP_1:
-            return KEY_KP_1;
-        case RGFW_KP_2:
-            return KEY_KP_2;
-        case RGFW_KP_3:
-            return KEY_KP_3;
-        case RGFW_KP_4:
-            return KEY_KP_4;
-        case RGFW_KP_5:
-            return KEY_KP_5;
-        case RGFW_KP_6:
-            return KEY_KP_6;
-        case RGFW_KP_7:
-            return KEY_KP_7;
-        case RGFW_KP_8:
-            return KEY_KP_8;
-        case RGFW_KP_9:
-            return KEY_KP_9;
-        case RGFW_KP_0:
-            return KEY_KP_0;
-        case RGFW_KP_Period:
-            return KEY_KP_DECIMAL;
-        default:
-            return 0;
-    }
-
-    return 0;
+    return RGFWKeyToRayKey[keycode];
 }
 // EOF
