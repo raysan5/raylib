@@ -9,9 +9,14 @@ comptime {
 // get the flags a second time when adding raygui
 var raylib_flags_arr: std.ArrayListUnmanaged([]const u8) = .{};
 
+/// we're not inside the actual build script recognized by the
+/// zig build system; use this type where one would otherwise
+/// use `@This()` when inside the actual entrypoint file.
+const BuildScript = @import("../build.zig");
+
 // This has been tested with zig version 0.12.0
 pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    const raylib_dep = b.dependency(options.raylib_dependency_name, .{
+    const raylib_dep = b.dependencyFromBuildZig(BuildScript, .{
         .target = target,
         .optimize = optimize,
         .raudio = options.raudio,
@@ -257,7 +262,6 @@ pub const Options = struct {
     linux_display_backend: LinuxDisplayBackend = .X11,
     opengl_version: OpenglVersion = .auto,
 
-    raylib_dependency_name: []const u8 = "raylib",
     raygui_dependency_name: []const u8 = "raygui",
 };
 
@@ -272,11 +276,11 @@ pub const OpenglVersion = enum {
 
     pub fn toCMacroStr(self: @This()) []const u8 {
         switch (self) {
-            .auto    => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
-            .gl_1_1   => return "GRAPHICS_API_OPENGL_11",
-            .gl_2_1   => return "GRAPHICS_API_OPENGL_21",
-            .gl_3_3   => return "GRAPHICS_API_OPENGL_33",
-            .gl_4_3   => return "GRAPHICS_API_OPENGL_43",
+            .auto => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
+            .gl_1_1 => return "GRAPHICS_API_OPENGL_11",
+            .gl_2_1 => return "GRAPHICS_API_OPENGL_21",
+            .gl_3_3 => return "GRAPHICS_API_OPENGL_33",
+            .gl_4_3 => return "GRAPHICS_API_OPENGL_43",
             .gles_2 => return "GRAPHICS_API_OPENGL_ES2",
             .gles_3 => return "GRAPHICS_API_OPENGL_ES3",
         }
