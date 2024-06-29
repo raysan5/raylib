@@ -432,44 +432,37 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            float *cosring;
-            float *sinring;
-            float *cosslice;
-            float *sinslice;
-            cosring = (float *)RL_CALLOC(rings + 2 + 1, sizeof(float));
-            sinring = (float *)RL_CALLOC(rings + 2 + 1, sizeof(float));
-            cosslice = (float *)RL_CALLOC(slices + 1, sizeof(float));
-            sinslice = (float *)RL_CALLOC(slices + 1, sizeof(float));
-            for (int i = 0; i < (rings + 2 + 1); i++)
-            {
-                cosring[i] = cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)); // Precalculate position on unit circle required for each ring
-                sinring[i] = sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i));
-            }
-            for (int j = 0; j < slices + 1; j++)
-            {
-                cosslice[j] = cosf(DEG2RAD*(360.0f*j/slices)); // Precalculate position on unit circle required for each slice
-                sinslice[j] = sinf(DEG2RAD*(360.0f*j/slices));
-            }
-            
-            for (int i = 0; i < (rings + 2); i++)
-            {
-                for (int j = 0; j < slices; j++)
-                {
-                    rlVertex3f(cosring[i]*sinslice[j], sinring[i], cosring[i]*cosslice[j]);
-                    rlVertex3f(cosring[i+1]*sinslice[j+1], sinring[i+1], cosring[i+1]*cosslice[j+1]);
-                    rlVertex3f(cosring[i+1]*sinslice[j], sinring[i+1], cosring[i+1]*cosslice[j]);
-            
-                    rlVertex3f(cosring[i]*sinslice[j], sinring[i], cosring[i]*cosslice[j]);
-                    rlVertex3f(cosring[i]*sinslice[j+1], sinring[i], cosring[i]*cosslice[j+1]);
-                    rlVertex3f(cosring[i+1]*sinslice[j+1], sinring[i+1], cosring[i+1]*cosslice[j+1]);
+            float ringangle = DEG2RAD*(180.0f/(rings + 1)); // Angle between latitudinal parallels
+            float sliceangle = DEG2RAD*(360.0f/slices); // Angle between longitudinal meridians
+
+            float cosring = cosf(ringangle);
+            float sinring = sinf(ringangle);
+            float cosslice = cosf(sliceangle);
+            float sinslice = sinf(sliceangle);
+
+            Vector3 vertices[4]; // Store face vertices
+            vertices[2] = (Vector3){0,1,0};
+            vertices[3] = (Vector3){sinring, cosring, 0};
+
+            for (int i = 0; i < rings + 1; i++) {
+                for (int j = 0; j < slices; j++) {
+                    vertices[0] = vertices[2]; // Rotate around y axis to set up vertices for next face
+                    vertices[1] = vertices[3];
+                    vertices[2] = (Vector3){cosslice*vertices[2].x - sinslice*vertices[2].z, vertices[2].y, sinslice*vertices[2].x + cosslice*vertices[2].z}; // Rotation matrix around y axis
+                    vertices[3] = (Vector3){cosslice*vertices[3].x - sinslice*vertices[3].z, vertices[3].y, sinslice*vertices[3].x + cosslice*vertices[3].z};
+
+                    rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                    rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
+
+                    rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+                    rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
                 }
+
+                vertices[2] = vertices[3]; // Rotate around z axis to set up  starting vertices for next ring
+                vertices[3] = (Vector3){cosring*vertices[3].x + sinring*vertices[3].y, -sinring*vertices[3].x + cosring*vertices[3].y, vertices[3].z}; // Rotation matrix around z axis
             }
-
-            RL_FREE(cosring);
-            RL_FREE(sinring);
-            RL_FREE(cosslice);
-            RL_FREE(sinslice);
-
         rlEnd();
     rlPopMatrix();
 }
