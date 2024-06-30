@@ -670,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="572">
+    <Functions count="573">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1809,6 +1809,10 @@
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
             <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="ImageFromChannel" retType="Image" paramCount="2" desc="Create an image from a selected channel of another image">
+            <Param type="Image" name="image" desc="" />
+            <Param type="int" name="selectedChannel" desc="" />
         </Function>
         <Function name="ImageFormat" retType="void" paramCount="2" desc="Convert image data to desired format">
             <Param type="Image *" name="image" desc="" />
