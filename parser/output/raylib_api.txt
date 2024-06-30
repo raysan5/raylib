@@ -2776,7 +2776,7 @@ Function 293: ImageFromImage() (2 input parameters)
 Function 294: ImageFromChannel() (2 input parameters)
   Name: ImageFromChannel
   Return type: Image
-  Description: Create an image from a selected channel of another image (GRAYSCALE/R16/R32)
+  Description: Create an image from a selected channel of another image (GRAYSCALE)
   Param[1]: image (type: Image)
   Param[2]: selectedChannel (type: int)
 Function 295: ImageText() (3 input parameters)

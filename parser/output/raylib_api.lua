@@ -5523,7 +5523,7 @@ return {
     },
     {
       name = "ImageFromChannel",
-      description = "Create an image from a selected channel of another image (GRAYSCALE/R16/R32)",
+      description = "Create an image from a selected channel of another image (GRAYSCALE)",
       returnType = "Image",
       params = {
         {type = "Image", name = "image"},

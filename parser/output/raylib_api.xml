@@ -1798,7 +1798,7 @@
             <Param type="Image" name="image" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
         </Function>
-        <Function name="ImageFromChannel" retType="Image" paramCount="2" desc="Create an image from a selected channel of another image (GRAYSCALE/R16/R32)">
+        <Function name="ImageFromChannel" retType="Image" paramCount="2" desc="Create an image from a selected channel of another image (GRAYSCALE)">
             <Param type="Image" name="image" desc="" />
             <Param type="int" name="selectedChannel" desc="" />
         </Function>
