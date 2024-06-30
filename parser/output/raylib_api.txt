@@ -2773,14 +2773,20 @@ Function 293: ImageFromImage() (2 input parameters)
   Description: Create an image from another image piece
   Param[1]: image (type: Image)
   Param[2]: rec (type: Rectangle)
-Function 294: ImageText() (3 input parameters)
+Function 294: ImageFromChannel() (2 input parameters)
+  Name: ImageFromChannel
+  Return type: Image
+  Description: Create an image from a selected channel of another image (GRAYSCALE/R16/R32)
+  Param[1]: image (type: Image)
+  Param[2]: selectedChannel (type: int)
+Function 295: ImageText() (3 input parameters)
   Name: ImageText
   Return type: Image
   Description: Create an image from text (default font)
   Param[1]: text (type: const char *)
   Param[2]: fontSize (type: int)
   Param[3]: color (type: Color)
-Function 295: ImageTextEx() (5 input parameters)
+Function 296: ImageTextEx() (5 input parameters)
   Name: ImageTextEx
   Return type: Image
   Description: Create an image from text (custom sprite font)
@@ -2789,12 +2795,6 @@ Function 295: ImageTextEx() (5 input parameters)
   Param[3]: fontSize (type: float)
   Param[4]: spacing (type: float)
   Param[5]: tint (type: Color)
-Function 296: ImageFromChannel() (2 input parameters)
-  Name: ImageFromChannel
-  Return type: Image
-  Description: Create an image from a selected channel of another image
-  Param[1]: image (type: Image)
-  Param[2]: selectedChannel (type: int)
 Function 297: ImageFormat() (2 input parameters)
   Name: ImageFormat
   Return type: void

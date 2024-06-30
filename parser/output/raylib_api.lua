@@ -5522,6 +5522,15 @@ return {
       }
     },
     {
+      name = "ImageFromChannel",
+      description = "Create an image from a selected channel of another image (GRAYSCALE/R16/R32)",
+      returnType = "Image",
+      params = {
+        {type = "Image", name = "image"},
+        {type = "int", name = "selectedChannel"}
+      }
+    },
+    {
       name = "ImageText",
       description = "Create an image from text (default font)",
       returnType = "Image",
@@ -5541,15 +5550,6 @@ return {
         {type = "float", name = "fontSize"},
         {type = "float", name = "spacing"},
         {type = "Color", name = "tint"}
-      }
-    },
-    {
-      name = "ImageFromChannel",
-      description = "Create an image from a selected channel of another image",
-      returnType = "Image",
-      params = {
-        {type = "Image", name = "image"},
-        {type = "int", name = "selectedChannel"}
       }
     },
     {
