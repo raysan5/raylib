@@ -1097,16 +1097,16 @@ void PollInputEvents(void)
                     }
 
                     #ifdef __linux__
-                    float value = (event->axis[i].x + event->axis[i].y) / (float) 32767;
+                    float value = (event->axis[i].x + event->axis[i].y)/(float)32767;
                     #else
-                    float value = (event->axis[i].x + -event->axis[i].y) / (float) 32767;
+                    float value = (event->axis[i].x + -event->axis[i].y)/(float)32767;
                     #endif
                     CORE.Input.Gamepad.axisState[event->joystick][axis] = value;
 
                     // Register button state for triggers in addition to their axes
                     if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
                     {
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;

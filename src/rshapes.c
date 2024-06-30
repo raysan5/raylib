@@ -2235,10 +2235,10 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
     float dx = center2.x - center1.x;      // X distance between centers
     float dy = center2.y - center1.y;      // Y distance between centers
 
-    float distanceSquared = dx * dx + dy * dy; // Distance between centers squared
+    float distanceSquared = dx*dx + dy*dy; // Distance between centers squared
     float radiusSum = radius1 + radius2;
 
-    collision = (distanceSquared <= (radiusSum * radiusSum));
+    collision = (distanceSquared <= (radiusSum*radiusSum));
 
     return collision;
 }
@@ -2329,17 +2329,17 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
         return CheckCollisionCircles(p1, 0, center, radius);
     }
 
-    float lengthSQ = ((dx * dx) + (dy * dy));
-    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (lengthSQ);
+    float lengthSQ = ((dx*dx) + (dy*dy));
+    float dotProduct = (((center.x - p1.x)*(p2.x - p1.x)) + ((center.y - p1.y)*(p2.y - p1.y)))/(lengthSQ);
 
     if (dotProduct > 1.0f) dotProduct = 1.0f;
     else if (dotProduct < 0.0f) dotProduct = 0.0f;
 
-    float dx2 = (p1.x - (dotProduct * (dx))) - center.x;
-    float dy2 = (p1.y - (dotProduct * (dy))) - center.y;
-    float distanceSQ = ((dx2 * dx2) + (dy2 * dy2));
+    float dx2 = (p1.x - (dotProduct*(dx))) - center.x;
+    float dy2 = (p1.y - (dotProduct*(dy))) - center.y;
+    float distanceSQ = ((dx2*dx2) + (dy2*dy2));
 
-    return (distanceSQ <= radius * radius);
+    return (distanceSQ <= radius*radius);
 }
 
 // Get collision rectangle for two rectangles collision

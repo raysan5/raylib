@@ -80,7 +80,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 // Local Variables Definition
 //----------------------------------------------------------------------------------
 #define SCANCODE_MAPPED_NUM 232
-static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
+static const KeyboardKey mapScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_NULL,           // SDL_SCANCODE_UNKNOWN
     0,
     0,
@@ -476,9 +476,9 @@ void ClearWindowState(unsigned int flags)
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    SDL_Surface* iconSurface = NULL;
+    SDL_Surface *iconSurface = NULL;
 
-    Uint32 rmask, gmask, bmask, amask;
+    unsigned int rmask = 0, gmask = 0, bmask = 0, amask = 0;
     int depth = 0;  // Depth in bits
     int pitch = 0;  // Pixel spacing (pitch) in bytes
 
@@ -492,72 +492,67 @@ void SetWindowIcon(Image image)
         case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
             rmask = 0xFF, gmask = 0xFF00;
             bmask = 0, amask = 0;
-            depth = 16, pitch = image.width * 2;
+            depth = 16, pitch = image.width*2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
             rmask = 0xF800, gmask = 0x07E0;
             bmask = 0x001F, amask = 0;
-            depth = 16, pitch = image.width * 2;
+            depth = 16, pitch = image.width*2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8: // Uses BGR for 24-bit
             rmask = 0x0000FF, gmask = 0x00FF00;
             bmask = 0xFF0000, amask = 0;
-            depth = 24, pitch = image.width * 3;
+            depth = 24, pitch = image.width*3;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
             rmask = 0xF800, gmask = 0x07C0;
             bmask = 0x003E, amask = 0x0001;
-            depth = 16, pitch = image.width * 2;
+            depth = 16, pitch = image.width*2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
             rmask = 0xF000, gmask = 0x0F00;
             bmask = 0x00F0, amask = 0x000F;
-            depth = 16, pitch = image.width * 2;
+            depth = 16, pitch = image.width*2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
             rmask = 0xFF000000, gmask = 0x00FF0000;
             bmask = 0x0000FF00, amask = 0x000000FF;
-            depth = 32, pitch = image.width * 4;
+            depth = 32, pitch = image.width*4;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R32:
             rmask = 0xFFFFFFFF, gmask = 0;
             bmask = 0, amask = 0;
-            depth = 32, pitch = image.width * 4;
+            depth = 32, pitch = image.width*4;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
             rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
             bmask = 0xFFFFFFFF, amask = 0;
-            depth = 96, pitch = image.width * 12;
+            depth = 96, pitch = image.width*12;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
             rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
             bmask = 0xFFFFFFFF, amask = 0xFFFFFFFF;
-            depth = 128, pitch = image.width * 16;
+            depth = 128, pitch = image.width*16;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R16:
             rmask = 0xFFFF, gmask = 0;
             bmask = 0, amask = 0;
-            depth = 16, pitch = image.width * 2;
+            depth = 16, pitch = image.width*2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
             rmask = 0xFFFF, gmask = 0xFFFF;
             bmask = 0xFFFF, amask = 0;
-            depth = 48, pitch = image.width * 6;
+            depth = 48, pitch = image.width*6;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
             rmask = 0xFFFF, gmask = 0xFFFF;
             bmask = 0xFFFF, amask = 0xFFFF;
-            depth = 64, pitch = image.width * 8;
+            depth = 64, pitch = image.width*8;
             break;
-        default:
-            // Compressed formats are not supported
-            return;
+        default: return; // Compressed formats are not supported
     }
 
-    iconSurface = SDL_CreateRGBSurfaceFrom(
-        image.data, image.width, image.height, depth, pitch,
-        rmask, gmask, bmask, amask
-    );
+    iconSurface = SDL_CreateRGBSurfaceFrom( image.data, image.width, image.height, depth, pitch, rmask, gmask, bmask, amask );
 
     if (iconSurface)
     {
@@ -599,7 +594,7 @@ void SetWindowMonitor(int monitor)
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
         // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
-        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
+        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)? true : false;
 
         const int screenWidth = CORE.Window.screen.width;
         const int screenHeight = CORE.Window.screen.height;
@@ -941,11 +936,11 @@ int SetGamepadMappings(const char *mappings)
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
 {
-    //Limit input values to between 0.0f and 1.0f
-    leftMotor  = (0.0f > leftMotor)  ? 0.0f : leftMotor;
-    rightMotor = (0.0f > rightMotor) ? 0.0f : rightMotor;
-    leftMotor  = (1.0f < leftMotor)  ? 1.0f : leftMotor;
-    rightMotor = (1.0f < rightMotor) ? 1.0f : rightMotor;
+    // Limit input values to between 0.0f and 1.0f
+    leftMotor  = (0.0f > leftMotor)? 0.0f : leftMotor;
+    rightMotor = (0.0f > rightMotor)? 0.0f : rightMotor;
+    leftMotor  = (1.0f < leftMotor)? 1.0f : leftMotor;
+    rightMotor = (1.0f < rightMotor)? 1.0f : rightMotor;
 
     if (IsGamepadAvailable(gamepad))
     {
@@ -1365,13 +1360,13 @@ void PollInputEvents(void)
                 if (axis >= 0)
                 {
                     // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
-                    float value = event.jaxis.value / (float) 32767;
+                    float value = event.jaxis.value/(float)32767;
                     CORE.Input.Gamepad.axisState[event.jaxis.which][axis] = value;
 
                     // Register button state for triggers in addition to their axes
                     if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
                     {
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event.jaxis.which][button] = pressed;
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
@@ -1554,6 +1549,7 @@ int InitPlatform(void)
     for (int i = 0; (i < SDL_NumJoysticks()) && (i < MAX_GAMEPADS); i++)
     {
         platform.gamepad[i] = SDL_JoystickOpen(i);
+
         if (platform.gamepad[i])
         {
             CORE.Input.Gamepad.ready[i] = true;
@@ -1608,8 +1604,9 @@ static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {
     if (sdlScancode >= 0 && sdlScancode < SCANCODE_MAPPED_NUM)
     {
-        return ScancodeToKey[sdlScancode];
+        return mapScancodeToKey[sdlScancode];
     }
+
     return KEY_NULL; // No equivalent key in Raylib
 }
 // EOF

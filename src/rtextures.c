@@ -3599,7 +3599,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     }
 
     // Calculate fixed-point increment for shorter length
-    int decInc = (longLen == 0)? 0 : (shortLen<<16) / longLen;
+    int decInc = (longLen == 0)? 0 : (shortLen << 16)/longLen;
 
     // Draw the line pixel by pixel
     if (yLonger)
@@ -3608,7 +3608,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
         for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
-            ImageDrawPixel(dst, startPosX + (j>>16), startPosY + i, color);
+            ImageDrawPixel(dst, startPosX + (j >> 16), startPosY + i, color);
         }
     }
     else
@@ -3617,7 +3617,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
         for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
-            ImageDrawPixel(dst, startPosX + i, startPosY + (j>>16), color);
+            ImageDrawPixel(dst, startPosX + i, startPosY + (j >> 16), color);
         }
     }
 }
@@ -3815,10 +3815,10 @@ void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color col
 {
     // Calculate the 2D bounding box of the triangle
     // Determine the minimum and maximum x and y coordinates of the triangle vertices
-    int xMin = (int)((v1.x < v2.x)? ((v1.x < v3.x) ? v1.x : v3.x) : ((v2.x < v3.x) ? v2.x : v3.x));
-    int yMin = (int)((v1.y < v2.y)? ((v1.y < v3.y) ? v1.y : v3.y) : ((v2.y < v3.y) ? v2.y : v3.y));
-    int xMax = (int)((v1.x > v2.x)? ((v1.x > v3.x) ? v1.x : v3.x) : ((v2.x > v3.x) ? v2.x : v3.x));
-    int yMax = (int)((v1.y > v2.y)? ((v1.y > v3.y) ? v1.y : v3.y) : ((v2.y > v3.y) ? v2.y : v3.y));
+    int xMin = (int)((v1.x < v2.x)? ((v1.x < v3.x)? v1.x : v3.x) : ((v2.x < v3.x)? v2.x : v3.x));
+    int yMin = (int)((v1.y < v2.y)? ((v1.y < v3.y)? v1.y : v3.y) : ((v2.y < v3.y)? v2.y : v3.y));
+    int xMax = (int)((v1.x > v2.x)? ((v1.x > v3.x)? v1.x : v3.x) : ((v2.x > v3.x)? v2.x : v3.x));
+    int yMax = (int)((v1.y > v2.y)? ((v1.y > v3.y)? v1.y : v3.y) : ((v2.y > v3.y)? v2.y : v3.y));
 
     // Clamp the bounding box to the image dimensions
     if (xMin < 0) xMin = 0;

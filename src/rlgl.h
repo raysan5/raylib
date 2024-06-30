@@ -1560,7 +1560,7 @@ void rlNormal3f(float x, float y, float z)
     float length = sqrtf(normalx*normalx + normaly*normaly + normalz*normalz);
     if (length != 0.0f)
     {
-        float ilength = 1.0f / length;
+        float ilength = 1.0f/length;
         normalx *= ilength;
         normaly *= ilength;
         normalz *= ilength;

@@ -175,7 +175,7 @@ typedef struct float16 {
 // Clamp float value
 RMAPI float Clamp(float value, float min, float max)
 {
-    float result = (value < min) ? min : value;
+    float result = (value < min)? min : value;
 
     if (result > max) result = max;
 
@@ -962,12 +962,12 @@ RMAPI Vector3 Vector3CubicHermite(Vector3 v1, Vector3 tangent1, Vector3 v2, Vect
 {
     Vector3 result = { 0 };
 
-    float amountPow2 = amount * amount;
-    float amountPow3 = amount * amount * amount;
+    float amountPow2 = amount*amount;
+    float amountPow3 = amount*amount*amount;
 
-    result.x = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.x + (amountPow3 - 2 * amountPow2 + amount) * tangent1.x + (-2 * amountPow3 + 3 * amountPow2) * v2.x + (amountPow3 - amountPow2) * tangent2.x;
-    result.y = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.y + (amountPow3 - 2 * amountPow2 + amount) * tangent1.y + (-2 * amountPow3 + 3 * amountPow2) * v2.y + (amountPow3 - amountPow2) * tangent2.y;
-    result.z = (2 * amountPow3 - 3 * amountPow2 + 1) * v1.z + (amountPow3 - 2 * amountPow2 + amount) * tangent1.z + (-2 * amountPow3 + 3 * amountPow2) * v2.z + (amountPow3 - amountPow2) * tangent2.z;
+    result.x = (2*amountPow3 - 3*amountPow2 + 1)*v1.x + (amountPow3 - 2*amountPow2 + amount)*tangent1.x + (-2*amountPow3 + 3*amountPow2)*v2.x + (amountPow3 - amountPow2)*tangent2.x;
+    result.y = (2*amountPow3 - 3*amountPow2 + 1)*v1.y + (amountPow3 - 2*amountPow2 + amount)*tangent1.y + (-2*amountPow3 + 3*amountPow2)*v2.y + (amountPow3 - amountPow2)*tangent2.y;
+    result.z = (2*amountPow3 - 3*amountPow2 + 1)*v1.z + (amountPow3 - 2*amountPow2 + amount)*tangent1.z + (-2*amountPow3 + 3*amountPow2)*v2.z + (amountPow3 - amountPow2)*tangent2.z;
 
     return result;
 }
@@ -2218,11 +2218,11 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 // as described in the GLTF 2.0 specification: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#interpolation-cubic
 RMAPI Quaternion QuaternionCubicHermiteSpline(Quaternion q1, Quaternion outTangent1, Quaternion q2, Quaternion inTangent2, float t)
 {
-    float t2 = t * t;
-    float t3 = t2 * t;
-    float h00 = 2 * t3 - 3 * t2 + 1;
-    float h10 = t3 - 2 * t2 + t;
-    float h01 = -2 * t3 + 3 * t2;
+    float t2 = t*t;
+    float t3 = t2*t;
+    float h00 = 2*t3 - 3*t2 + 1;
+    float h10 = t3 - 2*t2 + t;
+    float h01 = -2*t3 + 3*t2;
     float h11 = t3 - t2;
 
     Quaternion p0 = QuaternionScale(q1, h00);
