@@ -1132,7 +1132,8 @@ void PollInputEvents(void)
             {
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
 
-                if (key != KEY_NULL) {
+                if (key != KEY_NULL)
+                {
                     // If key was up, add it to the key pressed queue
                     if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
                     {

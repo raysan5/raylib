@@ -1464,7 +1464,7 @@ Music LoadMusicStream(const char *fileName)
             jar_xm_reset(ctxXm);    // Make sure we start at the beginning of the song
             musicLoaded = true;
         }
-        else 
+        else
         {
             jar_xm_free_context(ctxXm);
         }
@@ -1566,7 +1566,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
-        else 
+        else
         {
             stb_vorbis_close(ctxOgg);
         }

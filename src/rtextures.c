@@ -1636,19 +1636,18 @@ Image ImageFromChannel(Image image, int selectedChannel)
     Image result = { 0 };
 
     // Security check to avoid program crash
-    if ((image.data == NULL) || (image.width == 0) || (image.height == 0))
-        return result;
+    if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result;
 
-    // Check selected channel
+    // Check selected channel is valid
     if (selectedChannel < 0)
     {
         TRACELOG(LOG_WARNING, "Channel cannot be negative. Setting channel to 0.");
         selectedChannel = 0;
     }
-    if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
-            || image.format == PIXELFORMAT_UNCOMPRESSED_R32
-            || image.format == PIXELFORMAT_UNCOMPRESSED_R16
-            )
+
+    if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE ||
+        image.format == PIXELFORMAT_UNCOMPRESSED_R32 ||
+        image.format == PIXELFORMAT_UNCOMPRESSED_R16)
     {
         if (selectedChannel > 0)
         {
@@ -1664,11 +1663,10 @@ Image ImageFromChannel(Image image, int selectedChannel)
             selectedChannel = 1;
         }
     }
-    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R5G6B5
-            || image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8
-            || image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32
-            || image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16
-            )
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R5G6B5 ||
+             image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8 ||
+             image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32 ||
+             image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16)
     {
         if (selectedChannel > 2)
         {
@@ -1677,153 +1675,121 @@ Image ImageFromChannel(Image image, int selectedChannel)
         }
     }
 
-    // formats rgba
+    // Check for RGBA formats
     if (selectedChannel > 3)
     {
         TRACELOG(LOG_WARNING, "ImageFromChannel supports channels 0 to 3 (rgba). Setting channel to alpha.");
         selectedChannel = 3;
     }
 
+    // TODO: Consider other one-channel formats: R16, R32
     result.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     result.height = image.height;
     result.width = image.width;
     result.mipmaps = 1;
 
-    unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width * image.height, sizeof(unsigned char)); // values 0 to 255
+    unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width*image.height, sizeof(unsigned char)); // Values from 0 to 255
 
     if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
-        for (int i = 0, k = 0; i < image.width * image.height; ++i)
+        for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
-            float imageValue = -1;
+            float pixelValue = -1;
             switch (image.format)
             {
                 case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
                 {
-                    imageValue = (float)((unsigned char *)image.data)[i + selectedChannel]/255.0f;
+                    pixelValue = (float)((unsigned char *)image.data)[i + selectedChannel]/255.0f;
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
                 {
-                    imageValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
-
+                    pixelValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
                     k += 2;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    if (selectedChannel == 0)
-                    {
-                        imageValue = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
-                    }
-                    else if (selectedChannel == 1)
-                    {
-                        imageValue = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
-                    }
-                    else if (selectedChannel == 2)
-                    {
-                        imageValue = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
-                    }
-                    else if (selectedChannel == 3)
-                    {
-                        imageValue = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
-                    }
+                    if (selectedChannel == 0) pixelValue = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    else if (selectedChannel == 1) pixelValue = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
+                    else if (selectedChannel == 2) pixelValue = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
+                    else if (selectedChannel == 3) pixelValue = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    if (selectedChannel == 0)
-                    {
-                        imageValue = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
-                    }
-                    else if (selectedChannel == 1)
-                    {
-                        imageValue = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
-                    }
-                    else if (selectedChannel == 2)
-                    {
-                        imageValue = (float)(pixel & 0b0000000000011111)*(1.0f/31);
-                    }
+                    if (selectedChannel == 0) pixelValue = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    else if (selectedChannel == 1) pixelValue = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
+                    else if (selectedChannel == 2) pixelValue = (float)(pixel & 0b0000000000011111)*(1.0f/31);
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    if (selectedChannel == 0)
-                    {
-                        imageValue = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
-                    }
-                    else if (selectedChannel == 1)
-                    {
-                        imageValue = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
-                    }
-                    else if (selectedChannel == 2)
-                    {
-                        imageValue = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
-                    }
-                    else if (selectedChannel == 3)
-                    {
-                        imageValue = (float)(pixel & 0b0000000000001111)*(1.0f/15);
-                    }
+                    if (selectedChannel == 0) pixelValue = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
+                    else if (selectedChannel == 1) pixelValue = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
+                    else if (selectedChannel == 2) pixelValue = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
+                    else if (selectedChannel == 3) pixelValue = (float)(pixel & 0b0000000000001111)*(1.0f/15);
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
                 {
-                    imageValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
-
+                    pixelValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
                     k += 4;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
-                    imageValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
-
+                    pixelValue = (float)((unsigned char *)image.data)[k + selectedChannel]/255.0f;
                     k += 3;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
-                    imageValue = ((float *)image.data)[k];
-
+                    pixelValue = ((float *)image.data)[k];
                     k += 1;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
-                    imageValue = ((float *)image.data)[k + selectedChannel];
-
+                    pixelValue = ((float *)image.data)[k + selectedChannel];
                     k += 3;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
-                    imageValue = ((float *)image.data)[k + selectedChannel];
-
+                    pixelValue = ((float *)image.data)[k + selectedChannel];
                     k += 4;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16:
                 {
-                    imageValue = HalfToFloat(((unsigned short *)image.data)[k]);
-
+                    pixelValue = HalfToFloat(((unsigned short *)image.data)[k]);
                     k += 1;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
                 {
-                    imageValue = HalfToFloat(((unsigned short *)image.data)[k+selectedChannel]);
-
+                    pixelValue = HalfToFloat(((unsigned short *)image.data)[k+selectedChannel]);
                     k += 3;
+
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
                 {
-                    imageValue = HalfToFloat(((unsigned short *)image.data)[k + selectedChannel]);
-
+                    pixelValue = HalfToFloat(((unsigned short *)image.data)[k + selectedChannel]);
                     k += 4;
+
                 } break;
                 default: break;
             }
 
-            pixels[i] = imageValue * 255;
+            pixels[i] = (unsigned char)(pixelValue*255);
         }
     }
 
@@ -4911,12 +4877,12 @@ Color Fade(Color color, float alpha)
 int ColorToInt(Color color)
 {
     int result = 0;
-    
-    result = (int)(((unsigned int)color.r << 24) | 
-                   ((unsigned int)color.g << 16) | 
-                   ((unsigned int)color.b << 8) | 
+
+    result = (int)(((unsigned int)color.r << 24) |
+                   ((unsigned int)color.g << 16) |
+                   ((unsigned int)color.b << 8) |
                     (unsigned int)color.a);
-    
+
     return result;
 }
 

@@ -1,0 +1,27 @@
+GLFW_ICON ICON "raylib.ico"
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+	//BLOCK "080904E4" 	// English UK
+    BLOCK "040904E4"	// English US
+    BEGIN
+	  VALUE "CompanyName", "raylib technologies"
+      VALUE "FileDescription", "raylib example"
+      VALUE "FileVersion", "1.0"
+      VALUE "InternalName", "raylib-example"
+      VALUE "LegalCopyright", "(c) 2024 raylib technologies (@raylibtech)"
+      //VALUE "OriginalFilename", "raylib_app.exe"
+      VALUE "ProductName", "raylib-example"
+      VALUE "ProductVersion", "1.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+	//VALUE "Translation", 0x809, 1252	// English UK
+    VALUE "Translation", 0x409, 1252	// English US
+  END
+END

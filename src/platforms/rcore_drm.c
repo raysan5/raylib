@@ -398,7 +398,7 @@ int GetMonitorWidth(int monitor)
     {
         width = platform.connector->modes[platform.modeIndex].hdisplay;
     }
-    
+
     return width;
 }
 
@@ -415,7 +415,7 @@ int GetMonitorHeight(int monitor)
     {
         height = platform.connector->modes[platform.modeIndex].vdisplay;
     }
-    
+
     return height;
 }
 
@@ -479,7 +479,7 @@ const char *GetMonitorName(int monitor)
     {
         name = platform.connector->modes[platform.modeIndex].name;
     }
-    
+
     return name;
 }
 
@@ -1136,7 +1136,8 @@ void ClosePlatform(void)
 
     // Close the evdev devices
 
-    if (platform.mouseFd != -1) {
+    if (platform.mouseFd != -1)
+    {
         close(platform.mouseFd);
         platform.mouseFd = -1;
     }
@@ -1924,9 +1925,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         const int nearestHeightDiff = abs(platform.connector->modes[nearestIndex].vdisplay - height);
         const int nearestFpsDiff = abs(platform.connector->modes[nearestIndex].vrefresh - fps);
 
-        if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) {
-            nearestIndex = i;
-        }
+        if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) nearestIndex = i;
     }
 
     return nearestIndex;

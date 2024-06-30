@@ -1834,7 +1834,7 @@ void DrawSplineBezierQuadratic(const Vector2 *points, int pointCount, float thic
     if (pointCount >= 3)
     {
         for (int i = 0; i < pointCount - 2; i += 2) DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
-        
+
         // Cap circle drawing at the end of every segment
         //for (int i = 2; i < pointCount - 2; i += 2) DrawCircleV(points[i], thick/2.0f, color);
     }
@@ -1846,7 +1846,7 @@ void DrawSplineBezierCubic(const Vector2 *points, int pointCount, float thick, C
     if (pointCount >= 4)
     {
         for (int i = 0; i < pointCount - 3; i += 3) DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
-        
+
         // Cap circle drawing at the end of every segment
         //for (int i = 3; i < pointCount - 3; i += 3) DrawCircleV(points[i], thick/2.0f, color);
     }

@@ -2221,9 +2221,9 @@ RMAPI Quaternion QuaternionCubicHermiteSpline(Quaternion q1, Quaternion outTange
     float t2 = t * t;
     float t3 = t2 * t;
     float h00 = 2 * t3 - 3 * t2 + 1;
-    float h10 = t3 - 2 * t2 + t;    
-    float h01 = -2 * t3 + 3 * t2;   
-    float h11 = t3 - t2;            
+    float h10 = t3 - 2 * t2 + t;
+    float h01 = -2 * t3 + 3 * t2;
+    float h11 = t3 - t2;
 
     Quaternion p0 = QuaternionScale(q1, h00);
     Quaternion m0 = QuaternionScale(outTangent1, h10);
@@ -2533,7 +2533,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     translation->y = mat.m13;
     translation->z = mat.m14;
 
-    // Extract upper-left for determinant computation.
+    // Extract upper-left for determinant computation
     const float a = mat.m0;
     const float b = mat.m4;
     const float c = mat.m8;
@@ -2543,28 +2543,29 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     const float g = mat.m2;
     const float h = mat.m6;
     const float i = mat.m10;
-    const float A = e * i - f * h;
-    const float B = f * g - d * i;
-    const float C = d * h - e * g;
+    const float A = e*i - f*h;
+    const float B = f*g - d*i;
+    const float C = d*h - e*g;
 
-    // Extract scale.
-    const float det = a * A + b * B + c * C;
-    float scalex = Vector3Length((Vector3) {a, b, c});
-    float scaley = Vector3Length((Vector3) {d, e, f});
-    float scalez = Vector3Length((Vector3) {g, h, i});
-    Vector3 s = {scalex, scaley, scalez};
+    // Extract scale
+    const float det = a*A + b*B + c*C;
+    float scalex = Vector3Length((Vector3){ a, b, c });
+    float scaley = Vector3Length((Vector3){ d, e, f });
+    float scalez = Vector3Length((Vector3){ g, h, i });
+    Vector3 s = { scalex, scaley, scalez };
 
     if (det < 0) s = Vector3Negate(s);
 
     *scale = s;
 
-    // Remove scale from the matrix if it is not close to zero.
+    // Remove scale from the matrix if it is not close to zero
     Matrix clone = mat;
     if (!FloatEquals(det, 0))
     {
         clone.m0 /= s.x;
         clone.m5 /= s.y;
         clone.m10 /= s.z;
+
         // Extract rotation
         *rotation = QuaternionFromMatrix(clone);
     }
