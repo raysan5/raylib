@@ -5649,7 +5649,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
     }
 
     // Constant animation, no need to interpolate
-    if (FloatEquals(tend, tstart)) return false;
+    if (FloatEquals(tend, tstart)) return true;
 
     float duration = fmaxf((tend - tstart), EPSILON);
     float t = (time - tstart)/duration;
