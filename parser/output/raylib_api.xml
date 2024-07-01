@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
-    <Defines count="57">
+    <Defines count="58">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
@@ -11,8 +11,9 @@
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
         <Define name="DEG2RAD" type="FLOAT_MATH" value="(PI/180.0f)" desc="" />
         <Define name="RAD2DEG" type="FLOAT_MATH" value="(180.0f/PI)" desc="" />
-        <Define name="RL_MALLOC(sz)" type="MACRO" value="malloc(sz)" desc="" />
-        <Define name="RL_CALLOC(n,sz)" type="MACRO" value="calloc(n,sz)" desc="" />
+        <Define name="MAX_ALLOC_SIZE" type="INT_MATH" value="1024*1024" desc="1GB of maximum allocation data" />
+        <Define name="RL_MALLOC(sz)" type="MACRO" value="((sz > MAX_ALLOC_SIZE)? malloc(sz) : NULL)" desc="" />
+        <Define name="RL_CALLOC(n,sz)" type="MACRO" value="((n*sz > MAX_ALLOC_SIZE)? calloc(n,sz) : NULL)" desc="" />
         <Define name="RL_REALLOC(ptr,sz)" type="MACRO" value="realloc(ptr,sz)" desc="" />
         <Define name="RL_FREE(ptr)" type="MACRO" value="free(ptr)" desc="" />
         <Define name="CLITERAL(type)" type="MACRO" value="type" desc="" />
