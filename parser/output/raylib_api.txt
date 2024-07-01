@@ -1,5 +1,5 @@
 
-Defines found: 58
+Defines found: 57
 
 Define 001: RAYLIB_H
   Name: RAYLIB_H
@@ -51,242 +51,237 @@ Define 010: RAD2DEG
   Type: FLOAT_MATH
   Value: (180.0f/PI)
   Description: 
-Define 011: MAX_ALLOC_SIZE
-  Name: MAX_ALLOC_SIZE
-  Type: INT_MATH
-  Value: 1024*1024
-  Description: 1GB of maximum allocation data
-Define 012: RL_MALLOC(sz)
+Define 011: RL_MALLOC(sz)
   Name: RL_MALLOC(sz)
   Type: MACRO
-  Value: ((sz > MAX_ALLOC_SIZE)? malloc(sz) : NULL)
+  Value: malloc(sz)
   Description: 
-Define 013: RL_CALLOC(n,sz)
+Define 012: RL_CALLOC(n,sz)
   Name: RL_CALLOC(n,sz)
   Type: MACRO
-  Value: ((n*sz > MAX_ALLOC_SIZE)? calloc(n,sz) : NULL)
+  Value: calloc(n,sz)
   Description: 
-Define 014: RL_REALLOC(ptr,sz)
+Define 013: RL_REALLOC(ptr,sz)
   Name: RL_REALLOC(ptr,sz)
   Type: MACRO
   Value: realloc(ptr,sz)
   Description: 
-Define 015: RL_FREE(ptr)
+Define 014: RL_FREE(ptr)
   Name: RL_FREE(ptr)
   Type: MACRO
   Value: free(ptr)
   Description: 
-Define 016: CLITERAL(type)
+Define 015: CLITERAL(type)
   Name: CLITERAL(type)
   Type: MACRO
   Value: type
   Description: 
-Define 017: RL_COLOR_TYPE
+Define 016: RL_COLOR_TYPE
   Name: RL_COLOR_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 018: RL_RECTANGLE_TYPE
+Define 017: RL_RECTANGLE_TYPE
   Name: RL_RECTANGLE_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 019: RL_VECTOR2_TYPE
+Define 018: RL_VECTOR2_TYPE
   Name: RL_VECTOR2_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 020: RL_VECTOR3_TYPE
+Define 019: RL_VECTOR3_TYPE
   Name: RL_VECTOR3_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 021: RL_VECTOR4_TYPE
+Define 020: RL_VECTOR4_TYPE
   Name: RL_VECTOR4_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 022: RL_QUATERNION_TYPE
+Define 021: RL_QUATERNION_TYPE
   Name: RL_QUATERNION_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 023: RL_MATRIX_TYPE
+Define 022: RL_MATRIX_TYPE
   Name: RL_MATRIX_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 024: LIGHTGRAY
+Define 023: LIGHTGRAY
   Name: LIGHTGRAY
   Type: COLOR
   Value: CLITERAL(Color){ 200, 200, 200, 255 }
   Description: Light Gray
-Define 025: GRAY
+Define 024: GRAY
   Name: GRAY
   Type: COLOR
   Value: CLITERAL(Color){ 130, 130, 130, 255 }
   Description: Gray
-Define 026: DARKGRAY
+Define 025: DARKGRAY
   Name: DARKGRAY
   Type: COLOR
   Value: CLITERAL(Color){ 80, 80, 80, 255 }
   Description: Dark Gray
-Define 027: YELLOW
+Define 026: YELLOW
   Name: YELLOW
   Type: COLOR
   Value: CLITERAL(Color){ 253, 249, 0, 255 }
   Description: Yellow
-Define 028: GOLD
+Define 027: GOLD
   Name: GOLD
   Type: COLOR
   Value: CLITERAL(Color){ 255, 203, 0, 255 }
   Description: Gold
-Define 029: ORANGE
+Define 028: ORANGE
   Name: ORANGE
   Type: COLOR
   Value: CLITERAL(Color){ 255, 161, 0, 255 }
   Description: Orange
-Define 030: PINK
+Define 029: PINK
   Name: PINK
   Type: COLOR
   Value: CLITERAL(Color){ 255, 109, 194, 255 }
   Description: Pink
-Define 031: RED
+Define 030: RED
   Name: RED
   Type: COLOR
   Value: CLITERAL(Color){ 230, 41, 55, 255 }
   Description: Red
-Define 032: MAROON
+Define 031: MAROON
   Name: MAROON
   Type: COLOR
   Value: CLITERAL(Color){ 190, 33, 55, 255 }
   Description: Maroon
-Define 033: GREEN
+Define 032: GREEN
   Name: GREEN
   Type: COLOR
   Value: CLITERAL(Color){ 0, 228, 48, 255 }
   Description: Green
-Define 034: LIME
+Define 033: LIME
   Name: LIME
   Type: COLOR
   Value: CLITERAL(Color){ 0, 158, 47, 255 }
   Description: Lime
-Define 035: DARKGREEN
+Define 034: DARKGREEN
   Name: DARKGREEN
   Type: COLOR
   Value: CLITERAL(Color){ 0, 117, 44, 255 }
   Description: Dark Green
-Define 036: SKYBLUE
+Define 035: SKYBLUE
   Name: SKYBLUE
   Type: COLOR
   Value: CLITERAL(Color){ 102, 191, 255, 255 }
   Description: Sky Blue
-Define 037: BLUE
+Define 036: BLUE
   Name: BLUE
   Type: COLOR
   Value: CLITERAL(Color){ 0, 121, 241, 255 }
   Description: Blue
-Define 038: DARKBLUE
+Define 037: DARKBLUE
   Name: DARKBLUE
   Type: COLOR
   Value: CLITERAL(Color){ 0, 82, 172, 255 }
   Description: Dark Blue
-Define 039: PURPLE
+Define 038: PURPLE
   Name: PURPLE
   Type: COLOR
   Value: CLITERAL(Color){ 200, 122, 255, 255 }
   Description: Purple
-Define 040: VIOLET
+Define 039: VIOLET
   Name: VIOLET
   Type: COLOR
   Value: CLITERAL(Color){ 135, 60, 190, 255 }
   Description: Violet
-Define 041: DARKPURPLE
+Define 040: DARKPURPLE
   Name: DARKPURPLE
   Type: COLOR
   Value: CLITERAL(Color){ 112, 31, 126, 255 }
   Description: Dark Purple
-Define 042: BEIGE
+Define 041: BEIGE
   Name: BEIGE
   Type: COLOR
   Value: CLITERAL(Color){ 211, 176, 131, 255 }
   Description: Beige
-Define 043: BROWN
+Define 042: BROWN
   Name: BROWN
   Type: COLOR
   Value: CLITERAL(Color){ 127, 106, 79, 255 }
   Description: Brown
-Define 044: DARKBROWN
+Define 043: DARKBROWN
   Name: DARKBROWN
   Type: COLOR
   Value: CLITERAL(Color){ 76, 63, 47, 255 }
   Description: Dark Brown
-Define 045: WHITE
+Define 044: WHITE
   Name: WHITE
   Type: COLOR
   Value: CLITERAL(Color){ 255, 255, 255, 255 }
   Description: White
-Define 046: BLACK
+Define 045: BLACK
   Name: BLACK
   Type: COLOR
   Value: CLITERAL(Color){ 0, 0, 0, 255 }
   Description: Black
-Define 047: BLANK
+Define 046: BLANK
   Name: BLANK
   Type: COLOR
   Value: CLITERAL(Color){ 0, 0, 0, 0 }
   Description: Blank (Transparent)
-Define 048: MAGENTA
+Define 047: MAGENTA
   Name: MAGENTA
   Type: COLOR
   Value: CLITERAL(Color){ 255, 0, 255, 255 }
   Description: Magenta
-Define 049: RAYWHITE
+Define 048: RAYWHITE
   Name: RAYWHITE
   Type: COLOR
   Value: CLITERAL(Color){ 245, 245, 245, 255 }
   Description: My own White (raylib logo)
-Define 050: RL_BOOL_TYPE
+Define 049: RL_BOOL_TYPE
   Name: RL_BOOL_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 051: MOUSE_LEFT_BUTTON
+Define 050: MOUSE_LEFT_BUTTON
   Name: MOUSE_LEFT_BUTTON
   Type: UNKNOWN
   Value: MOUSE_BUTTON_LEFT
   Description: 
-Define 052: MOUSE_RIGHT_BUTTON
+Define 051: MOUSE_RIGHT_BUTTON
   Name: MOUSE_RIGHT_BUTTON
   Type: UNKNOWN
   Value: MOUSE_BUTTON_RIGHT
   Description: 
-Define 053: MOUSE_MIDDLE_BUTTON
+Define 052: MOUSE_MIDDLE_BUTTON
   Name: MOUSE_MIDDLE_BUTTON
   Type: UNKNOWN
   Value: MOUSE_BUTTON_MIDDLE
   Description: 
-Define 054: MATERIAL_MAP_DIFFUSE
+Define 053: MATERIAL_MAP_DIFFUSE
   Name: MATERIAL_MAP_DIFFUSE
   Type: UNKNOWN
   Value: MATERIAL_MAP_ALBEDO
   Description: 
-Define 055: MATERIAL_MAP_SPECULAR
+Define 054: MATERIAL_MAP_SPECULAR
   Name: MATERIAL_MAP_SPECULAR
   Type: UNKNOWN
   Value: MATERIAL_MAP_METALNESS
   Description: 
-Define 056: SHADER_LOC_MAP_DIFFUSE
+Define 055: SHADER_LOC_MAP_DIFFUSE
   Name: SHADER_LOC_MAP_DIFFUSE
   Type: UNKNOWN
   Value: SHADER_LOC_MAP_ALBEDO
   Description: 
-Define 057: SHADER_LOC_MAP_SPECULAR
+Define 056: SHADER_LOC_MAP_SPECULAR
   Name: SHADER_LOC_MAP_SPECULAR
   Type: UNKNOWN
   Value: SHADER_LOC_MAP_METALNESS
   Description: 
-Define 058: GetMouseRay
+Define 057: GetMouseRay
   Name: GetMouseRay
   Type: UNKNOWN
   Value: GetScreenToWorldRay
