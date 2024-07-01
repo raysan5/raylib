@@ -927,6 +927,12 @@ Sound LoadSoundFromWave(Wave wave)
 
     if (wave.data != NULL)
     {
+        if (ma_device_get_state(&AUDIO.System.device) == ma_device_state_uninitialized)
+        {
+            TRACELOG(LOG_WARNING, "SOUND: Audio device uninitialized");
+            return sound;
+        }
+
         // When using miniaudio we need to do our own mixing
         // To simplify this we need convert the format of each sound to be consistent with
         // the format used to open the playback AUDIO.System.device. We can do this two ways:
