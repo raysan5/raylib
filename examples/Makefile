@@ -651,7 +651,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 else ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
 	$(MAKE) -f Makefile.Web $@
 else
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(TARGET_PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -D$(TARGET_PLATFORM)
 endif
 
 # Clean everything
