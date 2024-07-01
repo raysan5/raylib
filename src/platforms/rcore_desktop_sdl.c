@@ -1576,13 +1576,15 @@ int InitPlatform(void)
     CORE.Time.previous = GetTime();     // Get time as double
 
     #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1");     // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
+    SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1"); // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
     #endif
     //----------------------------------------------------------------------------
 
     // Initialize storage system
     //----------------------------------------------------------------------------
-    CORE.Storage.basePath = GetWorkingDirectory();  // Define base path for storage
+    // Define base path for storage
+    CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();  
+    CHDIR(CORE.Storage.basePath); 
     //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
