@@ -3658,7 +3658,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     {
         // Line is more horizontal
         // Calculate half the width of the line
-        int wy = (thick - 1)*sqrtf(dx*dx + dy*dy)/(2*abs(dx));
+        int wy = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dx));
 
         // Draw additional lines above and below the main line
         for (int i = 1; i <= wy; i++)
@@ -3671,7 +3671,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     {
         // Line is more vertical or perfectly horizontal
         // Calculate half the width of the line
-        int wx = (thick - 1)*sqrtf(dx*dx + dy*dy)/(2*abs(dy));
+        int wx = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dy));
 
         // Draw additional lines to the left and right of the main line
         for (int i = 1; i <= wx; i++)
