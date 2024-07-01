@@ -123,11 +123,12 @@
 
 // Allow custom memory allocators
 // NOTE: Require recompiling raylib sources
+#define MAX_ALLOC_SIZE 1024*1024    // 1GB of maximum allocation data
 #ifndef RL_MALLOC
-    #define RL_MALLOC(sz)       malloc(sz)
+    #define RL_MALLOC(sz)       ((sz > MAX_ALLOC_SIZE)? malloc(sz) : NULL)
 #endif
 #ifndef RL_CALLOC
-    #define RL_CALLOC(n,sz)     calloc(n,sz)
+    #define RL_CALLOC(n,sz)     ((n*sz > MAX_ALLOC_SIZE)? calloc(n,sz) : NULL) 
 #endif
 #ifndef RL_REALLOC
     #define RL_REALLOC(ptr,sz)  realloc(ptr,sz)
