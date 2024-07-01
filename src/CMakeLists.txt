@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib C)
-set(PROJECT_VERSION 5.0.0)
-set(API_VERSION 500)
+set(PROJECT_VERSION 5.5.0)
+set(API_VERSION 550)
 
 include(GNUInstallDirs)
 include(JoinPaths)
