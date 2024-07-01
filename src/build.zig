@@ -122,6 +122,13 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     .X11 => {
                         raylib.defineCMacro("_GLFW_X11", null);
                         raylib.linkSystemLibrary("X11");
+                        raylib.linkSystemLibrary("Xcursor");
+                        raylib.linkSystemLibrary("Xrender");
+                        raylib.linkSystemLibrary("Xrandr");
+                        raylib.linkSystemLibrary("Xinerama");
+                        raylib.linkSystemLibrary("Xi");
+                        raylib.linkSystemLibrary("Xext");
+                        raylib.linkSystemLibrary("Xfixes");
                     },
                     .Wayland => {
                         raylib.defineCMacro("_GLFW_WAYLAND", null);
