@@ -61,21 +61,15 @@
       "description": ""
     },
     {
-      "name": "MAX_ALLOC_SIZE",
-      "type": "INT_MATH",
-      "value": "1024*1024",
-      "description": "1GB of maximum allocation data"
-    },
-    {
       "name": "RL_MALLOC(sz)",
       "type": "MACRO",
-      "value": "((sz > MAX_ALLOC_SIZE)? malloc(sz) : NULL)",
+      "value": "malloc(sz)",
       "description": ""
     },
     {
       "name": "RL_CALLOC(n,sz)",
       "type": "MACRO",
-      "value": "((n*sz > MAX_ALLOC_SIZE)? calloc(n,sz) : NULL)",
+      "value": "calloc(n,sz)",
       "description": ""
     },
     {
