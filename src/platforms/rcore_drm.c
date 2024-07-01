@@ -398,7 +398,7 @@ int GetMonitorWidth(int monitor)
     {
         width = platform.connector->modes[platform.modeIndex].hdisplay;
     }
-    
+
     return width;
 }
 
@@ -415,7 +415,7 @@ int GetMonitorHeight(int monitor)
     {
         height = platform.connector->modes[platform.modeIndex].vdisplay;
     }
-    
+
     return height;
 }
 
@@ -479,7 +479,7 @@ const char *GetMonitorName(int monitor)
     {
         name = platform.connector->modes[platform.modeIndex].name;
     }
-    
+
     return name;
 }
 
@@ -1028,7 +1028,7 @@ int InitPlatform(void)
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Set some default window flags
     CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
@@ -1136,7 +1136,8 @@ void ClosePlatform(void)
 
     // Close the evdev devices
 
-    if (platform.mouseFd != -1) {
+    if (platform.mouseFd != -1)
+    {
         close(platform.mouseFd);
         platform.mouseFd = -1;
     }
@@ -1613,7 +1614,7 @@ static void PollKeyboardEvents(void)
                     }
                 }
 
-                TRACELOG(LOG_DEBUG, "INPUT: KEY_%s Keycode(linux): %4i KeyCode(raylib): %4i", (event.value == 0) ? "UP  " : "DOWN", event.code, keycode);
+                TRACELOG(LOG_DEBUG, "INPUT: KEY_%s Keycode(linux): %4i KeyCode(raylib): %4i", (event.value == 0)? "UP  " : "DOWN", event.code, keycode);
             }
         }
     }
@@ -1640,7 +1641,7 @@ static void PollGamepadEvents(void)
                 {
                     short keycodeRaylib = linuxToRaylibMap[event.code];
 
-                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0) ? "UP  " : "DOWN", event.code, keycodeRaylib);
+                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0)? "UP" : "DOWN", event.code, keycodeRaylib);
 
                     if ((keycodeRaylib != 0) && (keycodeRaylib < MAX_GAMEPAD_BUTTONS))
                     {
@@ -1665,7 +1666,7 @@ static void PollGamepadEvents(void)
                         int range = platform.gamepadAbsAxisRange[i][event.code][1];
 
                         // NOTE: Scaling of event.value to get values between -1..1
-                        CORE.Input.Gamepad.axisState[i][axisRaylib] = (2 * (float)(event.value - min) / range) - 1;
+                        CORE.Input.Gamepad.axisState[i][axisRaylib] = (2*(float)(event.value - min)/range) - 1;
                     }
                 }
             }
@@ -1924,9 +1925,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         const int nearestHeightDiff = abs(platform.connector->modes[nearestIndex].vdisplay - height);
         const int nearestFpsDiff = abs(platform.connector->modes[nearestIndex].vrefresh - fps);
 
-        if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) {
-            nearestIndex = i;
-        }
+        if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) nearestIndex = i;
     }
 
     return nearestIndex;

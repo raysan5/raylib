@@ -1147,7 +1147,7 @@ void PollInputEvents(void)
 
             const unsigned char *buttons = state.buttons;
 
-            for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
+            for (int k = 0; (buttons != NULL) && (k < MAX_GAMEPAD_BUTTONS); k++)
             {
                 int button = -1;        // GamepadButton enum values assigned
 
@@ -1189,7 +1189,7 @@ void PollInputEvents(void)
             // Get current axis state
             const float *axes = state.axes;
 
-            for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1) && (k < MAX_GAMEPAD_AXIS); k++)
+            for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1); k++)
             {
                 CORE.Input.Gamepad.axisState[i][k] = axes[k];
             }

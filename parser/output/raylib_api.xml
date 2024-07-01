@@ -3,9 +3,9 @@
     <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
-        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
+        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="5.1-dev" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="5.5" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -670,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="572">
+    <Functions count="573">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1797,6 +1797,10 @@
         <Function name="ImageFromImage" retType="Image" paramCount="2" desc="Create an image from another image piece">
             <Param type="Image" name="image" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
+        </Function>
+        <Function name="ImageFromChannel" retType="Image" paramCount="2" desc="Create an image from a selected channel of another image (GRAYSCALE)">
+            <Param type="Image" name="image" desc="" />
+            <Param type="int" name="selectedChannel" desc="" />
         </Function>
         <Function name="ImageText" retType="Image" paramCount="3" desc="Create an image from text (default font)">
             <Param type="const char *" name="text" desc="" />

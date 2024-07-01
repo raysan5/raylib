@@ -15,7 +15,7 @@ return {
     {
       name = "RAYLIB_VERSION_MINOR",
       type = "INT",
-      value = 1,
+      value = 5,
       description = ""
     },
     {
@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "5.1-dev",
+      value = "5.5",
       description = ""
     },
     {
@@ -5519,6 +5519,15 @@ return {
       params = {
         {type = "Image", name = "image"},
         {type = "Rectangle", name = "rec"}
+      }
+    },
+    {
+      name = "ImageFromChannel",
+      description = "Create an image from a selected channel of another image (GRAYSCALE)",
+      returnType = "Image",
+      params = {
+        {type = "Image", name = "image"},
+        {type = "int", name = "selectedChannel"}
       }
     },
     {

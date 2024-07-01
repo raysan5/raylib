@@ -424,11 +424,16 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 // Draw sphere with extended parameters
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
+#if 0
+    // Basic implementation, do not use it!
+    // For a sphere with 16 rings and 16 slices it requires 8640 cos()/sin() function calls! 
+    // New optimized version below only requires 4 cos()/sin() calls
+    
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
-
+        
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -456,6 +461,51 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
                                sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
                                cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
                 }
+            }
+        rlEnd();
+    rlPopMatrix();
+#endif
+
+    rlPushMatrix();
+        // NOTE: Transformation is applied in inverse order (scale -> translate)
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+        rlScalef(radius, radius, radius);
+
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            float ringangle = DEG2RAD*(180.0f/(rings + 1)); // Angle between latitudinal parallels
+            float sliceangle = DEG2RAD*(360.0f/slices); // Angle between longitudinal meridians
+
+            float cosring = cosf(ringangle);
+            float sinring = sinf(ringangle);
+            float cosslice = cosf(sliceangle);
+            float sinslice = sinf(sliceangle);
+
+            Vector3 vertices[4] = { 0 }; // Required to store face vertices
+            vertices[2] = (Vector3){ 0, 1, 0 };
+            vertices[3] = (Vector3){ sinring, cosring, 0 };
+
+            for (int i = 0; i < rings + 1; i++)
+            {
+                for (int j = 0; j < slices; j++) 
+                {
+                    vertices[0] = vertices[2]; // Rotate around y axis to set up vertices for next face
+                    vertices[1] = vertices[3];
+                    vertices[2] = (Vector3){ cosslice*vertices[2].x - sinslice*vertices[2].z, vertices[2].y, sinslice*vertices[2].x + cosslice*vertices[2].z }; // Rotation matrix around y axis
+                    vertices[3] = (Vector3){ cosslice*vertices[3].x - sinslice*vertices[3].z, vertices[3].y, sinslice*vertices[3].x + cosslice*vertices[3].z };
+
+                    rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                    rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
+
+                    rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+                    rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                }
+
+                vertices[2] = vertices[3]; // Rotate around z axis to set up  starting vertices for next ring
+                vertices[3] = (Vector3){ cosring*vertices[3].x + sinring*vertices[3].y, -sinring*vertices[3].x + cosring*vertices[3].y, vertices[3].z }; // Rotation matrix around z axis
             }
         rlEnd();
     rlPopMatrix();
@@ -4327,7 +4377,7 @@ static Model LoadIQM(const char *fileName)
         model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
 
         model.meshMaterial[i] = i;
-        
+
         TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
 
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
@@ -4636,7 +4686,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         animations[a].boneCount = iqmHeader->num_poses;
         animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
-        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here 
+        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here
         TraceLog(LOG_INFO, "IQM Anim %s", animations[a].name);
         // animations[a].framerate = anim.framerate;     // TODO: Use animation framerate data?
 
@@ -4913,7 +4963,7 @@ static Model LoadGLTF(const char *fileName)
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
           - Supports basic animations
-          - Transforms, including parent-child relations, are applied on the mesh data, but the 
+          - Transforms, including parent-child relations, are applied on the mesh data, but the
             hierarchy is not kept (as it can't be represented).
           - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
             are turned into separate raylib Meshes.
@@ -5101,7 +5151,7 @@ static Model LoadGLTF(const char *fileName)
         // Each primitive within a glTF node becomes a Raylib Mesh.
         // The local-to-world transform of each node is used to transform the
         // points/normals/tangents of the created Mesh(es).
-        // Any glTF mesh linked from more than one Node (i.e. instancing) 
+        // Any glTF mesh linked from more than one Node (i.e. instancing)
         // is turned into multiple Mesh's, as each Node will have its own
         // transform applied.
         // Note: the code below disregards the scenes defined in the file, all nodes are used.
@@ -5262,7 +5312,7 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported", fileName);
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported, use vec2 float", fileName);
-                    
+
                         int index = mesh->primitives[p].attributes[j].index;
                         if (index == 0) model.meshes[meshIndex].texcoords = texcoordPtr;
                         else if (index == 1) model.meshes[meshIndex].texcoords2 = texcoordPtr;
@@ -5649,7 +5699,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
     }
 
     // Constant animation, no need to interpolate
-    if (FloatEquals(tend, tstart)) return false;
+    if (FloatEquals(tend, tstart)) return true;
 
     float duration = fmaxf((tend - tstart), EPSILON);
     float t = (time - tstart)/duration;
