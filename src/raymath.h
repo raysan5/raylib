@@ -77,6 +77,17 @@
     #endif
 #endif
 
+// NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
+// Plain structures in C++ (without constructors) can be initialized with { }
+// This is called aggregate initialization (C++11 feature)
+#ifndef CLITERAL
+    #if defined(__cplusplus)
+        #define CLITERAL(type)      type
+    #else
+        #define CLITERAL(type)      (type)
+    #endif
+#endif
+
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -2549,9 +2560,9 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
 
     // Extract scale
     const float det = a*A + b*B + c*C;
-    float scalex = Vector3Length((Vector3){ a, b, c });
-    float scaley = Vector3Length((Vector3){ d, e, f });
-    float scalez = Vector3Length((Vector3){ g, h, i });
+    float scalex = Vector3Length(CLITERAL(Vector3){ a, b, c });
+    float scaley = Vector3Length(CLITERAL(Vector3){ d, e, f });
+    float scalez = Vector3Length(CLITERAL(Vector3){ g, h, i });
     Vector3 s = { scalex, scaley, scalez };
 
     if (det < 0) s = Vector3Negate(s);
