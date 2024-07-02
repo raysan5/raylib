@@ -839,7 +839,19 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #include "external/glad.h"          // GLAD extensions loading library, includes OpenGL headers
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_ES3)
+#if defined(PLATFORM_IOS)
+    // These required macros should be defined in Xcode
+    #ifndef GRAPHICS_API_OPENGL_ES3
+        #error "GRAPHICS_API_OPENGL_ES3 required on PLATFORM_IOS"
+    #endif
+    #ifndef GL_GLEXT_PROTOTYPES
+        #error "GL_GLEXT_PROTOTYPES required on PLATFORM_IOS"
+    #endif
+    #include "libGLESv2/GLES/glext.h"
+    #include "libGLESv2/GLES2/gl2.h"
+    #include "libGLESv2/GLES2/gl2ext.h"           // OpenGL ES 2.0 extensions library
+    #include "libGLESv2/GLES3/gl3.h"
+#elif defined(GRAPHICS_API_OPENGL_ES3)
     #include <GLES3/gl3.h>              // OpenGL ES 3.0 library
     #define GL_GLEXT_PROTOTYPES
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
