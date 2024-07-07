@@ -2172,10 +2172,13 @@ bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
 {
     bool collision = false;
 
-    collision = CheckCollisionCircles(point, 0, center, radius);
+    float distanceSquared = (point.x - center.x) * (point.x - center.x) + (point.y - center.y) * (point.y - center.y);
+
+    collision = distanceSquared <= radius * radius;
 
     return collision;
 }
+
 
 // Check if point is inside a triangle defined by three points (p1, p2, p3)
 bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3)
