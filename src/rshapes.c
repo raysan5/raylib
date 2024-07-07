@@ -2179,7 +2179,6 @@ bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
     return collision;
 }
 
-
 // Check if point is inside a triangle defined by three points (p1, p2, p3)
 bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3)
 {
