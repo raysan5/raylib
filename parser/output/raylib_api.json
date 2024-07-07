@@ -10400,7 +10400,7 @@
         },
         {
           "type": "float",
-          "name": "size"
+          "name": "scale"
         },
         {
           "type": "Color",

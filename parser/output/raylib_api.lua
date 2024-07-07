@@ -7230,7 +7230,7 @@ return {
         {type = "Camera", name = "camera"},
         {type = "Texture2D", name = "texture"},
         {type = "Vector3", name = "position"},
-        {type = "float", name = "size"},
+        {type = "float", name = "scale"},
         {type = "Color", name = "tint"}
       }
     },

@@ -2645,7 +2645,7 @@
             <Param type="Camera" name="camera" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="Vector3" name="position" desc="" />
-            <Param type="float" name="size" desc="" />
+            <Param type="float" name="scale" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="DrawBillboardRec" retType="void" paramCount="6" desc="Draw a billboard texture defined by source">
