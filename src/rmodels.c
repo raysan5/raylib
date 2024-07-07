@@ -3661,11 +3661,13 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
     size = (Vector2) { size.x*fabsf((float)source.width/source.height), size.y };
 
+    // Compute the up vector and the right vector
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
     right = Vector3Scale(right, size.x);
     up = Vector3Scale(up, size.y);
 
+    // Flip the content of the billboard while maintaining the counterclockwise edge rendering order
     if (size.x < 0.0f)
     {
         source.x += size.x;
@@ -3681,9 +3683,23 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
         origin.y *= -1.0f;
     }
 
+    // Assume the given origin is normalized and does not alter the position of the billboard
     position = Vector3Add(position, Vector3Scale(Vector3Add(Vector3Scale(right, origin.x), Vector3Scale(up, origin.y)), 0.5f));
     origin = Vector2Multiply(Vector2Scale(Vector2Add(origin, Vector2One()), 0.5f), (Vector2) { fabsf(size.x), fabsf(size.y) });
 
+    // Draw the texture region described by source on the following rectangle in 3D space:
+    //
+    //                size.x          <--.
+    //  3 ^---------------------------+ 2 \ rotation
+    //    |                           |   /
+    //    |                           |
+    //    |   origin.x   position     |
+    // up |..............             | size.y
+    //    |             .             |
+    //    |             . origin.y    |
+    //    |             .             |
+    //  0 +---------------------------> 1
+    //                right
     Vector3 forward;
     if (rotation != 0.0) forward = Vector3CrossProduct(right, up);
 
