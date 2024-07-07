@@ -45,7 +45,7 @@ int main(void)
     Vector3 billUp = { 0.0f, 1.0f, 0.0f };
 
     // Set the height of the rotating billboard to 1.0 with the aspect ratio fixed
-    Vector2 size = { source.width / source.height, 1.0f };
+    Vector2 size = { source.width/source.height, 1.0f };
 
     // Rotate around origin
     // Here we choose to rotate around the image center
