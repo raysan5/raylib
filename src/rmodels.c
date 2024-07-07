@@ -5172,7 +5172,7 @@ static Model LoadGLTF(const char *fileName)
 
                             // Transform the vertices
                             float *vertices = model.meshes[meshIndex].vertices;
-                            for (int k = 0; k < attribute->count; k++)
+                            for (unsigned int k = 0; k < attribute->count; k++)
                             {
                                 Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k+1], vertices[3*k+2] }, worldMatrix);
                                 vertices[3*k] = vt.x;
@@ -5196,7 +5196,7 @@ static Model LoadGLTF(const char *fileName)
 
                             // Transform the normals
                             float *normals = model.meshes[meshIndex].normals;
-                            for (int k = 0; k < attribute->count; k++)
+                            for (unsigned int k = 0; k < attribute->count; k++)
                             {
                                 Vector3 nt = Vector3Transform((Vector3){ normals[3*k], normals[3*k+1], normals[3*k+2] }, worldMatrixNormals);
                                 normals[3*k] = nt.x;
@@ -5220,7 +5220,7 @@ static Model LoadGLTF(const char *fileName)
 
                             // Transform the tangents
                             float *tangents = model.meshes[meshIndex].tangents;
-                            for (int k = 0; k < attribute->count; k++)
+                            for (unsigned int k = 0; k < attribute->count; k++)
                             {
                                 Vector3 tt = Vector3Transform((Vector3){ tangents[3*k], tangents[3*k+1], tangents[3*k+2] }, worldMatrix);
                                 tangents[3*k] = tt.x;
