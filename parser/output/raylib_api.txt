@@ -473,7 +473,7 @@ Struct 23: Ray (2 fields)
   Name: Ray
   Description: Ray, ray for raycasting
   Field[1]: Vector3 position // Ray position (origin)
-  Field[2]: Vector3 direction // Ray direction
+  Field[2]: Vector3 direction // Ray direction (normalized)
 Struct 24: RayCollision (4 fields)
   Name: RayCollision
   Description: RayCollision, ray hit information
