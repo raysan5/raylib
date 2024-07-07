@@ -2172,9 +2172,9 @@ bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
 {
     bool collision = false;
 
-    float distanceSquared = (point.x - center.x) * (point.x - center.x) + (point.y - center.y) * (point.y - center.y);
+    float distanceSquared = (point.x - center.x)*(point.x - center.x) + (point.y - center.y)*(point.y - center.y);
 
-    collision = distanceSquared <= radius * radius;
+    if (distanceSquared <= radius*radius) collision = true;
 
     return collision;
 }
