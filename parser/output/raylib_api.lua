@@ -1058,7 +1058,7 @@ return {
         {
           type = "Vector3",
           name = "direction",
-          description = "Ray direction"
+          description = "Ray direction (normalized)"
         }
       }
     },

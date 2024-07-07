@@ -220,7 +220,7 @@
         </Struct>
         <Struct name="Ray" fieldCount="2" desc="Ray, ray for raycasting">
             <Field type="Vector3" name="position" desc="Ray position (origin)" />
-            <Field type="Vector3" name="direction" desc="Ray direction" />
+            <Field type="Vector3" name="direction" desc="Ray direction (normalized)" />
         </Struct>
         <Struct name="RayCollision" fieldCount="4" desc="RayCollision, ray hit information">
             <Field type="bool" name="hit" desc="Did the ray hit something?" />
