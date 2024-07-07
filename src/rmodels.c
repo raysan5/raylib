@@ -3638,11 +3638,11 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 }
 
 // Draw a billboard
-void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float size, Color tint)
+void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint)
 {
     Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, source, position, (Vector2){ size, size }, tint);
+    DrawBillboardRec(camera, texture, source, position, (Vector2) { scale*fabsf((float)source.width/source.height), scale }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
@@ -3651,16 +3651,12 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
 
-    DrawBillboardPro(camera, texture, source, position, up, size, Vector2Zero(), 0.0f, tint);
+    DrawBillboardPro(camera, texture, source, position, up, size, Vector2Scale(size, 0.5), 0.0f, tint);
 }
 
 // Draw a billboard with additional parameters
-// NOTE: Size defines the destination rectangle size, stretching the source texture as required
 void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
-    // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
-    size = (Vector2) { size.x*fabsf((float)source.width/source.height), size.y };
-
     // Compute the up vector and the right vector
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
@@ -3682,10 +3678,6 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
         up = Vector3Negate(up);
         origin.y *= -1.0f;
     }
-
-    // Assume the given origin is normalized and does not alter the position of the billboard
-    position = Vector3Add(position, Vector3Scale(Vector3Add(Vector3Scale(right, origin.x), Vector3Scale(up, origin.y)), 0.5f));
-    origin = Vector2Multiply(Vector2Scale(Vector2Add(origin, Vector2One()), 0.5f), (Vector2) { fabsf(size.x), fabsf(size.y) });
 
     // Draw the texture region described by source on the following rectangle in 3D space:
     //
