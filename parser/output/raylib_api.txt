@@ -3968,7 +3968,7 @@ Function 466: DrawBillboard() (5 input parameters)
   Param[1]: camera (type: Camera)
   Param[2]: texture (type: Texture2D)
   Param[3]: position (type: Vector3)
-  Param[4]: size (type: float)
+  Param[4]: scale (type: float)
   Param[5]: tint (type: Color)
 Function 467: DrawBillboardRec() (6 input parameters)
   Name: DrawBillboardRec
