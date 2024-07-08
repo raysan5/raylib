@@ -1617,6 +1617,10 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
+#if defined(__NetBSD__)
+    // Workaround for NetBSD
+    char* glfwPlatform = "X11";
+#else
     char* glfwPlatform = "";
     switch (glfwGetPlatform())
     {
@@ -1626,6 +1630,7 @@ int InitPlatform(void)
         case GLFW_PLATFORM_X11:     glfwPlatform = "X11";     break;
         case GLFW_PLATFORM_NULL:    glfwPlatform = "Null";    break;
     }
+#endif
 
     TRACELOG(LOG_INFO, "GLFW platform: %s", glfwPlatform);
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (GLFW): Initialized successfully");
