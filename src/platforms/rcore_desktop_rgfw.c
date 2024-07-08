@@ -79,7 +79,7 @@ void CloseWindow(void);
 #endif
 
 #ifdef _MSC_VER
-__declspec(dllimport) int __stdcall  MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, wchar_t* lpWideCharStr, int cchWideChar);
+__declspec(dllimport) int __stdcall  MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #include "../external/RGFW.h"

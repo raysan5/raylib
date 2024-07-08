@@ -1619,9 +1619,9 @@ int InitPlatform(void)
 
 #if defined(__NetBSD__)
     // Workaround for NetBSD
-    char* glfwPlatform = "X11";
+    char *glfwPlatform = "X11";
 #else
-    char* glfwPlatform = "";
+    char *glfwPlatform = "";
     switch (glfwGetPlatform())
     {
         case GLFW_PLATFORM_WIN32:   glfwPlatform = "Win32";   break;
