@@ -8,19 +8,17 @@
 *       - MacOS (Cocoa)
 *
 *   LIMITATIONS:
-*       - Limitation 01
-*       - Limitation 02
+*       - TODO
 *
 *   POSSIBLE IMPROVEMENTS:
-*       - Improvement 01
-*       - Improvement 02
+*       - TODO
 *
 *   ADDITIONAL NOTES:
 *       - TRACELOG() function is located in raylib [utils] module
 *
 *   CONFIGURATION:
-*       #define RCORE_PLATFORM_CUSTOM_FLAG
-*           Custom flag for rcore on target platform -not used-
+*       #define RCORE_PLATFORM_RGFW
+*           Custom flag for rcore on target platform RGFW
 *
 *   DEPENDENCIES:
 *       - RGFW.h (main library): Windowing and inputs management
@@ -244,7 +242,7 @@ bool WindowShouldClose(void)
 
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
-{
+{   
     RGFW_window_maximize(platform.window);
     ToggleBorderlessWindowed();
 }
@@ -252,10 +250,9 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    CORE.Window.flags & FLAG_WINDOW_UNDECORATED;
-
-    if (platform.window != NULL)
-        TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() after window creation not available on target platform");
+    if (platform.window != NULL) {
+        RGFW_window_setBorder(platform.window, CORE.Window.flags & FLAG_WINDOW_UNDECORATED);
+    }
 }
 
 // Set window state: maximized, if resizable
@@ -292,6 +289,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
+        printf("%i %i\n", platform.window->r.w, platform.window->r.h);
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
     }
@@ -313,7 +311,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_RGFW");
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
@@ -325,7 +323,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_RGFW");
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT post window creation post window creation is not supported on PLATFORM_DESKTOP_RGFW");
     }
     if (flags & FLAG_WINDOW_HIGHDPI)
     {
@@ -333,7 +331,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_RGFW");
+        RGFW_window_setMousePassthrough(platform.window, flags & FLAG_WINDOW_MOUSE_PASSTHROUGH);
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
@@ -408,7 +406,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
     {
-        //SDL_SetWindowGrab(platform.window, SDL_TRUE);
+        RGFW_window_setMousePassthrough(platform.window, flags & FLAG_WINDOW_MOUSE_PASSTHROUGH);
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_RGFW");
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
@@ -760,6 +758,62 @@ void SetMouseCursor(int cursor)
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
+/* 
+    TODO, try to make this better (RSGL uses this method too :I ) 
+    sourced from RSGL obviously -> ColleagueRiley
+*/
+char RSGL_keystrToChar(const char* str) {
+    if (str[1] == 0)
+        return str[0];
+
+
+    static const char* map[] = {
+        "asciitilde", "`",
+        "grave", "~",
+        "exclam", "!",
+        "at", "@",
+        "numbersign", "#",
+        "dollar", "$",
+        "percent", "%%",
+        "asciicircum", "^",
+        "ampersand", "&",
+        "asterisk", "*",
+        "parenleft", "(",
+        "parenright", ")",
+        "underscore", "_",
+        "minus", "-",
+        "plus", "+",
+        "equal", "=",
+        "braceleft", "{",
+        "bracketleft", "[",
+        "bracketright", "]",
+        "braceright", "}",
+        "colon", ":",
+        "semicolon", ";",
+        "quotedbl", "\"",
+        "apostrophe", "'",
+        "bar", "|",
+        "backslash", "\'",
+        "less", "<",
+        "comma", ",",
+        "greater", ">",
+        "period", ".",
+        "question", "?",
+        "slash", "/",
+        "space", " ",
+        "Return", "\n",
+        "Enter", "\n",
+        "enter", "\n",
+    };
+
+    u8 i = 0;
+    for (i = 0; i < (sizeof(map) / sizeof(char*)); i += 2)
+        if (strcmp(map[i], str) == 0)
+            return *map[i + 1];
+
+    return '\0';
+}
+
 // Register all input events
 void PollInputEvents(void)
 {
@@ -924,7 +978,7 @@ void PollInputEvents(void)
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
                     // Add character (codepoint) to the queue
-                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RGFW_keystrToChar(event->keyName);
+                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RSGL_keystrToChar(event->keyName);
                     CORE.Input.Keyboard.charPressedQueueCount++;
                 }
             } break;
