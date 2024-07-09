@@ -47,56 +47,55 @@
 **********************************************************************************************/
 
 #ifdef GRAPHICS_API_OPENGL_ES2
-#define RGFW_OPENGL_ES2
+    #define RGFW_OPENGL_ES2
 #endif
 
 void ShowCursor(void);
 void CloseWindow(void);
 
-#ifdef __linux__
-#define _INPUT_EVENT_CODES_H
+#if defined(__linux__)
+    #define _INPUT_EVENT_CODES_H
 #endif
 
 #if defined(__unix__) || defined(__linux__)
-#define _XTYPEDEF_FONT
+    #define _XTYPEDEF_FONT
 #endif
 
 #define RGFW_IMPLEMENTATION
 
 #if defined(__WIN32) || defined(__WIN64)
-#define WIN32_LEAN_AND_MEAN
-#define Rectangle rectangle_win32
-#define CloseWindow CloseWindow_win32
-#define ShowCursor __imp_ShowCursor
-#define _APISETSTRING_
+    #define WIN32_LEAN_AND_MEAN
+    #define Rectangle rectangle_win32
+    #define CloseWindow CloseWindow_win32
+    #define ShowCursor __imp_ShowCursor
+    #define _APISETSTRING_
 #endif
 
-#ifdef __APPLE__
-#define Point NSPOINT
-#define Size NSSIZE
+#if defined(__APPLE__)
+    #define Point NSPOINT
+    #define Size NSSIZE
 #endif
 
-#ifdef _MSC_VER
-__declspec(dllimport) int __stdcall  MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
+#if defined(_MSC_VER)
+__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #include "../external/RGFW.h"
 
-
-
 #if defined(__WIN32) || defined(__WIN64)
-#undef DrawText
-#undef ShowCursor
-#undef CloseWindow
-#undef Rectangle
+    #undef DrawText
+    #undef ShowCursor
+    #undef CloseWindow
+    #undef Rectangle
 #endif
 
-#ifdef __APPLE__
-#undef Point
-#undef Size
+#if defined(__APPLE__)
+    #undef Point
+    #undef Size
 #endif
 
 #include <stdbool.h>
+#include <string.h>     // Required for: strcmp()
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -110,7 +109,9 @@ typedef struct {
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
 
-static PlatformData platform = { NULL };   // Platform specific
+static PlatformData platform = { NULL }; // Platform specific
+
+static bool RGFW_disableCursor = false;
 
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
@@ -250,7 +251,8 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (platform.window != NULL) {
+    if (platform.window != NULL)
+    {
         RGFW_window_setBorder(platform.window, CORE.Window.flags & FLAG_WINDOW_UNDECORATED);
     }
 }
@@ -569,8 +571,7 @@ int GetCurrentMonitor(void)
 
     for (int i = 0; i < 6; i++)
     {
-        if ((mons[i].rect.x ==  mon.rect.x) && (mons[i].rect.y ==  mon.rect.y))
-            return i;
+        if ((mons[i].rect.x ==  mon.rect.x) && (mons[i].rect.y ==  mon.rect.y)) return i;
     }
 
     return 0;
@@ -672,8 +673,6 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-bool RGFW_disableCursor = false;
-
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
@@ -690,6 +689,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     RGFW_disableCursor = true;
+    
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
@@ -727,7 +727,7 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        // TODO:
+        // TODO: Open URL implementation
     }
 }
 
@@ -758,16 +758,12 @@ void SetMouseCursor(int cursor)
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
-/* 
-    TODO, try to make this better (RSGL uses this method too :I ) 
-    sourced from RSGL obviously -> ColleagueRiley
-*/
-char RSGL_keystrToChar(const char* str) {
-    if (str[1] == 0)
-        return str[0];
+// TODO: Review function to avoid duplicate with RSGL
+char RSGL_keystrToChar(const char *str)
+{
+    if (str[1] == 0) return str[0];
 
-
-    static const char* map[] = {
+    static const char *map[] = {
         "asciitilde", "`",
         "grave", "~",
         "exclam", "!",
@@ -806,10 +802,10 @@ char RSGL_keystrToChar(const char* str) {
         "enter", "\n",
     };
 
-    u8 i = 0;
-    for (i = 0; i < (sizeof(map) / sizeof(char*)); i += 2)
-        if (strcmp(map[i], str) == 0)
-            return *map[i + 1];
+    for (unsigned char i = 0; i < (sizeof(map)/sizeof(char *)); i += 2)
+    {
+        if (strcmp(map[i], str) == 0) return *map[i + 1];
+    }
 
     return '\0';
 }
@@ -866,25 +862,25 @@ void PollInputEvents(void)
     }
 
     // Register previous mouse states
-    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
-        CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
     CORE.Window.resizedLastFrame = false;
 
+#define RGFW_HOLD_MOUSE			(1L<<2)
 
-    #define RGFW_HOLD_MOUSE			(1L<<2)
-    #if defined(RGFW_X11) //|| defined(RGFW_MACOS)
+#if defined(RGFW_X11) //|| defined(RGFW_MACOS)
     if (platform.window->src.winArgs & RGFW_HOLD_MOUSE)
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
     }
-    else {
+    else
+    {
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
-    #endif
+#endif
 
     while (RGFW_window_checkEvent(platform.window))
     {
@@ -901,7 +897,7 @@ void PollInputEvents(void)
             }
         }
 
-        RGFW_Event* event = &platform.window->event;
+        RGFW_Event *event = &platform.window->event;
 
         // All input events can be processed after polling
         switch (event->type)
@@ -1163,6 +1159,7 @@ void PollInputEvents(void)
                         int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
+                        
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
                         else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
                     }
@@ -1254,8 +1251,7 @@ int InitPlatform(void)
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
 
-    if (CORE.Window.flags & FLAG_VSYNC_HINT)
-        RGFW_window_swapInterval(platform.window, 1);
+    if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
 
     RGFW_window_makeCurrent(platform.window);
 
@@ -1320,12 +1316,12 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-    #ifdef RGFW_X11
+#ifdef RGFW_X11
     for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
     {
         RGFW_registerJoystick(platform.window, i);
     }
-    #endif
+#endif
 
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
 
