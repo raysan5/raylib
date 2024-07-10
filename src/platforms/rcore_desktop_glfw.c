@@ -216,22 +216,12 @@ void ToggleBorderlessWindowed(void)
                 if (!wasOnFullscreen) glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
                 CORE.Window.previousScreen = CORE.Window.screen;
 
-                // Set undecorated and topmost modes and flags
-                glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_FALSE);
-                CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
-                glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_TRUE);
-                CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
+                // Ask fullscreen window :
+                glfwSetWindowMonitor(platform.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
 
-                // Get monitor position and size
-                int monitorPosX = 0;
-                int monitorPosY = 0;
-                glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
-                const int monitorWidth = mode->width;
-                const int monitorHeight = mode->height;
-
-                // Set screen position and size
-                glfwSetWindowPos(platform.handle, monitorPosX, monitorPosY);
-                glfwSetWindowSize(platform.handle, monitorWidth, monitorHeight);
+                // Let's not wait for GLFW to call WindowSizeCallback to update these values :
+                CORE.Window.screen.width = mode->width ;
+                CORE.Window.screen.height = mode->height ;
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -240,16 +230,17 @@ void ToggleBorderlessWindowed(void)
             }
             else
             {
-                // Remove topmost and undecorated modes and flags
-                glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_FALSE);
-                CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
-                glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
-                CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
-
                 // Return previous screen size and position
-                // NOTE: The order matters here, it must set size first, then set position, otherwise the screen will be positioned incorrectly
-                glfwSetWindowSize(platform.handle,  CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
-                glfwSetWindowPos(platform.handle, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y);
+                int prevPosX = CORE.Window.previousPosition.x ;
+                int prevPosY = CORE.Window.previousPosition.y ;
+                int prevWidth = CORE.Window.previousScreen.width ;
+                int prevHeight = CORE.Window.previousScreen.height ;
+
+                glfwSetWindowMonitor(platform.handle, NULL, prevPosX , prevPosY, prevWidth, prevHeight, GLFW_DONT_CARE);
+
+                // Let's not wait for GLFW to call WindowSizeCallback to update these values :
+                CORE.Window.screen.width = prevWidth ;
+                CORE.Window.screen.height = prevHeight ;
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
