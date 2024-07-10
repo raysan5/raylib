@@ -220,8 +220,8 @@ void ToggleBorderlessWindowed(void)
                 glfwSetWindowMonitor(platform.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
 
                 // Let's not wait for GLFW to call WindowSizeCallback to update these values :
-                CORE.Window.screen.width = mode->width ;
-                CORE.Window.screen.height = mode->height ;
+                CORE.Window.screen.width = mode->width;
+                CORE.Window.screen.height = mode->height;
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -231,16 +231,16 @@ void ToggleBorderlessWindowed(void)
             else
             {
                 // Return previous screen size and position
-                int prevPosX = CORE.Window.previousPosition.x ;
-                int prevPosY = CORE.Window.previousPosition.y ;
-                int prevWidth = CORE.Window.previousScreen.width ;
-                int prevHeight = CORE.Window.previousScreen.height ;
+                int prevPosX = CORE.Window.previousPosition.x;
+                int prevPosY = CORE.Window.previousPosition.y;
+                int prevWidth = CORE.Window.previousScreen.width;
+                int prevHeight = CORE.Window.previousScreen.height;
 
-                glfwSetWindowMonitor(platform.handle, NULL, prevPosX , prevPosY, prevWidth, prevHeight, GLFW_DONT_CARE);
+                glfwSetWindowMonitor(platform.handle, NULL, prevPosX, prevPosY, prevWidth, prevHeight, GLFW_DONT_CARE);
 
                 // Let's not wait for GLFW to call WindowSizeCallback to update these values :
-                CORE.Window.screen.width = prevWidth ;
-                CORE.Window.screen.height = prevHeight ;
+                CORE.Window.screen.width = prevWidth;
+                CORE.Window.screen.height = prevHeight;
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
