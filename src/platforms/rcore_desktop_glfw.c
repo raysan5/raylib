@@ -170,7 +170,16 @@ void ToggleFullscreen(void)
             CORE.Window.fullscreen = true;
             CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
-            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            // We need to save the "render size" intead of the "screen size"
+            // because we might have FLAG_WINDOW_HIGHDPI enabled.
+
+            int renderWidth  = GetRenderWidth();
+            int renderHeight = GetRenderHeight();
+
+            CORE.Window.previousScreen.width = renderWidth;
+            CORE.Window.previousScreen.height =  renderHeight;
+
+            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, renderWidth, renderHeight, GLFW_DONT_CARE);
         }
 
     }
@@ -179,7 +188,7 @@ void ToggleFullscreen(void)
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
 
-        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -214,7 +223,15 @@ void ToggleBorderlessWindowed(void)
                 // Store screen position and size
                 // NOTE: If it was on fullscreen, screen position was already stored, so skip setting it here
                 if (!wasOnFullscreen) glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
-                CORE.Window.previousScreen = CORE.Window.screen;
+
+                // We need to save the "render size" intead of the "screen size"
+                // because we might have FLAG_WINDOW_HIGHDPI enabled.
+
+                int renderWidth  = GetRenderWidth();
+                int renderHeight = GetRenderHeight();
+
+                CORE.Window.previousScreen.width = renderWidth;
+                CORE.Window.previousScreen.height = renderHeight;
 
                 // Ask fullscreen window :
                 glfwSetWindowMonitor(platform.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
@@ -1293,10 +1310,9 @@ int InitPlatform(void)
         // Resize window content area based on the monitor content scale.
         // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11.
         // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
-        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
-#if defined(__APPLE__)
-        glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
-#endif
+		// Scale content area based on the monitor content scale where window is placed on
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Only has effect on Windows and X11
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE); // Only has effect on MacOS and Wayland
     }
     else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
@@ -1511,15 +1527,16 @@ int InitPlatform(void)
 
         if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
         {
-            // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling.
-            // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
-    #if !defined(__APPLE__)
+            // NOTE: On APPLE and Wayland platforms system should manage window/input scaling and also framebuffer scaling.
+            // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+    #if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
             glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
 
             // Screen scaling matrix is required in case desired screen area is different from display area
             CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
 
             // Mouse input scaling for the new screen size
+            // TODO FIXME does Wayland requires mouse scaling too ?
             SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
     #endif
         }
@@ -1657,13 +1674,23 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-    if (IsWindowFullscreen()) return;
-
-    // Set current screen size
-
+#if defined(__APPLE__) || defined(_GLFW_WAYLAND)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+#else
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        Vector2 windowScaleDPI = GetWindowScaleDPI();
 
+        CORE.Window.screen.width = (unsigned int)ceilf(width/windowScaleDPI.x);
+        CORE.Window.screen.height = (unsigned int)ceilf(height/windowScaleDPI.y);
+    }
+    else
+    {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+#endif
     // NOTE: Postprocessing texture is not scaled to new size
 }
 
