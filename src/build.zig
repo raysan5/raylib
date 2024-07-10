@@ -282,7 +282,7 @@ pub const OpenglVersion = enum {
 pub const LinuxDisplayBackend = enum {
     X11,
     Wayland,
-	Both,
+    Both,
 };
 
 pub fn build(b: *std.Build) !void {
