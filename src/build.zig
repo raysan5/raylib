@@ -117,14 +117,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
+				
+				if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
 
-                switch (options.linux_display_backend) {
-                    .X11 => {
                         raylib.defineCMacro("_GLFW_X11", null);
                         raylib.linkSystemLibrary("X11");
-                    },
-                    .Wayland => {
-                        raylib.defineCMacro("_GLFW_WAYLAND", null);
+				}
+
+				if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+						raylib.defineCMacro("_GLFW_WAYLAND", null);
                         raylib.linkSystemLibrary("wayland-client");
                         raylib.linkSystemLibrary("wayland-cursor");
                         raylib.linkSystemLibrary("wayland-egl");
@@ -139,10 +140,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
                         waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
                         waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
-                    },
-                }
+ 
+    		}
 
-                raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
@@ -284,6 +285,7 @@ pub const OpenglVersion = enum {
 pub const LinuxDisplayBackend = enum {
     X11,
     Wayland,
+	Both,
 };
 
 pub fn build(b: *std.Build) !void {
