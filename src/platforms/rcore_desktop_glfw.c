@@ -147,7 +147,7 @@ void ToggleFullscreen(void)
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
-        glfwGetWindowPos(platform.handle, &CORE.Window.position.x, &CORE.Window.position.y);
+        glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
 
         int monitorCount = 0;
         int monitorIndex = GetCurrentMonitor();
@@ -156,6 +156,11 @@ void ToggleFullscreen(void)
         // Use current monitor, so we correctly get the display the window is on
         GLFWmonitor *monitor = (monitorIndex < monitorCount)? monitors[monitorIndex] : NULL;
 
+        // The size at which the content of the window shall be rendered 
+        // taking into account the DPI scaling if FLAG_WINDOW_HIGHDPI is set :
+        int renderingWidth  = GetRenderWidth();
+        int renderingHeight = GetRenderHeight();
+
         if (monitor == NULL)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
@@ -163,7 +168,7 @@ void ToggleFullscreen(void)
             CORE.Window.fullscreen = false;
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
 
-            glfwSetWindowMonitor(platform.handle, NULL, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            // There is nothing more to do. Just leave the window where it is.
         }
         else
         {
@@ -173,13 +178,10 @@ void ToggleFullscreen(void)
             // We need to save the "size at which the content of the window is rendered"
             // because we might have FLAG_WINDOW_HIGHDPI enabled.
 
-            int renderWidth  = GetRenderWidth();
-            int renderHeight = GetRenderHeight();
+            CORE.Window.previousScreen.width = renderingWidth;
+            CORE.Window.previousScreen.height = renderingHeight;
 
-            CORE.Window.previousScreen.width = renderWidth;
-            CORE.Window.previousScreen.height =  renderHeight;
-
-            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, renderWidth, renderHeight, GLFW_DONT_CARE);
+            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, renderingWidth, renderingHeight, GLFW_DONT_CARE);
         }
 
     }
@@ -188,7 +190,7 @@ void ToggleFullscreen(void)
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
 
-        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
