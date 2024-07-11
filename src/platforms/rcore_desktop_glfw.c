@@ -170,7 +170,7 @@ void ToggleFullscreen(void)
             CORE.Window.fullscreen = true;
             CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
-            // We need to save the "render size" intead of the "screen size"
+            // We need to save the "size at which the content of the window is rendered"
             // because we might have FLAG_WINDOW_HIGHDPI enabled.
 
             int renderWidth  = GetRenderWidth();
