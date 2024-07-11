@@ -190,7 +190,14 @@ void ToggleFullscreen(void)
             CORE.Window.previousScreen.width = renderingWidth;
             CORE.Window.previousScreen.height = renderingHeight;
 
+            // GLFW will pick the best monitor resolution it can find for the size of rendering :
+            // TODO pick the resolution ourself and try to rescale and center with black borders
             glfwSetWindowMonitor(platform.handle, monitor, 0, 0, renderingWidth, renderingHeight, GLFW_DONT_CARE);
+
+            // GLFW will call WindowSizeCallback too late after EndDrawing()
+            // Let's call it already so the user can access updated values without further delay :
+            const GLFWvidmode *mode = glfwGetVideoMode( monitor	);
+            WindowSizeCallback(platform.handle, mode->width, mode->height);
         }
 
     }
@@ -199,7 +206,12 @@ void ToggleFullscreen(void)
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
 
+        // Ask GLFW to restore the window and the previous monitor resolution :
         glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
+
+        // GLFW will call WindowSizeCallback too late after EndDrawing()
+        // Let's call it already so the user can access updated values without further delay :
+        WindowSizeCallback(platform.handle, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -246,9 +258,9 @@ void ToggleBorderlessWindowed(void)
                 // Ask fullscreen window :
                 glfwSetWindowMonitor(platform.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
 
-                // Let's not wait for GLFW to call WindowSizeCallback to update these values :
-                CORE.Window.screen.width = mode->width;
-                CORE.Window.screen.height = mode->height;
+                // GLFW will call WindowSizeCallback too late after EndDrawing()
+                // Let's call it already so the user can access updated values without further delay :
+                WindowSizeCallback(platform.handle, mode->width, mode->height);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -265,9 +277,9 @@ void ToggleBorderlessWindowed(void)
 
                 glfwSetWindowMonitor(platform.handle, NULL, prevPosX, prevPosY, prevWidth, prevHeight, GLFW_DONT_CARE);
 
-                // Let's not wait for GLFW to call WindowSizeCallback to update these values :
-                CORE.Window.screen.width = prevWidth;
-                CORE.Window.screen.height = prevHeight;
+                // GLFW will call WindowSizeCallback too late after EndDrawing()
+                // Let's call it already so the user can access updated values without further delay :
+                WindowSizeCallback(platform.handle, prevWidth, prevHeight);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
