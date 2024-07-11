@@ -144,6 +144,15 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
+    if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        // We can't go straighforward from one fullscreen mode to an other
+        // there needs to be at least one loop between them
+        // so we just toggle the currently active fullscreen mode and leave.
+        ToggleBorderlessWindowed();
+        return;
+    }
+
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
@@ -201,13 +210,13 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    // Leave fullscreen before attempting to set borderless windowed mode and get screen position from it
-    bool wasOnFullscreen = false;
     if (CORE.Window.fullscreen)
     {
-        CORE.Window.previousPosition = CORE.Window.position;
+        // We can't go straighforward from one fullscreen mode to an other
+        // there needs to be at least one loop between them
+        // so we just toggle the currently active fullscreen mode and leave.
         ToggleFullscreen();
-        wasOnFullscreen = true;
+        return;
     }
 
     const int monitor = GetCurrentMonitor();
@@ -222,9 +231,8 @@ void ToggleBorderlessWindowed(void)
         {
             if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
             {
-                // Store screen position and size
-                // NOTE: If it was on fullscreen, screen position was already stored, so skip setting it here
-                if (!wasOnFullscreen) glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
+                // Store screen position and size :
+                glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
 
                 // We need to save the "render size" intead of the "screen size"
                 // because we might have FLAG_WINDOW_HIGHDPI enabled.
