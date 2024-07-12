@@ -1761,6 +1761,14 @@ int GetRandomValue(int min, int max)
     return value;
 }
 
+// Get a random float between min and max included
+float GetRandomFloat(float min, float max)
+{
+  float value = min + ((float)GetRandomValue(0, RAND_MAX) / (float)RAND_MAX) * (max - min);
+
+  return value;
+}
+
 // Load random values sequence, no values repeated, min and max included
 int *LoadRandomSequence(unsigned int count, int min, int max)
 {
