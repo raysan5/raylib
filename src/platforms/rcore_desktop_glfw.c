@@ -172,7 +172,7 @@ void ToggleFullscreen(void)
 
         if (monitor == NULL)
         {
-            TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
+            TRACELOG(LOG_WARNING, "GLFW: ToggleFullscreen() failed to get monitor");
 
             CORE.Window.fullscreen = false;
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
@@ -213,6 +213,9 @@ void ToggleFullscreen(void)
         // Let's call it already so the user can access updated values without further delay :
         WindowSizeCallback(platform.handle, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
     }
+
+    // Refocus window
+    glfwFocusWindow(platform.handle);
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration
