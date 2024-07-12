@@ -28,6 +28,7 @@ int main(void)
     // SetRandomSeed(0xaabbccff);   // Set a custom random seed if desired, by default: "time(NULL)"
 
     int randValue = GetRandomValue(-8, 5);   // Get a random integer number between -8 and 5 (both included)
+    float randFloat = GetRandomFloat(-8.0, 5.0);   // Get a random float number between -8 and 5 (both included)
     
     unsigned int framesCounter = 0; // Variable used to count frames
     
@@ -45,6 +46,7 @@ int main(void)
         if (((framesCounter/120)%2) == 1)
         {
             randValue = GetRandomValue(-8, 5);
+            randFloat = GetRandomFloat(-8.0, 5.0);
             framesCounter = 0;
         }
         //----------------------------------------------------------------------------------
@@ -56,8 +58,10 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText("Every 2 seconds a new random value is generated:", 130, 100, 20, MAROON);
+            DrawText(TextFormat("%i", randValue), 360, 150, 80, LIGHTGRAY);
 
-            DrawText(TextFormat("%i", randValue), 360, 180, 80, LIGHTGRAY);
+            DrawText("Every 2 seconds a new random float is generated:", 130, 260, 20, MAROON);
+            DrawText(TextFormat("%.2f", randFloat), 360, 310, 80, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
