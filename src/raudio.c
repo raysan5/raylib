@@ -451,12 +451,18 @@ void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
 // Initialize audio device
-void InitAudioDevice(void)
+
+void InitAudioDevice(void){
+    // Values of 0 are default for miniaudio
+    rAudioConfig defaultConfig = {.sampleRate = 0, .periodSizeInFrames = 0};
+    InitAudioDeviceEx(defaultConfig);
+}
+
+void InitAudioDeviceEx(rAudioConfig rConfig)
 {
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
@@ -478,9 +484,10 @@ void InitAudioDevice(void)
     config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device
     config.capture.format = ma_format_s16;
     config.capture.channels = 1;
-    config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
+    config.sampleRate = rConfig.sampleRate; // Default: AUDIO_DEVICE_SAMPLE_RATE
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
+    config.periodSizeInFrames = rConfig.periodSizeInFrames;
 
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
@@ -516,7 +523,8 @@ void InitAudioDevice(void)
     TRACELOG(LOG_INFO, "    > Format:        %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
     TRACELOG(LOG_INFO, "    > Channels:      %d -> %d", AUDIO.System.device.playback.channels, AUDIO.System.device.playback.internalChannels);
     TRACELOG(LOG_INFO, "    > Sample rate:   %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
-    TRACELOG(LOG_INFO, "    > Periods size:  %d", AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
+    TRACELOG(LOG_INFO, "    > Period count:  %d", AUDIO.System.device.playback.internalPeriods);
+    TRACELOG(LOG_INFO, "    > Periods size:  %d * %d = %d", AUDIO.System.device.playback.internalPeriodSizeInFrames, AUDIO.System.device.playback.internalPeriods, AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
 
     AUDIO.System.isReady = true;
 }

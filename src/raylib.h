@@ -452,6 +452,11 @@ typedef struct Wave {
 typedef struct rAudioBuffer rAudioBuffer;
 typedef struct rAudioProcessor rAudioProcessor;
 
+typedef struct rAudioConfig{
+    unsigned int sampleRate;
+    unsigned int periodSizeInFrames;
+} rAudioConfig;
+
 // AudioStream, custom audio stream
 typedef struct AudioStream {
     rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
@@ -1606,6 +1611,7 @@ typedef void (*AudioCallback)(void *bufferData, unsigned int frames);
 
 // Audio device management functions
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
+RLAPI void InitAudioDeviceEx(rAudioConfig config);                    // Initialize audio device and context
 RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)
