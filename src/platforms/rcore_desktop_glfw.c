@@ -1339,7 +1339,11 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Only has effect on Windows and X11
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE); // Only has effect on MacOS and Wayland
     }
-    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+    else 
+    {
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+    }
 
     // Mouse passthrough
     if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
