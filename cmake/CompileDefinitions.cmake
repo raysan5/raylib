@@ -11,7 +11,6 @@ endfunction()
 
 if(${CUSTOMIZE_BUILD})
     target_compile_definitions("raylib" PRIVATE EXTERNAL_CONFIG_FLAGS)
-    define_if("raylib" USE_AUDIO)
 
     foreach(FLAG IN LISTS CONFIG_HEADER_FLAGS)
         string(REGEX MATCH "([^=]+)=(.+)" _ ${FLAG})
