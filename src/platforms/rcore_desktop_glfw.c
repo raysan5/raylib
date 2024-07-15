@@ -1410,6 +1410,12 @@ int InitPlatform(void)
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
 
+    // By default, when a fullscreen window looses focus, GLFW iconifies it and restores the desktop monitor resolution.
+    // This default behavior can be emulated on user's side with a simple code : `if ( ! IsWindowFocused() ) MinimizeWindow();`
+    // So we disable this GLFW default behavior and let the user decides by themself the behavior of their program :
+    glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
+
+
     GLFWmonitor *monitor = NULL;
     if (CORE.Window.fullscreen)
     {
@@ -1484,11 +1490,7 @@ int InitPlatform(void)
         // No-fullscreen window creation
         bool requestWindowedFullscreen = (CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0);
 
-        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost.
-        // This hinting code will not work if the user already specified the correct monitor dimensions;
-        // at this point we don't know the monitor's dimensions. (Though, how did the user then?)
-        if (requestWindowedFullscreen) glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
-
+       
         // Default to at least one pixel in size, as creation with a zero dimension is not allowed.
         int creationWidth = CORE.Window.screen.width != 0 ? CORE.Window.screen.width : 1;
         int creationHeight = CORE.Window.screen.height != 0 ? CORE.Window.screen.height : 1;
