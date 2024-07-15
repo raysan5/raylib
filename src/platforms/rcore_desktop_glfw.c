@@ -1410,7 +1410,7 @@ int InitPlatform(void)
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
 
-    // By default, when a fullscreen window looses focus, GLFW iconifies it and restores the desktop monitor resolution.
+    // By default, when a fullscreen window loses focus, GLFW iconifies it and restores the desktop monitor resolution.
     // This default behavior can be emulated on user's side with a simple code : `if ( ! IsWindowFocused() ) MinimizeWindow();`
     // So we disable this GLFW default behavior and let the user decides by themself the behavior of their program :
     glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
@@ -1560,15 +1560,18 @@ int InitPlatform(void)
         {
             // NOTE: On APPLE and Wayland platforms system should manage window/input scaling and also framebuffer scaling.
             // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
-    #if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
-            glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+    #if !defined(__APPLE__) 
+            if ( glfwGetPlatform() != GLFW_PLATFORM_WAYLAND )
+            {
+                glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
 
-            // Screen scaling matrix is required in case desired screen area is different from display area
-            CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+                // Screen scaling matrix is required in case desired screen area is different from display area
+                CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
 
-            // Mouse input scaling for the new screen size
-            // TODO FIXME does Wayland requires mouse scaling too ?
-            SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+                // Mouse input scaling for the new screen size
+                // TODO FIXME does Wayland requires mouse scaling too ?
+                SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+            }
     #endif
         }
 
@@ -1705,11 +1708,11 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-#if defined(__APPLE__) || defined(_GLFW_WAYLAND)
+#if defined(__APPLE__) 
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 #else
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    if ( ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0 ) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND) )
     {
         Vector2 windowScaleDPI = GetWindowScaleDPI();
 
