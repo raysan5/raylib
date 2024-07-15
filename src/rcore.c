@@ -631,7 +631,12 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize platform
     //--------------------------------------------------------------
-    InitPlatform();
+    if ( InitPlatform() != 0 )
+    {
+        TRACELOG(LOG_ERROR, "Platform backend: Window initialization failed.");
+        CORE.Window.ready = false;
+        return;
+    }
     //--------------------------------------------------------------
 
     // Initialize rlgl default data (buffers and shaders)
