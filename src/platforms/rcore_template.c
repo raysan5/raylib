@@ -476,7 +476,7 @@ int InitPlatform(void)
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
+        return -1;
     }
 
     // Initialize the EGL device connection
@@ -484,7 +484,7 @@ int InitPlatform(void)
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
+        return -1;
     }
 
     // Get an appropriate EGL framebuffer configuration
