@@ -631,10 +631,10 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize platform
     //--------------------------------------------------------------
-    if ( InitPlatform() != 0 )
+    int result = InitPlatform();
+    if (result == -1 )
     {
         TRACELOG(LOG_ERROR, "Platform backend: Window initialization failed.");
-        CORE.Window.ready = false;
         return;
     }
     //--------------------------------------------------------------
