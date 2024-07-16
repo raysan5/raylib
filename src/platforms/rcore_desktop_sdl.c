@@ -966,6 +966,12 @@ void SetMouseCursor(int cursor)
     CORE.Input.Mouse.cursor = cursor;
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    return SDL_GetKeyName(key);
+}
+
 static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
 {
     CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
