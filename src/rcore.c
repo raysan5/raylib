@@ -632,7 +632,7 @@ void InitWindow(int width, int height, const char *title)
     // Initialize platform
     //--------------------------------------------------------------
     int result = InitPlatform();
-    if (result == -1 )
+    if (result == -1)
     {
         TRACELOG(LOG_ERROR, "Platform backend: Window initialization failed.");
         return;
