@@ -1726,8 +1726,8 @@ int InitPlatform(void)
         // We don't use `ToggleFullscreen()` directly because `CORE.Window.fullscreen` is already set to `true`,
         // and `ToggleFullscreen()` would think it is already in fullscreen mode.
 
-        bool result = _ActivateHardwareFullscreenMode(monitorIndex, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
-        if ( result == false )
+        bool _result = _ActivateHardwareFullscreenMode(monitorIndex, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        if ( _result == false )
         {
             TRACELOG(LOG_WARNING,"DISPLAY: failed to activate fullscreen mode.");
             // We don't close the window, nor terminate GLFW, nor interrupt the paltform intialization because it is just a warning.
