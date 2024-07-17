@@ -1094,6 +1094,12 @@ void SetMouseCursor(int cursor)
     }
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    return glfwGetKeyName(key, glfwGetKeyScancode(key));
+}
+
 // Register all input events
 void PollInputEvents(void)
 {

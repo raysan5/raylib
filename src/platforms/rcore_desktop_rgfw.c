@@ -756,6 +756,13 @@ void SetMouseCursor(int cursor)
     RGFW_window_setMouseStandard(platform.window, cursor);
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
 // TODO: Review function to avoid duplicate with RSGL
