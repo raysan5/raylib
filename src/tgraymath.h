@@ -3,6 +3,10 @@
 #include "raymath.h"
 #endif
 
+#if __STDC_VERSION__ < 201112L
+#warning _Generic is a C11 directive and requires at least C11 compatibility.
+#endif
+
 void tgrarted(void);
 
 //----------------------------------------------------------------------------------
