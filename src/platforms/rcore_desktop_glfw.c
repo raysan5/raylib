@@ -1638,7 +1638,6 @@ int InitPlatform(void)
     }
 #endif
 
-    TRACELOG(LOG_INFO, "GLFW platform: %s", glfwPlatform);
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (GLFW): Initialized successfully");
 
     return 0;
