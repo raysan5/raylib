@@ -77,6 +77,8 @@
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
+*       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE3  "texture3"          // texture3 (texture slot active 3)
+*       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE4  "texture4"          // texture4 (texture slot active 4)
 *
 *   DEPENDENCIES:
 *      - OpenGL libraries (depending on platform and OpenGL version selected)
@@ -1000,6 +1002,12 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 #ifndef RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2
     #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
+#endif
+#ifndef RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE3
+    #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE3  "texture3"          // texture3 (texture slot active 3)
+#endif
+#ifndef RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE4
+    #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE4  "texture4"          // texture2 (texture slot active 4)
 #endif
 
 //----------------------------------------------------------------------------------
