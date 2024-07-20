@@ -213,6 +213,9 @@ void ToggleBorderlessWindowed(void)
                 // Store screen position and size :
                 glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
 
+                // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
+                glfwGetError(NULL); // So we must clear this error
+
                 // We need to save the "render size" intead of the "screen size"
                 // because we might have FLAG_WINDOW_HIGHDPI enabled.
 
@@ -612,6 +615,9 @@ void SetWindowTitle(const char *title)
 void SetWindowPosition(int x, int y)
 {
     glfwSetWindowPos(platform.handle, x, y);
+
+    // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
+    glfwGetError(NULL); // So we must clear this error
 }
 
 // Set monitor for the current window
@@ -649,6 +655,9 @@ void SetWindowMonitor(int monitor)
                 const int y = monitorWorkareaY + (monitorWorkareaHeight/2) - (screenHeight/2);
                 glfwSetWindowPos(platform.handle, x, y);
             }
+
+            // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
+            glfwGetError(NULL); // So we must clear this error
         }
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
@@ -778,6 +787,9 @@ int GetCurrentMonitor(void)
             glfwGetWindowPos(platform.handle, &wcx, &wcy);
             wcx += (int)CORE.Window.screen.width/2;
             wcy += (int)CORE.Window.screen.height/2;
+
+            // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
+            glfwGetError(NULL); // So we must clear this error
 
             for (int i = 0; i < monitorCount; i++)
             {
@@ -947,6 +959,9 @@ Vector2 GetWindowPosition(void)
     int y = 0;
 
     glfwGetWindowPos(platform.handle, &x, &y);
+
+    // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
+    glfwGetError(NULL); // So we must clear this error
 
     return (Vector2){ (float)x, (float)y };
 }
@@ -1573,6 +1588,9 @@ int InitPlatform(void)
                                                     //          This means that the desktop manager or GLFW might not be
                                                     //          able to fullfil this request and might change the position.
 
+    // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
+    glfwGetError(NULL); // So we must clear this error
+
     // As our windowed window is almost ready, we can associate the OpenGL context to it :
 
     glfwMakeContextCurrent(platform.handle); // NOTE : from here, we must `glfwDestroyWindow()` before any `glfwTerminate()`
@@ -2071,6 +2089,9 @@ static bool _ActivateHardwareFullscreenMode(int monitorIndex, int desiredWidth, 
     // Store previous window position and size (in case we exit fullscreen)
     glfwGetWindowPos(platform.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
 
+    // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window.
+    glfwGetError(NULL); // So we must clear this error
+
     // If `FLAG_RESCALE_CONTENT` is enabled, we might be rescaling the "screen" when rendering it.
     // So we need to remember the size the "render" viewport, not the size of the screen.
     // And anyway, if `FLAG_RESCALE_CONTENT` is disabled (backward compatibility mode), the hardware fullscreen
@@ -2129,9 +2150,9 @@ static bool _ActivateHardwareFullscreenMode(int monitorIndex, int desiredWidth, 
     glfwSetWindowMonitor(platform.handle, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 
     const char *errorMessage;
-    int result = glfwGetError(&errorMessage);
+    int _result = glfwGetError(&errorMessage);
 
-    if (result != GLFW_NO_ERROR)
+    if (_result != GLFW_NO_ERROR)
     {
         TRACELOG(LOG_ERROR, "DISPLAY: GLFW failed to activate requested fullscreen mode.");
 
