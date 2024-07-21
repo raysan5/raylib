@@ -621,6 +621,9 @@ void SetWindowPosition(int x, int y)
 }
 
 // Set monitor for the current window
+// NOTE : As of current version of Wayland and GLFW, it is not possible to set the position of a windowed 
+//        window by code, so this fonction will not move it from a display to another. Instead, it will 
+//        associate a monitor index to the window for fullscreen mode.
 void SetWindowMonitor(int monitor)
 {
     int monitorCount = 0;
@@ -628,6 +631,8 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
+        CORE.Window.lastAssociatedMonitorIndex = monitor;
+
         if ((CORE.Window.fullscreen) || IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
         {
             TRACELOG(LOG_INFO, "GLFW: Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
@@ -658,6 +663,11 @@ void SetWindowMonitor(int monitor)
 
             // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
             glfwGetError(NULL); // So we must clear this error
+
+            // NOTE : As of current version of Wayland and GLFW, it is not possible to set the position of a windowed 
+            //        window by code, so this fonction will not move it from a display to another. Instead, it will 
+            //        associate a monitor index to the window for fullscreen mode.
+
         }
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
@@ -772,13 +782,35 @@ int GetCurrentMonitor(void)
             }
         }
         else
+        if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+        {
+            // The algorithm bellow, which relies on the window position, won't work with current version of Wayland
+            // and GLFW, because Wayland does not allow to know the window position.
+            // NOTE : this is not a bug in Wayland or GLFW, it is a "feature design" of current version of Wayland.
+
+            // So intead of computing on which monitor is mostly displayed the window, we return the index of the monitor
+            // to which the user wanted to associate the window to using `SetWindowMonitor()` :
+
+            index = CORE.Window.lastAssociatedMonitorIndex;
+
+            if ((index < 0) || (index >= monitorCount))
+            {
+                index = monitorCount - 1;
+
+                // A monitor was probably unplugged.
+                // TODO : add a TRACELOG ?
+
+                CORE.Window.lastAssociatedMonitorIndex = index;
+            }
+        }
+        else
         {
             // In case the window is between two monitors, we use below logic
             // to try to detect the "current monitor" for that window, note that
             // this is probably an overengineered solution for a very side case
             // trying to match SDL behaviour
 
-            // NOTE : this won't work with Wayland because it does not allow to know the window position
+            // NOTE : this algorithm won't work with Wayland because it does not allow to know the window position.
 
             int closestDist = 0x7FFFFFFF;
 
@@ -1486,18 +1518,34 @@ int InitPlatform(void)
     // NOTE : we can't use glfwGetWindowMonitor() directly because it only works if the window is 
     // already in hardware fullscreen mode, otherwise it returns NULL. So we use `GetCurrentMonitor()`.
 
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+    {
+        // On current version of Wayland and GLFW it is not possible to know on which monitor the window
+        // is mostly visible onto. On some distro, the window will just open on the monitor with the mouse cursor.
+        // Unfortunately, the mouse coordinates returned by GLFW are always relative to the top left corner of the
+        // window frameBuffer. It is thus impossible to guess on which monitor the window was opened.
+        // So we pretend it was on the main monitor, because it is the most common scenario.
+        // It is thus possible to associate an other monitor to the window afterward using `SetWindowMonitor()`.
+        // However, this association will only have an effect when toggling the window to hardware fullscreen mode.
+
+        CORE.Window.lastAssociatedMonitorIndex = 0;
+    }
+    else
+    {
+        CORE.Window.lastAssociatedMonitorIndex = GetCurrentMonitor();
+    }
+
     int monitorCount = 0;
-    int monitorIndex = GetCurrentMonitor();
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
-    if (monitorIndex >= monitorCount)
+    if (CORE.Window.lastAssociatedMonitorIndex >= monitorCount)
     {
         TRACELOG(LOG_WARNING, "GLFW: Failed to determine Monitor to center Window");
         glfwTerminate();
         return -1;
     }
 
-    GLFWmonitor *monitor = monitors[monitorIndex];
+    GLFWmonitor *monitor = monitors[CORE.Window.lastAssociatedMonitorIndex];
 
     // We got the monitor, now let's get its current video mode :
 
@@ -1741,7 +1789,7 @@ int InitPlatform(void)
         // We don't use `ToggleFullscreen()` directly because `CORE.Window.fullscreen` is already set to `true`,
         // and `ToggleFullscreen()` would think it is already in fullscreen mode.
 
-        bool _result = _ActivateHardwareFullscreenMode(monitorIndex, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        bool _result = _ActivateHardwareFullscreenMode(CORE.Window.lastAssociatedMonitorIndex, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         if ( _result == false )
         {
             TRACELOG(LOG_WARNING,"DISPLAY: failed to activate fullscreen mode.");
@@ -2195,7 +2243,7 @@ static void _DeactivateHardwareFullscreenMode()
 
     glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
 
-    // As we're leaving we must restore soem metrics :
+    // As we're leaving we must restore some metrics :
 
     int monitorIndex = GetCurrentMonitor();
 
