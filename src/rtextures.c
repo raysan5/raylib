@@ -1213,7 +1213,7 @@ Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
 
-#ifdef SUPPORT_MODULE_RTEXT
+#if defined(SUPPORT_MODULE_RTEXT)
     int textLength = TextLength(text);
     int imageViewSize = width*height;
 
