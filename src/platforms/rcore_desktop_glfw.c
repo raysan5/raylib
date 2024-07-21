@@ -778,6 +778,8 @@ int GetCurrentMonitor(void)
             // this is probably an overengineered solution for a very side case
             // trying to match SDL behaviour
 
+            // NOTE : this won't work with Wayland because it does not allow to know the window position
+
             int closestDist = 0x7FFFFFFF;
 
             // Window center position
@@ -1515,19 +1517,14 @@ int InitPlatform(void)
 
     if (invalidWindowSizeRequested) 
     {
-        // If the user requested an invalid screen resolution
-        // it may be because they did not know the size of the display. 
-        // Also, they may provide only an invalid width or height. 
-        // For instance, `InitWindow(800,0)` could be interpreted as a desire to automatically set the
-        // height of the window the same as the height of the display.
-        // So we fill the blanks with the now known display dimensions :
+        // For backward compatibility purpose, an invalid window size is interpreted as a requestBorderlessWindowed.
+        // The `FLAG_BORDERLESS_WINDOWED_MODE` flag will be set when `ToggleBorderlessWindowed()` will be called later
+        // once we're done setting up the window.
+        // For now, we must give an arbitrary valid size to this window.
+        // This is the size the window will have if restored from fullscreen mode.
 
-        // TODO : NOTE the expected bahavior should be discussed an formalized with the community or the maintainer, 
-        // because it could also be interpreted as the desire to set a windowed window with a height or width same as
-        // the available desktop area.
-
-        if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = mode->width;
-        if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = mode->height;
+        CORE.Window.screen.width = mode->width*3/4;
+        CORE.Window.screen.height = mode->height*3/4;
     }
 
     // If the user did not requestWindowHDPI, the size of the frameBuffer is the same as the requested screen size :
