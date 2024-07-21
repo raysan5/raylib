@@ -1072,15 +1072,9 @@ void DrawGrid(int slices, float spacing)
             if (i == 0)
             {
                 rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
             }
             else
             {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
                 rlColor3f(0.75f, 0.75f, 0.75f);
             }
 
@@ -4294,7 +4288,7 @@ static Model LoadIQM(const char *fileName)
     // In case file can not be read, return an empty model
     if (fileDataPtr == NULL) return model;
 
-    const char* basePath = GetDirectoryPath(fileName);
+    const char *basePath = GetDirectoryPath(fileName);
 
     // Read IQM header
     IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;

@@ -683,6 +683,8 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
+    
+    TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", GetWorkingDirectory());
 }
 
 // Close window and unload OpenGL context
@@ -3482,7 +3484,7 @@ static void RecordAutomationEvent(void)
         currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
         currentEventList->events[currentEventList->count].type = INPUT_MOUSE_WHEEL_MOTION;
         currentEventList->events[currentEventList->count].params[0] = (int)CORE.Input.Mouse.currentWheelMove.x;
-        currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Mouse.currentWheelMove.y;;
+        currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Mouse.currentWheelMove.y;
         currentEventList->events[currentEventList->count].params[2] = 0;
 
         TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_MOUSE_WHEEL_MOTION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);

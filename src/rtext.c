@@ -1572,7 +1572,7 @@ char *TextReplace(const char *text, const char *replace, const char *by)
     byLen = TextLength(by);
 
     // Count the number of replacements needed
-    insertPoint = (char*)text;
+    insertPoint = (char *)text;
     for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
 
     // Allocate returning string and point temp to it
@@ -2339,7 +2339,7 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
     int readBytes = 0;              // Data bytes read (line)
     int readVars = 0;               // Variables filled by sscanf()
 
-    const char *fileText = (const char*)fileData;
+    const char *fileText = (const char *)fileData;
     const char *fileTextPtr = fileText;
 
     bool fontMalformed = false;     // Is the font malformed
