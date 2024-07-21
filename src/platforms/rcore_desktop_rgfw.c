@@ -46,7 +46,7 @@
 *
 **********************************************************************************************/
 
-#ifdef GRAPHICS_API_OPENGL_ES2
+#if defined(GRAPHICS_API_OPENGL_ES2)
     #define RGFW_OPENGL_ES2
 #endif
 
@@ -182,7 +182,7 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_u] = KEY_U,
     [RGFW_v] = KEY_V,
     [RGFW_w] = KEY_W,
-    [RGFW_x] KEY_X,
+    [RGFW_x] = KEY_X,
     [RGFW_y] = KEY_Y,
     [RGFW_z] = KEY_Z,
     [RGFW_Bracket] = KEY_LEFT_BRACKET,
@@ -243,7 +243,6 @@ bool WindowShouldClose(void)
 
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
-{   
 {   
     RGFW_window_maximize(platform.window);
     ToggleBorderlessWindowed();
@@ -537,7 +536,9 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#ifndef RGFW_WINDOWS
+#ifdef RGFW_WEBASM
+    return (void*)platform.window->src.ctx;
+#elif !defined(RGFW_WINDOWS)
     return (void *)platform.window->src.window;
 #else
     return platform.window->src.hwnd;
@@ -572,7 +573,7 @@ int GetCurrentMonitor(void)
 
     for (int i = 0; i < 6; i++)
     {
-        if ((mons[i].rect.x ==  mon.rect.x) && (mons[i].rect.y ==  mon.rect.y)) current = i;
+        if ((mons[i].rect.x ==  mon.rect.x) && (mons[i].rect.y ==  mon.rect.y)) return i;
     }
 
     return 0;
