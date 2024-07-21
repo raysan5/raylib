@@ -283,6 +283,8 @@ typedef struct CoreData {
         Size screenMax;                     // Screen maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
+        int lastAssociatedMonitorIndex;     // Contains the last monitor index selected using `SetWindowMonitor()` (required by Wayland backend)
+
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
 
