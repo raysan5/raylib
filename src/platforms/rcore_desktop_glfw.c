@@ -1026,17 +1026,18 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = {1.0, 1.0};
 
-    // On platforms, like Wayland, the window and its frameBuffer are automatically rescaled
+    // On platforms like Wayland, the window and its frameBuffer are automatically rescaled
     // according to the current DPI scale of the display on which the window is visible, 
     // `glfwGetWindowContentScale()` will always return `{1.0, 1.0}`, because there is no need
-    // for the applciation to apply any DPI rescaling by itself.
-    // So, to keep consistency among all supported platforms, if `FLAG_WINDOW_HIGHDPI` is enabled
+    // for the application to apply any DPI rescaling by itself.
+    // So, to keep consistency between all supported platforms, if `FLAG_WINDOW_HIGHDPI` is enabled
     // we ignore the value returned by `glfwGetWindowContentScale()` and return `{1.0, 1.0}` instead.
     // Same if we are in an hardware/exclusive fullscreen mode.
 
     if (!IsWindowState(FLAG_WINDOW_HIGHDPI) && !CORE.Window.fullscreen) 
     {
-        // We only need to know the DPI scale of the display if we want to rescale our UI and texts manually by code.
+        // We only need to know the DPI scale of the display if we have to rescale our UI and texts manually by code.
+        // TODO @SoloByte __APPLE__ test mission
 
         glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     }
