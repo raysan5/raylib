@@ -628,9 +628,6 @@ void SetWindowPosition(int x, int y)
 }
 
 // Set monitor for the current window
-// NOTE : As of current version of Wayland and GLFW, it is not possible to set the position of a windowed 
-//        window by code, so this fonction will not move it from a display to another. Instead, it will 
-//        associate a monitor index to the window for fullscreen mode.
 void SetWindowMonitor(int monitor)
 {
     int monitorCount = 0;
@@ -638,6 +635,7 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
+        bool changingMonitor = (CORE.Window.lastAssociatedMonitorIndex != monitor);
         CORE.Window.lastAssociatedMonitorIndex = monitor;
 
         if ((CORE.Window.fullscreen) || IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
@@ -646,6 +644,21 @@ void SetWindowMonitor(int monitor)
 
             const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
             glfwSetWindowMonitor(platform.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
+        }
+        else
+        if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+        {
+            // On current implementation of Wayland and GLFW, 
+            // this is the only way i found to move the window 
+            // from one monitor to another :
+
+            if (changingMonitor && !IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+            {
+                //!\ TODO FIXME This workaround might causes some unexpected issues and could be improved
+
+                ToggleBorderlessWindowed();
+                ToggleBorderlessWindowed();
+            }
         }
         else
         {
