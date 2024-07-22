@@ -216,14 +216,13 @@ void ToggleBorderlessWindowed(void)
                 // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window
                 glfwGetError(NULL); // So we must clear this error
 
-                // We need to save the "render size" intead of the "screen size"
-                // because we might have FLAG_WINDOW_HIGHDPI enabled.
+                //!\ We need to save the frameBuffer size intead of the "screen size"
 
-                int renderWidth  = GetRenderWidth();
-                int renderHeight = GetRenderHeight();
+                int prevWidth, prevHeight;
+                glfwGetFramebufferSize(platform.handle, &prevWidth, &prevHeight);
 
-                CORE.Window.previousScreen.width = renderWidth;
-                CORE.Window.previousScreen.height = renderHeight;
+                CORE.Window.previousScreen.width = prevWidth;
+                CORE.Window.previousScreen.height = prevHeight;
 
                 // Ask fullscreen window :
                 glfwSetWindowMonitor(platform.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
@@ -245,7 +244,15 @@ void ToggleBorderlessWindowed(void)
 
                 glfwSetWindowMonitor(platform.handle, NULL, prevPosX, prevPosY, prevWidth, prevHeight, GLFW_DONT_CARE);
 
-                _SetupFramebuffer( prevWidth , prevHeight, false );
+                if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+                {
+                    // Apparently, Wayland does not call the resize callback when required ...
+                    WindowSizeCallback(platform.handle, prevWidth, prevHeight);
+                }
+                else
+                {
+                    _SetupFramebuffer(prevWidth , prevHeight, false);
+                }
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -1863,14 +1870,19 @@ static void _SetupMouseScaleAndOffset()
     // returned by Raylib's mouse API functions.
 
     // TODO : test __APPLE__ special case, @SoloByte mission
-    // TODO : test Wayland spacial case
  
-#if !defined(__APPLE__)
-    if ( glfwGetPlatform() != GLFW_PLATFORM_WAYLAND )
+#if defined(__APPLE__)
+    SetMouseScale(1.0, 1.0);
+#else
+    if (IsWindowState(FLAG_RESCALE_CONTENT) || (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
     {
         float mouseScaleX = (float)CORE.Window.screen.width/(float)CORE.Window.render.width;
         float mouseScaleY = (float)CORE.Window.screen.height/(float)CORE.Window.render.height;
         SetMouseScale(mouseScaleX, mouseScaleY);
+    }
+    else
+    {
+        SetMouseScale(1.0, 1.0);
     }
 #endif
 
@@ -2137,18 +2149,13 @@ static bool _ActivateHardwareFullscreenMode(int monitorIndex, int desiredWidth, 
     // GLFW 3.4 may trigger an error if platform like Wayland don't support setting or getting the position of the window.
     glfwGetError(NULL); // So we must clear this error
 
-    // If `FLAG_RESCALE_CONTENT` is enabled, we might be rescaling the "screen" when rendering it.
-    // So we need to remember the size the "render" viewport, not the size of the screen.
-    // And anyway, if `FLAG_RESCALE_CONTENT` is disabled (backward compatibility mode), the hardware fullscreen
-    // mode, the size of the "render" is the same as the "screen" and also the same as the window's frameBuffer.
-    // THe `FLAG_WINDOW_HIGHDPI` should not interfere, because it is ignored in hardware fullscreen mode.
-
-    // TODO : test __APPLE__ special case ? @SoloByte mission
-    // TODO : test Wayland spacial case ?
+    //!\ We must remember the size of the frameBuffer, not the size of the "screen" :
 
     int frameBufferWidth , frameBufferHeight;
     glfwGetFramebufferSize(platform.handle, &frameBufferWidth, &frameBufferHeight);
-    CORE.Window.previousScreen = (Size){frameBufferWidth, frameBufferHeight};
+
+    CORE.Window.previousScreen.width = frameBufferWidth;
+    CORE.Window.previousScreen.height = frameBufferHeight;
 
     // Let's find a video mode that best matches our desired fullscreen mode :
 
@@ -2243,19 +2250,29 @@ static void _DeactivateHardwareFullscreenMode()
 
     glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
 
-    // As we're leaving we must restore some metrics :
+    // As we're leaving, we update the flags :
+
+    CORE.Window.fullscreen = false;
+    CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+
+    // And we must restore some metrics :
 
     int monitorIndex = GetCurrentMonitor();
 
     CORE.Window.display.width = GetMonitorWidth(monitorIndex);
     CORE.Window.display.height = GetMonitorHeight(monitorIndex);
 
-    _SetupFramebuffer(CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, false); 
+    int prevWidth  = CORE.Window.previousScreen.width;
+    int prevHeight = CORE.Window.previousScreen.height;
 
-    // And also update the flags :
-
-    CORE.Window.fullscreen = false;
-    CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+    {
+        WindowSizeCallback(platform.handle, prevWidth, prevHeight);
+    }
+    else
+    {
+        _SetupFramebuffer(prevWidth, prevHeight, false); 
+    }
 
     // Then we're done !
 
