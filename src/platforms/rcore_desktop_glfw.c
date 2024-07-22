@@ -636,6 +636,7 @@ void SetWindowMonitor(int monitor)
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         bool changingMonitor = (CORE.Window.lastAssociatedMonitorIndex != monitor);
+
         CORE.Window.lastAssociatedMonitorIndex = monitor;
 
         if ((CORE.Window.fullscreen) || IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
@@ -656,8 +657,8 @@ void SetWindowMonitor(int monitor)
             {
                 //!\ TODO FIXME This workaround might causes some unexpected issues and could be improved
 
-                ToggleBorderlessWindowed();
-                ToggleBorderlessWindowed();
+                ToggleBorderlessWindowed(); // The fullscreen window is automatically moved to the monitor
+                ToggleBorderlessWindowed(); // and is restored as windowed window on the same monitor.
             }
         }
         else
@@ -1379,22 +1380,33 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
     else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
 
+
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // When the DPI of the monitor on which the window is displayed is changed,
         // the hint bellow ask GLFW to resize the window accordingly to the DPI :
+
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Only has effect on Windows and X11
 
-        // the hints bellow ask GLFW to resize the frameBuffer accordingly to the DPI : // TODO @SoloByte mission
-        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE); // Only has effect on MacOS and Wayland // TODO Wayland test
+        // The hints bellow ask GLFW to resize the frameBuffer accordingly to the DPI.
+        // It only has effet MacOS and Wayland.
+
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE); // Wayland needs it to be false
+        // TODO @SoloByte __APPLE__ test mission
+
+        if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+        {
+            // On Wayland, `FLAG_WINDOW_HIGHDPI` must have no effect because the window and its framebuffer are 
+            // automatically rescaled by the OS. So, instead of rewriting the pipeline to add a Wayland special case 
+            // everywhere this flag is involved, we just disable it from here so it has no more effect afterward.
+            CORE.Window.flags &= ~FLAG_WINDOW_HIGHDPI;
+        }
     }
     else 
     {
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE); 
-        // TODO @SoloByte mission and Wayland test
-        // TODO : GLFW default it to true, whould it be changed to false ?
-        // TODO : test difference MacOS and Wayland
-        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE); 
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE); // Wayland needs it to be false
+        // TODO @SoloByte __APPLE__ test mission 
     }
 
     // Mouse passthrough
