@@ -418,6 +418,14 @@ void SetWindowState(unsigned int flags)
         glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
         WindowSizeCallback(platform.handle, fbWidth, fbHeight);
     }
+
+    // State change: FLAG_TEXT_LINEAR_FILTER
+    if (((CORE.Window.flags & FLAG_TEXT_LINEAR_FILTER) != (flags & FLAG_TEXT_LINEAR_FILTER)) && ((flags & FLAG_TEXT_LINEAR_FILTER) > 0))
+    {
+        CORE.Window.flags |= FLAG_TEXT_LINEAR_FILTER;
+        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
+        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
+    }
 }
 
 // Clear window configuration state flags
@@ -540,6 +548,14 @@ void ClearWindowState(unsigned int flags)
         int fbHeight;
         glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
         WindowSizeCallback(platform.handle, fbWidth, fbHeight);
+    }
+
+    // State change: FLAG_TEXT_LINEAR_FILTER
+    if (((CORE.Window.flags & FLAG_TEXT_LINEAR_FILTER) > 0) && ((flags & FLAG_TEXT_LINEAR_FILTER) > 0))
+    {
+        CORE.Window.flags &= ~FLAG_TEXT_LINEAR_FILTER;
+        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_NEAREST);
+        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
     }
 }
 
