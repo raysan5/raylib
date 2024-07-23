@@ -677,7 +677,7 @@ void InitWindow(int width, int height, const char *title)
     #endif
 #endif
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) || ((CORE.Window.flags & FLAG_TEXT_LINEAR_FILTER) > 0))
     {
         // Set default font texture filter for HighDPI (blurry)
         // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
