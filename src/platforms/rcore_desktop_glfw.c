@@ -247,15 +247,7 @@ void ToggleBorderlessWindowed(void)
 
                 glfwSetWindowMonitor(platform.handle, NULL, prevPosX, prevPosY, prevWidth, prevHeight, GLFW_DONT_CARE);
 
-                if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
-                {
-                    // Apparently, Wayland does not call the resize callback when required ...
-                    WindowSizeCallback(platform.handle, prevWidth, prevHeight);
-                }
-                else
-                {
-                    _SetupFramebuffer(prevWidth , prevHeight, false);
-                }
+                _SetupFramebuffer(prevWidth , prevHeight, false);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -1732,7 +1724,10 @@ int InitPlatform(void)
     // Initialize input events callbacks
     //----------------------------------------------------------------------------
     // Set window callback events
-    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
+    
+    //!\ `glfwSetFramebufferSizeCallback()` offers better cross-platform compatibility than `glfwSetWindowSizeCallback()`
+    glfwSetFramebufferSizeCallback(platform.handle, WindowSizeCallback); 
+    
     glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
     glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
@@ -2044,18 +2039,20 @@ static void _SetupFramebuffer(int frameBufferWidth, int frameBufferHeight, bool 
 
         if (!inHardwareFullscreenMode && requestWindowHDPI && !weAreOnWaylandPlatform)
         {
-            Vector2 windowScaleDPI = GetWindowScaleDPI();
-
+            Vector2 scaleDPI;
+            //!\ We must not use `GetWindowScaleDPI()` because it returns data relevant to the user, not to the platform.
+            glfwGetWindowContentScale(platform.handle, &scaleDPI.x, &scaleDPI.y);
+            
             // If the window is in windowed fullscreen mode (aka `FLAG_BORDERLESS_WINDOWED_MODE`)
             // the size of the frameBuffer is set to the size of the display.
             // This means that GLFW could not resize the window and its frameBuffer accordingly to the DPI.
             // The consequence is that we have to recompute the size of the screen accordingly
             // to the size of the frameBuffer provided by GLFW.
-            CORE.Window.screen.width = (unsigned int)roundf(frameBufferWidth/windowScaleDPI.x);
-            CORE.Window.screen.height = (unsigned int)roundf(frameBufferHeight/windowScaleDPI.y);
+            CORE.Window.screen.width = (unsigned int)roundf(frameBufferWidth/scaleDPI.x);
+            CORE.Window.screen.height = (unsigned int)roundf(frameBufferHeight/scaleDPI.y);
 
             // And now, the screen should be scaled to fit into the render :
-            CORE.Window.screenScale = MatrixScale(windowScaleDPI.x, windowScaleDPI.y, 1.0);
+            CORE.Window.screenScale = MatrixScale(scaleDPI.x, scaleDPI.y, 1.0);
         }
         else // On Wayland, the screen should not need to be rescaled // TODO test Wayland
         {
@@ -2320,14 +2317,7 @@ static void _DeactivateHardwareFullscreenMode()
     int prevWidth  = CORE.Window.previousScreen.width;
     int prevHeight = CORE.Window.previousScreen.height;
 
-    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
-    {
-        WindowSizeCallback(platform.handle, prevWidth, prevHeight);
-    }
-    else
-    {
-        _SetupFramebuffer(prevWidth, prevHeight, false); 
-    }
+    _SetupFramebuffer(prevWidth, prevHeight, false); 
 
     // Then we're done !
 
