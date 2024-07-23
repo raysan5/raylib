@@ -130,7 +130,10 @@ static void _SetupFramebuffer(int frameBufferWidth, int frameBufferHeight, bool 
 static bool _ActivateHardwareFullscreenMode(int monitorIndex, int desiredWidth, int desiredHeight, int desiredRefreshRate); 
 static void _DeactivateHardwareFullscreenMode();
 
-static void _SetupMouseScaleAndOffset(); // Update mouse scale and offset according to current viewport
+static void _SetupPlatformMouseScaleAndOffset(); // Update mouse scale and offset according to current viewport
+
+static void _SetPlatformMouseOffset(int offsetX, int offsetY);
+static void _SetPlatformMouseScale(float scaleX, float scaleY);
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -1900,12 +1903,22 @@ static void WindowSizeCallback(GLFWwindow *window, int frameBufferWidth, int fra
     // We have to rescale and offset the mouse coordinate system 
     // so that it always matches the offset and scale of the "screen" surface
 
-    _SetupMouseScaleAndOffset();
+    _SetupPlatformMouseScaleAndOffset();
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
 
-static void _SetupMouseScaleAndOffset()
+static void _SetPlatformMouseOffset(int offsetX, int offsetY)
+{
+    CORE.Input.Mouse.platformOffset = (Vector2){ (float)offsetX, (float)offsetY };
+}
+
+static void _SetPlatformMouseScale(float scaleX, float scaleY)
+{
+    CORE.Input.Mouse.platformScale = (Vector2){ scaleX, scaleY };
+}
+
+static void _SetupPlatformMouseScaleAndOffset()
 {
     // Depending the current viewport and setup, we have to rescale and offset the mouse coordinate system
     // returned by Raylib's mouse API functions.
@@ -1913,24 +1926,25 @@ static void _SetupMouseScaleAndOffset()
     // TODO : test __APPLE__ special case, @SoloByte mission
  
 #if defined(__APPLE__)
-    SetMouseScale(1.0, 1.0);
+    _SetPlatformMouseScale(1.0, 1.0); //!\ We don't use the user's side SetMouseScale()
 #else
     if (IsWindowState(FLAG_RESCALE_CONTENT) || (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
     {
         float mouseScaleX = (float)CORE.Window.screen.width/(float)CORE.Window.render.width;
         float mouseScaleY = (float)CORE.Window.screen.height/(float)CORE.Window.render.height;
-        SetMouseScale(mouseScaleX, mouseScaleY);
+        
+        _SetPlatformMouseScale(mouseScaleX, mouseScaleY); //!\ We don't use the user's side SetMouseScale()
     }
     else
     {
-        SetMouseScale(1.0, 1.0);
+        _SetPlatformMouseScale(1.0, 1.0); //!\ We don't use the user's side SetMouseScale()
     }
 #endif
 
     float mouseOffsetX = -0.5f*CORE.Window.renderOffset.x;
     float mouseOffsetY = -0.5f*CORE.Window.renderOffset.y;
 
-    SetMouseOffset( mouseOffsetX , mouseOffsetY );
+    _SetPlatformMouseOffset(mouseOffsetX, mouseOffsetY); //!\ We don't use the user's side SetMouseOffset()
 }
 
 
