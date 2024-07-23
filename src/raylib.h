@@ -549,7 +549,9 @@ typedef enum {
     FLAG_INTERLACED_HINT          = 0x00010000,   // Set to try enabling interlaced video format (for V3D)
 
     // Experimental WIP flags :
-    FLAG_RESCALE_CONTENT          = 0x10000000    // (GLFW desktop platform) Set to rescale the content of the window when the window is resized or fullscreened
+    FLAG_RESCALE_CONTENT          = 0x10000000,   // Set to rescale the content of the window when the window is resized or fullscreened
+    FLAG_TEXT_LINEAR_FILTER       = 0x20000000,   // Set to force the linear texture filter of the text font
+    FLAG_RESCALE_CONTENT_LINEAR   = 0x30000000    // Set both bits of `FLAG_RESCALE_CONTENT` and `FLAG_TEXT_LINEAR_FILTER`
 } ConfigFlags;
 
 // Trace log level
