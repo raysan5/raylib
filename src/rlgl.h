@@ -4756,7 +4756,16 @@ static void rlLoadShaderDefault(void)
     "out vec2 fragTexCoord;             \n"
     "out vec4 fragColor;                \n"
 #endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
+
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    "#version 300 es                    \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2) (on some browsers)
+    "in vec3 vertexPosition;            \n"
+    "in vec2 vertexTexCoord;            \n"
+    "in vec4 vertexColor;               \n"
+    "out vec2 fragTexCoord;             \n"
+    "out vec4 fragColor;                \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
     "attribute vec3 vertexPosition;     \n"
@@ -4765,6 +4774,7 @@ static void rlLoadShaderDefault(void)
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
 #endif
+
     "uniform mat4 mvp;                  \n"
     "void main()                        \n"
     "{                                  \n"
@@ -4799,7 +4809,21 @@ static void rlLoadShaderDefault(void)
     "    finalColor = texelColor*colDiffuse*fragColor;        \n"
     "}                                  \n";
 #endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
+
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    "#version 300 es                    \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2)
+    "in vec2 fragTexCoord;              \n"
+    "in vec4 fragColor;                 \n"
+    "out vec4 finalColor;               \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
+    "    finalColor = texelColor*colDiffuse*fragColor;        \n"
+    "}                                  \n";
+#elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
     "varying vec2 fragTexCoord;         \n"
