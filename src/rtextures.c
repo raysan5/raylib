@@ -503,9 +503,14 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     Image image = { 0 };
 
     // Security check for input data
-    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0))
+    if ((fileData == NULL) || (dataSize == 0))
     {
         TRACELOG(LOG_ERROR, "IMAGE: Invalid file data");
+        return image;
+    }
+    if (fileType == NULL)
+    {
+        TRACELOG(LOG_ERROR, "IMAGE: Missing file extension");
         return image;
     }
 
