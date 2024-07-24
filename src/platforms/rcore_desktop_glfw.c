@@ -135,6 +135,9 @@ static void _SetupPlatformMouseScaleAndOffset(); // Update mouse scale and offse
 static void _SetPlatformMouseOffset(int offsetX, int offsetY);
 static void _SetPlatformMouseScale(float scaleX, float scaleY);
 
+inline bool _FlagIsRequestedAndUnset(unsigned int requestedFlags, unsigned int flagName); // function helper required by SetWindowState()
+inline bool _FlagIsRequestedAndSet(unsigned int requestedFlags, unsigned int flagName); // function helper required by ClearWindowState()
+
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
@@ -295,122 +298,114 @@ void RestoreWindow(void)
     }
 }
 
+
+// For the sake of code readability and debugging, we use some function helper :
+inline bool _FlagIsRequestedAndUnset(unsigned int requestedFlags, unsigned int flagName)
+{
+    return ((requestedFlags & flagName)!=0 && (CORE.Window.flags & flagName)==0);
+}
+
+inline bool _FlagIsRequestedAndSet(unsigned int requestedFlags, unsigned int flagName)
+{
+    return ((requestedFlags & flagName)!=0 && (CORE.Window.flags & flagName)!=0);
+}
+
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
     // Check previous state and requested state to apply required changes
     // NOTE: In most cases the functions already change the flags internally
 
-    // State change: FLAG_VSYNC_HINT
-    if (((CORE.Window.flags & FLAG_VSYNC_HINT) != (flags & FLAG_VSYNC_HINT)) && ((flags & FLAG_VSYNC_HINT) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_VSYNC_HINT))
     {
         glfwSwapInterval(1);
         CORE.Window.flags |= FLAG_VSYNC_HINT;
     }
 
-    // State change: FLAG_BORDERLESS_WINDOWED_MODE
-    // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
-    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
     }
-
-    // State change: FLAG_FULLSCREEN_MODE
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) != (flags & FLAG_FULLSCREEN_MODE))
+    else //!\ We can't have both fullscreen mode set at the same time. TODO : add a TRACELOG warnin ?
+    if (_FlagIsRequestedAndUnset(flags, FLAG_FULLSCREEN_MODE))
     {
         ToggleFullscreen();     // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_WINDOW_RESIZABLE
-    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_RESIZABLE))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
     }
 
-    // State change: FLAG_WINDOW_UNDECORATED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) != (flags & FLAG_WINDOW_UNDECORATED)) && (flags & FLAG_WINDOW_UNDECORATED))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_UNDECORATED))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_FALSE);
         CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
     }
 
-    // State change: FLAG_WINDOW_HIDDEN
-    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) != (flags & FLAG_WINDOW_HIDDEN)) && ((flags & FLAG_WINDOW_HIDDEN) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_HIDDEN))
     {
         glfwHideWindow(platform.handle);
         CORE.Window.flags |= FLAG_WINDOW_HIDDEN;
     }
 
-    // State change: FLAG_WINDOW_MINIMIZED
-    if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) != (flags & FLAG_WINDOW_MINIMIZED)) && ((flags & FLAG_WINDOW_MINIMIZED) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_MINIMIZED))
     {
         //GLFW_ICONIFIED
         MinimizeWindow();       // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_WINDOW_MAXIMIZED
-    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) != (flags & FLAG_WINDOW_MAXIMIZED)) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_MAXIMIZED))
     {
         //GLFW_MAXIMIZED
         MaximizeWindow();       // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_WINDOW_UNFOCUSED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) != (flags & FLAG_WINDOW_UNFOCUSED)) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_UNFOCUSED))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_FOCUS_ON_SHOW, GLFW_FALSE);
         CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
     }
 
-    // State change: FLAG_WINDOW_TOPMOST
-    if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) != (flags & FLAG_WINDOW_TOPMOST)) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_TOPMOST))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
     }
 
-    // State change: FLAG_WINDOW_ALWAYS_RUN
-    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) != (flags & FLAG_WINDOW_ALWAYS_RUN)) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_ALWAYS_RUN))
     {
         CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
     }
 
-    // The following states can not be changed after window creation
-
-    // State change: FLAG_WINDOW_TRANSPARENT
-    if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) != (flags & FLAG_WINDOW_TRANSPARENT)) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");
     }
 
-    // State change: FLAG_WINDOW_HIGHDPI
-    if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) != (flags & FLAG_WINDOW_HIGHDPI)) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_HIGHDPI))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
 
-    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
-    if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) != (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_MOUSE_PASSTHROUGH;
     }
 
-    // State change: FLAG_MSAA_4X_HINT
-    if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_MSAA_4X_HINT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
     }
 
-    // State change: FLAG_INTERLACED_HINT
-    if (((CORE.Window.flags & FLAG_INTERLACED_HINT) != (flags & FLAG_INTERLACED_HINT)) && ((flags & FLAG_INTERLACED_HINT) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_INTERLACED_HINT))
     {
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
     }
 
-    // State change: FLAG_RESCALE_CONTENT
-    if (((CORE.Window.flags & FLAG_RESCALE_CONTENT) != (flags & FLAG_RESCALE_CONTENT)) && ((flags & FLAG_RESCALE_CONTENT) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_RESCALE_CONTENT))
     {
         CORE.Window.flags |= FLAG_RESCALE_CONTENT;
         int fbWidth;
@@ -419,8 +414,7 @@ void SetWindowState(unsigned int flags)
         WindowSizeCallback(platform.handle, fbWidth, fbHeight);
     }
 
-    // State change: FLAG_TEXT_LINEAR_FILTER
-    if (((CORE.Window.flags & FLAG_TEXT_LINEAR_FILTER) != (flags & FLAG_TEXT_LINEAR_FILTER)) && ((flags & FLAG_TEXT_LINEAR_FILTER) > 0))
+    if (_FlagIsRequestedAndUnset(flags, FLAG_TEXT_LINEAR_FILTER))
     {
         CORE.Window.flags |= FLAG_TEXT_LINEAR_FILTER;
         rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
@@ -434,114 +428,94 @@ void ClearWindowState(unsigned int flags)
     // Check previous state and requested state to apply required changes
     // NOTE: In most cases the functions already change the flags internally
 
-    // State change: FLAG_VSYNC_HINT
-    if (((CORE.Window.flags & FLAG_VSYNC_HINT) > 0) && ((flags & FLAG_VSYNC_HINT) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_VSYNC_HINT))
     {
         glfwSwapInterval(0);
         CORE.Window.flags &= ~FLAG_VSYNC_HINT;
     }
 
-    // State change: FLAG_BORDERLESS_WINDOWED_MODE
-    // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
-    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_FULLSCREEN_MODE
-    if (((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) && ((flags & FLAG_FULLSCREEN_MODE) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_FULLSCREEN_MODE))
     {
         ToggleFullscreen();     // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_WINDOW_RESIZABLE
-    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_RESIZABLE))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_FALSE);
         CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
     }
 
-    // State change: FLAG_WINDOW_HIDDEN
-    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) && ((flags & FLAG_WINDOW_HIDDEN) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_HIDDEN))
     {
         glfwShowWindow(platform.handle);
         CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;
     }
 
-    // State change: FLAG_WINDOW_MINIMIZED
-    if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((flags & FLAG_WINDOW_MINIMIZED) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_MINIMIZED))
     {
         RestoreWindow();       // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_WINDOW_MAXIMIZED
-    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_MAXIMIZED))
     {
         RestoreWindow();       // NOTE: Window state flag updated inside function
     }
 
-    // State change: FLAG_WINDOW_UNDECORATED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) && ((flags & FLAG_WINDOW_UNDECORATED) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_UNDECORATED))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
         CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
     }
 
-    // State change: FLAG_WINDOW_UNFOCUSED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_UNFOCUSED))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
     }
 
-    // State change: FLAG_WINDOW_TOPMOST
-    if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_TOPMOST))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_FALSE);
         CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
     }
 
-    // State change: FLAG_WINDOW_ALWAYS_RUN
-    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) > 0) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_ALWAYS_RUN))
     {
         CORE.Window.flags &= ~FLAG_WINDOW_ALWAYS_RUN;
     }
 
-    // The following states can not be changed after window creation
-
-    // State change: FLAG_WINDOW_TRANSPARENT
-    if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");
     }
 
-    // State change: FLAG_WINDOW_HIGHDPI
-    if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_HIGHDPI))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
 
-    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
-    if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
         CORE.Window.flags &= ~FLAG_WINDOW_MOUSE_PASSTHROUGH;
     }
 
-    // State change: FLAG_MSAA_4X_HINT
-    if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) > 0) && ((flags & FLAG_MSAA_4X_HINT) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_MSAA_4X_HINT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
     }
 
-    // State change: FLAG_INTERLACED_HINT
-    if (((CORE.Window.flags & FLAG_INTERLACED_HINT) > 0) && ((flags & FLAG_INTERLACED_HINT) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_INTERLACED_HINT))
     {
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
     }
 
-    // State change: FLAG_RESCALE_CONTENT
-    if (((CORE.Window.flags & FLAG_RESCALE_CONTENT) > 0) && ((flags & FLAG_RESCALE_CONTENT) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_RESCALE_CONTENT))
     {
         CORE.Window.flags &= ~FLAG_RESCALE_CONTENT;
         int fbWidth;
@@ -550,8 +524,7 @@ void ClearWindowState(unsigned int flags)
         WindowSizeCallback(platform.handle, fbWidth, fbHeight);
     }
 
-    // State change: FLAG_TEXT_LINEAR_FILTER
-    if (((CORE.Window.flags & FLAG_TEXT_LINEAR_FILTER) > 0) && ((flags & FLAG_TEXT_LINEAR_FILTER) > 0))
+    if (_FlagIsRequestedAndSet(flags, FLAG_TEXT_LINEAR_FILTER))
     {
         CORE.Window.flags &= ~FLAG_TEXT_LINEAR_FILTER;
         rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_NEAREST);
