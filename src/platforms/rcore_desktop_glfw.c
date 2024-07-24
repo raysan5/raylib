@@ -1968,8 +1968,8 @@ static void _SetupPlatformMouseScaleAndOffset()
     }
 #endif
 
-    float mouseOffsetX = -0.5f*CORE.Window.renderOffset.x;
-    float mouseOffsetY = -0.5f*CORE.Window.renderOffset.y;
+    float mouseOffsetX = -0.5f*CORE.Window.renderOffset.x; //!\ `renderOffset` must be divided by two because `SetupViewport()`
+    float mouseOffsetY = -0.5f*CORE.Window.renderOffset.y; //   expects it not to be already divided by two for historical reasons.
 
     _SetPlatformMouseOffset(mouseOffsetX, mouseOffsetY); //!\ We don't use the user's side SetMouseOffset()
 }
@@ -2152,6 +2152,7 @@ static void _SetupFramebuffer(int frameBufferWidth, int frameBufferHeight, bool 
         CORE.Window.render.width = frameBufferWidth ;
         CORE.Window.render.height = CORE.Window.screen.height*frameBufferWidth/CORE.Window.screen.width;
 
+        //!\ Note : we don't divide the offset by 2 because `SetupViewport()` expects it NOT to be already divided ...
         CORE.Window.renderOffset.x = 0;
         CORE.Window.renderOffset.y = (frameBufferHeight - CORE.Window.render.height);
 
@@ -2168,6 +2169,7 @@ static void _SetupFramebuffer(int frameBufferWidth, int frameBufferHeight, bool 
         CORE.Window.render.width = CORE.Window.screen.width*frameBufferHeight/CORE.Window.screen.height;
         CORE.Window.render.height = frameBufferHeight;
 
+        //!\ Note : we don't divide the offset by 2 because `SetupViewport()` expects it NOT to be already divided ...
         CORE.Window.renderOffset.x = (frameBufferWidth - CORE.Window.render.width);
         CORE.Window.renderOffset.y = 0;
 
@@ -2509,6 +2511,20 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     CORE.Input.Mouse.currentPosition.y = (float)y;
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
+    // Check if the mouse cursor is on the "screen" (ie, inside the "render" surface):
+
+    double renderMouseX = x - CORE.Window.renderOffset.x/2.0f; //!\ We must divide this "offset" by 2 because `SetupViewport()` expects
+    double renderMouseY = y - CORE.Window.renderOffset.y/2.0f; //   this offset not to be already divided by two, for historical reasons.
+
+    if ((renderMouseX < 0) || (renderMouseY < 0) || (renderMouseX >= CORE.Window.render.width) || (renderMouseY >= CORE.Window.render.height))
+    {
+        CORE.Input.Mouse.cursorOnScreen = false;
+    }
+    else
+    {
+        CORE.Input.Mouse.cursorOnScreen = true;
+    }
+
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
@@ -2542,8 +2558,13 @@ static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
 // GLFW3 CursorEnter Callback, when cursor enters the window
 static void CursorEnterCallback(GLFWwindow *window, int enter)
 {
-    if (enter) CORE.Input.Mouse.cursorOnScreen = true;
-    else CORE.Input.Mouse.cursorOnScreen = false;
+    // Here, we only test if the cursor is exiting the window because the presence of the cursor 
+    // inside the `CORE.Window.screen` surface is tested into `MouseCursorPosCallback()`.
+
+    if (enter == GLFW_FALSE)
+    {
+        CORE.Input.Mouse.cursorOnScreen = false;
+    }
 }
 
 // GLFW3 Joystick Connected/Disconnected Callback
