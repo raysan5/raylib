@@ -503,7 +503,11 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     Image image = { 0 };
 
     // Security check for input data
-    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
+    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0))
+    {
+        TRACELOG(LOG_ERROR, "IMAGE: Invalid file data");
+        return image;
+    }
 
     if ((false)
 #if defined(SUPPORT_FILEFORMAT_PNG)
