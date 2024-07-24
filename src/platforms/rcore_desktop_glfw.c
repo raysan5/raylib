@@ -1169,14 +1169,30 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
     TRACELOG(LOG_WARNING, "GamepadSetVibration() not available on target platform");
 }
 
-// Set mouse position XY
+// Set the system mouse position XY in `CORE.Window.screen` coordinates 
+// NOTE : user's `SetMouseOffset()` and `SetMouseScale()` are ignored.
 void SetMousePosition(int x, int y)
 {
-    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+    // If the requested mouse coordinates are outside the screen, we clip them :
+
+    x = (x < 0) ? 0 : ((x < CORE.Window.screen.width) ? x : (CORE.Window.screen.width - 1));
+    y = (y < 0) ? 0 : ((y < CORE.Window.screen.height) ? y : (CORE.Window.screen.height - 1));
+
+    // We rescale and offset the requested coordinates according to the platform's setup,
+    // so it also works when `FLAG_WINDOW_HIGHDPI` or `FLAG_RESCALE_CONTENT` are enabled.
+    // User's mouse offset and rescaling must be ignored, because they could put the mouse cursor outside the window.
+
+    float mouseX = (float)x/CORE.Input.Mouse.platformScale.x - CORE.Input.Mouse.platformOffset.x;
+    float mouseY = (float)y/CORE.Input.Mouse.platformScale.y - CORE.Input.Mouse.platformOffset.y;
+
+    // Update the metrics :
+
+    CORE.Input.Mouse.currentPosition = (Vector2){ mouseX, mouseY };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
-    // NOTE: emscripten not implemented
-    glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
+    // And we're done :
+
+    glfwSetCursorPos(platform.handle, mouseX, mouseY);
 }
 
 // Set mouse cursor
