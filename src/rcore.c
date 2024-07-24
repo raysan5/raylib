@@ -683,6 +683,10 @@ void InitWindow(int width, int height, const char *title)
         // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
         rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
         rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
+
+        // As of 2024-07-24, to keep backward compatibility, `FLAG_WINDOW_HIGHDPI` does not contain the 
+        // bit of `FLAG_TEXT_LINEAR_FILTER`, so we add it here for forward compatibility. TODO remove once deprecated.
+        CORE.Window.flags |= FLAG_TEXT_LINEAR_FILTER;
     }
 #endif
 
