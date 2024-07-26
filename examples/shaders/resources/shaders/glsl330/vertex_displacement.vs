@@ -11,33 +11,32 @@ uniform mat4 mvp;
 uniform mat4 matModel;
 uniform mat4 matNormal;
 
-uniform float time;
+uniform float time; 
+
+uniform sampler2D perlinNoiseMap;
 
 // Output vertex attributes (to fragment shader)
 out vec3 fragPosition;
 out vec2 fragTexCoord;
-out vec4 fragColor;
 out vec3 fragNormal;
-
-float perlinNoise(vec2 p);
+out float height;
 
 void main()
 {
-    float height = perlinNoise(vertexTexCoord +  vec2(time, time) * 0.01);
-    vec3 displacedPosition = vertexPosition + vec3(0.0, height*2.0, 0.0);
+    vec2 animatedTexCoord = sin(vertexTexCoord + vec2(sin(time + vertexPosition.x * 0.1), cos(time + vertexPosition.z * 0.1)) * 0.3) * 0.5 + 0.5;
+
+    // Fetch displacement from the displacement map and amplify it
+    float displacement = texture(perlinNoiseMap, animatedTexCoord).r * 7; // Amplified displacement
+
+    // Combine displacement and wave motion
+    vec3 displacedPosition = vertexPosition + vec3(0.0, displacement, 0.0);
 
     // Send vertex attributes to fragment shader
     fragPosition = vec3(matModel*vec4(displacedPosition, 1.0));
     fragTexCoord = vertexTexCoord;
-    fragColor = vertexColor;
     fragNormal = normalize(vec3(matNormal*vec4(vertexNormal, 1.0)));
+    height = displacedPosition.y * 0.2;
 
     // Calculate final vertex position
-    gl_Position = mvp*vec4(displacedPosition, 1.0);
-}
-
-float perlinNoise(vec2 p) {
-    // Implement or call your Perlin noise function here
-    // This is a placeholder function
-    return fract(sin(dot(p ,vec2(12.9898,78.233))) * 43758.5453);
+    gl_Position = mvp*vec4(displacedPosition , 1.0);
 }

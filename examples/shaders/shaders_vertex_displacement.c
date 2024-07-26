@@ -15,6 +15,9 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "rlgl.h"
+
+#include <printf.h>
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -38,28 +41,37 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - vertex displacement");
 
     Camera camera = {0};
-    camera.position = (Vector3) {10.0f, 10.0f, 0.0f};
+    camera.position = (Vector3) {20.0f, 5.0f, -20.0f};
     camera.target = (Vector3) {0.0f, 0.0f, 0.0f};
     camera.up = (Vector3) {0.0f, 1.0f, 0.0f};
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    Mesh planeMesh = GenMeshPlane(30, 30, 30, 30);
+    Mesh planeMesh = GenMeshPlane(50, 50, 50, 50);
     Model planeModel = LoadModelFromMesh(planeMesh);
 
     Shader shader = LoadShader(
         TextFormat("resources/shaders/glsl%i/vertex_displacement.vs", GLSL_VERSION),
-        TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION)
+        TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION)
         );
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4);
+    
+    Image perlinNoiseImage = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
+    Texture perlinNoiseMap = LoadTextureFromImage(perlinNoiseImage);
+    UnloadImage(perlinNoiseImage);
 
-    Light light = CreateLight(LIGHT_DIRECTIONAL, (Vector3){-10.0f, 10.0f, 10.0f}, Vector3Zero(), WHITE, shader);
+    int perlinNoiseMapLoc = GetShaderLocation(shader, "perlinNoiseMap");
+    rlEnableShader(shader.id);
+    rlActiveTextureSlot(1);
+    rlEnableTexture(perlinNoiseMap.id);
+    rlSetUniformSampler(perlinNoiseMapLoc, 1);
+    
 
     planeModel.materials[0].shader = shader;
-    
+
     float time = 0.0f;
 
     SetTargetFPS(60);
@@ -84,8 +96,15 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            DrawModel(planeModel, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, (Color) {1, 34, 47, 255});
+
+                BeginShaderMode(shader);
+                    DrawModel(planeModel, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, (Color) {255, 255, 255, 255});
+                EndShaderMode();
+
             EndMode3D();
+
+            DrawText("Displacement mapping", 10, 10, 20, DARKGRAY);
+            DrawFPS(10, 40);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
