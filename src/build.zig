@@ -70,6 +70,55 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         });
     raylib.linkLibC();
 
+    // support_fileformat_bmp
+    if (options.support_fileformat_bmp) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_BMP", "1");
+    }
+    // support_fileformat_tga
+    if (options.support_fileformat_tga) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_TGA", "1");
+    }
+    // support_fileformat_jpg
+    if (options.support_fileformat_jpg) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_JPG", "1");
+    }
+    // support_fileformat_qoi
+    if (options.support_fileformat_qoi) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_QOI", "1");
+    }
+    // support_fileformat_psd
+    if (options.support_fileformat_psd) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_PSD", "1");
+    }
+    // support_fileformat_hdr
+    if (options.support_fileformat_hdr) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_HDR", "1");
+    }
+    // support_fileformat_pic
+    if (options.support_fileformat_pic) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_PIC", "1");
+    }
+    // support_fileformat_ktx
+    if (options.support_fileformat_ktx) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_KTX", "1");
+    }
+    // support_fileformat_astc
+    if (options.support_fileformat_astc) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_ASTC", "1");
+    }
+    // support_fileformat_pkm
+    if (options.support_fileformat_pkm) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_PKM", "1");
+    }
+    // support_fileformat_pvr
+    if (options.support_fileformat_pvr) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_PVR", "1");
+    }
+    // support_fileformat_svg
+    if (options.support_fileformat_svg) {
+        raylib.defineCMacro("SUPPORT_FILEFORMAT_SVG", "1");
+    }
+
     // No GLFW required on PLATFORM_DRM
     if (!options.platform_drm) {
         raylib.addIncludePath(b.path("src/external/glfw/include"));
@@ -118,9 +167,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-
-                        raylib.defineCMacro("_GLFW_X11", null);
-                        raylib.linkSystemLibrary("X11");
+                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.linkSystemLibrary("X11");
                 }
 
                 if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
@@ -253,6 +301,26 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+
+    // enable format support:
+    // these are enabled by default
+    // support_fileformat_png: bool = true,
+    // support_fileformat_dds: bool = true,
+    // support_fileformat_gif: bool = true,
+
+    // these are optional
+    support_fileformat_bmp: bool = false,
+    support_fileformat_tga: bool = false,
+    support_fileformat_jpg: bool = false,
+    support_fileformat_qoi: bool = true,
+    support_fileformat_psd: bool = false,
+    support_fileformat_hdr: bool = false,
+    support_fileformat_pic: bool = false,
+    support_fileformat_ktx: bool = false,
+    support_fileformat_astc: bool = false,
+    support_fileformat_pkm: bool = false,
+    support_fileformat_pvr: bool = false,
+    support_fileformat_svg: bool = false,
 
     raygui_dependency_name: []const u8 = "raygui",
 };
