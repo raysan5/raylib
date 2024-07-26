@@ -1,3 +1,4 @@
+//Ported by CDM to work on older hardware.
 #version 120
 
 // Input vertex attributes (from vertex shader)
