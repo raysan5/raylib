@@ -28,6 +28,20 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
         .opengl_version = options.opengl_version,
+
+        // supported file format options:
+        .support_fileformat_bmp = options.support_fileformat_bmp,
+        .support_fileformat_tga = options.support_fileformat_tga,
+        .support_fileformat_jpg = options.support_fileformat_jpg,
+        .support_fileformat_qoi = options.support_fileformat_qoi,
+        .support_fileformat_psd = options.support_fileformat_psd,
+        .support_fileformat_hdr = options.support_fileformat_hdr,
+        .support_fileformat_pic = options.support_fileformat_pic,
+        .support_fileformat_ktx = options.support_fileformat_ktx,
+        .support_fileformat_astc = options.support_fileformat_astc,
+        .support_fileformat_pkm = options.support_fileformat_pkm,
+        .support_fileformat_pvr = options.support_fileformat_pvr,
+        .support_fileformat_svg = options.support_fileformat_svg,
     });
     const raylib = raylib_dep.artifact("raylib");
 
@@ -69,6 +83,11 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             .optimize = optimize,
         });
     raylib.linkLibC();
+
+    // No GLFW required on PLATFORM_DRM
+    if (!options.platform_drm) {
+        raylib.addIncludePath(b.path("src/external/glfw/include"));
+    }
 
     // support_fileformat_bmp
     if (options.support_fileformat_bmp) {
@@ -117,11 +136,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     // support_fileformat_svg
     if (options.support_fileformat_svg) {
         raylib.defineCMacro("SUPPORT_FILEFORMAT_SVG", "1");
-    }
-
-    // No GLFW required on PLATFORM_DRM
-    if (!options.platform_drm) {
-        raylib.addIncludePath(b.path("src/external/glfw/include"));
     }
 
     var c_source_files = try std.ArrayList([]const u8).initCapacity(b.allocator, 2);
@@ -375,6 +389,20 @@ pub fn build(b: *std.Build) !void {
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
         .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
         .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
+
+        // supported image file format flags
+        .support_fileformat_bmp = b.option(bool, "support_fileformat_bmp", "support for fileformat bmp") orelse false,
+        .support_fileformat_tga = b.option(bool, "support_fileformat_tga", "support for fileformat tga") orelse false,
+        .support_fileformat_jpg = b.option(bool, "support_fileformat_jpg", "support for fileformat jpg") orelse false,
+        .support_fileformat_qoi = b.option(bool, "support_fileformat_qoi", "support for fileformat qoi") orelse false,
+        .support_fileformat_psd = b.option(bool, "support_fileformat_psd", "support for fileformat psd") orelse false,
+        .support_fileformat_hdr = b.option(bool, "support_fileformat_hdr", "support for fileformat hdr") orelse false,
+        .support_fileformat_pic = b.option(bool, "support_fileformat_pic", "support for fileformat pic") orelse false,
+        .support_fileformat_ktx = b.option(bool, "support_fileformat_ktx", "support for fileformat ktx") orelse false,
+        .support_fileformat_astc = b.option(bool, "support_fileformat_astc", "support for fileformat astc") orelse false,
+        .support_fileformat_pkm = b.option(bool, "support_fileformat_pkm", "support for fileformat pkm") orelse false,
+        .support_fileformat_pvr = b.option(bool, "support_fileformat_pvr", "support for fileformat pvr") orelse false,
+        .support_fileformat_svg = b.option(bool, "support_fileformat_svg", "support for fileformat svg") orelse false,
     };
 
     const lib = try compileRaylib(b, target, optimize, options);
