@@ -2,14 +2,14 @@
 *
 *   raylib [core] example - Basic window
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 5.0, last time updated with raylib 4.5
 *
-*   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by <Alex ZH> (@ZzzhHe) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 <user_name> (@<user_github>)
+*   Copyright (c) 2023 <Alex ZH> (@ZzzhHe)
 *
 ********************************************************************************************/
 
@@ -40,6 +40,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - vertex displacement");
 
+    // set up camera
     Camera camera = {0};
     camera.position = (Vector3) {20.0f, 5.0f, -20.0f};
     camera.target = (Vector3) {0.0f, 0.0f, 0.0f};
@@ -47,29 +48,28 @@ int main(void)
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    Mesh planeMesh = GenMeshPlane(50, 50, 50, 50);
-    Model planeModel = LoadModelFromMesh(planeMesh);
-
+    // Load vertex and fragment shaders
     Shader shader = LoadShader(
         TextFormat("resources/shaders/glsl%i/vertex_displacement.vs", GLSL_VERSION),
         TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION)
         );
-    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-
-    int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4);
     
+    // Load perlin noise texture
     Image perlinNoiseImage = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
     Texture perlinNoiseMap = LoadTextureFromImage(perlinNoiseImage);
     UnloadImage(perlinNoiseImage);
 
+    // Set shader uniform location
     int perlinNoiseMapLoc = GetShaderLocation(shader, "perlinNoiseMap");
     rlEnableShader(shader.id);
     rlActiveTextureSlot(1);
     rlEnableTexture(perlinNoiseMap.id);
     rlSetUniformSampler(perlinNoiseMapLoc, 1);
     
-
+    // Create a plane mesh and model
+    Mesh planeMesh = GenMeshPlane(50, 50, 50, 50);
+    Model planeModel = LoadModelFromMesh(planeMesh);
+    // Set plane model material
     planeModel.materials[0].shader = shader;
 
     float time = 0.0f;
@@ -81,13 +81,11 @@ int main(void)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        UpdateCamera(&camera, CAMERA_FREE);
+        //----------------------------------------------------------------------------------
+        UpdateCamera(&camera, CAMERA_FREE); // Update camera
 
-        float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
-
-        time += GetFrameTime();
-        SetShaderValue(shader, GetShaderLocation(shader, "time"), &time, SHADER_UNIFORM_FLOAT); 
+        time += GetFrameTime(); // Update time variable
+        SetShaderValue(shader, GetShaderLocation(shader, "time"), &time, SHADER_UNIFORM_FLOAT); // Send time value to shader
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -98,12 +96,13 @@ int main(void)
             BeginMode3D(camera);
 
                 BeginShaderMode(shader);
+                    // Draw plane model
                     DrawModel(planeModel, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, (Color) {255, 255, 255, 255});
                 EndShaderMode();
 
             EndMode3D();
 
-            DrawText("Displacement mapping", 10, 10, 20, DARKGRAY);
+            DrawText("Vertex displacement", 10, 10, 20, DARKGRAY);
             DrawFPS(10, 40);
 
         EndDrawing();

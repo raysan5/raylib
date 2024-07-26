@@ -13,5 +13,6 @@ void main()
 {
     vec4 darkblue = vec4(0.0, 0.13, 0.18, 1.0);
     vec4 lightblue = vec4(1.0, 1.0, 1.0, 1.0);
+    // interplate between two colors based on height
     finalColor = mix(darkblue, lightblue, height);
 }
