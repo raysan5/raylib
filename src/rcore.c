@@ -668,15 +668,7 @@ void InitWindow(int width, int height, const char *title)
     SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
     #endif
 #endif
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-    {
-        // Set default font texture filter for HighDPI (blurry)
-        // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
-        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
-    }
-#endif
+
 
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
