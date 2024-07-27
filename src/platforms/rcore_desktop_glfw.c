@@ -1275,11 +1275,10 @@ int InitPlatform(void)
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API); // OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 
-    //Disable GlFW auto iconify behaviour
-    //Auto Iconify automatically minimizes (iconifies) the window if the window loses focus
-    //additionally auto iconify restores the hardware resolution of the monitor if the window that loses focus is a fullscreen window
+    // Disable GlFW auto iconify behaviour
+    // Auto Iconify automatically minimizes (iconifies) the window if the window loses focus
+    // additionally auto iconify restores the hardware resolution of the monitor if the window that loses focus is a fullscreen window
     glfwWindowHint(GLFW_AUTO_ICONIFY, 0); 
-
 
     // Check window creation flags
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
