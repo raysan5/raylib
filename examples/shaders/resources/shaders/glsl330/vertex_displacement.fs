@@ -1,13 +1,11 @@
 #version 330
 
-// Input vertex attributes (from vertex shader)
+// Input fragment attributes (from fragment shader)
 in vec2 fragTexCoord;
 in float height;
 
 // Output fragment color
 out vec4 finalColor;
-
-// NOTE: Add here your custom variables
 
 void main()
 {
