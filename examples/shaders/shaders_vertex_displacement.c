@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window
+*   raylib [shaders] example - Vertex displacement
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 4.5
 *
