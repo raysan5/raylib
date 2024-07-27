@@ -353,6 +353,14 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
         {
             fileData = LoadFileData(fileNameOrString, &dataSize);
             isSvgStringValid = true;
+
+            // make sure that fileData is a NULL terminated String
+            // as required by nsvgParse()
+            if (fileData[dataSize-1] != '\0')
+            {
+                fileData = RL_REALLOC(fileData, dataSize+1);
+                fileData[dataSize] = '\0';
+            }
         }
         else
         {
