@@ -195,7 +195,7 @@ void ToggleBorderlessWindowed(void)
     bool wasOnFullscreen = false;
     if (CORE.Window.fullscreen)
     {
-        //fullscreen already saves previous position so it does not need to be set here again
+        // fullscreen already saves the previous position so it does not need to be set here again
         ToggleFullscreen();
         wasOnFullscreen = true;
     }
@@ -593,7 +593,7 @@ void SetWindowTitle(const char *title)
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    //update core window position as well
+    // Update CORE.Window.position as well
     CORE.Window.position.x = x;
     CORE.Window.position.y = y;
     glfwSetWindowPos(platform.handle, x, y);
@@ -1688,6 +1688,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 }
 static void WindowPosCallback(GLFWwindow* window, int x, int y)
 {
+    // Set current window position
     CORE.Window.position.x = x;
     CORE.Window.position.y = y;
 }
