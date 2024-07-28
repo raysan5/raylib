@@ -884,6 +884,13 @@ void SetMouseCursor(int cursor)
     }
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
 // Register all input events
 void PollInputEvents(void)
 {

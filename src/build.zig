@@ -117,31 +117,29 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
+                if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
 
-                switch (options.linux_display_backend) {
-                    .X11 => {
                         raylib.defineCMacro("_GLFW_X11", null);
                         raylib.linkSystemLibrary("X11");
-                    },
-                    .Wayland => {
-                        raylib.defineCMacro("_GLFW_WAYLAND", null);
-                        raylib.linkSystemLibrary("wayland-client");
-                        raylib.linkSystemLibrary("wayland-cursor");
-                        raylib.linkSystemLibrary("wayland-egl");
-                        raylib.linkSystemLibrary("xkbcommon");
-                        raylib.addIncludePath(b.path("src"));
-                        waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
-                        waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
-                        waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
-                    },
                 }
 
+                if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.linkSystemLibrary("wayland-client");
+                    raylib.linkSystemLibrary("wayland-cursor");
+                    raylib.linkSystemLibrary("wayland-egl");
+                    raylib.linkSystemLibrary("xkbcommon");
+                    raylib.addIncludePath(b.path("src"));
+                    waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
+                    waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
+                    waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
+                }
                 raylib.defineCMacro("PLATFORM_DESKTOP", null);
             } else {
                 if (options.opengl_version == .auto) {
@@ -253,7 +251,7 @@ pub const Options = struct {
     raygui: bool = false,
     platform_drm: bool = false,
     shared: bool = false,
-    linux_display_backend: LinuxDisplayBackend = .X11,
+    linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
 
     raygui_dependency_name: []const u8 = "raygui",
@@ -284,6 +282,7 @@ pub const OpenglVersion = enum {
 pub const LinuxDisplayBackend = enum {
     X11,
     Wayland,
+    Both,
 };
 
 pub fn build(b: *std.Build) !void {

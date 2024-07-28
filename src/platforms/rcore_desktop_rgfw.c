@@ -8,19 +8,17 @@
 *       - MacOS (Cocoa)
 *
 *   LIMITATIONS:
-*       - Limitation 01
-*       - Limitation 02
+*       - TODO
 *
 *   POSSIBLE IMPROVEMENTS:
-*       - Improvement 01
-*       - Improvement 02
+*       - TODO
 *
 *   ADDITIONAL NOTES:
 *       - TRACELOG() function is located in raylib [utils] module
 *
 *   CONFIGURATION:
-*       #define RCORE_PLATFORM_CUSTOM_FLAG
-*           Custom flag for rcore on target platform -not used-
+*       #define RCORE_PLATFORM_RGFW
+*           Custom flag for rcore on target platform RGFW
 *
 *   DEPENDENCIES:
 *       - RGFW.h (main library): Windowing and inputs management
@@ -48,57 +46,56 @@
 *
 **********************************************************************************************/
 
-#ifdef GRAPHICS_API_OPENGL_ES2
-#define RGFW_OPENGL_ES2
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    #define RGFW_OPENGL_ES2
 #endif
 
 void ShowCursor(void);
 void CloseWindow(void);
 
-#ifdef __linux__
-#define _INPUT_EVENT_CODES_H
+#if defined(__linux__)
+    #define _INPUT_EVENT_CODES_H
 #endif
 
 #if defined(__unix__) || defined(__linux__)
-#define _XTYPEDEF_FONT
+    #define _XTYPEDEF_FONT
 #endif
 
 #define RGFW_IMPLEMENTATION
 
 #if defined(__WIN32) || defined(__WIN64)
-#define WIN32_LEAN_AND_MEAN
-#define Rectangle rectangle_win32
-#define CloseWindow CloseWindow_win32
-#define ShowCursor __imp_ShowCursor
-#define _APISETSTRING_
+    #define WIN32_LEAN_AND_MEAN
+    #define Rectangle rectangle_win32
+    #define CloseWindow CloseWindow_win32
+    #define ShowCursor __imp_ShowCursor
+    #define _APISETSTRING_
 #endif
 
-#ifdef __APPLE__
-#define Point NSPOINT
-#define Size NSSIZE
+#if defined(__APPLE__)
+    #define Point NSPOINT
+    #define Size NSSIZE
 #endif
 
-#ifdef _MSC_VER
-__declspec(dllimport) int __stdcall  MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, wchar_t* lpWideCharStr, int cchWideChar);
+#if defined(_MSC_VER)
+__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #include "../external/RGFW.h"
 
-
-
 #if defined(__WIN32) || defined(__WIN64)
-#undef DrawText
-#undef ShowCursor
-#undef CloseWindow
-#undef Rectangle
+    #undef DrawText
+    #undef ShowCursor
+    #undef CloseWindow
+    #undef Rectangle
 #endif
 
-#ifdef __APPLE__
-#undef Point
-#undef Size
+#if defined(__APPLE__)
+    #undef Point
+    #undef Size
 #endif
 
 #include <stdbool.h>
+#include <string.h>     // Required for: strcmp()
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -112,7 +109,9 @@ typedef struct {
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
 
-static PlatformData platform = { NULL };   // Platform specific
+static PlatformData platform = { NULL }; // Platform specific
+
+static bool RGFW_disableCursor = false;
 
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
@@ -183,7 +182,7 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_u] = KEY_U,
     [RGFW_v] = KEY_V,
     [RGFW_w] = KEY_W,
-    [RGFW_x] KEY_X,
+    [RGFW_x] = KEY_X,
     [RGFW_y] = KEY_Y,
     [RGFW_z] = KEY_Z,
     [RGFW_Bracket] = KEY_LEFT_BRACKET,
@@ -244,7 +243,7 @@ bool WindowShouldClose(void)
 
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
-{
+{   
     RGFW_window_maximize(platform.window);
     ToggleBorderlessWindowed();
 }
@@ -252,10 +251,10 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    CORE.Window.flags & FLAG_WINDOW_UNDECORATED;
-
     if (platform.window != NULL)
-        TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() after window creation not available on target platform");
+    {
+        RGFW_window_setBorder(platform.window, CORE.Window.flags & FLAG_WINDOW_UNDECORATED);
+    }
 }
 
 // Set window state: maximized, if resizable
@@ -292,6 +291,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
+        printf("%i %i\n", platform.window->r.w, platform.window->r.h);
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
     }
@@ -313,7 +313,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_RGFW");
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
@@ -325,7 +325,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_RGFW");
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT post window creation post window creation is not supported on PLATFORM_DESKTOP_RGFW");
     }
     if (flags & FLAG_WINDOW_HIGHDPI)
     {
@@ -333,7 +333,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_RGFW");
+        RGFW_window_setMousePassthrough(platform.window, flags & FLAG_WINDOW_MOUSE_PASSTHROUGH);
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
@@ -408,7 +408,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
     {
-        //SDL_SetWindowGrab(platform.window, SDL_TRUE);
+        RGFW_window_setMousePassthrough(platform.window, flags & FLAG_WINDOW_MOUSE_PASSTHROUGH);
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_RGFW");
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
@@ -483,14 +483,14 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    RGFW_window_setName(platform.window, title);
+    RGFW_window_setName(platform.window, (char*)title);
     CORE.Window.title = title;
 }
 
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    RGFW_window_move(platform.window, RGFW_VECTOR(x, y));
+    RGFW_window_move(platform.window, RGFW_POINT(x, y));
 }
 
 // Set monitor for the current window
@@ -536,7 +536,9 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#ifndef RGFW_WINDOWS
+#ifdef RGFW_WEBASM
+    return (void*)platform.window->src.ctx;
+#elif !defined(RGFW_WINDOWS)
     return (void *)platform.window->src.window;
 #else
     return platform.window->src.hwnd;
@@ -566,16 +568,15 @@ int GetMonitorCount(void)
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
-    int current = 0;
     RGFW_monitor *mons = RGFW_getMonitors();
     RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
 
     for (int i = 0; i < 6; i++)
     {
-        if ((mons[i].rect.x ==  mon.rect.x) && (mons[i].rect.y ==  mon.rect.y)) current = i;
+        if ((mons[i].rect.x ==  mon.rect.x) && (mons[i].rect.y ==  mon.rect.y)) return i;
     }
 
-    return current;
+    return 0;
 }
 
 // Get selected monitor position
@@ -644,7 +645,7 @@ Vector2 GetWindowScaleDPI(void)
 {
     RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
 
-    return (Vector2){((u32)monitor.scaleX)*platform.window->r.w, ((u32) monitor.scaleX)*platform.window->r.h};
+    return (Vector2){monitor.scaleX, monitor.scaleX};
 }
 
 // Set clipboard text content
@@ -674,8 +675,6 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-bool RGFW_disableCursor = false;
-
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
@@ -692,8 +691,8 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     RGFW_disableCursor = true;
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    RGFW_window_mouseHold(platform.window, RGFW_AREA(CORE.Window.screen.width / 2, CORE.Window.screen.height / 2));
 
     HideCursor();
 }
@@ -729,7 +728,7 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        // TODO:
+        // TODO: Open URL implementation
     }
 }
 
@@ -747,7 +746,7 @@ int SetGamepadMappings(const char *mappings)
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
-    RGFW_window_moveMouse(platform.window, RGFW_VECTOR(x, y));
+    RGFW_window_moveMouse(platform.window, RGFW_POINT(x, y));
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
@@ -758,7 +757,66 @@ void SetMouseCursor(int cursor)
     RGFW_window_setMouseStandard(platform.window, cursor);
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
+
+// TODO: Review function to avoid duplicate with RSGL
+char RSGL_keystrToChar(const char *str)
+{
+    if (str[1] == 0) return str[0];
+
+    static const char *map[] = {
+        "asciitilde", "`",
+        "grave", "~",
+        "exclam", "!",
+        "at", "@",
+        "numbersign", "#",
+        "dollar", "$",
+        "percent", "%%",
+        "asciicircum", "^",
+        "ampersand", "&",
+        "asterisk", "*",
+        "parenleft", "(",
+        "parenright", ")",
+        "underscore", "_",
+        "minus", "-",
+        "plus", "+",
+        "equal", "=",
+        "braceleft", "{",
+        "bracketleft", "[",
+        "bracketright", "]",
+        "braceright", "}",
+        "colon", ":",
+        "semicolon", ";",
+        "quotedbl", "\"",
+        "apostrophe", "'",
+        "bar", "|",
+        "backslash", "\'",
+        "less", "<",
+        "comma", ",",
+        "greater", ">",
+        "period", ".",
+        "question", "?",
+        "slash", "/",
+        "space", " ",
+        "Return", "\n",
+        "Enter", "\n",
+        "enter", "\n",
+    };
+
+    for (unsigned char i = 0; i < (sizeof(map)/sizeof(char *)); i += 2)
+    {
+        if (strcmp(map[i], str) == 0) return *map[i + 1];
+    }
+
+    return '\0';
+}
 
 // Register all input events
 void PollInputEvents(void)
@@ -812,8 +870,7 @@ void PollInputEvents(void)
     }
 
     // Register previous mouse states
-    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
-        CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
@@ -822,15 +879,16 @@ void PollInputEvents(void)
 
     #define RGFW_HOLD_MOUSE			(1L<<2)
     #if defined(RGFW_X11) //|| defined(RGFW_MACOS)
-    if (platform.window->src.winArgs & RGFW_HOLD_MOUSE)
+    if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
     }
-    else {
+    else
+    {
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
-    #endif
+#endif
 
     while (RGFW_window_checkEvent(platform.window))
     {
@@ -847,7 +905,7 @@ void PollInputEvents(void)
             }
         }
 
-        RGFW_Event* event = &platform.window->event;
+        RGFW_Event *event = &platform.window->event;
 
         // All input events can be processed after polling
         switch (event->type)
@@ -924,7 +982,7 @@ void PollInputEvents(void)
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
                     // Add character (codepoint) to the queue
-                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RGFW_keystrToChar(event->keyName);
+                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RSGL_keystrToChar(event->keyName);
                     CORE.Input.Keyboard.charPressedQueueCount++;
                 }
             } break;
@@ -974,17 +1032,17 @@ void PollInputEvents(void)
             } break;
             case RGFW_mousePosChanged:
             {
-                if (platform.window->src.winArgs & RGFW_HOLD_MOUSE)
+                if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
                 {
                     CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
 
-                    if ((event->point.x - (platform.window->r.w/2))*2)
+                    if (event->point.x)
                         CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
-                    if ((event->point.y - (platform.window->r.h/2))*2)
+                    if (event->point.y)
                         CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.currentPosition.y;
 
-                    CORE.Input.Mouse.currentPosition.x = (event->point.x - (platform.window->r.w/2))*2;
-                    CORE.Input.Mouse.currentPosition.y = (event->point.y - (platform.window->r.h/2))*2;
+                    CORE.Input.Mouse.currentPosition.x = (float)event->point.x;
+                    CORE.Input.Mouse.currentPosition.y = (float)event->point.y;
                 }
                 else
                 {
@@ -1109,6 +1167,7 @@ void PollInputEvents(void)
                         int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
+                        
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
                         else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
                     }
@@ -1147,8 +1206,6 @@ void PollInputEvents(void)
         }
 #endif
     }
-
-    if (RGFW_disableCursor && platform.window->event.inFocus) RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
     //-----------------------------------------------------------------------------
 }
 
@@ -1200,8 +1257,17 @@ int InitPlatform(void)
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
 
-    if (CORE.Window.flags & FLAG_VSYNC_HINT)
-        RGFW_window_swapInterval(platform.window, 1);
+    RGFW_area screenSize = RGFW_getScreenSize();
+    CORE.Window.display.width = screenSize.w;
+    CORE.Window.display.height = screenSize.h;
+    /* 
+        I think this is needed by Raylib now ? 
+        If so, rcore_destkop_sdl should be updated too
+    */
+    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+
+
+    if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
 
     RGFW_window_makeCurrent(platform.window);
 
@@ -1266,12 +1332,12 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-    #ifdef RGFW_X11
+#ifdef RGFW_X11
     for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
     {
         RGFW_registerJoystick(platform.window, i);
     }
-    #endif
+#endif
 
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
 
