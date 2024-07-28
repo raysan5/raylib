@@ -1160,9 +1160,9 @@ void SetMousePosition(int x, int y)
 
     // Update the metrics :
 
-    CORE.Input.Mouse.currentPosition = (Vector2){ mouseX, mouseY };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-
+    CORE.Input.Mouse.currentPosition = (Vector2){ mouseX, mouseY };
+  
     // And we're done :
 
     glfwSetCursorPos(platform.handle, mouseX, mouseY);
