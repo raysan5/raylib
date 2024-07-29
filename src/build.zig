@@ -28,6 +28,7 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
         .opengl_version = options.opengl_version,
+        .config = options.config,
     });
     const raylib = raylib_dep.artifact("raylib");
 
@@ -52,6 +53,53 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
+    if (options.config) |config| {
+        const file = try std.fs.path.join(b.allocator, &.{ std.fs.path.dirname(@src().file) orelse ".", "config.h" });
+        defer b.allocator.free(file);
+        const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
+        defer b.allocator.free(content);
+
+        var lines = std.mem.split(u8, content, "\n");
+        lines_loop: while (lines.next()) |line| {
+            if (!std.mem.startsWith(u8, line, "#define")) continue;
+
+            // Remove "#define " and add "-D" prefix
+            var flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{line[6..]});
+
+            // Skip if user is supplying the flag
+            var user_supplied_flags = std.mem.split(u8, config, " ");
+            while (user_supplied_flags.next()) |user_flag| {
+                // Flag could be -Dflag=1 or -Dflag
+                const skip_flag = user_flag[0 .. std.mem.lastIndexOf(u8, user_flag, "=") orelse user_flag.len];
+                if (std.mem.startsWith(u8, flag, skip_flag)) continue :lines_loop;
+            }
+
+            // Remove trailing comments
+            if (std.mem.indexOf(u8, flag, "/")) |comment_idx| {
+                flag = flag[0..comment_idx];
+                flag = try std.fmt.allocPrint(b.allocator, "{s}", .{std.mem.trim(u8, flag, " ")});
+            }
+
+            // Insert '=' after flag and remove spaces after equal
+            if (std.mem.indexOf(u8, flag, " ")) |startspaces_idx| {
+                flag[startspaces_idx] = '=';
+                // Remove spaces after equal
+                if (std.mem.lastIndexOf(u8, flag, " ")) |endspaces_idx| {
+                    const left = flag[0 .. startspaces_idx + 1];
+                    const right = flag[endspaces_idx + 1 ..];
+                    flag = try std.fmt.allocPrint(b.allocator, "{s}{s}", .{ left, right });
+                }
+            }
+
+            // Append default value from config.h to compile flags
+            try raylib_flags_arr.append(b.allocator, flag);
+        }
+        // Append config flags supplied by user to compile flags
+        try raylib_flags_arr.append(b.allocator, config);
+
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
+    }
+
     if (options.shared) {
         try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
     }
@@ -253,6 +301,7 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+    config: ?[]const u8 = null,
 
     raygui_dependency_name: []const u8 = "raygui",
 };
@@ -307,6 +356,7 @@ pub fn build(b: *std.Build) !void {
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
         .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
         .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
+        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse null,
     };
 
     const lib = try compileRaylib(b, target, optimize, options);
