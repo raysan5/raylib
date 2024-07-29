@@ -60,40 +60,23 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         defer b.allocator.free(content);
 
         var lines = std.mem.split(u8, content, "\n");
-        lines_loop: while (lines.next()) |line| {
-            if (!std.mem.startsWith(u8, line, "#define")) continue;
+        while (lines.next()) |line| {
+            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+            if (std.mem.startsWith(u8, line, "//")) continue;
 
-            // Remove "#define " and add "-D" prefix
-            var flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{line[6..]});
+            var flag = std.mem.trimLeft(u8, line, " \t");                 // Trim whitespace
+            flag = flag["#define ".len - 1 ..];                           // Remove #define
+            flag = std.mem.trimLeft(u8, flag, " \t");                     // Trim whitespace
+            flag = flag[0..std.mem.indexOf(u8, flag, " ").?];             // Flag is only one word, so capture till space
+            flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
 
-            // Skip if user is supplying the flag
-            var user_supplied_flags = std.mem.split(u8, config, " ");
-            while (user_supplied_flags.next()) |user_flag| {
-                // Flag could be -Dflag=1 or -Dflag
-                const skip_flag = user_flag[0 .. std.mem.lastIndexOf(u8, user_flag, "=") orelse user_flag.len];
-                if (std.mem.startsWith(u8, flag, skip_flag)) continue :lines_loop;
-            }
-
-            // Remove trailing comments
-            if (std.mem.indexOf(u8, flag, "/")) |comment_idx| {
-                flag = flag[0..comment_idx];
-                flag = try std.fmt.allocPrint(b.allocator, "{s}", .{std.mem.trim(u8, flag, " ")});
-            }
-
-            // Insert '=' after flag and remove spaces after equal
-            if (std.mem.indexOf(u8, flag, " ")) |startspaces_idx| {
-                flag[startspaces_idx] = '=';
-                // Remove spaces after equal
-                if (std.mem.lastIndexOf(u8, flag, " ")) |endspaces_idx| {
-                    const left = flag[0 .. startspaces_idx + 1];
-                    const right = flag[endspaces_idx + 1 ..];
-                    flag = try std.fmt.allocPrint(b.allocator, "{s}{s}", .{ left, right });
-                }
-            }
+            // If user specifies the flag skip it
+            if (std.mem.containsAtLeast(u8, config, 1, flag)) continue;
 
             // Append default value from config.h to compile flags
             try raylib_flags_arr.append(b.allocator, flag);
         }
+
         // Append config flags supplied by user to compile flags
         try raylib_flags_arr.append(b.allocator, config);
 
