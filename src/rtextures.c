@@ -291,11 +291,21 @@ Image LoadImage(const char *fileName)
     // Loading file to memory
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    const char *fileType = GetFileExtension(fileName);
+
+    #if defined(SUPPORT_FILEFORMAT_SVG)
+    if ((strcmp(fileType, ".svg") == 0) || (strcmp(fileType, ".SVG") == 0))
+    {
+        fileData = RL_REALLOC(fileData, dataSize+1);
+        fileData[dataSize] = '\0';
+        dataSize++;
+    }
+    #endif
 
     // Loading image from memory data
     if (fileData != NULL)
     {
-        image = LoadImageFromMemory(GetFileExtension(fileName), fileData, dataSize);
+        image = LoadImageFromMemory(fileType, fileData, dataSize);
 
         UnloadFileData(fileData);
     }
@@ -619,22 +629,28 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             (fileData[2] == 'v') &&
             (fileData[3] == 'g'))
         {
-            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
-            unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
+            // make sure that fileData is a NULL terminated String
+            // as required by nsvgParse()
+            if (fileData[dataSize-1] == '\0')
+            {
+                struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+                unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
 
-            // Rasterize
-            struct NSVGrasterizer *rast = nsvgCreateRasterizer();
-            nsvgRasterize(rast, svgImage, 0, 0, 1.0f, img, svgImage->width, svgImage->height, svgImage->width*4);
+                // Rasterize
+                struct NSVGrasterizer *rast = nsvgCreateRasterizer();
+                nsvgRasterize(rast, svgImage, 0, 0, 1.0f, img, svgImage->width, svgImage->height, svgImage->width*4);
 
-            // Populate image struct with all data
-            image.data = img;
-            image.width = svgImage->width;
-            image.height = svgImage->height;
-            image.mipmaps = 1;
-            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+                // Populate image struct with all data
+                image.data = img;
+                image.width = svgImage->width;
+                image.height = svgImage->height;
+                image.mipmaps = 1;
+                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-            nsvgDelete(svgImage);
-            nsvgDeleteRasterizer(rast);
+                nsvgDelete(svgImage);
+                nsvgDeleteRasterizer(rast);
+            }
+            else TRACELOG(LOG_WARNING, "IMAGE: SVG image data must be NULL terminated");
         }
     }
 #endif
