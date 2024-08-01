@@ -618,8 +618,9 @@ void SetWindowMonitor(int monitor)
         {
             TRACELOG(LOG_INFO, "GLFW: Selected monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
 
-            const int screenWidth = CORE.Window.screen.width;
-            const int screenHeight = CORE.Window.screen.height;
+            // Here the render width has to be used again in case high dpi flag is enabled
+            const int screenWidth = CORE.Window.render.width;
+            const int screenHeight = CORE.Window.render.height;
             int monitorWorkareaX = 0;
             int monitorWorkareaY = 0;
             int monitorWorkareaWidth = 0;
