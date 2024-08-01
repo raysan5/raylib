@@ -469,7 +469,7 @@ RMAPI Vector2 Vector2Rotate(Vector2 v, float angle)
 }
 
 // Move Vector towards target
-RMAPI Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
+RMAPI Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float speed)
 {
     Vector2 result = { 0 };
 
