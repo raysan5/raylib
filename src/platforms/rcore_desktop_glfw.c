@@ -1572,12 +1572,17 @@ int InitPlatform(void)
         int monitorWidth = 0;
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
-
-        int posX = monitorX + (monitorWidth - (int)CORE.Window.screen.width)/2;
-        int posY = monitorY + (monitorHeight - (int)CORE.Window.screen.height)/2;
+        
+        // Here CORE.Window.render.width/height should be used instead of CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled.
+        int posX = monitorX + (monitorWidth - (int)CORE.Window.render.width)/2;
+        int posY = monitorY + (monitorHeight - (int)CORE.Window.render.height)/2;
         if (posX < monitorX) posX = monitorX;
         if (posY < monitorY) posY = monitorY;
         SetWindowPosition(posX, posY);
+
+        // Update CORE.Window.position here so it is correct from the start
+        CORE.Window.position.x = posX;
+        CORE.Window.position.y = posY;
     }
 
     // Load OpenGL extensions
