@@ -5403,7 +5403,9 @@ int GetPixelDataSize(int width, int height, int format)
         default: break;
     }
 
-    dataSize = width*height*bpp/8;  // Total data size in bytes
+    // Total data size in bytes
+    // NOTE: promote to long long during calculation to avoid overflows before dividing by 8
+    dataSize = width*height*(long long)bpp/8;
 
     // Most compressed formats works on 4x4 blocks,
     // if texture is smaller, minimum dataSize is 8 or 16
