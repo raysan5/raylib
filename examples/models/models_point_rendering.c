@@ -17,7 +17,7 @@
 #include <stdlib.h>         // Required for: rand()
 #include <math.h>           // Required for: cos(), sin()
 
-#define MAX_POINTS 10000000 // 1 million
+#define MAX_POINTS 10000000 // 10 million
 #define MIN_POINTS 1000     // 1 thousand
 
 static float RandFloat();
