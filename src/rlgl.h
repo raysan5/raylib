@@ -4993,7 +4993,8 @@ static int rlGetPixelDataSize(int width, int height, int format)
         default: break;
     }
 
-    dataSize = width*height*bpp/8;  // Total data size in bytes
+    char bytesPerPixel = bpp/8;
+    dataSize = width*height*bytesPerPixel; // Total data size in bytes
 
     // Most compressed formats works on 4x4 blocks,
     // if texture is smaller, minimum dataSize is 8 or 16
