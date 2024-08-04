@@ -1,47 +1,40 @@
+/*******************************************************************************************
+*
+*   raylib example - point rendering
+*
+*   Example originally created with raylib 5.0, last time updated with raylib 5.0
+*
+*   Example contributed by Reese Gallagher (@satchelfrost) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2024 Reese Gallagher (@satchelfrost)
+*
+********************************************************************************************/
+
 #include "raylib.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <stdlib.h>         // Required for: rand()
+#include <math.h>           // Required for: cos(), sin()
 
-#define MAX_POINTS 10000000
-#define MIN_POINTS 1000
+#define MAX_POINTS 10000000 // 1 million
+#define MIN_POINTS 1000     // 1 thousand
 
-float randFloat()
-{
-    return (float)rand() / RAND_MAX;
-}
+static float RandFloat();
+static Mesh GenPoints(int numPoints);
 
-static Mesh GenMeshCustom(int numPoints)
-{
-    Mesh mesh = { 
-        .triangleCount = 1,
-        .vertexCount = numPoints,
-        .vertices = (float *)MemAlloc(numPoints * 3 * sizeof(float)),
-        .colors = (unsigned char*)MemAlloc(numPoints * 4 * sizeof(unsigned char)),
-    };
-
-    // https://en.wikipedia.org/wiki/Spherical_coordinate_system
-    for (int i = 0; i < numPoints; i++) {
-        float theta = PI * randFloat();
-        float phi   = 2 * PI * randFloat();
-        float r     = 10.0f * randFloat();
-        mesh.vertices[i * 3 + 0] = r * sin(theta) * cos(phi);
-        mesh.vertices[i * 3 + 1] = r * sin(theta) * sin(phi);
-        mesh.vertices[i * 3 + 2] = r * cos(theta);
-        Color color = ColorFromHSV(r * 360.0f, 1.0f, 1.0f);
-        mesh.colors[i * 4 + 0] = color.r;
-        mesh.colors[i * 4 + 1] = color.g;
-        mesh.colors[i * 4 + 2] = color.b;
-        mesh.colors[i * 4 + 3] = color.a;
-    }
-
-    // Upload mesh data from CPU (RAM) to GPU (VRAM) memory
-    UploadMesh(&mesh, false);
-    return mesh;
-}
-
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main()
 {
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - point rendering");
+    SetTargetFPS(60);
+
     Camera camera = {
         .position   = {3.0f, 3.0f, 3.0f},
         .target     = {0.0f, 0.0f, 0.0f},
@@ -50,50 +43,59 @@ int main()
         .projection = CAMERA_PERSPECTIVE,
     };
 
-    InitWindow(800, 600, "Point Rendering");
-
     Vector3 position = {0.0f, 0.0f, 0.0f};
-    bool newMethod = true;
+    bool useDrawModelPoints = true;
     bool numPointsChanged = false;
     int numPoints = 1000;
-    Mesh mesh = GenMeshCustom(numPoints);
+    Mesh mesh = GenPoints(numPoints);
     Model model = LoadModelFromMesh(mesh);
+    //--------------------------------------------------------------------------------------
 
-    SetTargetFPS(60);
-
+    // Main game loop
     while(!WindowShouldClose()) {
+        // Update
+        //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
-        if (IsKeyPressed(KEY_SPACE)) newMethod = !newMethod;
-        if (IsKeyPressed(KEY_UP)) {
+        if (IsKeyPressed(KEY_SPACE)) useDrawModelPoints = !useDrawModelPoints;
+        if (IsKeyPressed(KEY_UP))
+        {
             numPoints = (numPoints * 10 > MAX_POINTS) ? MAX_POINTS : numPoints * 10;
             numPointsChanged = true;
             TraceLog(LOG_INFO, "num points %d", numPoints);
         }
-        if (IsKeyPressed(KEY_DOWN)) {
+        if (IsKeyPressed(KEY_DOWN))
+        {
             numPoints = (numPoints / 10 < MIN_POINTS) ? MIN_POINTS : numPoints / 10;
             numPointsChanged = true;
             TraceLog(LOG_INFO, "num points %d", numPoints);
         }
 
-        /* re-upload a different point cloud size */
-        if (numPointsChanged) {
+        // re-upload a different point cloud size
+        if (numPointsChanged)
+        {
             UnloadModel(model);
-            mesh = GenMeshCustom(numPoints);
+            mesh = GenPoints(numPoints);
             model = LoadModelFromMesh(mesh);
             numPointsChanged = false;
         }
 
+        // Draw
+        //----------------------------------------------------------------------------------
         BeginDrawing();
             ClearBackground(BLACK);
             BeginMode3D(camera);
 
-                /* The new method only uploads the points once to the GPU */
-                if (newMethod) {
+                // The new method only uploads the points once to the GPU
+                if (useDrawModelPoints)
+                {
                     DrawModelPoints(model, position, 1.0f, WHITE);
-                } else {
-                /* The old method must continually draw the "points" (lines) */
-                    for (int i = 0; i < numPoints; i++) {
+                }
+                else
+                {
+                // The old method must continually draw the "points" (lines)
+                    for (int i = 0; i < numPoints; i++)
+                    {
                         Vector3 pos = {
                             .x = mesh.vertices[i * 3 + 0],
                             .y = mesh.vertices[i * 3 + 1],
@@ -109,28 +111,67 @@ int main()
                     }
                 }
 
+                // Draw a unit sphere for reference
                 DrawSphereWires(position, 1.0f, 10, 10, YELLOW);
             EndMode3D();
 
-            /* Text formatting */
+            // Text formatting
             Color color = WHITE;
             int fps = GetFPS();
             if ((fps < 30) && (fps >= 15)) color = ORANGE;
             else if (fps < 15) color = RED;
             DrawText(TextFormat("%2i FPS", fps), 20, 20, 40, color);
-            DrawText(TextFormat("Point Count %d", numPoints), 20, 550, 40, WHITE);
+            DrawText(TextFormat("Point Count: %d", numPoints), 20, screenHeight - 50, 40, WHITE);
             DrawText("Up - increase points", 20, 70, 20, WHITE);
             DrawText("Down - decrease points", 20, 100, 20, WHITE);
-            DrawText("Space - draw mode", 20, 130, 20, WHITE);
-            if (newMethod) {
-                DrawText("DrawModelPoints", 20, 160, 20, GREEN);
-            } else {
-                DrawText("DrawPoint3D", 20, 160, 20, RED);
-            }
+            DrawText("Space - drawing function", 20, 130, 20, WHITE);
+            if (useDrawModelPoints) DrawText("DrawModelPoints()", 20, 160, 20, GREEN);
+            else DrawText("DrawPoint3D()", 20, 160, 20, RED);
         EndDrawing();
+        //----------------------------------------------------------------------------------
     }
 
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
     UnloadModel(model);
     CloseWindow();
+    //--------------------------------------------------------------------------------------
     return 0;
+}
+
+// Random float between 0 and 1
+float RandFloat()
+{
+    return (float)rand() / RAND_MAX;
+}
+
+// Generate a spherical point cloud
+Mesh GenPoints(int numPoints)
+{
+    Mesh mesh = { 
+        .triangleCount = 1,
+        .vertexCount = numPoints,
+        .vertices = (float *)MemAlloc(numPoints * 3 * sizeof(float)),
+        .colors = (unsigned char*)MemAlloc(numPoints * 4 * sizeof(unsigned char)),
+    };
+
+    // https://en.wikipedia.org/wiki/Spherical_coordinate_system
+    for (int i = 0; i < numPoints; i++)
+    {
+        float theta = PI * RandFloat();
+        float phi   = 2 * PI * RandFloat();
+        float r     = 10.0f * RandFloat();
+        mesh.vertices[i * 3 + 0] = r * sin(theta) * cos(phi);
+        mesh.vertices[i * 3 + 1] = r * sin(theta) * sin(phi);
+        mesh.vertices[i * 3 + 2] = r * cos(theta);
+        Color color = ColorFromHSV(r * 360.0f, 1.0f, 1.0f);
+        mesh.colors[i * 4 + 0] = color.r;
+        mesh.colors[i * 4 + 1] = color.g;
+        mesh.colors[i * 4 + 2] = color.b;
+        mesh.colors[i * 4 + 3] = color.a;
+    }
+
+    // Upload mesh data from CPU (RAM) to GPU (VRAM) memory
+    UploadMesh(&mesh, false);
+    return mesh;
 }
