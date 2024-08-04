@@ -14,10 +14,8 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
 
-#include <printf.h>
+#include "rlgl.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -51,8 +49,7 @@ int main(void)
     // Load vertex and fragment shaders
     Shader shader = LoadShader(
         TextFormat("resources/shaders/glsl%i/vertex_displacement.vs", GLSL_VERSION),
-        TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION)
-        );
+        TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION));
     
     // Load perlin noise texture
     Image perlinNoiseImage = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
@@ -111,7 +108,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
     UnloadShader(shader);
     UnloadModel(planeModel);
 
