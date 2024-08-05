@@ -467,7 +467,7 @@ INCLUDE_PATHS = -I.
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     INCLUDE_PATHS += -Iexternal/glfw/include
     ifeq ($(PLATFORM_OS),BSD)
-        INCLUDE_PATHS += -I/usr/local/include
+        INCLUDE_PATHS += -I/usr/local/include -I/usr/pkg/include -I/usr/X11R7/include
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
