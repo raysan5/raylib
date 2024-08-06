@@ -1,12 +1,8 @@
-//Ported by CDM to work on older hardware.
 #version 120
 
 // Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
 varying vec4 fragColor;
-
-// Output fragment color
-vec4 finalColor;
 
 uniform vec3 viewEye;
 uniform vec3 viewCenter;
