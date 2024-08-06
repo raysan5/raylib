@@ -155,6 +155,13 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 }
 
                 if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+                        std.log.err(
+                            \\ Wayland may not be installed on the system.
+                            \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
+                        , .{});
+                        @panic("No Wayland");
+                    };
                     raylib.defineCMacro("_GLFW_WAYLAND", null);
                     raylib.linkSystemLibrary("wayland-client");
                     raylib.linkSystemLibrary("wayland-cursor");
