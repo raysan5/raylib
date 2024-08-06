@@ -4993,7 +4993,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
         default: break;
     }
 
-    float bytesPerPixel = (float)bpp/8.0f;
+    double bytesPerPixel = (double)bpp/8.0;
     dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
 
     // Most compressed formats works on 4x4 blocks,
