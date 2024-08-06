@@ -181,6 +181,10 @@ void ToggleFullscreen(void)
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
 
         glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+
+        // we update the window position right away
+        CORE.Window.position.x = CORE.Window.previousPosition.x;
+        CORE.Window.position.y = CORE.Window.previousPosition.y;
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -256,6 +260,9 @@ void ToggleBorderlessWindowed(void)
                 glfwFocusWindow(platform.handle);
 
                 CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+
+                CORE.Window.position.x = CORE.Window.previousPosition.x;
+                CORE.Window.position.y = CORE.Window.previousPosition.y;
             }
         }
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
