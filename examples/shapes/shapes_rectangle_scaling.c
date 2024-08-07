@@ -33,7 +33,7 @@ int main(void)
 
     Vector2 mousePosition = { 0 };
 
-    bool mouseScaleReady = false;
+    bool mouseOverRectangle = false;
     bool mouseScaleMode = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -46,17 +46,19 @@ int main(void)
         //----------------------------------------------------------------------------------
         mousePosition = GetMousePosition();
 
+        if (CheckCollisionPointRec(mousePosition, rec))
+        {
+            mouseOverRectangle = true;
+        }
+        else mouseOverRectangle = false;
+
         if (CheckCollisionPointRec(mousePosition, (Rectangle){ rec.x + rec.width - MOUSE_SCALE_MARK_SIZE, rec.y + rec.height - MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE }))
         {
-            mouseScaleReady = true;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) mouseScaleMode = true;
         }
-        else mouseScaleReady = false;
 
         if (mouseScaleMode)
         {
-            mouseScaleReady = true;
-
             rec.width = (mousePosition.x - rec.x);
             rec.height = (mousePosition.y - rec.y);
 
@@ -82,7 +84,7 @@ int main(void)
 
             DrawRectangleRec(rec, Fade(GREEN, 0.5f));
 
-            if (mouseScaleReady)
+            if (mouseOverRectangle || mouseScaleMode)
             {
                 DrawRectangleLinesEx(rec, 1, RED);
                 DrawTriangle((Vector2){ rec.x + rec.width - MOUSE_SCALE_MARK_SIZE, rec.y + rec.height },
