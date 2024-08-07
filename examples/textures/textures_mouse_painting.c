@@ -187,8 +187,8 @@ int main(void)
         }
 
         // Draw top panel
-        DrawRectangle(0, 0, GetScreenWidth(), 50, RAYWHITE);
-        DrawLine(0, 50, GetScreenWidth(), 50, LIGHTGRAY);
+        DrawRectangle(0, 0, GetScreenWidth(), 70, RAYWHITE);
+        DrawLine(0, 70, GetScreenWidth(), 70, LIGHTGRAY);
 
         // Draw color selection rectangles
         for (int i = 0; i < MAX_COLORS_COUNT; i++) DrawRectangleRec(colorsRecs[i], colors[i]);
@@ -202,6 +202,9 @@ int main(void)
         // Draw save image button
         DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover ? RED : BLACK);
         DrawText("SAVE!", 755, 20, 10, btnSaveMouseHover ? RED : BLACK);
+
+        // Draw controls
+        DrawText("Left Click: Paint            Right Click: Erase            Mousewheel: Brush size", colorsRecs[0].x, colorsRecs[0].y + colorsRecs[0].height + 5, 20, BLACK);
 
         // Draw save image message
         if (showSaveMessage)
