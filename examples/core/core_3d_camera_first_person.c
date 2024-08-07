@@ -65,6 +65,7 @@ int main(void)
         {
             cameraMode = CAMERA_FREE;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_TWO))
