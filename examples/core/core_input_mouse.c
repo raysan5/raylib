@@ -55,7 +55,8 @@ int main(void)
 
             DrawCircleV(ballPosition, 40, ballColor);
 
-            DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
+            DrawText("move ball with mouse and click mouse buttons to change color", 10, 10, 20, DARKGRAY);
+            DrawText("Left: MAROON\nRight: DARKBLUE\nMiddle: LIME\nSide: PURPLE\nExtra: YELLOW\nForward: ORANGE\nBack: BEIGE", 10, 35, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
