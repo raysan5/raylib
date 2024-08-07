@@ -73,18 +73,21 @@ int main(void)
         {
             cameraMode = CAMERA_FIRST_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_THREE))
         {
             cameraMode = CAMERA_THIRD_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_FOUR))
         {
             cameraMode = CAMERA_ORBITAL;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            camera.fovy = 60.0f;
         }
 
         // Switch camera projection
@@ -120,7 +123,7 @@ int main(void)
         bool zoomIn = IsKeyDown(KEY_KP_ADD);
         bool zoomOut = IsKeyDown(KEY_KP_SUBTRACT);
 
-        if (cameraMode != CAMERA_THIRD_PERSON && (wheelMove != 0 || zoomIn || zoomOut))
+        if (cameraMode == CAMERA_FIRST_PERSON && (wheelMove != 0 || zoomIn || zoomOut))
         {
             if ((wheelMove > 0 || zoomIn) && camera.fovy >= 20.0f)
             {
@@ -132,8 +135,6 @@ int main(void)
             }
         }
         
-        printf("fov: %.2f\n", camera.fovy);
-        printf("bool: %d\n", (cameraMode != CAMERA_THIRD_PERSON && (wheelMove != 0 || zoomIn || zoomOut)));
         // Update camera computes movement internally depending on the camera mode
         // Some default standard keyboard/mouse inputs are hardcoded to simplify use
         // For advance camera controls, it's reecommended to compute camera movement manually
@@ -201,8 +202,8 @@ int main(void)
             DrawText("- Zoom keys: num-plus, num-minus or mouse scroll", 15, 90, 10, BLACK);
             DrawText("- Camera projection key: P", 15, 105, 10, BLACK);
 
-            DrawRectangle(600, 5, 195, 120, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(600, 5, 195, 120, BLUE);
+            DrawRectangle(600, 5, 195, 100, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(600, 5, 195, 100, BLUE);
 
             DrawText("Camera status:", 610, 15, 10, BLACK);
             DrawText(TextFormat("- Mode: %s", (cameraMode == CAMERA_FREE) ? "FREE" :
@@ -214,7 +215,6 @@ int main(void)
             DrawText(TextFormat("- Position: (%06.3f, %06.3f, %06.3f)", camera.position.x, camera.position.y, camera.position.z), 610, 60, 10, BLACK);
             DrawText(TextFormat("- Target: (%06.3f, %06.3f, %06.3f)", camera.target.x, camera.target.y, camera.target.z), 610, 75, 10, BLACK);
             DrawText(TextFormat("- Up: (%06.3f, %06.3f, %06.3f)", camera.up.x, camera.up.y, camera.up.z), 610, 90, 10, BLACK);
-            DrawText(TextFormat("- FOV: %06.3f", camera.fovy), 610, 105, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
