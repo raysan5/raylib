@@ -4364,8 +4364,6 @@ void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned 
 {
 #if defined(GRAPHICS_API_OPENGL_43)
     glDispatchCompute(groupX, groupY, groupZ);
-#else
-    TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 }
 
@@ -4383,7 +4381,6 @@ unsigned int rlLoadShaderBuffer(unsigned int size, const void *data, int usageHi
 #else
     TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
-
 
     return ssbo;
 }
@@ -4405,8 +4402,6 @@ void rlUpdateShaderBuffer(unsigned int id, const void *data, unsigned int dataSi
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, dataSize, data);
-#else
-    TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 }
 
@@ -4418,8 +4413,6 @@ unsigned int rlGetShaderBufferSize(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferParameteri64v(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &size);
-#else
-    TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 
     return (size > 0)? (unsigned int)size : 0;
@@ -4431,8 +4424,6 @@ void rlReadShaderBuffer(unsigned int id, void *dest, unsigned int count, unsigne
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, count, dest);
-#else
-    TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 }
 
@@ -4441,8 +4432,6 @@ void rlBindShaderBuffer(unsigned int id, unsigned int index)
 {
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, id);
-#else
-    TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 }
 
@@ -4453,8 +4442,6 @@ void rlCopyShaderBuffer(unsigned int destId, unsigned int srcId, unsigned int de
     glBindBuffer(GL_COPY_READ_BUFFER, srcId);
     glBindBuffer(GL_COPY_WRITE_BUFFER, destId);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcOffset, destOffset, count);
-#else
-    TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 }
 
