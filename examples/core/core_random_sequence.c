@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - Generates a random sequence
 *
-*   Example originally created with raylib 5.0, last time updated with raylib 5.0
+*   Example originally created with raylib 5.0, last time updated with raylib 5.5
 *
 *   Example contributed by Dalton Overmyer (@REDl3east) and reviewed by Ramon Santamaria (@raysan5)
 *

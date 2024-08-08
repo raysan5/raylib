@@ -6,7 +6,7 @@
 *   As you will notice, code structure is slightly diferent to the other examples...
 *   To compile it for PLATFORM_WEB just uncomment #define PLATFORM_WEB at beginning
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 1.3
+*   Example originally created with raylib 1.3, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

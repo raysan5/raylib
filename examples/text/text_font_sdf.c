@@ -2,7 +2,7 @@
 *
 *   raylib [text] example - Font SDF loading
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 4.0
+*   Example originally created with raylib 1.3, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

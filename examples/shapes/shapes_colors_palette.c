@@ -2,7 +2,7 @@
 *
 *   raylib [shapes] example - Colors palette
 *
-*   Example originally created with raylib 1.0, last time updated with raylib 2.5
+*   Example originally created with raylib 1.0, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

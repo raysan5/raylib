@@ -5,7 +5,7 @@
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *
-*   Example originally created with raylib 4.0, last time updated with raylib 4.0
+*   Example originally created with raylib 4.0, last time updated with raylib 5.5
 *
 *   Example contributed by Samuel Skiff (@GoldenThumbs) and reviewed by Ramon Santamaria (@raysan5)
 *

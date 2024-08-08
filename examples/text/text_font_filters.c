@@ -6,7 +6,7 @@
 *   display of the font when scaling it to different sizes, that way, it's not required
 *   to generate multiple fonts at multiple sizes (as long as the scaling is not very different)
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 4.2
+*   Example originally created with raylib 1.3, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

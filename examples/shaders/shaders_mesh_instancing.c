@@ -2,7 +2,7 @@
 *
 *   raylib [shaders] example - Mesh instancing
 *
-*   Example originally created with raylib 3.7, last time updated with raylib 4.2
+*   Example originally created with raylib 3.7, last time updated with raylib 5.5
 *
 *   Example contributed by @seanpringle and reviewed by Max (@moliad) and Ramon Santamaria (@raysan5)
 *

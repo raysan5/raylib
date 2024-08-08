@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - Custom logging
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   Example originally created with raylib 2.5, last time updated with raylib 5.5
 *
 *   Example contributed by Pablo Marcos Oltra (@pamarcos) and reviewed by Ramon Santamaria (@raysan5)
 *

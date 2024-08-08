@@ -11,7 +11,7 @@
 *     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
 *                 Characters in image must follow some spacing and order rules
 *
-*   Example originally created with raylib 1.4, last time updated with raylib 3.0
+*   Example originally created with raylib 1.4, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

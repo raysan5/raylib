@@ -2,7 +2,7 @@
 *
 *   raylib [shaders] example - Hybrid Rendering
 *
-*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*   Example originally created with raylib 4.2, last time updated with raylib 5.5
 *
 *   Example contributed by Buğra Alptekin Sarı (@BugraAlptekinSari) and reviewed by Ramon Santamaria (@raysan5)
 *

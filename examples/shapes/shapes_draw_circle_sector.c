@@ -2,7 +2,7 @@
 *
 *   raylib [shapes] example - draw circle sector (with gui options)
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   Example originally created with raylib 2.5, last time updated with raylib 5.5
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *

@@ -4,7 +4,7 @@
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 4.5, last time updated with raylib 5.5
 *
 *   Example contributed by Justin Andreas Lacoste (@27justin) and reviewed by Ramon Santamaria (@raysan5)
 *

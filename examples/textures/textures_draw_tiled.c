@@ -2,7 +2,7 @@
 *
 *   raylib [textures] example - Draw part of the texture tiled
 *
-*   Example originally created with raylib 3.0, last time updated with raylib 4.2
+*   Example originally created with raylib 3.0, last time updated with raylib 5.5
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *

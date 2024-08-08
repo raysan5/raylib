@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - Load models vox (MagicaVoxel)
 *
-*   Example originally created with raylib 4.0, last time updated with raylib 4.0
+*   Example originally created with raylib 4.0, last time updated with raylib 5.5
 *
 *   Example contributed by Johann Nadalutti (@procfxgen) and reviewed by Ramon Santamaria (@raysan5)
 *

@@ -2,7 +2,7 @@
 *
 *   raylib [shaders] example - Basic PBR
 *
-*   Example originally created with raylib 5.0, last time updated with raylib 5.1-dev
+*   Example originally created with raylib 5.0, last time updated with raylib 5.5
 *
 *   Example contributed by Afan OLOVCIC (@_DevDad) and reviewed by Ramon Santamaria (@raysan5)
 *

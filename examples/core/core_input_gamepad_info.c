@@ -5,7 +5,7 @@
 *   NOTE: This example requires a Gamepad connected to the system
 *         Check raylib.h for buttons configuration
 *
-*   Example originally created with raylib 4.6, last time updated with raylib 4.6
+*   Example originally created with raylib 4.6, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

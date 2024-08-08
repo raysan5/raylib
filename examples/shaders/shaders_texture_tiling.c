@@ -4,6 +4,8 @@
 *
 *   Example demonstrates how to tile a texture on a 3D model using raylib.
 *
+*   Example last time updated with raylib 5.5
+*
 *   Example contributed by Luis Almeida (@luis605) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

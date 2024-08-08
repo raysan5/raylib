@@ -58,7 +58,7 @@
 *
 *   raylib [core] example - Basic window
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 4.5, last time updated with raylib 5.5
 *
 *   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
 *

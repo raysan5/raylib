@@ -4,7 +4,7 @@
 *
 *   NOTE: This example illustrates how to draw into a blank texture using a shader
 *
-*   Example originally created with raylib 2.0, last time updated with raylib 3.7
+*   Example originally created with raylib 2.0, last time updated with raylib 5.5
 *
 *   Example contributed by Michał Ciesielski and reviewed by Ramon Santamaria (@raysan5)
 *

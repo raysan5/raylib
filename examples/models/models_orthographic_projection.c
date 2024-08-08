@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - Show the difference between perspective and orthographic projection
 *
-*   Example originally created with raylib 2.0, last time updated with raylib 3.7
+*   Example originally created with raylib 2.0, last time updated with raylib 5.5
 *
 *   Example contributed by Max Danielsson (@autious) and reviewed by Ramon Santamaria (@raysan5)
 *

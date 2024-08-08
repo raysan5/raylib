@@ -5,7 +5,7 @@
 *   NOTE: This example requires linking with pthreads library on MinGW, 
 *   it can be accomplished passing -static parameter to compiler
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 3.0
+*   Example originally created with raylib 2.5, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *

@@ -2,7 +2,7 @@
 *
 *   raylib [shaders] example - OpenGL point particle system
 *
-*   Example originally created with raylib 3.8, last time updated with raylib 2.5
+*   Example originally created with raylib 3.8, last time updated with raylib 5.5
 *
 *   Example contributed by Stephan Soller (@arkanis) and reviewed by Ramon Santamaria (@raysan5)
 *

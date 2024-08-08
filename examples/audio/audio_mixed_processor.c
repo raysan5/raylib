@@ -2,7 +2,7 @@
 *
 *   raylib [audio] example - Mixed audio processing
 *
-*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*   Example originally created with raylib 4.2, last time updated with raylib 5.5
 *
 *   Example contributed by hkc (@hatkidchan) and reviewed by Ramon Santamaria (@raysan5)
 *

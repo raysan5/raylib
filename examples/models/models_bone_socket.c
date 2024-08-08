@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - Using bones as socket for calculating the positioning of something
 * 
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 4.5, last time updated with raylib 5.5
 *
 *   Example contributed by iP (@ipzaur) and reviewed by Ramon Santamaria (@raysan5)
 *

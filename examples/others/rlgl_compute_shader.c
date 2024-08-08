@@ -5,7 +5,7 @@
 *   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
 *         shaders used in this example are #version 430 (OpenGL 4.3)
 *
-*   Example originally created with raylib 4.0, last time updated with raylib 2.5
+*   Example originally created with raylib 4.0, last time updated with raylib 5.5
 *
 *   Example contributed by Teddy Astie (@tsnake41) and reviewed by Ramon Santamaria (@raysan5)
 *

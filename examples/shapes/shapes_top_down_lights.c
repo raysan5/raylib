@@ -2,7 +2,7 @@
 *
 *   raylib [shapes] example - top down lights
 *
-*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*   Example originally created with raylib 4.2, last time updated with raylib 5.5
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *

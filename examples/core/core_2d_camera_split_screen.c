@@ -5,7 +5,7 @@
 *   Addapted from the core_3d_camera_split_screen example: 
 *       https://github.com/raysan5/raylib/blob/master/examples/core/core_3d_camera_split_screen.c
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 4.5, last time updated with raylib 5.5
 *
 *   Example contributed by Gabriel dos Santos Sanches (@gabrielssanches) and reviewed by Ramon Santamaria (@raysan5)
 *

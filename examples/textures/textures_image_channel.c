@@ -4,7 +4,7 @@
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
-*   Example originally created with raylib 5.1-dev, last time updated with raylib 5.1-dev
+*   Example originally created with raylib 5.1-dev, last time updated with raylib 5.5
 *
 *   Example contributed by Bruno Cabral (github.com/brccabral) and reviewed by Ramon Santamaria (@raysan5)
 *

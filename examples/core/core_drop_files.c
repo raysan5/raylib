@@ -4,7 +4,7 @@
 *
 *   NOTE: This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 4.2
+*   Example originally created with raylib 1.3, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

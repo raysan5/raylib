@@ -15,7 +15,7 @@
 *        @Nighten for the DrawTextStyle() code https://github.com/NightenDushi/Raylib_DrawTextStyle
 *        Chris Camacho (codifies - http://bedroomcoders.co.uk/) for the alpha discard shader
 *
-*   Example originally created with raylib 3.5, last time updated with raylib 4.0
+*   Example originally created with raylib 3.5, last time updated with raylib 5.5
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *
