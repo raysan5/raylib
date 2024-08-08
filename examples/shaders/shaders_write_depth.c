@@ -27,10 +27,10 @@
 // Declare custom functions required for the example
 //------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
-static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
+static RenderTexture LoadRenderTextureDepthTex(int width, int height);
 
 // Unload render texture from GPU memory (VRAM)
-static void UnloadRenderTextureDepthTex(RenderTexture2D target);
+static void UnloadRenderTextureDepthTex(RenderTexture target);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -48,7 +48,7 @@ int main(void)
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/write_depth.fs", GLSL_VERSION));
 
     // Use Customized function to create writable depth texture buffer
-    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+    RenderTexture target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
 
     // Define the camera to look into our 3d world
     Camera camera = {
@@ -113,9 +113,9 @@ int main(void)
 // Define custom functions required for the example
 //------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
-RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
+RenderTexture LoadRenderTextureDepthTex(int width, int height)
 {
-    RenderTexture2D target = { 0 };
+    RenderTexture target = { 0 };
 
     target.id = rlLoadFramebuffer(); // Load an empty framebuffer
 
@@ -152,7 +152,7 @@ RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 }
 
 // Unload render texture from GPU memory (VRAM)
-void UnloadRenderTextureDepthTex(RenderTexture2D target)
+void UnloadRenderTextureDepthTex(RenderTexture target)
 {
     if (target.id > 0)
     {

@@ -57,8 +57,8 @@ int main(void)
     bool showSaveMessage = false;
     int saveMessageCounter = 0;
 
-    // Create a RenderTexture2D to use as a canvas
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
+    // Create a RenderTexture to use as a canvas
+    RenderTexture target = LoadRenderTexture(screenWidth, screenHeight);
 
     // Clear render texture before entering the game loop
     BeginTextureMode(target);

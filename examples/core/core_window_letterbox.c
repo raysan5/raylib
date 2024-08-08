@@ -37,7 +37,7 @@ int main(void)
     int gameScreenHeight = 480;
 
     // Render texture initialization, used to hold the rendering result so we can easily resize it
-    RenderTexture2D target = LoadRenderTexture(gameScreenWidth, gameScreenHeight);
+    RenderTexture target = LoadRenderTexture(gameScreenWidth, gameScreenHeight);
     SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);  // Texture scale filter to use
 
     Color colors[10] = { 0 };

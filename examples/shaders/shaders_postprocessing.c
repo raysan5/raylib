@@ -109,8 +109,8 @@ int main(void)
 
     int currentShader = FX_GRAYSCALE;
 
-    // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
+    // Create a RenderTexture to be used for render to texture
+    RenderTexture target = LoadRenderTexture(screenWidth, screenHeight);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

@@ -64,8 +64,8 @@ int main(void)
 
     float swirlCenter[2] = { (float)screenWidth/2, (float)screenHeight/2 };
 
-    // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
+    // Create a RenderTexture to be used for render to texture
+    RenderTexture target = LoadRenderTexture(screenWidth, screenHeight);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

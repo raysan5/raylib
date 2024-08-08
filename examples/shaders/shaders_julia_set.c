@@ -57,8 +57,8 @@ int main(void)
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/julia_set.fs", GLSL_VERSION));
 
-    // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    // Create a RenderTexture to be used for render to texture
+    RenderTexture target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
     // c constant to use in z^2 + c
     float c[2] = { pointsOfInterest[0][0], pointsOfInterest[0][1] };
@@ -173,7 +173,7 @@ int main(void)
             // NOTE: We do not invert texture on Y, already considered inside shader
             BeginShaderMode(shader);
                 // WARNING: If FLAG_WINDOW_HIGHDPI is enabled, HighDPI monitor scaling should be considered
-                // when rendering the RenderTexture2D to fit in the HighDPI scaled Window
+                // when rendering the RenderTexture to fit in the HighDPI scaled Window
                 DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, WHITE);
             EndShaderMode();
 

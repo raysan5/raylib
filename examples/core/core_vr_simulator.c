@@ -82,7 +82,7 @@ int main(void)
 
     // Initialize framebuffer for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
-    RenderTexture2D target = LoadRenderTexture(device.hResolution, device.vResolution);
+    RenderTexture target = LoadRenderTexture(device.hResolution, device.vResolution);
 
     // The target's height is flipped (in the source Rectangle), due to OpenGL reasons
     Rectangle sourceRec = { 0.0f, 0.0f, (float)target.texture.width, -(float)target.texture.height };

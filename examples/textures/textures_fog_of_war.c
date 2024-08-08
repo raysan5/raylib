@@ -61,7 +61,7 @@ int main(void)
     // Render texture to render fog of war
     // NOTE: To get an automatic smooth-fog effect we use a render texture to render fog
     // at a smaller size (one pixel per tile) and scale it on drawing with bilinear filtering
-    RenderTexture2D fogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
+    RenderTexture fogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
     SetTextureFilter(fogOfWar.texture, TEXTURE_FILTER_BILINEAR);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second

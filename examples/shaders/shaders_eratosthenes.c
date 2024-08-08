@@ -45,7 +45,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Sieve of Eratosthenes");
 
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
+    RenderTexture target = LoadRenderTexture(screenWidth, screenHeight);
 
     // Load Eratosthenes shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader

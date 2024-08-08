@@ -23,8 +23,8 @@
 
 #define SHADOWMAP_RESOLUTION 1024
 
-RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
-void UnloadShadowmapRenderTexture(RenderTexture2D target);
+RenderTexture LoadShadowmapRenderTexture(int width, int height);
+void UnloadShadowmapRenderTexture(RenderTexture target);
 void DrawScene(Model cube, Model robot);
 
 //------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ int main(void)
     int animCount = 0;
     ModelAnimation* robotAnimations = LoadModelAnimations("resources/models/robot.glb", &animCount);
 
-    RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
+    RenderTexture shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
     // For the shadowmapping algorithm, we will be rendering everything from the light's point of view
     Camera3D lightCam = (Camera3D){ 0 };
     lightCam.position = Vector3Scale(lightDir, -15.0f);
@@ -199,9 +199,9 @@ int main(void)
     return 0;
 }
 
-RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
+RenderTexture LoadShadowmapRenderTexture(int width, int height)
 {
-    RenderTexture2D target = { 0 };
+    RenderTexture target = { 0 };
 
     target.id = rlLoadFramebuffer(); // Load an empty framebuffer
     target.texture.width = width;
@@ -233,7 +233,7 @@ RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
 }
 
 // Unload shadowmap render texture from GPU memory (VRAM)
-void UnloadShadowmapRenderTexture(RenderTexture2D target)
+void UnloadShadowmapRenderTexture(RenderTexture target)
 {
     if (target.id > 0)
     {
