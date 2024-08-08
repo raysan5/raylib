@@ -65,28 +65,28 @@ int main(void)
         {
             cameraMode = CAMERA_FREE;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
-            camera.fovy = 60.0f;
+            //camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_TWO))
         {
             cameraMode = CAMERA_FIRST_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
-            camera.fovy = 60.0f;
+            //camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_THREE))
         {
             cameraMode = CAMERA_THIRD_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
-            camera.fovy = 60.0f;
+            //camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_FOUR))
         {
             cameraMode = CAMERA_ORBITAL;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
-            camera.fovy = 60.0f;
+            //camera.fovy = 60.0f;
         }
 
         // Switch camera projection
