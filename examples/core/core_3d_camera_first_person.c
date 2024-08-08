@@ -117,22 +117,22 @@ int main(void)
             }
         }
 
-        //Camera zooming
-        float wheelMove = GetMouseWheelMove();
-        bool zoomIn = IsKeyDown(KEY_KP_ADD);
-        bool zoomOut = IsKeyDown(KEY_KP_SUBTRACT);
+        ////Camera zooming
+        //float wheelMove = GetMouseWheelMove();
+        //bool zoomIn = IsKeyDown(KEY_KP_ADD);
+        //bool zoomOut = IsKeyDown(KEY_KP_SUBTRACT);
 
-        if (cameraMode == CAMERA_FIRST_PERSON && (wheelMove != 0 || zoomIn || zoomOut))
-        {
-            if ((wheelMove > 0 || zoomIn) && camera.fovy >= 20.0f)
-            {
-                camera.fovy -= 5.0f;
-            }
-            else if ((wheelMove < 0 || zoomOut) && camera.fovy <= 90.0f)
-            {
-                camera.fovy += 5.0f;
-            }
-        }
+        //if (cameraMode == CAMERA_FIRST_PERSON && (wheelMove != 0 || zoomIn || zoomOut))
+        //{
+        //    if ((wheelMove > 0 || zoomIn) && camera.fovy >= 20.0f)
+        //    {
+        //        camera.fovy -= 5.0f;
+        //    }
+        //    else if ((wheelMove < 0 || zoomOut) && camera.fovy <= 90.0f)
+        //    {
+        //        camera.fovy += 5.0f;
+        //    }
+        //}
         
         // Update camera computes movement internally depending on the camera mode
         // Some default standard keyboard/mouse inputs are hardcoded to simplify use
@@ -190,16 +190,15 @@ int main(void)
             EndMode3D();
 
             // Draw info boxes
-            DrawRectangle(5, 5, 330, 120, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(5, 5, 330, 120, BLUE);
+            DrawRectangle(5, 5, 330, 100, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(5, 5, 330, 100, BLUE);
 
             DrawText("Camera controls:", 15, 15, 10, BLACK);
-            DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
-            DrawText("  (Space and Left-Ctrl in Free Camera mode only)", 15, 45, 10, DARKGRAY);
-            DrawText("- Look around: arrow keys or mouse", 15, 60, 10, BLACK);
-            DrawText("- Camera mode keys: 1, 2, 3, 4", 15, 75, 10, BLACK);
-            DrawText("- Zoom keys: num-plus, num-minus or mouse scroll", 15, 90, 10, BLACK);
-            DrawText("- Camera projection key: P", 15, 105, 10, BLACK);
+            DrawText(TextFormat("- Move keys: %s", (cameraMode == CAMERA_FREE) ? "W, A, S, D, Space, Left-Ctrl" : "W, A, S, D"), 15, 30, 10, BLACK);
+            DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
+            DrawText("- Camera mode keys: 1, 2, 3, 4", 15, 60, 10, BLACK);
+            DrawText(TextFormat("- Zoom keys: %s", (cameraMode == CAMERA_FIRST_PERSON) ? "-" : "num-plus, num-minus or mouse scroll"), 15, 75, 10, BLACK);
+            DrawText("- Camera projection key: P", 15, 90, 10, BLACK);
 
             DrawRectangle(600, 5, 195, 100, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(600, 5, 195, 100, BLUE);
