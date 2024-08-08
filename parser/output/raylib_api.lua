@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "5.5",
+      value = "5.5-dev",
       description = ""
     },
     {
@@ -1058,7 +1058,7 @@ return {
         {
           type = "Vector3",
           name = "direction",
-          description = "Ray direction"
+          description = "Ray direction (normalized)"
         }
       }
     },
@@ -7230,7 +7230,7 @@ return {
         {type = "Camera", name = "camera"},
         {type = "Texture2D", name = "texture"},
         {type = "Vector3", name = "position"},
-        {type = "float", name = "size"},
+        {type = "float", name = "scale"},
         {type = "Color", name = "tint"}
       }
     },

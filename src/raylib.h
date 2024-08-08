@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v5.5 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v5.5-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -84,7 +84,7 @@
 #define RAYLIB_VERSION_MAJOR 5
 #define RAYLIB_VERSION_MINOR 5
 #define RAYLIB_VERSION_PATCH 0
-#define RAYLIB_VERSION  "5.5"
+#define RAYLIB_VERSION  "5.5-dev"
 
 // Function specifiers in case library is build/used as a shared library
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -421,7 +421,7 @@ typedef struct ModelAnimation {
 // Ray, ray for raycasting
 typedef struct Ray {
     Vector3 position;       // Ray position (origin)
-    Vector3 direction;      // Ray direction
+    Vector3 direction;      // Ray direction (normalized)
 } Ray;
 
 // RayCollision, ray hit information
@@ -1546,7 +1546,7 @@ RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, floa
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);          // Draw a model wires (with texture if set)
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                   // Draw bounding box (wires)
-RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float size, Color tint);   // Draw a billboard texture
+RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint);   // Draw a billboard texture
 RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint); // Draw a billboard texture defined by source
 RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
 

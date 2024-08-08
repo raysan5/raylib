@@ -28,6 +28,7 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
         .opengl_version = options.opengl_version,
+        .config = options.config,
     });
     const raylib = raylib_dep.artifact("raylib");
 
@@ -52,6 +53,36 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
+    if (options.config) |config| {
+        const file = try std.fs.path.join(b.allocator, &.{ std.fs.path.dirname(@src().file) orelse ".", "config.h" });
+        defer b.allocator.free(file);
+        const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
+        defer b.allocator.free(content);
+
+        var lines = std.mem.split(u8, content, "\n");
+        while (lines.next()) |line| {
+            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+            if (std.mem.startsWith(u8, line, "//")) continue;
+
+            var flag = std.mem.trimLeft(u8, line, " \t");                 // Trim whitespace
+            flag = flag["#define ".len - 1 ..];                           // Remove #define
+            flag = std.mem.trimLeft(u8, flag, " \t");                     // Trim whitespace
+            flag = flag[0..std.mem.indexOf(u8, flag, " ").?];             // Flag is only one word, so capture till space
+            flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
+
+            // If user specifies the flag skip it
+            if (std.mem.containsAtLeast(u8, config, 1, flag)) continue;
+
+            // Append default value from config.h to compile flags
+            try raylib_flags_arr.append(b.allocator, flag);
+        }
+
+        // Append config flags supplied by user to compile flags
+        try raylib_flags_arr.append(b.allocator, config);
+
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
+    }
+
     if (options.shared) {
         try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
     }
@@ -117,31 +148,36 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
+                if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
 
-                switch (options.linux_display_backend) {
-                    .X11 => {
                         raylib.defineCMacro("_GLFW_X11", null);
                         raylib.linkSystemLibrary("X11");
-                    },
-                    .Wayland => {
-                        raylib.defineCMacro("_GLFW_WAYLAND", null);
-                        raylib.linkSystemLibrary("wayland-client");
-                        raylib.linkSystemLibrary("wayland-cursor");
-                        raylib.linkSystemLibrary("wayland-egl");
-                        raylib.linkSystemLibrary("xkbcommon");
-                        raylib.addIncludePath(b.path("src"));
-                        waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
-                        waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
-                        waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
-                    },
                 }
 
+                if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+                        std.log.err(
+                            \\ Wayland may not be installed on the system.
+                            \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
+                        , .{});
+                        @panic("No Wayland");
+                    };
+                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.linkSystemLibrary("wayland-client");
+                    raylib.linkSystemLibrary("wayland-cursor");
+                    raylib.linkSystemLibrary("wayland-egl");
+                    raylib.linkSystemLibrary("xkbcommon");
+                    raylib.addIncludePath(b.path("src"));
+                    waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
+                    waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
+                    waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
+                }
                 raylib.defineCMacro("PLATFORM_DESKTOP", null);
             } else {
                 if (options.opengl_version == .auto) {
@@ -253,8 +289,9 @@ pub const Options = struct {
     raygui: bool = false,
     platform_drm: bool = false,
     shared: bool = false,
-    linux_display_backend: LinuxDisplayBackend = .X11,
+    linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+    config: ?[]const u8 = null,
 
     raygui_dependency_name: []const u8 = "raygui",
 };
@@ -284,6 +321,7 @@ pub const OpenglVersion = enum {
 pub const LinuxDisplayBackend = enum {
     X11,
     Wayland,
+    Both,
 };
 
 pub fn build(b: *std.Build) !void {
@@ -308,6 +346,7 @@ pub fn build(b: *std.Build) !void {
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
         .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
         .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
+        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse null,
     };
 
     const lib = try compileRaylib(b, target, optimize, options);

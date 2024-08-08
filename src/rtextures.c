@@ -503,7 +503,16 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     Image image = { 0 };
 
     // Security check for input data
-    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
+    if ((fileData == NULL) || (dataSize == 0))
+    {
+        TRACELOG(LOG_WARNING, "IMAGE: Invalid file data");
+        return image;
+    }
+    if (fileType == NULL)
+    {
+        TRACELOG(LOG_WARNING, "IMAGE: Missing file extension");
+        return image;
+    }
 
     if ((false)
 #if defined(SUPPORT_FILEFORMAT_PNG)
@@ -1213,6 +1222,7 @@ Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
 
+#if defined(SUPPORT_MODULE_RTEXT)
     int textLength = TextLength(text);
     int imageViewSize = width*height;
 
@@ -1223,6 +1233,10 @@ Image GenImageText(int width, int height, const char *text)
     image.mipmaps = 1;
 
     memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
+#else
+    TRACELOG(LOG_WARNING, "IMAGE: GenImageText() requires module: rtext");
+    image = GenImageColor(width, height, BLACK);     // Generating placeholder black image rectangle
+#endif
 
     return image;
 }
@@ -3658,7 +3672,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     {
         // Line is more horizontal
         // Calculate half the width of the line
-        int wy = (thick - 1)*sqrtf(dx*dx + dy*dy)/(2*abs(dx));
+        int wy = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dx));
 
         // Draw additional lines above and below the main line
         for (int i = 1; i <= wy; i++)
@@ -3671,7 +3685,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     {
         // Line is more vertical or perfectly horizontal
         // Calculate half the width of the line
-        int wx = (thick - 1)*sqrtf(dx*dx + dy*dy)/(2*abs(dy));
+        int wx = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dy));
 
         // Draw additional lines to the left and right of the main line
         for (int i = 1; i <= wx; i++)
@@ -5389,7 +5403,8 @@ int GetPixelDataSize(int width, int height, int format)
         default: break;
     }
 
-    dataSize = width*height*bpp/8;  // Total data size in bytes
+    double bytesPerPixel = (double)bpp/8.0;
+    dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
 
     // Most compressed formats works on 4x4 blocks,
     // if texture is smaller, minimum dataSize is 8 or 16
