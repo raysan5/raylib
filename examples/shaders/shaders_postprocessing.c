@@ -83,7 +83,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Model model = LoadModel("resources/models/church.obj");                 // Load OBJ model
-    Texture2D texture = LoadTexture("resources/models/church_diffuse.png"); // Load model texture (diffuse map)
+    Texture texture = LoadTexture("resources/models/church_diffuse.png"); // Load model texture (diffuse map)
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;        // Set model diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position

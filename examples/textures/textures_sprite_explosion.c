@@ -34,7 +34,7 @@ int main(void)
     Sound fxBoom = LoadSound("resources/boom.wav");
 
     // Load explosion texture
-    Texture2D explosion = LoadTexture("resources/explosion.png");
+    Texture explosion = LoadTexture("resources/explosion.png");
 
     // Init variables for animation
     float frameWidth = (float)(explosion.width/NUM_FRAMES_PER_LINE);   // Sprite one frame rectangle width

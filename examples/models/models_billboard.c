@@ -34,7 +34,7 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    Texture2D bill = LoadTexture("resources/billboard.png");    // Our billboard texture
+    Texture bill = LoadTexture("resources/billboard.png");    // Our billboard texture
     Vector3 billPositionStatic = { 0.0f, 2.0f, 0.0f };          // Position of static billboard
     Vector3 billPositionRotating = { 1.0f, 2.0f, 1.0f };        // Position of rotating billboard
 

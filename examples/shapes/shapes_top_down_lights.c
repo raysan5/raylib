@@ -227,7 +227,7 @@ int main(void)
 
     // Create a checkerboard ground texture
     Image img = GenImageChecked(64, 64, 32, 32, DARKBROWN, DARKGRAY);
-    Texture2D backgroundTexture = LoadTextureFromImage(img);
+    Texture backgroundTexture = LoadTextureFromImage(img);
     UnloadImage(img);
 
     // Create a global light mask to hold all the blended lights

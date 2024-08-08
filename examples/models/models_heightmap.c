@@ -34,7 +34,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;                 // Camera projection type
 
     Image image = LoadImage("resources/heightmap.png");     // Load heightmap image (RAM)
-    Texture2D texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
+    Texture texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
 
     Mesh mesh = GenMeshHeightmap(image, (Vector3){ 16, 8, 16 }); // Generate heightmap mesh (RAM and VRAM)
     Model model = LoadModelFromMesh(mesh);                  // Load model from generated mesh

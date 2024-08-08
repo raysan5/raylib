@@ -61,7 +61,7 @@ int main(void)
     };
 
     // Image converted to Texture (VRAM) to be drawn
-    Texture2D texture = LoadTextureFromImage(image);
+    Texture texture = LoadTextureFromImage(image);
 
     // With an Image loaded from file, after Texture is loaded, we can unload Image
     // but in our case, Image is embedded in executable, in program .data segment

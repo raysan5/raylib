@@ -30,7 +30,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - N-patch drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D nPatchTexture = LoadTexture("resources/ninepatch_button.png");
+    Texture nPatchTexture = LoadTexture("resources/ninepatch_button.png");
 
     Vector2 mousePosition = { 0 };
     Vector2 origin = { 0.0f, 0.0f };

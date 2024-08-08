@@ -42,7 +42,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
     Model model = LoadModel("resources/models/iqm/guy.iqm");                    // Load the animated model mesh and basic data
-    Texture2D texture = LoadTexture("resources/models/iqm/guytex.png");         // Load model texture and set material
+    Texture texture = LoadTexture("resources/models/iqm/guytex.png");         // Load model texture and set material
     SetMaterialTexture(&model.materials[0], MATERIAL_MAP_DIFFUSE, texture);     // Set model material map texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position

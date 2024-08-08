@@ -277,7 +277,7 @@ int main(void)
                 } break;
                 case DEFERRED_POSITION:
                 {
-                    DrawTextureRec((Texture2D){
+                    DrawTextureRec((Texture){
                         .id = gBuffer.positionTexture,
                         .width = screenWidth,
                         .height = screenHeight,
@@ -287,7 +287,7 @@ int main(void)
                 } break;
                 case DEFERRED_NORMAL:
                 {
-                    DrawTextureRec((Texture2D){
+                    DrawTextureRec((Texture){
                         .id = gBuffer.normalTexture,
                         .width = screenWidth,
                         .height = screenHeight,
@@ -297,7 +297,7 @@ int main(void)
                 } break;
                 case DEFERRED_ALBEDO:
                 {
-                    DrawTextureRec((Texture2D){
+                    DrawTextureRec((Texture){
                         .id = gBuffer.albedoSpecTexture,
                         .width = screenWidth,
                         .height = screenHeight,

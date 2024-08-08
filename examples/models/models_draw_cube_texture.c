@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------------
 // Custom Functions Declaration
 //------------------------------------------------------------------------------------
-void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float length, Color color); // Draw cube textured
-void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, float width, float height, float length, Color color); // Draw cube with a region of a texture
+void DrawCubeTexture(Texture texture, Vector3 position, float width, float height, float length, Color color); // Draw cube textured
+void DrawCubeTextureRec(Texture texture, Rectangle source, Vector3 position, float width, float height, float length, Color color); // Draw cube with a region of a texture
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -42,7 +42,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;
     
     // Load texture to be applied to the cubes sides
-    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");
+    Texture texture = LoadTexture("resources/cubicmap_atlas.png");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ int main(void)
 //------------------------------------------------------------------------------------
 // Draw cube textured
 // NOTE: Cube position is the center position
-void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float length, Color color)
+void DrawCubeTexture(Texture texture, Vector3 position, float width, float height, float length, Color color)
 {
     float x = position.x;
     float y = position.y;
@@ -157,7 +157,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
 }
 
 // Draw cube with texture piece applied to all faces
-void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, float width, float height, float length, Color color)
+void DrawCubeTextureRec(Texture texture, Rectangle source, Vector3 position, float width, float height, float length, Color color)
 {
     float x = position.x;
     float y = position.y;

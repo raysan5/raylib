@@ -36,7 +36,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");
 
     Image imBlank = GenImageColor(1024, 1024, BLANK);
-    Texture2D texture = LoadTextureFromImage(imBlank);  // Load blank texture to fill on shader
+    Texture texture = LoadTextureFromImage(imBlank);  // Load blank texture to fill on shader
     UnloadImage(imBlank);
 
     // NOTE: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version

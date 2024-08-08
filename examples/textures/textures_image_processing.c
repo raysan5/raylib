@@ -59,7 +59,7 @@ int main(void)
 
     Image imOrigin = LoadImage("resources/parrots.png");   // Loaded in CPU memory (RAM)
     ImageFormat(&imOrigin, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);         // Format image to RGBA 32bit (required for texture update) <-- ISSUE
-    Texture2D texture = LoadTextureFromImage(imOrigin);    // Image converted to texture, GPU memory (VRAM)
+    Texture texture = LoadTextureFromImage(imOrigin);    // Image converted to texture, GPU memory (VRAM)
 
     Image imCopy = ImageCopy(imOrigin);
 

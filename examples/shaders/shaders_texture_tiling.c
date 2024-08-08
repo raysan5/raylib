@@ -46,7 +46,7 @@ int main(void)
     Model model = LoadModelFromMesh(cube);
     
     // Load a texture and assign to cube model
-    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");
+    Texture texture = LoadTexture("resources/cubicmap_atlas.png");
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     // Set the texture tiling using a shader

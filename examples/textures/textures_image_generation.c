@@ -37,7 +37,7 @@ int main(void)
     Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 50, 50, 4.0f);
     Image cellular = GenImageCellular(screenWidth, screenHeight, 32);
 
-    Texture2D textures[NUM_TEXTURES] = { 0 };
+    Texture textures[NUM_TEXTURES] = { 0 };
 
     textures[0] = LoadTextureFromImage(verticalGradient);
     textures[1] = LoadTextureFromImage(horizontalGradient);

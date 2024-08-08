@@ -39,7 +39,7 @@ int main(void)
     // NOTE: We will update this texture when required with next frame data
     // WARNING: It's not recommended to use this technique for sprites animation,
     // use spritesheets instead, like illustrated in textures_sprite_anim example
-    Texture2D texScarfyAnim = LoadTextureFromImage(imScarfyAnim);
+    Texture texScarfyAnim = LoadTextureFromImage(imScarfyAnim);
 
     unsigned int nextFrameDataOffset = 0;  // Current byte offset to next frame in image.data
 

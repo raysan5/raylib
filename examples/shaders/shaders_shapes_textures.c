@@ -38,7 +38,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shapes and texture shaders");
 
-    Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
+    Texture fudesumi = LoadTexture("resources/fudesumi.png");
 
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version

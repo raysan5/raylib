@@ -33,7 +33,7 @@ int main(void)
 
     // Load RAW image data (512x512, 32bit RGBA, no file header)
     Image fudesumiRaw = LoadImageRaw("resources/fudesumi.raw", 384, 512, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 0);
-    Texture2D fudesumi = LoadTextureFromImage(fudesumiRaw);  // Upload CPU (RAM) image to GPU (VRAM)
+    Texture fudesumi = LoadTextureFromImage(fudesumiRaw);  // Upload CPU (RAM) image to GPU (VRAM)
     UnloadImage(fudesumiRaw);                                // Unload CPU (RAM) image data
 
     // Generate a checked texture by code
@@ -61,7 +61,7 @@ int main(void)
         .mipmaps = 1
     };
 
-    Texture2D checked = LoadTextureFromImage(checkedIm);
+    Texture checked = LoadTextureFromImage(checkedIm);
     UnloadImage(checkedIm);         // Unload CPU (RAM) image data (pixels)
     //---------------------------------------------------------------------------------------
 

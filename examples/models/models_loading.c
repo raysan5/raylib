@@ -47,7 +47,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     Model model = LoadModel("resources/models/obj/castle.obj");                 // Load model
-    Texture2D texture = LoadTexture("resources/models/obj/castle_diffuse.png"); // Load model texture
+    Texture texture = LoadTexture("resources/models/obj/castle_diffuse.png"); // Load model texture
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set map diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                    // Set model position

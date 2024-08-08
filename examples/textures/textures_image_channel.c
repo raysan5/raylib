@@ -46,12 +46,12 @@ int main(void)
 
     Image backgroundImage = GenImageChecked(screenWidth, screenHeight, screenWidth/20, screenHeight/20, ORANGE, YELLOW);
 
-    Texture2D fudesumiTexture = LoadTextureFromImage(fudesumiImage);
-    Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
-    Texture2D textureRed = LoadTextureFromImage(imageRed);
-    Texture2D textureGreen = LoadTextureFromImage(imageGreen);
-    Texture2D textureBlue = LoadTextureFromImage(imageBlue);
-    Texture2D backgroundTexture = LoadTextureFromImage(backgroundImage);
+    Texture fudesumiTexture = LoadTextureFromImage(fudesumiImage);
+    Texture textureAlpha = LoadTextureFromImage(imageAlpha);
+    Texture textureRed = LoadTextureFromImage(imageRed);
+    Texture textureGreen = LoadTextureFromImage(imageGreen);
+    Texture textureBlue = LoadTextureFromImage(imageBlue);
+    Texture backgroundTexture = LoadTextureFromImage(backgroundImage);
 
     UnloadImage(fudesumiImage);
     UnloadImage(imageAlpha);

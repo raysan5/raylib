@@ -21,7 +21,7 @@
 #define MAX_POINTS  11      // 10 points and back to the start
 
 // Draw textured polygon, defined by vertex and texture coordinates
-void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint);
+void DrawTexturePoly(Texture texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -111,7 +111,7 @@ int main(void)
 // Draw textured polygon, defined by vertex and texture coordinates
 // NOTE: Polygon center must have straight line path to all points
 // without crossing perimeter, points must be in anticlockwise order
-void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
+void DrawTexturePoly(Texture texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
 {
     rlSetTexture(texture.id);
 

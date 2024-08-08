@@ -23,7 +23,7 @@
 #endif
 
 // Generate cubemap (6 faces) from equirectangular (panorama) texture
-static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format);
+static TextureCubemap GenTextureCubemap(Shader shader, Texture panorama, int size, int format);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -74,7 +74,7 @@ int main(void)
         TextCopy(skyboxFileName, "resources/dresden_square_2k.hdr");
 
         // Load HDR panorama (sphere) texture
-        Texture2D panorama = LoadTexture(skyboxFileName);
+        Texture panorama = LoadTexture(skyboxFileName);
 
         // Generate cubemap (texture with 6 quads-cube-mapping) from panorama HDR texture
         // NOTE 1: New texture is generated rendering to texture, shader calculates the sphere->cube coordinates mapping
@@ -118,7 +118,7 @@ int main(void)
                     if (useHDR)
                     {
                         // Load HDR panorama (sphere) texture
-                        Texture2D panorama = LoadTexture(droppedFiles.paths[0]);
+                        Texture panorama = LoadTexture(droppedFiles.paths[0]);
 
                         // Generate cubemap from panorama texture
                         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
@@ -182,7 +182,7 @@ int main(void)
 }
 
 // Generate cubemap texture from HDR texture
-static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
+static TextureCubemap GenTextureCubemap(Shader shader, Texture panorama, int size, int format)
 {
     TextureCubemap cubemap = { 0 };
 

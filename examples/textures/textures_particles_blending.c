@@ -53,7 +53,7 @@ int main(void)
 
     float gravity = 3.0f;
 
-    Texture2D smoke = LoadTexture("resources/spark_flame.png");
+    Texture smoke = LoadTexture("resources/spark_flame.png");
 
     int blending = BLEND_ALPHA;
 

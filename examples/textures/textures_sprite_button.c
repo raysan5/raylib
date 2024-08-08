@@ -30,7 +30,7 @@ int main(void)
     InitAudioDevice();      // Initialize audio device
 
     Sound fxButton = LoadSound("resources/buttonfx.wav");   // Load button sound
-    Texture2D button = LoadTexture("resources/button.png"); // Load button texture
+    Texture button = LoadTexture("resources/button.png"); // Load button texture
 
     // Define frame rectangle for drawing
     float frameHeight = (float)button.height/NUM_FRAMES;

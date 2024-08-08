@@ -36,7 +36,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
 
-    Texture2D texture = LoadTexture("resources/fudesumi.png");
+    Texture texture = LoadTexture("resources/fudesumi.png");
 
     Shader shdrOutline = LoadShader(0, TextFormat("resources/shaders/glsl%i/outline.fs", GLSL_VERSION));
 

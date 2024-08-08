@@ -27,7 +27,7 @@ int main(void)
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
-    Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
+    Texture scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     int frameWidth = scarfy.width/6;
     int frameHeight = scarfy.height;

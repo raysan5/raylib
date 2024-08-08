@@ -49,7 +49,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Model model = LoadModel("resources/models/watermill.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
+    Texture texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
 
     // Load shader for model
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader

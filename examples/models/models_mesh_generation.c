@@ -31,7 +31,7 @@ int main(void)
 
     // We generate a checked image for texturing
     Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);
-    Texture2D texture = LoadTextureFromImage(checked);
+    Texture texture = LoadTextureFromImage(checked);
     UnloadImage(checked);
 
     Model models[NUM_MODELS] = { 0 };

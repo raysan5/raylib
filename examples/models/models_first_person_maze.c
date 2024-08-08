@@ -36,12 +36,12 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Image imMap = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
-    Texture2D cubicmap = LoadTextureFromImage(imMap);       // Convert image to texture to display (VRAM)
+    Texture cubicmap = LoadTextureFromImage(imMap);       // Convert image to texture to display (VRAM)
     Mesh mesh = GenMeshCubicmap(imMap, (Vector3){ 1.0f, 1.0f, 1.0f });
     Model model = LoadModelFromMesh(mesh);
 
     // NOTE: By default each cube is mapped to one part of texture atlas
-    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
+    Texture texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;    // Set map diffuse texture
 
     // Get map image data to be used for collision detection

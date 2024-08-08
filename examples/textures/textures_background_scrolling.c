@@ -27,9 +27,9 @@ int main(void)
 
     // NOTE: Be careful, background width must be equal or bigger than screen width
     // if not, texture should be draw more than two times for scrolling effect
-    Texture2D background = LoadTexture("resources/cyberpunk_street_background.png");
-    Texture2D midground = LoadTexture("resources/cyberpunk_street_midground.png");
-    Texture2D foreground = LoadTexture("resources/cyberpunk_street_foreground.png");
+    Texture background = LoadTexture("resources/cyberpunk_street_background.png");
+    Texture midground = LoadTexture("resources/cyberpunk_street_midground.png");
+    Texture foreground = LoadTexture("resources/cyberpunk_street_foreground.png");
 
     float scrollingBack = 0.0f;
     float scrollingMid = 0.0f;

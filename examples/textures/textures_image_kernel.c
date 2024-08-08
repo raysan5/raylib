@@ -78,10 +78,10 @@ int main(void)
     ImageCrop(&catSharpend, (Rectangle){ 0, 0, (float)200, (float)450 });
     
     // Images converted to texture, GPU memory (VRAM)
-    Texture2D texture = LoadTextureFromImage(image);
-    Texture2D catSharpendTexture = LoadTextureFromImage(catSharpend);
-    Texture2D catSobelTexture = LoadTextureFromImage(catSobel);
-    Texture2D catGaussianTexture = LoadTextureFromImage(catGaussian);
+    Texture texture = LoadTextureFromImage(image);
+    Texture catSharpendTexture = LoadTextureFromImage(catSharpend);
+    Texture catSobelTexture = LoadTextureFromImage(catSobel);
+    Texture catGaussianTexture = LoadTextureFromImage(catGaussian);
     
     // Once images have been converted to texture and uploaded to VRAM, 
     // they can be unloaded from RAM

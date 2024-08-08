@@ -29,7 +29,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [texture] example - sprite anim");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
+    Texture scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     Vector2 position = { 350.0f, 280.0f };
     Rectangle frameRec = { 0.0f, 0.0f, (float)scarfy.width/6, (float)scarfy.height };

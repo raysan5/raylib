@@ -41,7 +41,7 @@ int main(void)
     Ray ray = { 0 };        // Picking ray
 
     Model tower = LoadModel("resources/models/obj/turret.obj");                 // Load OBJ model
-    Texture2D texture = LoadTexture("resources/models/obj/turret_diffuse.png"); // Load model texture
+    Texture texture = LoadTexture("resources/models/obj/turret_diffuse.png"); // Load model texture
     tower.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set model diffuse texture
 
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                        // Set model position

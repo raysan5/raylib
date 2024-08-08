@@ -55,7 +55,7 @@ int main(void)
 
     UnloadFont(font);       // Unload custom font (already drawn used on image)
 
-    Texture2D texture = LoadTextureFromImage(parrots);      // Image converted to texture, uploaded to GPU memory (VRAM)
+    Texture texture = LoadTextureFromImage(parrots);      // Image converted to texture, uploaded to GPU memory (VRAM)
     UnloadImage(parrots);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
 
     SetTargetFPS(60);
