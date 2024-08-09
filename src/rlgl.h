@@ -4083,7 +4083,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             //case GL_GEOMETRY_SHADER:
         #if defined(GRAPHICS_API_OPENGL_43)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile compute shader code", shader); break;
-        #else
+        #elif defined(GRAPHICS_API_OPENGL_33)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shader); break;
         #endif
             default: break;
@@ -4110,7 +4110,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             //case GL_GEOMETRY_SHADER:
         #if defined(GRAPHICS_API_OPENGL_43)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader compiled successfully", shader); break;
-        #else
+        #elif defined(GRAPHICS_API_OPENGL_33)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shader); break;
         #endif
             default: break;
