@@ -67,7 +67,7 @@ int main(void)
             {
                 DrawText(TextFormat("GP%d: %s", gamepad, GetGamepadName(gamepad)), 10, 10, 10, BLACK);
 
-                if (TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_1) || TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_2))
+                if (TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_1) > -1 || TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_2) > -1)
                 {
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);
 
