@@ -65,24 +65,28 @@ int main(void)
         {
             cameraMode = CAMERA_FREE;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            //camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_TWO))
         {
             cameraMode = CAMERA_FIRST_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            //camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_THREE))
         {
             cameraMode = CAMERA_THIRD_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            //camera.fovy = 60.0f;
         }
 
         if (IsKeyPressed(KEY_FOUR))
         {
             cameraMode = CAMERA_ORBITAL;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
+            //camera.fovy = 60.0f;
         }
 
         // Switch camera projection
@@ -113,6 +117,23 @@ int main(void)
             }
         }
 
+        ////Camera zooming
+        //float wheelMove = GetMouseWheelMove();
+        //bool zoomIn = IsKeyDown(KEY_KP_ADD);
+        //bool zoomOut = IsKeyDown(KEY_KP_SUBTRACT);
+
+        //if (cameraMode == CAMERA_FIRST_PERSON && (wheelMove != 0 || zoomIn || zoomOut))
+        //{
+        //    if ((wheelMove > 0 || zoomIn) && camera.fovy >= 20.0f)
+        //    {
+        //        camera.fovy -= 5.0f;
+        //    }
+        //    else if ((wheelMove < 0 || zoomOut) && camera.fovy <= 90.0f)
+        //    {
+        //        camera.fovy += 5.0f;
+        //    }
+        //}
+        
         // Update camera computes movement internally depending on the camera mode
         // Some default standard keyboard/mouse inputs are hardcoded to simplify use
         // For advance camera controls, it's reecommended to compute camera movement manually
@@ -173,10 +194,10 @@ int main(void)
             DrawRectangleLines(5, 5, 330, 100, BLUE);
 
             DrawText("Camera controls:", 15, 15, 10, BLACK);
-            DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
+            DrawText(TextFormat("- Move keys: %s", (cameraMode == CAMERA_FREE) ? "W, A, S, D, Space, Left-Ctrl" : "W, A, S, D"), 15, 30, 10, BLACK);
             DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
             DrawText("- Camera mode keys: 1, 2, 3, 4", 15, 60, 10, BLACK);
-            DrawText("- Zoom keys: num-plus, num-minus or mouse scroll", 15, 75, 10, BLACK);
+            DrawText(TextFormat("- Zoom keys: %s", (cameraMode == CAMERA_FIRST_PERSON) ? "-" : "num-plus, num-minus or mouse scroll"), 15, 75, 10, BLACK);
             DrawText("- Camera projection key: P", 15, 90, 10, BLACK);
 
             DrawRectangle(600, 5, 195, 100, Fade(SKYBLUE, 0.5f));
