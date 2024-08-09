@@ -59,15 +59,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
         defer b.allocator.free(content);
 
-        var lines = std.mem.split(u8, content, "\n");
+        var lines = std.mem.splitScalar(u8, content, '\n');
         while (lines.next()) |line| {
             if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
             if (std.mem.startsWith(u8, line, "//")) continue;
 
-            var flag = std.mem.trimLeft(u8, line, " \t");                 // Trim whitespace
-            flag = flag["#define ".len - 1 ..];                           // Remove #define
-            flag = std.mem.trimLeft(u8, flag, " \t");                     // Trim whitespace
-            flag = flag[0..std.mem.indexOf(u8, flag, " ").?];             // Flag is only one word, so capture till space
+            var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+            flag = flag["#define ".len - 1 ..]; // Remove #define
+            flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+            flag = flag[0..std.mem.indexOf(u8, flag, " ").?]; // Flag is only one word, so capture till space
             flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
 
             // If user specifies the flag skip it
@@ -149,9 +149,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-
-                        raylib.defineCMacro("_GLFW_X11", null);
-                        raylib.linkSystemLibrary("X11");
+                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.linkSystemLibrary("X11");
                 }
 
                 if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
