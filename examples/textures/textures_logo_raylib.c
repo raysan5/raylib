@@ -29,6 +29,9 @@ int main(void)
     Texture2D texture = LoadTexture("resources/raylib_logo.png");        // Texture loading
     //---------------------------------------------------------------------------------------
 
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //---------------------------------------------------------------------------------------
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
