@@ -63,7 +63,6 @@ int main(void)
 
     Texture2D checked = LoadTextureFromImage(checkedIm);
     UnloadImage(checkedIm);         // Unload CPU (RAM) image data (pixels)
-    //---------------------------------------------------------------------------------------
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
