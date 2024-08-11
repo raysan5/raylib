@@ -3,6 +3,8 @@ changelog
 
 Current Release:    raylib 5.0 (18 November 2023)
 
+[models] ADDED: DrawModelTfm() supply Matrix instead of its component.
+
 -------------------------------------------------------------------------
 Release:     raylib 5.0 - 10th Anniversary Edition (18 November 2023)
 -------------------------------------------------------------------------
