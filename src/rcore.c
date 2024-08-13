@@ -360,7 +360,7 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported symbol, required for some bindings
 
-static CoreData CORE = { 0 };               // Global CORE state context
+CoreData CORE = { 0 };               // Global CORE state context
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;    // Screenshots counter
