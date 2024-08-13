@@ -5741,11 +5741,11 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 cgltf_accessor_read_float(output, 3*keyframe+1, tmp, 4);
                 Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, 3*keyframe+2, tmp, 4);
-                Vector4 outTangent1 = {tmp[0], tmp[1], tmp[2]};
+                Vector4 outTangent1 = {tmp[0], tmp[1], tmp[2], 0.0f};
                 cgltf_accessor_read_float(output, 3*(keyframe+1)+1, tmp, 4);
                 Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 4);
-                Vector4 inTangent2 = {tmp[0], tmp[1], tmp[2]};
+                Vector4 inTangent2 = {tmp[0], tmp[1], tmp[2], 0.0f};
                 Vector4 *r = data;
 
                 v1 = QuaternionNormalize(v1);
