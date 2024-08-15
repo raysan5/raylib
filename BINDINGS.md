@@ -83,7 +83,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-raku](https://github.com/vushu/raylib-raku)                                      | **auto**         | [Raku](https://www.raku.org)                                         | Artistic License 2.0 |
 | [Raylib.lean](https://github.com/KislyjKisel/Raylib.lean)                                | 4.5              | [Lean4](https://lean-lang.org)                                       | BSD-3-Clause         |
 | [raylib-cobol](https://codeberg.org/glowiak/raylib-cobol)                                | **auto**         | [COBOL](https://gnucobol.sourceforge.io)                             | Public domain        |
-| [raylib-apl](https://github.com/Brian-ED/raylib-apl)                                | **auto**         | [Dyalog APL](https://www.dyalog.com/)                             | MIT        |
+| [raylib-apl](https://github.com/Brian-ED/raylib-apl)                                     | **5.0**          | [Dyalog APL](https://www.dyalog.com/)                                | MIT                  |
 
 ### Utility Wrapers
 
