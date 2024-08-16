@@ -811,19 +811,21 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
+    Matrix mat = rlGetMatrixModelview();
+    float zoomElement = 0.5f / mat.m0;
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f((float)posX, (float)posY);
-        rlVertex2f((float)posX + (float)width, (float)posY);
+        rlVertex2f((float)posX - zoomElement, (float)posY);
+        rlVertex2f((float)posX + (float)width + zoomElement, (float)posY);
 
-        rlVertex2f((float)posX + (float)width, (float)posY);
-        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
+        rlVertex2f((float)posX + (float)width, (float)posY - zoomElement);
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height + zoomElement);
 
-        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
-        rlVertex2f((float)posX, (float)posY + (float)height);
+        rlVertex2f((float)posX + (float)width + zoomElement, (float)posY + (float)height);
+        rlVertex2f((float)posX - zoomElement, (float)posY + (float)height);
 
-        rlVertex2f((float)posX, (float)posY + (float)height);
-        rlVertex2f((float)posX, (float)posY);
+        rlVertex2f((float)posX, (float)posY + (float)height + zoomElement);
+        rlVertex2f((float)posX, (float)posY - zoomElement);
     rlEnd();
 }
 
