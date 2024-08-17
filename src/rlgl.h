@@ -3994,18 +3994,18 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     unsigned int fragmentShaderId = 0;
 
     // Compile vertex shader (if provided)
+    // NOTE: If not vertex shader is provided, use default one
     if (vsCode != NULL) vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
-    // In case no vertex shader was provided or compilation failed, we use default vertex shader
-    if (vertexShaderId == 0) vertexShaderId = RLGL.State.defaultVShaderId;
+    else vertexShaderId = RLGL.State.defaultVShaderId;
 
     // Compile fragment shader (if provided)
+    // NOTE: If not vertex shader is provided, use default one
     if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
-    // In case no fragment shader was provided or compilation failed, we use default fragment shader
-    if (fragmentShaderId == 0) fragmentShaderId = RLGL.State.defaultFShaderId;
+    else fragmentShaderId = RLGL.State.defaultFShaderId;
 
     // In case vertex and fragment shader are the default ones, no need to recompile, we can just assign the default shader program id
     if ((vertexShaderId == RLGL.State.defaultVShaderId) && (fragmentShaderId == RLGL.State.defaultFShaderId)) id = RLGL.State.defaultShaderId;
-    else
+    else if ((vertexShaderId > 0) && (fragmentShaderId > 0))
     {
         // One of or both shader are new, we need to compile a new shader program
         id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
@@ -4100,6 +4100,8 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
             RL_FREE(log);
         }
+
+        shader = 0;
     }
     else
     {
