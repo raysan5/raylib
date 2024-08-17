@@ -44,7 +44,11 @@ if (${PLATFORM} MATCHES "Desktop")
             set(OPENGL_LIBRARIES "GL")
         endif ()
 
-        set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "WASI")
+            set(LIBS_PRIVATE m atomic)
+        endif ()
+
+        set(LIBS_PRIVATE ${LIBS_PRIVATE} pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
 
         if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
             find_library(OSS_LIBRARY ossaudio)

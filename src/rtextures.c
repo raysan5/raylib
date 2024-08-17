@@ -4599,6 +4599,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         }
 
         rlSetTexture(texture.id);
+#if defined(SUPPORT_QUADS_DRAW_MODE)
         rlBegin(RL_QUADS);
 
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -4625,7 +4626,6 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             rlVertex2f(topRight.x, topRight.y);
 
         rlEnd();
-        rlSetTexture(0);
 
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
@@ -4633,7 +4633,6 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // I leave here the old implementation for educational purposes,
         // just in case someone wants to do some performance test
         /*
-        rlSetTexture(texture.id);
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
             if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
@@ -4664,8 +4663,47 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
                 rlVertex2f(dest.width, 0.0f);
             rlEnd();
         rlPopMatrix();
-        rlSetTexture(0);
         */
+
+#else
+        rlBegin(RL_TRIANGLES);
+
+            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+            // Top-left corner for texture
+            if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
+            else rlTexCoord2f(source.x/width, source.y/height);
+            rlVertex2f(topLeft.x, topLeft.y);
+
+            // Bottom-left corner for texture
+            if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+            else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+            rlVertex2f(bottomLeft.x, bottomLeft.y);
+
+            // Bottom-right corner for texture
+            if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+            else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+            rlVertex2f(bottomRight.x, bottomRight.y);
+
+            // Top-left corner for texture
+            if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
+            else rlTexCoord2f(source.x/width, source.y/height);
+            rlVertex2f(topLeft.x, topLeft.y);
+
+            // Bottom-right corner for texture
+            if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+            else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+            rlVertex2f(bottomRight.x, bottomRight.y);
+
+            // Top-right corner for texture
+            if (flipX) rlTexCoord2f(source.x/width, source.y/height);
+            else rlTexCoord2f((source.x + source.width)/width, source.y/height);
+            rlVertex2f(topRight.x, topRight.y);
+
+        rlEnd();
+#endif
+        rlSetTexture(0);
     }
 }
 
