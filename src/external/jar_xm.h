@@ -1204,7 +1204,7 @@ static void jar_xm_tone_portamento(jar_xm_context_t* ctx, jar_xm_channel_context
 }
 
 static void jar_xm_pitch_slide(jar_xm_context_t* ctx, jar_xm_channel_context_t* ch, float period_offset) {
-    /* Don't ask about the 4.f coefficient. I found mention of it nowhere. Found by ear™. */
+    /* Don't ask about the 4.f coefficient. I found mention of it nowhere. Found by ear. */
     if(ctx->module.frequency_type == jar_xm_LINEAR_FREQUENCIES) {period_offset *= 4.f; }
     ch->period += period_offset;
     jar_xm_CLAMP_DOWN(ch->period);
@@ -1507,7 +1507,7 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
             jar_xm_volume_slide(ch, ch->fine_volume_slide_param);
             break;
         case 0xD: /* EDy: Note delay */
-            /* XXX: figure this out better. EDx triggers the note even when there no note and no instrument. But ED0 acts like like a ghost note, EDx (x ≠ 0) does not. */
+            /* XXX: figure this out better. EDx triggers the note even when there no note and no instrument. But ED0 acts like like a ghost note, EDx (x != 0) does not. */
             if(s->note == 0 && s->instrument == 0) {
                 unsigned int flags = jar_xm_TRIGGER_KEEP_VOLUME;
                 if(ch->current->effect_param & 0x0F) {
@@ -1795,7 +1795,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
             if(ch->current->effect_param > 0) {
                 char arp_offset = ctx->tempo % 3;
                 switch(arp_offset) {
-                case 2: /* 0 -> x -> 0 -> y -> x -> … */
+                case 2: /* 0 -> x -> 0 -> y -> x -> ... */
                     if(ctx->current_tick == 1) {
                         ch->arp_in_progress = true;
                         ch->arp_note_offset = ch->current->effect_param >> 4;
@@ -1803,7 +1803,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
                         break;
                     }
                     /* No break here, this is intended */
-                case 1: /* 0 -> 0 -> y -> x -> … */
+                case 1: /* 0 -> 0 -> y -> x -> ... */
                     if(ctx->current_tick == 0) {
                         ch->arp_in_progress = false;
                         ch->arp_note_offset = 0;
@@ -1811,7 +1811,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
                         break;
                     }
                     /* No break here, this is intended */
-                case 0: /* 0 -> y -> x -> … */
+                case 0: /* 0 -> y -> x -> ... */
                     jar_xm_arpeggio(ctx, ch, ch->current->effect_param, ctx->current_tick - arp_offset);
                 default:
                     break;

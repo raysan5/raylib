@@ -114,6 +114,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(model);     // Unload model data
+    UnloadTexture(texture); // Unload texture data
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
