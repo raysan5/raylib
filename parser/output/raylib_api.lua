@@ -1417,6 +1417,11 @@ return {
           description = "Set to run program in fullscreen"
         },
         {
+          name = "FLAG_MANAGE_PREEDIT_CANDIDATE",
+          value = 131072,
+          description = "Set to manage the drawing of preedit candidates by the application side"
+        },
+        {
           name = "FLAG_WINDOW_RESIZABLE",
           value = 4,
           description = "Set to allow resizable window"
@@ -3067,6 +3072,30 @@ return {
       }
     },
     {
+      name = "PreeditCallback",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "int", name = "preeditLength"},
+        {type = "int *", name = "preeditString"},
+        {type = "int", name = "blockCount"},
+        {type = "int *", name = "blockSizes"},
+        {type = "int", name = "focusedBlock"},
+        {type = "int", name = "caret"}
+      }
+    },
+    {
+      name = "PreeditCandidateCallback",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "int", name = "candidatesCount"},
+        {type = "int", name = "selectedIndex"},
+        {type = "int", name = "pageStart"},
+        {type = "int", name = "pageSize"}
+      }
+    },
+    {
       name = "AudioCallback",
       description = "",
       returnType = "void",
@@ -4272,6 +4301,71 @@ return {
       returnType = "void",
       params = {
         {type = "int", name = "key"}
+      }
+    },
+    {
+      name = "SetPreeditCallback",
+      description = "Set a callback for preedit",
+      returnType = "void",
+      params = {
+        {type = "PreeditCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetPreeditCursorRectangle",
+      description = "Set the preedit cursor area that is used to decide the position of the candidate window",
+      returnType = "void",
+      params = {
+        {type = "int", name = "x"},
+        {type = "int", name = "y"},
+        {type = "int", name = "w"},
+        {type = "int", name = "h"}
+      }
+    },
+    {
+      name = "GetPreeditCursorRectangle",
+      description = "Get the preedit cursor area",
+      returnType = "void",
+      params = {
+        {type = "int *", name = "x"},
+        {type = "int *", name = "y"},
+        {type = "int *", name = "w"},
+        {type = "int *", name = "h"}
+      }
+    },
+    {
+      name = "IsImeOn",
+      description = "Check if IME is ON",
+      returnType = "bool"
+    },
+    {
+      name = "SetImeStatus",
+      description = "Set IME status",
+      returnType = "void",
+      params = {
+        {type = "bool", name = "on"}
+      }
+    },
+    {
+      name = "ResetPreedit",
+      description = "Reset preedit text",
+      returnType = "void"
+    },
+    {
+      name = "SetPreeditCandidateCallback",
+      description = "Set a callback for preedit candidates",
+      returnType = "void",
+      params = {
+        {type = "PreeditCandidateCallback", name = "callback"}
+      }
+    },
+    {
+      name = "GetPreeditCandidate",
+      description = "Get the text of the preedie candidate. This can be used only when `FLAG_MANAGE_PREEDIT_CANDIDATE` ConfigFlag is enabled on Win32int *",
+      returnType = "int *",
+      params = {
+        {type = "int", name = "index"},
+        {type = "int *", name = "textCount"}
       }
     },
     {
