@@ -1689,7 +1689,7 @@ void WaitTime(double seconds)
     #if defined(_WIN32)
         Sleep((unsigned long)(sleepSeconds*1000.0));
     #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__) || defined(__wasi__)
         struct timespec req = { 0 };
         time_t sec = sleepSeconds;
         long nsec = (sleepSeconds - sec)*1000000000L;
