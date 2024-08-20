@@ -364,6 +364,44 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
+// Set the preedit cursor area.
+// This is used to decide the position of the candidate window.
+void SetPreeditCursorRectangle(int x, int y, int w, int h)
+{
+    TRACELOG(LOG_WARNING, "SetPreeditCursorRectangle() not implemented on target platform");
+}
+
+// Get the preedit cursor area
+void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h)
+{
+    TRACELOG(LOG_WARNING, "GetPreeditCursorRectangle() not implemented on target platform");
+}
+
+// Check if IME is ON
+bool IsImeOn(void)
+{
+    TRACELOG(LOG_WARNING, "IsImeOn() not implemented on target platform");
+    return false;
+}
+
+// Set IME status
+void SetImeStatus(bool on)
+{
+    TRACELOG(LOG_WARNING, "SetImeStatus() not implemented on target platform");
+}
+
+// Reset preedit text
+void ResetPreedit(void)
+{
+    TRACELOG(LOG_WARNING, "ResetPreedit() not implemented on target platform");
+}
+
+// Get the text of the preedie candidate
+int *GetPreeditCandidate(int index, int *textCount)
+{
+    TRACELOG(LOG_WARNING, "GetPreeditCandidate() not implemented on target platform");
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {

@@ -306,6 +306,9 @@ typedef struct CoreData {
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
 
+            PreeditCallback preeditCallback; // Preedit callback
+            PreeditCandidateCallback preeditCandidateCallback; // Preedit candidate callback
+
         } Keyboard;
         struct {
             Vector2 offset;                 // Mouse offset
@@ -2862,6 +2865,18 @@ int GetCharPressed(void)
     }
 
     return value;
+}
+
+// Set a callback for preedit
+void SetPreeditCallback(PreeditCallback callback)
+{
+    CORE.Input.Keyboard.preeditCallback = callback;
+}
+
+// Set a callback for preedit candidate
+void SetPreeditCandidateCallback(PreeditCandidateCallback callback)
+{
+    CORE.Input.Keyboard.preeditCandidateCallback = callback;
 }
 
 // Set a custom key to exit program
