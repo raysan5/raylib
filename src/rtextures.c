@@ -371,7 +371,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 
         if (isSvgStringValid)
         {
-            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            struct NSVGimage *svgImage = nsvgParse((char *)fileData, "px", 96.0f);
 
             unsigned char *img = RL_MALLOC(width*height*4);
 
@@ -404,7 +404,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
             nsvgDeleteRasterizer(rast);
         }
 
-        if (isSvgStringValid && (fileData != fileNameOrString)) UnloadFileData(fileData);
+        if (isSvgStringValid && (fileData != (unsigned char *)fileNameOrString)) UnloadFileData(fileData);
     }
 #else
     TRACELOG(LOG_WARNING, "SVG image support not enabled, image can not be loaded");
@@ -611,7 +611,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             (fileData[2] == 'v') &&
             (fileData[3] == 'g'))
         {
-            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            struct NSVGimage *svgImage = nsvgParse((char *)fileData, "px", 96.0f);
             unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
 
             // Rasterize
