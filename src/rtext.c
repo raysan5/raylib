@@ -1467,8 +1467,7 @@ float TextToFloat(const char *text)
     int i = 0;
     for (; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
 
-    if (text[i++] != '.') value *= sign;
-    else
+    if (text[i++] == '.')
     {
         float divisor = 10.0f;
         for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
@@ -1478,7 +1477,7 @@ float TextToFloat(const char *text)
         }
     }
 
-    return value;
+    return value*sign;
 }
 
 #if defined(SUPPORT_TEXT_MANIPULATION)
