@@ -4092,6 +4092,12 @@ static Model LoadOBJ(const char *fileName)
             model.materialCount = 1;
             TRACELOG(LOG_INFO, "MODEL: No materials provided, setting one default material for all meshes");
         }
+        else if (model.materialCount > 1 && model.meshCount > 1)
+        {
+            // TEMP warning about multiple materials, to be removed when proper splitting code is implemented
+            // any obj with multiple materials will need to have it's materials assigned by the user in code to work at this time
+            TRACELOG(LOG_INFO, "MODEL: OBJ has multiple materials, manual material assignment will be required.");
+        }
 
         // Init model meshes and materials
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
