@@ -371,7 +371,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 
         if (isSvgStringValid)
         {
-            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            struct NSVGimage *svgImage = nsvgParse((char *)fileData, "px", 96.0f);
 
             unsigned char *img = RL_MALLOC(width*height*4);
 
@@ -404,7 +404,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
             nsvgDeleteRasterizer(rast);
         }
 
-        if (isSvgStringValid && (fileData != fileNameOrString)) UnloadFileData(fileData);
+        if (isSvgStringValid && (fileData != (unsigned char *)fileNameOrString)) UnloadFileData(fileData);
     }
 #else
     TRACELOG(LOG_WARNING, "SVG image support not enabled, image can not be loaded");
@@ -503,7 +503,16 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     Image image = { 0 };
 
     // Security check for input data
-    if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
+    if ((fileData == NULL) || (dataSize == 0))
+    {
+        TRACELOG(LOG_WARNING, "IMAGE: Invalid file data");
+        return image;
+    }
+    if (fileType == NULL)
+    {
+        TRACELOG(LOG_WARNING, "IMAGE: Missing file extension");
+        return image;
+    }
 
     if ((false)
 #if defined(SUPPORT_FILEFORMAT_PNG)
@@ -602,7 +611,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             (fileData[2] == 'v') &&
             (fileData[3] == 'g'))
         {
-            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            struct NSVGimage *svgImage = nsvgParse((char *)fileData, "px", 96.0f);
             unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
 
             // Rasterize
@@ -1213,6 +1222,7 @@ Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
 
+#if defined(SUPPORT_MODULE_RTEXT)
     int textLength = TextLength(text);
     int imageViewSize = width*height;
 
@@ -1223,6 +1233,10 @@ Image GenImageText(int width, int height, const char *text)
     image.mipmaps = 1;
 
     memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
+#else
+    TRACELOG(LOG_WARNING, "IMAGE: GenImageText() requires module: rtext");
+    image = GenImageColor(width, height, BLACK);     // Generating placeholder black image rectangle
+#endif
 
     return image;
 }
@@ -5389,7 +5403,8 @@ int GetPixelDataSize(int width, int height, int format)
         default: break;
     }
 
-    dataSize = width*height*bpp/8;  // Total data size in bytes
+    double bytesPerPixel = (double)bpp/8.0;
+    dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
 
     // Most compressed formats works on 4x4 blocks,
     // if texture is smaller, minimum dataSize is 8 or 16
