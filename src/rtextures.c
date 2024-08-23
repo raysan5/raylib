@@ -1112,6 +1112,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
+    float aspectRatio = (float)width / (float)height;
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
@@ -1119,6 +1120,10 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             float nx = (float)(x + offsetX)*(scale/(float)width);
             float ny = (float)(y + offsetY)*(scale/(float)height);
 
+            // Apply aspect ratio compensation to wider side
+            if (width > height) nx *= aspectRatio;
+            else ny /= aspectRatio;
+            
             // Basic perlin noise implementation (not used)
             //float p = (stb_perlin_noise3(nx, ny, 0.0f, 0, 0, 0);
 
