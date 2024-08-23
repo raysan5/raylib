@@ -1626,7 +1626,9 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         {
             music.ctxType = MUSIC_AUDIO_FLAC;
             music.ctxData = ctxFlac;
-            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            int sampleSize = ctxFlac->bitsPerSample;
+            if (ctxFlac->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, sampleSize, ctxFlac->channels);
             music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
