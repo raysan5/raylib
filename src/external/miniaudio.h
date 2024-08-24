@@ -36078,9 +36078,15 @@ static ma_result ma_context_get_device_info_from_fd__audio4(ma_context* pContext
         ma_uint32 channels;
         ma_uint32 sampleRate;
 
+#ifdef __NetBSD__
+        if (ioctl(fd, AUDIO_GETFORMAT, &fdInfo) < 0) {
+            return MA_ERROR;
+        }
+#else
         if (ioctl(fd, AUDIO_GETINFO, &fdInfo) < 0) {
             return MA_ERROR;
         }
+#endif
 
         if (deviceType == ma_device_type_playback) {
             channels   = fdInfo.play.channels;
@@ -36358,7 +36364,11 @@ static ma_result ma_device_init_fd__audio4(ma_device* pDevice, const ma_device_c
             /* We're using a default device. Get the info from the /dev/audioctl file instead of /dev/audio. */
             int fdctl = open(pDefaultDeviceCtlNames[iDefaultDevice], fdFlags, 0);
             if (fdctl != -1) {
+#ifdef __NetBSD__
+                fdInfoResult = ioctl(fdctl, AUDIO_GETFORMAT, &fdInfo);
+#else
                 fdInfoResult = ioctl(fdctl, AUDIO_GETINFO, &fdInfo);
+#endif
                 close(fdctl);
             }
         }

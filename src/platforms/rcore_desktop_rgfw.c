@@ -1239,15 +1239,15 @@ int InitPlatform(void)
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21)
     {
-        RGFW_setGLVersion(2, 1);
+        RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
     }
     else if (rlGetVersion() == RL_OPENGL_33)
     {
-        RGFW_setGLVersion(3, 3);
+        RGFW_setGLVersion(RGFW_GL_CORE, 3, 3);
     }
     else if (rlGetVersion() == RL_OPENGL_43)
     {
-        RGFW_setGLVersion(4, 1);
+        RGFW_setGLVersion(RGFW_GL_CORE, 4, 1);
     }
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)

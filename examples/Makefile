@@ -479,6 +479,7 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
+    core/core_basic_window_web \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
@@ -528,6 +529,7 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
+    textures/textures_image_channel \
     textures/textures_image_drawing \
     textures/textures_image_generation \
     textures/textures_image_kernel \
@@ -566,6 +568,7 @@ TEXT = \
 MODELS = \
     models/models_animation \
     models/models_billboard \
+    models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap \
     models/models_draw_cube_texture \
@@ -587,6 +590,7 @@ MODELS = \
 
 SHADERS = \
     shaders/shaders_basic_lighting \
+    shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_render \
     shaders/shaders_eratosthenes \
@@ -609,7 +613,8 @@ SHADERS = \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_write_depth
+    shaders/shaders_write_depth \
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \
