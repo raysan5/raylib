@@ -2016,6 +2016,8 @@ static void ProcessMaterialsOBJ(Material *materials, tinyobj_material_t *mats, i
         // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
         materials[m] = LoadMaterialDefault();
 
+        if (mats == NULL) continue;
+
         // Get default texture, in case no texture is defined
         // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
         materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
@@ -4071,132 +4073,230 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 //  - A mesh is created for every material present in the obj file
 //  - the model.meshCount is therefore the materialCount returned from tinyobj
 //  - the mesh is automatically triangulated by tinyobj
-static Model LoadOBJ(const char *fileName)
+static Model LoadOBJ(const char* fileName)
 {
+    tinyobj_attrib_t objAttributes = { 0 };
+    tinyobj_shape_t* objShapes = NULL;
+    unsigned int objShapeCount = 0;
+
+    tinyobj_material_t* objMaterials = NULL;
+    unsigned int objMaterialCount = 0;
+
     Model model = { 0 };
+    model.transform = MatrixIdentity();
 
-    tinyobj_attrib_t attrib = { 0 };
-    tinyobj_shape_t *meshes = NULL;
-    unsigned int meshCount = 0;
+    char* fileText = LoadFileText(fileName);
 
-    tinyobj_material_t *materials = NULL;
-    unsigned int materialCount = 0;
-
-    char *fileText = LoadFileText(fileName);
-
-    if (fileText != NULL)
+    if (fileText == NULL)
     {
-        unsigned int dataSize = (unsigned int)strlen(fileText);
+        TRACELOG(LOG_ERROR, "MODEL Unable to read obj file %s", fileName);
+        return model;
+    }
 
-        char currentDir[1024] = { 0 };
-        strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
-        const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
-        if (CHDIR(workingDir) != 0)
+    char currentDir[1024] = { 0 };
+    strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
+    const char* workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
+    if (CHDIR(workingDir) != 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
+    }
+
+    unsigned int dataSize = (unsigned int)strlen(fileText);
+
+    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
+    int ret = tinyobj_parse_obj(&objAttributes, &objShapes, &objShapeCount, &objMaterials, &objMaterialCount, fileText, dataSize, flags);
+
+    UnloadFileText(fileText);
+
+    unsigned int faceVertIndex = 0;
+    unsigned int nextShape = 1;
+    int lastMaterial = -1;
+    unsigned int meshIndex = 0;
+
+    // count meshes
+    unsigned int nextShapeEnd = objAttributes.num_face_num_verts;
+
+    // see how many verts till the next shape
+
+    if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
+
+    // walk all the faces
+    for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
+    {
+        if (faceVertIndex >= nextShapeEnd)
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
+            // try to find the last vert in the next shape
+            nextShape++;
+            if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
+            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+            meshIndex++;
+        }
+        else if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial)
+        {
+            meshIndex++;// if this is a new material, we need to allocate a new mesh
         }
 
-        unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileText, dataSize, flags);
+        lastMaterial = objAttributes.material_ids[faceId];
+        faceVertIndex += objAttributes.face_num_verts[faceId];
+    }
 
-        if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
-        else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
+    // allocate the base meshes and materials
+    model.meshCount = meshIndex + 1;
+    model.meshes = (Mesh*)MemAlloc(sizeof(Mesh) * model.meshCount);
 
-        // WARNING: We are not splitting meshes by materials (previous implementation)
-        // Depending on the provided OBJ that was not the best option and it just crashed
-        // so, implementation was simplified to prioritize parsed meshes
-        model.meshCount = meshCount;
+    if (objMaterialCount == 0) objMaterialCount = 1;
 
-        // Set number of materials available
-        // NOTE: There could be more materials available than meshes but it will be resolved at
-        // model.meshMaterial, just assigning the right material to corresponding mesh
-        model.materialCount = materialCount;
-        if (model.materialCount == 0)
+    model.materialCount = objMaterialCount;
+    model.materials = (Material*)MemAlloc(sizeof(Material) * objMaterialCount);
+
+    model.meshMaterial = (int*)MemAlloc(sizeof(int) * model.meshCount);
+
+    // see how many verts are in each mesh
+    unsigned int* localMeshVertexCounts = (unsigned int*)MemAlloc(sizeof(unsigned int) * model.meshCount);
+
+    faceVertIndex = 0;
+    nextShapeEnd = objAttributes.num_face_num_verts;
+    lastMaterial = -1;
+    meshIndex = 0;
+    unsigned int localMeshVertexCount = 0;
+
+    nextShape = 1;
+    if (objShapeCount > 1)
+        nextShapeEnd = objShapes[nextShape].face_offset;
+
+    // walk all the faces
+    for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
+    {
+        bool newMesh = false; // do we need a new mesh?
+        if (faceVertIndex >= nextShapeEnd)
         {
-            model.materialCount = 1;
-            TRACELOG(LOG_INFO, "MODEL: No materials provided, setting one default material for all meshes");
+            // try to find the last vert in the next shape
+            nextShape++;
+            if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
+            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+
+            newMesh = true;
         }
-        else if (model.materialCount > 1 && model.meshCount > 1)
+        else if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial)
         {
-            // TEMP warning about multiple materials, to be removed when proper splitting code is implemented
-            // any obj with multiple materials will need to have it's materials assigned by the user in code to work at this time
-            TRACELOG(LOG_INFO, "MODEL: OBJ has multiple materials, manual material assignment will be required.");
-        }
-
-        // Init model meshes and materials
-        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int)); // Material index assigned to each mesh
-        model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-
-        // Process each provided mesh
-        for (int i = 0; i < model.meshCount; i++)
-        {
-            // WARNING: We need to calculate the mesh triangles manually using meshes[i].face_offset
-            // because in case of triangulated quads, meshes[i].length actually report quads,
-            // despite the triangulation that is efectively considered on attrib.num_faces
-            unsigned int tris = 0;
-            if (i == model.meshCount - 1) tris = attrib.num_faces - meshes[i].face_offset;
-            else tris = meshes[i + 1].face_offset;
-
-            model.meshes[i].vertexCount = tris*3;
-            model.meshes[i].triangleCount = tris;   // Face count (triangulated)
-            model.meshes[i].vertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-            model.meshes[i].texcoords = (float *)RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));
-            model.meshes[i].normals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-            model.meshMaterial[i] = 0;  // By default, assign material 0 to each mesh
-
-            // Process all mesh faces
-            for (unsigned int face = 0, f = meshes[i].face_offset, v = 0, vt = 0, vn = 0; face < tris; face++, f++, v += 3, vt += 3, vn += 3)
-            {
-                // Get indices for the face
-                tinyobj_vertex_index_t idx0 = attrib.faces[f*3 + 0];
-                tinyobj_vertex_index_t idx1 = attrib.faces[f*3 + 1];
-                tinyobj_vertex_index_t idx2 = attrib.faces[f*3 + 2];
-
-                // Fill vertices buffer (float) using vertex index of the face
-                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[v*3 + n] = attrib.vertices[idx0.v_idx*3 + n]; }
-                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[(v + 1)*3 + n] = attrib.vertices[idx1.v_idx*3 + n]; }
-                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[(v + 2)*3 + n] = attrib.vertices[idx2.v_idx*3 + n]; }
-
-                if (attrib.num_texcoords > 0)
-                {
-                    // Fill texcoords buffer (float) using vertex index of the face
-                    // NOTE: Y-coordinate must be flipped upside-down
-                    model.meshes[i].texcoords[vt*2 + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
-                    model.meshes[i].texcoords[vt*2 + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1];
-
-                    model.meshes[i].texcoords[(vt + 1)*2 + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
-                    model.meshes[i].texcoords[(vt + 1)*2 + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1];
-
-                    model.meshes[i].texcoords[(vt + 2)*2 + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
-                    model.meshes[i].texcoords[(vt + 2)*2 + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1];
-                }
-
-                if (attrib.num_normals > 0)
-                {
-                    // Fill normals buffer (float) using vertex index of the face
-                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[vn*3 + n] = attrib.normals[idx0.vn_idx*3 + n]; }
-                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[(vn + 1)*3 + n] = attrib.normals[idx1.vn_idx*3 + n]; }
-                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[(vn + 2)*3 + n] = attrib.normals[idx2.vn_idx*3 + n]; }
-                }
-            }
+            newMesh = true;
         }
 
-        // Init model materials
-        if (materialCount > 0) ProcessMaterialsOBJ(model.materials, materials, materialCount);
-        else model.materials[0] = LoadMaterialDefault(); // Set default material for the mesh
+        lastMaterial = objAttributes.material_ids[faceId];
 
-        tinyobj_attrib_free(&attrib);
-        tinyobj_shapes_free(meshes, model.meshCount);
-        tinyobj_materials_free(materials, materialCount);
-
-        UnloadFileText(fileText);
-
-        // Restore current working directory
-        if (CHDIR(currentDir) != 0)
+        if (newMesh)
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", currentDir);
+            localMeshVertexCounts[meshIndex] = localMeshVertexCount;
+
+            localMeshVertexCount = 0;
+            meshIndex++;
         }
+
+        faceVertIndex += objAttributes.face_num_verts[faceId];
+        localMeshVertexCount += objAttributes.face_num_verts[faceId];
+    }
+    localMeshVertexCounts[meshIndex] = localMeshVertexCount;
+
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        // allocate the buffers for each mesh
+        unsigned int vertexCount = localMeshVertexCounts[i];
+
+        model.meshes[i].vertexCount = vertexCount;
+        model.meshes[i].triangleCount = vertexCount / 3;
+
+        model.meshes[i].vertices = (float*)MemAlloc(sizeof(float) * vertexCount * 3);
+        model.meshes[i].normals = (float*)MemAlloc(sizeof(float) * vertexCount * 3);
+        model.meshes[i].texcoords = (float*)MemAlloc(sizeof(float) * vertexCount * 2);
+        model.meshes[i].colors = (unsigned char*)MemAlloc(sizeof(unsigned char) * vertexCount * 4);
+    }
+
+    MemFree(localMeshVertexCounts);
+    localMeshVertexCounts = NULL;
+
+    // fill meshes
+    faceVertIndex = 0;
+
+    nextShapeEnd = objAttributes.num_face_num_verts;
+
+    // see how many verts till the next shape
+    nextShape = 1;
+    if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
+    lastMaterial = -1;
+    meshIndex = 0;
+    localMeshVertexCount = 0;
+
+    // walk all the faces
+    for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
+    {
+        bool newMesh = false; // do we need a new mesh?
+        if (faceVertIndex >= nextShapeEnd)
+        {
+            // try to find the last vert in the next shape
+            nextShape++;
+            if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
+            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+            newMesh = true;
+        }
+        // if this is a new material, we need to allocate a new mesh
+        if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial) newMesh = true;
+        lastMaterial = objAttributes.material_ids[faceId];;
+
+        if (newMesh)
+        {
+            localMeshVertexCount = 0;
+            meshIndex++;
+        }
+
+        int matId = 0;
+        if (lastMaterial >= 0 && lastMaterial < objMaterialCount)
+            matId = lastMaterial;
+
+        model.meshMaterial[meshIndex] = matId;
+
+        for (int f = 0; f < objAttributes.face_num_verts[faceId]; f++)
+        {
+            int vertIndex = objAttributes.faces[faceVertIndex].v_idx;
+            int normalIndex = objAttributes.faces[faceVertIndex].vn_idx;
+            int texcordIndex = objAttributes.faces[faceVertIndex].vt_idx;
+
+            Vector3 vert = { objAttributes.vertices[vertIndex * 3], objAttributes.vertices[vertIndex * 3 + 1] , objAttributes.vertices[vertIndex * 3 + 2] };
+            Vector3 normal = { objAttributes.normals[normalIndex * 3], objAttributes.normals[normalIndex * 3 + 1] , objAttributes.normals[normalIndex * 3 + 2] };
+            Vector2 uv = { objAttributes.texcoords[texcordIndex * 2], objAttributes.texcoords[texcordIndex * 2 + 1] };
+
+            for (int i = 0; i < 3; i++)
+                model.meshes[meshIndex].vertices[localMeshVertexCount * 3 + i] = objAttributes.vertices[vertIndex * 3 + i];
+
+            for (int i = 0; i < 3; i++)
+                model.meshes[meshIndex].normals[localMeshVertexCount * 3 + i] = objAttributes.normals[normalIndex * 3 + i];
+
+            for (int i = 0; i < 2; i++)
+                model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + i] = objAttributes.texcoords[texcordIndex * 2 + i];
+
+            model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + 1];
+
+            for (int i = 0; i < 4; i++)
+                model.meshes[meshIndex].colors[localMeshVertexCount * 4 + i] = 255;
+
+            faceVertIndex++;
+            localMeshVertexCount++;
+        }
+    }
+
+    if (objMaterialCount > 0) ProcessMaterialsOBJ(model.materials, objMaterials, objMaterialCount);
+    else model.materials[0] = LoadMaterialDefault(); // Set default material for the mesh
+
+    tinyobj_attrib_free(&objAttributes);
+    tinyobj_shapes_free(objShapes, objShapeCount);
+    tinyobj_materials_free(objMaterials, objMaterialCount);
+
+    for (int i = 0; i < model.meshCount; i++)
+        UploadMesh(model.meshes + i, true);
+
+    // Restore current working directory
+    if (CHDIR(currentDir) != 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", currentDir);
     }
 
     return model;
