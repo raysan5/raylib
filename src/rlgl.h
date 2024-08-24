@@ -4414,14 +4414,14 @@ void rlUpdateShaderBuffer(unsigned int id, const void *data, unsigned int dataSi
 // Get SSBO buffer size
 unsigned int rlGetShaderBufferSize(unsigned int id)
 {
-    GLint64 size = 0;
-
 #if defined(GRAPHICS_API_OPENGL_43)
+    GLint64 size = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferParameteri64v(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &size);
-#endif
-
     return (size > 0)? (unsigned int)size : 0;
+#else
+    return 0;
+#endif
 }
 
 // Read SSBO buffer data (GPU->CPU)
