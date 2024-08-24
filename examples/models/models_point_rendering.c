@@ -71,7 +71,7 @@ int main()
             TraceLog(LOG_INFO, "num points %d", numPoints);
         }
 
-        // re-upload a different point cloud size
+        // upload a different point cloud size
         if (numPointsChanged)
         {
             UnloadModel(model);
@@ -91,9 +91,9 @@ int main()
                 {
                     DrawModelPoints(model, position, 1.0f, WHITE);
                 }
+                // The old method must continually draw the "points" (lines)
                 else
                 {
-                // The old method must continually draw the "points" (lines)
                     for (int i = 0; i < numPoints; i++)
                     {
                         Vector3 pos = {
