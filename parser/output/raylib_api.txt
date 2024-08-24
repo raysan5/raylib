@@ -24,7 +24,7 @@ Define 004: RAYLIB_VERSION_PATCH
 Define 005: RAYLIB_VERSION
   Name: RAYLIB_VERSION
   Type: STRING
-  Value: "5.5"
+  Value: "5.5-dev"
   Description: 
 Define 006: __declspec(x)
   Name: __declspec(x)
@@ -2176,8 +2176,8 @@ Function 217: DrawCircleGradient() (5 input parameters)
   Param[1]: centerX (type: int)
   Param[2]: centerY (type: int)
   Param[3]: radius (type: float)
-  Param[4]: color1 (type: Color)
-  Param[5]: color2 (type: Color)
+  Param[4]: inner (type: Color)
+  Param[5]: outer (type: Color)
 Function 218: DrawCircleV() (3 input parameters)
   Name: DrawCircleV
   Return type: void
@@ -2278,8 +2278,8 @@ Function 229: DrawRectangleGradientV() (6 input parameters)
   Param[2]: posY (type: int)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
-  Param[5]: color1 (type: Color)
-  Param[6]: color2 (type: Color)
+  Param[5]: top (type: Color)
+  Param[6]: bottom (type: Color)
 Function 230: DrawRectangleGradientH() (6 input parameters)
   Name: DrawRectangleGradientH
   Return type: void
@@ -2288,17 +2288,17 @@ Function 230: DrawRectangleGradientH() (6 input parameters)
   Param[2]: posY (type: int)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
-  Param[5]: color1 (type: Color)
-  Param[6]: color2 (type: Color)
+  Param[5]: left (type: Color)
+  Param[6]: right (type: Color)
 Function 231: DrawRectangleGradientEx() (5 input parameters)
   Name: DrawRectangleGradientEx
   Return type: void
   Description: Draw a gradient-filled rectangle with custom vertex colors
   Param[1]: rec (type: Rectangle)
-  Param[2]: col1 (type: Color)
-  Param[3]: col2 (type: Color)
-  Param[4]: col3 (type: Color)
-  Param[5]: col4 (type: Color)
+  Param[2]: topLeft (type: Color)
+  Param[3]: bottomLeft (type: Color)
+  Param[4]: topRight (type: Color)
+  Param[5]: bottomRight (type: Color)
 Function 232: DrawRectangleLines() (5 input parameters)
   Name: DrawRectangleLines
   Return type: void

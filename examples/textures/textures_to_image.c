@@ -38,6 +38,8 @@ int main(void)
 
     texture = LoadTextureFromImage(image);                 // Recreate texture from retrieved image data (RAM -> VRAM)
     UnloadImage(image);                                    // Unload retrieved image data from CPU memory (RAM)
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop

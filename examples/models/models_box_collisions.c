@@ -109,7 +109,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Move player with cursors to collide", 220, 40, 20, GRAY);
+            DrawText("Move player with arrow keys to collide", 220, 40, 20, GRAY);
 
             DrawFPS(10, 10);
 

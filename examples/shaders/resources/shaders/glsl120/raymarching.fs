@@ -1,8 +1,4 @@
-#version 100
-
-precision mediump float;
-
-#extension GL_OES_standard_derivatives : enable
+#version 120
 
 // Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
