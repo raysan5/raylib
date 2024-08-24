@@ -703,9 +703,9 @@
         <Function name="ClearWindowState" retType="void" paramCount="1" desc="Clear window configuration state flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
-        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)">
+        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)">
         </Function>
-        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed (only PLATFORM_DESKTOP)">
+        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)">
         </Function>
         <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable (only PLATFORM_DESKTOP)">
         </Function>

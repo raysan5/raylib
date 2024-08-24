@@ -1056,12 +1056,12 @@ Function 013: ClearWindowState() (1 input parameters)
 Function 014: ToggleFullscreen() (0 input parameters)
   Name: ToggleFullscreen
   Return type: void
-  Description: Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)
+  Description: Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)
   No input parameters
 Function 015: ToggleBorderlessWindowed() (0 input parameters)
   Name: ToggleBorderlessWindowed
   Return type: void
-  Description: Toggle window state: borderless windowed (only PLATFORM_DESKTOP)
+  Description: Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)
   No input parameters
 Function 016: MaximizeWindow() (0 input parameters)
   Name: MaximizeWindow
