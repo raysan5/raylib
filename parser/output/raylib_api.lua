@@ -3158,12 +3158,12 @@ return {
     },
     {
       name = "ToggleFullscreen",
-      description = "Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)",
+      description = "Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)",
       returnType = "void"
     },
     {
       name = "ToggleBorderlessWindowed",
-      description = "Toggle window state: borderless windowed (only PLATFORM_DESKTOP)",
+      description = "Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)",
       returnType = "void"
     },
     {
@@ -7203,6 +7203,30 @@ return {
     {
       name = "DrawModelWiresEx",
       description = "Draw a model wires (with texture if set) with extended parameters",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "Vector3", name = "position"},
+        {type = "Vector3", name = "rotationAxis"},
+        {type = "float", name = "rotationAngle"},
+        {type = "Vector3", name = "scale"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "DrawModelPoints",
+      description = "Draw a model as points",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "Vector3", name = "position"},
+        {type = "float", name = "scale"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "DrawModelPointsEx",
+      description = "Draw a model as points with extended parameters",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},

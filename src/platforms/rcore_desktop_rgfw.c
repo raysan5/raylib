@@ -76,9 +76,7 @@ void CloseWindow(void);
     #define Size NSSIZE
 #endif
 
-#if defined(_MSC_VER)
 __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
-#endif
 
 #include "../external/RGFW.h"
 
@@ -538,10 +536,8 @@ void *GetWindowHandle(void)
 {
 #ifdef RGFW_WEBASM
     return (void*)platform.window->src.ctx;
-#elif !defined(RGFW_WINDOWS)
-    return (void *)platform.window->src.window;
 #else
-    return platform.window->src.hwnd;
+    return (void*)platform.window->src.window;
 #endif
 }
 

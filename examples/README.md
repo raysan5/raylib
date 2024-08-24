@@ -147,11 +147,12 @@ Examples using raylib models functionality, including models loading/generation 
 | 91 | [models_loading_vox](models/models_loading_vox.c) | <img src="models/models_loading_vox.png" alt="models_loading_vox" width="80"> | ⭐️☆☆☆ | **4.0** | **4.0** | [Johann Nadalutti](https://github.com/procfxgen) |
 | 92 | [models_loading_m3d](models/models_loading_m3d.c) | <img src="models/models_loading_m3d.png" alt="models_loading_m3d" width="80"> | ⭐️☆☆☆ | **4.2** | **4.2** | [bzt](https://bztsrc.gitlab.io/model3d) |
 | 93 | [models_orthographic_projection](models/models_orthographic_projection.c) | <img src="models/models_orthographic_projection.png" alt="models_orthographic_projection" width="80"> | ⭐️☆☆☆ | 2.0 | 3.7 | [Max Danielsson](https://github.com/autious) |
-| 94 | [models_rlgl_solar_system](models/models_rlgl_solar_system.c) | <img src="models/models_rlgl_solar_system.png" alt="models_rlgl_solar_system" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
-| 95 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c) | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Berni](https://github.com/Berni8k) |
-| 96 | [models_waving_cubes](models/models_waving_cubes.c) | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [codecat](https://github.com/codecat) |
-| 97 | [models_heightmap](models/models_heightmap.c) | <img src="models/models_heightmap.png" alt="models_heightmap" width="80"> | ⭐️☆☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
-| 98 | [models_skybox](models/models_skybox.c) | <img src="models/models_skybox.png" alt="models_skybox" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
+| 94 | [models_point_rendering](models/models_point_rendering.c) | <img src="models/models_point_rendering.png" alt="models_point_rendering" width="80"> | ⭐️⭐️☆☆ | 5.0 | 5.0 | [Reese Gallagher](https://github.com/satchelfrost) |
+| 95 | [models_rlgl_solar_system](models/models_rlgl_solar_system.c) | <img src="models/models_rlgl_solar_system.png" alt="models_rlgl_solar_system" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
+| 96 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c) | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Berni](https://github.com/Berni8k) |
+| 97 | [models_waving_cubes](models/models_waving_cubes.c) | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [codecat](https://github.com/codecat) |
+| 98 | [models_heightmap](models/models_heightmap.c) | <img src="models/models_heightmap.png" alt="models_heightmap" width="80"> | ⭐️☆☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
+| 99 | [models_skybox](models/models_skybox.c) | <img src="models/models_skybox.png" alt="models_skybox" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
 
 ### category: shaders
 
@@ -159,26 +160,25 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 99  | [shaders_basic_lighting](shaders/shaders_basic_lighting.c) | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="80"> | ⭐️⭐️⭐️⭐️ | 3.0 | **4.2** | [Chris Camacho](https://github.com/codifies) |
-| 100 | [shaders_model_shader](shaders/shaders_model_shader.c) | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="80"> | ⭐️⭐️☆☆ | 1.3 | 3.7 | [Ray](https://github.com/raysan5) |
-| 101 | [shaders_shapes_textures](shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.7 | [Ray](https://github.com/raysan5) |
-| 102 | [shaders_custom_uniform](shaders/shaders_custom_uniform.c) | <img src="shaders/shaders_custom_uniform.png" alt="shaders_custom_uniform" width="80"> | ⭐️⭐️☆☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
-| 103 | [shaders_postprocessing](shaders/shaders_postprocessing.c) | <img src="shaders/shaders_postprocessing.png" alt="shaders_postprocessing" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
-| 104 | [shaders_palette_switch](shaders/shaders_palette_switch.c) | <img src="shaders/shaders_palette_switch.png" alt="shaders_palette_switch" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Marco Lizza](https://github.com/MarcoLizza) |
-| 105 | [shaders_raymarching](shaders/shaders_raymarching.c) | <img src="shaders/shaders_raymarching.png" alt="shaders_raymarching" width="80"> | ⭐️⭐️⭐️⭐️ | 2.0 | **4.2** | [Ray](https://github.com/raysan5) |
-| 106 | [shaders_texture_drawing](shaders/shaders_texture_drawing.c) | <img src="shaders/shaders_texture_drawing.png" alt="shaders_texture_drawing" width="80"> | ⭐️⭐️☆☆ | 2.0 | 3.7 | [Michał Ciesielski](https://github.com/) |
-| 107 | [shaders_texture_outline](shaders/shaders_texture_outline.c) | <img src="shaders/shaders_texture_outline.png" alt="shaders_texture_outline" width="80"> | ⭐️⭐️⭐️☆ | **4.0** | **4.0** | [Samuel Skiff](https://github.com/GoldenThumbs) |
-| 108 | [shaders_texture_waves](shaders/shaders_texture_waves.c) | <img src="shaders/shaders_texture_waves.png" alt="shaders_texture_waves" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Anata](https://github.com/anatagawa) |
-| 109 | [shaders_julia_set](shaders/shaders_julia_set.c) | <img src="shaders/shaders_julia_set.png" alt="shaders_julia_set" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [eggmund](https://github.com/eggmund) |
-| 110 | [shaders_eratosthenes](shaders/shaders_eratosthenes.c) | <img src="shaders/shaders_eratosthenes.png" alt="shaders_eratosthenes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [ProfJski](https://github.com/ProfJski) |
-| 111 | [shaders_fog](shaders/shaders_fog.c) | <img src="shaders/shaders_fog.png" alt="shaders_fog" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 112 | [shaders_simple_mask](shaders/shaders_simple_mask.c) | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 113 | [shaders_hot_reloading](shaders/shaders_hot_reloading.c) | <img src="shaders/shaders_hot_reloading.png" alt="shaders_hot_reloading" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.5 | [Ray](https://github.com/raysan5) |
-| 114 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐️⭐️⭐️⭐️ | 3.7 | **4.2** | [seanpringle](https://github.com/seanpringle) |
-| 115 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 116 | [shaders_spotlight](shaders/shaders_spotlight.c) | <img src="shaders/shaders_spotlight.png" alt="shaders_spotlight" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 117 | [shaders_deferred_render](shaders/shaders_deferred_render.c) | <img src="shaders/shaders_deferred_render.png" alt="shaders_deferred_render" width="80"> | ⭐️⭐️⭐️⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
-| 118 | [shaders_vertex_displacement](shaders/shaders_vertex_displacement.c) | <img src="shaders/shaders_vertex_displacement.png" alt="shaders_deferred_render" width="80"> | ⭐️☆☆☆ | 1.5 | 1.5 | [Alex ZH](https://github.com/ZzzhHe) |
+| 100  | [shaders_basic_lighting](shaders/shaders_basic_lighting.c) | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="80"> | ⭐️⭐️⭐️⭐️ | 3.0 | **4.2** | [Chris Camacho](https://github.com/codifies) |
+| 101 | [shaders_model_shader](shaders/shaders_model_shader.c) | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="80"> | ⭐️⭐️☆☆ | 1.3 | 3.7 | [Ray](https://github.com/raysan5) |
+| 102 | [shaders_shapes_textures](shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.7 | [Ray](https://github.com/raysan5) |
+| 103 | [shaders_custom_uniform](shaders/shaders_custom_uniform.c) | <img src="shaders/shaders_custom_uniform.png" alt="shaders_custom_uniform" width="80"> | ⭐️⭐️☆☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
+| 104 | [shaders_postprocessing](shaders/shaders_postprocessing.c) | <img src="shaders/shaders_postprocessing.png" alt="shaders_postprocessing" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
+| 105 | [shaders_palette_switch](shaders/shaders_palette_switch.c) | <img src="shaders/shaders_palette_switch.png" alt="shaders_palette_switch" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Marco Lizza](https://github.com/MarcoLizza) |
+| 106 | [shaders_raymarching](shaders/shaders_raymarching.c) | <img src="shaders/shaders_raymarching.png" alt="shaders_raymarching" width="80"> | ⭐️⭐️⭐️⭐️ | 2.0 | **4.2** | [Ray](https://github.com/raysan5) |
+| 107 | [shaders_texture_drawing](shaders/shaders_texture_drawing.c) | <img src="shaders/shaders_texture_drawing.png" alt="shaders_texture_drawing" width="80"> | ⭐️⭐️☆☆ | 2.0 | 3.7 | [Michał Ciesielski](https://github.com/) |
+| 108 | [shaders_texture_outline](shaders/shaders_texture_outline.c) | <img src="shaders/shaders_texture_outline.png" alt="shaders_texture_outline" width="80"> | ⭐️⭐️⭐️☆ | **4.0** | **4.0** | [Samuel Skiff](https://github.com/GoldenThumbs) |
+| 109 | [shaders_texture_waves](shaders/shaders_texture_waves.c) | <img src="shaders/shaders_texture_waves.png" alt="shaders_texture_waves" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Anata](https://github.com/anatagawa) |
+| 110 | [shaders_julia_set](shaders/shaders_julia_set.c) | <img src="shaders/shaders_julia_set.png" alt="shaders_julia_set" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [eggmund](https://github.com/eggmund) |
+| 111 | [shaders_eratosthenes](shaders/shaders_eratosthenes.c) | <img src="shaders/shaders_eratosthenes.png" alt="shaders_eratosthenes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [ProfJski](https://github.com/ProfJski) |
+| 112 | [shaders_fog](shaders/shaders_fog.c) | <img src="shaders/shaders_fog.png" alt="shaders_fog" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 113 | [shaders_simple_mask](shaders/shaders_simple_mask.c) | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 114 | [shaders_hot_reloading](shaders/shaders_hot_reloading.c) | <img src="shaders/shaders_hot_reloading.png" alt="shaders_hot_reloading" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.5 | [Ray](https://github.com/raysan5) |
+| 115 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐️⭐️⭐️⭐️ | 3.7 | **4.2** | [seanpringle](https://github.com/seanpringle) |
+| 116 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 117 | [shaders_spotlight](shaders/shaders_spotlight.c) | <img src="shaders/shaders_spotlight.png" alt="shaders_spotlight" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 118 | [shaders_deferred_render](shaders/shaders_deferred_render.c) | <img src="shaders/shaders_deferred_render.png" alt="shaders_deferred_render" width="80"> | ⭐️⭐️⭐️⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
 
 ### category: audio
 
