@@ -3158,12 +3158,12 @@ return {
     },
     {
       name = "ToggleFullscreen",
-      description = "Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)",
+      description = "Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)",
       returnType = "void"
     },
     {
       name = "ToggleBorderlessWindowed",
-      description = "Toggle window state: borderless windowed (only PLATFORM_DESKTOP)",
+      description = "Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)",
       returnType = "void"
     },
     {
