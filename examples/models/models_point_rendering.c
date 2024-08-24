@@ -21,7 +21,6 @@
 #define MIN_POINTS 1000     // 1 thousand
 
 static float RandFloat();
-static Mesh GenPoints(int numPoints);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -52,7 +51,8 @@ int main()
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while(!WindowShouldClose()) {
+    while(!WindowShouldClose())
+    {
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
@@ -139,12 +139,6 @@ int main()
     return 0;
 }
 
-// Random float between 0 and 1
-float RandFloat()
-{
-    return (float)rand() / RAND_MAX;
-}
-
 // Generate a spherical point cloud
 Mesh GenPoints(int numPoints)
 {
@@ -158,9 +152,9 @@ Mesh GenPoints(int numPoints)
     // https://en.wikipedia.org/wiki/Spherical_coordinate_system
     for (int i = 0; i < numPoints; i++)
     {
-        float theta = PI * RandFloat();
-        float phi   = 2 * PI * RandFloat();
-        float r     = 10.0f * RandFloat();
+        float theta = PI * rand() / RAND_MAX;
+        float phi   = 2.0f * PI * rand() / RAND_MAX;
+        float r     = 10.0f * rand() / RAND_MAX;
         mesh.vertices[i * 3 + 0] = r * sin(theta) * cos(phi);
         mesh.vertices[i * 3 + 1] = r * sin(theta) * sin(phi);
         mesh.vertices[i * 3 + 2] = r * cos(theta);
