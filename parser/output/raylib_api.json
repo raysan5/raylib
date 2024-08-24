@@ -10367,6 +10367,60 @@
       ]
     },
     {
+      "name": "DrawModelPoints",
+      "description": "Draw a model as points",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Model",
+          "name": "model"
+        },
+        {
+          "type": "Vector3",
+          "name": "position"
+        },
+        {
+          "type": "float",
+          "name": "scale"
+        },
+        {
+          "type": "Color",
+          "name": "tint"
+        }
+      ]
+    },
+    {
+      "name": "DrawModelPointsEx",
+      "description": "Draw a model as points with extended parameters",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Model",
+          "name": "model"
+        },
+        {
+          "type": "Vector3",
+          "name": "position"
+        },
+        {
+          "type": "Vector3",
+          "name": "rotationAxis"
+        },
+        {
+          "type": "float",
+          "name": "rotationAngle"
+        },
+        {
+          "type": "Vector3",
+          "name": "scale"
+        },
+        {
+          "type": "Color",
+          "name": "tint"
+        }
+      ]
+    },
+    {
       "name": "DrawBoundingBox",
       "description": "Draw bounding box (wires)",
       "returnType": "void",
