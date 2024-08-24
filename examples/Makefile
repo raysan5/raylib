@@ -582,6 +582,7 @@ MODELS = \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_orthographic_projection \
+    models/models_point_rendering \
     models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_waving_cubes \

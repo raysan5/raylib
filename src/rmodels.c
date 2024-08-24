@@ -3631,6 +3631,30 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
     rlDisableWireMode();
 }
 
+// Draw a model points
+void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
+{
+    rlEnablePointMode();
+    rlDisableBackfaceCulling();
+
+    DrawModel(model, position, scale, tint);
+
+    rlEnableBackfaceCulling();
+    rlDisableWireMode();
+}
+
+// Draw a model points
+void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
+{
+    rlEnablePointMode();
+    rlDisableBackfaceCulling();
+
+    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
+
+    rlEnableBackfaceCulling();
+    rlDisableWireMode();
+}
+
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint)
 {
