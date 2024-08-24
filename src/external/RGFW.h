@@ -4999,7 +4999,9 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 	#define WIN32_LEAN_AND_MEAN
 	#define OEMRESOURCE
 	#include <windows.h>
-	
+
+	__declspec(dllimport) int __stdcall WideCharToMultiByte( UINT CodePage, DWORD dwFlags, const WCHAR* lpWideCharStr, int cchWideChar,  LPSTR lpMultiByteStr, int cbMultiByte, LPCCH lpDefaultChar, LPBOOL lpUsedDefaultChar);
+
 	#include <processthreadsapi.h>
 	#include <wchar.h>
 	#include <locale.h>
