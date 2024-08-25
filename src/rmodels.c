@@ -4073,7 +4073,7 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 //  - A mesh is created for every material present in the obj file
 //  - the model.meshCount is therefore the materialCount returned from tinyobj
 //  - the mesh is automatically triangulated by tinyobj
-static Model LoadOBJ(const char* fileName)
+static Model LoadOBJ(const char *fileName)
 {
     tinyobj_attrib_t objAttributes = { 0 };
     tinyobj_shape_t* objShapes = NULL;
@@ -4105,6 +4105,12 @@ static Model LoadOBJ(const char* fileName)
 
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
     int ret = tinyobj_parse_obj(&objAttributes, &objShapes, &objShapeCount, &objMaterials, &objMaterialCount, fileText, dataSize, flags);
+
+    if (ret != TINYOBJ_SUCCESS)
+    {
+        TRACELOG(LOG_ERROR, "MODEL Unable to read obj data %s", fileName);
+        return model;
+    }
 
     UnloadFileText(fileText);
 
@@ -4144,10 +4150,16 @@ static Model LoadOBJ(const char* fileName)
     model.meshCount = meshIndex + 1;
     model.meshes = (Mesh*)MemAlloc(sizeof(Mesh) * model.meshCount);
 
-    if (objMaterialCount == 0) objMaterialCount = 1;
-
-    model.materialCount = objMaterialCount;
-    model.materials = (Material*)MemAlloc(sizeof(Material) * objMaterialCount);
+    if (objMaterialCount > 0)
+    {
+        model.materialCount = objMaterialCount;
+        model.materials = (Material*)MemAlloc(sizeof(Material) * objMaterialCount);
+    }
+    else // we must allocate at least one material
+    {
+        model.materialCount = 1;
+        model.materials = (Material*)MemAlloc(sizeof(Material) * 1);
+    }
 
     model.meshMaterial = (int*)MemAlloc(sizeof(int) * model.meshCount);
 
@@ -4249,7 +4261,7 @@ static Model LoadOBJ(const char* fileName)
         }
 
         int matId = 0;
-        if (lastMaterial >= 0 && lastMaterial < objMaterialCount)
+        if (lastMaterial >= 0 && lastMaterial < (int)objMaterialCount)
             matId = lastMaterial;
 
         model.meshMaterial[meshIndex] = matId;
@@ -4259,10 +4271,6 @@ static Model LoadOBJ(const char* fileName)
             int vertIndex = objAttributes.faces[faceVertIndex].v_idx;
             int normalIndex = objAttributes.faces[faceVertIndex].vn_idx;
             int texcordIndex = objAttributes.faces[faceVertIndex].vt_idx;
-
-            Vector3 vert = { objAttributes.vertices[vertIndex * 3], objAttributes.vertices[vertIndex * 3 + 1] , objAttributes.vertices[vertIndex * 3 + 2] };
-            Vector3 normal = { objAttributes.normals[normalIndex * 3], objAttributes.normals[normalIndex * 3 + 1] , objAttributes.normals[normalIndex * 3 + 2] };
-            Vector2 uv = { objAttributes.texcoords[texcordIndex * 2], objAttributes.texcoords[texcordIndex * 2 + 1] };
 
             for (int i = 0; i < 3; i++)
                 model.meshes[meshIndex].vertices[localMeshVertexCount * 3 + i] = objAttributes.vertices[vertIndex * 3 + i];
