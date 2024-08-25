@@ -694,11 +694,12 @@ void PollInputEvents(void)
         // Process this event
         if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-        // NOTE: Never close window, native activity is controlled by the system!
+        // NOTE: Allow closing the window in case a configuration change happened.
+        // The android_main function should be allowed to return to its caller in order for the
+        // Android OS to relaunch the activity.
         if (platform.app->destroyRequested != 0)
         {
-            //CORE.Window.shouldClose = true;
-            //ANativeActivity_finish(platform.app->activity);
+            CORE.Window.shouldClose = true;
         }
     }
 }
@@ -781,7 +782,7 @@ int InitPlatform(void)
             // Process this event
             if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-            // NOTE: Never close window, native activity is controlled by the system!
+            // NOTE: It's highly likely destroyRequested will never be non-zero at the start of the activity lifecycle.
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
@@ -811,6 +812,12 @@ void ClosePlatform(void)
 
         eglTerminate(platform.device);
         platform.device = EGL_NO_DISPLAY;
+    }
+
+    // NOTE: Reset global state in case the activity is being relaunched.
+    if (platform.app->destroyRequested != 0) {
+        CORE = (CoreData){0};
+        platform = (PlatformData){0};
     }
 }
 
