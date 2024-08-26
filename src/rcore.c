@@ -678,7 +678,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
     CORE.Time.frameCounter = 0;
-    CORE.Window.shouldClose = false;
+    SetWindowShouldClose(false);
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
@@ -2736,7 +2736,7 @@ void PlayAutomationEvent(AutomationEvent event)
             case INPUT_GESTURE: GESTURES.current = event.params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
     #endif
             // Window event
-            case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;
+            case WINDOW_CLOSE: SetWindowShouldClose(true); break;
             case WINDOW_MAXIMIZE: MaximizeWindow(); break;
             case WINDOW_MINIMIZE: MinimizeWindow(); break;
             case WINDOW_RESIZE: SetWindowSize(event.params[0], event.params[1]); break;

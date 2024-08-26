@@ -160,6 +160,11 @@ bool WindowShouldClose(void)
     return false;
 }
 
+void SetWindowShouldClose(bool shouldClose)
+{
+    TRACELOG(LOG_WARNING, "SetWindowShouldClose() has no effect on Web");
+}
+
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {

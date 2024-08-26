@@ -142,6 +142,12 @@ bool WindowShouldClose(void)
     else return true;
 }
 
+void SetWindowShouldClose(bool shouldClose)
+{
+    CORE.Window.shouldClose = shouldClose;
+    glfwSetWindowShouldClose(platform.handle, shouldClose);
+}
+
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {

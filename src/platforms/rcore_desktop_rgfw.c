@@ -239,6 +239,12 @@ bool WindowShouldClose(void)
     else return true;
 }
 
+void SetWindowShouldClose(bool shouldClose)
+{
+    CORE.Window.shouldClose = shouldClose;
+    RGFW_window_setShouldClose(platform.window);
+}
+
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {   

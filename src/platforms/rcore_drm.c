@@ -206,7 +206,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     [BTN_TL] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
     [BTN_TL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
     [BTN_TR] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-    [BTN_TR2] GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    [BTN_TR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
     [BTN_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
     [BTN_MODE] = GAMEPAD_BUTTON_MIDDLE,
     [BTN_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
@@ -251,6 +251,11 @@ bool WindowShouldClose(void)
 {
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
+}
+
+void SetWindowShouldClose(bool shouldClose)
+{
+    CORE.Window.shouldClose = shouldClose;
 }
 
 // Toggle fullscreen mode
@@ -668,7 +673,7 @@ void PollInputEvents(void)
 #endif
 
     // Check exit key
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) SetWindowShouldClose(true);
 
     // Register previous mouse position
     if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -1139,7 +1144,7 @@ void ClosePlatform(void)
         platform.device = EGL_NO_DISPLAY;
     }
 
-    CORE.Window.shouldClose = true;   // Added to force threads to exit when the close window is called
+    SetWindowShouldClose(true);   // Added to force threads to exit when the close window is called
 
     // Close the evdev devices
 

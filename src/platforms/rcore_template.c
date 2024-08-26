@@ -90,6 +90,12 @@ bool WindowShouldClose(void)
     else return true;
 }
 
+void SetWindowShouldClose(bool shouldClose)
+{
+    CORE.Window.shouldClose = shouldClose;
+    TRACELOG(LOG_WARNING, "SetWindowShouldClose() not available on target platform");
+}
+
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {

@@ -244,6 +244,11 @@ bool WindowShouldClose(void)
     else return true;
 }
 
+void SetWindowShouldClose(bool shouldClose)
+{
+    CORE.Window.shouldClose = shouldClose;
+}
+
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
@@ -1063,7 +1068,7 @@ void PollInputEvents(void)
         // All input events can be processed after polling
         switch (event.type)
         {
-            case SDL_QUIT: CORE.Window.shouldClose = true; break;
+            case SDL_QUIT: SetWindowShouldClose(true); break;
 
             case SDL_DROPFILE:      // Dropped file
             {
@@ -1150,7 +1155,7 @@ void PollInputEvents(void)
                 // TODO: Put exitKey verification outside the switch?
                 if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey])
                 {
-                    CORE.Window.shouldClose = true;
+                    SetWindowShouldClose(true);
                 }
             } break;
 
