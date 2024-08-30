@@ -107,7 +107,6 @@ Vector2 lockedMousePos = { 0 };
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
-void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 // Error callback event
 static void ErrorCallback(int error, const char *description);                      // GLFW3 Error Callback, runs on GLFW3 error
@@ -1730,9 +1729,5 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     return 1; // The event was consumed by the callback handler
 }
 
-// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
-void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
-    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
-};
 
 // EOF

@@ -25,7 +25,13 @@
 const int screenWidth = 800;
 const int screenHeight = 450;
 GLFWwindow *window;
-    
+
+
+
+bool CustomWindowShouldClose(void) {
+    return glfwWindowShouldClose(window);
+}
+
 int CustomInitPlatform(void) {
     if (!glfwInit())
     {
@@ -89,10 +95,14 @@ void CustomClosePlatform(void) {
 int main(void)
 {
     union OverridableFunctionPointer funcs;
+    funcs.InitPlatform = CustomInitPlatform;
+    funcs.ClosePlatform = CustomClosePlatform;
+    funcs.WindowShouldClose = CustomWindowShouldClose;
     CustomInitPlatform();
 
-    OverrideInternalFunction("InitPlatform",&funcs);
+    //OverrideInternalFunction("InitPlatform",&funcs);
     OverrideInternalFunction("ClosePlatform",&funcs);
+    OverrideInternalFunction("WindowShouldClose",&funcs);
 
     RenderTexture2D fb = LoadRenderTexture(80,24);
 
@@ -114,6 +124,6 @@ int main(void)
         glfwPollEvents();
     }
 
-    CustomClosePlatform();
+    //CustomClosePlatform();
     return 0;
 }

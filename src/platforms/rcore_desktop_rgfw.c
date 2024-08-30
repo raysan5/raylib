@@ -220,7 +220,6 @@ static const unsigned short keyMappingRGFW[] = {
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 bool InitGraphicsDevice(void);   // Initialize graphics device
-void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -1355,8 +1354,4 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
     return keyMappingRGFW[keycode];
 }
 
-// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
-void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
-    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
-};
 

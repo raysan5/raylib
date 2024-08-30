@@ -91,6 +91,16 @@ GEN_CALLBACK_BODY_VOID(OpenURL, (const char *url), (url))
 // Note that there is no responsibility here for the Raylib maintainers to keep a stable API for core functions
 void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func) {
     GEN_CASE(InitPlatform)
+    GEN_CASE(WindowShouldClose)
+    GEN_CASE(GetMonitorCount)
+    GEN_CASE(GetCurrentMonitor)
+    GEN_CASE(ShowCursor)
+    GEN_CASE(HideCursor)
+    GEN_CASE(SetWindowState)
+    GEN_CASE(ClearWindowState)
+    GEN_CASE(SetWindowMinSize)
+    GEN_CASE(SetWindowMaxSize)
+    GEN_CASE(SetWindowSize)
     GEN_CASE(ClosePlatform)
     GEN_CASE(ToggleFullscreen)
     GEN_CASE(ToggleBorderlessWindowed)
@@ -139,7 +149,6 @@ CoreData * GetCore() {
 int InitPlatform(void) { 
     CHECK_AND_CALL(InitPlatform, ());
     CORE.Window.ready = true;
-    TRACELOG(LOG_WARNING, "InitPlatform was called but not overriden by the user"); 
     return 0;
 }
 
