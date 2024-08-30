@@ -191,7 +191,6 @@ union OverridableFunctionPointer {
 };
 
 void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
-//CoreData * GetCore(); // Get and set variables of Raylib's core struct
 
 // EOF
 #endif

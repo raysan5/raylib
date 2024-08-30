@@ -255,6 +255,5 @@ typedef struct CoreData {
 } CoreData;
 
 
-CoreData * GetCore(); // Get Raylib's CoreData struct. The fields of this are not guaranteed to be stable.
-
+CoreData * GetCore(); // Get Raylib's CoreData struct.
 #endif
