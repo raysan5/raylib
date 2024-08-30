@@ -219,6 +219,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 static void InitKeyboard(void);                 // Initialize raw keyboard system
@@ -1937,5 +1938,10 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 
     return nearestIndex;
 }
+
+// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
+    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
+};
 
 // EOF

@@ -2,7 +2,7 @@
 include(CMakeDependentOption)
 include(EnumOption)
 
-enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM;SDL" "Platform to build for.")
+enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM;SDL;Offscreen;None" "Platform to build for.")
 
 enum_option(OPENGL_VERSION "OFF;4.3;3.3;2.1;1.1;ES 2.0;ES 3.0" "Force a specific OpenGL Version?")
 

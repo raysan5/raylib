@@ -164,8 +164,6 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadMesh(mesh);       // Unload the mesh
     UnloadShader(shader);   // Unload shader
-    UnloadTexture(texture); // Unload texture
-    UnloadTexture(light);   // Unload texture
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

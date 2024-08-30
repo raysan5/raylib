@@ -251,6 +251,7 @@ static const KeyboardKey mapKeycode[KEYCODE_MAP_SIZE] = {
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);           // Process Android activity lifecycle commands
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);   // Process Android inputs
@@ -1335,5 +1336,10 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     return 0;
 }
+
+// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
+    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
+};
 
 // EOF

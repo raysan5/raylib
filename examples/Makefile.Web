@@ -448,7 +448,6 @@ MODELS = \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_orthographic_projection \
-    models/models_point_rendering \
     models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_waving_cubes \
@@ -478,8 +477,7 @@ SHADERS = \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_write_depth \
-    shaders/shaders_vertex_displacement
+    shaders/shaders_write_depth
 
 AUDIO = \
     audio/audio_mixed_processor \

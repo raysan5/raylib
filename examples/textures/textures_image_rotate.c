@@ -43,8 +43,6 @@ int main(void)
     textures[2] = LoadTextureFromImage(imageNeg90);
 
     int currentTexture = 0;
-
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop

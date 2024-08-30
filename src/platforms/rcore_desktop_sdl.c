@@ -225,6 +225,7 @@ static const int CursorsLUT[] = {
 //----------------------------------------------------------------------------------
 int InitPlatform(void);                                      // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);                                    // Close platform
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
 
@@ -1617,4 +1618,11 @@ static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 
     return KEY_NULL; // No equivalent key in Raylib
 }
+
+
+// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
+    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
+};
+
 // EOF

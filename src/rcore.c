@@ -515,6 +515,10 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
     #include "platforms/rcore_android.c"
+#elif defined(PLATFORM_NONE)
+    #include "platforms/rcore_none.c"
+#elif defined(PLATFORM_OFFSCREEN)
+    #include "platforms/rcore_none.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!

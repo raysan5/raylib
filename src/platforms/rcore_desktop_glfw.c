@@ -103,6 +103,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 // Error callback event
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -1897,5 +1898,10 @@ static void JoystickCallback(int jid, int event)
         memset(CORE.Input.Gamepad.name[jid], 0, 64);
     }
 }
+
+// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
+    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
+};
 
 // EOF

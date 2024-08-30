@@ -48,8 +48,8 @@ int main(void)
     bool active = false;
     int framesCounter = 0;
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    //---------------------------------------------------------------------------------------
+    SetTargetFPS(120);
+    //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key

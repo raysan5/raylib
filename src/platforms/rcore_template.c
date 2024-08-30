@@ -73,6 +73,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 bool InitGraphicsDevice(void);   // Initialize graphics device
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -594,5 +595,10 @@ void ClosePlatform(void)
 {
     // TODO: De-initialize graphics, inputs and more
 }
+
+// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only)
+void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func); {
+    TraceLog(LOG_WARNING, "OverrideInternalFunction called on unsupported platform");
+};
 
 // EOF

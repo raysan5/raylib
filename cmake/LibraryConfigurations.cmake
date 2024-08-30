@@ -96,7 +96,24 @@ elseif ("${PLATFORM}" MATCHES "SDL")
     find_package(SDL2 REQUIRED)
     set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
     set(LIBS_PRIVATE SDL2::SDL2)
+elseif ("${PLATFORM}" MATCHES "None")
+    set(PLATFORM_CPP "PLATFORM_NONE")
+    set(CUSTOMIZE_BUILD TRUE)
 
+    set(USE_AUDIO FALSE)
+    find_library(pthread NAMES pthread)
+    find_package(OpenGL)
+
+    set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES})
+elseif ("${PLATFORM}" MATCHES "Offscreen")
+    set(GRAPHICS "GRAPHICS_API_OPENGL_33")
+    set(PLATFORM_CPP "PLATFORM_OFFSCREEN")
+ 
+    find_library(pthread NAMES pthread)
+    find_package(OpenGL)
+
+    set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES})
+    set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
