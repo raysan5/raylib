@@ -36,19 +36,71 @@ static PlatformData platform = { 0 };   // Platform specific data
         return; \
     }
 
-// For the functions that have default behavior on PLATFORM_OFFSCREEN, check if the function exists
+// For the functions that have default behavior on PLATFORM_EMBEDDABLE, check if the function exists
 // first.
 #define CHECK_AND_CALL(fn_name, args) \
     if(internal##fn_name##Callback != NULL) {\
         return (*internal##fn_name##Callback)(LIST args); \
     }
 
-// For the functions that have default behavior on PLATFORM_OFFSCREEN, check if the function exists
+// For the functions that have default behavior on PLATFORM_EMBEDDABLE, check if the function exists
 // first (void version).
 #define CHECK_AND_CALL_VOID(fn_name, args) \
     if(internal##fn_name##Callback != NULL) {\
         (*internal##fn_name##Callback)(LIST args); \
     }
+
+// Generate an internal callback function pointer
+#define GEN_FUNCPOINTER(fn_name) \
+    static fn_name##Callback * internal##fn_name##Callback = NULL;
+
+GEN_FUNCPOINTER(InitPlatform)
+GEN_FUNCPOINTER(WindowShouldClose)
+GEN_FUNCPOINTER(GetMonitorCount)
+GEN_FUNCPOINTER(GetCurrentMonitor)
+GEN_FUNCPOINTER(ShowCursor)
+GEN_FUNCPOINTER(HideCursor)
+GEN_FUNCPOINTER(SetWindowState)
+GEN_FUNCPOINTER(ClearWindowState)
+GEN_FUNCPOINTER(SetWindowMinSize)
+GEN_FUNCPOINTER(SetWindowMaxSize)
+GEN_FUNCPOINTER(SetWindowSize)
+GEN_FUNCPOINTER(ClosePlatform)
+GEN_FUNCPOINTER(ToggleFullscreen)
+GEN_FUNCPOINTER(ToggleBorderlessWindowed)
+GEN_FUNCPOINTER(MaximizeWindow)
+GEN_FUNCPOINTER(MinimizeWindow)
+GEN_FUNCPOINTER(RestoreWindow)
+GEN_FUNCPOINTER(SetWindowIcon)
+GEN_FUNCPOINTER(SetWindowIcons)
+GEN_FUNCPOINTER(SetWindowTitle)
+GEN_FUNCPOINTER(SetWindowPosition)
+GEN_FUNCPOINTER(SetWindowMonitor)
+GEN_FUNCPOINTER(SetWindowOpacity)
+GEN_FUNCPOINTER(SetWindowFocused)
+GEN_FUNCPOINTER(EnableCursor)
+GEN_FUNCPOINTER(DisableCursor)
+GEN_FUNCPOINTER(SwapScreenBuffer)
+GEN_FUNCPOINTER(SetGamepadVibration)
+GEN_FUNCPOINTER(SetMousePosition)
+GEN_FUNCPOINTER(SetMouseCursor)
+GEN_FUNCPOINTER(PollInputEvents)
+GEN_FUNCPOINTER(SetClipboardText)
+GEN_FUNCPOINTER(SetGamepadMappings)
+GEN_FUNCPOINTER(GetWindowHandle)
+GEN_FUNCPOINTER(GetMonitorPosition)
+GEN_FUNCPOINTER(GetMonitorWidth)
+GEN_FUNCPOINTER(GetMonitorHeight)
+GEN_FUNCPOINTER(GetMonitorPhysicalWidth)
+GEN_FUNCPOINTER(GetMonitorPhysicalHeight)
+GEN_FUNCPOINTER(GetMonitorRefreshRate)
+GEN_FUNCPOINTER(GetMonitorName)
+GEN_FUNCPOINTER(GetWindowPosition)
+GEN_FUNCPOINTER(GetWindowScaleDPI)
+GEN_FUNCPOINTER(GetClipboardText)
+GEN_FUNCPOINTER(GetKeyName)
+GEN_FUNCPOINTER(GetTime)
+GEN_FUNCPOINTER(OpenURL)
 
 GEN_CALLBACK_BODY_VOID(ClosePlatform, (void), ())
 GEN_CALLBACK_BODY_VOID(ToggleFullscreen, (void), ())
@@ -87,7 +139,7 @@ GEN_CALLBACK_BODY(const char *, "", GetKeyName, (int key), (key))
 GEN_CALLBACK_BODY(double, 0.0, GetTime, (void), ())
 GEN_CALLBACK_BODY_VOID(OpenURL, (const char *url), (url))
 
-// Override an internal platform function with your own (PLATFORM_OFFSCREEN and PLATFORM_NONE only).
+// Override an internal platform function with your own (PLATFORM_EMBEDDABLE and PLATFORM_NONE only).
 // Note that there is no responsibility here for the Raylib maintainers to keep a stable API for core functions
 void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func) {
     GEN_CASE(InitPlatform)
@@ -136,17 +188,29 @@ void OverrideInternalFunction(const char * funcName, union OverridableFunctionPo
     GEN_CASE(GetClipboardText)
     GEN_CASE(GetKeyName)
     GEN_CASE(GetTime)
+    GEN_CASE(OpenURL)
 
     TraceLog(LOG_ERROR, "Unknown function name \"%s\", did not bind.",funcName);
 };
 
 
-#ifdef PLATFORM_OFFSCREEN
-// 
+#ifndef PLATFORM_EMBEDDABLE
+GEN_CALLBACK_BODY(int, 0, InitPlatform, (void), ())
+GEN_CALLBACK_BODY(bool, true, WindowShouldClose, (void), ())
+GEN_CALLBACK_BODY(int, 0, GetMonitorCount, (void), ())
+GEN_CALLBACK_BODY(int, 0, GetCurrentMonitor, (void), ())
+GEN_CALLBACK_BODY_VOID(ShowCursor, (void), ())
+GEN_CALLBACK_BODY_VOID(HideCursor, (void), ())
+GEN_CALLBACK_BODY_VOID(SetWindowState, (unsigned int flags), (flags))
+GEN_CALLBACK_BODY_VOID(ClearWindowState, (unsigned int flags), (flags))
+GEN_CALLBACK_BODY_VOID(SetWindowMinSize, (int width, int height), (width,height))
+GEN_CALLBACK_BODY_VOID(SetWindowMaxSize, (int width, int height), (width,height))
+GEN_CALLBACK_BODY_VOID(SetWindowSize, (int width, int height), (width,height))
+
+#else
 int InitPlatform(void) { 
-    printf("j\n");
     CHECK_AND_CALL(InitPlatform, ());
-    printf("test\n");
+    printf("theJ\n");
     CORE.Window.ready = true;
     return 0;
 }

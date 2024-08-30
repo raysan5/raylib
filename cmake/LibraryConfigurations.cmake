@@ -105,9 +105,9 @@ elseif ("${PLATFORM}" MATCHES "None")
     find_package(OpenGL)
 
     set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES})
-elseif ("${PLATFORM}" MATCHES "Offscreen")
+elseif ("${PLATFORM}" MATCHES "Embeddable")
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
-    set(PLATFORM_CPP "PLATFORM_OFFSCREEN")
+    set(PLATFORM_CPP "PLATFORM_EMBEDDABLE")
  
     find_library(pthread NAMES pthread)
     find_package(OpenGL)

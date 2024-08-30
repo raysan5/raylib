@@ -8516,9 +8516,9 @@ RGFW_window* RGFW_createWindow(const char* name, RGFW_rect rect, u16 args) {
     attrs.preserveDrawingBuffer = EM_FALSE;
 	
     if (RGFW_DOUBLE_BUFFER == 0)
-        attrs.renderViaOffscreenBackBuffer = 0;
+        attrs.renderViaEmbeddableBackBuffer = 0;
     else
-        attrs.renderViaOffscreenBackBuffer = RGFW_AUX_BUFFERS;
+        attrs.renderViaEmbeddableBackBuffer = RGFW_AUX_BUFFERS;
     
     attrs.failIfMajorPerformanceCaveat = EM_FALSE;
 	attrs.majorVersion = (RGFW_majorVersion == 0) ? 1 : RGFW_majorVersion;

@@ -118,15 +118,16 @@ elseif (NOT SUPPORT_GESTURES_SYSTEM)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_basic_screen_manager.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_input_gestures_web.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_input_gestures.c)
-elseif ("${PLATFORM}" STREQUAL "None" OR "${PLATFORM}" STREQUAL "Offscreen")
-    # for some reason i get an error when trying to compile this one from any platform? oh well we'll just stick it here
-    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
 endif ()
+
+# The core_override one is only for Embeddable/Blank platforms
+if (NOT ${PLATFORM} MATCHES "None" AND NOT ${PLATFORM} MATCHES "Embeddable")
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_override.c)
+endif()
 
 # The rlgl_standalone example only targets desktop, without shared libraries.
 if (BUILD_SHARED_LIBS OR NOT ${PLATFORM} MATCHES "Desktop")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
-
 endif()
 
 include_directories(BEFORE SYSTEM others/external/include)

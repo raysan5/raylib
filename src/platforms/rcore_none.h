@@ -63,7 +63,7 @@ typedef struct {
 #define LIST(...) __VA_ARGS__
 
 // The code for warning the user that a function hasn't been overriden. On PLATFORM_NONE, this isn't emitted.
-#ifndef PLATFORM_OFFSCREEN
+#ifndef PLATFORM_EMBEDDABLE
 #define FUNCTION_MISSING_WARNING(fn_name) TRACELOG(LOG_WARNING, #fn_name " was called but not overriden by the user");
 #else
 #define FUNCTION_MISSING_WARNING(fn_name)
@@ -72,13 +72,11 @@ typedef struct {
 // Generate a callback
 #define GEN_CALLBACK_HEAD(fn_ret, ret_value, fn_name, named_args, args) \
     typedef fn_ret (*fn_name##Callback)(LIST named_args); \
-    static fn_name##Callback * internal##fn_name##Callback = NULL; \
     fn_ret fn_name(LIST named_args);
 
 // Generate a callback that returns a void.
 #define GEN_CALLBACK_HEAD_VOID(fn_name, named_args, args) \
     typedef void (*fn_name##Callback)(LIST named_args); \
-    static fn_name##Callback * internal##fn_name##Callback = NULL; \
     void fn_name(LIST named_args);
 
 //----------------------------------------------------------------------------------
@@ -141,7 +139,7 @@ GEN_CALLBACK_HEAD_VOID(SetWindowSize, (int width, int height), (width,height))
 #define GEN_FIELD(fn_name) fn_name##Callback fn_name;
 
 // The avaliable functions you can pass to OverrideInternalFunction. 
-// The fields are only accessible when compiling with PLATFORM_NONE or PLATFORM_OFFSCREEN 
+// The fields are only accessible when compiling with PLATFORM_NONE or PLATFORM_EMBEDDABLE 
 union OverridableFunctionPointer {
     GEN_FIELD(InitPlatform)
     GEN_FIELD(WindowShouldClose)
@@ -189,6 +187,7 @@ union OverridableFunctionPointer {
     GEN_FIELD(GetClipboardText)
     GEN_FIELD(GetKeyName)
     GEN_FIELD(GetTime)
+    GEN_FIELD(OpenURL)
 };
 
 void OverrideInternalFunction(const char * funcName, union OverridableFunctionPointer * func);

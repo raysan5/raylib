@@ -14,7 +14,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "rmod.h"
 #include "rcore.h"
 
 #include "GLFW/glfw3.h"         // Windows/Context and inputs management
@@ -28,6 +27,15 @@ const int screenHeight = 450;
 GLFWwindow *window;
 
 
+void CustomSetWindowTitle(const char *title)
+{
+    GetCore()->Window.title = title;
+    glfwSetWindowTitle(window, title);
+}
+
+double CustomGetTime(void) {
+    return glfwGetTime();
+}
 
 bool CustomWindowShouldClose(void) {
     if (GetCore()->Window.ready) return GetCore()->Window.shouldClose;
@@ -35,7 +43,6 @@ bool CustomWindowShouldClose(void) {
 }
 
 int CustomInitPlatform(void) {
-    printf("Initing\n");
     if (!glfwInit())
     {
         printf("GLFW3: Can not initialize GLFW\n");
@@ -65,6 +72,7 @@ int CustomInitPlatform(void) {
     else printf("GLFW3: Window created successfully\n");
 
     //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwSetWindowSize(window, GetCore()->Window.screen.width, GetCore()->Window.screen.height);
     glfwSetWindowPos(window, 200, 200);
 
     glfwMakeContextCurrent(window);
@@ -94,39 +102,50 @@ void CustomClosePlatform(void) {
     glfwTerminate();                // Free GLFW3 resources
 }
 
+
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(void)
 
 {
-    union OverridableFunctionPointer funcs;
-    funcs.InitPlatform = CustomInitPlatform;
-    funcs.ClosePlatform = CustomClosePlatform;
-    funcs.WindowShouldClose = CustomWindowShouldClose;
-    //CustomInitPlatform();
-    
-    OverrideInternalFunction("InitPlatform",&funcs);
-    OverrideInternalFunction("ClosePlatform",&funcs);
-    OverrideInternalFunction("WindowShouldClose",&funcs);
 
-    RenderTexture2D fb = LoadRenderTexture(80,24);
+    union OverridableFunctionPointer funcs[4];
 
-    InitWindow(1,1,"r");
+    funcs[0].InitPlatform = CustomInitPlatform;
+    OverrideInternalFunction("InitPlatform",&funcs[0]);
 
-    Color col;
+    funcs[1].ClosePlatform = CustomClosePlatform;
+    OverrideInternalFunction("ClosePlatform",&funcs[1]);
+
+    funcs[2].WindowShouldClose = CustomWindowShouldClose;
+    OverrideInternalFunction("WindowShouldClose",&funcs[2]);
+
+    funcs[3].GetTime = CustomGetTime;
+    OverrideInternalFunction("GetTime",&funcs[3]);
+
+    funcs[4].SetWindowTitle = CustomSetWindowTitle;
+    OverrideInternalFunction("SetWindowTitle",&funcs[4]);
+
+
+    InitWindow(screenWidth,screenHeight,"Test");
+
+    Color col = WHITE;
+
+    SetTargetFPS(5);
 
     //--------------------------------------------------------------------------------------
 
-    while(!WindowShouldClose()) {
-        Vector2 pos = GetMousePosition();
-        
+    // Main game loop
+    while(!WindowShouldClose()) {        
         BeginDrawing();
-            ClearBackground(WHITE);
-            BeginTextureMode(fb);
-                ClearBackground(RED);
-            EndTextureMode();
+            ClearBackground(col);
         EndDrawing();
+
+        col.r = GetRandomValue(0,255);
+        col.g = GetRandomValue(0,255);
+        col.b = GetRandomValue(0,255);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

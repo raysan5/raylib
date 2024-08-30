@@ -88,6 +88,13 @@
 #include <raylib.h>
 #include <stddef.h>
 
+#ifdef PLATFORM_NONE
+#include "platforms/rcore_none.h"
+#endif
+#ifdef PLATFORM_EMBEDDABLE
+#include "platforms/rcore_none.h"
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
