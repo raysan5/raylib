@@ -4598,9 +4598,9 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
 
-        rlSetTexture(texture.id);
 #if defined(SUPPORT_QUADS_DRAW_MODE)
         rlBegin(RL_QUADS);
+            rlSetTexture(texture.id);
 
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
@@ -4667,6 +4667,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 
 #else
         rlBegin(RL_TRIANGLES);
+            rlSetTexture(texture.id);
 
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
