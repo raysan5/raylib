@@ -120,8 +120,8 @@ elseif (NOT SUPPORT_GESTURES_SYSTEM)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_input_gestures.c)
 endif ()
 
-# The core_override one is only for Embeddable/Blank platforms
-if (NOT ${PLATFORM} MATCHES "None" AND NOT ${PLATFORM} MATCHES "Embeddable")
+# The core_override one is only for Blank platforms
+if (NOT ${PLATFORM} MATCHES "Embeddable")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_override.c)
 endif()
 
