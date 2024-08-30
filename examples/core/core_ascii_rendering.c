@@ -15,6 +15,7 @@
 
 #include "raylib.h"
 #include "rmod.h"
+#include "rcore.h"
 
 #include "GLFW/glfw3.h"         // Windows/Context and inputs management
 
@@ -29,10 +30,12 @@ GLFWwindow *window;
 
 
 bool CustomWindowShouldClose(void) {
-    return glfwWindowShouldClose(window);
+    if (GetCore()->Window.ready) return GetCore()->Window.shouldClose;
+    else return true;
 }
 
 int CustomInitPlatform(void) {
+    printf("Initing\n");
     if (!glfwInit())
     {
         printf("GLFW3: Can not initialize GLFW\n");
@@ -81,6 +84,8 @@ int CustomInitPlatform(void) {
     rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f); // Orthographic projection with top-left corner at (0,0)
     rlMatrixMode(RL_MODELVIEW);                         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                                   // Reset current matrix (MODELVIEW)
+
+    GetCore()->Window.ready = true;
     return 0;
 }
 
@@ -93,14 +98,15 @@ void CustomClosePlatform(void) {
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(void)
+
 {
     union OverridableFunctionPointer funcs;
     funcs.InitPlatform = CustomInitPlatform;
     funcs.ClosePlatform = CustomClosePlatform;
     funcs.WindowShouldClose = CustomWindowShouldClose;
-    CustomInitPlatform();
-
-    //OverrideInternalFunction("InitPlatform",&funcs);
+    //CustomInitPlatform();
+    
+    OverrideInternalFunction("InitPlatform",&funcs);
     OverrideInternalFunction("ClosePlatform",&funcs);
     OverrideInternalFunction("WindowShouldClose",&funcs);
 
@@ -113,6 +119,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     while(!WindowShouldClose()) {
+        Vector2 pos = GetMousePosition();
+        
         BeginDrawing();
             ClearBackground(WHITE);
             BeginTextureMode(fb);
@@ -122,6 +130,7 @@ int main(void)
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        GetCore()->Window.shouldClose = glfwWindowShouldClose(window);
     }
 
     //CustomClosePlatform();

@@ -140,14 +140,13 @@ void OverrideInternalFunction(const char * funcName, union OverridableFunctionPo
     TraceLog(LOG_ERROR, "Unknown function name \"%s\", did not bind.",funcName);
 };
 
-CoreData * GetCore() {
-    return &CORE;
-}
 
 #ifdef PLATFORM_OFFSCREEN
 // 
 int InitPlatform(void) { 
+    printf("j\n");
     CHECK_AND_CALL(InitPlatform, ());
+    printf("test\n");
     CORE.Window.ready = true;
     return 0;
 }
