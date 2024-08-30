@@ -719,10 +719,10 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
         bottomRight.y = y + (dx + rec.width)*sinRotation + (dy + rec.height)*cosRotation;
     }
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
+#if defined(SUPPORT_QUADS_DRAW_MODE)
     rlBegin(RL_QUADS);
 
         rlNormal3f(0.0f, 0.0f, 1.0f);
@@ -741,23 +741,34 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
         rlVertex2f(topRight.x, topRight.y);
 
     rlEnd();
-
-    rlSetTexture(0);
 #else
     rlBegin(RL_TRIANGLES);
 
+        rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
+        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(topLeft.x, topLeft.y);
+
+        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(bottomLeft.x, bottomLeft.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(topRight.x, topRight.y);
 
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(topRight.x, topRight.y);
+
+        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(bottomLeft.x, bottomLeft.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(bottomRight.x, bottomRight.y);
 
     rlEnd();
 #endif
+
+    rlSetTexture(0);
 }
 
 // Draw a vertical-gradient-filled rectangle

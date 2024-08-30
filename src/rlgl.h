@@ -1424,6 +1424,7 @@ void rlBegin(int mode)
     // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
     if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode)
     {
+        int currentTexture = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId;
         if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
         {
             // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
@@ -1446,7 +1447,7 @@ void rlBegin(int mode)
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = mode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = RLGL.State.defaultTextureId;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = currentTexture;
     }
 }
 
