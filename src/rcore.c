@@ -360,10 +360,15 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported symbol, required for some bindings
 
-CoreData CORE = { 0 };               // Global CORE state context
+CoreData CORE = { 0 };                      // Global CORE state context
+
+// Flag to note GPU acceleration is available,
+// referenced from other modules to support GPU data loading
+// NOTE: Useful to allow Texture, RenderTexture, Font.texture, Mesh.vaoId/vboId, Shader loading
+bool isGpuReady = false;
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-static int screenshotCounter = 0;    // Screenshots counter
+static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -637,28 +642,31 @@ void InitWindow(int width, int height, const char *title)
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    isGpuReady = true; // Flag to note GPU has been initialized successfully
 
     // Setup default viewport
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    // Load default font
-    // WARNING: External function: Module required: rtext
-    LoadFontDefault();
-    #if defined(SUPPORT_MODULE_RSHAPES)
-    // Set font white rectangle for shapes drawing, so shapes and text can be batched together
-    // WARNING: rshapes module is required, if not available, default internal white rectangle is used
-    Rectangle rec = GetFontDefault().recs[95];
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-    {
-        // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
-        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
-    }
-    else
-    {
-        // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
-        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
-    }
+#if defined(SUPPORT_MODULE_RTEXT)
+    #if defined(SUPPORT_DEFAULT_FONT)
+        // Load default font
+        // WARNING: External function: Module required: rtext
+        LoadFontDefault();
+        #if defined(SUPPORT_MODULE_RSHAPES)
+        // Set font white rectangle for shapes drawing, so shapes and text can be batched together
+        // WARNING: rshapes module is required, if not available, default internal white rectangle is used
+        Rectangle rec = GetFontDefault().recs[95];
+        if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+        {
+            // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
+        }
+        else
+        {
+            // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
+            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+        }
+        #endif
     #endif
 #else
     #if defined(SUPPORT_MODULE_RSHAPES)
@@ -668,7 +676,6 @@ void InitWindow(int width, int height, const char *title)
     SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
     #endif
 #endif
-
 
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
@@ -2707,8 +2714,8 @@ void PlayAutomationEvent(AutomationEvent event)
             } break;
             case INPUT_MOUSE_WHEEL_MOTION:  // param[0]: x delta, param[1]: y delta
             {
-                CORE.Input.Mouse.currentWheelMove.x = (float)event.params[0]; break;
-                CORE.Input.Mouse.currentWheelMove.y = (float)event.params[1]; break;
+                CORE.Input.Mouse.currentWheelMove.x = (float)event.params[0];
+                CORE.Input.Mouse.currentWheelMove.y = (float)event.params[1];
             } break;
             case INPUT_TOUCH_UP: CORE.Input.Touch.currentTouchState[event.params[0]] = false; break;            // param[0]: id
             case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[event.params[0]] = true; break;           // param[0]: id
@@ -2745,6 +2752,8 @@ void PlayAutomationEvent(AutomationEvent event)
             case ACTION_SETTARGETFPS: SetTargetFPS(event.params[0]); break;
             default: break;
         }
+
+        TRACELOG(LOG_INFO, "AUTOMATION PLAY: Frame: %i | Event type: %i | Event parameters: %i, %i, %i", event.frame, event.type, event.params[0], event.params[1], event.params[2]);
     }
 #endif
 }

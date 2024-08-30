@@ -670,7 +670,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="573">
+    <Functions count="575">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -703,9 +703,9 @@
         <Function name="ClearWindowState" retType="void" paramCount="1" desc="Clear window configuration state flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
-        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)">
+        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)">
         </Function>
-        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed (only PLATFORM_DESKTOP)">
+        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)">
         </Function>
         <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable (only PLATFORM_DESKTOP)">
         </Function>
@@ -1353,8 +1353,8 @@
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
             <Param type="float" name="radius" desc="" />
-            <Param type="Color" name="color1" desc="" />
-            <Param type="Color" name="color2" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
         </Function>
         <Function name="DrawCircleV" retType="void" paramCount="3" desc="Draw a color-filled circle (Vector version)">
             <Param type="Vector2" name="center" desc="" />
@@ -1431,23 +1431,23 @@
             <Param type="int" name="posY" desc="" />
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
-            <Param type="Color" name="color1" desc="" />
-            <Param type="Color" name="color2" desc="" />
+            <Param type="Color" name="top" desc="" />
+            <Param type="Color" name="bottom" desc="" />
         </Function>
         <Function name="DrawRectangleGradientH" retType="void" paramCount="6" desc="Draw a horizontal-gradient-filled rectangle">
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
-            <Param type="Color" name="color1" desc="" />
-            <Param type="Color" name="color2" desc="" />
+            <Param type="Color" name="left" desc="" />
+            <Param type="Color" name="right" desc="" />
         </Function>
         <Function name="DrawRectangleGradientEx" retType="void" paramCount="5" desc="Draw a gradient-filled rectangle with custom vertex colors">
             <Param type="Rectangle" name="rec" desc="" />
-            <Param type="Color" name="col1" desc="" />
-            <Param type="Color" name="col2" desc="" />
-            <Param type="Color" name="col3" desc="" />
-            <Param type="Color" name="col4" desc="" />
+            <Param type="Color" name="topLeft" desc="" />
+            <Param type="Color" name="bottomLeft" desc="" />
+            <Param type="Color" name="topRight" desc="" />
+            <Param type="Color" name="bottomRight" desc="" />
         </Function>
         <Function name="DrawRectangleLines" retType="void" paramCount="5" desc="Draw rectangle outline">
             <Param type="int" name="posX" desc="" />
@@ -2630,6 +2630,20 @@
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="DrawModelWiresEx" retType="void" paramCount="6" desc="Draw a model wires (with texture if set) with extended parameters">
+            <Param type="Model" name="model" desc="" />
+            <Param type="Vector3" name="position" desc="" />
+            <Param type="Vector3" name="rotationAxis" desc="" />
+            <Param type="float" name="rotationAngle" desc="" />
+            <Param type="Vector3" name="scale" desc="" />
+            <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="DrawModelPoints" retType="void" paramCount="4" desc="Draw a model as points">
+            <Param type="Model" name="model" desc="" />
+            <Param type="Vector3" name="position" desc="" />
+            <Param type="float" name="scale" desc="" />
+            <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="DrawModelPointsEx" retType="void" paramCount="6" desc="Draw a model as points with extended parameters">
             <Param type="Model" name="model" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector3" name="rotationAxis" desc="" />

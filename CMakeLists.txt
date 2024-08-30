@@ -36,9 +36,6 @@ include(CompilerFlags)
 # Registers build options that are exposed to cmake
 include(CMakeOptions.txt)
 
-# Enforces a few environment and compiler configurations
-include(BuildOptions)
-
 if (UNIX AND NOT APPLE)
   if (NOT GLFW_BUILD_WAYLAND AND NOT GLFW_BUILD_X11)
     MESSAGE(FATAL_ERROR "Cannot disable both Wayland and X11")

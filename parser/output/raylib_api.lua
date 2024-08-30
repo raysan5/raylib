@@ -3158,12 +3158,12 @@ return {
     },
     {
       name = "ToggleFullscreen",
-      description = "Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)",
+      description = "Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)",
       returnType = "void"
     },
     {
       name = "ToggleBorderlessWindowed",
-      description = "Toggle window state: borderless windowed (only PLATFORM_DESKTOP)",
+      description = "Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)",
       returnType = "void"
     },
     {
@@ -4697,8 +4697,8 @@ return {
         {type = "int", name = "centerX"},
         {type = "int", name = "centerY"},
         {type = "float", name = "radius"},
-        {type = "Color", name = "color1"},
-        {type = "Color", name = "color2"}
+        {type = "Color", name = "inner"},
+        {type = "Color", name = "outer"}
       }
     },
     {
@@ -4835,8 +4835,8 @@ return {
         {type = "int", name = "posY"},
         {type = "int", name = "width"},
         {type = "int", name = "height"},
-        {type = "Color", name = "color1"},
-        {type = "Color", name = "color2"}
+        {type = "Color", name = "top"},
+        {type = "Color", name = "bottom"}
       }
     },
     {
@@ -4848,8 +4848,8 @@ return {
         {type = "int", name = "posY"},
         {type = "int", name = "width"},
         {type = "int", name = "height"},
-        {type = "Color", name = "color1"},
-        {type = "Color", name = "color2"}
+        {type = "Color", name = "left"},
+        {type = "Color", name = "right"}
       }
     },
     {
@@ -4858,10 +4858,10 @@ return {
       returnType = "void",
       params = {
         {type = "Rectangle", name = "rec"},
-        {type = "Color", name = "col1"},
-        {type = "Color", name = "col2"},
-        {type = "Color", name = "col3"},
-        {type = "Color", name = "col4"}
+        {type = "Color", name = "topLeft"},
+        {type = "Color", name = "bottomLeft"},
+        {type = "Color", name = "topRight"},
+        {type = "Color", name = "bottomRight"}
       }
     },
     {
@@ -7203,6 +7203,30 @@ return {
     {
       name = "DrawModelWiresEx",
       description = "Draw a model wires (with texture if set) with extended parameters",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "Vector3", name = "position"},
+        {type = "Vector3", name = "rotationAxis"},
+        {type = "float", name = "rotationAngle"},
+        {type = "Vector3", name = "scale"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "DrawModelPoints",
+      description = "Draw a model as points",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "Vector3", name = "position"},
+        {type = "float", name = "scale"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "DrawModelPointsEx",
+      description = "Draw a model as points with extended parameters",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
