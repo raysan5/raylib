@@ -194,6 +194,10 @@
 #define MAGENTA    CLITERAL(Color){ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+// Filter string used in ScanDirectoryFiles, ScanDirectoryFilesRecursively and
+// LoadDirectoryFilesEx to include directories in the result array
+#define FILTER_FOLDER "/DIR"
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
