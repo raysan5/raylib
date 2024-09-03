@@ -763,8 +763,10 @@ int InitPlatform(void)
 
         drmModeConnector *con = drmModeGetConnector(platform.fd, res->connectors[i]);
         TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
-
-        if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
+        
+        // In certain cases the status of the conneciton is reported as UKNOWN, but it is still connected.
+        // This might be a hardware or software limitation like on Raspberry Pi Zero with composite output.
+        if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->encoder_id))
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
             platform.connector = con;
