@@ -247,6 +247,10 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+#ifndef FILTER_FOLDER
+    #define FILTER_FOLDER             "/DIR"        // Filter string used in ScanDirectoryFiles, ScanDirectoryFilesRecursively and LoadDirectoryFilesEx to include directories in the result array
+#endif
+
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
