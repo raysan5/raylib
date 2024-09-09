@@ -4985,6 +4985,27 @@ Vector3 ColorToHSV(Color color)
     return hsv;
 }
 
+/*
+Mix 2 Colors togehter. 
+t = what color is more dominant.
+t=0.0f means color 1 is more dominant
+t=1.0f means color 2 is more dominant
+set t to 0.5 to have both colors balanced
+*/
+Color MixColors(Color color1, Color color2, float t) { 
+    Color newColor = { 0, 0, 0, 0 };
+    if (t < 0) {t=0.0f;}
+    else if(t>1) {t=1.0f;}
+
+    newColor.r = (unsigned char)((1.0f-t) * color1.r + t * color2.r);
+    newColor.g = (unsigned char)((1.0f-t) * color1.g + t * color2.g);
+    newColor.b = (unsigned char)((1.0f-t) * color1.b + t * color2.b);
+    newColor.a = (unsigned char)((1.0f-t) * color1.a + t * color2.a);
+
+    return newColor;
+
+ }
+
 // Get a Color from HSV values
 // Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
 // NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
