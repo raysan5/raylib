@@ -119,6 +119,7 @@
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT   4
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES   6
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
