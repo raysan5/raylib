@@ -721,6 +721,11 @@ void *GetWindowHandle(void)
     return NULL;
 }
 
+void *GetPlatformHandle(void) 
+{
+    return platform.handle;
+}
+
 // Get number of monitors
 int GetMonitorCount(void)
 {

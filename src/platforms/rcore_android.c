@@ -424,6 +424,12 @@ void *GetWindowHandle(void)
     return NULL;
 }
 
+void *GetPlatformHandle(void) 
+{
+    TRACELOG(LOG_WARNING, "GetPlatformHandle() not implemented on target platform");
+    return NULL;
+}
+
 // Get number of monitors
 int GetMonitorCount(void)
 {

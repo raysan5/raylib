@@ -984,6 +984,7 @@ RLAPI void SetWindowSize(int width, int height);                  // Set window 
 RLAPI void SetWindowOpacity(float opacity);                       // Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)
 RLAPI void SetWindowFocused(void);                                // Set window focused (only PLATFORM_DESKTOP)
 RLAPI void *GetWindowHandle(void);                                // Get native window handle
+RLAPI void *GetPlatformHandle(void);                              // Get platform handle (GLFWwindow*, only PLATFORM_DESKTOP)
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 RLAPI int GetRenderWidth(void);                                   // Get current render width (it considers HiDPI)
