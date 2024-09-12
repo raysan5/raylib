@@ -1425,7 +1425,6 @@ RLAPI int ColorToInt(Color color);                                          // G
 RLAPI Vector4 ColorNormalize(Color color);                                  // Get Color normalized as float [0..1]
 RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Get Color from normalized values [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                                      // Get HSV values for a Color, hue [0..360], saturation/value [0..1]
-RLAPI Color ColorLerp(Color color1, Color color2, float d);                 // Mix 2 Colors together   
 RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Get a Color from HSV values, hue [0..360], saturation/value [0..1]
 RLAPI Color ColorTint(Color color, Color tint);                             // Get color multiplied with another color
 RLAPI Color ColorBrightness(Color color, float factor);                     // Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
@@ -1436,6 +1435,7 @@ RLAPI Color GetColor(unsigned int hexValue);                                // G
 RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
 RLAPI int GetPixelDataSize(int width, int height, int format);              // Get pixel data size in bytes for certain format
+RLAPI Color ColorLerp(Color color1, Color color2, float d);                 // Mix 2 Colors Together
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)

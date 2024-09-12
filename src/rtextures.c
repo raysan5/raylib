@@ -4985,25 +4985,6 @@ Vector3 ColorToHSV(Color color)
     return hsv;
 }
 
-/*
-Mix 2 Colors togehter. 
-d = what color is more dominant.
-d=0.0f means color 1 is more dominant
-d=1.0f means color 2 is more dominant
-set d to 0.5 to have both colors balanced
-*/
-Color ColorLerp(Color color1, Color color2, float d) { 
-    Color newColor = { 0, 0, 0, 0};
-    if (d < 0) {d=0.0f;}
-    else if(d>1) {d=1.0f;}
-
-    newColor.r = (unsigned char)((1.0f-d) * color1.r + d * color2.r);
-    newColor.g = (unsigned char)((1.0f-d) * color1.g + d * color2.g);
-    newColor.b = (unsigned char)((1.0f-d) * color1.b + d * color2.b);
-    newColor.a = (unsigned char)((1.0f-d) * color1.a + d * color2.a);
-
-    return newColor;
-}
 
 
 // Get a Color from HSV values
@@ -5442,6 +5423,24 @@ int GetPixelDataSize(int width, int height, int format)
 
     return dataSize;
 }
+
+
+// Mix 2 Colors togehter. 
+// d = dominance. 0.5 for equal
+Color ColorLerp(Color color1, Color color2, float d) 
+{ 
+    Color newColor = { 0, 0, 0, 0 };
+    if (d < 0) {d=0.0f;}
+    else if(d>1) {d=1.0f;}
+
+    newColor.r = (unsigned char)((1.0f-d) * color1.r + d * color2.r);
+    newColor.g = (unsigned char)((1.0f-d) * color1.g + d * color2.g);
+    newColor.b = (unsigned char)((1.0f-d) * color1.b + d * color2.b);
+    newColor.a = (unsigned char)((1.0f-d) * color1.a + d * color2.a);
+
+    return newColor;
+}
+
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
