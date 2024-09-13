@@ -165,6 +165,10 @@ unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
 unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
     #include <unistd.h>
+#elif defined(__FreeBSD__)
+    #include <sys/types.h>
+    #include <sys/sysctl.h>
+    #include <unistd.h>
 #elif defined(__APPLE__)
     #include <sys/syslimits.h>
     #include <mach-o/dyld.h>
@@ -2153,6 +2157,28 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
+#elif defined(__FreeBSD__)
+    size_t size = sizeof(appDir);
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+
+    if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
+    {
+        int len = strlen(appDir);
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '/')
+            {
+                appDir[i + 1] = '\0';
+                break;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '/';
+    }
+
 #endif
 
     return appDir;
