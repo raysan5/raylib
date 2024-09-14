@@ -773,14 +773,11 @@ typedef enum {
     SHADER_LOC_VERTEX_NORMAL,       // Shader location: vertex attribute: normal
     SHADER_LOC_VERTEX_TANGENT,      // Shader location: vertex attribute: tangent
     SHADER_LOC_VERTEX_COLOR,        // Shader location: vertex attribute: color
-    SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
-    SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
     SHADER_LOC_MATRIX_MVP,          // Shader location: matrix uniform: model-view-projection
     SHADER_LOC_MATRIX_VIEW,         // Shader location: matrix uniform: view (camera transform)
     SHADER_LOC_MATRIX_PROJECTION,   // Shader location: matrix uniform: projection
     SHADER_LOC_MATRIX_MODEL,        // Shader location: matrix uniform: model (transform)
     SHADER_LOC_MATRIX_NORMAL,       // Shader location: matrix uniform: normal
-    SHADER_LOC_BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
     SHADER_LOC_VECTOR_VIEW,         // Shader location: vector uniform: view
     SHADER_LOC_COLOR_DIFFUSE,       // Shader location: vector uniform: diffuse color
     SHADER_LOC_COLOR_SPECULAR,      // Shader location: vector uniform: specular color
@@ -795,7 +792,10 @@ typedef enum {
     SHADER_LOC_MAP_CUBEMAP,         // Shader location: samplerCube texture: cubemap
     SHADER_LOC_MAP_IRRADIANCE,      // Shader location: samplerCube texture: irradiance
     SHADER_LOC_MAP_PREFILTER,       // Shader location: samplerCube texture: prefilter
-    SHADER_LOC_MAP_BRDF             // Shader location: sampler2d texture: brdf
+    SHADER_LOC_MAP_BRDF,            // Shader location: sampler2d texture: brdf
+    SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
+    SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
+    SHADER_LOC_BONE_MATRICES        // Shader location: array of matrices uniform: boneMatrices
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO

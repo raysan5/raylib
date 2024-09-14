@@ -1738,6 +1738,13 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+    
+    // Upload Bone Transforms    
+    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
+    {
+        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
+    }
+    
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1814,8 +1821,34 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
+        
+        // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
+        {
+            if (mesh.vboId[6] != 0)
+            {
+                rlEnableVertexBuffer(mesh.vboId[6]);
+                rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+                rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
+            }
+            else
+            {
+                // Set default value for defined vertex attribute in shader but not provided by mesh
+                // WARNING: It could result in GPU undefined behaviour
+                float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                rlSetVertexAttributeDefault(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], value, SHADER_ATTRIB_VEC4, 4);
+                rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
+            }
+        }
+        
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[7]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS], 4, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS]);
+        }
 
-        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
+        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[8]);
     }
 
     int eyeCount = 1;
