@@ -1487,7 +1487,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
     
     // Upload Bone Transforms    
-    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1)
+    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
     }
@@ -4783,6 +4783,17 @@ static Model LoadIQM(const char *fileName)
     }
 
     BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
+    
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        model.meshes[i].boneCount = model.boneCount;
+        model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
+        
+        for (int j = 0; j < model.meshes[i].boneCount; j++)
+        {
+            model.meshes[i].boneMatrices[j] = MatrixIdentity();
+        }
+    }
 
     UnloadFileData(fileData);
 
@@ -5866,6 +5877,15 @@ static Model LoadGLTF(const char *fileName)
                 {
                     memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
                 }
+                
+                // Bone Transform Matrices
+                model.meshes[meshIndex].boneCount = model.boneCount;
+                model.meshes[meshIndex].boneMatrices = RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
+                
+                for (int j = 0; j < model.meshes[meshIndex].boneCount; j++)
+                {
+                    model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
+                }
 
                 meshIndex++;       // Move to next mesh
             }
@@ -6634,6 +6654,13 @@ static Model LoadM3D(const char *fileName)
             {
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
+                
+                model.meshes[i].boneCount = model.boneCount;
+                model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
+                for (int j = 0; j < model.meshes[i].boneCount; j++)
+                {
+                    model.meshes[i].boneMatrices[j] = MatrixIdentity();
+                }
             }
         }
 
