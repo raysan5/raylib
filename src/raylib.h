@@ -352,8 +352,10 @@ typedef struct Mesh {
     // Animation vertex data
     float *animVertices;    // Animated vertex positions (after bones transformations)
     float *animNormals;     // Animated normals (after bones transformations)
-    unsigned char *boneIds; // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)
-    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
+    unsigned char *boneIds; // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
+    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
+    Matrix *boneMatrices;   // Bones animated transformation matrices
+    int boneCount;          // Number of bones
 
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
@@ -771,11 +773,14 @@ typedef enum {
     SHADER_LOC_VERTEX_NORMAL,       // Shader location: vertex attribute: normal
     SHADER_LOC_VERTEX_TANGENT,      // Shader location: vertex attribute: tangent
     SHADER_LOC_VERTEX_COLOR,        // Shader location: vertex attribute: color
+    SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
+    SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
     SHADER_LOC_MATRIX_MVP,          // Shader location: matrix uniform: model-view-projection
     SHADER_LOC_MATRIX_VIEW,         // Shader location: matrix uniform: view (camera transform)
     SHADER_LOC_MATRIX_PROJECTION,   // Shader location: matrix uniform: projection
     SHADER_LOC_MATRIX_MODEL,        // Shader location: matrix uniform: model (transform)
     SHADER_LOC_MATRIX_NORMAL,       // Shader location: matrix uniform: normal
+    SHADER_LOC_BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
     SHADER_LOC_VECTOR_VIEW,         // Shader location: vector uniform: view
     SHADER_LOC_COLOR_DIFFUSE,       // Shader location: vector uniform: diffuse color
     SHADER_LOC_COLOR_SPECULAR,      // Shader location: vector uniform: specular color
@@ -1590,6 +1595,7 @@ RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);   
 RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
 RLAPI void UnloadModelAnimations(ModelAnimation *animations, int animCount);                // Unload animation array data
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
+RLAPI void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame);   // Update model animation mesh bone matrices
 
 // Collision detection functions
 RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);   // Check collision between two spheres

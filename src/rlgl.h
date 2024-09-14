@@ -68,12 +68,15 @@
 *       #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
 *       #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
 *       #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS      "vertexBoneIds"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS  "vertexBoneWeights" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView)))
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES  "boneMatrices"   // bone matrices
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
@@ -324,22 +327,28 @@
 
 // Default shader vertex attribute locations
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD    1
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL      2
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR       3
 #endif
     #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT       4
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT         4
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     6
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 7
 #endif
 
 //----------------------------------------------------------------------------------
@@ -759,6 +768,7 @@ RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); 
 RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName);   // Get shader location attribute
 RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count); // Set shader value uniform
 RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                        // Set shader value matrix
+RLAPI void rlSetUniformMatrices(int locIndex, const Matrix *mat, int count);    // Set shader value matrices
 RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
 RLAPI void rlSetShader(unsigned int id, int *locs);                             // Set shader currently active (id and locations)
 
@@ -977,6 +987,12 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
     #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
 #endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS      "vertexBoneIds"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS  "vertexBoneWeights" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS
+#endif
 
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_MVP
     #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
@@ -995,6 +1011,9 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR
     #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+#endif
+#ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES
+    #define RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES  "boneMatrices"   // bone matrices
 #endif
 #ifndef RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0
     #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
@@ -4148,6 +4167,8 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
+    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
 
     // NOTE: If some attrib name is no found on the shader, it locations becomes -1
 
@@ -4280,6 +4301,14 @@ void rlSetUniformMatrix(int locIndex, Matrix mat)
         mat.m12, mat.m13, mat.m14, mat.m15
     };
     glUniformMatrix4fv(locIndex, 1, false, matfloat);
+#endif
+}
+
+// Set shader value uniform matrix
+void rlSetUniformMatrices(int locIndex, const Matrix *matrices, int count)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUniformMatrix4fv(locIndex, count, true, (const float*)matrices);
 #endif
 }
 

@@ -130,7 +130,7 @@
     #define MAX_MATERIAL_MAPS       12    // Maximum number of maps supported
 #endif
 #ifndef MAX_MESH_VERTEX_BUFFERS
-    #define MAX_MESH_VERTEX_BUFFERS  7    // Maximum vertex buffers (VBO) per mesh
+    #define MAX_MESH_VERTEX_BUFFERS  9    // Maximum vertex buffers (VBO) per mesh
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1252,7 +1252,9 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[3] = 0;     // Vertex buffer: colors
     mesh->vboId[4] = 0;     // Vertex buffer: tangents
     mesh->vboId[5] = 0;     // Vertex buffer: texcoords2
-    mesh->vboId[6] = 0;     // Vertex buffer: indices
+    mesh->vboId[6] = 0;     // Vertex buffer: boneIds
+    mesh->vboId[7] = 0;     // Vertex buffer: boneWeights
+    mesh->vboId[8] = 0;     // Vertex buffer: indices
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
@@ -1338,10 +1340,42 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, value, SHADER_ATTRIB_VEC2, 2);
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
+    
+    if (mesh->boneIds != NULL)
+    {
+        // Enable vertex attribute: boneIds (shader-location = 6)
+        mesh->vboId[6] = rlLoadVertexBuffer(mesh->boneIds, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
+    }
+    else
+    {
+        // Default vertex attribute: boneIds
+        // WARNING: Default value provided to shader if location available
+        float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, value, SHADER_ATTRIB_VEC4, 4);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
+    }
+    
+    if (mesh->boneWeights != NULL)
+    {
+        // Enable vertex attribute: texcoord2 (shader-location = 5)
+        mesh->vboId[7] = rlLoadVertexBuffer(mesh->boneWeights, mesh->vertexCount*4*sizeof(float), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, 4, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS);
+    }
+    else
+    {
+        // Default vertex attribute: texcoord2
+        // WARNING: Default value provided to shader if location available
+        float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, value, SHADER_ATTRIB_VEC4, 2);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS);
+    }
 
     if (mesh->indices != NULL)
     {
-        mesh->vboId[6] = rlLoadVertexBufferElement(mesh->indices, mesh->triangleCount*3*sizeof(unsigned short), dynamic);
+        mesh->vboId[8] = rlLoadVertexBufferElement(mesh->indices, mesh->triangleCount*3*sizeof(unsigned short), dynamic);
     }
 
     if (mesh->vaoId > 0) TRACELOG(LOG_INFO, "VAO: [ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
@@ -1451,6 +1485,13 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+    
+    // Upload Bone Transforms    
+    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1)
+    {
+        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
+    }
+
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1529,8 +1570,34 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
+        
+        // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
+        {
+            if (mesh.vboId[6] != 0)
+            {
+                rlEnableVertexBuffer(mesh.vboId[6]);
+                rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+                rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
+            }
+            else
+            {
+                // Set default value for defined vertex attribute in shader but not provided by mesh
+                // WARNING: It could result in GPU undefined behaviour
+                float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                rlSetVertexAttributeDefault(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], value, SHADER_ATTRIB_VEC4, 4);
+                rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
+            }
+        }
+        
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[7]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS], 4, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS]);
+        }
 
-        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
+        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[8]);
     }
 
     int eyeCount = 1;
@@ -1825,6 +1892,7 @@ void UnloadMesh(Mesh mesh)
     RL_FREE(mesh.animNormals);
     RL_FREE(mesh.boneWeights);
     RL_FREE(mesh.boneIds);
+    RL_FREE(mesh.boneMatrices);
 }
 
 // Export mesh data to file
@@ -2250,6 +2318,50 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             {
                 rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
                 rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
+            }
+        }
+    }
+}
+
+void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame)
+{
+    if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
+    {
+        if (frame >= anim.frameCount) frame = frame%anim.frameCount;    
+    
+        for (int i = 0; i < model.meshCount; i++)
+        {
+            if (model.meshes[i].boneMatrices)
+            {
+                assert(model.meshes[i].boneCount == anim.boneCount);
+              
+                for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
+                {
+                    Vector3 inTranslation = model.bindPose[boneId].translation;
+                    Quaternion inRotation = model.bindPose[boneId].rotation;
+                    Vector3 inScale = model.bindPose[boneId].scale;
+                    
+                    Vector3 outTranslation = anim.framePoses[frame][boneId].translation;
+                    Quaternion outRotation = anim.framePoses[frame][boneId].rotation;
+                    Vector3 outScale = anim.framePoses[frame][boneId].scale;
+
+                    Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
+                    Quaternion invRotation = QuaternionInvert(inRotation);
+                    Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
+
+                    Vector3 boneTranslation = Vector3Add(
+                        Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
+                        outRotation), outTranslation); 
+                    Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
+                    Vector3 boneScale = Vector3Multiply(outScale, invScale);
+                    
+                    Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
+                        QuaternionToMatrix(boneRotation),
+                        MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
+                        MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+                    
+                    model.meshes[i].boneMatrices[boneId] = boneMatrix;
+                }
             }
         }
     }
