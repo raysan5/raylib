@@ -6378,6 +6378,16 @@ return {
       }
     },
     {
+      name = "ColorLerp",
+      description = "Get color lerp interpolation between two colors, factor [0.0f..1.0f]",
+      returnType = "Color",
+      params = {
+        {type = "Color", name = "color1"},
+        {type = "Color", name = "color2"},
+        {type = "float", name = "factor"}
+      }
+    },
+    {
       name = "GetColor",
       description = "Get Color structure from hexadecimal value",
       returnType = "Color",
@@ -6412,16 +6422,6 @@ return {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
         {type = "int", name = "format"}
-      }
-    },
-    {
-      name = "ColorLerp",
-      description = "Mix 2 Colors Together",
-      returnType = "Color",
-      params = {
-        {type = "Color", name = "color1"},
-        {type = "Color", name = "color2"},
-        {type = "float", name = "d"}
       }
     },
     {
