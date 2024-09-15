@@ -4565,6 +4565,9 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 
         if (source.width < 0) { flipX = true; source.width *= -1; }
         if (source.height < 0) source.y -= source.height;
+        
+        if (dest.width < 0) dest.width *= -1;
+        if (dest.height < 0) dest.height *= -1;
 
         Vector2 topLeft = { 0 };
         Vector2 topRight = { 0 };
