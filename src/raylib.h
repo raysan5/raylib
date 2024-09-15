@@ -1431,11 +1431,11 @@ RLAPI Color ColorBrightness(Color color, float factor);                     // G
 RLAPI Color ColorContrast(Color color, float contrast);                     // Get color with contrast correction, contrast values between -1.0f and 1.0f
 RLAPI Color ColorAlpha(Color color, float alpha);                           // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Get src alpha-blended into dst color with tint
+RLAPI Color ColorLerp(Color color1, Color color2, float factor);            // Get color lerp interpolation between two colors, factor [0.0f..1.0f]
 RLAPI Color GetColor(unsigned int hexValue);                                // Get Color structure from hexadecimal value
 RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
 RLAPI int GetPixelDataSize(int width, int height, int format);              // Get pixel data size in bytes for certain format
-RLAPI Color ColorLerp(Color color1, Color color2, float d);                 // Mix 2 Colors Together
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)

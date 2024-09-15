@@ -5185,6 +5185,22 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     return out;
 }
 
+// Get color lerp interpolation between two colors, factor [0.0f..1.0f]
+Color ColorLerp(Color color1, Color color2, float factor) 
+{ 
+    Color color = { 0 };
+    
+    if (d < 0) d = 0.0f;
+    else if (d > 1) d = 1.0f;
+
+    color.r = (unsigned char)((1.0f - factor)*color1.r + factor*color2.r);
+    color.g = (unsigned char)((1.0f - factor)*color1.g + factor*color2.g);
+    color.b = (unsigned char)((1.0f - factor)*color1.b + factor*color2.b);
+    color.a = (unsigned char)((1.0f - factor)*color1.a + factor*color2.a);
+
+    return color;
+}
+
 // Get a Color struct from hexadecimal value
 Color GetColor(unsigned int hexValue)
 {
@@ -5423,24 +5439,6 @@ int GetPixelDataSize(int width, int height, int format)
 
     return dataSize;
 }
-
-
-// Mix 2 Colors togehter. 
-// d = dominance. 0.5 for equal
-Color ColorLerp(Color color1, Color color2, float d) 
-{ 
-    Color newColor = { 0, 0, 0, 0 };
-    if (d < 0) {d=0.0f;}
-    else if(d>1) {d=1.0f;}
-
-    newColor.r = (unsigned char)((1.0f-d) * color1.r + d * color2.r);
-    newColor.g = (unsigned char)((1.0f-d) * color1.g + d * color2.g);
-    newColor.b = (unsigned char)((1.0f-d) * color1.b + d * color2.b);
-    newColor.a = (unsigned char)((1.0f-d) * color1.a + d * color2.a);
-
-    return newColor;
-}
-
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
