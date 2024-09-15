@@ -251,6 +251,10 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+#ifndef FILTER_FOLDER
+    #define FILTER_FOLDER             "/DIR"        // Filter string used in ScanDirectoryFiles, ScanDirectoryFilesRecursively and LoadDirectoryFilesEx to include directories in the result array
+#endif
+
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
@@ -3339,10 +3343,21 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
                 if (filter != NULL)
                 {
-                    if (IsFileExtension(path, filter))
+                    if (IsPathFile(path))
                     {
-                        strcpy(files->paths[files->count], path);
-                        files->count++;
+                        if (IsFileExtension(path, filter))
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
+                    }
+                    else
+                    {
+                        if (TextFindIndex(filter, FILTER_FOLDER) >= 0)
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
                     }
                 }
                 else
@@ -3402,7 +3417,22 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         break;
                     }
                 }
-                else ScanDirectoryFilesRecursively(path, files, filter);
+                else 
+                {
+                    if (filter != NULL && TextFindIndex(filter, FILTER_FOLDER) >= 0)
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+                    
+                    if (files->count >= files->capacity)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
+                        break;
+                    }
+
+                    ScanDirectoryFilesRecursively(path, files, filter);
+                }
             }
         }
 
