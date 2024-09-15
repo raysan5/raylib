@@ -3368,38 +3368,38 @@ Function 380: ColorAlphaBlend() (3 input parameters)
   Param[1]: dst (type: Color)
   Param[2]: src (type: Color)
   Param[3]: tint (type: Color)
-Function 381: GetColor() (1 input parameters)
+Function 381: ColorLerp() (3 input parameters)
+  Name: ColorLerp
+  Return type: Color
+  Description: Get color lerp interpolation between two colors, factor [0.0f..1.0f]
+  Param[1]: color1 (type: Color)
+  Param[2]: color2 (type: Color)
+  Param[3]: factor (type: float)
+Function 382: GetColor() (1 input parameters)
   Name: GetColor
   Return type: Color
   Description: Get Color structure from hexadecimal value
   Param[1]: hexValue (type: unsigned int)
-Function 382: GetPixelColor() (2 input parameters)
+Function 383: GetPixelColor() (2 input parameters)
   Name: GetPixelColor
   Return type: Color
   Description: Get Color from a source pixel pointer of certain format
   Param[1]: srcPtr (type: void *)
   Param[2]: format (type: int)
-Function 383: SetPixelColor() (3 input parameters)
+Function 384: SetPixelColor() (3 input parameters)
   Name: SetPixelColor
   Return type: void
   Description: Set color formatted into destination pixel pointer
   Param[1]: dstPtr (type: void *)
   Param[2]: color (type: Color)
   Param[3]: format (type: int)
-Function 384: GetPixelDataSize() (3 input parameters)
+Function 385: GetPixelDataSize() (3 input parameters)
   Name: GetPixelDataSize
   Return type: int
   Description: Get pixel data size in bytes for certain format
   Param[1]: width (type: int)
   Param[2]: height (type: int)
   Param[3]: format (type: int)
-Function 385: ColorLerp() (3 input parameters)
-  Name: ColorLerp
-  Return type: Color
-  Description: Mix 2 Colors Together
-  Param[1]: color1 (type: Color)
-  Param[2]: color2 (type: Color)
-  Param[3]: d (type: float)
 Function 386: GetFontDefault() (0 input parameters)
   Name: GetFontDefault
   Return type: Font

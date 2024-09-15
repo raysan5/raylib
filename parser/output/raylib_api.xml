@@ -2219,6 +2219,11 @@
             <Param type="Color" name="src" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
+        <Function name="ColorLerp" retType="Color" paramCount="3" desc="Get color lerp interpolation between two colors, factor [0.0f..1.0f]">
+            <Param type="Color" name="color1" desc="" />
+            <Param type="Color" name="color2" desc="" />
+            <Param type="float" name="factor" desc="" />
+        </Function>
         <Function name="GetColor" retType="Color" paramCount="1" desc="Get Color structure from hexadecimal value">
             <Param type="unsigned int" name="hexValue" desc="" />
         </Function>
@@ -2235,11 +2240,6 @@
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="int" name="format" desc="" />
-        </Function>
-        <Function name="ColorLerp" retType="Color" paramCount="3" desc="Mix 2 Colors Together">
-            <Param type="Color" name="color1" desc="" />
-            <Param type="Color" name="color2" desc="" />
-            <Param type="float" name="d" desc="" />
         </Function>
         <Function name="GetFontDefault" retType="Font" paramCount="0" desc="Get the default Font">
         </Function>
