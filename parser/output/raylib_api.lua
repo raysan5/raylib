@@ -4076,7 +4076,7 @@ return {
     },
     {
       name = "LoadDirectoryFilesEx",
-      description = "Load directory filepaths with extension filtering and recursive directory scan",
+      description = "Load directory filepaths with extension filtering and recursive directory scan. Use "/DIR" in the filter string to include directories in the result",
       returnType = "FilePathList",
       params = {
         {type = "const char *", name = "basePath"},
@@ -6378,6 +6378,16 @@ return {
       }
     },
     {
+      name = "ColorLerp",
+      description = "Get color lerp interpolation between two colors, factor [0.0f..1.0f]",
+      returnType = "Color",
+      params = {
+        {type = "Color", name = "color1"},
+        {type = "Color", name = "color2"},
+        {type = "float", name = "factor"}
+      }
+    },
+    {
       name = "GetColor",
       description = "Get Color structure from hexadecimal value",
       returnType = "Color",
@@ -6429,7 +6439,7 @@ return {
     },
     {
       name = "LoadFontEx",
-      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont",
+      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
       returnType = "Font",
       params = {
         {type = "const char *", name = "fileName"},

@@ -165,6 +165,10 @@ unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
 unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
     #include <unistd.h>
+#elif defined(__FreeBSD__)
+    #include <sys/types.h>
+    #include <sys/sysctl.h>
+    #include <unistd.h>
 #elif defined(__APPLE__)
     #include <sys/syslimits.h>
     #include <mach-o/dyld.h>
@@ -245,6 +249,10 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 
 #ifndef MAX_AUTOMATION_EVENTS
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
+#endif
+
+#ifndef FILTER_FOLDER
+    #define FILTER_FOLDER             "/DIR"        // Filter string used in ScanDirectoryFiles, ScanDirectoryFilesRecursively and LoadDirectoryFilesEx to include directories in the result array
 #endif
 
 // Flags operation macros
@@ -2166,6 +2174,28 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
+#elif defined(__FreeBSD__)
+    size_t size = sizeof(appDir);
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+
+    if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
+    {
+        int len = strlen(appDir);
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '/')
+            {
+                appDir[i + 1] = '\0';
+                break;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '/';
+    }
+
 #endif
 
     return appDir;
@@ -3318,10 +3348,21 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
                 if (filter != NULL)
                 {
-                    if (IsFileExtension(path, filter))
+                    if (IsPathFile(path))
                     {
-                        strcpy(files->paths[files->count], path);
-                        files->count++;
+                        if (IsFileExtension(path, filter))
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
+                    }
+                    else
+                    {
+                        if (TextFindIndex(filter, FILTER_FOLDER) >= 0)
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
                     }
                 }
                 else
@@ -3381,7 +3422,22 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         break;
                     }
                 }
-                else ScanDirectoryFilesRecursively(path, files, filter);
+                else 
+                {
+                    if (filter != NULL && TextFindIndex(filter, FILTER_FOLDER) >= 0)
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+                    
+                    if (files->count >= files->capacity)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
+                        break;
+                    }
+
+                    ScanDirectoryFilesRecursively(path, files, filter);
+                }
             }
         }
 

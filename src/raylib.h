@@ -1131,7 +1131,7 @@ RLAPI bool ChangeDirectory(const char *dir);                      // Change work
 RLAPI bool IsPathFile(const char *path);                          // Check if a given path is a file or a directory
 RLAPI bool IsFileNameValid(const char *fileName);                 // Check if fileName is valid for the platform/OS
 RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);       // Load directory filepaths
-RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and recursive directory scan
+RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and recursive directory scan. Use "/DIR" in the filter string to include directories in the result
 RLAPI void UnloadDirectoryFiles(FilePathList files);              // Unload filepaths
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
 RLAPI FilePathList LoadDroppedFiles(void);                        // Load dropped filepaths
@@ -1436,6 +1436,7 @@ RLAPI Color ColorBrightness(Color color, float factor);                     // G
 RLAPI Color ColorContrast(Color color, float contrast);                     // Get color with contrast correction, contrast values between -1.0f and 1.0f
 RLAPI Color ColorAlpha(Color color, float alpha);                           // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Get src alpha-blended into dst color with tint
+RLAPI Color ColorLerp(Color color1, Color color2, float factor);            // Get color lerp interpolation between two colors, factor [0.0f..1.0f]
 RLAPI Color GetColor(unsigned int hexValue);                                // Get Color structure from hexadecimal value
 RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
