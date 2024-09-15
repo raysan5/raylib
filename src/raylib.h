@@ -1435,6 +1435,7 @@ RLAPI Color GetColor(unsigned int hexValue);                                // G
 RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
 RLAPI int GetPixelDataSize(int width, int height, int format);              // Get pixel data size in bytes for certain format
+RLAPI Color ColorLerp(Color color1, Color color2, float d);                 // Mix 2 Colors Together
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
