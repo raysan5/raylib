@@ -5190,8 +5190,8 @@ Color ColorLerp(Color color1, Color color2, float factor)
 { 
     Color color = { 0 };
     
-    if (d < 0) d = 0.0f;
-    else if (d > 1) d = 1.0f;
+    if (factor < 0.0f) factor = 0.0f;
+    else if (factor > 1.0f) factor = 1.0f;
 
     color.r = (unsigned char)((1.0f - factor)*color1.r + factor*color2.r);
     color.g = (unsigned char)((1.0f - factor)*color1.g + factor*color2.g);
