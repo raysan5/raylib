@@ -393,6 +393,17 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
     return result;
 }
 
+RMAPI Vector2 Vector2Limit(Vector2 v, float limit) {
+    Vector2 result = {v.x, x.y};
+    float length = sqrtf((v.x * v.x) + (v.y * v.y))
+    if (length > limit) {
+        float ilength = 1.0f/length;
+        result.x = v.x*ilength*limit;
+        result.y = v.y*ilength*limit;
+    }
+    return result
+}
+
 // Transforms a Vector2 by a given Matrix
 RMAPI Vector2 Vector2Transform(Vector2 v, Matrix mat)
 {
