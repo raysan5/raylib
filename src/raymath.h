@@ -402,7 +402,7 @@ RMAPI Vector2 Vector2Limit(Vector2 v, float limit) {
         result.x = v.x*ilength*limit;
         result.y = v.y*ilength*limit;
     }
-    return result
+    return result;
 }
 
 // Transforms a Vector2 by a given Matrix
