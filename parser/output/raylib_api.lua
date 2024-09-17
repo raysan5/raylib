@@ -4076,7 +4076,7 @@ return {
     },
     {
       name = "LoadDirectoryFilesEx",
-      description = "Load directory filepaths with extension filtering and recursive directory scan. Use "/DIR" in the filter string to include directories in the result",
+      description = "Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result",
       returnType = "FilePathList",
       params = {
         {type = "const char *", name = "basePath"},

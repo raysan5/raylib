@@ -1081,7 +1081,7 @@
         <Function name="LoadDirectoryFiles" retType="FilePathList" paramCount="1" desc="Load directory filepaths">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and recursive directory scan. Use "/DIR" in the filter string to include directories in the result">
+        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result">
             <Param type="const char *" name="basePath" desc="" />
             <Param type="const char *" name="filter" desc="" />
             <Param type="bool" name="scanSubdirs" desc="" />

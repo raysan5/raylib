@@ -1722,7 +1722,7 @@ Function 137: LoadDirectoryFiles() (1 input parameters)
 Function 138: LoadDirectoryFilesEx() (3 input parameters)
   Name: LoadDirectoryFilesEx
   Return type: FilePathList
-  Description: Load directory filepaths with extension filtering and recursive directory scan. Use "/DIR" in the filter string to include directories in the result
+  Description: Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
   Param[1]: basePath (type: const char *)
   Param[2]: filter (type: const char *)
   Param[3]: scanSubdirs (type: bool)
