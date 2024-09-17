@@ -251,9 +251,9 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
-#ifndef FILTER_FOLDER
-    #define FILTER_FOLDER             "/DIR"        // Filter string used in ScanDirectoryFiles, ScanDirectoryFilesRecursively and LoadDirectoryFilesEx to include directories in the result array
-#endif
+#ifndef DIRECTORY_FILTER_TAG
+    #define DIRECTORY_FILTER_TAG       "DIR"        // Name tag used to request directory inclusion on directory scan
+#endif                                              // NOTE: Used in ScanDirectoryFiles(), ScanDirectoryFilesRecursively() and LoadDirectoryFilesEx()
 
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
@@ -3353,7 +3353,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                     }
                     else
                     {
-                        if (TextFindIndex(filter, FILTER_FOLDER) >= 0)
+                        if (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0)
                         {
                             strcpy(files->paths[files->count], path);
                             files->count++;
@@ -3419,7 +3419,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                 }
                 else 
                 {
-                    if (filter != NULL && TextFindIndex(filter, FILTER_FOLDER) >= 0)
+                    if ((filter != NULL) && (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0))
                     {
                         strcpy(files->paths[files->count], path);
                         files->count++;
