@@ -6670,7 +6670,7 @@ static Model LoadM3D(const char *fileName)
                 
                 model.meshes[i].boneCount = model.boneCount;
                 model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
-                for (int j = 0; j < model.meshes[i].boneCount; j++)
+                for (j = 0; j < model.meshes[i].boneCount; j++)
                 {
                     model.meshes[i].boneMatrices[j] = MatrixIdentity();
                 }
