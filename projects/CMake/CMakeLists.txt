@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11) # FetchContent is available in 3.11+
 project(example)
 
 # Generate compile_commands.json
