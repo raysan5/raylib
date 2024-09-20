@@ -78,7 +78,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-zig-bindings](https://github.com/L-Briand/raylib-zig-bindings)                   | **5.0**          | [Zig](https://ziglang.org)                                           | Zlib                 |
 | [hare-raylib](https://git.sr.ht/~evantj/hare-raylib)                                     | **auto**         | [Hare](https://harelang.org)                                         | Zlib                 |
 | [raylib-sunder](https://github.com/ashn-dot-dev/raylib-sunder)                           | **auto**         | [Sunder](https://github.com/ashn-dot-dev/sunder)                     | 0BSD                 |
-| [rayed-bqn](https://github.com/Brian-ED/rayed-bqn)                                       | **auto**         | [BQN](https://mlochbaum.github.io/BQN)                               | MIT                  |
+| [raylib-bqn](https://github.com/Brian-ED/raylib-bqn)                                     | **5.0**          | [BQN](https://mlochbaum.github.io/BQN)                               | MIT                  |
 | [rayjs](https://github.com/mode777/rayjs)                                                | 4.6-dev          | [QuickJS](https://bellard.org/quickjs)                               | MIT                  |
 | [raylib-raku](https://github.com/vushu/raylib-raku)                                      | **auto**         | [Raku](https://www.raku.org)                                         | Artistic License 2.0 |
 | [Raylib.lean](https://github.com/KislyjKisel/Raylib.lean)                                | 4.5              | [Lean4](https://lean-lang.org)                                       | BSD-3-Clause         |
@@ -92,6 +92,7 @@ These are utility wrappers for specific languages, they are not required to use 
 | ---------------------------------------------------- | :------------: | :------------------------------------------: | :-----: |
 | [raylib-cpp](https://github.com/robloach/raylib-cpp) | **5.0**        | [C++](https://en.wikipedia.org/wiki/C%2B%2B) | Zlib    |
 | [claylib](https://github.com/defun-games/claylib)    | 4.5            | [Common Lisp](https://common-lisp.net)       | Zlib    |
+| [rayed-bqn](https://github.com/Brian-ED/rayed-bqn)   | **5.0**        | [BQN](https://mlochbaum.github.io/BQN)       | MIT     |
 
 ### Older or Unmaintained Language Bindings
 
