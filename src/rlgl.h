@@ -350,6 +350,9 @@
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 7
 #endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES   6
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition

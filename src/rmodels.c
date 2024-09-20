@@ -4377,7 +4377,7 @@ static Model LoadOBJ(const char *fileName)
         }
         // if this is a new material, we need to allocate a new mesh
         if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial) newMesh = true;
-        lastMaterial = objAttributes.material_ids[faceId];;
+        lastMaterial = objAttributes.material_ids[faceId];
 
         if (newMesh)
         {
