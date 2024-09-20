@@ -94,7 +94,6 @@ These are utility wrappers for specific languages, they are not required to use 
 | [claylib](https://github.com/defun-games/claylib)    | 4.5            | [Common Lisp](https://common-lisp.net)       | Zlib    |
 | [rayed-bqn](https://github.com/Brian-ED/rayed-bqn)   | **5.0**        | [BQN](https://mlochbaum.github.io/BQN)       | MIT     |
 
-
 ### Older or Unmaintained Language Bindings
 
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
