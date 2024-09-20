@@ -850,12 +850,22 @@
         {
           "type": "unsigned char *",
           "name": "boneIds",
-          "description": "Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)"
+          "description": "Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)"
         },
         {
           "type": "float *",
           "name": "boneWeights",
-          "description": "Vertex bone weight, up to 4 bones influence by vertex (skinning)"
+          "description": "Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)"
+        },
+        {
+          "type": "Matrix *",
+          "name": "boneMatrices",
+          "description": "Bones animated transformation matrices"
+        },
+        {
+          "type": "int",
+          "name": "boneCount",
+          "description": "Number of bones"
         },
         {
           "type": "unsigned int",
@@ -2518,6 +2528,21 @@
           "name": "SHADER_LOC_MAP_BRDF",
           "value": 25,
           "description": "Shader location: sampler2d texture: brdf"
+        },
+        {
+          "name": "SHADER_LOC_VERTEX_BONEIDS",
+          "value": 26,
+          "description": "Shader location: vertex attribute: boneIds"
+        },
+        {
+          "name": "SHADER_LOC_VERTEX_BONEWEIGHTS",
+          "value": 27,
+          "description": "Shader location: vertex attribute: boneWeights"
+        },
+        {
+          "name": "SHADER_LOC_BONE_MATRICES",
+          "value": 28,
+          "description": "Shader location: array of matrices uniform: boneMatrices"
         }
       ]
     },
@@ -11063,6 +11088,25 @@
         {
           "type": "ModelAnimation",
           "name": "anim"
+        }
+      ]
+    },
+    {
+      "name": "UpdateModelAnimationBoneMatrices",
+      "description": "Update model animation mesh bone matrices",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Model",
+          "name": "model"
+        },
+        {
+          "type": "ModelAnimation",
+          "name": "anim"
+        },
+        {
+          "type": "int",
+          "name": "frame"
         }
       ]
     },

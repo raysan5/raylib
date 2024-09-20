@@ -160,7 +160,7 @@
             <Field type="float" name="rotation" desc="Camera rotation in degrees" />
             <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
         </Struct>
-        <Struct name="Mesh" fieldCount="15" desc="Mesh, vertex data and vao/vbo">
+        <Struct name="Mesh" fieldCount="17" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
             <Field type="int" name="triangleCount" desc="Number of triangles stored (indexed or not)" />
             <Field type="float *" name="vertices" desc="Vertex position (XYZ - 3 components per vertex) (shader-location = 0)" />
@@ -172,8 +172,10 @@
             <Field type="unsigned short *" name="indices" desc="Vertex indices (in case vertex data comes indexed)" />
             <Field type="float *" name="animVertices" desc="Animated vertex positions (after bones transformations)" />
             <Field type="float *" name="animNormals" desc="Animated normals (after bones transformations)" />
-            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)" />
-            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning)" />
+            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)" />
+            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)" />
+            <Field type="Matrix *" name="boneMatrices" desc="Bones animated transformation matrices" />
+            <Field type="int" name="boneCount" desc="Number of bones" />
             <Field type="unsigned int" name="vaoId" desc="OpenGL Vertex Array Object id" />
             <Field type="unsigned int *" name="vboId" desc="OpenGL Vertex Buffer Objects id (default vertex data)" />
         </Struct>
@@ -505,7 +507,7 @@
             <Value name="MATERIAL_MAP_PREFILTER" integer="9" desc="Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
             <Value name="MATERIAL_MAP_BRDF" integer="10" desc="Brdf material" />
         </Enum>
-        <Enum name="ShaderLocationIndex" valueCount="26" desc="Shader location index">
+        <Enum name="ShaderLocationIndex" valueCount="29" desc="Shader location index">
             <Value name="SHADER_LOC_VERTEX_POSITION" integer="0" desc="Shader location: vertex attribute: position" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD01" integer="1" desc="Shader location: vertex attribute: texcoord01" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD02" integer="2" desc="Shader location: vertex attribute: texcoord02" />
@@ -532,6 +534,9 @@
             <Value name="SHADER_LOC_MAP_IRRADIANCE" integer="23" desc="Shader location: samplerCube texture: irradiance" />
             <Value name="SHADER_LOC_MAP_PREFILTER" integer="24" desc="Shader location: samplerCube texture: prefilter" />
             <Value name="SHADER_LOC_MAP_BRDF" integer="25" desc="Shader location: sampler2d texture: brdf" />
+            <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: boneIds" />
+            <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: boneWeights" />
+            <Value name="SHADER_LOC_BONE_MATRICES" integer="28" desc="Shader location: array of matrices uniform: boneMatrices" />
         </Enum>
         <Enum name="ShaderUniformDataType" valueCount="9" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
@@ -670,7 +675,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="576">
+    <Functions count="577">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2821,6 +2826,11 @@
         <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
+        </Function>
+        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="anim" desc="" />
+            <Param type="int" name="frame" desc="" />
         </Function>
         <Function name="CheckCollisionSpheres" retType="bool" paramCount="4" desc="Check collision between two spheres">
             <Param type="Vector3" name="center1" desc="" />
