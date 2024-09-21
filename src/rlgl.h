@@ -351,7 +351,7 @@
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 7
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES   6
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     8
 #endif
 
 //----------------------------------------------------------------------------------
@@ -4272,7 +4272,7 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
     #endif
         case RL_SHADER_UNIFORM_SAMPLER2D: glUniform1iv(locIndex, count, (int *)value); break;
         default: TRACELOG(RL_LOG_WARNING, "SHADER: Failed to set uniform value, data type not recognized");
-        
+
         // TODO: Support glUniform1uiv(), glUniform2uiv(), glUniform3uiv(), glUniform4uiv()
     }
 #endif
