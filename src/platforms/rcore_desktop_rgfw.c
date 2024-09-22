@@ -940,7 +940,7 @@ void PollInputEvents(void)
                 SetupViewport(platform.window->r.w, platform.window->r.h);
                 CORE.Window.screen.width = platform.window->r.w;
                 CORE.Window.screen.height =  platform.window->r.h;
-                CORE.Window.currentFbo.width = platform.window->r.w;;
+                CORE.Window.currentFbo.width = platform.window->r.w;
                 CORE.Window.currentFbo.height = platform.window->r.h;
                 CORE.Window.resizedLastFrame = true;
             } break;

@@ -165,6 +165,10 @@ unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
 unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
     #include <unistd.h>
+#elif defined(__FreeBSD__)
+    #include <sys/types.h>
+    #include <sys/sysctl.h>
+    #include <unistd.h>
 #elif defined(__APPLE__)
     #include <sys/syslimits.h>
     #include <mach-o/dyld.h>
@@ -187,14 +191,27 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #endif
 
 #if defined(_WIN32)
-    #include <direct.h>             // Required for: _getch(), _chdir()
+    #include <io.h>                 // Required for: _access() [Used in FileExists()]
+    #include <direct.h>             // Required for: _getch(), _chdir(), _mkdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
-    #include <io.h>                 // Required for: _access() [Used in FileExists()]
 #else
     #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
     #define CHDIR chdir
+#endif
+
+#if defined(_MSC_VER) && ((defined(WIN32) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__))
+    #include <direct.h>             // Required for: _mkdir()
+    #define MKDIR(dir)  _mkdir(dir)
+#elif defined __GNUC__
+    #if defined(__linux__)
+        #define MKDIR(dir) mkdir(dir, 0777);
+    #else
+        #include <sys/types.h>
+        #include <sys/stat.h>           // Required for: mkdir()
+        #define MKDIR(dir) _mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
+    #endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -246,6 +263,10 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #ifndef MAX_AUTOMATION_EVENTS
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
+
+#ifndef DIRECTORY_FILTER_TAG
+    #define DIRECTORY_FILTER_TAG       "DIR"        // Name tag used to request directory inclusion on directory scan
+#endif                                              // NOTE: Used in ScanDirectoryFiles(), ScanDirectoryFilesRecursively() and LoadDirectoryFilesEx()
 
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
@@ -1295,6 +1316,8 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         //          vertex color location       = 3
         //          vertex tangent location     = 4
         //          vertex texcoord2 location   = 5
+        //          vertex boneIds location     = 6
+        //          vertex boneWeights location = 7
 
         // NOTE: If any location is not found, loc point becomes -1
 
@@ -1310,6 +1333,8 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_VERTEX_NORMAL] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
         shader.locs[SHADER_LOC_VERTEX_TANGENT] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
         shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+        shader.locs[SHADER_LOC_VERTEX_BONEIDS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
+        shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
 
         // Get handles to GLSL uniform locations (vertex shader)
         shader.locs[SHADER_LOC_MATRIX_MVP] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MVP);
@@ -1317,6 +1342,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_MATRIX_PROJECTION] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION);
         shader.locs[SHADER_LOC_MATRIX_MODEL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL);
         shader.locs[SHADER_LOC_MATRIX_NORMAL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL);
+        shader.locs[SHADER_LOC_BONE_MATRICES] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES);
 
         // Get handles to GLSL uniform locations (fragment shader)
         shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR);
@@ -2161,6 +2187,28 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
+#elif defined(__FreeBSD__)
+    size_t size = sizeof(appDir);
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+
+    if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
+    {
+        int len = strlen(appDir);
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '/')
+            {
+                appDir[i + 1] = '\0';
+                break;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '/';
+    }
+
 #endif
 
     return appDir;
@@ -2230,6 +2278,40 @@ void UnloadDirectoryFiles(FilePathList files)
     for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
     RL_FREE(files.paths);
+}
+
+// Create directories (including full path requested), returns 0 on success
+int MakeDirectory(const char *dirPath)
+{
+    if ((dirPath == NULL) || (dirPath[0] == '\0')) return 1; // Path is not valid
+    if (DirectoryExists(dirPath)) return 0; // Path already exists (is valid)
+
+    // Copy path string to avoid modifying original
+    int len = (int)strlen(dirPath) + 1;
+    char *pathcpy = (char *)RL_CALLOC(len, 1);
+    memcpy(pathcpy, dirPath, len);
+
+    // Iterate over pathcpy, create each subdirectory as needed
+    for (int i = 0; (i < len) && (pathcpy[i] != '\0'); i++)
+    {
+        if (pathcpy[i] == ':') i++;
+        else
+        {
+            if ((pathcpy[i] == '\\') || (pathcpy[i] == '/'))
+            {
+                pathcpy[i] = '\0';
+                if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+                pathcpy[i] = '/';
+            }
+        }
+    }
+
+    // Create final directory
+    if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+
+    RL_FREE(pathcpy);
+
+    return 0;
 }
 
 // Change working directory, returns true on success
@@ -3313,10 +3395,21 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
                 if (filter != NULL)
                 {
-                    if (IsFileExtension(path, filter))
+                    if (IsPathFile(path))
                     {
-                        strcpy(files->paths[files->count], path);
-                        files->count++;
+                        if (IsFileExtension(path, filter))
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
+                    }
+                    else
+                    {
+                        if (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0)
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
                     }
                 }
                 else
@@ -3376,7 +3469,22 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         break;
                     }
                 }
-                else ScanDirectoryFilesRecursively(path, files, filter);
+                else 
+                {
+                    if ((filter != NULL) && (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0))
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+                    
+                    if (files->count >= files->capacity)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
+                        break;
+                    }
+
+                    ScanDirectoryFilesRecursively(path, files, filter);
+                }
             }
         }
 

@@ -260,8 +260,8 @@ extern void LoadFontDefault(void)
 
     // Allocate space for our characters info data
     // NOTE: This memory must be freed at end! --> Done by CloseWindow()
-    defaultFont.glyphs = (GlyphInfo *)RL_MALLOC(defaultFont.glyphCount*sizeof(GlyphInfo));
-    defaultFont.recs = (Rectangle *)RL_MALLOC(defaultFont.glyphCount*sizeof(Rectangle));
+    defaultFont.glyphs = (GlyphInfo *)RL_CALLOC(defaultFont.glyphCount, sizeof(GlyphInfo));
+    defaultFont.recs = (Rectangle *)RL_CALLOC(defaultFont.glyphCount, sizeof(Rectangle));
 
     int currentLine = 0;
     int currentPosX = charsDivisor;
@@ -677,6 +677,8 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
                         chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+                        
+                        if (chh > fontSize) TRACELOG(LOG_WARNING, "FONT: Character [0x%08x] size is bigger than expected font size", ch);
 
                         // Load characters images
                         chars[i].image.width = chw;

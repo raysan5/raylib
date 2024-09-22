@@ -70,8 +70,9 @@ RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
-RAYLIB_INCLUDE_PATH   ?= /usr/local/include
-RAYLIB_LIB_PATH       ?= /usr/local/lib
+DESTDIR ?= /usr/local
+RAYLIB_INCLUDE_PATH   ?= $(DESTDIR)/include
+RAYLIB_LIB_PATH       ?= $(DESTDIR)/lib
 
 # Library type compilation: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
@@ -586,7 +587,8 @@ MODELS = \
     models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_waving_cubes \
-    models/models_yaw_pitch_roll
+    models/models_yaw_pitch_roll \
+    models/models_gpu_skinning
 
 SHADERS = \
     shaders/shaders_basic_lighting \

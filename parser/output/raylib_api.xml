@@ -160,7 +160,7 @@
             <Field type="float" name="rotation" desc="Camera rotation in degrees" />
             <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
         </Struct>
-        <Struct name="Mesh" fieldCount="15" desc="Mesh, vertex data and vao/vbo">
+        <Struct name="Mesh" fieldCount="17" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
             <Field type="int" name="triangleCount" desc="Number of triangles stored (indexed or not)" />
             <Field type="float *" name="vertices" desc="Vertex position (XYZ - 3 components per vertex) (shader-location = 0)" />
@@ -172,8 +172,10 @@
             <Field type="unsigned short *" name="indices" desc="Vertex indices (in case vertex data comes indexed)" />
             <Field type="float *" name="animVertices" desc="Animated vertex positions (after bones transformations)" />
             <Field type="float *" name="animNormals" desc="Animated normals (after bones transformations)" />
-            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)" />
-            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning)" />
+            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)" />
+            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)" />
+            <Field type="Matrix *" name="boneMatrices" desc="Bones animated transformation matrices" />
+            <Field type="int" name="boneCount" desc="Number of bones" />
             <Field type="unsigned int" name="vaoId" desc="OpenGL Vertex Array Object id" />
             <Field type="unsigned int *" name="vboId" desc="OpenGL Vertex Buffer Objects id (default vertex data)" />
         </Struct>
@@ -505,7 +507,7 @@
             <Value name="MATERIAL_MAP_PREFILTER" integer="9" desc="Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
             <Value name="MATERIAL_MAP_BRDF" integer="10" desc="Brdf material" />
         </Enum>
-        <Enum name="ShaderLocationIndex" valueCount="26" desc="Shader location index">
+        <Enum name="ShaderLocationIndex" valueCount="29" desc="Shader location index">
             <Value name="SHADER_LOC_VERTEX_POSITION" integer="0" desc="Shader location: vertex attribute: position" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD01" integer="1" desc="Shader location: vertex attribute: texcoord01" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD02" integer="2" desc="Shader location: vertex attribute: texcoord02" />
@@ -532,6 +534,9 @@
             <Value name="SHADER_LOC_MAP_IRRADIANCE" integer="23" desc="Shader location: samplerCube texture: irradiance" />
             <Value name="SHADER_LOC_MAP_PREFILTER" integer="24" desc="Shader location: samplerCube texture: prefilter" />
             <Value name="SHADER_LOC_MAP_BRDF" integer="25" desc="Shader location: sampler2d texture: brdf" />
+            <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: boneIds" />
+            <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: boneWeights" />
+            <Value name="SHADER_LOC_BONE_MATRICES" integer="28" desc="Shader location: array of matrices uniform: boneMatrices" />
         </Enum>
         <Enum name="ShaderUniformDataType" valueCount="9" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
@@ -670,7 +675,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="575">
+    <Functions count="578">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1069,6 +1074,9 @@
         </Function>
         <Function name="GetApplicationDirectory" retType="const char *" paramCount="0" desc="Get the directory of the running application (uses static string)">
         </Function>
+        <Function name="MakeDirectory" retType="int" paramCount="1" desc="Create directories (including full path requested), returns 0 on success">
+            <Param type="const char *" name="dirPath" desc="" />
+        </Function>
         <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
             <Param type="const char *" name="dir" desc="" />
         </Function>
@@ -1081,7 +1089,7 @@
         <Function name="LoadDirectoryFiles" retType="FilePathList" paramCount="1" desc="Load directory filepaths">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and recursive directory scan">
+        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result">
             <Param type="const char *" name="basePath" desc="" />
             <Param type="const char *" name="filter" desc="" />
             <Param type="bool" name="scanSubdirs" desc="" />
@@ -2219,6 +2227,11 @@
             <Param type="Color" name="src" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
+        <Function name="ColorLerp" retType="Color" paramCount="3" desc="Get color lerp interpolation between two colors, factor [0.0f..1.0f]">
+            <Param type="Color" name="color1" desc="" />
+            <Param type="Color" name="color2" desc="" />
+            <Param type="float" name="factor" desc="" />
+        </Function>
         <Function name="GetColor" retType="Color" paramCount="1" desc="Get Color structure from hexadecimal value">
             <Param type="unsigned int" name="hexValue" desc="" />
         </Function>
@@ -2241,7 +2254,7 @@
         <Function name="LoadFont" retType="Font" paramCount="1" desc="Load font from file into GPU memory (VRAM)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont">
+        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int *" name="codepoints" desc="" />
@@ -2816,6 +2829,11 @@
         <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
+        </Function>
+        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="anim" desc="" />
+            <Param type="int" name="frame" desc="" />
         </Function>
         <Function name="CheckCollisionSpheres" retType="bool" paramCount="4" desc="Check collision between two spheres">
             <Param type="Vector3" name="center1" desc="" />
