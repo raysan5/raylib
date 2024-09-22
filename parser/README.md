@@ -41,7 +41,7 @@ OPTIONS:
     -f, --format <type>             : Define output format for parser data.
                                       Supported types: DEFAULT, JSON, XML, LUA
 
-    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)
+    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMAPI for raymath.h, etc.)
                                       NOTE: If no specifier defined, defaults to: RLAPI
 
     -t, --truncate <after>          : Define string to truncate input after (i.e. "RLGL IMPLEMENTATION" for rlgl.h)
@@ -56,7 +56,7 @@ EXAMPLES:
     > raylib_parser --output raylib_data.info --format XML
         Process <raylib.h> to generate <raylib_data.info> as XML text data
 
-    > raylib_parser --input raymath.h --output raymath_data.info --format XML
+    > raylib_parser --input raymath.h --output raymath_data.info --format XML --define RMAPI
         Process <raymath.h> to generate <raymath_data.info> as XML text data
 ```
 
