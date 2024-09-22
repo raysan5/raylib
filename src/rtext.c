@@ -260,8 +260,8 @@ extern void LoadFontDefault(void)
 
     // Allocate space for our characters info data
     // NOTE: This memory must be freed at end! --> Done by CloseWindow()
-    defaultFont.glyphs = (GlyphInfo *)RL_MALLOC(defaultFont.glyphCount*sizeof(GlyphInfo));
-    defaultFont.recs = (Rectangle *)RL_MALLOC(defaultFont.glyphCount*sizeof(Rectangle));
+    defaultFont.glyphs = (GlyphInfo *)RL_CALLOC(defaultFont.glyphCount, sizeof(GlyphInfo));
+    defaultFont.recs = (Rectangle *)RL_CALLOC(defaultFont.glyphCount, sizeof(Rectangle));
 
     int currentLine = 0;
     int currentPosX = charsDivisor;
