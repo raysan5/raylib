@@ -195,26 +195,30 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #include <direct.h>             // Required for: _getch(), _chdir(), _mkdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
+    #define MKDIR(dir) _mkdir(dir)
 #else
     #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
     #define CHDIR chdir
+    #define MKDIR(dir) mkdir(dir, 0777)
 #endif
 
+/*
 #if defined(_MSC_VER) && ((defined(WIN32) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__))
-    #include <direct.h>             // Required for: _mkdir()
-    #define MKDIR(dir)  _mkdir(dir)
+    //#include <direct.h>             // Required for: _mkdir()
+    //#define MKDIR(dir)  _mkdir(dir)
 #elif defined __GNUC__
     #if defined(EMSCRIPTEN)
-        #define MKDIR(dir) mkdir(dir)
+        #define MKDIR(dir) mkdir(dir, 0777)
     #elif defined(__linux__)
-        #define MKDIR(dir) mkdir(dir, 0777);
+        #define MKDIR(dir) mkdir(dir, 0777)
     #else
         #include <sys/types.h>
         #include <sys/stat.h>           // Required for: mkdir()
         #define MKDIR(dir) _mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
     #endif
 #endif
+*/
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
