@@ -210,7 +210,7 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #else
         #include <sys/types.h>
         #include <sys/stat.h>           // Required for: mkdir()
-        #define MKDIR(dir) _mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
+        #define MKDIR(dir) mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
     #endif
 #endif
 
