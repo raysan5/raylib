@@ -191,14 +191,23 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #endif
 
 #if defined(_WIN32)
-    #include <direct.h>             // Required for: _getch(), _chdir()
+    #include <io.h>                 // Required for: _access() [Used in FileExists()]
+    #include <direct.h>             // Required for: _getch(), _chdir(), _mkdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
-    #include <io.h>                 // Required for: _access() [Used in FileExists()]
 #else
     #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
     #define CHDIR chdir
+#endif
+
+#if defined(_MSC_VER) && ((defined(WIN32) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__))
+    #include <direct.h>             // Required for: _mkdir()
+    #define MKDIR(dir)  _mkdir(dir)
+#elif defined __GNUC__
+    #include <sys/types.h>
+    #include <sys/stat.h>           // Required for: mkdir()
+    #define MKDIR(dir)  mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
 #endif
 
 //----------------------------------------------------------------------------------
@@ -2265,6 +2274,40 @@ void UnloadDirectoryFiles(FilePathList files)
     for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
     RL_FREE(files.paths);
+}
+
+// Create directories (including full path requested), returns 0 on success
+int MakeDirectory(const char *dirPath)
+{
+    if ((dirPath == NULL) || (dirPath[0] == '\0')) return 1; // Path is not valid
+    if (DirectoryExists(dirPath)) return 0; // Path already exists (is valid)
+
+    // Copy path string to avoid modifying original
+    int len = (int)strlen(dirPath) + 1;
+    char *pathcpy = (char *)RL_CALLOC(len, 1);
+    memcpy(pathcpy, dirPath, len);
+
+    // Iterate over pathcpy, create each subdirectory as needed
+    for (int i = 0; (i < len) && (pathcpy[i] != '\0'); i++)
+    {
+        if (pathcpy[i] == ':') i++;
+        else
+        {
+            if ((pathcpy[i] == '\\') || (pathcpy[i] == '/'))
+            {
+                pathcpy[i] = '\0';
+                if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+                pathcpy[i] = '/';
+            }
+        }
+    }
+
+    // Create final directory
+    if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+
+    RL_FREE(pathcpy);
+
+    return 0;
 }
 
 // Change working directory, returns true on success
