@@ -205,12 +205,14 @@ unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #include <direct.h>             // Required for: _mkdir()
     #define MKDIR(dir)  _mkdir(dir)
 #elif defined __GNUC__
-    #if defined(__linux__)
+    #if defined(EMSCRIPTEN)
+        #define MKDIR(dir) mkdir(dir)
+    #elif defined(__linux__)
         #define MKDIR(dir) mkdir(dir, 0777);
     #else
         #include <sys/types.h>
         #include <sys/stat.h>           // Required for: mkdir()
-        #define MKDIR(dir) mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
+        #define MKDIR(dir) _mkdir(dir)  // OLD: mkdir(dir, 0777) -> w64devkit complaints!
     #endif
 #endif
 
