@@ -74,7 +74,7 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
-
+extern bool isGpuReady;                 // Flag to note GPU has been initialized successfully
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
@@ -989,6 +989,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Initialize OpenGL context (states and resources)
                     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+                    isGpuReady = true;
 
                     // Setup default viewport
                     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
