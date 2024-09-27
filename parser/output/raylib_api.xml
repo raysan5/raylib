@@ -1297,12 +1297,12 @@
         </Function>
         <Function name="GetShapesTextureRectangle" retType="Rectangle" paramCount="0" desc="Get texture source rectangle that is used for shapes drawing">
         </Function>
-        <Function name="DrawPixel" retType="void" paramCount="3" desc="Draw a pixel">
+        <Function name="DrawPixel" retType="void" paramCount="3" desc="Draw a pixel using geometry [Can be slow, use with care]">
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawPixelV" retType="void" paramCount="2" desc="Draw a pixel (Vector version)">
+        <Function name="DrawPixelV" retType="void" paramCount="2" desc="Draw a pixel using geometry (Vector version) [Can be slow, use with care]">
             <Param type="Vector2" name="position" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>

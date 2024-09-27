@@ -2102,14 +2102,14 @@ Function 207: GetShapesTextureRectangle() (0 input parameters)
 Function 208: DrawPixel() (3 input parameters)
   Name: DrawPixel
   Return type: void
-  Description: Draw a pixel
+  Description: Draw a pixel using geometry [Can be slow, use with care]
   Param[1]: posX (type: int)
   Param[2]: posY (type: int)
   Param[3]: color (type: Color)
 Function 209: DrawPixelV() (2 input parameters)
   Name: DrawPixelV
   Return type: void
-  Description: Draw a pixel (Vector version)
+  Description: Draw a pixel using geometry (Vector version) [Can be slow, use with care]
   Param[1]: position (type: Vector2)
   Param[2]: color (type: Color)
 Function 210: DrawLine() (5 input parameters)
