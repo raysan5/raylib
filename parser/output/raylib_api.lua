@@ -4614,7 +4614,7 @@ return {
     },
     {
       name = "DrawPixel",
-      description = "Draw a pixel",
+      description = "Draw a pixel using geometry [Can be slow, use with care]",
       returnType = "void",
       params = {
         {type = "int", name = "posX"},
@@ -4624,7 +4624,7 @@ return {
     },
     {
       name = "DrawPixelV",
-      description = "Draw a pixel (Vector version)",
+      description = "Draw a pixel using geometry (Vector version) [Can be slow, use with care]",
       returnType = "void",
       params = {
         {type = "Vector2", name = "position"},
