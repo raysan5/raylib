@@ -7621,7 +7621,7 @@ return {
     },
     {
       name = "UpdateModelAnimationBoneMatrices",
-      description = "Update model animation mesh bone matrices",
+      description = "Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},

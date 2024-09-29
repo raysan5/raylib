@@ -2830,7 +2830,7 @@
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
         </Function>
-        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices">
+        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
             <Param type="int" name="frame" desc="" />

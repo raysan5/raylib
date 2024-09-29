@@ -4230,7 +4230,7 @@ Function 503: IsModelAnimationValid() (2 input parameters)
 Function 504: UpdateModelAnimationBoneMatrices() (3 input parameters)
   Name: UpdateModelAnimationBoneMatrices
   Return type: void
-  Description: Update model animation mesh bone matrices
+  Description: Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
   Param[3]: frame (type: int)
