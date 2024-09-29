@@ -1252,9 +1252,10 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR] = 0;        // Vertex buffer: colors
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT] = 0;      // Vertex buffer: tangents
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2] = 0;    // Vertex buffer: texcoords2
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = 0;      // Vertex buffer: indices
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = 0;      // Vertex buffer: boneIds
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = 0;  // Vertex buffer: boneWeights
-    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = 0;      // Vertex buffer: indices
+
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
@@ -1340,7 +1341,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, value, SHADER_ATTRIB_VEC2, 2);
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
-    
+
+#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
     if (mesh->boneIds != NULL)
     {
         // Enable vertex attribute: boneIds (shader-location = 6)
@@ -1372,6 +1374,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, value, SHADER_ATTRIB_VEC4, 2);
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS);
     }
+#endif
 
     if (mesh->indices != NULL)
     {
@@ -1485,13 +1488,14 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
-    
+
+#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
     // Upload Bone Transforms    
     if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
     }
-
+#endif
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1570,7 +1574,8 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
-        
+
+#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
         // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
         {
@@ -1586,6 +1591,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS], 4, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS]);
         }
+#endif
 
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
     }
@@ -1729,11 +1735,13 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
     
+#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
     // Upload Bone Transforms    
     if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
     }
+#endif
     
     //-----------------------------------------------------
 

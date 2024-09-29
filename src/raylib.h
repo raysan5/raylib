@@ -1597,7 +1597,7 @@ RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);   
 RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
 RLAPI void UnloadModelAnimations(ModelAnimation *animations, int animCount);                // Unload animation array data
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
-RLAPI void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame);   // Update model animation mesh bone matrices
+RLAPI void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame);   // Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)
 
 // Collision detection functions
 RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);   // Check collision between two spheres

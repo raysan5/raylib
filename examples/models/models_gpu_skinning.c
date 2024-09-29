@@ -10,6 +10,8 @@
 *   BSD-like license that allows static linking with closed source software
 *
 *   Copyright (c) 2024 Daniel Holden (@orangeduck)
+* 
+*   Note: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
 *
 ********************************************************************************************/
 

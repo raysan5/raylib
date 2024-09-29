@@ -119,9 +119,18 @@
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR       3
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT     4
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     6
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 7
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     8
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
+
+// The mac OpenGL drivers do not support more than 8 VBOs, so we can't support GPU animations
+#ifndef __APPLE__
+#define RL_SUPPORT_MESH_ANIMATION_VBO
+#endif
+
+#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+#endif
+
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
