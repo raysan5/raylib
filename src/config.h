@@ -228,7 +228,7 @@
 // rmodels: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
-#define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
+#define MAX_MESH_VERTEX_BUFFERS         9       // Maximum vertex buffers (VBO) per mesh
 
 //------------------------------------------------------------------------------------
 // Module: raudio - Configuration Flags
