@@ -1342,7 +1342,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
 
-#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
     if (mesh->boneIds != NULL)
     {
         // Enable vertex attribute: boneIds (shader-location = 6)
@@ -1489,7 +1489,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
 
-#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
     // Upload Bone Transforms    
     if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
@@ -1575,7 +1575,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
         // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
         {
@@ -1735,7 +1735,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
     
-#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
     // Upload Bone Transforms    
     if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
