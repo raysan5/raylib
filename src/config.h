@@ -113,12 +113,24 @@
 #define RL_CULL_DISTANCE_FAR              1000.0      // Default projection matrix far cull distance
 
 // Default shader vertex attribute locations
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT   4
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD    1
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL      2
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR       3
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT     4
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
+
+// The mac OpenGL drivers do not support more than 8 VBOs, so we can't support GPU animations
+#ifndef __APPLE__
+#define RL_SUPPORT_MESH_ANIMATION_VBO
+#endif
+
+#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+#endif
+
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
@@ -225,7 +237,7 @@
 // rmodels: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
-#define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
+#define MAX_MESH_VERTEX_BUFFERS         9       // Maximum vertex buffers (VBO) per mesh
 
 //------------------------------------------------------------------------------------
 // Module: raudio - Configuration Flags

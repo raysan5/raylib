@@ -206,7 +206,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     [BTN_TL] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
     [BTN_TL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
     [BTN_TR] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-    [BTN_TR2] GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    [BTN_TR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
     [BTN_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
     [BTN_MODE] = GAMEPAD_BUTTON_MIDDLE,
     [BTN_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
@@ -763,8 +763,10 @@ int InitPlatform(void)
 
         drmModeConnector *con = drmModeGetConnector(platform.fd, res->connectors[i]);
         TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
-
-        if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
+        
+        // In certain cases the status of the conneciton is reported as UKNOWN, but it is still connected.
+        // This might be a hardware or software limitation like on Raspberry Pi Zero with composite output.
+        if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->encoder_id))
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
             platform.connector = con;
