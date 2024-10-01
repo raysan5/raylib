@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Virtual Dpad
+*   raylib [core] example - input virtual controls
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
@@ -27,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - virtual dpad");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input virtual controls");
 
     const int dpadX = 90;
     const int dpadY = 300;
