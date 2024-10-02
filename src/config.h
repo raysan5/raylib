@@ -121,12 +121,10 @@
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
 
-// The mac OpenGL drivers do not support more than 8 VBOs, so we can't support GPU animations
-#ifndef __APPLE__
-#define RL_SUPPORT_MESH_ANIMATION_VBO
-#endif
 
-#ifdef RL_SUPPORT_MESH_ANIMATION_VBO
+#define RL_SUPPORT_MESH_GPU_SKINNING                   // Remove this if your GPU does not support more than 8 VBOs
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
@@ -237,7 +235,12 @@
 // rmodels: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
 #define MAX_MESH_VERTEX_BUFFERS         9       // Maximum vertex buffers (VBO) per mesh
+#else
+#define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
+#endif
 
 //------------------------------------------------------------------------------------
 // Module: raudio - Configuration Flags
