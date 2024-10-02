@@ -58,6 +58,13 @@
 #endif
 
 //----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#ifndef MAX_CLIPBOARD_BUFFER_LENGTH
+    #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
+#endif
+
+//----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
@@ -852,10 +859,22 @@ void SetClipboardText(const char *text)
 }
 
 // Get clipboard text content
-// NOTE: returned string must be freed with SDL_free()
 const char *GetClipboardText(void)
 {
-    return SDL_GetClipboardText();
+    static char buffer[MAX_CLIPBOARD_BUFFER_LENGTH] = { 0 };
+
+    char *clipboard = SDL_GetClipboardText();
+
+    int clipboardSize = snprintf(buffer, sizeof(buffer), "%s", clipboard);
+    if (clipboardSize >= MAX_CLIPBOARD_BUFFER_LENGTH)
+    {
+        char *truncate = buffer + MAX_CLIPBOARD_BUFFER_LENGTH - 4;
+        sprintf(truncate, "...");
+    }
+
+    SDL_free(clipboard);
+
+    return buffer;
 }
 
 // Show mouse cursor
@@ -1589,8 +1608,8 @@ int InitPlatform(void)
     // Initialize storage system
     //----------------------------------------------------------------------------
     // Define base path for storage
-    CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();  
-    CHDIR(CORE.Storage.basePath); 
+    CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();
+    CHDIR(CORE.Storage.basePath);
     //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
