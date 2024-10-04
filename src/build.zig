@@ -40,6 +40,17 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
+fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
+    raylib.defineCMacro("PLATFORM_DESKTOP", null);
+
+    switch (platform) {
+        .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
+        .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
+        .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
+        else => {}
+    }
+}
+
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     raylib_flags_arr.clearRetainingCapacity();
 
@@ -102,7 +113,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
-    if (!options.platform_drm) {
+    if (options.platform != .drm) {
         raylib.addIncludePath(b.path("src/external/glfw/include"));
     }
 
@@ -136,10 +147,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            setDesktopPlatform(raylib, options.platform);
         },
         .linux => {
-            if (!options.platform_drm) {
+            if (options.platform != .drm) {
                 try c_source_files.append("rglfw.c");
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
@@ -177,7 +188,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
                     waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
                 }
-                raylib.defineCMacro("PLATFORM_DESKTOP", null);
+                setDesktopPlatform(raylib, options.platform);
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
@@ -211,7 +222,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib.linkSystemLibrary("Xxf86vm");
             raylib.linkSystemLibrary("Xcursor");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            setDesktopPlatform(raylib, options.platform);
         },
         .macos => {
             // On macos rglfw.c include Objective-C files.
@@ -227,7 +238,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib.linkFramework("AppKit");
             raylib.linkFramework("IOKit");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
             raylib.defineCMacro("PLATFORM_WEB", null);
@@ -286,7 +297,7 @@ pub const Options = struct {
     rtext: bool = true,
     rtextures: bool = true,
     raygui: bool = false,
-    platform_drm: bool = false,
+    platform: PlatformBackend = .glfw,
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
@@ -323,6 +334,13 @@ pub const LinuxDisplayBackend = enum {
     Both,
 };
 
+pub const PlatformBackend = enum {
+    glfw,
+    rgfw,
+    sdl,
+    drm
+};
+
 pub fn build(b: *std.Build) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -336,7 +354,7 @@ pub fn build(b: *std.Build) !void {
 
     const defaults = Options{};
     const options = Options{
-        .platform_drm = b.option(bool, "platform_drm", "Compile raylib in native mode (no X11)") orelse defaults.platform_drm,
+        .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
         .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
         .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
         .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
