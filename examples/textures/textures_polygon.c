@@ -88,9 +88,9 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
- 
+
             DrawText("textured polygon", 20, 20, 20, DARKGRAY);
-  
+
             DrawTexturePoly(texture, (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
                             positions, texcoords, MAX_POINTS, WHITE);
 
@@ -104,7 +104,7 @@ int main(void)
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
- 
+
     return 0;
 }
 
