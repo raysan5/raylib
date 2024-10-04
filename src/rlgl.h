@@ -1451,7 +1451,7 @@ void rlBegin(int mode)
     if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode)
     {
         int currentTexture = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId;
-            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
+        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
         {
             // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
             // that way, following QUADS drawing will keep aligned with index processing
