@@ -336,7 +336,12 @@ pub const LinuxDisplayBackend = enum {
     Both,
 };
 
-pub const PlatformBackend = enum { glfw, rgfw, sdl, drm };
+pub const PlatformBackend = enum {
+    glfw,
+    rgfw,
+    sdl,
+    drm,
+};
 
 pub fn build(b: *std.Build) !void {
     // Standard target options allows the person running `zig build` to choose
