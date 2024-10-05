@@ -72,7 +72,7 @@
 #define MAX_CALLBACKS_TO_PARSE    64    // Maximum number of callbacks to parse
 #define MAX_FUNCS_TO_PARSE      1024    // Maximum number of functions to parse
 
-#define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
+#define MAX_LINE_LENGTH         1024    // Maximum length of one line (including comments)
 
 #define MAX_STRUCT_FIELDS         64    // Maximum number of struct fields
 #define MAX_ENUM_VALUES          512    // Maximum number of enum values
@@ -139,7 +139,7 @@ typedef struct EnumInfo {
 // Function info data
 typedef struct FunctionInfo {
     char name[64];              // Function name
-    char desc[128];             // Function description (comment at the end)
+    char desc[512];             // Function description (comment at the end)
     char retType[32];           // Return value type
     int paramCount;             // Number of function parameters
     char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
@@ -1100,7 +1100,7 @@ static void ShowCommandLineInfo(void)
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
     printf("                                      Supported types: DEFAULT, JSON, XML, LUA, CODE\n\n");
-    printf("    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
+    printf("    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMAPI for raymath.h, etc.)\n");
     printf("                                      NOTE: If no specifier defined, defaults to: RLAPI\n\n");
     printf("    -t, --truncate <after>          : Define string to truncate input after (i.e. \"RLGL IMPLEMENTATION\" for rlgl.h)\n");
     printf("                                      NOTE: If not specified, the full input file is parsed.\n\n");
@@ -1110,7 +1110,7 @@ static void ShowCommandLineInfo(void)
     printf("        Process <raylib.h> to generate <api.json>\n\n");
     printf("    > raylib_parser --output raylib_data.info --format XML\n");
     printf("        Process <raylib.h> to generate <raylib_data.info> as XML text data\n\n");
-    printf("    > raylib_parser --input raymath.h --output raymath_data.info --format XML\n");
+    printf("    > raylib_parser --input raymath.h --output raymath_data.info --format XML --define RMAPI\n");
     printf("        Process <raymath.h> to generate <raymath_data.info> as XML text data\n\n");
 }
 

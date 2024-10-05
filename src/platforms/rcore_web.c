@@ -129,7 +129,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 
 // Emscripten window callback events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 
 // Emscripten input callback events
@@ -190,7 +190,8 @@ void ToggleFullscreen(void)
     if (enterFullscreen)
     {
         // NOTE: The setTimeouts handle the browser mode change delay
-        EM_ASM(
+        EM_ASM
+        (
             setTimeout(function()
             {
                 Module.requestFullscreen(false, false);
@@ -298,7 +299,8 @@ void ToggleBorderlessWindowed(void)
     {
         // NOTE: 1. The setTimeouts handle the browser mode change delay
         //       2. The style unset handles the possibility of a width="value%" like on the default shell.html file
-        EM_ASM(
+        EM_ASM
+        (
             setTimeout(function()
             {
                 Module.requestFullscreen(false, true);
@@ -882,6 +884,13 @@ void SetMouseCursor(int cursor)
     }
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
 // Register all input events
 void PollInputEvents(void)
 {
@@ -972,7 +981,7 @@ void PollInputEvents(void)
                     default: break;
                 }
 
-                if (button != -1)   // Check for valid button
+                if (button + 1 != 0)   // Check for valid button
                 {
                     if (gamepadState.digitalButton[j] == 1)
                     {
@@ -1563,12 +1572,12 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 }
 
 // Register window resize event
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
-{
-    // TODO: Implement EmscriptenWindowResizedCallback()?
+// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
+// {
+//     // TODO: Implement EmscriptenWindowResizedCallback()?
 
-    return 1; // The event was consumed by the callback handler
-}
+//     return 1; // The event was consumed by the callback handler
+// }
 
 EM_JS(int, GetWindowInnerWidth, (), { return window.innerWidth; });
 EM_JS(int, GetWindowInnerHeight, (), { return window.innerHeight; });
@@ -1584,11 +1593,11 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     int width = GetWindowInnerWidth();
     int height = GetWindowInnerHeight();
 
-    if (width < CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
-    else if (width > CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
+    if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
+    else if (width > (int)CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
 
-    if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
-    else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
+    if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
+    else if (height > (int)CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
 
     emscripten_set_canvas_element_size("#canvas", width, height);
 

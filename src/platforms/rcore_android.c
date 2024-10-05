@@ -74,14 +74,14 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
-
+extern bool isGpuReady;                 // Flag to note GPU has been initialized successfully
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
 // Local Variables Definition
 //----------------------------------------------------------------------------------
 #define KEYCODE_MAP_SIZE 162
-static const KeyboardKey KeycodeMap[KEYCODE_MAP_SIZE] = {
+static const KeyboardKey mapKeycode[KEYCODE_MAP_SIZE] = {
     KEY_NULL,           // AKEYCODE_UNKNOWN
     0,                  // AKEYCODE_SOFT_LEFT
     0,                  // AKEYCODE_SOFT_RIGHT
@@ -281,14 +281,15 @@ void android_main(struct android_app *app)
     // Request to end the native activity
     ANativeActivity_finish(app->activity);
 
-    // Android ALooper_pollAll() variables
+    // Android ALooper_pollOnce() variables
     int pollResult = 0;
     int pollEvents = 0;
 
     // Waiting for application events before complete finishing
     while (!app->destroyRequested)
     {
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&platform.source)) >= 0)
+        // Poll all events until we reach return value TIMEOUT, meaning no events left to process
+        while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, (void **)&platform.source)) > ALOOPER_POLL_TIMEOUT)
         {
             if (platform.source != NULL) platform.source->process(app, platform.source);
         }
@@ -632,6 +633,13 @@ void SetMouseCursor(int cursor)
     TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
 // Register all input events
 void PollInputEvents(void)
 {
@@ -660,7 +668,7 @@ void PollInputEvents(void)
                 CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
         }
     }
-    
+
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
@@ -675,22 +683,23 @@ void PollInputEvents(void)
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
-    // Android ALooper_pollAll() variables
+    // Android ALooper_pollOnce() variables
     int pollResult = 0;
     int pollEvents = 0;
 
-    // Poll Events (registered events)
+    // Poll Events (registered events) until we reach TIMEOUT which indicates there are no events left to poll
     // NOTE: Activity is paused if not enabled (platform.appEnabled)
-    while ((pollResult = ALooper_pollAll(platform.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&platform.source)) >= 0)
+    while ((pollResult = ALooper_pollOnce(platform.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&platform.source)) > ALOOPER_POLL_TIMEOUT)
     {
         // Process this event
         if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-        // NOTE: Never close window, native activity is controlled by the system!
+        // NOTE: Allow closing the window in case a configuration change happened.
+        // The android_main function should be allowed to return to its caller in order for the
+        // Android OS to relaunch the activity.
         if (platform.app->destroyRequested != 0)
         {
-            //CORE.Window.shouldClose = true;
-            //ANativeActivity_finish(platform.app->activity);
+            CORE.Window.shouldClose = true;
         }
     }
 }
@@ -760,20 +769,20 @@ int InitPlatform(void)
 
     TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Initialized successfully");
 
-    // Android ALooper_pollAll() variables
+    // Android ALooper_pollOnce() variables
     int pollResult = 0;
     int pollEvents = 0;
 
     // Wait for window to be initialized (display and context)
     while (!CORE.Window.ready)
     {
-        // Process events loop
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&platform.source)) >= 0)
+        // Process events until we reach TIMEOUT, which indicates no more events queued.
+        while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, (void**)&platform.source)) > ALOOPER_POLL_TIMEOUT)
         {
             // Process this event
             if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-            // NOTE: Never close window, native activity is controlled by the system!
+            // NOTE: It's highly likely destroyRequested will never be non-zero at the start of the activity lifecycle.
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
@@ -803,6 +812,12 @@ void ClosePlatform(void)
 
         eglTerminate(platform.device);
         platform.device = EGL_NO_DISPLAY;
+    }
+
+    // NOTE: Reset global state in case the activity is being relaunched.
+    if (platform.app->destroyRequested != 0) {
+        CORE = (CoreData){0};
+        platform = (PlatformData){0};
     }
 }
 
@@ -974,6 +989,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Initialize OpenGL context (states and resources)
                     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+                    isGpuReady = true;
 
                     // Setup default viewport
                     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
@@ -1133,9 +1149,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_Y] = AMotionEvent_getAxisValue(
                     event, AMOTION_EVENT_AXIS_RZ, 0);
             CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_TRIGGER] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_BRAKE, 0) * 2.0f - 1.0f;
+                    event, AMOTION_EVENT_AXIS_BRAKE, 0)*2.0f - 1.0f;
             CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_TRIGGER] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_GAS, 0) * 2.0f - 1.0f;
+                    event, AMOTION_EVENT_AXIS_GAS, 0)*2.0f - 1.0f;
 
             // dpad is reported as an axis on android
             float dpadX = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
@@ -1201,7 +1217,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             return 1; // Handled gamepad button
         }
 
-        KeyboardKey key = (keycode > 0 && keycode < KEYCODE_MAP_SIZE) ? KeycodeMap[keycode] : KEY_NULL;
+        KeyboardKey key = (keycode > 0 && keycode < KEYCODE_MAP_SIZE)? mapKeycode[keycode] : KEY_NULL;
         if (key != KEY_NULL)
         {
             // Save current key and its state
@@ -1252,10 +1268,10 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         CORE.Input.Touch.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
 
         // Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
-        float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x) / (float)CORE.Window.display.width;
-        float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y) / (float)CORE.Window.display.height;
-        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x * widthRatio - (float)CORE.Window.renderOffset.x / 2;
-        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y * heightRatio - (float)CORE.Window.renderOffset.y / 2;
+        float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x)/(float)CORE.Window.display.width;
+        float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y)/(float)CORE.Window.display.height;
+        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x*widthRatio - (float)CORE.Window.renderOffset.x/2;
+        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y*heightRatio - (float)CORE.Window.renderOffset.y/2;
     }
 
     int32_t action = AMotionEvent_getAction(event);

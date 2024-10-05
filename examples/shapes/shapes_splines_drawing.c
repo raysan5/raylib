@@ -56,6 +56,10 @@ int main(void)
         { 710.0f, 260.0f },
     };
     
+    // Array required for spline bezier-cubic, 
+    // including control points interleaved with start-end segment points
+    Vector2 pointsInterleaved[3*(MAX_SPLINE_POINTS - 1) + 1] = { 0 };
+    
     int pointCount = 5;
     int selectedPoint = -1;
     int focusedPoint = -1;
@@ -63,7 +67,7 @@ int main(void)
     Vector2 *focusedControlPoint = NULL;
     
     // Cubic Bezier control points initialization
-    ControlPoint control[MAX_SPLINE_POINTS] = { 0 };
+    ControlPoint control[MAX_SPLINE_POINTS-1] = { 0 };
     for (int i = 0; i < pointCount - 1; i++)
     {
         control[i].start = (Vector2){ points[i].x + 50, points[i].y };
@@ -88,6 +92,9 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && (pointCount < MAX_SPLINE_POINTS))
         {
             points[pointCount] = GetMousePosition();
+            int i = pointCount - 1;
+            control[i].start = (Vector2){ points[i].x + 50, points[i].y };
+            control[i].end = (Vector2){ points[i + 1].x - 50, points[i + 1].y };
             pointCount++;
         }
 
@@ -114,7 +121,7 @@ int main(void)
         if ((splineTypeActive == SPLINE_BEZIER) && (focusedPoint == -1))
         {
             // Spline control point focus and selection logic
-            for (int i = 0; i < pointCount; i++)
+            for (int i = 0; i < pointCount - 1; i++)
             {
                 if (CheckCollisionPointCircle(GetMousePosition(), control[i].start, 6.0f))
                 {
@@ -185,13 +192,32 @@ int main(void)
             }
             else if (splineTypeActive == SPLINE_BEZIER)
             {
+                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be 
+                // provided interleaved with the start and end point of every segment
+                for (int i = 0; i < (pointCount - 1); i++) 
+                {
+                    pointsInterleaved[3*i] = points[i];
+                    pointsInterleaved[3*i + 1] = control[i].start;
+                    pointsInterleaved[3*i + 2] = control[i].end;
+                }
+                
+                pointsInterleaved[3*(pointCount - 1)] = points[pointCount - 1];
+
                 // Draw spline: cubic-bezier (with control points)
-                for (int i = 0; i < pointCount - 1; i++)
+                DrawSplineBezierCubic(pointsInterleaved, 3*(pointCount - 1) + 1, splineThickness, RED);
+                
+                /*
+                for (int i = 0; i < 3*(pointCount - 1); i += 3)
                 {
                     // Drawing individual segments, not considering thickness connection compensation
-                    DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], splineThickness, RED);
+                    DrawSplineSegmentBezierCubic(pointsInterleaved[i], pointsInterleaved[i + 1], pointsInterleaved[i + 2], pointsInterleaved[i + 3], splineThickness, MAROON);
+                }
+                */
 
-                    // Every cubic bezier point should have two control points
+                // Draw spline control points
+                for (int i = 0; i < pointCount - 1; i++)
+                {
+                    // Every cubic bezier point have two control points
                     DrawCircleV(control[i].start, 6, GOLD);
                     DrawCircleV(control[i].end, 6, GOLD);
                     if (focusedControlPoint == &control[i].start) DrawCircleV(control[i].start, 8, GREEN);
@@ -216,7 +242,7 @@ int main(void)
                         (splineTypeActive != SPLINE_BEZIER) &&
                         (i < pointCount - 1)) DrawLineV(points[i], points[i + 1], GRAY);
 
-                    DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), points[i].x, points[i].y + 10, 10, BLACK);
+                    DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), (int)points[i].x, (int)points[i].y + 10, 10, BLACK);
                 }
             }
 

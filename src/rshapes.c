@@ -79,8 +79,8 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used on shapes drawing (white pixel loaded by rlgl)
-Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
+static Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used on shapes drawing (white pixel loaded by rlgl)
+static Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -126,7 +126,7 @@ Rectangle GetShapesTextureRectangle(void)
 // Draw a pixel
 void DrawPixel(int posX, int posY, Color color)
 {
-  DrawPixelV((Vector2){ (float)posX, (float)posY }, color);
+    DrawPixelV((Vector2){ (float)posX, (float)posY }, color);
 }
 
 // Draw a pixel (Vector version)
@@ -178,9 +178,8 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        // WARNING: Adding 0.5f offset to "center" point on selected pixel
-        rlVertex2f((float)startPosX + 0.5f, (float)startPosY + 0.5f);
-        rlVertex2f((float)endPosX + 0.5f, (float)endPosY + 0.5f);
+        rlVertex2f((float)startPosX, (float)startPosY);
+        rlVertex2f((float)endPosX, (float)endPosY);
     rlEnd();
 }
 
@@ -189,9 +188,8 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        // WARNING: Adding 0.5f offset to "center" point on selected pixel
-        rlVertex2f(startPos.x + 0.5f, startPos.y + 0.5f);
-        rlVertex2f(endPos.x + 0.5f, endPos.y + 0.5f);
+        rlVertex2f(startPos.x, startPos.y);
+        rlVertex2f(endPos.x, endPos.y);
     rlEnd();
 }
 
@@ -339,7 +337,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
         }
 
         // NOTE: In case number of segments is odd, we add one last piece to the cake
-        if (((unsigned int)segments%2) == 1)
+        if ((((unsigned int)segments)%2) == 1)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -432,17 +430,16 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
 }
 
 // Draw a gradient-filled circle
-// NOTE: Gradient goes from center (color1) to border (color2)
-void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
+void DrawCircleGradient(int centerX, int centerY, float radius, Color inner, Color outer)
 {
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
         {
-            rlColor4ub(color1.r, color1.g, color1.b, color1.a);
+            rlColor4ub(inner.r, inner.g, inner.b, inner.a);
             rlVertex2f((float)centerX, (float)centerY);
-            rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
             rlVertex2f((float)centerX + cosf(DEG2RAD*(i + 10))*radius, (float)centerY + sinf(DEG2RAD*(i + 10))*radius);
-            rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
             rlVertex2f((float)centerX + cosf(DEG2RAD*i)*radius, (float)centerY + sinf(DEG2RAD*i)*radius);
         }
     rlEnd();
@@ -763,22 +760,19 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 }
 
 // Draw a vertical-gradient-filled rectangle
-// NOTE: Gradient goes from bottom (color1) to top (color2)
-void DrawRectangleGradientV(int posX, int posY, int width, int height, Color color1, Color color2)
+void DrawRectangleGradientV(int posX, int posY, int width, int height, Color top, Color bottom)
 {
-    DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color1, color2, color2, color1);
+    DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, top, bottom, bottom, top);
 }
 
 // Draw a horizontal-gradient-filled rectangle
-// NOTE: Gradient goes from bottom (color1) to top (color2)
-void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2)
+void DrawRectangleGradientH(int posX, int posY, int width, int height, Color left, Color right)
 {
-    DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color1, color1, color2, color2);
+    DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, left, left, right, right);
 }
 
 // Draw a gradient-filled rectangle
-// NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
-void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
+void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color topRight, Color bottomRight)
 {
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
@@ -787,19 +781,19 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
         rlNormal3f(0.0f, 0.0f, 1.0f);
 
         // NOTE: Default raylib font character 95 is a white square
-        rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+        rlColor4ub(topLeft.r, topLeft.g, topLeft.b, topLeft.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(rec.x, rec.y);
 
-        rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+        rlColor4ub(bottomLeft.r, bottomLeft.g, bottomLeft.b, bottomLeft.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(rec.x, rec.y + rec.height);
 
-        rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+        rlColor4ub(topRight.r, topRight.g, topRight.b, topRight.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(rec.x + rec.width, rec.y + rec.height);
 
-        rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+        rlColor4ub(bottomRight.r, bottomRight.g, bottomRight.b, bottomRight.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();
@@ -1759,7 +1753,8 @@ void DrawSplineBasis(const Vector2 *points, int pointCount, float thick, Color c
         DrawTriangleStrip(vertices, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
     }
 
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
+    // Cap circle drawing at the end of every segment
+    DrawCircleV(currentPoint, thick/2.0f, color);
 }
 
 // Draw spline: Catmull-Rom, minimum 4 points
@@ -1825,28 +1820,31 @@ void DrawSplineCatmullRom(const Vector2 *points, int pointCount, float thick, Co
         DrawTriangleStrip(vertices, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
     }
 
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
+    // Cap circle drawing at the end of every segment
+    DrawCircleV(currentPoint, thick/2.0f, color);
 }
 
 // Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
 void DrawSplineBezierQuadratic(const Vector2 *points, int pointCount, float thick, Color color)
 {
-    if (pointCount < 3) return;
-
-    for (int i = 0; i < pointCount - 2; i++)
+    if (pointCount >= 3)
     {
-        DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
+        for (int i = 0; i < pointCount - 2; i += 2) DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
+
+        // Cap circle drawing at the end of every segment
+        //for (int i = 2; i < pointCount - 2; i += 2) DrawCircleV(points[i], thick/2.0f, color);
     }
 }
 
 // Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
 void DrawSplineBezierCubic(const Vector2 *points, int pointCount, float thick, Color color)
 {
-    if (pointCount < 4) return;
-
-    for (int i = 0; i < pointCount - 3; i++)
+    if (pointCount >= 4)
     {
-        DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
+        for (int i = 0; i < pointCount - 3; i += 3) DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
+
+        // Cap circle drawing at the end of every segment
+        //for (int i = 3; i < pointCount - 3; i += 3) DrawCircleV(points[i], thick/2.0f, color);
     }
 }
 
@@ -2170,7 +2168,9 @@ bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
 {
     bool collision = false;
 
-    collision = CheckCollisionCircles(point, 0, center, radius);
+    float distanceSquared = (point.x - center.x)*(point.x - center.x) + (point.y - center.y)*(point.y - center.y);
+
+    if (distanceSquared <= radius*radius) collision = true;
 
     return collision;
 }
@@ -2233,10 +2233,10 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
     float dx = center2.x - center1.x;      // X distance between centers
     float dy = center2.y - center1.y;      // Y distance between centers
 
-    float distanceSquared = dx * dx + dy * dy; // Distance between centers squared
+    float distanceSquared = dx*dx + dy*dy; // Distance between centers squared
     float radiusSum = radius1 + radius2;
 
-    collision = (distanceSquared <= (radiusSum * radiusSum));
+    collision = (distanceSquared <= (radiusSum*radiusSum));
 
     return collision;
 }
@@ -2327,17 +2327,17 @@ RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Ve
         return CheckCollisionCircles(p1, 0, center, radius);
     }
 
-    float lengthSQ = ((dx * dx) + (dy * dy));
-    float dotProduct = (((center.x - p1.x) * (p2.x - p1.x)) + ((center.y - p1.y) * (p2.y - p1.y))) / (lengthSQ);
+    float lengthSQ = ((dx*dx) + (dy*dy));
+    float dotProduct = (((center.x - p1.x)*(p2.x - p1.x)) + ((center.y - p1.y)*(p2.y - p1.y)))/(lengthSQ);
 
     if (dotProduct > 1.0f) dotProduct = 1.0f;
     else if (dotProduct < 0.0f) dotProduct = 0.0f;
 
-    float dx2 = (p1.x - (dotProduct * (dx))) - center.x;
-    float dy2 = (p1.y - (dotProduct * (dy))) - center.y;
-    float distanceSQ = ((dx2 * dx2) + (dy2 * dy2));
+    float dx2 = (p1.x - (dotProduct*(dx))) - center.x;
+    float dy2 = (p1.y - (dotProduct*(dy))) - center.y;
+    float distanceSQ = ((dx2*dx2) + (dy2*dy2));
 
-    return (distanceSQ <= radius * radius);
+    return (distanceSQ <= radius*radius);
 }
 
 // Get collision rectangle for two rectangles collision

@@ -4,7 +4,9 @@
 #
 #   This file supports building raylib examples for the following platforms:
 #
-#     > PLATFORM_DESKTOP (GLFW backend):
+#     > PLATFORM_DESKTOP
+#         - Defaults to PLATFORM_DESKTOP_GLFW
+#     > PLATFORM_DESKTOP_GFLW (GLFW backend):
 #         - Windows (Win32, Win64)
 #         - Linux (X11/Wayland desktop mode)
 #         - macOS/OSX (x64, arm64)
@@ -52,9 +54,15 @@
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM              ?= PLATFORM_DESKTOP
 
+ifeq ($(PLATFORM), PLATFORM_DESKTOP)
+    TARGET_PLATFORM = PLATFORM_DESKTOP_GLFW
+else
+    TARGET_PLATFORM = $(PLATFORM)
+endif
+
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 5.0.0
+RAYLIB_VERSION        ?= 5.5.0
 RAYLIB_PATH           ?= ..
 
 # Define raylib source code path
@@ -62,8 +70,9 @@ RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
-RAYLIB_INCLUDE_PATH   ?= /usr/local/include
-RAYLIB_LIB_PATH       ?= /usr/local/lib
+DESTDIR ?= /usr/local
+RAYLIB_INCLUDE_PATH   ?= $(DESTDIR)/include
+RAYLIB_LIB_PATH       ?= $(DESTDIR)/lib
 
 # Library type compilation: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
@@ -91,7 +100,7 @@ BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 
 # Determine PLATFORM_OS when required
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_DESKTOP_RGFW))
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -118,7 +127,7 @@ ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLA
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DRM)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
@@ -127,7 +136,7 @@ endif
 
 # RAYLIB_PATH adjustment for LINUX platform
 # TODO: Do we really need this?
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),LINUX)
         RAYLIB_PREFIX  ?= ..
         RAYLIB_PATH     = $(realpath $(RAYLIB_PREFIX))
@@ -135,14 +144,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # Default path for raylib on Raspberry Pi
-ifeq ($(PLATFORM),PLATFORM_DRM)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     RAYLIB_PATH        ?= /home/pi/raylib
 endif
 
 # Define raylib release directory for compiled library
 RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Emscripten required variables
 		EMSDK_PATH         ?= C:/emsdk
@@ -158,7 +167,7 @@ endif
 #------------------------------------------------------------------------------------------------
 CC = gcc
 
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
@@ -168,7 +177,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CC = clang
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
@@ -179,15 +188,15 @@ endif
 #------------------------------------------------------------------------------------------------
 MAKE ?= make
 
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
         MAKE = mingw32-make
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
+ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     MAKE = emmake make
 endif
 
@@ -206,11 +215,11 @@ CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
-    ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
         CFLAGS += -sASSERTIONS=1 --profiling
     endif
 else
-    ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
         ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
             CFLAGS += -O3
         else
@@ -227,7 +236,7 @@ endif
 #  -Wstrict-prototypes      warn if a function is declared or defined without specifying the argument types
 #  -Werror=implicit-function-declaration   catch function calls without prior declaration
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),STATIC)
             CFLAGS += -D_DEFAULT_SOURCE
@@ -238,7 +247,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DRM)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
 
@@ -248,7 +257,7 @@ endif
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     endif
@@ -256,10 +265,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     INCLUDE_PATHS += -I$(SDL_INCLUDE_PATH)
 endif
-ifeq ($(PLATFORM),PLATFORM_DRM)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     INCLUDE_PATHS += -I/usr/include/libdrm
 endif
@@ -273,7 +282,7 @@ endif
 #------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # NOTE: The resource .rc file contains windows executable icon and properties
         LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
@@ -289,7 +298,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDFLAGS += -Lsrc -L$(RAYLIB_LIB_PATH)
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # NOTE: The resource .rc file contains windows executable icon and properties
         LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
@@ -300,7 +309,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
     endif
     LDFLAGS += -L$(SDL_LIBRARY_PATH)
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # -Os                        # size optimization
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
     # -sUSE_GLFW=3              # Use glfw3 library (context/input management)
@@ -347,7 +356,7 @@ endif
 # Define libraries required on linking: LDLIBS
 # NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
 #------------------------------------------------------------------------------------------------
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
         # NOTE: WinMM library required to set high-res timer resolution
@@ -393,7 +402,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDLIBS += -lglfw
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
         LDLIBS = -lraylib -lSDL2 -lSDL2main -lopengl32 -lgdi32
@@ -421,7 +430,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
         LDLIBS += -latomic
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
         LDLIBS = ..\src\libraylib.a -lgdi32 -lwinmm -lopengl32
@@ -446,12 +455,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_RGFW)
         LDLIBS += -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DRM)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
 endif
@@ -471,6 +480,7 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
+    core/core_basic_window_web \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
@@ -520,6 +530,7 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
+    textures/textures_image_channel \
     textures/textures_image_drawing \
     textures/textures_image_generation \
     textures/textures_image_kernel \
@@ -558,6 +569,7 @@ TEXT = \
 MODELS = \
     models/models_animation \
     models/models_billboard \
+    models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap \
     models/models_draw_cube_texture \
@@ -571,13 +583,16 @@ MODELS = \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_orthographic_projection \
+    models/models_point_rendering \
     models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_waving_cubes \
-    models/models_yaw_pitch_roll
+    models/models_yaw_pitch_roll \
+    models/models_gpu_skinning
 
 SHADERS = \
     shaders/shaders_basic_lighting \
+    shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_render \
     shaders/shaders_eratosthenes \
@@ -600,7 +615,8 @@ SHADERS = \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_write_depth
+    shaders/shaders_write_depth \
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \
@@ -638,17 +654,17 @@ others: $(OTHERS)
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!
 %: %.c
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
+ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 	$(MAKE) -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
-else ifeq ($(PLATFORM),PLATFORM_WEB)
+else ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
 	$(MAKE) -f Makefile.Web $@
 else
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -D$(TARGET_PLATFORM)
 endif
 
 # Clean everything
 clean:
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o *.exe /s
     endif
@@ -661,11 +677,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_DRM)
+ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
 	rm -fv *.o
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.wasm *.html *.js *.data
     else

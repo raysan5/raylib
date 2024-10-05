@@ -9,9 +9,14 @@ comptime {
 // get the flags a second time when adding raygui
 var raylib_flags_arr: std.ArrayListUnmanaged([]const u8) = .{};
 
+/// we're not inside the actual build script recognized by the
+/// zig build system; use this type where one would otherwise
+/// use `@This()` when inside the actual entrypoint file.
+const BuildScript = @import("../build.zig");
+
 // This has been tested with zig version 0.12.0
 pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    const raylib_dep = b.dependency(options.raylib_dependency_name, .{
+    const raylib_dep = b.dependencyFromBuildZig(BuildScript, .{
         .target = target,
         .optimize = optimize,
         .raudio = options.raudio,
@@ -23,6 +28,7 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
         .opengl_version = options.opengl_version,
+        .config = options.config,
     });
     const raylib = raylib_dep.artifact("raylib");
 
@@ -32,6 +38,17 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     return raylib;
+}
+
+fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
+    raylib.defineCMacro("PLATFORM_DESKTOP", null);
+
+    switch (platform) {
+        .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
+        .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
+        .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
+        else => {}
+    }
 }
 
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
@@ -47,6 +64,36 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
+    if (options.config) |config| {
+        const file = try std.fs.path.join(b.allocator, &.{ std.fs.path.dirname(@src().file) orelse ".", "config.h" });
+        defer b.allocator.free(file);
+        const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
+        defer b.allocator.free(content);
+
+        var lines = std.mem.splitScalar(u8, content, '\n');
+        while (lines.next()) |line| {
+            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+            if (std.mem.startsWith(u8, line, "//")) continue;
+
+            var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+            flag = flag["#define ".len - 1 ..]; // Remove #define
+            flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+            flag = flag[0..std.mem.indexOf(u8, flag, " ").?]; // Flag is only one word, so capture till space
+            flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
+
+            // If user specifies the flag skip it
+            if (std.mem.containsAtLeast(u8, config, 1, flag)) continue;
+
+            // Append default value from config.h to compile flags
+            try raylib_flags_arr.append(b.allocator, flag);
+        }
+
+        // Append config flags supplied by user to compile flags
+        try raylib_flags_arr.append(b.allocator, config);
+
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
+    }
+
     if (options.shared) {
         try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
     }
@@ -66,7 +113,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
-    if (!options.platform_drm) {
+    if (options.platform != .drm) {
         raylib.addIncludePath(b.path("src/external/glfw/include"));
     }
 
@@ -100,10 +147,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            setDesktopPlatform(raylib, options.platform);
         },
         .linux => {
-            if (!options.platform_drm) {
+            if (options.platform != .drm) {
                 try c_source_files.append("rglfw.c");
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
@@ -112,32 +159,36 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
-
-                switch (options.linux_display_backend) {
-                    .X11 => {
-                        raylib.defineCMacro("_GLFW_X11", null);
-                        raylib.linkSystemLibrary("X11");
-                    },
-                    .Wayland => {
-                        raylib.defineCMacro("_GLFW_WAYLAND", null);
-                        raylib.linkSystemLibrary("wayland-client");
-                        raylib.linkSystemLibrary("wayland-cursor");
-                        raylib.linkSystemLibrary("wayland-egl");
-                        raylib.linkSystemLibrary("xkbcommon");
-                        raylib.addIncludePath(b.path("src"));
-                        waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
-                        waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
-                        waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
-                        waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
-                        waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
-                    },
+                if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
+                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.linkSystemLibrary("X11");
                 }
 
-                raylib.defineCMacro("PLATFORM_DESKTOP", null);
+                if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+                        std.log.err(
+                            \\ Wayland may not be installed on the system.
+                            \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
+                        , .{});
+                        @panic("No Wayland");
+                    };
+                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.linkSystemLibrary("wayland-client");
+                    raylib.linkSystemLibrary("wayland-cursor");
+                    raylib.linkSystemLibrary("wayland-egl");
+                    raylib.linkSystemLibrary("xkbcommon");
+                    raylib.addIncludePath(b.path("src"));
+                    waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
+                    waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
+                    waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
+                    waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
+                    waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
+                }
+                setDesktopPlatform(raylib, options.platform);
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
@@ -171,7 +222,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib.linkSystemLibrary("Xxf86vm");
             raylib.linkSystemLibrary("Xcursor");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            setDesktopPlatform(raylib, options.platform);
         },
         .macos => {
             // On macos rglfw.c include Objective-C files.
@@ -187,7 +238,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib.linkFramework("AppKit");
             raylib.linkFramework("IOKit");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
             raylib.defineCMacro("PLATFORM_WEB", null);
@@ -202,21 +253,16 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
             defer b.allocator.free(cache_include);
 
-            if (comptime builtin.zig_version.minor > 12) {
-                var dir = std.fs.cwd().openDir(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
-                dir.close();
-                raylib.addIncludePath(b.path(cache_include));
-            } else {
-                var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
-                dir.close();
-                raylib.addIncludePath(.{ .path = cache_include });
-            }
+            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
+            dir.close();
+            raylib.addIncludePath(.{ .cwd_relative = cache_include });
         },
         else => {
             @panic("Unsupported OS");
         },
     }
 
+    raylib.addIncludePath(b.path("src"));
     raylib.root_module.addCSourceFiles(.{
         .root = b.path("src"),
         .files = c_source_files.items,
@@ -251,12 +297,12 @@ pub const Options = struct {
     rtext: bool = true,
     rtextures: bool = true,
     raygui: bool = false,
-    platform_drm: bool = false,
+    platform: PlatformBackend = .glfw,
     shared: bool = false,
-    linux_display_backend: LinuxDisplayBackend = .X11,
+    linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+    config: ?[]const u8 = null,
 
-    raylib_dependency_name: []const u8 = "raylib",
     raygui_dependency_name: []const u8 = "raygui",
 };
 
@@ -271,11 +317,11 @@ pub const OpenglVersion = enum {
 
     pub fn toCMacroStr(self: @This()) []const u8 {
         switch (self) {
-            .auto    => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
-            .gl_1_1   => return "GRAPHICS_API_OPENGL_11",
-            .gl_2_1   => return "GRAPHICS_API_OPENGL_21",
-            .gl_3_3   => return "GRAPHICS_API_OPENGL_33",
-            .gl_4_3   => return "GRAPHICS_API_OPENGL_43",
+            .auto => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
+            .gl_1_1 => return "GRAPHICS_API_OPENGL_11",
+            .gl_2_1 => return "GRAPHICS_API_OPENGL_21",
+            .gl_3_3 => return "GRAPHICS_API_OPENGL_33",
+            .gl_4_3 => return "GRAPHICS_API_OPENGL_43",
             .gles_2 => return "GRAPHICS_API_OPENGL_ES2",
             .gles_3 => return "GRAPHICS_API_OPENGL_ES3",
         }
@@ -285,6 +331,14 @@ pub const OpenglVersion = enum {
 pub const LinuxDisplayBackend = enum {
     X11,
     Wayland,
+    Both,
+};
+
+pub const PlatformBackend = enum {
+    glfw,
+    rgfw,
+    sdl,
+    drm
 };
 
 pub fn build(b: *std.Build) !void {
@@ -300,7 +354,7 @@ pub fn build(b: *std.Build) !void {
 
     const defaults = Options{};
     const options = Options{
-        .platform_drm = b.option(bool, "platform_drm", "Compile raylib in native mode (no X11)") orelse defaults.platform_drm,
+        .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
         .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
         .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
         .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
@@ -309,6 +363,7 @@ pub fn build(b: *std.Build) !void {
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
         .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
         .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
+        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse null,
     };
 
     const lib = try compileRaylib(b, target, optimize, options);
