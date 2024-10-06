@@ -47,7 +47,7 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
         .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
         .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
         .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
-        else => {}
+        else => {},
     }
 }
 
@@ -74,11 +74,12 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         while (lines.next()) |line| {
             if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
             if (std.mem.startsWith(u8, line, "//")) continue;
+            if (std.mem.startsWith(u8, line, "#if")) continue;
 
             var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
             flag = flag["#define ".len - 1 ..]; // Remove #define
             flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-            flag = flag[0..std.mem.indexOf(u8, flag, " ").?]; // Flag is only one word, so capture till space
+            flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
             flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
 
             // If user specifies the flag skip it
@@ -301,6 +302,7 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+    /// config should be a list of cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: ?[]const u8 = null,
 
     raygui_dependency_name: []const u8 = "raygui",
@@ -338,7 +340,7 @@ pub const PlatformBackend = enum {
     glfw,
     rgfw,
     sdl,
-    drm
+    drm,
 };
 
 pub fn build(b: *std.Build) !void {
