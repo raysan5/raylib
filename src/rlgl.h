@@ -68,12 +68,15 @@
 *       #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
 *       #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
 *       #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS      "vertexBoneIds"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS  "vertexBoneWeights" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView)))
 *       #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES  "boneMatrices"   // bone matrices
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
@@ -324,23 +327,36 @@
 
 // Default shader vertex attribute locations
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD    1
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL      2
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR       3
 #endif
     #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT       4
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT         4
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
 #endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
+#endif
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+#endif
+#endif
+
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -527,6 +543,10 @@ typedef enum {
     RL_SHADER_UNIFORM_IVEC2,            // Shader uniform type: ivec2 (2 int)
     RL_SHADER_UNIFORM_IVEC3,            // Shader uniform type: ivec3 (3 int)
     RL_SHADER_UNIFORM_IVEC4,            // Shader uniform type: ivec4 (4 int)
+    RL_SHADER_UNIFORM_UINT,             // Shader uniform type: unsigned int
+    RL_SHADER_UNIFORM_UIVEC2,           // Shader uniform type: uivec2 (2 unsigned int)
+    RL_SHADER_UNIFORM_UIVEC3,           // Shader uniform type: uivec3 (3 unsigned int)
+    RL_SHADER_UNIFORM_UIVEC4,           // Shader uniform type: uivec4 (4 unsigned int)
     RL_SHADER_UNIFORM_SAMPLER2D         // Shader uniform type: sampler2d
 } rlShaderUniformDataType;
 
@@ -665,7 +685,7 @@ RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
 RLAPI void rlEnableWireMode(void);                      // Enable wire mode
 RLAPI void rlEnablePointMode(void);                     // Enable point mode
-RLAPI void rlDisableWireMode(void);                     // Disable wire mode ( and point ) maybe rename
+RLAPI void rlDisableWireMode(void);                     // Disable wire (and point) mode
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
 RLAPI float rlGetLineWidth(void);                       // Get the line drawing width
 RLAPI void rlEnableSmoothLines(void);                   // Enable line aliasing
@@ -755,6 +775,7 @@ RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); 
 RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName);   // Get shader location attribute
 RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count); // Set shader value uniform
 RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                        // Set shader value matrix
+RLAPI void rlSetUniformMatrices(int locIndex, const Matrix *mat, int count);    // Set shader value matrices
 RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
 RLAPI void rlSetShader(unsigned int id, int *locs);                             // Set shader currently active (id and locations)
 
@@ -973,6 +994,12 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
     #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
 #endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS      "vertexBoneIds"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS  "vertexBoneWeights" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS
+#endif
 
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_MVP
     #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
@@ -991,6 +1018,9 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR
     #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+#endif
+#ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES
+    #define RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES  "boneMatrices"   // bone matrices
 #endif
 #ifndef RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0
     #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
@@ -1948,6 +1978,7 @@ void rlEnableWireMode(void)
 #endif
 }
 
+// Enable point mode
 void rlEnablePointMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
@@ -1956,6 +1987,7 @@ void rlEnablePointMode(void)
     glEnable(GL_PROGRAM_POINT_SIZE);
 #endif
 }
+
 // Disable wire mode
 void rlDisableWireMode(void)
 {
@@ -4143,6 +4175,11 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
 
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
+    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
+#endif
+
     // NOTE: If some attrib name is no found on the shader, it locations becomes -1
 
     glLinkProgram(program);
@@ -4234,8 +4271,16 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
         case RL_SHADER_UNIFORM_IVEC2: glUniform2iv(locIndex, count, (int *)value); break;
         case RL_SHADER_UNIFORM_IVEC3: glUniform3iv(locIndex, count, (int *)value); break;
         case RL_SHADER_UNIFORM_IVEC4: glUniform4iv(locIndex, count, (int *)value); break;
+    #if !defined(GRAPHICS_API_OPENGL_ES2)
+        case RL_SHADER_UNIFORM_UINT: glUniform1uiv(locIndex, count, (unsigned int *)value); break;
+        case RL_SHADER_UNIFORM_UIVEC2: glUniform2uiv(locIndex, count, (unsigned int *)value); break;
+        case RL_SHADER_UNIFORM_UIVEC3: glUniform3uiv(locIndex, count, (unsigned int *)value); break;
+        case RL_SHADER_UNIFORM_UIVEC4: glUniform4uiv(locIndex, count, (unsigned int *)value); break;
+    #endif
         case RL_SHADER_UNIFORM_SAMPLER2D: glUniform1iv(locIndex, count, (int *)value); break;
         default: TRACELOG(RL_LOG_WARNING, "SHADER: Failed to set uniform value, data type not recognized");
+
+        // TODO: Support glUniform1uiv(), glUniform2uiv(), glUniform3uiv(), glUniform4uiv()
     }
 #endif
 }
@@ -4266,6 +4311,14 @@ void rlSetUniformMatrix(int locIndex, Matrix mat)
         mat.m12, mat.m13, mat.m14, mat.m15
     };
     glUniformMatrix4fv(locIndex, 1, false, matfloat);
+#endif
+}
+
+// Set shader value uniform matrix
+void rlSetUniformMatrices(int locIndex, const Matrix *matrices, int count)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUniformMatrix4fv(locIndex, count, true, (const float*)matrices);
 #endif
 }
 
@@ -4410,14 +4463,14 @@ void rlUpdateShaderBuffer(unsigned int id, const void *data, unsigned int dataSi
 // Get SSBO buffer size
 unsigned int rlGetShaderBufferSize(unsigned int id)
 {
-    GLint64 size = 0;
-
 #if defined(GRAPHICS_API_OPENGL_43)
+    GLint64 size = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferParameteri64v(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &size);
-#endif
-
     return (size > 0)? (unsigned int)size : 0;
+#else
+    return 0;
+#endif
 }
 
 // Read SSBO buffer data (GPU->CPU)
