@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_desktop_rgfw template - Functions to manage window, graphics device and inputs
+*   rcore_desktop_rgfw - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: RGFW
 *       - Windows (Win32, Win64)
@@ -69,14 +69,13 @@ void CloseWindow(void);
     #define CloseWindow CloseWindow_win32
     #define ShowCursor __imp_ShowCursor
     #define _APISETSTRING_
+	__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #if defined(__APPLE__)
     #define Point NSPOINT
     #define Size NSSIZE
 #endif
-
-__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 
 #include "../external/RGFW.h"
 
@@ -289,7 +288,6 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
-        printf("%i %i\n", platform.window->r.w, platform.window->r.h);
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
     }
