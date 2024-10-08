@@ -686,7 +686,7 @@ void DisableCursor(void)
 {
     RGFW_disableCursor = true;
 
-    RGFW_window_mouseHold(platform.window, RGFW_AREA(CORE.Window.screen.width / 2, CORE.Window.screen.height / 2));
+    RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
 
     HideCursor();
 }
@@ -871,8 +871,8 @@ void PollInputEvents(void)
     CORE.Window.resizedLastFrame = false;
 
 
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     #define RGFW_HOLD_MOUSE			(1L<<2)
-    #if defined(RGFW_X11) //|| defined(RGFW_MACOS)
     if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
@@ -882,9 +882,9 @@ void PollInputEvents(void)
     {
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
-#endif
 
-    while (RGFW_window_checkEvent(platform.window))
+    
+	while (RGFW_window_checkEvent(platform.window))
     {
 
         if ((platform.window->event.type >= RGFW_jsButtonPressed) && (platform.window->event.type <= RGFW_jsAxisMove))
@@ -1028,15 +1028,8 @@ void PollInputEvents(void)
             {
                 if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
                 {
-                    CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
-
-                    if (event->point.x)
-                        CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
-                    if (event->point.y)
-                        CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.currentPosition.y;
-
-                    CORE.Input.Mouse.currentPosition.x = (float)event->point.x;
-                    CORE.Input.Mouse.currentPosition.y = (float)event->point.y;
+                    CORE.Input.Mouse.currentPosition.x += (float)event->point.x;
+                    CORE.Input.Mouse.currentPosition.y += (float)event->point.y;
                 }
                 else
                 {
