@@ -935,7 +935,6 @@ void PollInputEvents(void)
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
-
     // Gamepad support using emscripten API
     // NOTE: GLFW3 joystick functionality not available in web
 

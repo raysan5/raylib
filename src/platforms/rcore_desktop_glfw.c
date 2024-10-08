@@ -1234,7 +1234,6 @@ void PollInputEvents(void)
     glfwSetWindowShouldClose(platform.handle, GLFW_FALSE);
 }
 
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------

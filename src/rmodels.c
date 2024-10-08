@@ -702,7 +702,6 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     rlPopMatrix();
 }
 
-
 // Draw a wired cylinder with base at startPos and top at endPos
 // NOTE: It could be also used for pyramid and cone
 void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int sides, Color color)
@@ -1258,7 +1257,6 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = 0;      // Vertex buffer: boneIds
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = 0;  // Vertex buffer: boneWeights
 #endif
-
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
@@ -2097,7 +2095,6 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
 
     return success;
 }
-
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
 // Process obj materials
@@ -5680,8 +5677,6 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
-
-
                     }
 
                     // NOTE: Attributes related to animations are processed separately

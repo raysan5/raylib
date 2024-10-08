@@ -162,7 +162,6 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 
 #endif // RCAMERA_H
 
-
 /***********************************************************************************
 *
 *   CAMERA IMPLEMENTATION

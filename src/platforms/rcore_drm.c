@@ -1480,7 +1480,6 @@ static void ConfigureEvdevDevice(char *device)
             TEST_BIT(keyBits, BTN_MOUSE)) isMouse = true;
     }
 
-
     if (TEST_BIT(evBits, EV_KEY))
     {
         // The first 32 keys as defined in input-event-codes.h are pretty much

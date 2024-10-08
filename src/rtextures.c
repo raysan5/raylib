@@ -4988,8 +4988,6 @@ Vector3 ColorToHSV(Color color)
     return hsv;
 }
 
-
-
 // Get a Color from HSV values
 // Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
 // NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors

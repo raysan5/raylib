@@ -76,7 +76,6 @@ void SetSaveFileDataCallback(SaveFileDataCallback callback) { saveFileData = cal
 void SetLoadFileTextCallback(LoadFileTextCallback callback) { loadFileText = callback; }  // Set custom file text loader
 void SetSaveFileTextCallback(SaveFileTextCallback callback) { saveFileText = callback; }  // Set custom file text saver
 
-
 #if defined(PLATFORM_ANDROID)
 static AAssetManager *assetManager = NULL;          // Android assets manager pointer
 static const char *internalDataPath = NULL;         // Android internal data path
