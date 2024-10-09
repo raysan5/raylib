@@ -24,7 +24,7 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .rshapes = options.rshapes,
         .rtext = options.rtext,
         .rtextures = options.rtextures,
-        .platform_drm = options.platform_drm,
+        .platform = options.platform,
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
         .opengl_version = options.opengl_version,
