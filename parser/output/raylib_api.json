@@ -6816,25 +6816,6 @@
       ]
     },
     {
-      "name": "LoadImageSvg",
-      "description": "Load image from SVG file data or string with specified size",
-      "returnType": "Image",
-      "params": [
-        {
-          "type": "const char *",
-          "name": "fileNameOrString"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        }
-      ]
-    },
-    {
       "name": "LoadImageAnim",
       "description": "Load image sequence from file (frames appended to image.data)",
       "returnType": "Image",
