@@ -9,3 +9,6 @@ pub fn build(b: *std.Build) !void {
 // expose helper functions to user's build.zig
 pub const addRaylib = raylib.addRaylib;
 pub const addRaygui = raylib.addRaygui;
+
+// expose options for compiling
+pub const RaylibOptions = raylib.Options;
