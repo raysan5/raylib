@@ -358,6 +358,7 @@ pub fn build(b: *std.Build) !void {
     const options = Options{
         .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
         .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
+        .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
         .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
         .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
         .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
