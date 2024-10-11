@@ -968,7 +968,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     #define TEXT_BYTES_PER_LINE     20
 #endif
 
-    #define MAX_FONT_DATA_SIZE      1024*1024       // 1 MB
+    #define MAX_FONT_DATA_SIZE      1024*1024       // 1 MiB
 
     // Get file name from path
     char fileNamePascal[256] = { 0 };
@@ -1515,14 +1515,11 @@ int TextCopy(char *dst, const char *src)
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
 {
-    bool result = false;
-
     if ((text1 != NULL) && (text2 != NULL))
     {
-        if (strcmp(text1, text2) == 0) result = true;
+        if (strcmp(text1, text2) == 0) return true;
     }
-
-    return result;
+    return false;
 }
 
 // Get a piece of a text string
@@ -2323,10 +2320,9 @@ static Font LoadBMFont(const char *fileName)
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)
 {
-    if (hex >= '0' && hex <= '9') return hex - '0';
-    else if (hex >= 'a' && hex <= 'f') return hex - 'a' + 10;
-    else if (hex >= 'A' && hex <= 'F') return hex - 'A' + 10;
-    else return 0;
+    return (hex >= '0' && hex <= '9') ? (hex - '0') :
+           (hex >= 'a' && hex <= 'f') ? (hex - 'a' + 10) :
+           (hex >= 'A' && hex <= 'F') ? (hex - 'A' + 10) : 0;
 }
 
 // Load font data for further use
