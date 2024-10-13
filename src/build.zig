@@ -65,7 +65,7 @@ fn srcDir(b: *std.Build) []const u8 {
     comptime {
         const order = std.SemanticVersion.order;
         const parse = std.SemanticVersion.parse;
-        if (order(min_ver, parse("0.14.0") catch unreachable) != .lt)
+        if (order(parse(min_ver) catch unreachable, parse("0.14.0") catch unreachable) != .lt)
             @compileError("Please take a look at this function again");
     }
 
@@ -136,7 +136,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
-        _ = std.debug.print("\n\n{s}\n\n", .{@src().file});
         raylib.addIncludePath(b.path(b.pathJoin(&.{ srcDir(b), "external/glfw/include" })));
     }
 
