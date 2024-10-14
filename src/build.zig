@@ -34,7 +34,6 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .shared = options.shared,
         .linux_display_backend = options.linux_display_backend,
         .opengl_version = options.opengl_version,
-        // TODO: Fix the type mismatch caused here due to unsupported `?[]const u8`.
         .config = options.config,
     });
     const raylib = raylib_dep.artifact("raylib");
@@ -86,7 +85,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
-    if (options.config) |config| {
+    if (options.config.len > 0) {
         const file = b.pathJoin(&.{ srcDir(b), "config.h" });
         const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
         defer b.allocator.free(content);
@@ -104,14 +103,14 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
 
             // If user specifies the flag skip it
-            if (std.mem.containsAtLeast(u8, config, 1, flag)) continue;
+            if (std.mem.containsAtLeast(u8, options.config, 1, flag)) continue;
 
             // Append default value from config.h to compile flags
             try raylib_flags_arr.append(b.allocator, flag);
         }
 
         // Append config flags supplied by user to compile flags
-        try raylib_flags_arr.append(b.allocator, config);
+        try raylib_flags_arr.append(b.allocator, options.config);
 
         try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
     }
@@ -321,7 +320,7 @@ pub const Options = struct {
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
     /// config should be a list of cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
-    config: ?[]const u8 = null,
+    config: []const u8 = &.{},
 
     raygui_dependency_name: []const u8 = "raygui",
 };
@@ -384,7 +383,7 @@ pub fn build(b: *std.Build) !void {
         .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
         .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
         .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
-        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h"),
+        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
     };
 
     const lib = try compileRaylib(b, target, optimize, options);
