@@ -506,10 +506,10 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
         if (fileData != NULL)
         {
             qoi_desc desc = { 0 };
-            image.data = qoi_decode(fileData, dataSize, &desc, 4);
+            image.data = qoi_decode(fileData, dataSize, &desc, (int) fileData[12]);
             image.width = desc.width;
             image.height = desc.height;
-            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            image.format = desc.channels == 4 ? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 : PIXELFORMAT_UNCOMPRESSED_R8G8B8;
             image.mipmaps = 1;
         }
     }
