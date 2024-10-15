@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_desktop_rgfw template - Functions to manage window, graphics device and inputs
+*   rcore_desktop_rgfw - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: RGFW
 *       - Windows (Win32, Win64)
@@ -69,14 +69,13 @@ void CloseWindow(void);
     #define CloseWindow CloseWindow_win32
     #define ShowCursor __imp_ShowCursor
     #define _APISETSTRING_
+    __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #if defined(__APPLE__)
     #define Point NSPOINT
     #define Size NSSIZE
 #endif
-
-__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 
 #include "../external/RGFW.h"
 
@@ -289,7 +288,6 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
-        printf("%i %i\n", platform.window->r.w, platform.window->r.h);
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
     }
@@ -688,7 +686,7 @@ void DisableCursor(void)
 {
     RGFW_disableCursor = true;
 
-    RGFW_window_mouseHold(platform.window, RGFW_AREA(CORE.Window.screen.width / 2, CORE.Window.screen.height / 2));
+    RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
 
     HideCursor();
 }
@@ -872,9 +870,8 @@ void PollInputEvents(void)
     //-----------------------------------------------------------------------------
     CORE.Window.resizedLastFrame = false;
 
-
-    #define RGFW_HOLD_MOUSE			(1L<<2)
-    #if defined(RGFW_X11) //|| defined(RGFW_MACOS)
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+    #define RGFW_HOLD_MOUSE     (1L<<2)
     if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
@@ -884,11 +881,9 @@ void PollInputEvents(void)
     {
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
-#endif
 
     while (RGFW_window_checkEvent(platform.window))
     {
-
         if ((platform.window->event.type >= RGFW_jsButtonPressed) && (platform.window->event.type <= RGFW_jsAxisMove))
         {
             if (!CORE.Input.Gamepad.ready[platform.window->event.joystick])
@@ -1030,15 +1025,8 @@ void PollInputEvents(void)
             {
                 if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
                 {
-                    CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
-
-                    if (event->point.x)
-                        CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
-                    if (event->point.y)
-                        CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.currentPosition.y;
-
-                    CORE.Input.Mouse.currentPosition.x = (float)event->point.x;
-                    CORE.Input.Mouse.currentPosition.y = (float)event->point.y;
+                    CORE.Input.Mouse.currentPosition.x += (float)event->point.x;
+                    CORE.Input.Mouse.currentPosition.y += (float)event->point.y;
                 }
                 else
                 {
@@ -1205,7 +1193,6 @@ void PollInputEvents(void)
     //-----------------------------------------------------------------------------
 }
 
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
@@ -1261,7 +1248,6 @@ int InitPlatform(void)
         If so, rcore_destkop_sdl should be updated too
     */
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-
 
     if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
 

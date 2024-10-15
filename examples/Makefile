@@ -492,6 +492,7 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
+    core/core_input_virtual_controls \
     core/core_loading_thread \
     core/core_random_sequence \
     core/core_random_values \
@@ -548,7 +549,6 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
-    textures/textures_svg_loading \
     textures/textures_textured_curve \
     textures/textures_to_image
 

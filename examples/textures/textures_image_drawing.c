@@ -47,7 +47,7 @@ int main(void)
 
     UnloadImage(cat);       // Unload image from RAM
 
-    // Load custom font for frawing on image
+    // Load custom font for drawing on image
     Font font = LoadFont("resources/custom_jupiter_crash.png");
 
     // Draw over image using custom font

@@ -1302,15 +1302,15 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     {
         byteCounter++;
 
-        int next = 0;
-        letter = GetCodepointNext(&text[i], &next);
+        int codepointByteCount = 0;
+        letter = GetCodepointNext(&text[i], &codepointByteCount);
         index = GetGlyphIndex(font, letter);
 
-        i += next;
+        i += codepointByteCount;
 
         if (letter != '\n')
         {
-            if (font.glyphs[index].advanceX != 0) textWidth += font.glyphs[index].advanceX;
+            if (font.glyphs[index].advanceX > 0) textWidth += font.glyphs[index].advanceX;
             else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
         }
         else
@@ -1930,7 +1930,8 @@ int GetCodepointCount(const char *text)
 const char *CodepointToUTF8(int codepoint, int *utf8Size)
 {
     static char utf8[6] = { 0 };
-    int size = 0;   // Byte size of codepoint
+    memset(utf8, 0, 6); // Clear static array
+    int size = 0;       // Byte size of codepoint
 
     if (codepoint <= 0x7f)
     {
