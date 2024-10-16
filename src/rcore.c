@@ -2770,7 +2770,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
     msg[dataSize] = 128; // Write the '1' bit
 
     unsigned int bitsLen = 8*dataSize;
-    memcpy(msg + newDataSize, &bitsLen, 4); // Append the len in bits at the end of the buffer
+    msg[newDataSize-1] = bitsLen;
 
     // Process the message in successive 512-bit chunks
     for (int offset = 0; offset < newDataSize; offset += (512/8))
