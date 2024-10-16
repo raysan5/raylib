@@ -2776,7 +2776,13 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
     for (int offset = 0; offset < newDataSize; offset += (512/8))
     {
         // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
-        unsigned int *w = (unsigned int *)(msg + offset);
+        unsigned int w[80] = {0};
+        for (int i = 0; i < 16; i++) {
+            w[i] = (msg[offset + (i * 4) + 0] << 24) |
+                   (msg[offset + (i * 4) + 1] << 16) |
+                   (msg[offset + (i * 4) + 2] << 8) |
+                   (msg[offset + (i * 4) + 3]);
+        }
 
         // Message schedule: extend the sixteen 32-bit words into eighty 32-bit words:
         for (int i = 16; i < 80; ++i) {
