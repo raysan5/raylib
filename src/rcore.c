@@ -2778,6 +2778,11 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
         // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
         unsigned int *w = (unsigned int *)(msg + offset);
 
+        // Message schedule: extend the sixteen 32-bit words into eighty 32-bit words:
+        for (int i = 16; i < 80; ++i) {
+            w[i] = ROTATE_LEFT(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
+        }
+
         // Initialize hash value for this chunk
         unsigned int a = hash[0];
         unsigned int b = hash[1];
