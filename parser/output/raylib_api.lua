@@ -3589,8 +3589,8 @@ return {
       }
     },
     {
-      name = "IsShaderReady",
-      description = "Check if a shader is ready",
+      name = "IsShaderValid",
+      description = "Check if a shader is valid (loaded on GPU)",
       returnType = "bool",
       params = {
         {type = "Shader", name = "shader"}
@@ -5401,8 +5401,8 @@ return {
       returnType = "Image"
     },
     {
-      name = "IsImageReady",
-      description = "Check if an image is ready",
+      name = "IsImageValid",
+      description = "Check if an image is valid (data and parameters)",
       returnType = "bool",
       params = {
         {type = "Image", name = "image"}
@@ -6166,8 +6166,8 @@ return {
       }
     },
     {
-      name = "IsTextureReady",
-      description = "Check if a texture is ready",
+      name = "IsTextureValid",
+      description = "Check if a texture is valid (loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "Texture2D", name = "texture"}
@@ -6182,8 +6182,8 @@ return {
       }
     },
     {
-      name = "IsRenderTextureReady",
-      description = "Check if a render texture is ready",
+      name = "IsRenderTextureValid",
+      description = "Check if a render texture is valid (loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "RenderTexture2D", name = "target"}
@@ -6513,8 +6513,8 @@ return {
       }
     },
     {
-      name = "IsFontReady",
-      description = "Check if a font is ready",
+      name = "IsFontValid",
+      description = "Check if a font is valid (font data loaded, WARNING: GPU texture not checked)",
       returnType = "bool",
       params = {
         {type = "Font", name = "font"}
@@ -7193,8 +7193,8 @@ return {
       }
     },
     {
-      name = "IsModelReady",
-      description = "Check if a model is ready",
+      name = "IsModelValid",
+      description = "Check if a model is valid (loaded in GPU, VAO/VBOs)",
       returnType = "bool",
       params = {
         {type = "Model", name = "model"}
@@ -7547,8 +7547,8 @@ return {
       returnType = "Material"
     },
     {
-      name = "IsMaterialReady",
-      description = "Check if a material is ready",
+      name = "IsMaterialValid",
+      description = "Check if a material is valid (shader assigned, map textures loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "Material", name = "material"}
@@ -7766,8 +7766,8 @@ return {
       }
     },
     {
-      name = "IsWaveReady",
-      description = "Checks if wave data is ready",
+      name = "IsWaveValid",
+      description = "Checks if wave data is valid (data loaded and parameters)",
       returnType = "bool",
       params = {
         {type = "Wave", name = "wave"}
@@ -7798,8 +7798,8 @@ return {
       }
     },
     {
-      name = "IsSoundReady",
-      description = "Checks if a sound is ready",
+      name = "IsSoundValid",
+      description = "Checks if a sound is valid (data loaded and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -7988,8 +7988,8 @@ return {
       }
     },
     {
-      name = "IsMusicReady",
-      description = "Checks if a music stream is ready",
+      name = "IsMusicValid",
+      description = "Checks if a music stream is valid (context and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Music", name = "music"}
@@ -8114,8 +8114,8 @@ return {
       }
     },
     {
-      name = "IsAudioStreamReady",
-      description = "Checks if an audio stream is ready",
+      name = "IsAudioStreamValid",
+      description = "Checks if an audio stream is valid (buffers initialized)",
       returnType = "bool",
       params = {
         {type = "AudioStream", name = "stream"}

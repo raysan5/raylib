@@ -1378,10 +1378,10 @@ Function 075: LoadShaderFromMemory() (2 input parameters)
   Description: Load shader from code strings and bind default locations
   Param[1]: vsCode (type: const char *)
   Param[2]: fsCode (type: const char *)
-Function 076: IsShaderReady() (1 input parameters)
-  Name: IsShaderReady
+Function 076: IsShaderValid() (1 input parameters)
+  Name: IsShaderValid
   Return type: bool
-  Description: Check if a shader is ready
+  Description: Check if a shader is valid (loaded on GPU)
   Param[1]: shader (type: Shader)
 Function 077: GetShaderLocation() (2 input parameters)
   Name: GetShaderLocation
@@ -2674,10 +2674,10 @@ Function 279: LoadImageFromScreen() (0 input parameters)
   Return type: Image
   Description: Load image from screen buffer and (screenshot)
   No input parameters
-Function 280: IsImageReady() (1 input parameters)
-  Name: IsImageReady
+Function 280: IsImageValid() (1 input parameters)
+  Name: IsImageValid
   Return type: bool
-  Description: Check if an image is ready
+  Description: Check if an image is valid (data and parameters)
   Param[1]: image (type: Image)
 Function 281: UnloadImage() (1 input parameters)
   Name: UnloadImage
@@ -3211,20 +3211,20 @@ Function 355: LoadRenderTexture() (2 input parameters)
   Description: Load texture for rendering (framebuffer)
   Param[1]: width (type: int)
   Param[2]: height (type: int)
-Function 356: IsTextureReady() (1 input parameters)
-  Name: IsTextureReady
+Function 356: IsTextureValid() (1 input parameters)
+  Name: IsTextureValid
   Return type: bool
-  Description: Check if a texture is ready
+  Description: Check if a texture is valid (loaded in GPU)
   Param[1]: texture (type: Texture2D)
 Function 357: UnloadTexture() (1 input parameters)
   Name: UnloadTexture
   Return type: void
   Description: Unload texture from GPU memory (VRAM)
   Param[1]: texture (type: Texture2D)
-Function 358: IsRenderTextureReady() (1 input parameters)
-  Name: IsRenderTextureReady
+Function 358: IsRenderTextureValid() (1 input parameters)
+  Name: IsRenderTextureValid
   Return type: bool
-  Description: Check if a render texture is ready
+  Description: Check if a render texture is valid (loaded in GPU)
   Param[1]: target (type: RenderTexture2D)
 Function 359: UnloadRenderTexture() (1 input parameters)
   Name: UnloadRenderTexture
@@ -3450,10 +3450,10 @@ Function 392: LoadFontFromMemory() (6 input parameters)
   Param[4]: fontSize (type: int)
   Param[5]: codepoints (type: int *)
   Param[6]: codepointCount (type: int)
-Function 393: IsFontReady() (1 input parameters)
-  Name: IsFontReady
+Function 393: IsFontValid() (1 input parameters)
+  Name: IsFontValid
   Return type: bool
-  Description: Check if a font is ready
+  Description: Check if a font is valid (font data loaded, WARNING: GPU texture not checked)
   Param[1]: font (type: Font)
 Function 394: LoadFontData() (6 input parameters)
   Name: LoadFontData
@@ -3926,10 +3926,10 @@ Function 460: LoadModelFromMesh() (1 input parameters)
   Return type: Model
   Description: Load model from generated mesh (default material)
   Param[1]: mesh (type: Mesh)
-Function 461: IsModelReady() (1 input parameters)
-  Name: IsModelReady
+Function 461: IsModelValid() (1 input parameters)
+  Name: IsModelValid
   Return type: bool
-  Description: Check if a model is ready
+  Description: Check if a model is valid (loaded in GPU, VAO/VBOs)
   Param[1]: model (type: Model)
 Function 462: UnloadModel() (1 input parameters)
   Name: UnloadModel
@@ -4178,10 +4178,10 @@ Function 495: LoadMaterialDefault() (0 input parameters)
   Return type: Material
   Description: Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
   No input parameters
-Function 496: IsMaterialReady() (1 input parameters)
-  Name: IsMaterialReady
+Function 496: IsMaterialValid() (1 input parameters)
+  Name: IsMaterialValid
   Return type: bool
-  Description: Check if a material is ready
+  Description: Check if a material is valid (shader assigned, map textures loaded in GPU)
   Param[1]: material (type: Material)
 Function 497: UnloadMaterial() (1 input parameters)
   Name: UnloadMaterial
@@ -4334,10 +4334,10 @@ Function 520: LoadWaveFromMemory() (3 input parameters)
   Param[1]: fileType (type: const char *)
   Param[2]: fileData (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 521: IsWaveReady() (1 input parameters)
-  Name: IsWaveReady
+Function 521: IsWaveValid() (1 input parameters)
+  Name: IsWaveValid
   Return type: bool
-  Description: Checks if wave data is ready
+  Description: Checks if wave data is valid (data loaded and parameters)
   Param[1]: wave (type: Wave)
 Function 522: LoadSound() (1 input parameters)
   Name: LoadSound
@@ -4354,10 +4354,10 @@ Function 524: LoadSoundAlias() (1 input parameters)
   Return type: Sound
   Description: Create a new sound that shares the same sample data as the source sound, does not own the sound data
   Param[1]: source (type: Sound)
-Function 525: IsSoundReady() (1 input parameters)
-  Name: IsSoundReady
+Function 525: IsSoundValid() (1 input parameters)
+  Name: IsSoundValid
   Return type: bool
-  Description: Checks if a sound is ready
+  Description: Checks if a sound is valid (data loaded and buffers initialized)
   Param[1]: sound (type: Sound)
 Function 526: UpdateSound() (3 input parameters)
   Name: UpdateSound
@@ -4478,10 +4478,10 @@ Function 546: LoadMusicStreamFromMemory() (3 input parameters)
   Param[1]: fileType (type: const char *)
   Param[2]: data (type: const unsigned char *)
   Param[3]: dataSize (type: int)
-Function 547: IsMusicReady() (1 input parameters)
-  Name: IsMusicReady
+Function 547: IsMusicValid() (1 input parameters)
+  Name: IsMusicValid
   Return type: bool
-  Description: Checks if a music stream is ready
+  Description: Checks if a music stream is valid (context and buffers initialized)
   Param[1]: music (type: Music)
 Function 548: UnloadMusicStream() (1 input parameters)
   Name: UnloadMusicStream
@@ -4559,10 +4559,10 @@ Function 561: LoadAudioStream() (3 input parameters)
   Param[1]: sampleRate (type: unsigned int)
   Param[2]: sampleSize (type: unsigned int)
   Param[3]: channels (type: unsigned int)
-Function 562: IsAudioStreamReady() (1 input parameters)
-  Name: IsAudioStreamReady
+Function 562: IsAudioStreamValid() (1 input parameters)
+  Name: IsAudioStreamValid
   Return type: bool
-  Description: Checks if an audio stream is ready
+  Description: Checks if an audio stream is valid (buffers initialized)
   Param[1]: stream (type: AudioStream)
 Function 563: UnloadAudioStream() (1 input parameters)
   Name: UnloadAudioStream
