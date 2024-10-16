@@ -1155,8 +1155,8 @@ Model LoadModelFromMesh(Mesh mesh)
     return model;
 }
 
-// Check if a model is ready
-bool IsModelReady(Model model)
+// Check if a model is valid (loaded in GPU, VAO/VBOs)
+bool IsModelValid(Model model)
 {
     bool result = false;
 
@@ -1165,8 +1165,24 @@ bool IsModelReady(Model model)
         (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
         (model.meshCount > 0) &&            // Validate mesh count
         (model.materialCount > 0)) result = true; // Validate material count
-
-    // NOTE: This is a very general model validation, many elements could be validated from a model...
+        
+    // NOTE: Many elements could be validated from a model, including every model mesh VAO/VBOs
+    // but some VBOs could not be used, it depends on Mesh vertex data
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        if ((model.meshes[i].vertices != NULL) && (model.meshes[i].vboId[0] == 0)) { result = false; break; }  // Vertex position buffer not uploaded to GPU
+        if ((model.meshes[i].texcoords != NULL) && (model.meshes[i].vboId[1] == 0)) { result = false; break; }  // Vertex textcoords buffer not uploaded to GPU
+        if ((model.meshes[i].normals != NULL) && (model.meshes[i].vboId[2] == 0)) { result = false; break; }  // Vertex normals buffer not uploaded to GPU
+        if ((model.meshes[i].colors != NULL) && (model.meshes[i].vboId[3] == 0)) { result = false; break; }  // Vertex colors buffer not uploaded to GPU
+        if ((model.meshes[i].tangents != NULL) && (model.meshes[i].vboId[4] == 0)) { result = false; break; }  // Vertex tangents buffer not uploaded to GPU
+        if ((model.meshes[i].texcoords2 != NULL) && (model.meshes[i].vboId[5] == 0)) { result = false; break; }  // Vertex texcoords2 buffer not uploaded to GPU
+        if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }  // Vertex indices buffer not uploaded to GPU
+        if ((model.meshes[i].boneIds != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIds buffer not uploaded to GPU
+        if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; }  // Vertex boneWeights buffer not uploaded to GPU
+            
+        // NOTE: Some OpenGL versions do not support VAO, so we don't check it
+        //if (model.meshes[i].vaoId == 0) { result = false; break }
+    }
 
     return result;
 }
@@ -2182,13 +2198,15 @@ Material LoadMaterialDefault(void)
     return material;
 }
 
-// Check if a material is ready
-bool IsMaterialReady(Material material)
+// Check if a material is valid (map textures loaded in GPU)
+bool IsMaterialValid(Material material)
 {
     bool result = false;
 
     if ((material.maps != NULL) &&      // Validate material contain some map
         (material.shader.id > 0)) result = true; // Validate material shader is valid
+        
+    // TODO: Check if available maps contain loaded textures
 
     return result;
 }

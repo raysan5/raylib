@@ -1342,10 +1342,10 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     return shader;
 }
 
-// Check if a shader is ready
-bool IsShaderReady(Shader shader)
+// Check if a shader is valid (loaded on GPU)
+bool IsShaderValid(Shader shader)
 {
-    return ((shader.id > 0) &&          // Validate shader id (loaded successfully)
+    return ((shader.id > 0) &&          // Validate shader id (GPU loaded successfully)
             (shader.locs != NULL));     // Validate memory has been allocated for default shader locations
 
     // The following locations are tried to be set automatically (locs[i] >= 0),

@@ -600,15 +600,15 @@ Image LoadImageFromScreen(void)
 }
 
 // Check if an image is ready
-bool IsImageReady(Image image)
+bool IsImageValid(Image image)
 {
     bool result = false;
 
     if ((image.data != NULL) &&     // Validate pixel data available
-        (image.width > 0) &&
-        (image.height > 0) &&       // Validate image size
+        (image.width > 0) &&        // Validate image width
+        (image.height > 0) &&       // Validate image height
         (image.format > 0) &&       // Validate image format
-        (image.mipmaps > 0)) result = true;       // Validate image mipmaps (at least 1 for basic mipmap level)
+        (image.mipmaps > 0)) result = true; // Validate image mipmaps (at least 1 for basic mipmap level)
 
     return result;
 }
@@ -4224,16 +4224,16 @@ RenderTexture2D LoadRenderTexture(int width, int height)
     return target;
 }
 
-// Check if a texture is ready
-bool IsTextureReady(Texture2D texture)
+// Check if a texture is valid (loaded in GPU)
+bool IsTextureValid(Texture2D texture)
 {
     bool result = false;
 
-    // TODO: Validate maximum texture size supported by GPU?
+    // TODO: Validate maximum texture size supported by GPU
 
-    if ((texture.id > 0) &&         // Validate OpenGL id
-        (texture.width > 0) &&
-        (texture.height > 0) &&     // Validate texture size
+    if ((texture.id > 0) &&         // Validate OpenGL id (texture uplaoded to GPU)
+        (texture.width > 0) &&      // Validate texture width
+        (texture.height > 0) &&     // Validate texture height
         (texture.format > 0) &&     // Validate texture pixel format
         (texture.mipmaps > 0)) result = true;     // Validate texture mipmaps (at least 1 for basic mipmap level)
 
@@ -4251,14 +4251,14 @@ void UnloadTexture(Texture2D texture)
     }
 }
 
-// Check if a render texture is ready
-bool IsRenderTextureReady(RenderTexture2D target)
+// Check if a render texture is valid (loaded in GPU)
+bool IsRenderTextureValid(RenderTexture2D target)
 {
     bool result = false;
 
-    if ((target.id > 0) &&                  // Validate OpenGL id
-        IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
-        IsTextureReady(target.texture)) result = true;    // Validate FBO texture
+    if ((target.id > 0) &&                  // Validate OpenGL id (loaded on GPU)
+        IsTextureValid(target.depth) &&     // Validate FBO depth texture/renderbuffer attachment
+        IsTextureValid(target.texture)) result = true; // Validate FBO texture attachment
 
     return result;
 }

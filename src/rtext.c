@@ -581,17 +581,16 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     return font;
 }
 
-// Check if a font is ready
-bool IsFontReady(Font font)
+// Check if a font is valid (font data loaded)
+// WARNING: GPU texture not checked
+bool IsFontValid(Font font)
 {
-    return ((font.texture.id > 0) &&    // Validate OpenGL id for font texture atlas
-            (font.baseSize > 0) &&      // Validate font size
+    return ((font.baseSize > 0) &&      // Validate font size
             (font.glyphCount > 0) &&    // Validate font contains some glyph
             (font.recs != NULL) &&      // Validate font recs defining glyphs on texture atlas
             (font.glyphs != NULL));     // Validate glyph data is loaded
 
-    // NOTE: Further validations could be done to verify if recs count and glyphs count
-    // match glyphCount and to verify that data contained is valid (glyphs values, metrics...)
+    // NOTE: Further validations could be done to verify if recs and glyphs contain valid data (glyphs values, metrics...)
 }
 
 // Load font data for further use
