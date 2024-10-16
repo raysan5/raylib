@@ -675,7 +675,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="577">
+    <Functions count="579">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1125,6 +1125,14 @@
         <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data, memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int *" name="outputSize" desc="" />
+        </Function>
+        <Function name="ComputeCRC32" retType="unsigned int" paramCount="2" desc="Compute CRC32 hash code">
+            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="int" name="dataSize" desc="" />
+        </Function>
+        <Function name="ComputeMD5" retType="unsigned int *" paramCount="2" desc="Compute MD5 hash code, returns static int[4] (16 bytes)">
+            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="LoadAutomationEventList" retType="AutomationEventList" paramCount="1" desc="Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS">
             <Param type="const char *" name="fileName" desc="" />

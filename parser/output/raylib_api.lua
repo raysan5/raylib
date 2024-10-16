@@ -4191,6 +4191,24 @@ return {
       }
     },
     {
+      name = "ComputeCRC32",
+      description = "Compute CRC32 hash code",
+      returnType = "unsigned int",
+      params = {
+        {type = "unsigned char *", name = "data"},
+        {type = "int", name = "dataSize"}
+      }
+    },
+    {
+      name = "ComputeMD5",
+      description = "Compute MD5 hash code, returns static int[4] (16 bytes)",
+      returnType = "unsigned int *",
+      params = {
+        {type = "unsigned char *", name = "data"},
+        {type = "int", name = "dataSize"}
+      }
+    },
+    {
       name = "LoadAutomationEventList",
       description = "Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS",
       returnType = "AutomationEventList",
