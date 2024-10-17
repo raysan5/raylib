@@ -26,7 +26,9 @@
 *       #define RAYMATH_STATIC_INLINE
 *           Define static inline functions code, so #include header suffices for use.
 *           This may use up lots of memory.
-*
+* 
+*       #define RAYMATH_DISABLE_OPERATORS
+*           Disables C++ operator overloads for raymath types.
 *
 *   LICENSE: zlib/libpng
 *
@@ -2583,7 +2585,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
 
 // optional C++ math operators
 // define RAYLIB_DISABLE_VECTOR_OPERATORS to disable
-#if defined(__cplusplus) && !defined(RAYLIB_DISABLE_VECTOR_OPERATORS)
+#if defined(__cplusplus) && !defined(RAYMATH_DISABLE_OPERATORS)
 
 //------------------Vector2-----------------//
 static constexpr Vector2 Vector2Zeros = { 0, 0 };
