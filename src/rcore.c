@@ -2740,6 +2740,102 @@ unsigned int *ComputeMD5(unsigned char *data, int dataSize)
     return hash;
 }
 
+// Compute SHA-1 hash code
+// NOTE: Returns a static int[5] array (20 bytes)
+unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
+    #define ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
+
+    static unsigned int hash[5] = { 0 };  // Hash to be returned
+
+    // Initialize hash values
+    hash[0] = 0x67452301;
+    hash[1] = 0xEFCDAB89;
+    hash[2] = 0x98BADCFE;
+    hash[3] = 0x10325476;
+    hash[4] = 0xC3D2E1F0;
+
+    // Pre-processing: adding a single 1 bit
+    // Append '1' bit to message
+    // NOTE: The input bytes are considered as bits strings,
+    // where the first bit is the most significant bit of the byte
+
+    // Pre-processing: padding with zeros
+    // Append '0' bit until message length in bit 448 (mod 512)
+    // Append length mod (2 pow 64) to message
+
+    int newDataSize = ((((dataSize + 8)/64) + 1)*64);
+
+    unsigned char *msg = RL_CALLOC(newDataSize, 1); // Initialize with '0' bits
+    memcpy(msg, data, dataSize);
+    msg[dataSize] = 128; // Write the '1' bit
+
+    unsigned int bitsLen = 8*dataSize;
+    msg[newDataSize-1] = bitsLen;
+
+    // Process the message in successive 512-bit chunks
+    for (int offset = 0; offset < newDataSize; offset += (512/8))
+    {
+        // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
+        unsigned int w[80] = {0};
+        for (int i = 0; i < 16; i++) {
+            w[i] = (msg[offset + (i * 4) + 0] << 24) |
+                   (msg[offset + (i * 4) + 1] << 16) |
+                   (msg[offset + (i * 4) + 2] << 8) |
+                   (msg[offset + (i * 4) + 3]);
+        }
+
+        // Message schedule: extend the sixteen 32-bit words into eighty 32-bit words:
+        for (int i = 16; i < 80; ++i) {
+            w[i] = ROTATE_LEFT(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
+        }
+
+        // Initialize hash value for this chunk
+        unsigned int a = hash[0];
+        unsigned int b = hash[1];
+        unsigned int c = hash[2];
+        unsigned int d = hash[3];
+        unsigned int e = hash[4];
+
+        for (int i = 0; i < 80; i++)
+        {
+            unsigned int f = 0;
+            unsigned int k = 0;
+
+            if (i < 20) {
+                f = (b & c) | ((~b) & d);
+                k = 0x5A827999;
+            } else if (i < 40) {
+                f = b ^ c ^ d;
+                k = 0x6ED9EBA1;
+            } else if (i < 60) {
+                f = (b & c) | (b & d) | (c & d);
+                k = 0x8F1BBCDC;
+            } else {
+                f = b ^ c ^ d;
+                k = 0xCA62C1D6;
+            }
+
+            unsigned int temp = ROTATE_LEFT(a, 5) + f + e + k + w[i];
+            e = d;
+            d = c;
+            c = ROTATE_LEFT(b, 30);
+            b = a;
+            a = temp;
+        }
+
+        // Add this chunk's hash to result so far
+        hash[0] += a;
+        hash[1] += b;
+        hash[2] += c;
+        hash[3] += d;
+        hash[4] += e;
+    }
+
+    free(msg);
+
+    return hash;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Automation Events Recording and Playing
 //----------------------------------------------------------------------------------
