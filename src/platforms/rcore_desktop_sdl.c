@@ -1609,7 +1609,6 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     // Define base path for storage
     CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();
-    CHDIR(CORE.Storage.basePath);
     //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
