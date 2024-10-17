@@ -4722,6 +4722,21 @@
       ]
     },
     {
+      "name": "ComputeSHA1",
+      "description": "Compute SHA1 hash code, returns static int[5] (20 bytes)",
+      "returnType": "unsigned int *",
+      "params": [
+        {
+          "type": "unsigned char *",
+          "name": "data"
+        },
+        {
+          "type": "int",
+          "name": "dataSize"
+        }
+      ]
+    },
+    {
       "name": "LoadAutomationEventList",
       "description": "Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS",
       "returnType": "AutomationEventList",
