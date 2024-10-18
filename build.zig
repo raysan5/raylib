@@ -68,36 +68,41 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     if (options.config.len > 0) {
         try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
 
-        var iter = std.mem.tokenizeScalar(u8, options.config, ' ');
-        while (iter.next()) |config_flag| {
+        for (options.config) |config_flag|
             try raylib_flags_arr.append(b.allocator, config_flag);
-        }
 
-        // TODO: Either fix this code such that it can actually handle multiple flags being passed,
-        // or just expect people who pass custom build flags to pass everything themselves.
         //// TODO: Docs warn against using `pathFromRoot`; see if it can be resolved otherwise.
-        //const file = b.pathFromRoot("src/config.h");
-        //const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
-        //defer b.allocator.free(content);
+        const file = b.pathFromRoot("src/config.h");
+        const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
+        defer b.allocator.free(content);
 
-        //var lines = std.mem.splitScalar(u8, content, '\n');
-        //while (lines.next()) |line| {
-        //    if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-        //    if (std.mem.startsWith(u8, line, "//")) continue;
-        //    if (std.mem.startsWith(u8, line, "#if")) continue;
+        var lines = std.mem.tokenizeScalar(u8, content, '\n');
+        outer: while (lines.next()) |line| {
+            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+            if (std.mem.startsWith(u8, line, "//")) continue;
+            if (std.mem.startsWith(u8, line, "#if")) continue;
 
-        //    var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-        //    flag = flag["#define ".len - 1 ..]; // Remove #define
-        //    flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-        //    flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-        //    flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
+            var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+            flag = flag["#define ".len - 1 ..]; // Remove #define
+            flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+            flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
+            flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
 
-        //    // If user specifies the flag skip it
-        //    if (std.mem.containsAtLeast(u8, options.config, 1, flag)) continue;
+            // TODO: Slow, O(n*m) time check all flags where `n` is the number of lines in
+            // `config.h` and `m` is the number of configs passed by `-Dconfig`.
+            //
+            // If user specifies the flag skip it
+            for (options.config) |config_flag| {
+                if (!std.mem.startsWith(u8, config_flag, flag)) continue;
+                if (config_flag.len == flag.len or config_flag[flag.len] == '=') {
+                    std.debug.print("Skipped applying: {s}\n", .{flag});
+                    continue :outer;
+                }
+            }
 
-        //    // Append default value from config.h to compile flags
-        //    try raylib_flags_arr.append(b.allocator, flag);
-        //}
+            // Append default value from config.h to compile flags
+            try raylib_flags_arr.append(b.allocator, flag);
+        }
     }
 
     if (options.shared) {
@@ -306,13 +311,28 @@ pub const Options = struct {
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
     /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
-    config: []const u8 = &.{},
+    config: []const []const u8 = &.{},
 
     raygui_dependency_name: []const u8 = "raygui",
 
     const defaults = Options{};
 
     fn getOptions(b: *std.Build) Options {
+        // TODO: This is an ugly hack turn the `[]const u8` that `-Dconfig` takes into a `[]const []const u8`.
+        var config = defaults.config;
+        var config_array = std.ArrayList([]const u8).init(b.allocator);
+        if (b.option([]const []const u8, "config", "Compile with custom define macros overriding config.h")) |o_config| {
+            config = o_config;
+
+            if (o_config.len == 1) {
+                var iter = std.mem.tokenizeScalar(u8, o_config[0], ' ');
+                while (iter.next()) |flag| {
+                    config_array.append(flag) catch @panic("OOM");
+                }
+                config = config_array.items;
+            }
+        }
+
         return .{
             .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
             .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
@@ -324,7 +344,7 @@ pub const Options = struct {
             .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
-            .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
+            .config = config,
         };
     }
 };
