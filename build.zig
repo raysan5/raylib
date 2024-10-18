@@ -66,34 +66,38 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
     if (options.config.len > 0) {
-        // TODO: Docs warn against using `pathFromRoot`; see if it can be resolved otherwise.
-        const file = b.pathFromRoot("src/config.h");
-        const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
-        defer b.allocator.free(content);
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
 
-        var lines = std.mem.splitScalar(u8, content, '\n');
-        while (lines.next()) |line| {
-            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-            if (std.mem.startsWith(u8, line, "//")) continue;
-            if (std.mem.startsWith(u8, line, "#if")) continue;
-
-            var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-            flag = flag["#define ".len - 1 ..]; // Remove #define
-            flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-            flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-            flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
-
-            // If user specifies the flag skip it
-            if (std.mem.containsAtLeast(u8, options.config, 1, flag)) continue;
-
-            // Append default value from config.h to compile flags
-            try raylib_flags_arr.append(b.allocator, flag);
+        var iter = std.mem.tokenizeScalar(u8, options.config, ' ');
+        while (iter.next()) |config_flag| {
+            try raylib_flags_arr.append(b.allocator, config_flag);
         }
 
-        // Append config flags supplied by user to compile flags
-        try raylib_flags_arr.append(b.allocator, options.config);
+        // TODO: Either fix this code such that it can actually handle multiple flags being passed,
+        // or just expect people who pass custom build flags to pass everything themselves.
+        //// TODO: Docs warn against using `pathFromRoot`; see if it can be resolved otherwise.
+        //const file = b.pathFromRoot("src/config.h");
+        //const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
+        //defer b.allocator.free(content);
 
-        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
+        //var lines = std.mem.splitScalar(u8, content, '\n');
+        //while (lines.next()) |line| {
+        //    if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+        //    if (std.mem.startsWith(u8, line, "//")) continue;
+        //    if (std.mem.startsWith(u8, line, "#if")) continue;
+
+        //    var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+        //    flag = flag["#define ".len - 1 ..]; // Remove #define
+        //    flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+        //    flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
+        //    flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
+
+        //    // If user specifies the flag skip it
+        //    if (std.mem.containsAtLeast(u8, options.config, 1, flag)) continue;
+
+        //    // Append default value from config.h to compile flags
+        //    try raylib_flags_arr.append(b.allocator, flag);
+        //}
     }
 
     if (options.shared) {
@@ -301,7 +305,7 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
-    /// config should be a list of cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
+    /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: []const u8 = &.{},
 
     raygui_dependency_name: []const u8 = "raygui",
