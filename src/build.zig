@@ -68,7 +68,7 @@ fn srcDir(b: *std.Build) []const u8 {
             @compileError("Please take a look at this function again");
     }
 
-    const src_file = std.fs.path.relative(b.allocator, @src().file, ".") catch @panic("OOM");
+    const src_file = std.fs.path.relative(b.allocator, ".", @src().file) catch @panic("OOM");
     return std.fs.path.dirname(src_file) orelse ".";
 }
 
