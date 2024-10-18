@@ -305,6 +305,24 @@ pub const Options = struct {
     config: []const u8 = &.{},
 
     raygui_dependency_name: []const u8 = "raygui",
+
+    const defaults = Options{};
+
+    fn getOptions(b: *std.Build) Options {
+        return .{
+            .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
+            .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
+            .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
+            .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
+            .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
+            .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
+            .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
+            .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
+            .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
+            .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
+            .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
+        };
+    }
 };
 
 pub const OpenglVersion = enum {
@@ -353,22 +371,7 @@ pub fn build(b: *std.Build) !void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const defaults = Options{};
-    const options = Options{
-        .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
-        .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
-        .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
-        .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
-        .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
-        .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
-        .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
-        .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
-        .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
-        .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
-        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
-    };
-
-    const lib = try compileRaylib(b, target, optimize, options);
+    const lib = try compileRaylib(b, target, optimize, Options.getOptions(b));
 
     lib.installHeader(b.path("src/raylib.h"), "raylib.h");
     lib.installHeader(b.path("src/raymath.h"), "raymath.h");
