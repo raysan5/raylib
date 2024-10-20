@@ -72,6 +72,36 @@ fn srcDir(b: *std.Build) []const u8 {
     return std.fs.path.dirname(src_file) orelse ".";
 }
 
+/// A list of all flags from `src/config.h` that one may override
+const config_h_flags = outer: {
+    // Set this value higher if compile errors happen as `src/config.h` gets larger
+    @setEvalBranchQuota(1 << 20);
+
+    const config_h = @embedFile("config.h");
+    var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
+
+    var i = 0;
+    var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
+    while (lines.next()) |line| {
+        if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+        if (std.mem.startsWith(u8, line, "//")) continue;
+        if (std.mem.startsWith(u8, line, "#if")) continue;
+
+        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+        flag = flag["#define ".len - 1 ..]; // Remove #define
+        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
+        flag = "-D" ++ flag; // Prepend with -D
+
+        flags[i] = flag;
+        i += 1;
+    }
+
+    // Uncomment this to check what flags normally get passed
+    //@compileLog(flags[0..i].*);
+    break :outer flags[0..i].*;
+};
+
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     raylib_flags_arr.clearRetainingCapacity();
 
@@ -86,33 +116,36 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
     if (options.config.len > 0) {
-        const file = b.pathJoin(&.{ srcDir(b), "config.h" });
-        const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
-        defer b.allocator.free(content);
+        // Sets a flag indiciating the use of a custom `config.h`
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
 
-        var lines = std.mem.splitScalar(u8, content, '\n');
-        while (lines.next()) |line| {
-            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-            if (std.mem.startsWith(u8, line, "//")) continue;
-            if (std.mem.startsWith(u8, line, "#if")) continue;
+        // Splits a space-separated list of config flags into multiple flags
+        //
+        // Note: This means certain flags like `-x c++` won't be processed properly.
+        // `-xc++` or similar should be used when possible
+        var config_iter = std.mem.tokenizeScalar(u8, options.config, ' ');
 
-            var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-            flag = flag["#define ".len - 1 ..]; // Remove #define
-            flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-            flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-            flag = try std.fmt.allocPrint(b.allocator, "-D{s}", .{flag}); // Prepend with -D
+        // Apply config flags supplied by the user
+        while (config_iter.next()) |config_flag|
+            try raylib_flags_arr.append(b.allocator, config_flag);
 
-            // If user specifies the flag skip it
-            if (std.mem.containsAtLeast(u8, options.config, 1, flag)) continue;
+        // Apply all relevant configs from `src/config.h` *except* the user-specified ones
+        //
+        // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
+        // `m` corresponds roughly to the number of lines in `src/config.h`
+        // `n` corresponds to the number of user-specified flags
+        outer: for (config_h_flags) |flag| {
+            // If a user already specified the flag, skip it
+            while (config_iter.next()) |config_flag| {
+                // For a user-specified flag to match, it must share the same prefix and have the
+                // same length or be followed by an equals sign
+                if (!std.mem.startsWith(u8, config_flag, flag)) continue;
+                if (config_flag.len == flag.len or config_flag[flag.len] == '=') continue :outer;
+            }
 
-            // Append default value from config.h to compile flags
+            // Otherwise, append default value from config.h to compile flags
             try raylib_flags_arr.append(b.allocator, flag);
         }
-
-        // Append config flags supplied by user to compile flags
-        try raylib_flags_arr.append(b.allocator, options.config);
-
-        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
     }
 
     if (options.shared) {
@@ -319,10 +352,28 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
-    /// config should be a list of cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
+    /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: []const u8 = &.{},
 
     raygui_dependency_name: []const u8 = "raygui",
+
+    const defaults = Options{};
+
+    fn getOptions(b: *std.Build) Options {
+        return .{
+            .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
+            .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
+            .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
+            .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
+            .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
+            .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
+            .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
+            .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
+            .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
+            .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
+            .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
+        };
+    }
 };
 
 pub const OpenglVersion = enum {
@@ -371,22 +422,7 @@ pub fn build(b: *std.Build) !void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const defaults = Options{};
-    const options = Options{
-        .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
-        .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
-        .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
-        .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
-        .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
-        .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
-        .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
-        .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
-        .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
-        .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
-        .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
-    };
-
-    const lib = try compileRaylib(b, target, optimize, options);
+    const lib = try compileRaylib(b, target, optimize, Options.getOptions(b));
 
     lib.installHeader(b.path(b.pathJoin(&.{ srcDir(b), "raylib.h" })), "raylib.h");
     lib.installHeader(b.path(b.pathJoin(&.{ srcDir(b), "raymath.h" })), "raymath.h");
