@@ -72,6 +72,36 @@ fn srcDir(b: *std.Build) []const u8 {
     return std.fs.path.dirname(src_file) orelse ".";
 }
 
+/// A list of all flags from `src/config.h` that one may override
+const config_h_flags = outer: {
+    // Set this value higher if compile errors happen as `src/config.h` gets larger
+    @setEvalBranchQuota(1 << 20);
+
+    const config_h = @embedFile("config.h");
+    var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
+
+    var i = 0;
+    var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
+    while (lines.next()) |line| {
+        if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+        if (std.mem.startsWith(u8, line, "//")) continue;
+        if (std.mem.startsWith(u8, line, "#if")) continue;
+
+        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+        flag = flag["#define ".len - 1 ..]; // Remove #define
+        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
+        flag = "-D" ++ flag; // Prepend with -D
+
+        flags[i] = flag;
+        i += 1;
+    }
+
+    // Uncomment this to check what flags normally get passed
+    //@compileLog(flags[0..i].*);
+    break :outer flags[0..i].*;
+};
+
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     raylib_flags_arr.clearRetainingCapacity();
 
@@ -86,16 +116,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
     if (options.config.len > 0) {
-        // Note: Both this and the commented out code immediately below should behave the same.
-        // `@embedFile` probably captures the intent better, but has the unfortunate consequence of
-        // bloating up the size of a binary. The performance of a build system probably isn't vital.
-        // It should also be possible to get the list of configs needed from `src/config.h` at
-        // comptime such that this cost can be ignored AND simplify the logic.
-        const content = @embedFile("config.h");
-        // Note: Usage of `std.build.pathFromRoot` is disadvised according to its documentation
-        //const file = b.pathFromRoot(b.pathJoin(&.{ srcDir(b), "config.h" }));
-        //const content = try std.fs.cwd().readFileAlloc(b.allocator, file, std.math.maxInt(usize));
-
         // Sets a flag indiciating the use of a custom `config.h`
         try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
 
@@ -105,30 +125,17 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         // `-xc++` or similar should be used when possible
         var config_iter = std.mem.tokenizeScalar(u8, options.config, ' ');
 
-        // Append config flags supplied by user to compile flags
+        // Apply config flags supplied by the user
         while (config_iter.next()) |config_flag|
             try raylib_flags_arr.append(b.allocator, config_flag);
 
         // Apply all relevant configs from `src/config.h` *except* the user-specified ones
-        var lines = std.mem.tokenizeScalar(u8, content, '\n');
-        outer: while (lines.next()) |line| {
-            config_iter.reset();
-
-            if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-            if (std.mem.startsWith(u8, line, "//")) continue;
-            if (std.mem.startsWith(u8, line, "#if")) continue;
-
-            var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-            flag = flag["#define ".len - 1 ..]; // Remove #define
-            flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-            flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-            flag = b.fmt("-D{s}", .{flag}); // Prepend with -D
-
+        //
+        // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
+        // `m` corresponds roughly to the number of lines in `src/config.h`
+        // `n` corresponds to the number of user-specified flags
+        outer: for (config_h_flags) |flag| {
             // If a user already specified the flag, skip it
-            //
-            // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
-            // `m` corresponds to the number of lines in `src/config.h`
-            // `n` corresponds to the number of user-specified flags
             while (config_iter.next()) |config_flag| {
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
@@ -136,7 +143,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 if (config_flag.len == flag.len or config_flag[flag.len] == '=') continue :outer;
             }
 
-            // Append default value from config.h to compile flags
+            // Otherwise, append default value from config.h to compile flags
             try raylib_flags_arr.append(b.allocator, flag);
         }
     }
