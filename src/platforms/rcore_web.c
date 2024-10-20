@@ -74,6 +74,8 @@
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
     bool ourFullscreen;                 // Internal var to filter our handling of fullscreen vs the user handling of fullscreen
+    int unmaximizedWidth;               // Internal var to store the unmaximized window (canvas) width
+    int unmaximizedHeight;              // Internal var to store the unmaximized window (canvas) height
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -317,7 +319,16 @@ void ToggleBorderlessWindowed(void)
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
-    TRACELOG(LOG_WARNING, "MaximizeWindow() not available on target platform");
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        platform.unmaximizedWidth = CORE.Window.screen.width;
+        platform.unmaximizedHeight = CORE.Window.screen.height;
+
+        const int tabWidth = EM_ASM_INT( { return window.innerWidth;  }, 0);
+        const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
+
+        if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
+    }
 }
 
 // Set window state: minimized
@@ -329,7 +340,10 @@ void MinimizeWindow(void)
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        if (platform.unmaximizedWidth && platform.unmaximizedHeight) glfwSetWindowSize(platform.handle, platform.unmaximizedWidth, platform.unmaximizedHeight);
+    }
 }
 
 // Set window configuration state using flags
