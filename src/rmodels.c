@@ -1362,7 +1362,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
     if (mesh->boneIds != NULL)
     {
-        // Enable vertex attribute: boneIds (shader-location = 6)
+        // Enable vertex attribute: boneIds (shader-location = 7)
         mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = rlLoadVertexBuffer(mesh->boneIds, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, 4, RL_UNSIGNED_BYTE, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
@@ -1378,7 +1378,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     
     if (mesh->boneWeights != NULL)
     {
-        // Enable vertex attribute: boneWeights (shader-location = 7)
+        // Enable vertex attribute: boneWeights (shader-location = 8)
         mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = rlLoadVertexBuffer(mesh->boneWeights, mesh->vertexCount*4*sizeof(float), dynamic);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, 4, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS);
