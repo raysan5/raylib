@@ -81,7 +81,6 @@ int main(void)
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
-        UpdateModelAnimationBoneMatrices(characterModel, anim, animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
