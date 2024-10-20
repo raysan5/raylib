@@ -328,6 +328,8 @@ void MaximizeWindow(void)
         const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
 
         if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
+
+        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
     }
 }
 
@@ -343,6 +345,8 @@ void RestoreWindow(void)
     if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
     {
         if (platform.unmaximizedWidth && platform.unmaximizedHeight) glfwSetWindowSize(platform.handle, platform.unmaximizedWidth, platform.unmaximizedHeight);
+
+        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
     }
 }
 
@@ -412,9 +416,20 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_MAXIMIZED
-    if ((flags & FLAG_WINDOW_MAXIMIZED) > 0)
+    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) != (flags & FLAG_WINDOW_MAXIMIZED)) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
     {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+        if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+        {
+            platform.unmaximizedWidth = CORE.Window.screen.width;
+            platform.unmaximizedHeight = CORE.Window.screen.height;
+
+            const int tabWidth = EM_ASM_INT( { return window.innerWidth;  }, 0);
+            const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
+
+            if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
+
+            CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+        }
     }
 
     // State change: FLAG_WINDOW_UNFOCUSED
@@ -530,9 +545,14 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_MAXIMIZED
-    if ((flags & FLAG_WINDOW_MAXIMIZED) > 0)
+    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
     {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+        if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+        {
+            if (platform.unmaximizedWidth && platform.unmaximizedHeight) glfwSetWindowSize(platform.handle, platform.unmaximizedWidth, platform.unmaximizedHeight);
+
+            CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+        }
     }
 
     // State change: FLAG_WINDOW_UNDECORATED
