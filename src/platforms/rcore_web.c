@@ -328,6 +328,8 @@ void MaximizeWindow(void)
         const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
 
         if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
+
+        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
     }
 }
 
@@ -343,6 +345,8 @@ void RestoreWindow(void)
     if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
     {
         if (platform.unmaximizedWidth && platform.unmaximizedHeight) glfwSetWindowSize(platform.handle, platform.unmaximizedWidth, platform.unmaximizedHeight);
+
+        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
     }
 }
 
