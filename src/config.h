@@ -113,12 +113,22 @@
 #define RL_CULL_DISTANCE_FAR              1000.0      // Default projection matrix far cull distance
 
 // Default shader vertex attribute locations
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION  0
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD  1
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL    2
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR     3
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT   4
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 5
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD    1
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL      2
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR       3
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT     4
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
+
+
+#define RL_SUPPORT_MESH_GPU_SKINNING                   // Remove this if your GPU does not support more than 8 VBOs
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+#endif
+
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
@@ -170,7 +180,6 @@
 //#define SUPPORT_FILEFORMAT_ASTC     1
 //#define SUPPORT_FILEFORMAT_PKM      1
 //#define SUPPORT_FILEFORMAT_PVR      1
-//#define SUPPORT_FILEFORMAT_SVG      1
 
 // Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
 #define SUPPORT_IMAGE_EXPORT            1
@@ -225,7 +234,12 @@
 // rmodels: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+#define MAX_MESH_VERTEX_BUFFERS         9       // Maximum vertex buffers (VBO) per mesh
+#else
 #define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
+#endif
 
 //------------------------------------------------------------------------------------
 // Module: raudio - Configuration Flags

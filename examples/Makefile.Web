@@ -35,8 +35,9 @@ RAYLIB_PATH           ?= ..
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
-RAYLIB_INCLUDE_PATH   ?= /usr/local/include
-RAYLIB_LIB_PATH       ?= /usr/local/lib
+DESTDIR ?= /usr/local
+RAYLIB_INCLUDE_PATH   ?= $(DESTDIR)/include
+RAYLIB_LIB_PATH       ?= $(DESTDIR)/lib
 
 # Library type compilation: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
@@ -358,6 +359,7 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
+    core/core_input_virtual_controls \
     core/core_loading_thread \
     core/core_random_sequence \
     core/core_random_values \
@@ -413,7 +415,6 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
-    textures/textures_svg_loading \
     textures/textures_textured_curve \
     textures/textures_to_image
 
@@ -447,6 +448,7 @@ MODELS = \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_orthographic_projection \
+    models/models_point_rendering \
     models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_waving_cubes \
@@ -772,10 +774,6 @@ textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
 textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/scarfy.png@resources/scarfy.png
-
-textures/textures_svg_loading: textures/textures_svg_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/test.svg
 
 textures/textures_textured_curve: textures/textures_textured_curve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

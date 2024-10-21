@@ -130,7 +130,7 @@
     #define MAX_MATERIAL_MAPS       12    // Maximum number of maps supported
 #endif
 #ifndef MAX_MESH_VERTEX_BUFFERS
-    #define MAX_MESH_VERTEX_BUFFERS  7    // Maximum vertex buffers (VBO) per mesh
+    #define MAX_MESH_VERTEX_BUFFERS  9    // Maximum vertex buffers (VBO) per mesh
 #endif
 
 //----------------------------------------------------------------------------------
@@ -426,14 +426,14 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 {
 #if 0
     // Basic implementation, do not use it!
-    // For a sphere with 16 rings and 16 slices it requires 8640 cos()/sin() function calls! 
+    // For a sphere with 16 rings and 16 slices it requires 8640 cos()/sin() function calls!
     // New optimized version below only requires 4 cos()/sin() calls
-    
+
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
-        
+
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -488,7 +488,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 
             for (int i = 0; i < rings + 1; i++)
             {
-                for (int j = 0; j < slices; j++) 
+                for (int j = 0; j < slices; j++)
                 {
                     vertices[0] = vertices[2]; // Rotate around y axis to set up vertices for next face
                     vertices[1] = vertices[3];
@@ -701,7 +701,6 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
         rlEnd();
     rlPopMatrix();
 }
-
 
 // Draw a wired cylinder with base at startPos and top at endPos
 // NOTE: It could be also used for pyramid and cone
@@ -1156,8 +1155,8 @@ Model LoadModelFromMesh(Mesh mesh)
     return model;
 }
 
-// Check if a model is ready
-bool IsModelReady(Model model)
+// Check if a model is valid (loaded in GPU, VAO/VBOs)
+bool IsModelValid(Model model)
 {
     bool result = false;
 
@@ -1167,7 +1166,23 @@ bool IsModelReady(Model model)
         (model.meshCount > 0) &&            // Validate mesh count
         (model.materialCount > 0)) result = true; // Validate material count
 
-    // NOTE: This is a very general model validation, many elements could be validated from a model...
+    // NOTE: Many elements could be validated from a model, including every model mesh VAO/VBOs
+    // but some VBOs could not be used, it depends on Mesh vertex data
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        if ((model.meshes[i].vertices != NULL) && (model.meshes[i].vboId[0] == 0)) { result = false; break; }  // Vertex position buffer not uploaded to GPU
+        if ((model.meshes[i].texcoords != NULL) && (model.meshes[i].vboId[1] == 0)) { result = false; break; }  // Vertex textcoords buffer not uploaded to GPU
+        if ((model.meshes[i].normals != NULL) && (model.meshes[i].vboId[2] == 0)) { result = false; break; }  // Vertex normals buffer not uploaded to GPU
+        if ((model.meshes[i].colors != NULL) && (model.meshes[i].vboId[3] == 0)) { result = false; break; }  // Vertex colors buffer not uploaded to GPU
+        if ((model.meshes[i].tangents != NULL) && (model.meshes[i].vboId[4] == 0)) { result = false; break; }  // Vertex tangents buffer not uploaded to GPU
+        if ((model.meshes[i].texcoords2 != NULL) && (model.meshes[i].vboId[5] == 0)) { result = false; break; }  // Vertex texcoords2 buffer not uploaded to GPU
+        if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }  // Vertex indices buffer not uploaded to GPU
+        if ((model.meshes[i].boneIds != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIds buffer not uploaded to GPU
+        if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; }  // Vertex boneWeights buffer not uploaded to GPU
+
+        // NOTE: Some OpenGL versions do not support VAO, so we don't check it
+        //if (model.meshes[i].vaoId == 0) { result = false; break }
+    }
 
     return result;
 }
@@ -1246,13 +1261,18 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh->vaoId = 0;        // Vertex Array Object
-    mesh->vboId[0] = 0;     // Vertex buffer: positions
-    mesh->vboId[1] = 0;     // Vertex buffer: texcoords
-    mesh->vboId[2] = 0;     // Vertex buffer: normals
-    mesh->vboId[3] = 0;     // Vertex buffer: colors
-    mesh->vboId[4] = 0;     // Vertex buffer: tangents
-    mesh->vboId[5] = 0;     // Vertex buffer: texcoords2
-    mesh->vboId[6] = 0;     // Vertex buffer: indices
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION] = 0;     // Vertex buffer: positions
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD] = 0;     // Vertex buffer: texcoords
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL] = 0;       // Vertex buffer: normals
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR] = 0;        // Vertex buffer: colors
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT] = 0;      // Vertex buffer: tangents
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2] = 0;    // Vertex buffer: texcoords2
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = 0;      // Vertex buffer: indices
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = 0;      // Vertex buffer: boneIds
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = 0;  // Vertex buffer: boneWeights
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
@@ -1262,12 +1282,12 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
     // Enable vertex attributes: position (shader-location = 0)
     void *vertices = (mesh->animVertices != NULL)? mesh->animVertices : mesh->vertices;
-    mesh->vboId[0] = rlLoadVertexBuffer(vertices, mesh->vertexCount*3*sizeof(float), dynamic);
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION] = rlLoadVertexBuffer(vertices, mesh->vertexCount*3*sizeof(float), dynamic);
     rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, 3, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
-    mesh->vboId[1] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
     rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
 
@@ -1278,7 +1298,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     {
         // Enable vertex attributes: normals (shader-location = 2)
         void *normals = (mesh->animNormals != NULL)? mesh->animNormals : mesh->normals;
-        mesh->vboId[2] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL);
     }
@@ -1294,7 +1314,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->colors != NULL)
     {
         // Enable vertex attribute: color (shader-location = 3)
-        mesh->vboId[3] = rlLoadVertexBuffer(mesh->colors, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR] = rlLoadVertexBuffer(mesh->colors, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, 4, RL_UNSIGNED_BYTE, 1, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR);
     }
@@ -1310,7 +1330,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->tangents != NULL)
     {
         // Enable vertex attribute: tangent (shader-location = 4)
-        mesh->vboId[4] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), dynamic);
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), dynamic);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, 4, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT);
     }
@@ -1326,7 +1346,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->texcoords2 != NULL)
     {
         // Enable vertex attribute: texcoord2 (shader-location = 5)
-        mesh->vboId[5] = rlLoadVertexBuffer(mesh->texcoords2, mesh->vertexCount*2*sizeof(float), dynamic);
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2] = rlLoadVertexBuffer(mesh->texcoords2, mesh->vertexCount*2*sizeof(float), dynamic);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, 2, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
@@ -1339,9 +1359,43 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
 
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+    if (mesh->boneIds != NULL)
+    {
+        // Enable vertex attribute: boneIds (shader-location = 7)
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = rlLoadVertexBuffer(mesh->boneIds, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
+    }
+    else
+    {
+        // Default vertex attribute: boneIds
+        // WARNING: Default value provided to shader if location available
+        float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, value, SHADER_ATTRIB_VEC4, 4);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
+    }
+
+    if (mesh->boneWeights != NULL)
+    {
+        // Enable vertex attribute: boneWeights (shader-location = 8)
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = rlLoadVertexBuffer(mesh->boneWeights, mesh->vertexCount*4*sizeof(float), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, 4, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS);
+    }
+    else
+    {
+        // Default vertex attribute: boneWeights
+        // WARNING: Default value provided to shader if location available
+        float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, value, SHADER_ATTRIB_VEC4, 2);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS);
+    }
+#endif
+
     if (mesh->indices != NULL)
     {
-        mesh->vboId[6] = rlLoadVertexBufferElement(mesh->indices, mesh->triangleCount*3*sizeof(unsigned short), dynamic);
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = rlLoadVertexBufferElement(mesh->indices, mesh->triangleCount*3*sizeof(unsigned short), dynamic);
     }
 
     if (mesh->vaoId > 0) TRACELOG(LOG_INFO, "VAO: [ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
@@ -1451,6 +1505,14 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+    // Upload Bone Transforms
+    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
+    {
+        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
+    }
+#endif
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1478,19 +1540,19 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (!rlEnableVertexArray(mesh.vaoId))
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
-        rlEnableVertexBuffer(mesh.vboId[0]);
+        rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
 
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
-        rlEnableVertexBuffer(mesh.vboId[1]);
+        rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
 
         if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
         {
             // Bind mesh VBO data: vertex normals (shader-location = 2)
-            rlEnableVertexBuffer(mesh.vboId[2]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
         }
@@ -1498,9 +1560,9 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
         {
-            if (mesh.vboId[3] != 0)
+            if (mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR] != 0)
             {
-                rlEnableVertexBuffer(mesh.vboId[3]);
+                rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR]);
                 rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, RL_UNSIGNED_BYTE, 1, 0, 0);
                 rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
             }
@@ -1517,7 +1579,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
         {
-            rlEnableVertexBuffer(mesh.vboId[4]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
         }
@@ -1525,12 +1587,30 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
         {
-            rlEnableVertexBuffer(mesh.vboId[5]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+        // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
+        }
+
+        // Bind mesh VBO data: vertex bone weights (shader-location = 7, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS], 4, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS]);
+        }
+#endif
+
+        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
     }
 
     int eyeCount = 1;
@@ -1671,6 +1751,15 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+    // Upload Bone Transforms
+    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
+    {
+        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
+    }
+#endif
+
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1696,19 +1785,19 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     if (!rlEnableVertexArray(mesh.vaoId))
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
-        rlEnableVertexBuffer(mesh.vboId[0]);
+        rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
 
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
-        rlEnableVertexBuffer(mesh.vboId[1]);
+        rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
 
         if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
         {
             // Bind mesh VBO data: vertex normals (shader-location = 2)
-            rlEnableVertexBuffer(mesh.vboId[2]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
         }
@@ -1716,9 +1805,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
         {
-            if (mesh.vboId[3] != 0)
+            if (mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR] != 0)
             {
-                rlEnableVertexBuffer(mesh.vboId[3]);
+                rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR]);
                 rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, RL_UNSIGNED_BYTE, 1, 0, 0);
                 rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
             }
@@ -1735,7 +1824,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
         {
-            rlEnableVertexBuffer(mesh.vboId[4]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
         }
@@ -1743,12 +1832,30 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
         {
-            rlEnableVertexBuffer(mesh.vboId[5]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
+#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+        // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
+        }
+
+        // Bind mesh VBO data: vertex bone weights (shader-location = 7, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS], 4, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS]);
+        }
+#endif
+
+        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
     }
 
     int eyeCount = 1;
@@ -1825,6 +1932,7 @@ void UnloadMesh(Mesh mesh)
     RL_FREE(mesh.animNormals);
     RL_FREE(mesh.boneWeights);
     RL_FREE(mesh.boneIds);
+    RL_FREE(mesh.boneMatrices);
 }
 
 // Export mesh data to file
@@ -2004,7 +2112,6 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
     return success;
 }
 
-
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
 // Process obj materials
 static void ProcessMaterialsOBJ(Material *materials, tinyobj_material_t *mats, int materialCount)
@@ -2015,6 +2122,8 @@ static void ProcessMaterialsOBJ(Material *materials, tinyobj_material_t *mats, i
         // Init material to default
         // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
         materials[m] = LoadMaterialDefault();
+
+        if (mats == NULL) continue;
 
         // Get default texture, in case no texture is defined
         // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
@@ -2089,13 +2198,15 @@ Material LoadMaterialDefault(void)
     return material;
 }
 
-// Check if a material is ready
-bool IsMaterialReady(Material material)
+// Check if a material is valid (map textures loaded in GPU)
+bool IsMaterialValid(Material material)
 {
     bool result = false;
 
     if ((material.maps != NULL) &&      // Validate material contain some map
         (material.shader.id > 0)) result = true; // Validate material shader is valid
+
+    // TODO: Check if available maps contain loaded textures
 
     return result;
 }
@@ -2248,6 +2359,50 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             {
                 rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
                 rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
+            }
+        }
+    }
+}
+
+void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame)
+{
+    if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
+    {
+        if (frame >= anim.frameCount) frame = frame%anim.frameCount;
+
+        for (int i = 0; i < model.meshCount; i++)
+        {
+            if (model.meshes[i].boneMatrices)
+            {
+                assert(model.meshes[i].boneCount == anim.boneCount);
+
+                for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
+                {
+                    Vector3 inTranslation = model.bindPose[boneId].translation;
+                    Quaternion inRotation = model.bindPose[boneId].rotation;
+                    Vector3 inScale = model.bindPose[boneId].scale;
+
+                    Vector3 outTranslation = anim.framePoses[frame][boneId].translation;
+                    Quaternion outRotation = anim.framePoses[frame][boneId].rotation;
+                    Vector3 outScale = anim.framePoses[frame][boneId].scale;
+
+                    Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
+                    Quaternion invRotation = QuaternionInvert(inRotation);
+                    Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
+
+                    Vector3 boneTranslation = Vector3Add(
+                        Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
+                        outRotation), outTranslation);
+                    Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
+                    Vector3 boneScale = Vector3Multiply(outScale, invScale);
+
+                    Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
+                        QuaternionToMatrix(boneRotation),
+                        MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
+                        MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+
+                    model.meshes[i].boneMatrices[boneId] = boneMatrix;
+                }
             }
         }
     }
@@ -3631,6 +3786,30 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
     rlDisableWireMode();
 }
 
+// Draw a model points
+void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
+{
+    rlEnablePointMode();
+    rlDisableBackfaceCulling();
+
+    DrawModel(model, position, scale, tint);
+
+    rlEnableBackfaceCulling();
+    rlDisableWireMode();
+}
+
+// Draw a model points
+void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
+{
+    rlEnablePointMode();
+    rlDisableBackfaceCulling();
+
+    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
+
+    rlEnableBackfaceCulling();
+    rlDisableWireMode();
+}
+
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint)
 {
@@ -4049,130 +4228,236 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 //  - the mesh is automatically triangulated by tinyobj
 static Model LoadOBJ(const char *fileName)
 {
+    tinyobj_attrib_t objAttributes = { 0 };
+    tinyobj_shape_t* objShapes = NULL;
+    unsigned int objShapeCount = 0;
+
+    tinyobj_material_t* objMaterials = NULL;
+    unsigned int objMaterialCount = 0;
+
     Model model = { 0 };
+    model.transform = MatrixIdentity();
 
-    tinyobj_attrib_t attrib = { 0 };
-    tinyobj_shape_t *meshes = NULL;
-    unsigned int meshCount = 0;
+    char* fileText = LoadFileText(fileName);
 
-    tinyobj_material_t *materials = NULL;
-    unsigned int materialCount = 0;
-
-    char *fileText = LoadFileText(fileName);
-
-    if (fileText != NULL)
+    if (fileText == NULL)
     {
-        unsigned int dataSize = (unsigned int)strlen(fileText);
+        TRACELOG(LOG_ERROR, "MODEL Unable to read obj file %s", fileName);
+        return model;
+    }
 
-        char currentDir[1024] = { 0 };
-        strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
-        const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
-        if (CHDIR(workingDir) != 0)
+    char currentDir[1024] = { 0 };
+    strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
+    const char* workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
+    if (CHDIR(workingDir) != 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
+    }
+
+    unsigned int dataSize = (unsigned int)strlen(fileText);
+
+    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
+    int ret = tinyobj_parse_obj(&objAttributes, &objShapes, &objShapeCount, &objMaterials, &objMaterialCount, fileText, dataSize, flags);
+
+    if (ret != TINYOBJ_SUCCESS)
+    {
+        TRACELOG(LOG_ERROR, "MODEL Unable to read obj data %s", fileName);
+        return model;
+    }
+
+    UnloadFileText(fileText);
+
+    unsigned int faceVertIndex = 0;
+    unsigned int nextShape = 1;
+    int lastMaterial = -1;
+    unsigned int meshIndex = 0;
+
+    // count meshes
+    unsigned int nextShapeEnd = objAttributes.num_face_num_verts;
+
+    // see how many verts till the next shape
+
+    if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
+
+    // walk all the faces
+    for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
+    {
+        if (faceVertIndex >= nextShapeEnd)
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
+            // try to find the last vert in the next shape
+            nextShape++;
+            if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
+            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+            meshIndex++;
+        }
+        else if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial)
+        {
+            meshIndex++;// if this is a new material, we need to allocate a new mesh
         }
 
-        unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileText, dataSize, flags);
+        lastMaterial = objAttributes.material_ids[faceId];
+        faceVertIndex += objAttributes.face_num_verts[faceId];
+    }
 
-        if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
-        else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
+    // allocate the base meshes and materials
+    model.meshCount = meshIndex + 1;
+    model.meshes = (Mesh*)MemAlloc(sizeof(Mesh) * model.meshCount);
 
-        // WARNING: We are not splitting meshes by materials (previous implementation)
-        // Depending on the provided OBJ that was not the best option and it just crashed
-        // so, implementation was simplified to prioritize parsed meshes
-        model.meshCount = meshCount;
+    if (objMaterialCount > 0)
+    {
+        model.materialCount = objMaterialCount;
+        model.materials = (Material*)MemAlloc(sizeof(Material) * objMaterialCount);
+    }
+    else // we must allocate at least one material
+    {
+        model.materialCount = 1;
+        model.materials = (Material*)MemAlloc(sizeof(Material) * 1);
+    }
 
-        // Set number of materials available
-        // NOTE: There could be more materials available than meshes but it will be resolved at
-        // model.meshMaterial, just assigning the right material to corresponding mesh
-        model.materialCount = materialCount;
-        if (model.materialCount == 0)
+    model.meshMaterial = (int*)MemAlloc(sizeof(int) * model.meshCount);
+
+    // see how many verts are in each mesh
+    unsigned int* localMeshVertexCounts = (unsigned int*)MemAlloc(sizeof(unsigned int) * model.meshCount);
+
+    faceVertIndex = 0;
+    nextShapeEnd = objAttributes.num_face_num_verts;
+    lastMaterial = -1;
+    meshIndex = 0;
+    unsigned int localMeshVertexCount = 0;
+
+    nextShape = 1;
+    if (objShapeCount > 1)
+        nextShapeEnd = objShapes[nextShape].face_offset;
+
+    // walk all the faces
+    for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
+    {
+        bool newMesh = false; // do we need a new mesh?
+        if (faceVertIndex >= nextShapeEnd)
         {
-            model.materialCount = 1;
-            TRACELOG(LOG_INFO, "MODEL: No materials provided, setting one default material for all meshes");
+            // try to find the last vert in the next shape
+            nextShape++;
+            if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
+            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+
+            newMesh = true;
         }
-        else if (model.materialCount > 1 && model.meshCount > 1)
+        else if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial)
         {
-            // TEMP warning about multiple materials, to be removed when proper splitting code is implemented
-            // any obj with multiple materials will need to have it's materials assigned by the user in code to work at this time
-            TRACELOG(LOG_INFO, "MODEL: OBJ has multiple materials, manual material assignment will be required.");
-        }
-
-        // Init model meshes and materials
-        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int)); // Material index assigned to each mesh
-        model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-
-        // Process each provided mesh
-        for (int i = 0; i < model.meshCount; i++)
-        {
-            // WARNING: We need to calculate the mesh triangles manually using meshes[i].face_offset
-            // because in case of triangulated quads, meshes[i].length actually report quads,
-            // despite the triangulation that is efectively considered on attrib.num_faces
-            unsigned int tris = 0;
-            if (i == model.meshCount - 1) tris = attrib.num_faces - meshes[i].face_offset;
-            else tris = meshes[i + 1].face_offset;
-
-            model.meshes[i].vertexCount = tris*3;
-            model.meshes[i].triangleCount = tris;   // Face count (triangulated)
-            model.meshes[i].vertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-            model.meshes[i].texcoords = (float *)RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));
-            model.meshes[i].normals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-            model.meshMaterial[i] = 0;  // By default, assign material 0 to each mesh
-
-            // Process all mesh faces
-            for (unsigned int face = 0, f = meshes[i].face_offset, v = 0, vt = 0, vn = 0; face < tris; face++, f++, v += 3, vt += 3, vn += 3)
-            {
-                // Get indices for the face
-                tinyobj_vertex_index_t idx0 = attrib.faces[f*3 + 0];
-                tinyobj_vertex_index_t idx1 = attrib.faces[f*3 + 1];
-                tinyobj_vertex_index_t idx2 = attrib.faces[f*3 + 2];
-
-                // Fill vertices buffer (float) using vertex index of the face
-                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[v*3 + n] = attrib.vertices[idx0.v_idx*3 + n]; }
-                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[(v + 1)*3 + n] = attrib.vertices[idx1.v_idx*3 + n]; }
-                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[(v + 2)*3 + n] = attrib.vertices[idx2.v_idx*3 + n]; }
-
-                if (attrib.num_texcoords > 0)
-                {
-                    // Fill texcoords buffer (float) using vertex index of the face
-                    // NOTE: Y-coordinate must be flipped upside-down
-                    model.meshes[i].texcoords[vt*2 + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
-                    model.meshes[i].texcoords[vt*2 + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1];
-
-                    model.meshes[i].texcoords[(vt + 1)*2 + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
-                    model.meshes[i].texcoords[(vt + 1)*2 + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1];
-
-                    model.meshes[i].texcoords[(vt + 2)*2 + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
-                    model.meshes[i].texcoords[(vt + 2)*2 + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1];
-                }
-
-                if (attrib.num_normals > 0)
-                {
-                    // Fill normals buffer (float) using vertex index of the face
-                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[vn*3 + n] = attrib.normals[idx0.vn_idx*3 + n]; }
-                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[(vn + 1)*3 + n] = attrib.normals[idx1.vn_idx*3 + n]; }
-                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[(vn + 2)*3 + n] = attrib.normals[idx2.vn_idx*3 + n]; }
-                }
-            }
+            newMesh = true;
         }
 
-        // Init model materials
-        if (materialCount > 0) ProcessMaterialsOBJ(model.materials, materials, materialCount);
-        else model.materials[0] = LoadMaterialDefault(); // Set default material for the mesh
+        lastMaterial = objAttributes.material_ids[faceId];
 
-        tinyobj_attrib_free(&attrib);
-        tinyobj_shapes_free(meshes, model.meshCount);
-        tinyobj_materials_free(materials, materialCount);
-
-        UnloadFileText(fileText);
-
-        // Restore current working directory
-        if (CHDIR(currentDir) != 0)
+        if (newMesh)
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", currentDir);
+            localMeshVertexCounts[meshIndex] = localMeshVertexCount;
+
+            localMeshVertexCount = 0;
+            meshIndex++;
         }
+
+        faceVertIndex += objAttributes.face_num_verts[faceId];
+        localMeshVertexCount += objAttributes.face_num_verts[faceId];
+    }
+    localMeshVertexCounts[meshIndex] = localMeshVertexCount;
+
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        // allocate the buffers for each mesh
+        unsigned int vertexCount = localMeshVertexCounts[i];
+
+        model.meshes[i].vertexCount = vertexCount;
+        model.meshes[i].triangleCount = vertexCount / 3;
+
+        model.meshes[i].vertices = (float*)MemAlloc(sizeof(float) * vertexCount * 3);
+        model.meshes[i].normals = (float*)MemAlloc(sizeof(float) * vertexCount * 3);
+        model.meshes[i].texcoords = (float*)MemAlloc(sizeof(float) * vertexCount * 2);
+        model.meshes[i].colors = (unsigned char*)MemAlloc(sizeof(unsigned char) * vertexCount * 4);
+    }
+
+    MemFree(localMeshVertexCounts);
+    localMeshVertexCounts = NULL;
+
+    // fill meshes
+    faceVertIndex = 0;
+
+    nextShapeEnd = objAttributes.num_face_num_verts;
+
+    // see how many verts till the next shape
+    nextShape = 1;
+    if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
+    lastMaterial = -1;
+    meshIndex = 0;
+    localMeshVertexCount = 0;
+
+    // walk all the faces
+    for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
+    {
+        bool newMesh = false; // do we need a new mesh?
+        if (faceVertIndex >= nextShapeEnd)
+        {
+            // try to find the last vert in the next shape
+            nextShape++;
+            if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
+            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+            newMesh = true;
+        }
+        // if this is a new material, we need to allocate a new mesh
+        if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial) newMesh = true;
+        lastMaterial = objAttributes.material_ids[faceId];
+
+        if (newMesh)
+        {
+            localMeshVertexCount = 0;
+            meshIndex++;
+        }
+
+        int matId = 0;
+        if (lastMaterial >= 0 && lastMaterial < (int)objMaterialCount)
+            matId = lastMaterial;
+
+        model.meshMaterial[meshIndex] = matId;
+
+        for (int f = 0; f < objAttributes.face_num_verts[faceId]; f++)
+        {
+            int vertIndex = objAttributes.faces[faceVertIndex].v_idx;
+            int normalIndex = objAttributes.faces[faceVertIndex].vn_idx;
+            int texcordIndex = objAttributes.faces[faceVertIndex].vt_idx;
+
+            for (int i = 0; i < 3; i++)
+                model.meshes[meshIndex].vertices[localMeshVertexCount * 3 + i] = objAttributes.vertices[vertIndex * 3 + i];
+
+            for (int i = 0; i < 3; i++)
+                model.meshes[meshIndex].normals[localMeshVertexCount * 3 + i] = objAttributes.normals[normalIndex * 3 + i];
+
+            for (int i = 0; i < 2; i++)
+                model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + i] = objAttributes.texcoords[texcordIndex * 2 + i];
+
+            model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + 1];
+
+            for (int i = 0; i < 4; i++)
+                model.meshes[meshIndex].colors[localMeshVertexCount * 4 + i] = 255;
+
+            faceVertIndex++;
+            localMeshVertexCount++;
+        }
+    }
+
+    if (objMaterialCount > 0) ProcessMaterialsOBJ(model.materials, objMaterials, objMaterialCount);
+    else model.materials[0] = LoadMaterialDefault(); // Set default material for the mesh
+
+    tinyobj_attrib_free(&objAttributes);
+    tinyobj_shapes_free(objShapes, objShapeCount);
+    tinyobj_materials_free(objMaterials, objMaterialCount);
+
+    for (int i = 0; i < model.meshCount; i++)
+        UploadMesh(model.meshes + i, true);
+
+    // Restore current working directory
+    if (CHDIR(currentDir) != 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", currentDir);
     }
 
     return model;
@@ -4539,6 +4824,17 @@ static Model LoadIQM(const char *fileName)
     }
 
     BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
+
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        model.meshes[i].boneCount = model.boneCount;
+        model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
+
+        for (int j = 0; j < model.meshes[i].boneCount; j++)
+        {
+            model.meshes[i].boneMatrices[j] = MatrixIdentity();
+        }
+    }
 
     UnloadFileData(fileData);
 
@@ -4948,17 +5244,19 @@ static Model LoadGLTF(const char *fileName)
     ***********************************************************************************************/
 
     // Macro to simplify attributes loading code
-    #define LOAD_ATTRIBUTE(accesor, numComp, dataType, dstPtr) \
+    #define LOAD_ATTRIBUTE(accesor, numComp, srcType, dstPtr) LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, srcType)
+
+    #define LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, dstType) \
     { \
         int n = 0; \
-        dataType *buffer = (dataType *)accesor->buffer_view->buffer->data + accesor->buffer_view->offset/sizeof(dataType) + accesor->offset/sizeof(dataType); \
+        srcType *buffer = (srcType *)accesor->buffer_view->buffer->data + accesor->buffer_view->offset/sizeof(srcType) + accesor->offset/sizeof(srcType); \
         for (unsigned int k = 0; k < accesor->count; k++) \
         {\
             for (int l = 0; l < numComp; l++) \
             {\
-                dstPtr[numComp*k + l] = buffer[n + l];\
+                dstPtr[numComp*k + l] = (dstType)buffer[n + l];\
             }\
-            n += (int)(accesor->stride/sizeof(dataType));\
+            n += (int)(accesor->stride/sizeof(srcType));\
         }\
     }
 
@@ -5399,8 +5697,6 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
-
-
                     }
 
                     // NOTE: Attributes related to animations are processed separately
@@ -5421,23 +5717,25 @@ static Model LoadGLTF(const char *fileName)
                         // Load unsigned short data type into mesh.indices
                         LOAD_ATTRIBUTE(attribute, 1, unsigned short, model.meshes[meshIndex].indices)
                     }
+                    else if (attribute->component_type == cgltf_component_type_r_8u)
+                    {
+                        // Init raylib mesh indices to copy glTF attribute data
+                        model.meshes[meshIndex].indices = RL_MALLOC(attribute->count * sizeof(unsigned short));
+                        LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned char, model.meshes[meshIndex].indices, unsigned short)
+
+                    }
                     else if (attribute->component_type == cgltf_component_type_r_32u)
                     {
                         // Init raylib mesh indices to copy glTF attribute data
                         model.meshes[meshIndex].indices = RL_MALLOC(attribute->count*sizeof(unsigned short));
-
-                        // Load data into a temp buffer to be converted to raylib data type
-                        unsigned int *temp = RL_MALLOC(attribute->count*sizeof(unsigned int));
-                        LOAD_ATTRIBUTE(attribute, 1, unsigned int, temp);
-
-                        // Convert data to raylib indices data type (unsigned short)
-                        for (unsigned int d = 0; d < attribute->count; d++) model.meshes[meshIndex].indices[d] = (unsigned short)temp[d];
+                        LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned int, model.meshes[meshIndex].indices, unsigned short);
 
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
-
-                        RL_FREE(temp);
                     }
-                    else TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data format not supported, use u16", fileName);
+                    else
+                    {
+                        TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data format not supported, use u16", fileName);
+                    }
                 }
                 else model.meshes[meshIndex].triangleCount = model.meshes[meshIndex].vertexCount/3;    // Unindexed mesh
 
@@ -5469,7 +5767,7 @@ static Model LoadGLTF(const char *fileName)
         //  - Only supports linear interpolation (default method in Blender when checked "Always Sample Animations" when exporting a GLTF file)
         //  - Only supports translation/rotation/scale animation channel.path, weights not considered (i.e. morph targets)
         //----------------------------------------------------------------------------------------------------
-        if (data->skins_count == 1)
+        if (data->skins_count > 0)
         {
             cgltf_skin skin = data->skins[0];
             model.bones = LoadBoneInfoGLTF(skin, &model.boneCount);
@@ -5489,9 +5787,9 @@ static Model LoadGLTF(const char *fileName)
                 MatrixDecompose(worldMatrix, &(model.bindPose[i].translation), &(model.bindPose[i].rotation), &(model.bindPose[i].scale));
             }
         }
-        else if (data->skins_count > 1)
+        if (data->skins_count > 1)
         {
-            TRACELOG(LOG_ERROR, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
 
         meshIndex = 0;
@@ -5621,6 +5919,15 @@ static Model LoadGLTF(const char *fileName)
                 if (model.meshes[meshIndex].normals != NULL)
                 {
                     memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
+                }
+
+                // Bone Transform Matrices
+                model.meshes[meshIndex].boneCount = model.boneCount;
+                model.meshes[meshIndex].boneMatrices = RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
+
+                for (int j = 0; j < model.meshes[meshIndex].boneCount; j++)
+                {
+                    model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
                 }
 
                 meshIndex++;       // Move to next mesh
@@ -5803,7 +6110,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
     if (result == cgltf_result_success)
     {
-        if (data->skins_count == 1)
+        if (data->skins_count > 0)
         {
             cgltf_skin skin = data->skins[0];
             *animCount = (int)data->animations_count;
@@ -5938,7 +6245,11 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                 RL_FREE(boneChannels);
             }
         }
-        else TRACELOG(LOG_ERROR, "MODEL: [%s] expected exactly one skin to load animation data from, but found %i", fileName, data->skins_count);
+
+        if (data->skins_count > 1)
+        {
+            TRACELOG(LOG_WARNING, "MODEL: [%s] expected exactly one skin to load animation data from, but found %i", fileName, data->skins_count);
+        }
 
         cgltf_free(data);
     }
@@ -6390,6 +6701,13 @@ static Model LoadM3D(const char *fileName)
             {
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
+
+                model.meshes[i].boneCount = model.boneCount;
+                model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
+                for (j = 0; j < model.meshes[i].boneCount; j++)
+                {
+                    model.meshes[i].boneMatrices[j] = MatrixIdentity();
+                }
             }
         }
 
