@@ -892,7 +892,7 @@ int SetGamepadMappings(const char *mappings)
 }
 
 // Set gamepad vibration
-void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
+void SetGamepadVibration(int gamepad, float low, float high, int duration)
 {
     TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
 }
