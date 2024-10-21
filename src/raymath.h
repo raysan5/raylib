@@ -2895,6 +2895,40 @@ inline const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
     lhs = QuaternionTransform(lhs, rhs);
     return lhs;
 }
+
+// Matrix operators
+inline Matrix operator + (const Matrix& lhs, const Matrix& rhs)
+{
+....return MatrixAdd(lhs, rhs);
+}
+
+inline const Matrix& operator += (Matrix& lhs, const Matrix& rhs)
+{
+....lhs = MatrixAdd(lhs, rhs);
+....return lhs;
+}
+
+inline Matrix operator - (const Matrix& lhs, const Matrix& rhs)
+{
+....return MatrixSubtract(lhs, rhs);
+}
+
+inline const Matrix& operator -= (Matrix& lhs, const Matrix& rhs)
+{
+....lhs = MatrixSubtract(lhs, rhs);
+....return lhs;
+}
+
+inline Matrix operator * (const Matrix& lhs, const Matrix& rhs)
+{
+....return MatrixMultiply(lhs, rhs);
+}
+
+inline const Matrix& operator *= (Matrix& lhs, const Matrix& rhs)
+{
+....lhs = MatrixMultiply(lhs, rhs);
+....return lhs;
+}
 //-------------------------------------------------------------------------------
 #endif  // C++ operators
 
