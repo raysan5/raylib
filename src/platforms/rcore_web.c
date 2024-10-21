@@ -673,7 +673,9 @@ void SetWindowSize(int width, int height)
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on target platform");
+    if (opacity >= 1.0f) opacity = 1.0f;
+    else if (opacity <= 0.0f) opacity = 0.0f;
+    EM_ASM({ document.getElementById('canvas').style.opacity = $0; }, opacity);
 }
 
 // Set window focused
