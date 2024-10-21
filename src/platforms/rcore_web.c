@@ -894,7 +894,32 @@ int SetGamepadMappings(const char *mappings)
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
-    TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (duration > 0.0f))
+    {
+        if (leftMotor < 0.0f) leftMotor = 0.0f;
+        if (leftMotor > 1.0f) leftMotor = 1.0f;
+        if (rightMotor < 0.0f) rightMotor = 0.0f;
+        if (rightMotor > 1.0f) rightMotor = 1.0f;
+        if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
+        duration *= 1000.0f; // Convert duration to ms
+
+        // Note: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
+        //       and Firefox only supports the hapticActuators API
+        EM_ASM({
+            try
+            {
+                navigator.getGamepads()[$0].vibrationActuator.playEffect('dual-rumble', { startDelay: 0, duration: $3, weakMagnitude: $1, strongMagnitude: $2 });
+            }
+            catch (e)
+            {
+                try
+                {
+                    navigator.getGamepads()[$0].hapticActuators[0].pulse($2, $3);
+                }
+                catch (e) { }
+            }
+        }, gamepad, leftMotor, rightMotor, duration);
+    }
 }
 
 // Set mouse position XY
