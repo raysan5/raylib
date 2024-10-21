@@ -4577,7 +4577,7 @@ return {
     },
     {
       name = "GetGestureHoldDuration",
-      description = "Get gesture hold time in milliseconds",
+      description = "Get gesture hold time in seconds",
       returnType = "float"
     },
     {

@@ -1281,7 +1281,7 @@
         </Function>
         <Function name="GetGestureDetected" retType="int" paramCount="0" desc="Get latest detected gesture">
         </Function>
-        <Function name="GetGestureHoldDuration" retType="float" paramCount="0" desc="Get gesture hold time in milliseconds">
+        <Function name="GetGestureHoldDuration" retType="float" paramCount="0" desc="Get gesture hold time in seconds">
         </Function>
         <Function name="GetGestureDragVector" retType="Vector2" paramCount="0" desc="Get gesture drag vector">
         </Function>

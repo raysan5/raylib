@@ -2065,7 +2065,7 @@ Function 200: GetGestureDetected() (0 input parameters)
 Function 201: GetGestureHoldDuration() (0 input parameters)
   Name: GetGestureHoldDuration
   Return type: float
-  Description: Get gesture hold time in milliseconds
+  Description: Get gesture hold time in seconds
   No input parameters
 Function 202: GetGestureDragVector() (0 input parameters)
   Name: GetGestureDragVector
