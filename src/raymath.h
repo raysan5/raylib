@@ -26,7 +26,7 @@
 *       #define RAYMATH_STATIC_INLINE
 *           Define static inline functions code, so #include header suffices for use.
 *           This may use up lots of memory.
-* 
+*
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
 *           Disables C++ operator overloads for raymath types.
 *

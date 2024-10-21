@@ -676,7 +676,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
                         chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
-                        
+
                         if (chh > fontSize) TRACELOG(LOG_WARNING, "FONT: Character [0x%08x] size is bigger than expected font size", ch);
 
                         // Load characters images

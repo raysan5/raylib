@@ -426,14 +426,14 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 {
 #if 0
     // Basic implementation, do not use it!
-    // For a sphere with 16 rings and 16 slices it requires 8640 cos()/sin() function calls! 
+    // For a sphere with 16 rings and 16 slices it requires 8640 cos()/sin() function calls!
     // New optimized version below only requires 4 cos()/sin() calls
-    
+
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
-        
+
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -488,7 +488,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 
             for (int i = 0; i < rings + 1; i++)
             {
-                for (int j = 0; j < slices; j++) 
+                for (int j = 0; j < slices; j++)
                 {
                     vertices[0] = vertices[2]; // Rotate around y axis to set up vertices for next face
                     vertices[1] = vertices[3];
@@ -1165,7 +1165,7 @@ bool IsModelValid(Model model)
         (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
         (model.meshCount > 0) &&            // Validate mesh count
         (model.materialCount > 0)) result = true; // Validate material count
-        
+
     // NOTE: Many elements could be validated from a model, including every model mesh VAO/VBOs
     // but some VBOs could not be used, it depends on Mesh vertex data
     for (int i = 0; i < model.meshCount; i++)
@@ -1179,7 +1179,7 @@ bool IsModelValid(Model model)
         if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }  // Vertex indices buffer not uploaded to GPU
         if ((model.meshes[i].boneIds != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIds buffer not uploaded to GPU
         if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; }  // Vertex boneWeights buffer not uploaded to GPU
-            
+
         // NOTE: Some OpenGL versions do not support VAO, so we don't check it
         //if (model.meshes[i].vaoId == 0) { result = false; break }
     }
@@ -1375,7 +1375,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, value, SHADER_ATTRIB_VEC4, 4);
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
     }
-    
+
     if (mesh->boneWeights != NULL)
     {
         // Enable vertex attribute: boneWeights (shader-location = 8)
@@ -1507,7 +1507,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    // Upload Bone Transforms    
+    // Upload Bone Transforms
     if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
@@ -1600,7 +1600,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
         }
-        
+
         // Bind mesh VBO data: vertex bone weights (shader-location = 7, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] != -1)
         {
@@ -1751,15 +1751,15 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
-    
+
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    // Upload Bone Transforms    
+    // Upload Bone Transforms
     if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
     }
 #endif
-    
+
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1845,7 +1845,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
         }
-        
+
         // Bind mesh VBO data: vertex bone weights (shader-location = 7, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] != -1)
         {
@@ -2205,7 +2205,7 @@ bool IsMaterialValid(Material material)
 
     if ((material.maps != NULL) &&      // Validate material contain some map
         (material.shader.id > 0)) result = true; // Validate material shader is valid
-        
+
     // TODO: Check if available maps contain loaded textures
 
     return result;
@@ -2368,20 +2368,20 @@ void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int fram
 {
     if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
     {
-        if (frame >= anim.frameCount) frame = frame%anim.frameCount;    
-    
+        if (frame >= anim.frameCount) frame = frame%anim.frameCount;
+
         for (int i = 0; i < model.meshCount; i++)
         {
             if (model.meshes[i].boneMatrices)
             {
                 assert(model.meshes[i].boneCount == anim.boneCount);
-              
+
                 for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
                 {
                     Vector3 inTranslation = model.bindPose[boneId].translation;
                     Quaternion inRotation = model.bindPose[boneId].rotation;
                     Vector3 inScale = model.bindPose[boneId].scale;
-                    
+
                     Vector3 outTranslation = anim.framePoses[frame][boneId].translation;
                     Quaternion outRotation = anim.framePoses[frame][boneId].rotation;
                     Vector3 outScale = anim.framePoses[frame][boneId].scale;
@@ -2392,15 +2392,15 @@ void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int fram
 
                     Vector3 boneTranslation = Vector3Add(
                         Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
-                        outRotation), outTranslation); 
+                        outRotation), outTranslation);
                     Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
                     Vector3 boneScale = Vector3Multiply(outScale, invScale);
-                    
+
                     Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
                         QuaternionToMatrix(boneRotation),
                         MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
                         MatrixScale(boneScale.x, boneScale.y, boneScale.z));
-                    
+
                     model.meshes[i].boneMatrices[boneId] = boneMatrix;
                 }
             }
@@ -4824,12 +4824,12 @@ static Model LoadIQM(const char *fileName)
     }
 
     BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
-    
+
     for (int i = 0; i < model.meshCount; i++)
     {
         model.meshes[i].boneCount = model.boneCount;
         model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
-        
+
         for (int j = 0; j < model.meshes[i].boneCount; j++)
         {
             model.meshes[i].boneMatrices[j] = MatrixIdentity();
@@ -5244,7 +5244,7 @@ static Model LoadGLTF(const char *fileName)
     ***********************************************************************************************/
 
     // Macro to simplify attributes loading code
-    #define LOAD_ATTRIBUTE(accesor, numComp, srcType, dstPtr) LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, srcType) 
+    #define LOAD_ATTRIBUTE(accesor, numComp, srcType, dstPtr) LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, srcType)
 
     #define LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, dstType) \
     { \
@@ -5732,7 +5732,7 @@ static Model LoadGLTF(const char *fileName)
 
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
                     }
-                    else 
+                    else
                     {
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data format not supported, use u16", fileName);
                     }
@@ -5920,11 +5920,11 @@ static Model LoadGLTF(const char *fileName)
                 {
                     memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
                 }
-                
+
                 // Bone Transform Matrices
                 model.meshes[meshIndex].boneCount = model.boneCount;
                 model.meshes[meshIndex].boneMatrices = RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
-                
+
                 for (int j = 0; j < model.meshes[meshIndex].boneCount; j++)
                 {
                     model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
@@ -6245,7 +6245,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                 RL_FREE(boneChannels);
             }
         }
-        
+
         if (data->skins_count > 1)
         {
             TRACELOG(LOG_WARNING, "MODEL: [%s] expected exactly one skin to load animation data from, but found %i", fileName, data->skins_count);
@@ -6701,7 +6701,7 @@ static Model LoadM3D(const char *fileName)
             {
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
-                
+
                 model.meshes[i].boneCount = model.boneCount;
                 model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
                 for (j = 0; j < model.meshes[i].boneCount; j++)

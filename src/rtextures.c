@@ -1007,7 +1007,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             // Apply aspect ratio compensation to wider side
             if (width > height) nx *= aspectRatio;
             else ny /= aspectRatio;
-            
+
             // Basic perlin noise implementation (not used)
             //float p = (stb_perlin_noise3(nx, ny, 0.0f, 0, 0, 0);
 
@@ -4457,7 +4457,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 
         if (source.width < 0) { flipX = true; source.width *= -1; }
         if (source.height < 0) source.y -= source.height;
-        
+
         if (dest.width < 0) dest.width *= -1;
         if (dest.height < 0) dest.height *= -1;
 
@@ -5079,10 +5079,10 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
 }
 
 // Get color lerp interpolation between two colors, factor [0.0f..1.0f]
-Color ColorLerp(Color color1, Color color2, float factor) 
-{ 
+Color ColorLerp(Color color1, Color color2, float factor)
+{
     Color color = { 0 };
-    
+
     if (factor < 0.0f) factor = 0.0f;
     else if (factor > 1.0f) factor = 1.0f;
 
