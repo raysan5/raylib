@@ -69,7 +69,6 @@ void CloseWindow(void);
     #define CloseWindow CloseWindow_win32
     #define ShowCursor __imp_ShowCursor
     #define _APISETSTRING_
-	__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #if defined(__APPLE__)
@@ -870,9 +869,8 @@ void PollInputEvents(void)
     //-----------------------------------------------------------------------------
     CORE.Window.resizedLastFrame = false;
 
-
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-    #define RGFW_HOLD_MOUSE			(1L<<2)
+    #define RGFW_HOLD_MOUSE     (1L<<2)
     if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
@@ -883,10 +881,8 @@ void PollInputEvents(void)
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
 
-    
-	while (RGFW_window_checkEvent(platform.window))
+    while (RGFW_window_checkEvent(platform.window))
     {
-
         if ((platform.window->event.type >= RGFW_jsButtonPressed) && (platform.window->event.type <= RGFW_jsAxisMove))
         {
             if (!CORE.Input.Gamepad.ready[platform.window->event.joystick])
@@ -1196,7 +1192,6 @@ void PollInputEvents(void)
     //-----------------------------------------------------------------------------
 }
 
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
@@ -1252,7 +1247,6 @@ int InitPlatform(void)
         If so, rcore_destkop_sdl should be updated too
     */
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-
 
     if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
 
