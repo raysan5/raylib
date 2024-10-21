@@ -76,33 +76,48 @@ fn emSdkSetupStep(b: *std.Build, emsdk: *std.Build.Dependency) !?*std.Build.Step
     }
 }
 
-/// A list of all flags from `src/config.h` that one may override
+/// A list of all flags and their corresponding values from `src/config.h` that one may override
 const config_h_flags = outer: {
     // Set this value higher if compile errors happen as `src/config.h` gets larger
     @setEvalBranchQuota(1 << 20);
 
     const config_h = @embedFile("src/config.h");
-    var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
+    var flags = [1][2][]const u8{.{ undefined, "1" }} ** (std.mem.count(u8, config_h, "\n") + 1);
+
+    const first_def = "#define CONFIG_H\n";
+    const first_line_idx = std.mem.indexOf(u8, config_h, first_def) orelse @compileError("Invalid `src/config.h`?");
 
     var i = 0;
-    var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
+    var lines = std.mem.tokenizeScalar(u8, config_h[first_line_idx + first_def.len ..], '\n');
     while (lines.next()) |line| {
-        if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-        if (std.mem.startsWith(u8, line, "//")) continue;
-        if (std.mem.startsWith(u8, line, "#if")) continue;
+        // Jump past `#if` lines until `#endif` is reached
+        if (std.mem.startsWith(u8, line, "#if")) {
+            // Count of `#if`s found without a delimiting `#endif`
+            var unpaired_if: u32 = 1;
+            while (unpaired_if != 0) {
+                const next_line = lines.next() orelse @compileError("src/config.h: `#endif` not found");
+                if (std.mem.startsWith(u8, next_line, "#if")) unpaired_if += 1;
+                if (std.mem.startsWith(u8, next_line, "#endif")) unpaired_if -= 1;
+            }
+        }
 
-        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-        flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-        flag = "-D" ++ flag; // Prepend with -D
+        // Ignore everything but `#define` lines
+        const prefix = "#define ";
+        if (!std.mem.startsWith(u8, line, prefix)) continue;
 
-        flags[i] = flag;
+        // Get space-separated strings
+        var strs = std.mem.tokenizeScalar(u8, line[prefix.len..], ' ');
+
+        flags[i][0] = strs.next() orelse @compileError("src/config.h: Flag not found: " ++ line);
+        if (strs.next()) |value| {
+            if (!std.mem.startsWith(u8, value, "//")) flags[i][1] = value;
+        }
+
         i += 1;
     }
 
     // Uncomment this to check what flags normally get passed
-    //@compileLog(flags[0..i].*);
+    //for (flags[0..i]) |flag| @compileLog(std.fmt.comptimePrint("{s}={s}", .{ flag[0], flag[1] }));
     break :outer flags[0..i].*;
 };
 
@@ -135,21 +150,32 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
         // Apply all relevant configs from `src/config.h` *except* the user-specified ones
         //
+        // Note: This entire loop might become unnecessary depending on https://github.com/raysan5/raylib/issues/4411
+        //
         // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
         // `m` corresponds roughly to the number of lines in `src/config.h`
         // `n` corresponds to the number of user-specified flags
-        outer: for (config_h_flags) |flag| {
+        outer: for (config_h_flags) |flag_val| {
+            const flag = flag_val[0];
+            const value = flag_val[1];
+
             // If a user already specified the flag, skip it
             config_iter.reset();
-            while (config_iter.next()) |config_flag| {
+            while (config_iter.next()) |user_flag| {
+                if (!std.mem.startsWith(u8, user_flag, "-D")) continue;
+                const u_flag_stripped = user_flag["-D".len..];
+
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
-                if (!std.mem.startsWith(u8, config_flag, flag)) continue;
-                if (config_flag.len == flag.len or config_flag[flag.len] == '=') continue :outer;
+                if (!std.mem.startsWith(u8, u_flag_stripped, flag)) continue;
+                if (u_flag_stripped.len == flag.len or u_flag_stripped[flag.len] == '=') continue :outer;
             }
 
             // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(b.allocator, flag);
+            try raylib_flags_arr.append(
+                b.allocator,
+                b.fmt("-D{s}={s}", .{ flag, value }),
+            );
         }
     }
 
