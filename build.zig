@@ -57,27 +57,12 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
     }
 }
 
-/// TODO: Once the minimum supported version is bumped to 0.14.0, it can be simplified again:
-/// https://github.com/raysan5/raylib/pull/4375#issuecomment-2408998315
-/// https://github.com/raysan5/raylib/blob/9b9c72eb0dc705cde194b053a366a40396acfb67/src/build.zig#L54-L56
-fn srcDir(b: *std.Build) []const u8 {
-    comptime {
-        const order = std.SemanticVersion.order;
-        const parse = std.SemanticVersion.parse;
-        if (order(parse(min_ver) catch unreachable, parse("0.14.0") catch unreachable) != .lt)
-            @compileError("Please take a look at this function again");
-    }
-
-    const src_file = std.fs.path.relative(b.allocator, ".", @src().file) catch @panic("OOM");
-    return std.fs.path.dirname(src_file) orelse ".";
-}
-
 /// A list of all flags from `src/config.h` that one may override
 const config_h_flags = outer: {
     // Set this value higher if compile errors happen as `src/config.h` gets larger
     @setEvalBranchQuota(1 << 20);
 
-    const config_h = @embedFile("config.h");
+    const config_h = @embedFile("src/config.h");
     var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
 
     var i = 0;
@@ -168,26 +153,26 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
-        raylib.addIncludePath(b.path(b.pathJoin(&.{ srcDir(b), "external/glfw/include" })));
+        raylib.addIncludePath(b.path("src/external/glfw/include"));
     }
 
     var c_source_files = try std.ArrayList([]const u8).initCapacity(b.allocator, 2);
-    c_source_files.appendSliceAssumeCapacity(&.{ "rcore.c", "utils.c" });
+    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c", "src/utils.c" });
 
     if (options.raudio) {
-        try c_source_files.append("raudio.c");
+        try c_source_files.append("src/raudio.c");
     }
     if (options.rmodels) {
-        try c_source_files.append("rmodels.c");
+        try c_source_files.append("src/rmodels.c");
     }
     if (options.rshapes) {
-        try c_source_files.append("rshapes.c");
+        try c_source_files.append("src/rshapes.c");
     }
     if (options.rtext) {
-        try c_source_files.append("rtext.c");
+        try c_source_files.append("src/rtext.c");
     }
     if (options.rtextures) {
-        try c_source_files.append("rtextures.c");
+        try c_source_files.append("src/rtextures.c");
     }
 
     if (options.opengl_version != .auto) {
@@ -196,7 +181,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
     switch (target.result.os.tag) {
         .windows => {
-            try c_source_files.append("rglfw.c");
+            try c_source_files.append("src/rglfw.c");
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
@@ -205,7 +190,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         },
         .linux => {
             if (options.platform != .drm) {
-                try c_source_files.append("rglfw.c");
+                try c_source_files.append("src/rglfw.c");
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
                 raylib.linkSystemLibrary("dl");
@@ -281,7 +266,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             // On macos rglfw.c include Objective-C files.
             try raylib_flags_arr.append(b.allocator, "-ObjC");
             raylib.root_module.addCSourceFile(.{
-                .file = b.path(b.pathJoin(&.{ srcDir(b), "rglfw.c" })),
+                .file = b.path("src/rglfw.c"),
                 .flags = raylib_flags_arr.items,
             });
             _ = raylib_flags_arr.pop();
@@ -315,7 +300,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     raylib.root_module.addCSourceFiles(.{
-        .root = b.path(srcDir(b)),
         .files = c_source_files.items,
         .flags = raylib_flags_arr.items,
     });
@@ -424,9 +408,9 @@ pub fn build(b: *std.Build) !void {
 
     const lib = try compileRaylib(b, target, optimize, Options.getOptions(b));
 
-    lib.installHeader(b.path(b.pathJoin(&.{ srcDir(b), "raylib.h" })), "raylib.h");
-    lib.installHeader(b.path(b.pathJoin(&.{ srcDir(b), "raymath.h" })), "raymath.h");
-    lib.installHeader(b.path(b.pathJoin(&.{ srcDir(b), "rlgl.h" })), "rlgl.h");
+    lib.installHeader(b.path("src/raylib.h"), "raylib.h");
+    lib.installHeader(b.path("src/raymath.h"), "raymath.h");
+    lib.installHeader(b.path("src/rlgl.h"), "rlgl.h");
 
     b.installArtifact(lib);
 }
@@ -437,7 +421,7 @@ fn waylandGenerate(
     comptime protocol: []const u8,
     comptime basename: []const u8,
 ) void {
-    const waylandDir = b.pathJoin(&.{ srcDir(b), "external/glfw/deps/wayland" });
+    const waylandDir = "src/external/glfw/deps/wayland";
     const protocolDir = b.pathJoin(&.{ waylandDir, protocol });
     const clientHeader = basename ++ ".h";
     const privateCode = basename ++ "-code.h";
