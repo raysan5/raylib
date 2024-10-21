@@ -15,14 +15,9 @@ comptime {
 // get the flags a second time when adding raygui
 var raylib_flags_arr: std.ArrayListUnmanaged([]const u8) = .{};
 
-/// we're not inside the actual build script recognized by the
-/// zig build system; use this type where one would otherwise
-/// use `@This()` when inside the actual entrypoint file.
-const BuildScript = @import("../build.zig");
-
 // This has been tested with zig version 0.12.0
 pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    const raylib_dep = b.dependencyFromBuildZig(BuildScript, .{
+    const raylib_dep = b.dependencyFromBuildZig(@This(), .{
         .target = target,
         .optimize = optimize,
         .raudio = options.raudio,
