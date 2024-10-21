@@ -2898,5 +2898,4 @@ inline const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
 //-------------------------------------------------------------------------------
 #endif  // C++ operators
 
-
 #endif  // RAYMATH_H
