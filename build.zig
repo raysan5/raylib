@@ -52,28 +52,40 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
     }
 }
 
-/// A list of all flags from `src/config.h` that one may override
+/// A list of all flags and their corresponding values from `src/config.h` that one may override
 const config_h_flags = outer: {
     // Set this value higher if compile errors happen as `src/config.h` gets larger
     @setEvalBranchQuota(1 << 20);
 
     const config_h = @embedFile("src/config.h");
-    var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
+    var flags: [std.mem.count(u8, config_h, "\n") + 1][2][]const u8 = undefined;
+
+    const first_def = "#define CONFIG_H\n";
+    const first_line_idx = std.mem.indexOf(u8, config_h, first_def) orelse @compileError("Invalid `src/config.h`?");
 
     var i = 0;
-    var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
+    var lines = std.mem.tokenizeScalar(u8, config_h[first_line_idx + first_def.len ..], '\n');
     while (lines.next()) |line| {
-        if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-        if (std.mem.startsWith(u8, line, "//")) continue;
-        if (std.mem.startsWith(u8, line, "#if")) continue;
+        // Jump past `#ifdef` and `#ifndef` lines
+        if (std.mem.startsWith(u8, line, "#ifdef ") or std.mem.startsWith(u8, line, "#ifndef ")) {
+            while (true) {
+                const next_line = lines.next() orelse @compileError("src/config.h: `#endif` not found");
+                if (std.mem.startsWith(u8, next_line, "#endif")) break;
+            }
+        }
 
-        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-        flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-        flag = "-D" ++ flag; // Prepend with -D
+        // Ignore everything but `#define` lines
+        const prefix = "#define ";
+        if (!std.mem.startsWith(u8, line, prefix)) continue;
 
-        flags[i] = flag;
+        // Get space-separated strings
+        var strs = std.mem.tokenizeScalar(u8, line[prefix.len..], ' ');
+        const flag = strs.next() orelse @compileError("src/config.h: Flag not found: " ++ line);
+
+        var value = strs.next() orelse "";
+        value = if (std.mem.startsWith(u8, value, "//")) "" else "=" ++ value;
+
+        flags[i] = .{ "-D" ++ flag, value };
         i += 1;
     }
 
@@ -114,8 +126,11 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
         // `m` corresponds roughly to the number of lines in `src/config.h`
         // `n` corresponds to the number of user-specified flags
-        outer: for (config_h_flags) |flag| {
+        outer: for (config_h_flags) |flag_val| {
+            const flag = flag_val[0];
+
             // If a user already specified the flag, skip it
+            config_iter.reset();
             while (config_iter.next()) |config_flag| {
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
@@ -124,7 +139,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
 
             // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(b.allocator, flag);
+            try raylib_flags_arr.append(
+                b.allocator,
+                std.mem.concat(b.allocator, u8, &flag_val) catch @panic("OOM"),
+            );
         }
     }
 
