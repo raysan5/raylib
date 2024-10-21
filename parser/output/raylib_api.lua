@@ -4418,12 +4418,13 @@ return {
     },
     {
       name = "SetGamepadVibration",
-      description = "Set gamepad vibration for both motors",
+      description = "Set gamepad vibration for both motors (duration in seconds)",
       returnType = "void",
       params = {
         {type = "int", name = "gamepad"},
         {type = "float", name = "leftMotor"},
-        {type = "float", name = "rightMotor"}
+        {type = "float", name = "rightMotor"},
+        {type = "float", name = "duration"}
       }
     },
     {

@@ -1217,10 +1217,11 @@
         <Function name="SetGamepadMappings" retType="int" paramCount="1" desc="Set internal gamepad mappings (SDL_GameControllerDB)">
             <Param type="const char *" name="mappings" desc="" />
         </Function>
-        <Function name="SetGamepadVibration" retType="void" paramCount="3" desc="Set gamepad vibration for both motors">
+        <Function name="SetGamepadVibration" retType="void" paramCount="4" desc="Set gamepad vibration for both motors (duration in seconds)">
             <Param type="int" name="gamepad" desc="" />
             <Param type="float" name="leftMotor" desc="" />
             <Param type="float" name="rightMotor" desc="" />
+            <Param type="float" name="duration" desc="" />
         </Function>
         <Function name="IsMouseButtonPressed" retType="bool" paramCount="1" desc="Check if a mouse button has been pressed once">
             <Param type="int" name="button" desc="" />

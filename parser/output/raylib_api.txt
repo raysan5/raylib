@@ -1942,13 +1942,14 @@ Function 177: SetGamepadMappings() (1 input parameters)
   Return type: int
   Description: Set internal gamepad mappings (SDL_GameControllerDB)
   Param[1]: mappings (type: const char *)
-Function 178: SetGamepadVibration() (3 input parameters)
+Function 178: SetGamepadVibration() (4 input parameters)
   Name: SetGamepadVibration
   Return type: void
-  Description: Set gamepad vibration for both motors
+  Description: Set gamepad vibration for both motors (duration in seconds)
   Param[1]: gamepad (type: int)
   Param[2]: leftMotor (type: float)
   Param[3]: rightMotor (type: float)
+  Param[4]: duration (type: float)
 Function 179: IsMouseButtonPressed() (1 input parameters)
   Name: IsMouseButtonPressed
   Return type: bool
