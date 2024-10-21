@@ -961,6 +961,7 @@ void SetGamepadVibration(int gamepad, float low, float high, int duration)
         if (low > 1.0f) low = 1.0f;
         if (high < 0.0f) high = 0.0f;
         if (high > 1.0f) high = 1.0f;
+        if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
 
         SDL_GameControllerRumble(platform.gamepad[gamepad], (Uint16)(low*65535.0f), (Uint16)(high*65535.0f), (Uint32)duration);
     }
