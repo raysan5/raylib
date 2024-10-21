@@ -82,25 +82,43 @@ const config_h_flags = outer: {
         var strs = std.mem.tokenizeScalar(u8, line[prefix.len..], ' ');
         const flag = strs.next() orelse @compileError("src/config.h: Flag not found: " ++ line);
 
-        var value = strs.next() orelse "";
-        value = if (std.mem.startsWith(u8, value, "//")) "" else "=" ++ value;
+        // Set to 1 if no value is provided
+        var value = strs.next() orelse "1";
+        value = if (std.mem.startsWith(u8, value, "//")) "1" else value;
 
-        flags[i] = .{ "-D" ++ flag, value };
+        flags[i] = .{ flag, value };
         i += 1;
     }
 
-    // Uncomment this to check what flags normally get passed
-    //@compileLog(flags[0..i].*);
     break :outer flags[0..i].*;
 };
 
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     raylib_flags_arr.clearRetainingCapacity();
 
-    const shared_flags = &[_][]const u8{
-        "-fPIC",
-        "-DBUILD_LIBTYPE_SHARED",
-    };
+    const raylib = if (options.shared)
+        b.addSharedLibrary(.{
+            .name = "raylib",
+            .target = target,
+            .optimize = optimize,
+        })
+    else
+        b.addStaticLibrary(.{
+            .name = "raylib",
+            .target = target,
+            .optimize = optimize,
+        });
+    raylib.linkLibC();
+
+    if (options.shared) {
+        const shared_flags = &[_][]const u8{
+            "-fPIC",
+            "-DBUILD_LIBTYPE_SHARED",
+        };
+
+        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
+    }
+
     try raylib_flags_arr.appendSlice(b.allocator, &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -128,41 +146,24 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         // `n` corresponds to the number of user-specified flags
         outer: for (config_h_flags) |flag_val| {
             const flag = flag_val[0];
+            const value = flag_val[1];
 
             // If a user already specified the flag, skip it
             config_iter.reset();
-            while (config_iter.next()) |config_flag| {
+            while (config_iter.next()) |config_flag_str| {
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
+                const prefix = "-D";
+                if (!std.mem.startsWith(u8, config_flag_str, prefix)) continue;
+                const config_flag = config_flag_str[prefix.len..];
                 if (!std.mem.startsWith(u8, config_flag, flag)) continue;
                 if (config_flag.len == flag.len or config_flag[flag.len] == '=') continue :outer;
             }
 
             // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(
-                b.allocator,
-                std.mem.concat(b.allocator, u8, &flag_val) catch @panic("OOM"),
-            );
+            raylib.root_module.addCMacro(flag, value);
         }
     }
-
-    if (options.shared) {
-        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
-    }
-
-    const raylib = if (options.shared)
-        b.addSharedLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        })
-    else
-        b.addStaticLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        });
-    raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
