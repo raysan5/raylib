@@ -324,8 +324,8 @@ void MaximizeWindow(void)
         platform.unmaximizedWidth = CORE.Window.screen.width;
         platform.unmaximizedHeight = CORE.Window.screen.height;
 
-        const int tabWidth = EM_ASM_INT( { return window.innerWidth;  }, 0);
-        const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
+        const int tabWidth = EM_ASM_INT( return window.innerWidth; );
+        const int tabHeight = EM_ASM_INT( return window.innerHeight; );
 
         if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
 
@@ -423,8 +423,8 @@ void SetWindowState(unsigned int flags)
             platform.unmaximizedWidth = CORE.Window.screen.width;
             platform.unmaximizedHeight = CORE.Window.screen.height;
 
-            const int tabWidth = EM_ASM_INT( { return window.innerWidth;  }, 0);
-            const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
+            const int tabWidth = EM_ASM_INT( return window.innerWidth; );
+            const int tabHeight = EM_ASM_INT( return window.innerHeight; );
 
             if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
 
@@ -1639,9 +1639,6 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 //     return 1; // The event was consumed by the callback handler
 // }
 
-EM_JS(int, GetWindowInnerWidth, (), { return window.innerWidth; });
-EM_JS(int, GetWindowInnerHeight, (), { return window.innerHeight; });
-
 // Register DOM element resize event
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
@@ -1650,8 +1647,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
     // This event is called whenever the window changes sizes,
     // so the size of the canvas object is explicitly retrieved below
-    int width = GetWindowInnerWidth();
-    int height = GetWindowInnerHeight();
+    int width = EM_ASM_INT( return window.innerWidth; );
+    int height = EM_ASM_INT( return window.innerHeight; );
 
     if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
     else if (width > (int)CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
