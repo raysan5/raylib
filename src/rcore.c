@@ -3307,6 +3307,7 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 // Set gamepad global deadzone
 void SetGamepadDeadzone(float deadzone)
 {
+    if (deadzone < 0.0f) deadzone = 0.0f;
     CORE.Input.Gamepad.globalDeadzone = deadzone;
 }
 
