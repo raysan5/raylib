@@ -42,53 +42,83 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 }
 
 fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
-    raylib.defineCMacro("PLATFORM_DESKTOP", null);
+    raylib.root_module.addCMacro("PLATFORM_DESKTOP", "1");
 
     switch (platform) {
-        .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
-        .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
-        .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
+        .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", "1"),
+        .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", "1"),
+        .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", "1"),
         else => {},
     }
 }
 
-/// A list of all flags from `src/config.h` that one may override
+/// A list of all flags and their corresponding values from `src/config.h` that one may override
 const config_h_flags = outer: {
     // Set this value higher if compile errors happen as `src/config.h` gets larger
     @setEvalBranchQuota(1 << 20);
 
     const config_h = @embedFile("src/config.h");
-    var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
+    var flags: [std.mem.count(u8, config_h, "\n") + 1][2][]const u8 = undefined;
+
+    const first_def = "#define CONFIG_H\n";
+    const first_line_idx = std.mem.indexOf(u8, config_h, first_def) orelse @compileError("Invalid `src/config.h`?");
 
     var i = 0;
-    var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
+    var lines = std.mem.tokenizeScalar(u8, config_h[first_line_idx + first_def.len ..], '\n');
     while (lines.next()) |line| {
-        if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-        if (std.mem.startsWith(u8, line, "//")) continue;
-        if (std.mem.startsWith(u8, line, "#if")) continue;
+        // Jump past `#ifdef` and `#ifndef` lines
+        if (std.mem.startsWith(u8, line, "#ifdef ") or std.mem.startsWith(u8, line, "#ifndef ")) {
+            while (true) {
+                const next_line = lines.next() orelse @compileError("src/config.h: `#endif` not found");
+                if (std.mem.startsWith(u8, next_line, "#endif")) break;
+            }
+        }
 
-        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
-        flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
-        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-        flag = "-D" ++ flag; // Prepend with -D
+        // Ignore everything but `#define` lines
+        const prefix = "#define ";
+        if (!std.mem.startsWith(u8, line, prefix)) continue;
 
-        flags[i] = flag;
+        // Get space-separated strings
+        var strs = std.mem.tokenizeScalar(u8, line[prefix.len..], ' ');
+        const flag = strs.next() orelse @compileError("src/config.h: Flag not found: " ++ line);
+
+        // Set to 1 if no value is provided
+        var value = strs.next() orelse "1";
+        if (std.mem.startsWith(u8, value, "//")) value = "1";
+
+        flags[i] = .{ flag, value };
         i += 1;
     }
 
-    // Uncomment this to check what flags normally get passed
-    //@compileLog(flags[0..i].*);
     break :outer flags[0..i].*;
 };
 
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     raylib_flags_arr.clearRetainingCapacity();
 
-    const shared_flags = &[_][]const u8{
-        "-fPIC",
-        "-DBUILD_LIBTYPE_SHARED",
-    };
+    const raylib = if (options.shared)
+        b.addSharedLibrary(.{
+            .name = "raylib",
+            .target = target,
+            .optimize = optimize,
+        })
+    else
+        b.addStaticLibrary(.{
+            .name = "raylib",
+            .target = target,
+            .optimize = optimize,
+        });
+    raylib.linkLibC();
+
+    if (options.shared) {
+        const shared_flags = &[_][]const u8{
+            "-fPIC",
+            "-DBUILD_LIBTYPE_SHARED",
+        };
+
+        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
+    }
+
     try raylib_flags_arr.appendSlice(b.allocator, &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -111,40 +141,31 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
         // Apply all relevant configs from `src/config.h` *except* the user-specified ones
         //
+        // Note: This entire loop might become unnecessary depending on https://github.com/raysan5/raylib/issues/4411
+        //
         // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
         // `m` corresponds roughly to the number of lines in `src/config.h`
         // `n` corresponds to the number of user-specified flags
-        outer: for (config_h_flags) |flag| {
+        outer: for (config_h_flags) |flag_val| {
+            const flag = flag_val[0];
+            const value = flag_val[1];
+
             // If a user already specified the flag, skip it
-            while (config_iter.next()) |config_flag| {
+            config_iter.reset();
+            while (config_iter.next()) |config_flag_str| {
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
+                const prefix = "-D";
+                if (!std.mem.startsWith(u8, config_flag_str, prefix)) continue;
+                const config_flag = config_flag_str[prefix.len..];
                 if (!std.mem.startsWith(u8, config_flag, flag)) continue;
                 if (config_flag.len == flag.len or config_flag[flag.len] == '=') continue :outer;
             }
 
             // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(b.allocator, flag);
+            raylib.root_module.addCMacro(flag, value);
         }
     }
-
-    if (options.shared) {
-        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
-    }
-
-    const raylib = if (options.shared)
-        b.addSharedLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        })
-    else
-        b.addStaticLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        });
-    raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
@@ -171,7 +192,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     if (options.opengl_version != .auto) {
-        raylib.defineCMacro(options.opengl_version.toCMacroStr(), null);
+        raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "1");
     }
 
     switch (target.result.os.tag) {
@@ -187,7 +208,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             if (options.platform != .drm) {
                 try c_source_files.append("src/rglfw.c");
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.root_module.addCMacro("_GLFW_X11", "1");
                     raylib.linkSystemLibrary("X11");
                     raylib.linkSystemLibrary("Xcursor");
                     raylib.linkSystemLibrary("Xext");
@@ -206,7 +227,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         , .{});
                         @panic("`wayland-scanner` not found");
                     };
-                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.root_module.addCMacro("_GLFW_WAYLAND", "1");
                     raylib.linkSystemLibrary("wayland-client");
                     raylib.linkSystemLibrary("xkbcommon");
                     waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
@@ -223,15 +244,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
-                    raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "1");
                 }
 
                 raylib.linkSystemLibrary("gbm");
                 raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
 
-                raylib.defineCMacro("PLATFORM_DRM", null);
-                raylib.defineCMacro("EGL_NO_X11", null);
-                raylib.defineCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
+                raylib.root_module.addCMacro("PLATFORM_DRM", "1");
+                raylib.root_module.addCMacro("EGL_NO_X11", "1");
+                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
@@ -266,9 +287,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
-            raylib.defineCMacro("PLATFORM_WEB", null);
+            raylib.root_module.addCMacro("PLATFORM_WEB", "1");
             if (options.opengl_version == .auto) {
-                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "1");
             }
 
             if (b.sysroot == null) {
