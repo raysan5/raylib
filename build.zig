@@ -186,16 +186,16 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .linux => {
             if (options.platform != .drm) {
                 try c_source_files.append("src/rglfw.c");
-                raylib.linkSystemLibrary("GL");
-                raylib.linkSystemLibrary("rt");
-                raylib.linkSystemLibrary("dl");
-                raylib.linkSystemLibrary("m");
-
-                raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
-                raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                     raylib.defineCMacro("_GLFW_X11", null);
                     raylib.linkSystemLibrary("X11");
+                    raylib.linkSystemLibrary("Xcursor");
+                    raylib.linkSystemLibrary("Xext");
+                    raylib.linkSystemLibrary("Xfixes");
+                    raylib.linkSystemLibrary("Xi");
+                    raylib.linkSystemLibrary("Xinerama");
+                    raylib.linkSystemLibrary("Xrandr");
+                    raylib.linkSystemLibrary("Xrender");
                 }
 
                 if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
@@ -208,8 +208,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     };
                     raylib.defineCMacro("_GLFW_WAYLAND", null);
                     raylib.linkSystemLibrary("wayland-client");
-                    raylib.linkSystemLibrary("wayland-cursor");
-                    raylib.linkSystemLibrary("wayland-egl");
                     raylib.linkSystemLibrary("xkbcommon");
                     waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
                     waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
@@ -228,14 +226,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
                 }
 
-                raylib.linkSystemLibrary("EGL");
-                raylib.linkSystemLibrary("drm");
                 raylib.linkSystemLibrary("gbm");
-                raylib.linkSystemLibrary("pthread");
-                raylib.linkSystemLibrary("rt");
-                raylib.linkSystemLibrary("m");
-                raylib.linkSystemLibrary("dl");
-                raylib.addIncludePath(.{ .cwd_relative = "/usr/include/libdrm" });
+                raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
 
                 raylib.defineCMacro("PLATFORM_DRM", null);
                 raylib.defineCMacro("EGL_NO_X11", null);
