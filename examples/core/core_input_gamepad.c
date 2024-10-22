@@ -20,9 +20,9 @@
 #include "raylib.h"
 
 // NOTE: Gamepad name ID depends on drivers and OS
-#define XBOX360_LEGACY_NAME_ID  "Xbox Controller"
-#define XBOX360_NAME_ID     "Xbox 360 Controller"
-#define PS3_NAME_ID         "Sony PLAYSTATION(R)3 Controller"
+#define XBOX_ALIAS_1 "xbox"
+#define XBOX_ALIAS_2 "x-box"
+#define PS_ALIAS     "playstation"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -67,7 +67,7 @@ int main(void)
             {
                 DrawText(TextFormat("GP%d: %s", gamepad, GetGamepadName(gamepad)), 10, 10, 10, BLACK);
 
-                if (TextIsEqual(GetGamepadName(gamepad), XBOX360_LEGACY_NAME_ID) || TextIsEqual(GetGamepadName(gamepad), XBOX360_NAME_ID))
+                if (TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_1) > -1 || TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_2) > -1)
                 {
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);
 
@@ -120,7 +120,7 @@ int main(void)
                     //DrawText(TextFormat("Xbox axis LT: %02.02f", GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_TRIGGER)), 10, 40, 10, BLACK);
                     //DrawText(TextFormat("Xbox axis RT: %02.02f", GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_RIGHT_TRIGGER)), 10, 60, 10, BLACK);
                 }
-                else if (TextIsEqual(GetGamepadName(gamepad), PS3_NAME_ID))
+                else if (TextFindIndex(TextToLower(GetGamepadName(gamepad)), PS_ALIAS) > -1)
                 {
                     DrawTexture(texPs3Pad, 0, 0, DARKGRAY);
 
