@@ -116,6 +116,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         // `n` corresponds to the number of user-specified flags
         outer: for (config_h_flags) |flag| {
             // If a user already specified the flag, skip it
+            config_iter.reset();
             while (config_iter.next()) |config_flag| {
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
