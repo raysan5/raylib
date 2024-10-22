@@ -81,6 +81,8 @@ int main(void)
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
+        characterModel.transform = MatrixTranslate(position.x, position.y, position.z);
+        UpdateModelAnimationBoneMatrices(characterModel, anim, animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -92,8 +94,6 @@ int main(void)
             BeginMode3D(camera);
             
                 // Draw character
-                characterModel.transform = MatrixTranslate(position.x, position.y, position.z);
-                UpdateModelAnimationBoneMatrices(characterModel, anim, animCurrentFrame);
                 DrawMesh(characterModel.meshes[0], characterModel.materials[1], characterModel.transform);
 
                 DrawGrid(10, 1.0f);
