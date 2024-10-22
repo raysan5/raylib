@@ -100,6 +100,8 @@
 // Show OpenGL extensions and capabilities detailed logs on init
 //#define RLGL_SHOW_GL_DETAILS_INFO              1
 
+#define RL_SUPPORT_MESH_GPU_SKINNING           1      // GPU skinning, comment if your GPU does not support more than 8 VBOs
+
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
 #define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)
 #define RL_DEFAULT_BATCH_DRAWCALLS           256      // Default number of batch draw calls (by state changes: mode, texture)
@@ -120,15 +122,10 @@
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT     4
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
-
-
-#define RL_SUPPORT_MESH_GPU_SKINNING                   // Remove this if your GPU does not support more than 8 VBOs
-
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+#if defined(RL_SUPPORT_MESH_GPU_SKINNING)
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
-
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
