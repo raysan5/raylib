@@ -42,12 +42,12 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 }
 
 fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
-    raylib.defineCMacro("PLATFORM_DESKTOP", null);
+    raylib.root_module.addCMacro("PLATFORM_DESKTOP", "1");
 
     switch (platform) {
-        .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
-        .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
-        .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
+        .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", "1"),
+        .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", "1"),
+        .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", "1"),
         else => {},
     }
 }
@@ -84,7 +84,7 @@ const config_h_flags = outer: {
 
         // Set to 1 if no value is provided
         var value = strs.next() orelse "1";
-        value = if (std.mem.startsWith(u8, value, "//")) "1" else value;
+        if (std.mem.startsWith(u8, value, "//")) value = "1";
 
         flags[i] = .{ flag, value };
         i += 1;
@@ -192,7 +192,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     if (options.opengl_version != .auto) {
-        raylib.defineCMacro(options.opengl_version.toCMacroStr(), null);
+        raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "1");
     }
 
     switch (target.result.os.tag) {
@@ -215,7 +215,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.root_module.addCMacro("_GLFW_X11", "1");
                     raylib.linkSystemLibrary("X11");
                 }
 
@@ -227,7 +227,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         , .{});
                         @panic("`wayland-scanner` not found");
                     };
-                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.root_module.addCMacro("_GLFW_WAYLAND", "1");
                     raylib.linkSystemLibrary("wayland-client");
                     raylib.linkSystemLibrary("wayland-cursor");
                     raylib.linkSystemLibrary("wayland-egl");
@@ -246,7 +246,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
-                    raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "1");
                 }
 
                 raylib.linkSystemLibrary("EGL");
@@ -258,9 +258,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.linkSystemLibrary("dl");
                 raylib.addIncludePath(.{ .cwd_relative = "/usr/include/libdrm" });
 
-                raylib.defineCMacro("PLATFORM_DRM", null);
-                raylib.defineCMacro("EGL_NO_X11", null);
-                raylib.defineCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
+                raylib.root_module.addCMacro("PLATFORM_DRM", "1");
+                raylib.root_module.addCMacro("EGL_NO_X11", "1");
+                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
@@ -295,9 +295,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
-            raylib.defineCMacro("PLATFORM_WEB", null);
+            raylib.root_module.addCMacro("PLATFORM_WEB", "1");
             if (options.opengl_version == .auto) {
-                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "1");
             }
 
             if (b.sysroot == null) {
