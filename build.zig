@@ -186,8 +186,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .linux => {
             if (options.platform != .drm) {
                 try c_source_files.append("src/rglfw.c");
+
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                     raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.linkSystemLibrary("GLX");
                     raylib.linkSystemLibrary("X11");
                     raylib.linkSystemLibrary("Xcursor");
                     raylib.linkSystemLibrary("Xext");
@@ -207,6 +209,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         @panic("`wayland-scanner` not found");
                     };
                     raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.linkSystemLibrary("EGL");
                     raylib.linkSystemLibrary("wayland-client");
                     raylib.linkSystemLibrary("xkbcommon");
                     waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
@@ -226,6 +229,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
                 }
 
+                raylib.linkSystemLibrary("EGL");
                 raylib.linkSystemLibrary("gbm");
                 raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
 
