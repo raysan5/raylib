@@ -349,7 +349,6 @@ typedef struct CoreData {
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];                // Gamepad axis state
-            float globalDeadzone;           // Global gamepad axis deadzone
 
         } Gamepad;
     } Input;
@@ -643,7 +642,6 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
-    CORE.Input.Gamepad.globalDeadzone = 0.1f;
 
     // Initialize platform
     //--------------------------------------------------------------
@@ -3297,18 +3295,10 @@ float GetGamepadAxisMovement(int gamepad, int axis)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS)) {
         float movement = value < 0.0f ? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
 
-        // 0.1f = GAMEPAD_AXIS_MINIMUM_DRIFT/DELTA
-        if (movement > value + CORE.Input.Gamepad.globalDeadzone) value = CORE.Input.Gamepad.axisState[gamepad][axis];
+        if (movement > value) value = CORE.Input.Gamepad.axisState[gamepad][axis];
     }
 
     return value;
-}
-
-// Set gamepad global deadzone
-void SetGamepadDeadzone(float deadzone)
-{
-    if (deadzone < 0.0f) deadzone = 0.0f;
-    CORE.Input.Gamepad.globalDeadzone = deadzone;
 }
 
 //----------------------------------------------------------------------------------
