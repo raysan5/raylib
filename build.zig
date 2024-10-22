@@ -141,6 +141,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
         // Apply all relevant configs from `src/config.h` *except* the user-specified ones
         //
+        // Note: This entire loop might become unnecessary depending on https://github.com/raysan5/raylib/issues/4411
+        //
         // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
         // `m` corresponds roughly to the number of lines in `src/config.h`
         // `n` corresponds to the number of user-specified flags
