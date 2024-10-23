@@ -10,10 +10,13 @@ KEY CHANGES:
  - New rcore backend: RGFW
  - New raylib project creator tool
  - New platforms supported: Dreamcast, N64, PSP, PSVita, PS4
- - GPU Skinning (all platforms and GPU versions)
+ - GPU Skinning (all platforms and GL versions)
  - raymath C++ operators
 
 Detailed changes:
+
+WIP: Last update with commit from 21-Oct-2024
+
 [rcore] ADDED: Working directory info at initialization by @Ray
 [rcore] ADDED: `MakeDirectory()`, supporting recursive directory creation by @Ray
 [rcore] ADDED: `ComputeSHA1()` (#4390) by @Anthony Carbajal
