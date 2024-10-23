@@ -1650,7 +1650,7 @@ void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color 
         prevNormal = normal;
     }
 
-#else   // !SUPPORT_SPLINE_MITTERS
+#else   // !SUPPORT_SPLINE_MITERS
 
     Vector2 delta = { 0 };
     float length = 0.0f;
