@@ -13,7 +13,7 @@ uniform vec4 colDiffuse;
 void main()
 {
     // Fetch color from texture sampler
-    vec4 texelColor = texture(texture0, fragTexCoord);
+    vec4 texelColor = texture2D(texture0, fragTexCoord);
     
     // Calculate final fragment color
     gl_FragColor = texelColor*colDiffuse*fragColor;
