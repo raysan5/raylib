@@ -119,7 +119,6 @@ int main(void)
                     if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) DrawCircle(536, 61, 20, RED);
 
                     // Draw axis: left joystick
-
                     Color leftGamepadColor = BLACK;
                     if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_THUMB)) leftGamepadColor = RED;
                     DrawCircle(259, 152, 39, BLACK);
@@ -195,9 +194,64 @@ int main(void)
                 }
                 else
                 {
-                    DrawText("- GENERIC GAMEPAD -", 280, 180, 20, GRAY);
 
-                    // TODO: Draw generic gamepad
+                    // Draw background: generic
+                    DrawRectangleRounded((Rectangle){ 175, 110, 460, 220}, 0.3f, 0.0f, DARKGRAY);
+
+                    // Draw buttons: basic
+                    DrawCircle(365, 170, 12, RAYWHITE);
+                    DrawCircle(405, 170, 12, RAYWHITE);
+                    DrawCircle(445, 170, 12, RAYWHITE);
+                    DrawCircle(516, 191, 17, RAYWHITE);
+                    DrawCircle(551, 227, 17, RAYWHITE);
+                    DrawCircle(587, 191, 17, RAYWHITE);
+                    DrawCircle(551, 155, 17, RAYWHITE);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_MIDDLE_LEFT)) DrawCircle(365, 170, 10, RED);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_MIDDLE)) DrawCircle(405, 170, 10, GREEN);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_MIDDLE_RIGHT)) DrawCircle(445, 170, 10, BLUE);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)) DrawCircle(516, 191, 15, GOLD);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) DrawCircle(551, 227, 15, BLUE);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) DrawCircle(587, 191, 15, GREEN);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_UP)) DrawCircle(551, 155, 15, RED);
+
+                    // Draw buttons: d-pad
+                    DrawRectangle(245, 145, 28, 88, RAYWHITE);
+                    DrawRectangle(215, 174, 88, 29, RAYWHITE);
+                    DrawRectangle(247, 147, 24, 84, BLACK);
+                    DrawRectangle(217, 176, 84, 25, BLACK);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP)) DrawRectangle(247, 147, 24, 29, RED);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) DrawRectangle(247, 147 + 54, 24, 30, RED);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) DrawRectangle(217, 176, 30, 25, RED);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) DrawRectangle(217 + 54, 176, 30, 25, RED);
+
+                    // Draw buttons: left-right back
+                    DrawRectangleRounded((Rectangle){ 215, 98, 100, 10}, 0.5f, 0.0f, DARKGRAY);
+                    DrawRectangleRounded((Rectangle){ 495, 98, 100, 10}, 0.5f, 0.0f, DARKGRAY);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) DrawRectangleRounded((Rectangle){ 215, 98, 100, 10}, 0.5f, 0.0f, RED);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) DrawRectangleRounded((Rectangle){ 495, 98, 100, 10}, 0.5f, 0.0f, RED);
+
+                    // Draw axis: left joystick
+                    Color leftGamepadColor = BLACK;
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_THUMB)) leftGamepadColor = RED;
+                    DrawCircle(345, 260, 40, BLACK);
+                    DrawCircle(345, 260, 35, LIGHTGRAY);
+                    DrawCircle(345 + (int)(leftStickX*20),
+                               260 + (int)(leftStickY*20), 25, leftGamepadColor);
+
+                    // Draw axis: right joystick
+                    Color rightGamepadColor = BLACK;
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_THUMB)) rightGamepadColor = RED;
+                    DrawCircle(465, 260, 40, BLACK);
+                    DrawCircle(465, 260, 35, LIGHTGRAY);
+                    DrawCircle(465 + (int)(rightStickX*20),
+                               260 + (int)(rightStickY*20), 25, rightGamepadColor);
+
+                    // Draw axis: left-right triggers
+                    DrawRectangle(151, 110, 15, 70, GRAY);
+                    DrawRectangle(644, 110, 15, 70, GRAY);
+                    DrawRectangle(151, 110, 15, (int)(((1 + leftTrigger)/2)*70), RED);
+                    DrawRectangle(644, 110, 15, (int)(((1 + rightTrigger)/2)*70), RED);
+
                 }
 
                 DrawText(TextFormat("DETECTED AXIS [%i]:", GetGamepadAxisCount(0)), 10, 50, 10, MAROON);
