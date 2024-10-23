@@ -5265,6 +5265,17 @@ return {
       }
     },
     {
+      name = "CheckCollisionCircleLine",
+      description = "Check if circle collides with a line created betweeen two points [p1] and [p2]",
+      returnType = "bool",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"}
+      }
+    },
+    {
       name = "CheckCollisionPointRec",
       description = "Check if point is inside rectangle",
       returnType = "bool",
@@ -5295,6 +5306,17 @@ return {
       }
     },
     {
+      name = "CheckCollisionPointLine",
+      description = "Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]",
+      returnType = "bool",
+      params = {
+        {type = "Vector2", name = "point"},
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"},
+        {type = "int", name = "threshold"}
+      }
+    },
+    {
       name = "CheckCollisionPointPoly",
       description = "Check if point is within a polygon described by array of vertices",
       returnType = "bool",
@@ -5314,28 +5336,6 @@ return {
         {type = "Vector2", name = "startPos2"},
         {type = "Vector2", name = "endPos2"},
         {type = "Vector2 *", name = "collisionPoint"}
-      }
-    },
-    {
-      name = "CheckCollisionPointLine",
-      description = "Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]",
-      returnType = "bool",
-      params = {
-        {type = "Vector2", name = "point"},
-        {type = "Vector2", name = "p1"},
-        {type = "Vector2", name = "p2"},
-        {type = "int", name = "threshold"}
-      }
-    },
-    {
-      name = "CheckCollisionCircleLine",
-      description = "Check if circle collides with a line created betweeen two points [p1] and [p2]",
-      returnType = "bool",
-      params = {
-        {type = "Vector2", name = "center"},
-        {type = "float", name = "radius"},
-        {type = "Vector2", name = "p1"},
-        {type = "Vector2", name = "p2"}
       }
     },
     {

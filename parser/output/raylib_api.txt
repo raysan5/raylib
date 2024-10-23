@@ -2577,20 +2577,28 @@ Function 265: CheckCollisionCircleRec() (3 input parameters)
   Param[1]: center (type: Vector2)
   Param[2]: radius (type: float)
   Param[3]: rec (type: Rectangle)
-Function 266: CheckCollisionPointRec() (2 input parameters)
+Function 266: CheckCollisionCircleLine() (4 input parameters)
+  Name: CheckCollisionCircleLine
+  Return type: bool
+  Description: Check if circle collides with a line created betweeen two points [p1] and [p2]
+  Param[1]: center (type: Vector2)
+  Param[2]: radius (type: float)
+  Param[3]: p1 (type: Vector2)
+  Param[4]: p2 (type: Vector2)
+Function 267: CheckCollisionPointRec() (2 input parameters)
   Name: CheckCollisionPointRec
   Return type: bool
   Description: Check if point is inside rectangle
   Param[1]: point (type: Vector2)
   Param[2]: rec (type: Rectangle)
-Function 267: CheckCollisionPointCircle() (3 input parameters)
+Function 268: CheckCollisionPointCircle() (3 input parameters)
   Name: CheckCollisionPointCircle
   Return type: bool
   Description: Check if point is inside circle
   Param[1]: point (type: Vector2)
   Param[2]: center (type: Vector2)
   Param[3]: radius (type: float)
-Function 268: CheckCollisionPointTriangle() (4 input parameters)
+Function 269: CheckCollisionPointTriangle() (4 input parameters)
   Name: CheckCollisionPointTriangle
   Return type: bool
   Description: Check if point is inside a triangle
@@ -2598,14 +2606,22 @@ Function 268: CheckCollisionPointTriangle() (4 input parameters)
   Param[2]: p1 (type: Vector2)
   Param[3]: p2 (type: Vector2)
   Param[4]: p3 (type: Vector2)
-Function 269: CheckCollisionPointPoly() (3 input parameters)
+Function 270: CheckCollisionPointLine() (4 input parameters)
+  Name: CheckCollisionPointLine
+  Return type: bool
+  Description: Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
+  Param[1]: point (type: Vector2)
+  Param[2]: p1 (type: Vector2)
+  Param[3]: p2 (type: Vector2)
+  Param[4]: threshold (type: int)
+Function 271: CheckCollisionPointPoly() (3 input parameters)
   Name: CheckCollisionPointPoly
   Return type: bool
   Description: Check if point is within a polygon described by array of vertices
   Param[1]: point (type: Vector2)
   Param[2]: points (type: const Vector2 *)
   Param[3]: pointCount (type: int)
-Function 270: CheckCollisionLines() (5 input parameters)
+Function 272: CheckCollisionLines() (5 input parameters)
   Name: CheckCollisionLines
   Return type: bool
   Description: Check the collision between two lines defined by two points each, returns collision point by reference
@@ -2614,22 +2630,6 @@ Function 270: CheckCollisionLines() (5 input parameters)
   Param[3]: startPos2 (type: Vector2)
   Param[4]: endPos2 (type: Vector2)
   Param[5]: collisionPoint (type: Vector2 *)
-Function 271: CheckCollisionPointLine() (4 input parameters)
-  Name: CheckCollisionPointLine
-  Return type: bool
-  Description: Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
-  Param[1]: point (type: Vector2)
-  Param[2]: p1 (type: Vector2)
-  Param[3]: p2 (type: Vector2)
-  Param[4]: threshold (type: int)
-Function 272: CheckCollisionCircleLine() (4 input parameters)
-  Name: CheckCollisionCircleLine
-  Return type: bool
-  Description: Check if circle collides with a line created betweeen two points [p1] and [p2]
-  Param[1]: center (type: Vector2)
-  Param[2]: radius (type: float)
-  Param[3]: p1 (type: Vector2)
-  Param[4]: p2 (type: Vector2)
 Function 273: GetCollisionRec() (2 input parameters)
   Name: GetCollisionRec
   Return type: Rectangle

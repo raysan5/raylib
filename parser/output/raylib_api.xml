@@ -1659,6 +1659,12 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
         </Function>
+        <Function name="CheckCollisionCircleLine" retType="bool" paramCount="4" desc="Check if circle collides with a line created betweeen two points [p1] and [p2]">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+        </Function>
         <Function name="CheckCollisionPointRec" retType="bool" paramCount="2" desc="Check if point is inside rectangle">
             <Param type="Vector2" name="point" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
@@ -1674,6 +1680,12 @@
             <Param type="Vector2" name="p2" desc="" />
             <Param type="Vector2" name="p3" desc="" />
         </Function>
+        <Function name="CheckCollisionPointLine" retType="bool" paramCount="4" desc="Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]">
+            <Param type="Vector2" name="point" desc="" />
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="int" name="threshold" desc="" />
+        </Function>
         <Function name="CheckCollisionPointPoly" retType="bool" paramCount="3" desc="Check if point is within a polygon described by array of vertices">
             <Param type="Vector2" name="point" desc="" />
             <Param type="const Vector2 *" name="points" desc="" />
@@ -1685,18 +1697,6 @@
             <Param type="Vector2" name="startPos2" desc="" />
             <Param type="Vector2" name="endPos2" desc="" />
             <Param type="Vector2 *" name="collisionPoint" desc="" />
-        </Function>
-        <Function name="CheckCollisionPointLine" retType="bool" paramCount="4" desc="Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]">
-            <Param type="Vector2" name="point" desc="" />
-            <Param type="Vector2" name="p1" desc="" />
-            <Param type="Vector2" name="p2" desc="" />
-            <Param type="int" name="threshold" desc="" />
-        </Function>
-        <Function name="CheckCollisionCircleLine" retType="bool" paramCount="4" desc="Check if circle collides with a line created betweeen two points [p1] and [p2]">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="Vector2" name="p1" desc="" />
-            <Param type="Vector2" name="p2" desc="" />
         </Function>
         <Function name="GetCollisionRec" retType="Rectangle" paramCount="2" desc="Get collision rectangle for two rectangles collision">
             <Param type="Rectangle" name="rec1" desc="" />
