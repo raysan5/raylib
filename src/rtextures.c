@@ -4176,7 +4176,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
         // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
         // one after the other (that's a vertical image), following convention: +X, -X, +Y, -Y, +Z, -Z
-        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
+        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format, faces.mipmaps);
 
         if (cubemap.id != 0)
         {
