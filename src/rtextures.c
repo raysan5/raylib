@@ -1111,8 +1111,7 @@ Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
 
-#if defined(SUPPORT_MODULE_RTEXT)
-    int textLength = TextLength(text);
+    int textLength = (int)strlen(text);
     int imageViewSize = width*height;
 
     image.width = width;
@@ -1122,10 +1121,6 @@ Image GenImageText(int width, int height, const char *text)
     image.mipmaps = 1;
 
     memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
-#else
-    TRACELOG(LOG_WARNING, "IMAGE: GenImageText() requires module: rtext");
-    image = GenImageColor(width, height, BLACK);     // Generating placeholder black image rectangle
-#endif
 
     return image;
 }
