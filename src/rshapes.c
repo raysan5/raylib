@@ -808,21 +808,45 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
     Matrix mat = rlGetMatrixModelview();
-    float zoomElement = 0.5f / mat.m0;
+    float zoomFactor = 0.5f/mat.m0;
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f((float)posX - zoomElement, (float)posY);
-        rlVertex2f((float)posX + (float)width + zoomElement, (float)posY);
+        rlVertex2f((float)posX - zoomFactor, (float)posY);
+        rlVertex2f((float)posX + (float)width + zoomFactor, (float)posY);
 
-        rlVertex2f((float)posX + (float)width, (float)posY - zoomElement);
-        rlVertex2f((float)posX + (float)width, (float)posY + (float)height + zoomElement);
+        rlVertex2f((float)posX + (float)width, (float)posY - zoomFactor);
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height + zoomFactor);
 
-        rlVertex2f((float)posX + (float)width + zoomElement, (float)posY + (float)height);
-        rlVertex2f((float)posX - zoomElement, (float)posY + (float)height);
+        rlVertex2f((float)posX + (float)width + zoomFactor, (float)posY + (float)height);
+        rlVertex2f((float)posX - zoomFactor, (float)posY + (float)height);
 
-        rlVertex2f((float)posX, (float)posY + (float)height + zoomElement);
-        rlVertex2f((float)posX, (float)posY - zoomElement);
+        rlVertex2f((float)posX, (float)posY + (float)height + zoomFactor);
+        rlVertex2f((float)posX, (float)posY - zoomFactor);
     rlEnd();
+/*
+// Previous implementation, it has issues... but it does not require view matrix...
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+    DrawRectangle(posX, posY, width, 1, color);
+    DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
+    DrawRectangle(posX, posY + height - 1, width, 1, color);
+    DrawRectangle(posX, posY + 1, 1, height - 2, color);
+#else
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2f((float)posX, (float)posY);
+        rlVertex2f((float)posX + (float)width, (float)posY + 1);
+
+        rlVertex2f((float)posX + (float)width, (float)posY + 1);
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
+
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
+        rlVertex2f((float)posX + 1, (float)posY + (float)height);
+
+        rlVertex2f((float)posX + 1, (float)posY + (float)height);
+        rlVertex2f((float)posX + 1, (float)posY + 1);
+    rlEnd();
+//#endif
+*/
 }
 
 // Draw rectangle outline with extended parameters
