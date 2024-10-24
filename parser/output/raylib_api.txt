@@ -1170,7 +1170,7 @@ Function 034: GetMonitorCount() (0 input parameters)
 Function 035: GetCurrentMonitor() (0 input parameters)
   Name: GetCurrentMonitor
   Return type: int
-  Description: Get primary system monitor
+  Description: Get current monitor where window is placed
   No input parameters
 Function 036: GetMonitorPosition() (1 input parameters)
   Name: GetMonitorPosition
