@@ -2395,22 +2395,16 @@ void ImageMipmaps(Image *image)
         else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps required memory could not be allocated");
 
         // Pointer to allocated memory point where store next mipmap level data
-        unsigned char *nextmip = (unsigned char *)image->data + GetPixelDataSize(image->width, image->height, image->format);
+        unsigned char *nextmip = image->data;
 
-        mipWidth = image->width/2;
-        mipHeight = image->height/2;
+        mipWidth = image->width;
+        mipHeight = image->height;
         mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
         Image imCopy = ImageCopy(*image);
 
         for (int i = 1; i < mipCount; i++)
         {
-            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
-
-            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
-
-            memcpy(nextmip, imCopy.data, mipSize);
             nextmip += mipSize;
-            image->mipmaps++;
 
             mipWidth /= 2;
             mipHeight /= 2;
@@ -2420,9 +2414,20 @@ void ImageMipmaps(Image *image)
             if (mipHeight < 1) mipHeight = 1;
 
             mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
+
+            if (i < image->mipmaps)
+                continue;
+
+            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
+
+            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
+
+            memcpy(nextmip, imCopy.data, mipSize);
         }
 
         UnloadImage(imCopy);
+
+        image->mipmaps = mipCount;
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps already available");
 }
