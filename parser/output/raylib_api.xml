@@ -595,13 +595,12 @@
             <Value name="TEXTURE_WRAP_MIRROR_REPEAT" integer="2" desc="Mirrors and repeats the texture in tiled mode" />
             <Value name="TEXTURE_WRAP_MIRROR_CLAMP" integer="3" desc="Mirrors and clamps to border the texture in tiled mode" />
         </Enum>
-        <Enum name="CubemapLayout" valueCount="6" desc="Cubemap layouts">
+        <Enum name="CubemapLayout" valueCount="5" desc="Cubemap layouts">
             <Value name="CUBEMAP_LAYOUT_AUTO_DETECT" integer="0" desc="Automatically detect layout type" />
             <Value name="CUBEMAP_LAYOUT_LINE_VERTICAL" integer="1" desc="Layout is defined by a vertical line with faces" />
             <Value name="CUBEMAP_LAYOUT_LINE_HORIZONTAL" integer="2" desc="Layout is defined by a horizontal line with faces" />
             <Value name="CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR" integer="3" desc="Layout is defined by a 3x4 cross with cubemap faces" />
             <Value name="CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE" integer="4" desc="Layout is defined by a 4x3 cross with cubemap faces" />
-            <Value name="CUBEMAP_LAYOUT_PANORAMA" integer="5" desc="Layout is defined by a panorama image (equirrectangular map)" />
         </Enum>
         <Enum name="FontType" valueCount="3" desc="Font type, defines generation method">
             <Value name="FONT_DEFAULT" integer="0" desc="Default font generation, anti-aliased" />

@@ -2839,11 +2839,6 @@ return {
           name = "CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE",
           value = 4,
           description = "Layout is defined by a 4x3 cross with cubemap faces"
-        },
-        {
-          name = "CUBEMAP_LAYOUT_PANORAMA",
-          value = 5,
-          description = "Layout is defined by a panorama image (equirrectangular map)"
         }
       }
     },
