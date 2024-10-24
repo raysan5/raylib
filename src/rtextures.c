@@ -2390,22 +2390,16 @@ void ImageMipmaps(Image *image)
         else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps required memory could not be allocated");
 
         // Pointer to allocated memory point where store next mipmap level data
-        unsigned char *nextmip = (unsigned char *)image->data + GetPixelDataSize(image->width, image->height, image->format);
+        unsigned char *nextmip = image->data;
 
-        mipWidth = image->width/2;
-        mipHeight = image->height/2;
+        mipWidth = image->width;
+        mipHeight = image->height;
         mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
         Image imCopy = ImageCopy(*image);
 
         for (int i = 1; i < mipCount; i++)
         {
-            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
-
-            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
-
-            memcpy(nextmip, imCopy.data, mipSize);
             nextmip += mipSize;
-            image->mipmaps++;
 
             mipWidth /= 2;
             mipHeight /= 2;
@@ -2415,9 +2409,20 @@ void ImageMipmaps(Image *image)
             if (mipHeight < 1) mipHeight = 1;
 
             mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
+
+            if (i < image->mipmaps)
+                continue;
+
+            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
+
+            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
+
+            memcpy(nextmip, imCopy.data, mipSize);
         }
 
         UnloadImage(imCopy);
+
+        image->mipmaps = mipCount;
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps already available");
 }
@@ -3906,7 +3911,6 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
         (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
 
-    if (dst->mipmaps > 1) TRACELOG(LOG_WARNING, "Image drawing only applied to base mipmap level");
     if (dst->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
     else
     {
@@ -4019,6 +4023,34 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         }
 
         if (useSrcMod) UnloadImage(srcMod);     // Unload source modified image
+
+        if (dst->mipmaps > 1 && src.mipmaps > 1) {
+            Image mipmapDst = *dst;
+            mipmapDst.data = (char *) mipmapDst.data + GetPixelDataSize(mipmapDst.width, mipmapDst.height, mipmapDst.format);
+            mipmapDst.width /= 2;
+            mipmapDst.height /= 2;
+            mipmapDst.mipmaps--;
+
+            Image mipmapSrc = src;
+            mipmapSrc.data = (char *) mipmapSrc.data + GetPixelDataSize(mipmapSrc.width, mipmapSrc.height, mipmapSrc.format);
+            mipmapSrc.width /= 2;
+            mipmapSrc.height /= 2;
+            mipmapSrc.mipmaps--;
+
+            Rectangle mipmapSrcRec = srcRec;
+            mipmapSrcRec.width /= 2;
+            mipmapSrcRec.height /= 2;
+            mipmapSrcRec.x /= 2;
+            mipmapSrcRec.y /= 2;
+
+            Rectangle mipmapDstRec = dstRec;
+            mipmapDstRec.width /= 2;
+            mipmapDstRec.height /= 2;
+            mipmapDstRec.x /= 2;
+            mipmapDstRec.y /= 2;
+
+            ImageDraw(&mipmapDst, mipmapSrc, mipmapSrcRec, mipmapDstRec, tint);
+        }
     }
 }
 
@@ -4162,6 +4194,9 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             faces = GenImageColor(size, size*6, MAGENTA);
             ImageFormat(&faces, image.format);
 
+            ImageMipmaps(&image);
+            ImageMipmaps(&faces);
+
             // NOTE: Image formatting does not work with compressed textures
 
             for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
@@ -4169,7 +4204,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
         // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
         // one after the other (that's a vertical image), following convention: +X, -X, +Y, -Y, +Z, -Z
-        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
+        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format, faces.mipmaps);
 
         if (cubemap.id != 0)
         {

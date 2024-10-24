@@ -191,7 +191,7 @@ static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int s
     // STEP 1: Setup framebuffer
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
-    cubemap.id = rlLoadTextureCubemap(0, size, format);
+    cubemap.id = rlLoadTextureCubemap(0, size, format, 1);
 
     unsigned int fbo = rlLoadFramebuffer();
     rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
