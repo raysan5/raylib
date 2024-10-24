@@ -5,7 +5,7 @@
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="5.5-dev" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="5.5" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -688,46 +688,46 @@
         </Function>
         <Function name="IsWindowFullscreen" retType="bool" paramCount="0" desc="Check if window is currently fullscreen">
         </Function>
-        <Function name="IsWindowHidden" retType="bool" paramCount="0" desc="Check if window is currently hidden (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowHidden" retType="bool" paramCount="0" desc="Check if window is currently hidden">
         </Function>
-        <Function name="IsWindowMinimized" retType="bool" paramCount="0" desc="Check if window is currently minimized (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowMinimized" retType="bool" paramCount="0" desc="Check if window is currently minimized">
         </Function>
-        <Function name="IsWindowMaximized" retType="bool" paramCount="0" desc="Check if window is currently maximized (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowMaximized" retType="bool" paramCount="0" desc="Check if window is currently maximized">
         </Function>
-        <Function name="IsWindowFocused" retType="bool" paramCount="0" desc="Check if window is currently focused (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowFocused" retType="bool" paramCount="0" desc="Check if window is currently focused">
         </Function>
         <Function name="IsWindowResized" retType="bool" paramCount="0" desc="Check if window has been resized last frame">
         </Function>
         <Function name="IsWindowState" retType="bool" paramCount="1" desc="Check if one specific window flag is enabled">
             <Param type="unsigned int" name="flag" desc="" />
         </Function>
-        <Function name="SetWindowState" retType="void" paramCount="1" desc="Set window configuration state using flags (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowState" retType="void" paramCount="1" desc="Set window configuration state using flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
         <Function name="ClearWindowState" retType="void" paramCount="1" desc="Clear window configuration state flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
-        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)">
+        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed, resizes monitor to match window resolution">
         </Function>
-        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)">
+        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed, resizes window to match monitor resolution">
         </Function>
-        <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable (only PLATFORM_DESKTOP)">
+        <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable">
         </Function>
-        <Function name="MinimizeWindow" retType="void" paramCount="0" desc="Set window state: minimized, if resizable (only PLATFORM_DESKTOP)">
+        <Function name="MinimizeWindow" retType="void" paramCount="0" desc="Set window state: minimized, if resizable">
         </Function>
-        <Function name="RestoreWindow" retType="void" paramCount="0" desc="Set window state: not minimized/maximized (only PLATFORM_DESKTOP)">
+        <Function name="RestoreWindow" retType="void" paramCount="0" desc="Set window state: not minimized/maximized">
         </Function>
-        <Function name="SetWindowIcon" retType="void" paramCount="1" desc="Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)">
+        <Function name="SetWindowIcon" retType="void" paramCount="1" desc="Set icon for window (single image, RGBA 32bit)">
             <Param type="Image" name="image" desc="" />
         </Function>
-        <Function name="SetWindowIcons" retType="void" paramCount="2" desc="Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)">
+        <Function name="SetWindowIcons" retType="void" paramCount="2" desc="Set icon for window (multiple images, RGBA 32bit)">
             <Param type="Image *" name="images" desc="" />
             <Param type="int" name="count" desc="" />
         </Function>
-        <Function name="SetWindowTitle" retType="void" paramCount="1" desc="Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)">
+        <Function name="SetWindowTitle" retType="void" paramCount="1" desc="Set title for window">
             <Param type="const char *" name="title" desc="" />
         </Function>
-        <Function name="SetWindowPosition" retType="void" paramCount="2" desc="Set window position on screen (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowPosition" retType="void" paramCount="2" desc="Set window position on screen">
             <Param type="int" name="x" desc="" />
             <Param type="int" name="y" desc="" />
         </Function>
@@ -746,10 +746,10 @@
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
         </Function>
-        <Function name="SetWindowOpacity" retType="void" paramCount="1" desc="Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowOpacity" retType="void" paramCount="1" desc="Set window opacity [0.0f..1.0f]">
             <Param type="float" name="opacity" desc="" />
         </Function>
-        <Function name="SetWindowFocused" retType="void" paramCount="0" desc="Set window focused (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowFocused" retType="void" paramCount="0" desc="Set window focused">
         </Function>
         <Function name="GetWindowHandle" retType="void *" paramCount="0" desc="Get native window handle">
         </Function>
@@ -1163,7 +1163,7 @@
         <Function name="IsKeyPressed" retType="bool" paramCount="1" desc="Check if a key has been pressed once">
             <Param type="int" name="key" desc="" />
         </Function>
-        <Function name="IsKeyPressedRepeat" retType="bool" paramCount="1" desc="Check if a key has been pressed again (Only PLATFORM_DESKTOP)">
+        <Function name="IsKeyPressedRepeat" retType="bool" paramCount="1" desc="Check if a key has been pressed again">
             <Param type="int" name="key" desc="" />
         </Function>
         <Function name="IsKeyDown" retType="bool" paramCount="1" desc="Check if a key is being pressed">

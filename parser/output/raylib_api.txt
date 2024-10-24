@@ -24,7 +24,7 @@ Define 004: RAYLIB_VERSION_PATCH
 Define 005: RAYLIB_VERSION
   Name: RAYLIB_VERSION
   Type: STRING
-  Value: "5.5-dev"
+  Value: "5.5"
   Description: 
 Define 006: __declspec(x)
   Name: __declspec(x)
@@ -1020,22 +1020,22 @@ Function 005: IsWindowFullscreen() (0 input parameters)
 Function 006: IsWindowHidden() (0 input parameters)
   Name: IsWindowHidden
   Return type: bool
-  Description: Check if window is currently hidden (only PLATFORM_DESKTOP)
+  Description: Check if window is currently hidden
   No input parameters
 Function 007: IsWindowMinimized() (0 input parameters)
   Name: IsWindowMinimized
   Return type: bool
-  Description: Check if window is currently minimized (only PLATFORM_DESKTOP)
+  Description: Check if window is currently minimized
   No input parameters
 Function 008: IsWindowMaximized() (0 input parameters)
   Name: IsWindowMaximized
   Return type: bool
-  Description: Check if window is currently maximized (only PLATFORM_DESKTOP)
+  Description: Check if window is currently maximized
   No input parameters
 Function 009: IsWindowFocused() (0 input parameters)
   Name: IsWindowFocused
   Return type: bool
-  Description: Check if window is currently focused (only PLATFORM_DESKTOP)
+  Description: Check if window is currently focused
   No input parameters
 Function 010: IsWindowResized() (0 input parameters)
   Name: IsWindowResized
@@ -1050,7 +1050,7 @@ Function 011: IsWindowState() (1 input parameters)
 Function 012: SetWindowState() (1 input parameters)
   Name: SetWindowState
   Return type: void
-  Description: Set window configuration state using flags (only PLATFORM_DESKTOP)
+  Description: Set window configuration state using flags
   Param[1]: flags (type: unsigned int)
 Function 013: ClearWindowState() (1 input parameters)
   Name: ClearWindowState
@@ -1060,48 +1060,48 @@ Function 013: ClearWindowState() (1 input parameters)
 Function 014: ToggleFullscreen() (0 input parameters)
   Name: ToggleFullscreen
   Return type: void
-  Description: Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)
+  Description: Toggle window state: fullscreen/windowed, resizes monitor to match window resolution
   No input parameters
 Function 015: ToggleBorderlessWindowed() (0 input parameters)
   Name: ToggleBorderlessWindowed
   Return type: void
-  Description: Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)
+  Description: Toggle window state: borderless windowed, resizes window to match monitor resolution
   No input parameters
 Function 016: MaximizeWindow() (0 input parameters)
   Name: MaximizeWindow
   Return type: void
-  Description: Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
+  Description: Set window state: maximized, if resizable
   No input parameters
 Function 017: MinimizeWindow() (0 input parameters)
   Name: MinimizeWindow
   Return type: void
-  Description: Set window state: minimized, if resizable (only PLATFORM_DESKTOP)
+  Description: Set window state: minimized, if resizable
   No input parameters
 Function 018: RestoreWindow() (0 input parameters)
   Name: RestoreWindow
   Return type: void
-  Description: Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
+  Description: Set window state: not minimized/maximized
   No input parameters
 Function 019: SetWindowIcon() (1 input parameters)
   Name: SetWindowIcon
   Return type: void
-  Description: Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)
+  Description: Set icon for window (single image, RGBA 32bit)
   Param[1]: image (type: Image)
 Function 020: SetWindowIcons() (2 input parameters)
   Name: SetWindowIcons
   Return type: void
-  Description: Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)
+  Description: Set icon for window (multiple images, RGBA 32bit)
   Param[1]: images (type: Image *)
   Param[2]: count (type: int)
 Function 021: SetWindowTitle() (1 input parameters)
   Name: SetWindowTitle
   Return type: void
-  Description: Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
+  Description: Set title for window
   Param[1]: title (type: const char *)
 Function 022: SetWindowPosition() (2 input parameters)
   Name: SetWindowPosition
   Return type: void
-  Description: Set window position on screen (only PLATFORM_DESKTOP)
+  Description: Set window position on screen
   Param[1]: x (type: int)
   Param[2]: y (type: int)
 Function 023: SetWindowMonitor() (1 input parameters)
@@ -1130,12 +1130,12 @@ Function 026: SetWindowSize() (2 input parameters)
 Function 027: SetWindowOpacity() (1 input parameters)
   Name: SetWindowOpacity
   Return type: void
-  Description: Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)
+  Description: Set window opacity [0.0f..1.0f]
   Param[1]: opacity (type: float)
 Function 028: SetWindowFocused() (0 input parameters)
   Name: SetWindowFocused
   Return type: void
-  Description: Set window focused (only PLATFORM_DESKTOP)
+  Description: Set window focused
   No input parameters
 Function 029: GetWindowHandle() (0 input parameters)
   Name: GetWindowHandle
@@ -1854,7 +1854,7 @@ Function 160: IsKeyPressed() (1 input parameters)
 Function 161: IsKeyPressedRepeat() (1 input parameters)
   Name: IsKeyPressedRepeat
   Return type: bool
-  Description: Check if a key has been pressed again (Only PLATFORM_DESKTOP)
+  Description: Check if a key has been pressed again
   Param[1]: key (type: int)
 Function 162: IsKeyDown() (1 input parameters)
   Name: IsKeyDown
