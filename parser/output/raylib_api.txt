@@ -4217,34 +4217,34 @@ Function 501: LoadModelAnimations() (2 input parameters)
 Function 502: UpdateModelAnimation() (3 input parameters)
   Name: UpdateModelAnimation
   Return type: void
-  Description: Update model animation pose
+  Description: Update model animation pose (CPU)
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
   Param[3]: frame (type: int)
-Function 503: UnloadModelAnimation() (1 input parameters)
+Function 503: UpdateModelAnimationBoneMatrices() (3 input parameters)
+  Name: UpdateModelAnimationBoneMatrices
+  Return type: void
+  Description: Update model animation mesh bone matrices (GPU skinning)
+  Param[1]: model (type: Model)
+  Param[2]: anim (type: ModelAnimation)
+  Param[3]: frame (type: int)
+Function 504: UnloadModelAnimation() (1 input parameters)
   Name: UnloadModelAnimation
   Return type: void
   Description: Unload animation data
   Param[1]: anim (type: ModelAnimation)
-Function 504: UnloadModelAnimations() (2 input parameters)
+Function 505: UnloadModelAnimations() (2 input parameters)
   Name: UnloadModelAnimations
   Return type: void
   Description: Unload animation array data
   Param[1]: animations (type: ModelAnimation *)
   Param[2]: animCount (type: int)
-Function 505: IsModelAnimationValid() (2 input parameters)
+Function 506: IsModelAnimationValid() (2 input parameters)
   Name: IsModelAnimationValid
   Return type: bool
   Description: Check model animation skeleton match
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
-Function 506: UpdateModelAnimationBoneMatrices() (3 input parameters)
-  Name: UpdateModelAnimationBoneMatrices
-  Return type: void
-  Description: Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)
-  Param[1]: model (type: Model)
-  Param[2]: anim (type: ModelAnimation)
-  Param[3]: frame (type: int)
 Function 507: CheckCollisionSpheres() (4 input parameters)
   Name: CheckCollisionSpheres
   Return type: bool
