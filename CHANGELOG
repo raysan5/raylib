@@ -24,12 +24,12 @@ WIP: Last update with commit from 21-Oct-2024
 [rcore] ADDED: `GetKeyName()` (#4161) by @MrScautHD
 [rcore] ADDED: `IsFileNameValid()` by @Ray
 [rcore] ADDED: `GetViewRay()`, viewport independent raycast (#3709) by @Luís Almeida
-[rcore] ADDED: Directory filtering to `LoadDirectoryFilesEx()`/`ScanDirectoryFiles()` (#4302) by @foxblock
 [rcore] RENAMED: `GetMouseRay()` to `GetScreenToWorldRay()` (#3830) by @Ray
 [rcore] RENAMED: `GetViewRay()` to `GetScreenToWorldRayEx()` (#3830) by @Ray
 [rcore] REVIEWED: `GetApplicationDirectory()` for FreeBSD (#4318) by @base
+[rcore] REVIEWED: `LoadDirectoryFilesEx()`/`ScanDirectoryFiles()`, support directory on filter (#4302) by @foxblock
 [rcore] REVIEWED: Update comments on fullscreen and boderless window to describe what they do (#4280) by @Jeffery Myers
-[rcore] REVIEWED: Automation events mouse wheel #4263 by @Ray
+[rcore] REVIEWED: Correct processing of mouse wheel on Automation events #4263 by @Ray
 [rcore] REVIEWED: Fix gamepad axis movement and its automation event recording (#4184) by @maxmutant
 [rcore] REVIEWED: Do not set RL_TEXTURE_FILTER_LINEAR when high dpi flag is enabled (#4189) by @Dave Green
 [rcore] REVIEWED: `GetScreenWidth()`/`GetScreenHeight()` (#4074) by @Anthony Carbajal
@@ -194,6 +194,7 @@ WIP: Last update with commit from 21-Oct-2024
 [rtext] ADDED: BDF fonts support (#3735) by @Stanley Fuller -WARNING-
 [rtext] ADDED: `TextToCamel()` (#4033) by @IoIxD
 [rtext] ADDED: `TextToSnake()` (#4033) by @IoIxD
+[rtext] ADDED: `TextToFloat()` (#3627) by @Benjamin Schmid Ties
 [rtext] REDESIGNED: `SetTextLineSpacing()` by @Ray -WARNING-
 [rtext] REVIEWED: `LoadFontDataBDF()` name and formating by @Ray
 [rtext] REVIEWED: `LoadFontDefault()`, initialize glyphs and recs to zero #4319 by @Ray
