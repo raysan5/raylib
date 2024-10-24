@@ -2364,6 +2364,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
     }
 }
 
+// Update model animated bones transform matrices for a given frame
+// NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
+// to be uploaded to shader at drawing, in case GPU skinning is enabled
 void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame)
 {
     if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
