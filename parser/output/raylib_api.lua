@@ -7598,7 +7598,17 @@ return {
     },
     {
       name = "UpdateModelAnimation",
-      description = "Update model animation pose",
+      description = "Update model animation pose (CPU)",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "ModelAnimation", name = "anim"},
+        {type = "int", name = "frame"}
+      }
+    },
+    {
+      name = "UpdateModelAnimationBoneMatrices",
+      description = "Update model animation mesh bone matrices (GPU skinning)",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
@@ -7630,16 +7640,6 @@ return {
       params = {
         {type = "Model", name = "model"},
         {type = "ModelAnimation", name = "anim"}
-      }
-    },
-    {
-      name = "UpdateModelAnimationBoneMatrices",
-      description = "Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)",
-      returnType = "void",
-      params = {
-        {type = "Model", name = "model"},
-        {type = "ModelAnimation", name = "anim"},
-        {type = "int", name = "frame"}
       }
     },
     {

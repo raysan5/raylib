@@ -2821,7 +2821,12 @@
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int *" name="animCount" desc="" />
         </Function>
-        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose">
+        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose (CPU)">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="anim" desc="" />
+            <Param type="int" name="frame" desc="" />
+        </Function>
+        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices (GPU skinning)">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
             <Param type="int" name="frame" desc="" />
@@ -2836,11 +2841,6 @@
         <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
-        </Function>
-        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)">
-            <Param type="Model" name="model" desc="" />
-            <Param type="ModelAnimation" name="anim" desc="" />
-            <Param type="int" name="frame" desc="" />
         </Function>
         <Function name="CheckCollisionSpheres" retType="bool" paramCount="4" desc="Check collision between two spheres">
             <Param type="Vector3" name="center1" desc="" />
