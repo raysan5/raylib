@@ -889,7 +889,7 @@ Enum 14: TextureWrap (4 values)
   Value[TEXTURE_WRAP_CLAMP]: 1
   Value[TEXTURE_WRAP_MIRROR_REPEAT]: 2
   Value[TEXTURE_WRAP_MIRROR_CLAMP]: 3
-Enum 15: CubemapLayout (6 values)
+Enum 15: CubemapLayout (5 values)
   Name: CubemapLayout
   Description: Cubemap layouts
   Value[CUBEMAP_LAYOUT_AUTO_DETECT]: 0
@@ -897,7 +897,6 @@ Enum 15: CubemapLayout (6 values)
   Value[CUBEMAP_LAYOUT_LINE_HORIZONTAL]: 2
   Value[CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR]: 3
   Value[CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE]: 4
-  Value[CUBEMAP_LAYOUT_PANORAMA]: 5
 Enum 16: FontType (3 values)
   Name: FontType
   Description: Font type, defines generation method
