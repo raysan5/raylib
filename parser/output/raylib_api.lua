@@ -3315,7 +3315,7 @@ return {
     },
     {
       name = "GetCurrentMonitor",
-      description = "Get primary system monitor",
+      description = "Get current monitor where window is placed",
       returnType = "int"
     },
     {
