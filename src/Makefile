@@ -230,8 +230,8 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 endif
 
 # Define raylib graphics api depending on selected platform
+# NOTE: By default use OpenGL 3.3 on desktop platforms
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
-    # By default use OpenGL 3.3 on desktop platforms
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
     #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21      # Uncomment to use OpenGL 2.1
@@ -239,11 +239,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     #GRAPHICS = GRAPHICS_API_OPENGL_ES2     # Uncomment to use OpenGL ES 2.0 (ANGLE)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
-    # By default use OpenGL 3.3 on desktop platform with SDL backend
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
-    # By default use OpenGL 3.3 on desktop platforms
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
     #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21      # Uncomment to use OpenGL 2.1
@@ -257,7 +255,7 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
-    #GRAPHICS = GRAPHICS_API_OPENGL_ES3      # Uncomment to use ES3/WebGL2 (preliminary support).
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES3      # Uncomment to use ES3/WebGL2 (preliminary support)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
