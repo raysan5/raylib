@@ -3315,7 +3315,7 @@ return {
     },
     {
       name = "GetCurrentMonitor",
-      description = "Get current connected monitor",
+      description = "Get primary system monitor",
       returnType = "int"
     },
     {

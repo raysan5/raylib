@@ -763,7 +763,7 @@
         </Function>
         <Function name="GetMonitorCount" retType="int" paramCount="0" desc="Get number of connected monitors">
         </Function>
-        <Function name="GetCurrentMonitor" retType="int" paramCount="0" desc="Get current connected monitor">
+        <Function name="GetCurrentMonitor" retType="int" paramCount="0" desc="Get primary system monitor">
         </Function>
         <Function name="GetMonitorPosition" retType="Vector2" paramCount="1" desc="Get specified monitor position">
             <Param type="int" name="monitor" desc="" />
