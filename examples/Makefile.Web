@@ -110,8 +110,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 		EMSDK_PATH         ?= C:/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
-		NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/20.18.0_64bit/bin
 		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
     endif
 endif
@@ -434,6 +434,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation \
+    models/models_gpu_skinning \
     models/models_billboard \
     models/models_box_collisions \
     models/models_cubicmap \
@@ -853,6 +854,12 @@ models/models_animation: models/models_animation.c
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
     --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
+    
+models/models_gpu_skinning: models/models_gpu_skinning.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
 models/models_billboard: models/models_billboard.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

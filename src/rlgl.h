@@ -4337,8 +4337,12 @@ void rlSetUniformMatrix(int locIndex, Matrix mat)
 // Set shader value uniform matrix
 void rlSetUniformMatrices(int locIndex, const Matrix *matrices, int count)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUniformMatrix4fv(locIndex, count, true, (const float*)matrices);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glUniformMatrix4fv(locIndex, count, true, (const float *)matrices);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    // WARNING: WebGL does not support Matrix transpose ("true" parameter)
+    // REF: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/uniformMatrix
+    glUniformMatrix4fv(locIndex, count, true, (const float *)matrices);
 #endif
 }
 
