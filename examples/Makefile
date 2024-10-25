@@ -197,11 +197,15 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
-    EMMAKE != type emmake
-    ifneq (, $(EMMAKE))
-        MAKE = emmake make
-    else
+    ifeq ($(OS),Windows_NT)
         MAKE = mingw32-make
+    else
+        EMMAKE != type emmake
+        ifneq (, $(EMMAKE))
+            MAKE = emmake make
+        else
+            MAKE = mingw32-make
+        endif
     endif
 endif
 
