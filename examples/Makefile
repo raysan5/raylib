@@ -197,7 +197,11 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
-    MAKE = mingw32-make
+    ifneq (, $(shell type emmake))
+        MAKE = emmake make
+    else
+        MAKE = mingw32-make
+    endif
 endif
 
 # Define compiler flags: CFLAGS
