@@ -677,6 +677,9 @@ shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 
 # Compile TEXTURES examples
 textures/textures_background_scrolling: textures/textures_background_scrolling.c
