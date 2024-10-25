@@ -139,7 +139,7 @@ endif
 
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
-MAKE ?= emmake make
+MAKE ?= make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -149,8 +149,13 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    MAKE = emmake make
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    EMMAKE != type emmake
+    ifneq (, $(EMMAKE))
+        MAKE = emmake make
+    else
+        MAKE = mingw32-make
+    endif
 endif
 
 # Define compiler flags: CFLAGS
