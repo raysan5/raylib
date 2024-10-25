@@ -197,7 +197,8 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
-    ifneq (, $(shell type emmake))
+	EMMAKE != type emmake
+    ifneq (, $(EMMAKE))
         MAKE = emmake make
     else
         MAKE = mingw32-make
@@ -455,7 +456,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = ../src/libraylib.a -lm 
+        LDLIBS = ../src/libraylib.a -lm
         LDLIBS += -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
     endif
 endif
