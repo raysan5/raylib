@@ -54,8 +54,8 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-	// Update 
-	//--------------------------------------------------------------------------
+    // Update 
+    //--------------------------------------------------------------------------
         dpadKeydown = -1; //reset
         float inputX=0;
         float inputY=0;
@@ -89,10 +89,9 @@ int main(void)
             case 3: playerY += 50*GetFrameTime();
             default:;
         };
-	//--------------------------------------------------------------------------
-	    
-	// Draw 
-	//--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    // Draw 
+    //--------------------------------------------------------------------------
        BeginDrawing();
             ClearBackground(RAYWHITE);
             for(int i=0;i<4;i++)
@@ -103,14 +102,15 @@ int main(void)
                 {
                     //draw label
                     DrawText(TextSubtext(dpadLabel,i,1),
-                             dpadCollider[i][0]-5,
-                             dpadCollider[i][1]-5,16,BLACK);
+                             dpadCollider[i][0]-7,
+                             dpadCollider[i][1]-8,20,BLACK);
                 }
-
             }
-            DrawText("Player",playerX,playerY,16,BLACK);
+
+            DrawRectangle(playerX-4,playerY-4,75,28,RED);
+            DrawText("Player",playerX,playerY,20,WHITE);
         EndDrawing();
-	//--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     }
 
     // De-Initialization
