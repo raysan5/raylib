@@ -52,6 +52,10 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
 
+# Use WebGL2 backend (OpenGL 3.0)
+# WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
+USE_WEBGL2            ?= FALSE
+
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
 ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -265,6 +269,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
     LDFLAGS += -sUSE_GLFW=3 -sASYNCIFY -sEXPORTED_RUNTIME_METHODS=ccall
+    
+    # NOTE: Flags required for WebGL 2.0 (OpenGL ES 3.0)
+    # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
+    ifeq ($(USE_WEBGL2),TRUE)
+        LDFLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
+    endif
 
     # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
