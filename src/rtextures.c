@@ -4194,12 +4194,15 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             faces = GenImageColor(size, size*6, MAGENTA);
             ImageFormat(&faces, image.format);
 
-            //ImageMipmaps(&image); // WARNING: image is a copy, it can't be done here, no intention to pass image by reference...
+            Image mipmapped = ImageCopy(image);
+            ImageMipmaps(&mipmapped);
             ImageMipmaps(&faces);
 
             // NOTE: Image formatting does not work with compressed textures
 
-            for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
+            for (int i = 0; i < 6; i++) ImageDraw(&faces, mipmapped, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
+
+            UnloadImage(mipmapped);
         }
 
         // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
