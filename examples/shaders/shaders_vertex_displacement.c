@@ -110,6 +110,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);
     UnloadModel(planeModel);
+    UnloadTexture(perlinNoiseMap);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

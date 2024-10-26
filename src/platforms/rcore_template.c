@@ -430,7 +430,6 @@ void PollInputEvents(void)
     // TODO: Poll input events for current platform
 }
 
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------

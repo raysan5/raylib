@@ -892,8 +892,8 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     return wave;
 }
 
-// Checks if wave data is ready
-bool IsWaveReady(Wave wave)
+// Checks if wave data is valid (data loaded and parameters)
+bool IsWaveValid(Wave wave)
 {
     bool result = false;
 
@@ -993,8 +993,8 @@ Sound LoadSoundAlias(Sound source)
 }
 
 
-// Checks if a sound is ready
-bool IsSoundReady(Sound sound)
+// Checks if a sound is valid (data loaded and buffers initialized)
+bool IsSoundValid(Sound sound)
 {
     bool result = false;
 
@@ -1626,7 +1626,9 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         {
             music.ctxType = MUSIC_AUDIO_FLAC;
             music.ctxData = ctxFlac;
-            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            int sampleSize = ctxFlac->bitsPerSample;
+            if (ctxFlac->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, sampleSize, ctxFlac->channels);
             music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1724,8 +1726,8 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     return music;
 }
 
-// Checks if a music stream is ready
-bool IsMusicReady(Music music)
+// Checks if a music stream is valid (context and buffers initialized)
+bool IsMusicValid(Music music)
 {
     return ((music.ctxData != NULL) &&          // Validate context loaded
             (music.frameCount > 0) &&           // Validate audio frame count
@@ -2117,8 +2119,8 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     return stream;
 }
 
-// Checks if an audio stream is ready
-bool IsAudioStreamReady(AudioStream stream)
+// Checks if an audio stream is valid (buffers initialized)
+bool IsAudioStreamValid(AudioStream stream)
 {
     return ((stream.buffer != NULL) &&    // Validate stream buffer
             (stream.sampleRate > 0) &&    // Validate sample rate is supported

@@ -72,7 +72,7 @@
 #define MAX_CALLBACKS_TO_PARSE    64    // Maximum number of callbacks to parse
 #define MAX_FUNCS_TO_PARSE      1024    // Maximum number of functions to parse
 
-#define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
+#define MAX_LINE_LENGTH         1024    // Maximum length of one line (including comments)
 
 #define MAX_STRUCT_FIELDS         64    // Maximum number of struct fields
 #define MAX_ENUM_VALUES          512    // Maximum number of enum values
@@ -139,7 +139,7 @@ typedef struct EnumInfo {
 // Function info data
 typedef struct FunctionInfo {
     char name[64];              // Function name
-    char desc[128];             // Function description (comment at the end)
+    char desc[512];             // Function description (comment at the end)
     char retType[32];           // Return value type
     int paramCount;             // Number of function parameters
     char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type

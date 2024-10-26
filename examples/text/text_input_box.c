@@ -35,7 +35,7 @@ int main(void)
 
     int framesCounter = 0;
 
-    SetTargetFPS(10);               // Set our game to run at 10 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop

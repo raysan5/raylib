@@ -16,13 +16,12 @@ option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 option(WITH_PIC "Compile static library as position-independent code" OFF)
 option(BUILD_SHARED_LIBS "Build raylib as a shared library" OFF)
-option(MACOS_FATLIB "Build fat library for both i386 and x86_64 on macOS" OFF)
 cmake_dependent_option(USE_AUDIO "Build raylib with audio module" ON CUSTOMIZE_BUILD ON)
 
 enum_option(USE_EXTERNAL_GLFW "OFF;IF_POSSIBLE;ON" "Link raylib against system GLFW instead of embedded one")
 
 # GLFW build options
-option(GLFW_BUILD_WAYLAND "Build the bundled GLFW with Wayland support" ON)
+option(GLFW_BUILD_WAYLAND "Build the bundled GLFW with Wayland support" OFF)
 option(GLFW_BUILD_X11 "Build the bundled GLFW with X11 support" ON)
 
 option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage" OFF)

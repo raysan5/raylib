@@ -471,3 +471,20 @@ Make sure to check raylib [CHANGELOG]([CHANGELOG](https://github.com/raysan5/ray
 Undoubtedly, this is the **biggest raylib update in 10 years**. Many new features and improvements with a special focus on maintainability and long-term sustainability. **Undoubtedly, this is the raylib of the future**.
 
 **Enjoy programming!** :)
+
+notes on raylib 5.5
+-------------------
+
+It's been **1 year** since latest raylib release and **11 years** since raylib 1.0 was officially released...
+
+Some numbers for this release:
+
+ - **+260** closed issues (for a TOTAL of **+1800**!)
+ - **+700** commits since previous RELEASE (for a TOTAL of **+7670**!)
+ - **+30** functions ADDED to raylib API (for a TOTAL of **580**!)
+ - **+110** functions REVIEWED with fixes and improvements
+ - **+135** new contributors (for a TOTAL of **+635**!)
+
+Highlights for `raylib 5.5`:
+
+TODO.
