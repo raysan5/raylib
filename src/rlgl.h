@@ -3408,18 +3408,19 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
     if (glInternalFormat != 0)
     {
         // Load cubemap faces/mipmaps
-        for (unsigned int i = 0; i < 6 * mipmapCount; i++)
+        for (unsigned int i = 0; i < 6*mipmapCount; i++)
         {
-            int mipmapLevel = i / 6;
-            int face = i % 6;
+            int mipmapLevel = i/6;
+            int face = i%6;
 
             if (data == NULL)
             {
                 if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB)
                 {
-                    if ((format == RL_PIXELFORMAT_UNCOMPRESSED_R32) || (format == RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)
-                            || (format == RL_PIXELFORMAT_UNCOMPRESSED_R16) || (format == RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
-                        TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
+                    if ((format == RL_PIXELFORMAT_UNCOMPRESSED_R32) || 
+                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32) ||
+                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R16) || 
+                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16)) TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     else glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, mipmapLevel, glInternalFormat, mipSize, mipSize, 0, glFormat, glType, NULL);
                 }
                 else TRACELOG(RL_LOG_WARNING, "TEXTURES: Empty cubemap creation does not support compressed format");
@@ -3446,10 +3447,10 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
                 glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
 #endif
-            if (face == 5) {
+            if (face == 5)
+            {
                 mipSize /= 2;
-                if (data != NULL)
-                    dataPtr += dataSize * 6;         // Increment data pointer to next mipmap
+                if (data != NULL) dataPtr += dataSize*6; // Increment data pointer to next mipmap
 
                 // Security check for NPOT textures
                 if (mipSize < 1) mipSize = 1;
@@ -3460,11 +3461,9 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
     }
 
     // Set cubemap texture sampling parameters
-    if (mipmapCount > 1) {
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    } else {
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    }
+    if (mipmapCount > 1) glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    else glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

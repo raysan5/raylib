@@ -2410,12 +2410,11 @@ void ImageMipmaps(Image *image)
 
             mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
 
-            if (i < image->mipmaps)
-                continue;
+            if (i < image->mipmaps) continue;
 
             TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
 
-            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
+            ImageResize(&imCopy, mipWidth, mipHeight); // Uses internally Mitchell cubic downscale filter
 
             memcpy(nextmip, imCopy.data, mipSize);
         }
@@ -4024,15 +4023,16 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 
         if (useSrcMod) UnloadImage(srcMod);     // Unload source modified image
 
-        if (dst->mipmaps > 1 && src.mipmaps > 1) {
+        if ((dst->mipmaps > 1) && (src.mipmaps > 1))
+        {
             Image mipmapDst = *dst;
-            mipmapDst.data = (char *) mipmapDst.data + GetPixelDataSize(mipmapDst.width, mipmapDst.height, mipmapDst.format);
+            mipmapDst.data = (char *)mipmapDst.data + GetPixelDataSize(mipmapDst.width, mipmapDst.height, mipmapDst.format);
             mipmapDst.width /= 2;
             mipmapDst.height /= 2;
             mipmapDst.mipmaps--;
 
             Image mipmapSrc = src;
-            mipmapSrc.data = (char *) mipmapSrc.data + GetPixelDataSize(mipmapSrc.width, mipmapSrc.height, mipmapSrc.format);
+            mipmapSrc.data = (char *)mipmapSrc.data + GetPixelDataSize(mipmapSrc.width, mipmapSrc.height, mipmapSrc.format);
             mipmapSrc.width /= 2;
             mipmapSrc.height /= 2;
             mipmapSrc.mipmaps--;
