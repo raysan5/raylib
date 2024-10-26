@@ -401,7 +401,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
-	LDPATHS += -L /usr/pkg/lib -L /usr/X11R7/lib -Wl,-R/usr/pkg/lib -Wl,-R/usr/X11R7/lib
+	LDFLAGS += -L /usr/pkg/lib -L /usr/X11R7/lib -Wl,-R/usr/pkg/lib -Wl,-R/usr/X11R7/lib
         LDLIBS = -lraylib -lGL -lpthread -lm
 
         # On XWindow requires also below libraries
@@ -677,6 +677,10 @@ clean:
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o *.exe /s
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+		find . -type f -perm -ugo+x -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
