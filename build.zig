@@ -116,6 +116,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         // `n` corresponds to the number of user-specified flags
         outer: for (config_h_flags) |flag| {
             // If a user already specified the flag, skip it
+            config_iter.reset();
             while (config_iter.next()) |config_flag| {
                 // For a user-specified flag to match, it must share the same prefix and have the
                 // same length or be followed by an equals sign
@@ -186,16 +187,18 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .linux => {
             if (options.platform != .drm) {
                 try c_source_files.append("src/rglfw.c");
-                raylib.linkSystemLibrary("GL");
-                raylib.linkSystemLibrary("rt");
-                raylib.linkSystemLibrary("dl");
-                raylib.linkSystemLibrary("m");
 
-                raylib.addLibraryPath(.{ .cwd_relative = "/usr/lib" });
-                raylib.addIncludePath(.{ .cwd_relative = "/usr/include" });
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                     raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.linkSystemLibrary("GLX");
                     raylib.linkSystemLibrary("X11");
+                    raylib.linkSystemLibrary("Xcursor");
+                    raylib.linkSystemLibrary("Xext");
+                    raylib.linkSystemLibrary("Xfixes");
+                    raylib.linkSystemLibrary("Xi");
+                    raylib.linkSystemLibrary("Xinerama");
+                    raylib.linkSystemLibrary("Xrandr");
+                    raylib.linkSystemLibrary("Xrender");
                 }
 
                 if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
@@ -207,9 +210,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         @panic("`wayland-scanner` not found");
                     };
                     raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.linkSystemLibrary("EGL");
                     raylib.linkSystemLibrary("wayland-client");
-                    raylib.linkSystemLibrary("wayland-cursor");
-                    raylib.linkSystemLibrary("wayland-egl");
                     raylib.linkSystemLibrary("xkbcommon");
                     waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
                     waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
@@ -229,13 +231,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 }
 
                 raylib.linkSystemLibrary("EGL");
-                raylib.linkSystemLibrary("drm");
                 raylib.linkSystemLibrary("gbm");
-                raylib.linkSystemLibrary("pthread");
-                raylib.linkSystemLibrary("rt");
-                raylib.linkSystemLibrary("m");
-                raylib.linkSystemLibrary("dl");
-                raylib.addIncludePath(.{ .cwd_relative = "/usr/include/libdrm" });
+                raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
 
                 raylib.defineCMacro("PLATFORM_DRM", null);
                 raylib.defineCMacro("EGL_NO_X11", null);

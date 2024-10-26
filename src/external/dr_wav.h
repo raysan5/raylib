@@ -1,6 +1,6 @@
 /*
 WAV audio loader and writer. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_wav - v0.13.13 - 2023-11-02
+dr_wav - v0.13.16 - 2024-02-27
 
 David Reid - mackron@gmail.com
 
@@ -147,7 +147,7 @@ extern "C" {
 
 #define DRWAV_VERSION_MAJOR     0
 #define DRWAV_VERSION_MINOR     13
-#define DRWAV_VERSION_REVISION  13
+#define DRWAV_VERSION_REVISION  16
 #define DRWAV_VERSION_STRING    DRWAV_XSTRINGIFY(DRWAV_VERSION_MAJOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_MINOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
@@ -3075,7 +3075,13 @@ DRWAV_PRIVATE drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc on
 
         if (pWav->container == drwav_container_riff || pWav->container == drwav_container_rifx) {
             if (drwav_bytes_to_u32_ex(chunkSizeBytes, pWav->container) < 36) {
-                return DRWAV_FALSE;    /* Chunk size should always be at least 36 bytes. */
+                /*
+                I've had a report of a WAV file failing to load when the size of the WAVE chunk is not encoded
+                and is instead just set to 0. I'm going to relax the validation here to allow these files to
+                load. Considering the chunk size isn't actually used this should be safe. With this change my
+                test suite still passes.
+                */
+                /*return DRWAV_FALSE;*/    /* Chunk size should always be at least 36 bytes. */
             }
         } else if (pWav->container == drwav_container_rf64) {
             if (drwav_bytes_to_u32_le(chunkSizeBytes) != 0xFFFFFFFF) {
@@ -3554,10 +3560,7 @@ DRWAV_PRIVATE drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc on
 
         /* Getting here means it's not a chunk that we care about internally, but might need to be handled as metadata by the caller. */
         if (isProcessingMetadata) {
-            drwav_uint64 metadataBytesRead;
-            
-            metadataBytesRead = drwav__metadata_process_chunk(&metadataParser, &header, drwav_metadata_type_all_including_unknown);
-            DRWAV_ASSERT(metadataBytesRead <= header.sizeInBytes);
+            drwav__metadata_process_chunk(&metadataParser, &header, drwav_metadata_type_all_including_unknown);
 
             /* Go back to the start of the chunk so we can normalize the position of the cursor. */
             if (drwav__seek_from_start(pWav->onSeek, cursor, pWav->pUserData) == DRWAV_FALSE) {
@@ -7830,7 +7833,7 @@ DRWAV_API void drwav_f32_to_s32(drwav_int32* pOut, const float* pIn, size_t samp
     }
 
     for (i = 0; i < sampleCount; ++i) {
-        *pOut++ = (drwav_int32)(2147483648.0 * pIn[i]);
+        *pOut++ = (drwav_int32)(2147483648.0f * pIn[i]);
     }
 }
 
@@ -8347,6 +8350,15 @@ DRWAV_API drwav_bool32 drwav_fourcc_equal(const drwav_uint8* a, const char* b)
 /*
 REVISION HISTORY
 ================
+v0.13.16 - 2024-02-27
+  - Fix a Wdouble-promotion warning.
+
+v0.13.15 - 2024-01-23
+  - Relax some unnecessary validation that prevented some files from loading.
+
+v0.13.14 - 2023-12-02
+  - Fix a warning about an unused variable.
+
 v0.13.13 - 2023-11-02
   - Fix a warning when compiling with Clang.
 

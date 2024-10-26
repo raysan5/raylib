@@ -24,7 +24,7 @@ Define 004: RAYLIB_VERSION_PATCH
 Define 005: RAYLIB_VERSION
   Name: RAYLIB_VERSION
   Type: STRING
-  Value: "5.5-dev"
+  Value: "5.5"
   Description: 
 Define 006: __declspec(x)
   Name: __declspec(x)
@@ -889,7 +889,7 @@ Enum 14: TextureWrap (4 values)
   Value[TEXTURE_WRAP_CLAMP]: 1
   Value[TEXTURE_WRAP_MIRROR_REPEAT]: 2
   Value[TEXTURE_WRAP_MIRROR_CLAMP]: 3
-Enum 15: CubemapLayout (6 values)
+Enum 15: CubemapLayout (5 values)
   Name: CubemapLayout
   Description: Cubemap layouts
   Value[CUBEMAP_LAYOUT_AUTO_DETECT]: 0
@@ -897,7 +897,6 @@ Enum 15: CubemapLayout (6 values)
   Value[CUBEMAP_LAYOUT_LINE_HORIZONTAL]: 2
   Value[CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR]: 3
   Value[CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE]: 4
-  Value[CUBEMAP_LAYOUT_PANORAMA]: 5
 Enum 16: FontType (3 values)
   Name: FontType
   Description: Font type, defines generation method
@@ -1021,22 +1020,22 @@ Function 005: IsWindowFullscreen() (0 input parameters)
 Function 006: IsWindowHidden() (0 input parameters)
   Name: IsWindowHidden
   Return type: bool
-  Description: Check if window is currently hidden (only PLATFORM_DESKTOP)
+  Description: Check if window is currently hidden
   No input parameters
 Function 007: IsWindowMinimized() (0 input parameters)
   Name: IsWindowMinimized
   Return type: bool
-  Description: Check if window is currently minimized (only PLATFORM_DESKTOP)
+  Description: Check if window is currently minimized
   No input parameters
 Function 008: IsWindowMaximized() (0 input parameters)
   Name: IsWindowMaximized
   Return type: bool
-  Description: Check if window is currently maximized (only PLATFORM_DESKTOP)
+  Description: Check if window is currently maximized
   No input parameters
 Function 009: IsWindowFocused() (0 input parameters)
   Name: IsWindowFocused
   Return type: bool
-  Description: Check if window is currently focused (only PLATFORM_DESKTOP)
+  Description: Check if window is currently focused
   No input parameters
 Function 010: IsWindowResized() (0 input parameters)
   Name: IsWindowResized
@@ -1051,7 +1050,7 @@ Function 011: IsWindowState() (1 input parameters)
 Function 012: SetWindowState() (1 input parameters)
   Name: SetWindowState
   Return type: void
-  Description: Set window configuration state using flags (only PLATFORM_DESKTOP)
+  Description: Set window configuration state using flags
   Param[1]: flags (type: unsigned int)
 Function 013: ClearWindowState() (1 input parameters)
   Name: ClearWindowState
@@ -1061,48 +1060,48 @@ Function 013: ClearWindowState() (1 input parameters)
 Function 014: ToggleFullscreen() (0 input parameters)
   Name: ToggleFullscreen
   Return type: void
-  Description: Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)
+  Description: Toggle window state: fullscreen/windowed, resizes monitor to match window resolution
   No input parameters
 Function 015: ToggleBorderlessWindowed() (0 input parameters)
   Name: ToggleBorderlessWindowed
   Return type: void
-  Description: Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)
+  Description: Toggle window state: borderless windowed, resizes window to match monitor resolution
   No input parameters
 Function 016: MaximizeWindow() (0 input parameters)
   Name: MaximizeWindow
   Return type: void
-  Description: Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
+  Description: Set window state: maximized, if resizable
   No input parameters
 Function 017: MinimizeWindow() (0 input parameters)
   Name: MinimizeWindow
   Return type: void
-  Description: Set window state: minimized, if resizable (only PLATFORM_DESKTOP)
+  Description: Set window state: minimized, if resizable
   No input parameters
 Function 018: RestoreWindow() (0 input parameters)
   Name: RestoreWindow
   Return type: void
-  Description: Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
+  Description: Set window state: not minimized/maximized
   No input parameters
 Function 019: SetWindowIcon() (1 input parameters)
   Name: SetWindowIcon
   Return type: void
-  Description: Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)
+  Description: Set icon for window (single image, RGBA 32bit)
   Param[1]: image (type: Image)
 Function 020: SetWindowIcons() (2 input parameters)
   Name: SetWindowIcons
   Return type: void
-  Description: Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)
+  Description: Set icon for window (multiple images, RGBA 32bit)
   Param[1]: images (type: Image *)
   Param[2]: count (type: int)
 Function 021: SetWindowTitle() (1 input parameters)
   Name: SetWindowTitle
   Return type: void
-  Description: Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
+  Description: Set title for window
   Param[1]: title (type: const char *)
 Function 022: SetWindowPosition() (2 input parameters)
   Name: SetWindowPosition
   Return type: void
-  Description: Set window position on screen (only PLATFORM_DESKTOP)
+  Description: Set window position on screen
   Param[1]: x (type: int)
   Param[2]: y (type: int)
 Function 023: SetWindowMonitor() (1 input parameters)
@@ -1131,12 +1130,12 @@ Function 026: SetWindowSize() (2 input parameters)
 Function 027: SetWindowOpacity() (1 input parameters)
   Name: SetWindowOpacity
   Return type: void
-  Description: Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)
+  Description: Set window opacity [0.0f..1.0f]
   Param[1]: opacity (type: float)
 Function 028: SetWindowFocused() (0 input parameters)
   Name: SetWindowFocused
   Return type: void
-  Description: Set window focused (only PLATFORM_DESKTOP)
+  Description: Set window focused
   No input parameters
 Function 029: GetWindowHandle() (0 input parameters)
   Name: GetWindowHandle
@@ -1171,7 +1170,7 @@ Function 034: GetMonitorCount() (0 input parameters)
 Function 035: GetCurrentMonitor() (0 input parameters)
   Name: GetCurrentMonitor
   Return type: int
-  Description: Get current connected monitor
+  Description: Get current monitor where window is placed
   No input parameters
 Function 036: GetMonitorPosition() (1 input parameters)
   Name: GetMonitorPosition
@@ -1855,7 +1854,7 @@ Function 160: IsKeyPressed() (1 input parameters)
 Function 161: IsKeyPressedRepeat() (1 input parameters)
   Name: IsKeyPressedRepeat
   Return type: bool
-  Description: Check if a key has been pressed again (Only PLATFORM_DESKTOP)
+  Description: Check if a key has been pressed again
   Param[1]: key (type: int)
 Function 162: IsKeyDown() (1 input parameters)
   Name: IsKeyDown
@@ -1942,13 +1941,14 @@ Function 177: SetGamepadMappings() (1 input parameters)
   Return type: int
   Description: Set internal gamepad mappings (SDL_GameControllerDB)
   Param[1]: mappings (type: const char *)
-Function 178: SetGamepadVibration() (3 input parameters)
+Function 178: SetGamepadVibration() (4 input parameters)
   Name: SetGamepadVibration
   Return type: void
-  Description: Set gamepad vibration for both motors
+  Description: Set gamepad vibration for both motors (duration in seconds)
   Param[1]: gamepad (type: int)
   Param[2]: leftMotor (type: float)
   Param[3]: rightMotor (type: float)
+  Param[4]: duration (type: float)
 Function 179: IsMouseButtonPressed() (1 input parameters)
   Name: IsMouseButtonPressed
   Return type: bool
@@ -2576,20 +2576,28 @@ Function 265: CheckCollisionCircleRec() (3 input parameters)
   Param[1]: center (type: Vector2)
   Param[2]: radius (type: float)
   Param[3]: rec (type: Rectangle)
-Function 266: CheckCollisionPointRec() (2 input parameters)
+Function 266: CheckCollisionCircleLine() (4 input parameters)
+  Name: CheckCollisionCircleLine
+  Return type: bool
+  Description: Check if circle collides with a line created betweeen two points [p1] and [p2]
+  Param[1]: center (type: Vector2)
+  Param[2]: radius (type: float)
+  Param[3]: p1 (type: Vector2)
+  Param[4]: p2 (type: Vector2)
+Function 267: CheckCollisionPointRec() (2 input parameters)
   Name: CheckCollisionPointRec
   Return type: bool
   Description: Check if point is inside rectangle
   Param[1]: point (type: Vector2)
   Param[2]: rec (type: Rectangle)
-Function 267: CheckCollisionPointCircle() (3 input parameters)
+Function 268: CheckCollisionPointCircle() (3 input parameters)
   Name: CheckCollisionPointCircle
   Return type: bool
   Description: Check if point is inside circle
   Param[1]: point (type: Vector2)
   Param[2]: center (type: Vector2)
   Param[3]: radius (type: float)
-Function 268: CheckCollisionPointTriangle() (4 input parameters)
+Function 269: CheckCollisionPointTriangle() (4 input parameters)
   Name: CheckCollisionPointTriangle
   Return type: bool
   Description: Check if point is inside a triangle
@@ -2597,14 +2605,22 @@ Function 268: CheckCollisionPointTriangle() (4 input parameters)
   Param[2]: p1 (type: Vector2)
   Param[3]: p2 (type: Vector2)
   Param[4]: p3 (type: Vector2)
-Function 269: CheckCollisionPointPoly() (3 input parameters)
+Function 270: CheckCollisionPointLine() (4 input parameters)
+  Name: CheckCollisionPointLine
+  Return type: bool
+  Description: Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
+  Param[1]: point (type: Vector2)
+  Param[2]: p1 (type: Vector2)
+  Param[3]: p2 (type: Vector2)
+  Param[4]: threshold (type: int)
+Function 271: CheckCollisionPointPoly() (3 input parameters)
   Name: CheckCollisionPointPoly
   Return type: bool
   Description: Check if point is within a polygon described by array of vertices
   Param[1]: point (type: Vector2)
   Param[2]: points (type: const Vector2 *)
   Param[3]: pointCount (type: int)
-Function 270: CheckCollisionLines() (5 input parameters)
+Function 272: CheckCollisionLines() (5 input parameters)
   Name: CheckCollisionLines
   Return type: bool
   Description: Check the collision between two lines defined by two points each, returns collision point by reference
@@ -2613,22 +2629,6 @@ Function 270: CheckCollisionLines() (5 input parameters)
   Param[3]: startPos2 (type: Vector2)
   Param[4]: endPos2 (type: Vector2)
   Param[5]: collisionPoint (type: Vector2 *)
-Function 271: CheckCollisionPointLine() (4 input parameters)
-  Name: CheckCollisionPointLine
-  Return type: bool
-  Description: Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
-  Param[1]: point (type: Vector2)
-  Param[2]: p1 (type: Vector2)
-  Param[3]: p2 (type: Vector2)
-  Param[4]: threshold (type: int)
-Function 272: CheckCollisionCircleLine() (4 input parameters)
-  Name: CheckCollisionCircleLine
-  Return type: bool
-  Description: Check if circle collides with a line created betweeen two points [p1] and [p2]
-  Param[1]: center (type: Vector2)
-  Param[2]: radius (type: float)
-  Param[3]: p1 (type: Vector2)
-  Param[4]: p2 (type: Vector2)
 Function 273: GetCollisionRec() (2 input parameters)
   Name: GetCollisionRec
   Return type: Rectangle
@@ -4217,34 +4217,34 @@ Function 501: LoadModelAnimations() (2 input parameters)
 Function 502: UpdateModelAnimation() (3 input parameters)
   Name: UpdateModelAnimation
   Return type: void
-  Description: Update model animation pose
+  Description: Update model animation pose (CPU)
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
   Param[3]: frame (type: int)
-Function 503: UnloadModelAnimation() (1 input parameters)
+Function 503: UpdateModelAnimationBoneMatrices() (3 input parameters)
+  Name: UpdateModelAnimationBoneMatrices
+  Return type: void
+  Description: Update model animation mesh bone matrices (GPU skinning)
+  Param[1]: model (type: Model)
+  Param[2]: anim (type: ModelAnimation)
+  Param[3]: frame (type: int)
+Function 504: UnloadModelAnimation() (1 input parameters)
   Name: UnloadModelAnimation
   Return type: void
   Description: Unload animation data
   Param[1]: anim (type: ModelAnimation)
-Function 504: UnloadModelAnimations() (2 input parameters)
+Function 505: UnloadModelAnimations() (2 input parameters)
   Name: UnloadModelAnimations
   Return type: void
   Description: Unload animation array data
   Param[1]: animations (type: ModelAnimation *)
   Param[2]: animCount (type: int)
-Function 505: IsModelAnimationValid() (2 input parameters)
+Function 506: IsModelAnimationValid() (2 input parameters)
   Name: IsModelAnimationValid
   Return type: bool
   Description: Check model animation skeleton match
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
-Function 506: UpdateModelAnimationBoneMatrices() (3 input parameters)
-  Name: UpdateModelAnimationBoneMatrices
-  Return type: void
-  Description: Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)
-  Param[1]: model (type: Model)
-  Param[2]: anim (type: ModelAnimation)
-  Param[3]: frame (type: int)
 Function 507: CheckCollisionSpheres() (4 input parameters)
   Name: CheckCollisionSpheres
   Return type: bool

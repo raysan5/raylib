@@ -5,7 +5,7 @@
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="5" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="5.5-dev" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="5.5" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -595,13 +595,12 @@
             <Value name="TEXTURE_WRAP_MIRROR_REPEAT" integer="2" desc="Mirrors and repeats the texture in tiled mode" />
             <Value name="TEXTURE_WRAP_MIRROR_CLAMP" integer="3" desc="Mirrors and clamps to border the texture in tiled mode" />
         </Enum>
-        <Enum name="CubemapLayout" valueCount="6" desc="Cubemap layouts">
+        <Enum name="CubemapLayout" valueCount="5" desc="Cubemap layouts">
             <Value name="CUBEMAP_LAYOUT_AUTO_DETECT" integer="0" desc="Automatically detect layout type" />
             <Value name="CUBEMAP_LAYOUT_LINE_VERTICAL" integer="1" desc="Layout is defined by a vertical line with faces" />
             <Value name="CUBEMAP_LAYOUT_LINE_HORIZONTAL" integer="2" desc="Layout is defined by a horizontal line with faces" />
             <Value name="CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR" integer="3" desc="Layout is defined by a 3x4 cross with cubemap faces" />
             <Value name="CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE" integer="4" desc="Layout is defined by a 4x3 cross with cubemap faces" />
-            <Value name="CUBEMAP_LAYOUT_PANORAMA" integer="5" desc="Layout is defined by a panorama image (equirrectangular map)" />
         </Enum>
         <Enum name="FontType" valueCount="3" desc="Font type, defines generation method">
             <Value name="FONT_DEFAULT" integer="0" desc="Default font generation, anti-aliased" />
@@ -689,46 +688,46 @@
         </Function>
         <Function name="IsWindowFullscreen" retType="bool" paramCount="0" desc="Check if window is currently fullscreen">
         </Function>
-        <Function name="IsWindowHidden" retType="bool" paramCount="0" desc="Check if window is currently hidden (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowHidden" retType="bool" paramCount="0" desc="Check if window is currently hidden">
         </Function>
-        <Function name="IsWindowMinimized" retType="bool" paramCount="0" desc="Check if window is currently minimized (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowMinimized" retType="bool" paramCount="0" desc="Check if window is currently minimized">
         </Function>
-        <Function name="IsWindowMaximized" retType="bool" paramCount="0" desc="Check if window is currently maximized (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowMaximized" retType="bool" paramCount="0" desc="Check if window is currently maximized">
         </Function>
-        <Function name="IsWindowFocused" retType="bool" paramCount="0" desc="Check if window is currently focused (only PLATFORM_DESKTOP)">
+        <Function name="IsWindowFocused" retType="bool" paramCount="0" desc="Check if window is currently focused">
         </Function>
         <Function name="IsWindowResized" retType="bool" paramCount="0" desc="Check if window has been resized last frame">
         </Function>
         <Function name="IsWindowState" retType="bool" paramCount="1" desc="Check if one specific window flag is enabled">
             <Param type="unsigned int" name="flag" desc="" />
         </Function>
-        <Function name="SetWindowState" retType="void" paramCount="1" desc="Set window configuration state using flags (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowState" retType="void" paramCount="1" desc="Set window configuration state using flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
         <Function name="ClearWindowState" retType="void" paramCount="1" desc="Clear window configuration state flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
-        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)">
+        <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed, resizes monitor to match window resolution">
         </Function>
-        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)">
+        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed, resizes window to match monitor resolution">
         </Function>
-        <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable (only PLATFORM_DESKTOP)">
+        <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable">
         </Function>
-        <Function name="MinimizeWindow" retType="void" paramCount="0" desc="Set window state: minimized, if resizable (only PLATFORM_DESKTOP)">
+        <Function name="MinimizeWindow" retType="void" paramCount="0" desc="Set window state: minimized, if resizable">
         </Function>
-        <Function name="RestoreWindow" retType="void" paramCount="0" desc="Set window state: not minimized/maximized (only PLATFORM_DESKTOP)">
+        <Function name="RestoreWindow" retType="void" paramCount="0" desc="Set window state: not minimized/maximized">
         </Function>
-        <Function name="SetWindowIcon" retType="void" paramCount="1" desc="Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)">
+        <Function name="SetWindowIcon" retType="void" paramCount="1" desc="Set icon for window (single image, RGBA 32bit)">
             <Param type="Image" name="image" desc="" />
         </Function>
-        <Function name="SetWindowIcons" retType="void" paramCount="2" desc="Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)">
+        <Function name="SetWindowIcons" retType="void" paramCount="2" desc="Set icon for window (multiple images, RGBA 32bit)">
             <Param type="Image *" name="images" desc="" />
             <Param type="int" name="count" desc="" />
         </Function>
-        <Function name="SetWindowTitle" retType="void" paramCount="1" desc="Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)">
+        <Function name="SetWindowTitle" retType="void" paramCount="1" desc="Set title for window">
             <Param type="const char *" name="title" desc="" />
         </Function>
-        <Function name="SetWindowPosition" retType="void" paramCount="2" desc="Set window position on screen (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowPosition" retType="void" paramCount="2" desc="Set window position on screen">
             <Param type="int" name="x" desc="" />
             <Param type="int" name="y" desc="" />
         </Function>
@@ -747,10 +746,10 @@
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
         </Function>
-        <Function name="SetWindowOpacity" retType="void" paramCount="1" desc="Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowOpacity" retType="void" paramCount="1" desc="Set window opacity [0.0f..1.0f]">
             <Param type="float" name="opacity" desc="" />
         </Function>
-        <Function name="SetWindowFocused" retType="void" paramCount="0" desc="Set window focused (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowFocused" retType="void" paramCount="0" desc="Set window focused">
         </Function>
         <Function name="GetWindowHandle" retType="void *" paramCount="0" desc="Get native window handle">
         </Function>
@@ -764,7 +763,7 @@
         </Function>
         <Function name="GetMonitorCount" retType="int" paramCount="0" desc="Get number of connected monitors">
         </Function>
-        <Function name="GetCurrentMonitor" retType="int" paramCount="0" desc="Get current connected monitor">
+        <Function name="GetCurrentMonitor" retType="int" paramCount="0" desc="Get current monitor where window is placed">
         </Function>
         <Function name="GetMonitorPosition" retType="Vector2" paramCount="1" desc="Get specified monitor position">
             <Param type="int" name="monitor" desc="" />
@@ -1164,7 +1163,7 @@
         <Function name="IsKeyPressed" retType="bool" paramCount="1" desc="Check if a key has been pressed once">
             <Param type="int" name="key" desc="" />
         </Function>
-        <Function name="IsKeyPressedRepeat" retType="bool" paramCount="1" desc="Check if a key has been pressed again (Only PLATFORM_DESKTOP)">
+        <Function name="IsKeyPressedRepeat" retType="bool" paramCount="1" desc="Check if a key has been pressed again">
             <Param type="int" name="key" desc="" />
         </Function>
         <Function name="IsKeyDown" retType="bool" paramCount="1" desc="Check if a key is being pressed">
@@ -1217,10 +1216,11 @@
         <Function name="SetGamepadMappings" retType="int" paramCount="1" desc="Set internal gamepad mappings (SDL_GameControllerDB)">
             <Param type="const char *" name="mappings" desc="" />
         </Function>
-        <Function name="SetGamepadVibration" retType="void" paramCount="3" desc="Set gamepad vibration for both motors">
+        <Function name="SetGamepadVibration" retType="void" paramCount="4" desc="Set gamepad vibration for both motors (duration in seconds)">
             <Param type="int" name="gamepad" desc="" />
             <Param type="float" name="leftMotor" desc="" />
             <Param type="float" name="rightMotor" desc="" />
+            <Param type="float" name="duration" desc="" />
         </Function>
         <Function name="IsMouseButtonPressed" retType="bool" paramCount="1" desc="Check if a mouse button has been pressed once">
             <Param type="int" name="button" desc="" />
@@ -1658,6 +1658,12 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
         </Function>
+        <Function name="CheckCollisionCircleLine" retType="bool" paramCount="4" desc="Check if circle collides with a line created betweeen two points [p1] and [p2]">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+        </Function>
         <Function name="CheckCollisionPointRec" retType="bool" paramCount="2" desc="Check if point is inside rectangle">
             <Param type="Vector2" name="point" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
@@ -1673,6 +1679,12 @@
             <Param type="Vector2" name="p2" desc="" />
             <Param type="Vector2" name="p3" desc="" />
         </Function>
+        <Function name="CheckCollisionPointLine" retType="bool" paramCount="4" desc="Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]">
+            <Param type="Vector2" name="point" desc="" />
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="int" name="threshold" desc="" />
+        </Function>
         <Function name="CheckCollisionPointPoly" retType="bool" paramCount="3" desc="Check if point is within a polygon described by array of vertices">
             <Param type="Vector2" name="point" desc="" />
             <Param type="const Vector2 *" name="points" desc="" />
@@ -1684,18 +1696,6 @@
             <Param type="Vector2" name="startPos2" desc="" />
             <Param type="Vector2" name="endPos2" desc="" />
             <Param type="Vector2 *" name="collisionPoint" desc="" />
-        </Function>
-        <Function name="CheckCollisionPointLine" retType="bool" paramCount="4" desc="Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]">
-            <Param type="Vector2" name="point" desc="" />
-            <Param type="Vector2" name="p1" desc="" />
-            <Param type="Vector2" name="p2" desc="" />
-            <Param type="int" name="threshold" desc="" />
-        </Function>
-        <Function name="CheckCollisionCircleLine" retType="bool" paramCount="4" desc="Check if circle collides with a line created betweeen two points [p1] and [p2]">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="Vector2" name="p1" desc="" />
-            <Param type="Vector2" name="p2" desc="" />
         </Function>
         <Function name="GetCollisionRec" retType="Rectangle" paramCount="2" desc="Get collision rectangle for two rectangles collision">
             <Param type="Rectangle" name="rec1" desc="" />
@@ -2821,7 +2821,12 @@
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int *" name="animCount" desc="" />
         </Function>
-        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose">
+        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose (CPU)">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="anim" desc="" />
+            <Param type="int" name="frame" desc="" />
+        </Function>
+        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices (GPU skinning)">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
             <Param type="int" name="frame" desc="" />
@@ -2836,11 +2841,6 @@
         <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
-        </Function>
-        <Function name="UpdateModelAnimationBoneMatrices" retType="void" paramCount="3" desc="Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)">
-            <Param type="Model" name="model" desc="" />
-            <Param type="ModelAnimation" name="anim" desc="" />
-            <Param type="int" name="frame" desc="" />
         </Function>
         <Function name="CheckCollisionSpheres" retType="bool" paramCount="4" desc="Check collision between two spheres">
             <Param type="Vector3" name="center1" desc="" />

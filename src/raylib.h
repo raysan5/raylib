@@ -1,22 +1,22 @@
 /**********************************************************************************************
 *
-*   raylib v5.5-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v5.5 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
 *       - Multiplatform: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly,
 *                        MacOS, Haiku, Android, Raspberry Pi, DRM native, HTML5.
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
-*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3, 4.3 or ES2 - choose at compile)
+*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3, 4.3, ES2, ES3 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*       - Multiple Fonts formats supported (TTF, XNA fonts, AngelCode fonts)
+*       - Multiple Fonts formats supported (TTF, OTF, FNT, BDF, Sprite fonts)
 *       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
 *       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
-*       - Animated 3D models supported (skeletal bones animation) (IQM)
+*       - Animated 3D models supported (skeletal bones animation) (IQM, M3D, GLTF)
 *       - Shaders support, including Model shaders and Postprocessing shaders
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
-*       - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
+*       - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, QOA, XM, MOD)
 *       - VR stereo rendering with configurable HMD device parameters
 *       - Bindings to multiple programming languages available!
 *
@@ -27,29 +27,35 @@
 *       - One default RenderBatch is loaded on rlglInit()->rlLoadRenderBatch() [rlgl] (OpenGL 3.3 or ES2)
 *
 *   DEPENDENCIES (included):
-*       [rcore] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input (PLATFORM_DESKTOP)
-*       [rlgl] glad (David Herberth - github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading (PLATFORM_DESKTOP)
+*       [rcore][GLFW] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input
+*       [rcore][RGFW] rgfw (ColleagueRiley - github.com/ColleagueRiley/RGFW) for window/context management and input
+*       [rlgl] glad/glad_gles2 (David Herberth - github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading
 *       [raudio] miniaudio (David Reid - github.com/mackron/miniaudio) for audio device/context management
 *
 *   OPTIONAL DEPENDENCIES (included):
 *       [rcore] msf_gif (Miles Fogle) for GIF recording
 *       [rcore] sinfl (Micha Mettke) for DEFLATE decompression algorithm
 *       [rcore] sdefl (Micha Mettke) for DEFLATE compression algorithm
+*       [rcore] rprand (Ramon Snatamaria) for pseudo-random numbers generation
+*       [rtextures] qoi (Dominic Szablewski - https://phoboslab.org) for QOI image manage
 *       [rtextures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
 *       [rtextures] stb_image_write (Sean Barret) for image writing (BMP, TGA, PNG, JPG)
-*       [rtextures] stb_image_resize (Sean Barret) for image resizing algorithms
+*       [rtextures] stb_image_resize2 (Sean Barret) for image resizing algorithms
+*       [rtextures] stb_perlin (Sean Barret) for Perlin Noise image generation
 *       [rtext] stb_truetype (Sean Barret) for ttf fonts loading
 *       [rtext] stb_rect_pack (Sean Barret) for rectangles packing
 *       [rmodels] par_shapes (Philip Rideout) for parametric 3d shapes generation
 *       [rmodels] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
 *       [rmodels] cgltf (Johannes Kuhlmann) for models loading (glTF)
-*       [rmodels] Model3D (bzt) for models loading (M3D, https://bztsrc.gitlab.io/model3d)
+*       [rmodels] m3d (bzt) for models loading (M3D, https://bztsrc.gitlab.io/model3d)
+*       [rmodels] vox_loader (Johann Nadalutti) for models loading (VOX)
 *       [raudio] dr_wav (David Reid) for WAV audio file loading
 *       [raudio] dr_flac (David Reid) for FLAC audio file loading
 *       [raudio] dr_mp3 (David Reid) for MP3 audio file loading
 *       [raudio] stb_vorbis (Sean Barret) for OGG audio loading
 *       [raudio] jar_xm (Joshua Reisenauer) for XM audio module loading
 *       [raudio] jar_mod (Joshua Reisenauer) for MOD audio module loading
+*       [raudio] qoa (Dominic Szablewski - https://phoboslab.org) for QOA audio manage
 *
 *
 *   LICENSE: zlib/libpng
@@ -84,7 +90,7 @@
 #define RAYLIB_VERSION_MAJOR 5
 #define RAYLIB_VERSION_MINOR 5
 #define RAYLIB_VERSION_PATCH 0
-#define RAYLIB_VERSION  "5.5-dev"
+#define RAYLIB_VERSION  "5.5"
 
 // Function specifiers in case library is build/used as a shared library
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -877,8 +883,7 @@ typedef enum {
     CUBEMAP_LAYOUT_LINE_VERTICAL,           // Layout is defined by a vertical line with faces
     CUBEMAP_LAYOUT_LINE_HORIZONTAL,         // Layout is defined by a horizontal line with faces
     CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR,     // Layout is defined by a 3x4 cross with cubemap faces
-    CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE,     // Layout is defined by a 4x3 cross with cubemap faces
-    CUBEMAP_LAYOUT_PANORAMA                 // Layout is defined by a panorama image (equirrectangular map)
+    CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE     // Layout is defined by a 4x3 cross with cubemap faces
 } CubemapLayout;
 
 // Font type, defines generation method
@@ -965,36 +970,36 @@ RLAPI void CloseWindow(void);                                     // Close windo
 RLAPI bool WindowShouldClose(void);                               // Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)
 RLAPI bool IsWindowReady(void);                                   // Check if window has been initialized successfully
 RLAPI bool IsWindowFullscreen(void);                              // Check if window is currently fullscreen
-RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowMinimized(void);                               // Check if window is currently minimized (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowMaximized(void);                               // Check if window is currently maximized (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowFocused(void);                                 // Check if window is currently focused (only PLATFORM_DESKTOP)
+RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
+RLAPI bool IsWindowMinimized(void);                               // Check if window is currently minimized
+RLAPI bool IsWindowMaximized(void);                               // Check if window is currently maximized
+RLAPI bool IsWindowFocused(void);                                 // Check if window is currently focused
 RLAPI bool IsWindowResized(void);                                 // Check if window has been resized last frame
 RLAPI bool IsWindowState(unsigned int flag);                      // Check if one specific window flag is enabled
-RLAPI void SetWindowState(unsigned int flags);                    // Set window configuration state using flags (only PLATFORM_DESKTOP)
+RLAPI void SetWindowState(unsigned int flags);                    // Set window configuration state using flags
 RLAPI void ClearWindowState(unsigned int flags);                  // Clear window configuration state flags
-RLAPI void ToggleFullscreen(void);                                // Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)
-RLAPI void ToggleBorderlessWindowed(void);                        // Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)
-RLAPI void MaximizeWindow(void);                                  // Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
-RLAPI void MinimizeWindow(void);                                  // Set window state: minimized, if resizable (only PLATFORM_DESKTOP)
-RLAPI void RestoreWindow(void);                                   // Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
-RLAPI void SetWindowIcon(Image image);                            // Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)
-RLAPI void SetWindowIcons(Image *images, int count);              // Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)
-RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
-RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
+RLAPI void ToggleFullscreen(void);                                // Toggle window state: fullscreen/windowed, resizes monitor to match window resolution
+RLAPI void ToggleBorderlessWindowed(void);                        // Toggle window state: borderless windowed, resizes window to match monitor resolution
+RLAPI void MaximizeWindow(void);                                  // Set window state: maximized, if resizable
+RLAPI void MinimizeWindow(void);                                  // Set window state: minimized, if resizable
+RLAPI void RestoreWindow(void);                                   // Set window state: not minimized/maximized
+RLAPI void SetWindowIcon(Image image);                            // Set icon for window (single image, RGBA 32bit)
+RLAPI void SetWindowIcons(Image *images, int count);              // Set icon for window (multiple images, RGBA 32bit)
+RLAPI void SetWindowTitle(const char *title);                     // Set title for window
+RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI void SetWindowMaxSize(int width, int height);               // Set window maximum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
-RLAPI void SetWindowOpacity(float opacity);                       // Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)
-RLAPI void SetWindowFocused(void);                                // Set window focused (only PLATFORM_DESKTOP)
+RLAPI void SetWindowOpacity(float opacity);                       // Set window opacity [0.0f..1.0f]
+RLAPI void SetWindowFocused(void);                                // Set window focused
 RLAPI void *GetWindowHandle(void);                                // Get native window handle
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 RLAPI int GetRenderWidth(void);                                   // Get current render width (it considers HiDPI)
 RLAPI int GetRenderHeight(void);                                  // Get current render height (it considers HiDPI)
 RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
-RLAPI int GetCurrentMonitor(void);                                // Get current connected monitor
+RLAPI int GetCurrentMonitor(void);                                // Get current monitor where window is placed
 RLAPI Vector2 GetMonitorPosition(int monitor);                    // Get specified monitor position
 RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width (current video mode used by monitor)
 RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height (current video mode used by monitor)
@@ -1165,7 +1170,7 @@ RLAPI void PlayAutomationEvent(AutomationEvent event);                          
 
 // Input-related functions: keyboard
 RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
-RLAPI bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again (Only PLATFORM_DESKTOP)
+RLAPI bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again
 RLAPI bool IsKeyDown(int key);                                // Check if a key is being pressed
 RLAPI bool IsKeyReleased(int key);                            // Check if a key has been released once
 RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
@@ -1184,7 +1189,7 @@ RLAPI int GetGamepadButtonPressed(void);                                        
 RLAPI int GetGamepadAxisCount(int gamepad);                                        // Get gamepad axis count for a gamepad
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);                         // Get axis movement value for a gamepad axis
 RLAPI int SetGamepadMappings(const char *mappings);                                // Set internal gamepad mappings (SDL_GameControllerDB)
-RLAPI void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor);    // Set gamepad vibration for both motors
+RLAPI void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration); // Set gamepad vibration for both motors (duration in seconds)
 
 // Input-related functions: mouse
 RLAPI bool IsMouseButtonPressed(int button);                  // Check if a mouse button has been pressed once
@@ -1299,13 +1304,13 @@ RLAPI Vector2 GetSplinePointBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vect
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
 RLAPI bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);        // Check collision between two circles
 RLAPI bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec);                         // Check collision between circle and rectangle
+RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2);               // Check if circle collides with a line created betweeen two points [p1] and [p2]
 RLAPI bool CheckCollisionPointRec(Vector2 point, Rectangle rec);                                         // Check if point is inside rectangle
 RLAPI bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius);                       // Check if point is inside circle
 RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);               // Check if point is inside a triangle
+RLAPI bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshold);                // Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
 RLAPI bool CheckCollisionPointPoly(Vector2 point, const Vector2 *points, int pointCount);                // Check if point is within a polygon described by array of vertices
 RLAPI bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint); // Check the collision between two lines defined by two points each, returns collision point by reference
-RLAPI bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshold);                // Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
-RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2);               // Check if circle collides with a line created betweeen two points [p1] and [p2]
 RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                         // Get collision rectangle for two rectangles collision
 
 //------------------------------------------------------------------------------------
@@ -1596,11 +1601,11 @@ RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);      
 
 // Model animations loading/unloading functions
 RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount);            // Load model animations from file
-RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);               // Update model animation pose
+RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);               // Update model animation pose (CPU)
+RLAPI void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame);   // Update model animation mesh bone matrices (GPU skinning)
 RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
 RLAPI void UnloadModelAnimations(ModelAnimation *animations, int animCount);                // Unload animation array data
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
-RLAPI void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame);   // Update model animation mesh bone matrices (Note GPU skinning does not work on Mac)
 
 // Collision detection functions
 RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);   // Check collision between two spheres

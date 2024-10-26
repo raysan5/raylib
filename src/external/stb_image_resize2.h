@@ -1,4 +1,4 @@
-/* stb_image_resize2 - v2.10 - public domain image resizing
+/* stb_image_resize2 - v2.12 - public domain image resizing
 
    by Jeff Roberts (v2) and Jorge L Rodriguez
    http://github.com/nothings/stb
@@ -10,35 +10,6 @@
       In one C/C++ file that #includes this file, do this:
          #define STB_IMAGE_RESIZE_IMPLEMENTATION
       before the #include. That will create the implementation in that file.
-
-   PORTING FROM VERSION 1
-
-      The API has changed. You can continue to use the old version of stb_image_resize.h,
-      which is available in the "deprecated/" directory.
-
-      If you're using the old simple-to-use API, porting is straightforward.
-      (For more advanced APIs, read the documentation.)
-
-        stbir_resize_uint8():
-          - call `stbir_resize_uint8_linear`, cast channel count to `stbir_pixel_layout`
-
-        stbir_resize_float():
-          - call `stbir_resize_float_linear`, cast channel count to `stbir_pixel_layout`
-
-        stbir_resize_uint8_srgb():
-          - function name is unchanged
-          - cast channel count to `stbir_pixel_layout`
-          - above is sufficient unless your image has alpha and it's not RGBA/BGRA
-            - in that case, follow the below instructions for stbir_resize_uint8_srgb_edgemode
-
-        stbir_resize_uint8_srgb_edgemode()
-          - switch to the "medium complexity" API
-          - stbir_resize(), very similar API but a few more parameters:
-            - pixel_layout: cast channel count to `stbir_pixel_layout`
-            - data_type:    STBIR_TYPE_UINT8_SRGB
-            - edge:         unchanged (STBIR_EDGE_WRAP, etc.)
-            - filter:       STBIR_FILTER_DEFAULT
-          - which channel is alpha is specified in stbir_pixel_layout, see enum for details
 
    EASY API CALLS:
      Easy API downsamples w/Mitchell filter, upsamples w/cubic interpolation, clamps to edge.
@@ -296,6 +267,34 @@
       ASSERT
          Define STBIR_ASSERT(boolval) to override assert() and not use assert.h
 
+     PORTING FROM VERSION 1
+        The API has changed. You can continue to use the old version of stb_image_resize.h,
+        which is available in the "deprecated/" directory.
+
+        If you're using the old simple-to-use API, porting is straightforward.
+        (For more advanced APIs, read the documentation.)
+
+          stbir_resize_uint8():
+            - call `stbir_resize_uint8_linear`, cast channel count to `stbir_pixel_layout`
+
+          stbir_resize_float():
+            - call `stbir_resize_float_linear`, cast channel count to `stbir_pixel_layout`
+
+          stbir_resize_uint8_srgb():
+            - function name is unchanged
+            - cast channel count to `stbir_pixel_layout`
+            - above is sufficient unless your image has alpha and it's not RGBA/BGRA
+              - in that case, follow the below instructions for stbir_resize_uint8_srgb_edgemode
+
+          stbir_resize_uint8_srgb_edgemode()
+            - switch to the "medium complexity" API
+            - stbir_resize(), very similar API but a few more parameters:
+              - pixel_layout: cast channel count to `stbir_pixel_layout`
+              - data_type:    STBIR_TYPE_UINT8_SRGB
+              - edge:         unchanged (STBIR_EDGE_WRAP, etc.)
+              - filter:       STBIR_FILTER_DEFAULT
+            - which channel is alpha is specified in stbir_pixel_layout, see enum for details
+
       FUTURE TODOS
         *  For polyphase integral filters, we just memcpy the coeffs to dupe
            them, but we should indirect and use the same coeff memory.
@@ -328,6 +327,10 @@
       Nathan Reed: warning fixes for 1.0
 
    REVISIONS
+      2.12 (2024-10-18) fix incorrect use of user_data with STBIR_FREE
+      2.11 (2024-09-08) fix harmless asan warnings in 2-channel and 3-channel mode
+                          with AVX-2, fix some weird scaling edge conditions with
+                          point sample mode.
       2.10 (2024-07-27) fix the defines GCC and mingw for loop unroll control,
                           fix MSVC 32-bit arm half float routines.
       2.09 (2024-06-19) fix the defines for 32-bit ARM GCC builds (was selecting
@@ -3247,6 +3250,7 @@ static void stbir__calculate_in_pixel_range( int * first_pixel, int * last_pixel
 
   first = (int)(STBIR_FLOORF(in_pixel_influence_lowerbound + 0.5f));
   last = (int)(STBIR_FLOORF(in_pixel_influence_upperbound - 0.5f));
+  if ( last < first ) last = first; // point sample mode can span a value *right* at 0.5, and cause these to cross
 
   if ( edge == STBIR_EDGE_WRAP )
   {
@@ -3281,6 +3285,11 @@ static void stbir__calculate_coefficients_for_gather_upsample( float out_filter_
     int in_first_pixel, in_last_pixel;
 
     stbir__calculate_in_pixel_range( &in_first_pixel, &in_last_pixel, out_pixel_center, out_filter_radius, inv_scale, out_shift, input_size, edge );
+
+    // make sure we never generate a range larger than our precalculated coeff width
+    //   this only happens in point sample mode, but it's a good safe thing to do anyway
+    if ( ( in_last_pixel - in_first_pixel + 1 ) > coefficient_width )
+      in_last_pixel = in_first_pixel + coefficient_width - 1;
 
     last_non_zero = -1;
     for (i = 0; i <= in_last_pixel - in_first_pixel; i++)
@@ -3317,19 +3326,22 @@ static void stbir__calculate_coefficients_for_gather_upsample( float out_filter_
   }
 }
 
-static void stbir__insert_coeff( stbir__contributors * contribs, float * coeffs, int new_pixel, float new_coeff )
+static void stbir__insert_coeff( stbir__contributors * contribs, float * coeffs, int new_pixel, float new_coeff, int max_width )
 {
   if ( new_pixel <= contribs->n1 )  // before the end
   {
     if ( new_pixel < contribs->n0 ) // before the front?
     {
-      int j, o = contribs->n0 - new_pixel;
-      for ( j = contribs->n1 - contribs->n0 ; j <= 0 ; j-- )
-        coeffs[ j + o ] = coeffs[ j ];
-      for ( j = 1 ; j < o ; j-- )
-        coeffs[ j ] = coeffs[ 0 ];
-      coeffs[ 0 ] = new_coeff;
-      contribs->n0 = new_pixel;
+      if ( ( contribs->n1 - new_pixel + 1 ) <= max_width )
+      { 
+        int j, o = contribs->n0 - new_pixel;
+        for ( j = contribs->n1 - contribs->n0 ; j <= 0 ; j-- )
+          coeffs[ j + o ] = coeffs[ j ];
+        for ( j = 1 ; j < o ; j-- )
+          coeffs[ j ] = coeffs[ 0 ];
+        coeffs[ 0 ] = new_coeff;
+        contribs->n0 = new_pixel;
+      }
     }
     else
     {
@@ -3338,12 +3350,15 @@ static void stbir__insert_coeff( stbir__contributors * contribs, float * coeffs,
   }
   else
   {
-    int j, e = new_pixel - contribs->n0;
-    for( j = ( contribs->n1 - contribs->n0 ) + 1 ; j < e ; j++ ) // clear in-betweens coeffs if there are any
-      coeffs[j] = 0;
+    if ( ( new_pixel - contribs->n0 + 1 ) <= max_width )
+    {
+      int j, e = new_pixel - contribs->n0;
+      for( j = ( contribs->n1 - contribs->n0 ) + 1 ; j < e ; j++ ) // clear in-betweens coeffs if there are any
+        coeffs[j] = 0;
 
-    coeffs[ e ] = new_coeff;
-    contribs->n1 = new_pixel;
+      coeffs[ e ] = new_coeff;
+      contribs->n1 = new_pixel;
+    }
   }
 }
 
@@ -3522,6 +3537,7 @@ static void stbir__cleanup_gathered_coefficients( stbir_edge edge, stbir__filter
 
   coeffs = coefficient_group;
   contribs = contributors;
+
   for (n = 0; n < num_contributors; n++)
   {
     int i;
@@ -3561,7 +3577,7 @@ static void stbir__cleanup_gathered_coefficients( stbir_edge edge, stbir__filter
         int endi = contribs->n1;
         contribs->n1 = input_last_n1;
         for( i = input_size; i <= endi; i++ )
-          stbir__insert_coeff( contribs, coeffs, stbir__edge_wrap_slow[edge]( i, input_size ), coeffs[i-start] );
+          stbir__insert_coeff( contribs, coeffs, stbir__edge_wrap_slow[edge]( i, input_size ), coeffs[i-start], coefficient_width );
       }
 
       // now check left hand edge
@@ -3573,7 +3589,7 @@ static void stbir__cleanup_gathered_coefficients( stbir_edge edge, stbir__filter
 
         // reinsert the coeffs with it reflected or clamped (insert accumulates, if the coeffs exist)
         for( i = -1 ; i > contribs->n0 ; i-- )
-          stbir__insert_coeff( contribs, coeffs, stbir__edge_wrap_slow[edge]( i, input_size ), *c-- );
+          stbir__insert_coeff( contribs, coeffs, stbir__edge_wrap_slow[edge]( i, input_size ), *c--, coefficient_width );
         save_n0 = contribs->n0;
         save_n0_coeff = c[0]; // save it, since we didn't do the final one (i==n0), because there might be too many coeffs to hold (before we resize)!
 
@@ -3583,7 +3599,7 @@ static void stbir__cleanup_gathered_coefficients( stbir_edge edge, stbir__filter
           coeffs[i] = coeffs[i-save_n0];
 
         // now that we have shrunk down the contribs, we insert the first one safely
-        stbir__insert_coeff( contribs, coeffs, stbir__edge_wrap_slow[edge]( save_n0, input_size ), save_n0_coeff );
+        stbir__insert_coeff( contribs, coeffs, stbir__edge_wrap_slow[edge]( save_n0, input_size ), save_n0_coeff, coefficient_width );
       }
     }
 
@@ -3592,6 +3608,7 @@ static void stbir__cleanup_gathered_coefficients( stbir_edge edge, stbir__filter
       int diff = contribs->n1 - contribs->n0 + 1;
       while ( diff && ( coeffs[ diff-1 ] == 0.0f ) )
         --diff;
+
       contribs->n1 = contribs->n0 + diff - 1;
 
       if ( contribs->n0 <= contribs->n1 )
@@ -3964,7 +3981,7 @@ static void stbir__calculate_filters( stbir__sampler * samp, stbir__sampler * ot
               }
               else
               {
-                stbir__insert_coeff( scatter_contributors, scatter_coeffs, n, gc );
+                stbir__insert_coeff( scatter_contributors, scatter_coeffs, n, gc, scatter_coefficient_width );
               }
               STBIR_ASSERT( ( scatter_contributors->n1 - scatter_contributors->n0 + 1 ) <= scatter_coefficient_width );
             }
@@ -4810,12 +4827,13 @@ static void stbir__decode_scanline(stbir__info const * stbir_info, int n, float 
     stbir__simdf8_madd_mem( tot0, tot0, c, decode+(ofs)*2 );
 
 #define stbir__1_coeff_remnant( ofs )                \
-    { stbir__simdf t;                                \
+    { stbir__simdf t,d;                              \
     stbir__simdf_load1z( t, hc + (ofs) );            \
+    stbir__simdf_load2( d, decode + (ofs) * 2 );     \
     stbir__simdf_0123to0011( t, t );                 \
-    stbir__simdf_mult_mem( t, t, decode+(ofs)*2 );   \
+    stbir__simdf_mult( t, t, d );                    \
     stbir__simdf8_add4( tot0, tot0, t ); }
-
+ 
 #define stbir__2_coeff_remnant( ofs )                \
     { stbir__simdf t;                                \
     stbir__simdf_load2( t, hc + (ofs) );             \
@@ -6714,7 +6732,7 @@ static void stbir__free_internal_mem( stbir__info *info )
     STBIR__FREE_AND_CLEAR( info->horizontal.coefficients );
     STBIR__FREE_AND_CLEAR( info->horizontal.contributors );
     STBIR__FREE_AND_CLEAR( info->alloced_mem );
-    STBIR__FREE_AND_CLEAR( info );
+    STBIR_FREE( info, info->user_data );
   #endif
   }
 
@@ -7112,6 +7130,11 @@ static stbir__info * stbir__alloc_internal_mem_and_build_samplers( stbir__sample
 
 #ifdef STBIR__SEPARATE_ALLOCATIONS
       temp_mem_amt = decode_buffer_size;
+
+      #ifdef STBIR_SIMD8
+      if ( effective_channels == 3 )
+        --temp_mem_amt; // avx in 3 channel mode needs one float at the start of the buffer
+      #endif
 #else
       temp_mem_amt = ( decode_buffer_size + ring_buffer_size + vertical_buffer_size ) * splits;
 #endif
@@ -7217,6 +7240,12 @@ static stbir__info * stbir__alloc_internal_mem_and_build_samplers( stbir__sample
         int t, ofs, start;
 
         ofs = decode_buffer_size / 4;
+
+        #if defined( STBIR__SEPARATE_ALLOCATIONS ) && defined(STBIR_SIMD8)
+        if ( effective_channels == 3 ) 
+          --ofs; // avx in 3 channel mode needs one float at the start of the buffer, so we snap back for clearing
+        #endif
+
         start = ofs - 4;
         if ( start < 0 ) start = 0;
 

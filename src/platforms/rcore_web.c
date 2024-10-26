@@ -324,8 +324,8 @@ void MaximizeWindow(void)
         platform.unmaximizedWidth = CORE.Window.screen.width;
         platform.unmaximizedHeight = CORE.Window.screen.height;
 
-        const int tabWidth = EM_ASM_INT( { return window.innerWidth;  }, 0);
-        const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
+        const int tabWidth = EM_ASM_INT( return window.innerWidth; );
+        const int tabHeight = EM_ASM_INT( return window.innerHeight; );
 
         if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
 
@@ -423,8 +423,8 @@ void SetWindowState(unsigned int flags)
             platform.unmaximizedWidth = CORE.Window.screen.width;
             platform.unmaximizedHeight = CORE.Window.screen.height;
 
-            const int tabWidth = EM_ASM_INT( { return window.innerWidth;  }, 0);
-            const int tabHeight = EM_ASM_INT( { return window.innerHeight; }, 0);
+            const int tabWidth = EM_ASM_INT( return window.innerWidth; );
+            const int tabHeight = EM_ASM_INT( return window.innerHeight; );
 
             if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
 
@@ -892,9 +892,34 @@ int SetGamepadMappings(const char *mappings)
 }
 
 // Set gamepad vibration
-void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
-    TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (duration > 0.0f))
+    {
+        if (leftMotor < 0.0f) leftMotor = 0.0f;
+        if (leftMotor > 1.0f) leftMotor = 1.0f;
+        if (rightMotor < 0.0f) rightMotor = 0.0f;
+        if (rightMotor > 1.0f) rightMotor = 1.0f;
+        if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
+        duration *= 1000.0f; // Convert duration to ms
+
+        // Note: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
+        //       and Firefox only supports the hapticActuators API
+        EM_ASM({
+            try
+            {
+                navigator.getGamepads()[$0].vibrationActuator.playEffect('dual-rumble', { startDelay: 0, duration: $3, weakMagnitude: $1, strongMagnitude: $2 });
+            }
+            catch (e)
+            {
+                try
+                {
+                    navigator.getGamepads()[$0].hapticActuators[0].pulse($2, $3);
+                }
+                catch (e) { }
+            }
+        }, gamepad, leftMotor, rightMotor, duration);
+    }
 }
 
 // Set mouse position XY
@@ -1614,9 +1639,6 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 //     return 1; // The event was consumed by the callback handler
 // }
 
-EM_JS(int, GetWindowInnerWidth, (), { return window.innerWidth; });
-EM_JS(int, GetWindowInnerHeight, (), { return window.innerHeight; });
-
 // Register DOM element resize event
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
@@ -1625,8 +1647,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
     // This event is called whenever the window changes sizes,
     // so the size of the canvas object is explicitly retrieved below
-    int width = GetWindowInnerWidth();
-    int height = GetWindowInnerHeight();
+    int width = EM_ASM_INT( return window.innerWidth; );
+    int height = EM_ASM_INT( return window.innerHeight; );
 
     if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
     else if (width > (int)CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;

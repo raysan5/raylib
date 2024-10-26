@@ -81,6 +81,8 @@ int main(void)
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
+        characterModel.transform = MatrixTranslate(position.x, position.y, position.z);
+        UpdateModelAnimationBoneMatrices(characterModel, anim, animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -91,12 +93,11 @@ int main(void)
 
             BeginMode3D(camera);
             
-                // Draw character
-                characterModel.transform = MatrixTranslate(position.x, position.y, position.z);
-                UpdateModelAnimationBoneMatrices(characterModel, anim, animCurrentFrame);
+                // Draw character mesh, pose calculation is done in shader (GPU skinning)
                 DrawMesh(characterModel.meshes[0], characterModel.materials[1], characterModel.transform);
 
                 DrawGrid(10, 1.0f);
+                
             EndMode3D();
 
             DrawText("Use the T/G to switch animation", 10, 10, 20, GRAY);
@@ -107,11 +108,11 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModelAnimations(modelAnimations, animsCount);
-    UnloadModel(characterModel);         // Unload character model and meshes/material
-    UnloadShader(skinningShader);
+    UnloadModelAnimations(modelAnimations, animsCount); // Unload model animation
+    UnloadModel(characterModel);    // Unload model and meshes/material
+    UnloadShader(skinningShader);   // Unload GPU skinning shader
     
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -953,17 +953,17 @@ int SetGamepadMappings(const char *mappings)
 }
 
 // Set gamepad vibration
-void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
-    // Limit input values to between 0.0f and 1.0f
-    leftMotor  = (0.0f > leftMotor)? 0.0f : leftMotor;
-    rightMotor = (0.0f > rightMotor)? 0.0f : rightMotor;
-    leftMotor  = (1.0f < leftMotor)? 1.0f : leftMotor;
-    rightMotor = (1.0f < rightMotor)? 1.0f : rightMotor;
-
-    if (IsGamepadAvailable(gamepad))
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (duration > 0.0f))
     {
-        SDL_GameControllerRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), (Uint32)(MAX_GAMEPAD_VIBRATION_TIME*1000.0f));
+        if (leftMotor < 0.0f) leftMotor = 0.0f;
+        if (leftMotor > 1.0f) leftMotor = 1.0f;
+        if (rightMotor < 0.0f) rightMotor = 0.0f;
+        if (rightMotor > 1.0f) rightMotor = 1.0f;
+        if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
+
+        SDL_GameControllerRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), (Uint32)(duration*1000.0f));
     }
 }
 

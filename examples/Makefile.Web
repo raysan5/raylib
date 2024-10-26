@@ -52,6 +52,10 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
 
+# Use WebGL2 backend (OpenGL 3.0)
+# WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
+USE_WEBGL2            ?= FALSE
+
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
 ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -110,8 +114,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 		EMSDK_PATH         ?= C:/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
-		NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/20.18.0_64bit/bin
 		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
     endif
 endif
@@ -139,7 +143,7 @@ endif
 
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
-MAKE ?= emmake make
+MAKE ?= make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -149,8 +153,17 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    MAKE = emmake make
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    ifeq ($(OS),Windows_NT)
+        MAKE = mingw32-make
+    else
+        EMMAKE != type emmake
+        ifneq (, $(EMMAKE))
+            MAKE = emmake make
+        else
+            MAKE = mingw32-make
+        endif
+    endif
 endif
 
 # Define compiler flags: CFLAGS
@@ -260,6 +273,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
     LDFLAGS += -sUSE_GLFW=3 -sASYNCIFY -sEXPORTED_RUNTIME_METHODS=ccall
+
+    # NOTE: Flags required for WebGL 2.0 (OpenGL ES 3.0)
+    # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
+    ifeq ($(USE_WEBGL2),TRUE)
+        LDFLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
+    endif
 
     # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
@@ -434,6 +453,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation \
+    models/models_gpu_skinning \
     models/models_billboard \
     models/models_box_collisions \
     models/models_cubicmap \
@@ -540,10 +560,10 @@ core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
 
 core/core_3d_picking: core/core_3d_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 core/core_automation_events : core/core_automation_events.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 core/core_basic_window: core/core_basic_window.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -642,7 +662,7 @@ shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
 
 shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 shapes/shapes_draw_ring: shapes/shapes_draw_ring.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -712,7 +732,7 @@ textures/textures_image_drawing: textures/textures_image_drawing.c
 
 textures/textures_image_generation: textures/textures_image_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864
-	
+
 textures/textures_image_kernel: textures/textures_image_kernel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
 	--preload-file textures/resources/cat.png@resources/cat.png
@@ -788,7 +808,7 @@ textures/textures_to_image: textures/textures_to_image.c
 text/text_codepoints_loading: text/text_codepoints_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
-    
+
 text/text_draw_3d: text/text_draw_3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
@@ -854,6 +874,12 @@ models/models_animation: models/models_animation.c
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
     --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
 
+models/models_gpu_skinning: models/models_gpu_skinning.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
+
 models/models_billboard: models/models_billboard.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/billboard.png@resources/billboard.png
@@ -877,7 +903,7 @@ models/models_first_person_maze: models/models_first_person_maze.c
 
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 models/models_heightmap: models/models_heightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/heightmap.png@resources/heightmap.png
@@ -886,7 +912,7 @@ models/models_loading: models/models_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/obj/castle.obj@resources/models/obj/castle.obj \
     --preload-file models/resources/models/obj/castle_diffuse.png@resources/models/obj/castle_diffuse.png
-    
+
 models/models_loading_gltf: models/models_loading_gltf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
@@ -894,12 +920,12 @@ models/models_loading_gltf: models/models_loading_gltf.c
 models/models_loading_m3d: models/models_loading_m3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
-    
+
 models/models_loading_vox: models/models_loading_vox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/vox/chr_knight.vox@resources/models/vox/chr_knight.vox \
     --preload-file models/resources/models/vox/chr_sword.vox@resources/models/vox/chr_sword.vox \
-    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox   
+    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox
 
 models/models_mesh_generation: models/models_mesh_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -925,7 +951,7 @@ models/models_skybox: models/models_skybox.c
 
 models/models_waving_cubes: models/models_waving_cubes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/obj/plane.obj@resources/models/obj/plane.obj \
@@ -1058,7 +1084,7 @@ audio/audio_mixed_processor: audio/audio_mixed_processor.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3 \
     --preload-file audio/resources/coin.wav@resources/coin.wav
-    
+
 audio/audio_module_playing: audio/audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/mini1111.xm@resources/mini1111.xm

@@ -3295,8 +3295,7 @@ float GetGamepadAxisMovement(int gamepad, int axis)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS)) {
         float movement = value < 0.0f ? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
 
-        // 0.1f = GAMEPAD_AXIS_MINIMUM_DRIFT/DELTA
-        if (movement > value + 0.1f) value = CORE.Input.Gamepad.axisState[gamepad][axis];
+        if (movement > value) value = CORE.Input.Gamepad.axisState[gamepad][axis];
     }
 
     return value;
