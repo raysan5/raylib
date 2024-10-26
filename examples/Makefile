@@ -268,7 +268,7 @@ INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 # Define additional directories containing required header files
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
-        INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
+        INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH) -I/usr/pkg/include -I/usr/X11R7/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
@@ -401,6 +401,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
+	LDFLAGS += -L /usr/pkg/lib -L /usr/X11R7/lib -Wl,-R/usr/pkg/lib -Wl,-R/usr/X11R7/lib
         LDLIBS = -lraylib -lGL -lpthread -lm
 
         # On XWindow requires also below libraries
@@ -676,6 +677,10 @@ clean:
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o *.exe /s
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+		find . -type f -perm -ugo+x -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
