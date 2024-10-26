@@ -1,6 +1,6 @@
 /*
 MP3 audio decoder. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_mp3 - v0.6.38 - 2023-11-02
+dr_mp3 - v0.6.39 - 2024-02-27
 
 David Reid - mackron@gmail.com
 
@@ -95,7 +95,7 @@ extern "C" {
 
 #define DRMP3_VERSION_MAJOR     0
 #define DRMP3_VERSION_MINOR     6
-#define DRMP3_VERSION_REVISION  38
+#define DRMP3_VERSION_REVISION  39
 #define DRMP3_VERSION_STRING    DRMP3_XSTRINGIFY(DRMP3_VERSION_MAJOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_MINOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
@@ -1985,8 +1985,8 @@ static drmp3_int16 drmp3d_scale_pcm(float sample)
     s32 -= (s32 < 0);
     s = (drmp3_int16)drmp3_clip_int16_arm(s32);
 #else
-    if (sample >=  32766.5) return (drmp3_int16) 32767;
-    if (sample <= -32767.5) return (drmp3_int16)-32768;
+    if (sample >=  32766.5f) return (drmp3_int16) 32767;
+    if (sample <= -32767.5f) return (drmp3_int16)-32768;
     s = (drmp3_int16)(sample + .5f);
     s -= (s < 0);   /* away from zero, to be compliant */
 #endif
@@ -2404,9 +2404,9 @@ DRMP3_API void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, size_t num
     for(; i < num_samples; i++)
     {
         float sample = in[i] * 32768.0f;
-        if (sample >=  32766.5)
+        if (sample >=  32766.5f)
             out[i] = (drmp3_int16) 32767;
-        else if (sample <= -32767.5)
+        else if (sample <= -32767.5f)
             out[i] = (drmp3_int16)-32768;
         else
         {
@@ -4495,6 +4495,9 @@ counts rather than sample counts.
 /*
 REVISION HISTORY
 ================
+v0.6.39 - 2024-02-27
+  - Fix a Wdouble-promotion warning.
+
 v0.6.38 - 2023-11-02
   - Fix build for ARMv6-M.
 
