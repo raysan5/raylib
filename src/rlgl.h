@@ -3408,7 +3408,7 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
     if (glInternalFormat != 0)
     {
         // Load cubemap faces/mipmaps
-        for (unsigned int i = 0; i < 6*mipmapCount; i++)
+        for (int i = 0; i < 6*mipmapCount; i++)
         {
             int mipmapLevel = i/6;
             int face = i%6;
