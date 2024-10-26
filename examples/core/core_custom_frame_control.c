@@ -27,12 +27,20 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "config.h"
+#include "assert.h"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(void)
 {
+    #if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+    // This examaple requires the SUPPORT_CUSTOM_FRAME_CONTROL feature.
+    // Please edit your raylib config.h and recompile raylib.
+    assert(false);
+    #endif
+
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
