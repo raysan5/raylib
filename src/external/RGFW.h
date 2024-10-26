@@ -38,6 +38,7 @@
 	#define RGFW_OPENGL_ES2 - (optional) use OpenGL ES (version 2)
 	#define RGFW_OPENGL_ES3 - (optional) use OpenGL ES (version 3)
 	#define RGFW_DIRECTX - (optional) use directX for the rendering backend (rather than opengl) (windows only, defaults to opengl for unix)
+	#define RGFW_WEBGPU - (optional) use webGPU for rendering (Web ONLY)
 	#define RGFW_NO_API - (optional) don't use any rendering API (no opengl, no vulkan, no directX)
 
 	#define RGFW_LINK_EGL (optional) (windows only) if EGL is being used, if EGL functions should be defined dymanically (using GetProcAddress)
@@ -84,6 +85,9 @@
 		Rob Rohan -> X11 bugs and missing features, MacOS/Cocoa fixing memory issues/bugs 
 		AICDG (@THISISAGOODNAME) -> vulkan support (example)
 		@Easymode -> support, testing/debugging, bug fixes and reviews
+		Joshua Rowe (omnisci3nce) - bug fix, review (macOS)
+		@lesleyrs -> bug fix, review (OpenGL)
+		Nick Porcino (meshula) - testing, organization, review (MacOS, examples)
 */
 
 #if _MSC_VER
@@ -201,7 +205,7 @@
 #ifdef __EMSCRIPTEN__
 	#define RGFW_WEBASM
 
-	#ifndef RGFW_NO_API
+	#if !defined(RGFW_NO_API) && !defined(RGFW_WEBGPU)
 		#define RGFW_OPENGL
 	#endif
 
@@ -211,6 +215,10 @@
 
 	#include <emscripten/html5.h>
 	#include <emscripten/key_codes.h>
+
+	#ifdef RGFW_WEBGPU
+		#include <emscripten/html5_webgpu.h>
+	#endif
 #endif
 
 #if defined(RGFW_X11) && defined(__APPLE__)
@@ -573,7 +581,13 @@ typedef struct RGFW_window_src {
 		void* image;
 #endif
 #elif defined(RGFW_WEBASM)
-	EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
+	#ifdef RGFW_WEBGPU
+		WGPUInstance ctx;
+        WGPUDevice device;
+        WGPUQueue queue;
+	#else
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
+	#endif
 #endif
 } RGFW_window_src;
 
@@ -1180,9 +1194,9 @@ int main() {
 	static : ar rcs RGFW.a RGFW.o
 	shared :
 		windows:
-			gcc -shared RGFW.o -lopengl32 -lshell32 -lgdi32 -o RGFW.dll
+			gcc -shared RGFW.o -lwinmm -lopengl32 -lshell32 -lgdi32 -o RGFW.dll
 		linux:
-			gcc -shared RGFW.o -lX11 -lXcursor -lGL -o RGFW.so
+			gcc -shared RGFW.o -lX11 -lXcursor -lGL -lXrandr -o RGFW.so
 		macos:
 			gcc -shared RGFW.o -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
 */
@@ -1406,7 +1420,7 @@ char RGFW_keyCodeToChar(u32 keycode, b8 shift) {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '`', '0', '1', '2', '3', '4', '5', '6', '7', '8', 
         '9', '-', '=', 0, '\t',  0, 0, 0, 0, 0, 0, 0, 0, 0, ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
         'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.', ',', '/', '[', ']',  ';', '\n', '\'', '\\', 
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  '/', '*', '-', '1', '2', '3',  '3', '5', '6', '7', '8',  '9', '0', '\n'
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  '/', '*', '-', '1', '2', '3',  '4', '5', '6', '7', '8',  '9', '0', '\n'
     };
 
     static const char mapCaps[] = {
@@ -1969,7 +1983,7 @@ void RGFW_updateLockState(RGFW_window* win, b8 capital, b8 numlock) {
 
 		size_t index = (sizeof(attribs) / sizeof(attribs[0])) - 13;
 
-#define RGFW_GL_ADD_ATTRIB(attrib, attVal) \
+	#define RGFW_GL_ADD_ATTRIB(attrib, attVal) \
 		if (attVal) { \
 			attribs[index] = attrib;\
 			attribs[index + 1] = attVal;\
@@ -2522,7 +2536,8 @@ Start of Linux / Unix defines
 			glXGetFBConfigAttrib((Display*) win->src.display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf);
 			glXGetFBConfigAttrib((Display*) win->src.display, fbc[i], GLX_SAMPLES, &samples);
 			
-			if ((best_fbc < 0 || samp_buf) && (samples == RGFW_SAMPLES || best_fbc == -1)) {
+			if ((!(args & RGFW_TRANSPARENT_WINDOW) || vi->depth == 32) && 
+				(best_fbc < 0 || samp_buf) && (samples == RGFW_SAMPLES || best_fbc == -1)) {
 				best_fbc = i;
 			}
 		}
@@ -2538,11 +2553,6 @@ Start of Linux / Unix defines
 		XVisualInfo* vi = glXGetVisualFromFBConfig((Display*) win->src.display, bestFbc);
 		
 		XFree(fbc);
-		
-		if (args & RGFW_TRANSPARENT_WINDOW) {
-			XMatchVisualInfo((Display*) win->src.display, DefaultScreen((Display*) win->src.display), 32, TrueColor, vi); /*!< for RGBA backgrounds*/
-		}
-		
 #else
 		XVisualInfo viNorm;
 
@@ -8547,7 +8557,8 @@ RGFW_window* RGFW_createWindow(const char* name, RGFW_rect rect, u16 args) {
 	RGFW_UNUSED(RGFW_initFormatAttribs);
 	
     RGFW_window* win = RGFW_window_basic_init(rect, args);
-
+	
+#ifndef RGFW_WEBGPU
     EmscriptenWebGLContextAttributes attrs;
     attrs.alpha = EM_TRUE;
     attrs.depth = EM_TRUE;
@@ -8576,6 +8587,11 @@ RGFW_window* RGFW_createWindow(const char* name, RGFW_rect rect, u16 args) {
 	#ifdef LEGACY_GL_EMULATION
 	EM_ASM("Module.useWebGL = true; GLImmediate.init();");	
 	#endif
+#else
+	win->src.ctx = wgpuCreateInstance(NULL);
+    win->src.device = emscripten_webgpu_get_device();
+    win->src.queue = wgpuDeviceGetQueue(win->src.device);
+#endif
 
 	emscripten_set_canvas_element_size("#canvas", rect.w, rect.h);
 	emscripten_set_window_title(name);
@@ -8871,16 +8887,20 @@ void RGFW_window_swapBuffers(RGFW_window* win) {
 	}
 	#endif
 
+#ifndef RGFW_WEBGPU
 	emscripten_webgl_commit_frame();
+#endif
 	emscripten_sleep(0);
 }
 
 
 void RGFW_window_makeCurrent_OpenGL(RGFW_window* win) {
+#ifndef RGFW_WEBGPU
 	if (win == NULL)
 	    emscripten_webgl_make_context_current(0);
 	else
 	    emscripten_webgl_make_context_current(win->src.ctx);
+#endif
 }
 
 #ifndef RGFW_EGL
@@ -8888,7 +8908,9 @@ void RGFW_window_swapInterval(RGFW_window* win, i32 swapInterval) { RGFW_UNUSED(
 #endif
 
 void RGFW_window_close(RGFW_window* win) {
-    emscripten_webgl_destroy_context(win->src.ctx);
+#ifndef RGFW_WEBGPU
+	emscripten_webgl_destroy_context(win->src.ctx);
+#endif
 
     free(win);
 }

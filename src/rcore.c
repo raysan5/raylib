@@ -161,8 +161,8 @@
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
-unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
-unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
+__declspec(dllimport) unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+__declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
     #include <unistd.h>
 #elif defined(__FreeBSD__)
