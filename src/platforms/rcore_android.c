@@ -74,7 +74,7 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
-
+extern bool isGpuReady;                 // Flag to note GPU has been initialized successfully
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
@@ -615,7 +615,7 @@ int SetGamepadMappings(const char *mappings)
 }
 
 // Set gamepad vibration
-void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
     TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
 }
@@ -694,15 +694,15 @@ void PollInputEvents(void)
         // Process this event
         if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-        // NOTE: Never close window, native activity is controlled by the system!
+        // NOTE: Allow closing the window in case a configuration change happened.
+        // The android_main function should be allowed to return to its caller in order for the
+        // Android OS to relaunch the activity.
         if (platform.app->destroyRequested != 0)
         {
-            //CORE.Window.shouldClose = true;
-            //ANativeActivity_finish(platform.app->activity);
+            CORE.Window.shouldClose = true;
         }
     }
 }
-
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
@@ -781,7 +781,7 @@ int InitPlatform(void)
             // Process this event
             if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-            // NOTE: Never close window, native activity is controlled by the system!
+            // NOTE: It's highly likely destroyRequested will never be non-zero at the start of the activity lifecycle.
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
@@ -811,6 +811,12 @@ void ClosePlatform(void)
 
         eglTerminate(platform.device);
         platform.device = EGL_NO_DISPLAY;
+    }
+
+    // NOTE: Reset global state in case the activity is being relaunched.
+    if (platform.app->destroyRequested != 0) {
+        CORE = (CoreData){0};
+        platform = (PlatformData){0};
     }
 }
 
@@ -982,6 +988,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Initialize OpenGL context (states and resources)
                     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+                    isGpuReady = true;
 
                     // Setup default viewport
                     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height

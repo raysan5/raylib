@@ -70,8 +70,9 @@ RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
-RAYLIB_INCLUDE_PATH   ?= /usr/local/include
-RAYLIB_LIB_PATH       ?= /usr/local/lib
+DESTDIR ?= /usr/local
+RAYLIB_INCLUDE_PATH   ?= $(DESTDIR)/include
+RAYLIB_LIB_PATH       ?= $(DESTDIR)/lib
 
 # Library type compilation: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
@@ -156,8 +157,8 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
 		EMSDK_PATH         ?= C:/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
-		NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/20.18.0_64bit/bin
 		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
     endif
 endif
@@ -196,7 +197,16 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
-    MAKE = emmake make
+    ifeq ($(OS),Windows_NT)
+        MAKE = mingw32-make
+    else
+        EMMAKE != type emmake
+        ifneq (, $(EMMAKE))
+            MAKE = emmake make
+        else
+            MAKE = mingw32-make
+        endif
+    endif
 endif
 
 # Define compiler flags: CFLAGS
@@ -258,7 +268,7 @@ INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 # Define additional directories containing required header files
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
-        INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
+        INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH) -I/usr/pkg/include -I/usr/X11R7/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
@@ -391,6 +401,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
+        LDFLAGS += -L/usr/X11R7/lib -Wl,-R/usr/X11R7/lib
         LDLIBS = -lraylib -lGL -lpthread -lm
 
         # On XWindow requires also below libraries
@@ -450,7 +461,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = ../src/libraylib.a -lm 
+        LDLIBS = ../src/libraylib.a -lm
         LDLIBS += -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
     endif
 endif
@@ -491,6 +502,7 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
+    core/core_input_virtual_controls \
     core/core_loading_thread \
     core/core_random_sequence \
     core/core_random_values \
@@ -547,7 +559,6 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
-    textures/textures_svg_loading \
     textures/textures_textured_curve \
     textures/textures_to_image
 
@@ -582,10 +593,12 @@ MODELS = \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_orthographic_projection \
+    models/models_point_rendering \
     models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_waving_cubes \
-    models/models_yaw_pitch_roll
+    models/models_yaw_pitch_roll \
+    models/models_gpu_skinning
 
 SHADERS = \
     shaders/shaders_basic_lighting \
@@ -664,6 +677,10 @@ clean:
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o *.exe /s
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+		find . -type f -perm -ugo+x -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete

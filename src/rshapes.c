@@ -807,6 +807,30 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
+    Matrix mat = rlGetMatrixModelview();
+    float zoomFactor = 0.5f/mat.m0;
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2f((float)posX - zoomFactor, (float)posY);
+        rlVertex2f((float)posX + (float)width + zoomFactor, (float)posY);
+
+        rlVertex2f((float)posX + (float)width, (float)posY - zoomFactor);
+        rlVertex2f((float)posX + (float)width, (float)posY + (float)height + zoomFactor);
+
+        rlVertex2f((float)posX + (float)width + zoomFactor, (float)posY + (float)height);
+        rlVertex2f((float)posX - zoomFactor, (float)posY + (float)height);
+
+        rlVertex2f((float)posX, (float)posY + (float)height + zoomFactor);
+        rlVertex2f((float)posX, (float)posY - zoomFactor);
+    rlEnd();
+/*
+// Previous implementation, it has issues... but it does not require view matrix...
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+    DrawRectangle(posX, posY, width, 1, color);
+    DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
+    DrawRectangle(posX, posY + height - 1, width, 1, color);
+    DrawRectangle(posX, posY + 1, 1, height - 2, color);
+#else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f((float)posX, (float)posY);
@@ -821,6 +845,8 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         rlVertex2f((float)posX + 1, (float)posY + (float)height);
         rlVertex2f((float)posX + 1, (float)posY + 1);
     rlEnd();
+//#endif
+*/
 }
 
 // Draw rectangle outline with extended parameters
@@ -828,8 +854,8 @@ void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color)
 {
     if ((lineThick > rec.width) || (lineThick > rec.height))
     {
-        if (rec.width > rec.height) lineThick = rec.height/2;
-        else if (rec.width < rec.height) lineThick = rec.width/2;
+        if (rec.width >= rec.height) lineThick = rec.height/2;
+        else if (rec.width <= rec.height) lineThick = rec.width/2;
     }
 
     // When rec = { x, y, 8.0f, 6.0f } and lineThick = 2, the following
@@ -1650,7 +1676,7 @@ void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color 
         prevNormal = normal;
     }
 
-#else   // !SUPPORT_SPLINE_MITTERS
+#else   // !SUPPORT_SPLINE_MITERS
 
     Vector2 delta = { 0 };
     float length = 0.0f;
