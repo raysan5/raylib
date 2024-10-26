@@ -4194,7 +4194,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             faces = GenImageColor(size, size*6, MAGENTA);
             ImageFormat(&faces, image.format);
 
-            ImageMipmaps(&image);
+            //ImageMipmaps(&image); // WARNING: image is a copy, it can't be done here, no intention to pass image by reference...
             ImageMipmaps(&faces);
 
             // NOTE: Image formatting does not work with compressed textures
