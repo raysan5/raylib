@@ -264,6 +264,22 @@ RMAPI Vector2 Vector2AddValue(Vector2 v, float add)
     return result;
 }
 
+// Add vector and x float value
+RMAPI Vector2 Vector2AddX(Vector2 v, float x)
+{
+    Vector2 result = { v.x + x, v.y };
+
+    return result;
+}
+
+// Add vector and y float value
+RMAPI Vector2 Vector2AddY(Vector2 v, float y)
+{
+    Vector2 result = { v.x, v.y + y };
+
+    return result;
+}
+
 // Subtract two vectors (v1 - v2)
 RMAPI Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
