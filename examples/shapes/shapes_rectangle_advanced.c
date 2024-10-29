@@ -3,6 +3,7 @@
 #include <math.h>
 
 // Draw rectangle with rounded edges and horizontal gradient, with options to choose side of roundness
+// Adapted from both `DrawRectangleRounded` and `DrawRectangleGradientH`
 void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, float roundnessRight, int segments, Color left, Color right)
 {
     // Neither side is rounded
@@ -197,7 +198,7 @@ void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, float rou
     rlBegin(RL_TRIANGLES);
 
         // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
-        for (int k = 0; k < 4; ++k) 
+        for (int k = 0; k < 4; ++k)
         {
             Color color;
             float radius;
@@ -274,18 +275,35 @@ void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, float rou
 #endif
 }
 
-int main(int argc, char *argv[]) {
-    InitWindow(600, 900, "Rectangle Rounded Gradient");
-    double width = 600/2.0, height = 900/6.0;
+int main(int argc, char *argv[])
+{
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle avanced");
+    SetTargetFPS(60);
+    //--------------------------------------------------------------------------------------
 
-    while (!WindowShouldClose()) {
+    // Main game loop
+    while (!WindowShouldClose())     // Detect window close button or ESC key
+    {
+        // Update rectangle bounds
+        //----------------------------------------------------------------------------------
+        double width = GetScreenWidth()/2.0, height = GetScreenHeight()/6.0;
+        Rectangle rec = {
+            GetScreenWidth() / 2.0 - width/2,
+            GetScreenHeight() / 2.0 - (5)*(height/2),
+            width, height
+        };
+        //--------------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
         BeginDrawing();
             ClearBackground(RAYWHITE);
-            Rectangle rec = {
-                GetScreenWidth() / 2.0 - width/2,
-                GetScreenHeight() / 2.0 - (5)*(height/2),
-                width, height
-            };
+
+            // Draw All Rectangles with different roundess  for each side and different gradients
             DrawRectangleRoundedGradientH(rec, 0.8, 0.8, 36, BLUE, RED);
 
             rec.y += rec.height + 1;
@@ -300,7 +318,13 @@ int main(int argc, char *argv[]) {
             rec.y += rec.height + 1;
             DrawRectangleRoundedGradientH(rec, 1.0, 0.0, 36, BLUE, PINK);
         EndDrawing();
+        //--------------------------------------------------------------------------------------
     }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
     return 0;
 }
 
