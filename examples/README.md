@@ -80,6 +80,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | 47 | [shapes_draw_circle_sector](shapes/shapes_draw_circle_sector.c) | <img src="shapes/shapes_draw_circle_sector.png" alt="shapes_draw_circle_sector" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | 48 | [shapes_draw_rectangle_rounded](shapes/shapes_draw_rectangle_rounded.c) | <img src="shapes/shapes_draw_rectangle_rounded.png" alt="shapes_draw_rectangle_rounded" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | 49 | [shapes_top_down_lights](shapes/shapes_top_down_lights.c) | <img src="shapes/shapes_top_down_lights.png" alt="shapes_top_down_lights" width="80"> | ⭐️⭐️⭐️⭐️ | **4.2** | **4.2** | [Jeffery Myers](https://github.com/JeffM2501) |
+| 50 | [shapes_rectangle_advanced](shapes/shapes_rectangle_advanced.c) | <img src="shapes/shapes_rectangle_advanced.png" alt="shapes_rectangle_advanced" width="80"> | ⭐️⭐️⭐️⭐️⭐️| **5.0** | **5.0** | [ExCyber](https://github.com/evertonse) |
 
 ### category: textures
 
@@ -87,28 +88,28 @@ Examples using raylib textures functionality, including image/textures loading/g
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 50 | [textures_logo_raylib](textures/textures_logo_raylib.c) | <img src="textures/textures_logo_raylib.png" alt="textures_logo_raylib" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
-| 51 | [textures_srcrec_dstrec](textures/textures_srcrec_dstrec.c) | <img src="textures/textures_srcrec_dstrec.png" alt="textures_srcrec_dstrec" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
-| 52 | [textures_image_drawing](textures/textures_image_drawing.c) | <img src="textures/textures_image_drawing.png" alt="textures_image_drawing" width="80"> | ⭐️⭐️☆☆ | 1.4 | 1.4 | [Ray](https://github.com/raysan5) |
-| 53 | [textures_image_generation](textures/textures_image_generation.c) | <img src="textures/textures_image_generation.png" alt="textures_image_generation" width="80"> | ⭐️⭐️☆☆ | 1.8 | 1.8 | [Ray](https://github.com/raysan5) |
-| 54 | [textures_image_loading](textures/textures_image_loading.c) | <img src="textures/textures_image_loading.png" alt="textures_image_loading" width="80"> | ⭐️☆☆☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
-| 55 | [textures_image_processing](textures/textures_image_processing.c) | <img src="textures/textures_image_processing.png" alt="textures_image_processing" width="80"> | ⭐️⭐️⭐️☆ | 1.4 | 3.5 | [Ray](https://github.com/raysan5) |
-| 56 | [textures_image_text](textures/textures_image_text.c) | <img src="textures/textures_image_text.png" alt="textures_image_text" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
-| 57 | [textures_to_image](textures/textures_to_image.c) | <img src="textures/textures_to_image.png" alt="textures_to_image" width="80"> | ⭐️☆☆☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
-| 58 | [textures_raw_data](textures/textures_raw_data.c) | <img src="textures/textures_raw_data.png" alt="textures_raw_data" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
-| 59 | [textures_particles_blending](textures/textures_particles_blending.c) | <img src="textures/textures_particles_blending.png" alt="textures_particles_blending" width="80"> | ⭐️☆☆☆ | 1.7 | 3.5 | [Ray](https://github.com/raysan5) |
-| 60 | [textures_npatch_drawing](textures/textures_npatch_drawing.c) | <img src="textures/textures_npatch_drawing.png" alt="textures_npatch_drawing" width="80"> | ⭐️⭐️⭐️☆ | 2.0 | 2.5 | [Jorge A. Gomes](https://github.com/overdev) |
-| 61 | [textures_background_scrolling](textures/textures_background_scrolling.c) | <img src="textures/textures_background_scrolling.png" alt="textures_background_scrolling" width="80"> | ⭐️☆☆☆ | 2.0 | 2.5 | [Ray](https://github.com/raysan5) |
-| 62 | [textures_sprite_anim](textures/textures_sprite_anim.c) | <img src="textures/textures_sprite_anim.png" alt="textures_sprite_anim" width="80"> | ⭐️⭐️☆☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
-| 63 | [textures_sprite_button](textures/textures_sprite_button.c) | <img src="textures/textures_sprite_button.png" alt="textures_sprite_button" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
-| 64 | [textures_sprite_explosion](textures/textures_sprite_explosion.c) | <img src="textures/textures_sprite_explosion.png" alt="textures_sprite_explosion" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 65 | [textures_bunnymark](textures/textures_bunnymark.c) | <img src="textures/textures_bunnymark.png" alt="textures_bunnymark" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | 2.5 | [Ray](https://github.com/raysan5) |
-| 66 | [textures_mouse_painting](textures/textures_mouse_painting.c) | <img src="textures/textures_mouse_painting.png" alt="textures_mouse_painting" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.0 | [Chris Dill](https://github.com/MysteriousSpace) |
-| 67 | [textures_blend_modes](textures/textures_blend_modes.c) | <img src="textures/textures_blend_modes.png" alt="textures_blend_modes" width="80"> | ⭐️☆☆☆ | 3.5 | 3.5 | [Karlo Licudine](https://github.com/accidentalrebel) |
-| 68 | [textures_draw_tiled](textures/textures_draw_tiled.c) | <img src="textures/textures_draw_tiled.png" alt="textures_draw_tiled" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | **4.2** | [Vlad Adrian](https://github.com/demizdor) |
-| 69 | [textures_polygon](textures/textures_polygon.c) | <img src="textures/textures_polygon.png" alt="textures_polygon" width="80"> | ⭐️☆☆☆ | 3.7 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 70 | [textures_fog_of_war](textures/textures_fog_of_war.c) | <img src="textures/textures_fog_of_war.png" alt="textures_fog_of_war" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
-| 71 | [textures_gif_player](textures/textures_gif_player.c) | <img src="textures/textures_gif_player.png" alt="textures_gif_player" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
+| 51 | [textures_logo_raylib](textures/textures_logo_raylib.c) | <img src="textures/textures_logo_raylib.png" alt="textures_logo_raylib" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
+| 52 | [textures_srcrec_dstrec](textures/textures_srcrec_dstrec.c) | <img src="textures/textures_srcrec_dstrec.png" alt="textures_srcrec_dstrec" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
+| 53 | [textures_image_drawing](textures/textures_image_drawing.c) | <img src="textures/textures_image_drawing.png" alt="textures_image_drawing" width="80"> | ⭐️⭐️☆☆ | 1.4 | 1.4 | [Ray](https://github.com/raysan5) |
+| 54 | [textures_image_generation](textures/textures_image_generation.c) | <img src="textures/textures_image_generation.png" alt="textures_image_generation" width="80"> | ⭐️⭐️☆☆ | 1.8 | 1.8 | [Ray](https://github.com/raysan5) |
+| 55 | [textures_image_loading](textures/textures_image_loading.c) | <img src="textures/textures_image_loading.png" alt="textures_image_loading" width="80"> | ⭐️☆☆☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
+| 56 | [textures_image_processing](textures/textures_image_processing.c) | <img src="textures/textures_image_processing.png" alt="textures_image_processing" width="80"> | ⭐️⭐️⭐️☆ | 1.4 | 3.5 | [Ray](https://github.com/raysan5) |
+| 57 | [textures_image_text](textures/textures_image_text.c) | <img src="textures/textures_image_text.png" alt="textures_image_text" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
+| 58 | [textures_to_image](textures/textures_to_image.c) | <img src="textures/textures_to_image.png" alt="textures_to_image" width="80"> | ⭐️☆☆☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
+| 59 | [textures_raw_data](textures/textures_raw_data.c) | <img src="textures/textures_raw_data.png" alt="textures_raw_data" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
+| 60 | [textures_particles_blending](textures/textures_particles_blending.c) | <img src="textures/textures_particles_blending.png" alt="textures_particles_blending" width="80"> | ⭐️☆☆☆ | 1.7 | 3.5 | [Ray](https://github.com/raysan5) |
+| 61 | [textures_npatch_drawing](textures/textures_npatch_drawing.c) | <img src="textures/textures_npatch_drawing.png" alt="textures_npatch_drawing" width="80"> | ⭐️⭐️⭐️☆ | 2.0 | 2.5 | [Jorge A. Gomes](https://github.com/overdev) |
+| 62 | [textures_background_scrolling](textures/textures_background_scrolling.c) | <img src="textures/textures_background_scrolling.png" alt="textures_background_scrolling" width="80"> | ⭐️☆☆☆ | 2.0 | 2.5 | [Ray](https://github.com/raysan5) |
+| 63 | [textures_sprite_anim](textures/textures_sprite_anim.c) | <img src="textures/textures_sprite_anim.png" alt="textures_sprite_anim" width="80"> | ⭐️⭐️☆☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
+| 64 | [textures_sprite_button](textures/textures_sprite_button.c) | <img src="textures/textures_sprite_button.png" alt="textures_sprite_button" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
+| 65 | [textures_sprite_explosion](textures/textures_sprite_explosion.c) | <img src="textures/textures_sprite_explosion.png" alt="textures_sprite_explosion" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 66 | [textures_bunnymark](textures/textures_bunnymark.c) | <img src="textures/textures_bunnymark.png" alt="textures_bunnymark" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | 2.5 | [Ray](https://github.com/raysan5) |
+| 67 | [textures_mouse_painting](textures/textures_mouse_painting.c) | <img src="textures/textures_mouse_painting.png" alt="textures_mouse_painting" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.0 | [Chris Dill](https://github.com/MysteriousSpace) |
+| 68 | [textures_blend_modes](textures/textures_blend_modes.c) | <img src="textures/textures_blend_modes.png" alt="textures_blend_modes" width="80"> | ⭐️☆☆☆ | 3.5 | 3.5 | [Karlo Licudine](https://github.com/accidentalrebel) |
+| 69 | [textures_draw_tiled](textures/textures_draw_tiled.c) | <img src="textures/textures_draw_tiled.png" alt="textures_draw_tiled" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | **4.2** | [Vlad Adrian](https://github.com/demizdor) |
+| 70 | [textures_polygon](textures/textures_polygon.c) | <img src="textures/textures_polygon.png" alt="textures_polygon" width="80"> | ⭐️☆☆☆ | 3.7 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 71 | [textures_fog_of_war](textures/textures_fog_of_war.c) | <img src="textures/textures_fog_of_war.png" alt="textures_fog_of_war" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
+| 72 | [textures_gif_player](textures/textures_gif_player.c) | <img src="textures/textures_gif_player.png" alt="textures_gif_player" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
 
 ### category: text
 
@@ -116,18 +117,18 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 72 | [text_raylib_fonts](text/text_raylib_fonts.c) | <img src="text/text_raylib_fonts.png" alt="text_raylib_fonts" width="80"> | ⭐️☆☆☆ | 1.7 | 3.7 | [Ray](https://github.com/raysan5) |
-| 73 | [text_font_spritefont](text/text_font_spritefont.c) | <img src="text/text_font_spritefont.png" alt="text_font_spritefont" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
-| 74 | [text_font_filters](text/text_font_filters.c) | <img src="text/text_font_filters.png" alt="text_font_filters" width="80"> | ⭐️⭐️☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
-| 75 | [text_font_loading](text/text_font_loading.c) | <img src="text/text_font_loading.png" alt="text_font_loading" width="80"> | ⭐️☆☆☆ | 1.4 | 3.0 | [Ray](https://github.com/raysan5) |
-| 76 | [text_font_sdf](text/text_font_sdf.c) | <img src="text/text_font_sdf.png" alt="text_font_sdf" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
-| 77 | [text_format_text](text/text_format_text.c) | <img src="text/text_format_text.png" alt="text_format_text" width="80"> | ⭐️☆☆☆ | 1.1 | 3.0 | [Ray](https://github.com/raysan5) |
-| 78 | [text_input_box](text/text_input_box.c) | <img src="text/text_input_box.png" alt="text_input_box" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.5 | [Ray](https://github.com/raysan5) |
-| 79 | [text_writing_anim](text/text_writing_anim.c) | <img src="text/text_writing_anim.png" alt="text_writing_anim" width="80"> | ⭐️⭐️☆☆ | 1.4 | 1.4 | [Ray](https://github.com/raysan5) |
-| 80 | [text_rectangle_bounds](text/text_rectangle_bounds.c) | <img src="text/text_rectangle_bounds.png" alt="text_rectangle_bounds" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
-| 81 | [text_unicode](text/text_unicode.c) | <img src="text/text_unicode.png" alt="text_unicode" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
-| 82 | [text_draw_3d](text/text_draw_3d.c) | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="80"> | ⭐️⭐️⭐️⭐️ | 3.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
-| 83 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
+| 73 | [text_raylib_fonts](text/text_raylib_fonts.c) | <img src="text/text_raylib_fonts.png" alt="text_raylib_fonts" width="80"> | ⭐️☆☆☆ | 1.7 | 3.7 | [Ray](https://github.com/raysan5) |
+| 74 | [text_font_spritefont](text/text_font_spritefont.c) | <img src="text/text_font_spritefont.png" alt="text_font_spritefont" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
+| 75 | [text_font_filters](text/text_font_filters.c) | <img src="text/text_font_filters.png" alt="text_font_filters" width="80"> | ⭐️⭐️☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
+| 76 | [text_font_loading](text/text_font_loading.c) | <img src="text/text_font_loading.png" alt="text_font_loading" width="80"> | ⭐️☆☆☆ | 1.4 | 3.0 | [Ray](https://github.com/raysan5) |
+| 77 | [text_font_sdf](text/text_font_sdf.c) | <img src="text/text_font_sdf.png" alt="text_font_sdf" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
+| 78 | [text_format_text](text/text_format_text.c) | <img src="text/text_format_text.png" alt="text_format_text" width="80"> | ⭐️☆☆☆ | 1.1 | 3.0 | [Ray](https://github.com/raysan5) |
+| 79 | [text_input_box](text/text_input_box.c) | <img src="text/text_input_box.png" alt="text_input_box" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.5 | [Ray](https://github.com/raysan5) |
+| 80 | [text_writing_anim](text/text_writing_anim.c) | <img src="text/text_writing_anim.png" alt="text_writing_anim" width="80"> | ⭐️⭐️☆☆ | 1.4 | 1.4 | [Ray](https://github.com/raysan5) |
+| 81 | [text_rectangle_bounds](text/text_rectangle_bounds.c) | <img src="text/text_rectangle_bounds.png" alt="text_rectangle_bounds" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
+| 82 | [text_unicode](text/text_unicode.c) | <img src="text/text_unicode.png" alt="text_unicode" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
+| 83 | [text_draw_3d](text/text_draw_3d.c) | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="80"> | ⭐️⭐️⭐️⭐️ | 3.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
+| 84 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
 
 ### category: models
 
@@ -135,25 +136,25 @@ Examples using raylib models functionality, including models loading/generation 
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 84 | [models_animation](models/models_animation.c) | <img src="models/models_animation.png" alt="models_animation" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [culacant](https://github.com/culacant) |
-| 85 | [models_billboard](models/models_billboard.c) | <img src="models/models_billboard.png" alt="models_billboard" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
-| 86 | [models_box_collisions](models/models_box_collisions.c) | <img src="models/models_box_collisions.png" alt="models_box_collisions" width="80"> | ⭐️☆☆☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
-| 87 | [models_cubicmap](models/models_cubicmap.c) | <img src="models/models_cubicmap.png" alt="models_cubicmap" width="80"> | ⭐️⭐️☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
-| 88 | [models_first_person_maze](models/models_first_person_maze.c) | <img src="models/models_first_person_maze.png" alt="models_first_person_maze" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 89 | [models_geometric_shapes](models/models_geometric_shapes.c) | <img src="models/models_geometric_shapes.png" alt="models_geometric_shapes" width="80"> | ⭐️☆☆☆ | 1.0 | 3.5 | [Ray](https://github.com/raysan5) |
-| 90 | [models_mesh_generation](models/models_mesh_generation.c) | <img src="models/models_mesh_generation.png" alt="models_mesh_generation" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
-| 91 | [models_mesh_picking](models/models_mesh_picking.c) | <img src="models/models_mesh_picking.png" alt="models_mesh_picking" width="80"> | ⭐️⭐️⭐️☆ | 1.7 | **4.0** | [Joel Davis](https://github.com/joeld42) |
-| 92 | [models_loading](models/models_loading.c) | <img src="models/models_loading.png" alt="models_loading" width="80"> | ⭐️☆☆☆ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
-| 93 | [models_loading_gltf](models/models_loading_gltf.c) | <img src="models/models_loading_gltf.png" alt="models_loading_gltf" width="80"> | ⭐️☆☆☆ | 3.7 | **4.2** | [Ray](https://github.com/raysan5) |
-| 94 | [models_loading_vox](models/models_loading_vox.c) | <img src="models/models_loading_vox.png" alt="models_loading_vox" width="80"> | ⭐️☆☆☆ | **4.0** | **4.0** | [Johann Nadalutti](https://github.com/procfxgen) |
-| 95 | [models_loading_m3d](models/models_loading_m3d.c) | <img src="models/models_loading_m3d.png" alt="models_loading_m3d" width="80"> | ⭐️☆☆☆ | **4.2** | **4.2** | [bzt](https://bztsrc.gitlab.io/model3d) |
-| 96 | [models_orthographic_projection](models/models_orthographic_projection.c) | <img src="models/models_orthographic_projection.png" alt="models_orthographic_projection" width="80"> | ⭐️☆☆☆ | 2.0 | 3.7 | [Max Danielsson](https://github.com/autious) |
-| 97 | [models_point_rendering](models/models_point_rendering.c) | <img src="models/models_point_rendering.png" alt="models_point_rendering" width="80"> | ⭐️⭐️☆☆ | 5.0 | 5.0 | [Reese Gallagher](https://github.com/satchelfrost) |
-| 98 | [models_rlgl_solar_system](models/models_rlgl_solar_system.c) | <img src="models/models_rlgl_solar_system.png" alt="models_rlgl_solar_system" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
-| 99 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c) | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Berni](https://github.com/Berni8k) |
-| 100 | [models_waving_cubes](models/models_waving_cubes.c) | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [codecat](https://github.com/codecat) |
-| 101 | [models_heightmap](models/models_heightmap.c) | <img src="models/models_heightmap.png" alt="models_heightmap" width="80"> | ⭐️☆☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
-| 102 | [models_skybox](models/models_skybox.c) | <img src="models/models_skybox.png" alt="models_skybox" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
+| 85 | [models_animation](models/models_animation.c) | <img src="models/models_animation.png" alt="models_animation" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [culacant](https://github.com/culacant) |
+| 86 | [models_billboard](models/models_billboard.c) | <img src="models/models_billboard.png" alt="models_billboard" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
+| 87 | [models_box_collisions](models/models_box_collisions.c) | <img src="models/models_box_collisions.png" alt="models_box_collisions" width="80"> | ⭐️☆☆☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
+| 88 | [models_cubicmap](models/models_cubicmap.c) | <img src="models/models_cubicmap.png" alt="models_cubicmap" width="80"> | ⭐️⭐️☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
+| 89 | [models_first_person_maze](models/models_first_person_maze.c) | <img src="models/models_first_person_maze.png" alt="models_first_person_maze" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 90 | [models_geometric_shapes](models/models_geometric_shapes.c) | <img src="models/models_geometric_shapes.png" alt="models_geometric_shapes" width="80"> | ⭐️☆☆☆ | 1.0 | 3.5 | [Ray](https://github.com/raysan5) |
+| 91 | [models_mesh_generation](models/models_mesh_generation.c) | <img src="models/models_mesh_generation.png" alt="models_mesh_generation" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
+| 92 | [models_mesh_picking](models/models_mesh_picking.c) | <img src="models/models_mesh_picking.png" alt="models_mesh_picking" width="80"> | ⭐️⭐️⭐️☆ | 1.7 | **4.0** | [Joel Davis](https://github.com/joeld42) |
+| 93 | [models_loading](models/models_loading.c) | <img src="models/models_loading.png" alt="models_loading" width="80"> | ⭐️☆☆☆ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
+| 94 | [models_loading_gltf](models/models_loading_gltf.c) | <img src="models/models_loading_gltf.png" alt="models_loading_gltf" width="80"> | ⭐️☆☆☆ | 3.7 | **4.2** | [Ray](https://github.com/raysan5) |
+| 95 | [models_loading_vox](models/models_loading_vox.c) | <img src="models/models_loading_vox.png" alt="models_loading_vox" width="80"> | ⭐️☆☆☆ | **4.0** | **4.0** | [Johann Nadalutti](https://github.com/procfxgen) |
+| 96 | [models_loading_m3d](models/models_loading_m3d.c) | <img src="models/models_loading_m3d.png" alt="models_loading_m3d" width="80"> | ⭐️☆☆☆ | **4.2** | **4.2** | [bzt](https://bztsrc.gitlab.io/model3d) |
+| 97 | [models_orthographic_projection](models/models_orthographic_projection.c) | <img src="models/models_orthographic_projection.png" alt="models_orthographic_projection" width="80"> | ⭐️☆☆☆ | 2.0 | 3.7 | [Max Danielsson](https://github.com/autious) |
+| 98 | [models_point_rendering](models/models_point_rendering.c) | <img src="models/models_point_rendering.png" alt="models_point_rendering" width="80"> | ⭐️⭐️☆☆ | 5.0 | 5.0 | [Reese Gallagher](https://github.com/satchelfrost) |
+| 99 | [models_rlgl_solar_system](models/models_rlgl_solar_system.c) | <img src="models/models_rlgl_solar_system.png" alt="models_rlgl_solar_system" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
+| 100 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c) | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Berni](https://github.com/Berni8k) |
+| 101 | [models_waving_cubes](models/models_waving_cubes.c) | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [codecat](https://github.com/codecat) |
+| 102 | [models_heightmap](models/models_heightmap.c) | <img src="models/models_heightmap.png" alt="models_heightmap" width="80"> | ⭐️☆☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
+| 103 | [models_skybox](models/models_skybox.c) | <img src="models/models_skybox.png" alt="models_skybox" width="80"> | ⭐️⭐️☆☆ | 1.8 | **4.0** | [Ray](https://github.com/raysan5) |
 
 ### category: shaders
 
@@ -161,25 +162,25 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 103  | [shaders_basic_lighting](shaders/shaders_basic_lighting.c) | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="80"> | ⭐️⭐️⭐️⭐️ | 3.0 | **4.2** | [Chris Camacho](https://github.com/codifies) |
-| 104 | [shaders_model_shader](shaders/shaders_model_shader.c) | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="80"> | ⭐️⭐️☆☆ | 1.3 | 3.7 | [Ray](https://github.com/raysan5) |
-| 105 | [shaders_shapes_textures](shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.7 | [Ray](https://github.com/raysan5) |
-| 106 | [shaders_custom_uniform](shaders/shaders_custom_uniform.c) | <img src="shaders/shaders_custom_uniform.png" alt="shaders_custom_uniform" width="80"> | ⭐️⭐️☆☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
-| 107 | [shaders_postprocessing](shaders/shaders_postprocessing.c) | <img src="shaders/shaders_postprocessing.png" alt="shaders_postprocessing" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
-| 108 | [shaders_palette_switch](shaders/shaders_palette_switch.c) | <img src="shaders/shaders_palette_switch.png" alt="shaders_palette_switch" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Marco Lizza](https://github.com/MarcoLizza) |
-| 109 | [shaders_raymarching](shaders/shaders_raymarching.c) | <img src="shaders/shaders_raymarching.png" alt="shaders_raymarching" width="80"> | ⭐️⭐️⭐️⭐️ | 2.0 | **4.2** | [Ray](https://github.com/raysan5) |
-| 110 | [shaders_texture_drawing](shaders/shaders_texture_drawing.c) | <img src="shaders/shaders_texture_drawing.png" alt="shaders_texture_drawing" width="80"> | ⭐️⭐️☆☆ | 2.0 | 3.7 | [Michał Ciesielski](https://github.com/) |
-| 111 | [shaders_texture_outline](shaders/shaders_texture_outline.c) | <img src="shaders/shaders_texture_outline.png" alt="shaders_texture_outline" width="80"> | ⭐️⭐️⭐️☆ | **4.0** | **4.0** | [Samuel Skiff](https://github.com/GoldenThumbs) |
-| 112 | [shaders_texture_waves](shaders/shaders_texture_waves.c) | <img src="shaders/shaders_texture_waves.png" alt="shaders_texture_waves" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Anata](https://github.com/anatagawa) |
-| 113 | [shaders_julia_set](shaders/shaders_julia_set.c) | <img src="shaders/shaders_julia_set.png" alt="shaders_julia_set" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [eggmund](https://github.com/eggmund) |
-| 114 | [shaders_eratosthenes](shaders/shaders_eratosthenes.c) | <img src="shaders/shaders_eratosthenes.png" alt="shaders_eratosthenes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [ProfJski](https://github.com/ProfJski) |
-| 115 | [shaders_fog](shaders/shaders_fog.c) | <img src="shaders/shaders_fog.png" alt="shaders_fog" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 116 | [shaders_simple_mask](shaders/shaders_simple_mask.c) | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 117 | [shaders_hot_reloading](shaders/shaders_hot_reloading.c) | <img src="shaders/shaders_hot_reloading.png" alt="shaders_hot_reloading" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.5 | [Ray](https://github.com/raysan5) |
-| 118 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐️⭐️⭐️⭐️ | 3.7 | **4.2** | [seanpringle](https://github.com/seanpringle) |
-| 119 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 120 | [shaders_spotlight](shaders/shaders_spotlight.c) | <img src="shaders/shaders_spotlight.png" alt="shaders_spotlight" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
-| 121 | [shaders_deferred_render](shaders/shaders_deferred_render.c) | <img src="shaders/shaders_deferred_render.png" alt="shaders_deferred_render" width="80"> | ⭐️⭐️⭐️⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
+| 104 | [shaders_basic_lighting](shaders/shaders_basic_lighting.c) | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="80"> | ⭐️⭐️⭐️⭐️ | 3.0 | **4.2** | [Chris Camacho](https://github.com/codifies) |
+| 105 | [shaders_model_shader](shaders/shaders_model_shader.c) | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="80"> | ⭐️⭐️☆☆ | 1.3 | 3.7 | [Ray](https://github.com/raysan5) |
+| 106 | [shaders_shapes_textures](shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.7 | [Ray](https://github.com/raysan5) |
+| 107 | [shaders_custom_uniform](shaders/shaders_custom_uniform.c) | <img src="shaders/shaders_custom_uniform.png" alt="shaders_custom_uniform" width="80"> | ⭐️⭐️☆☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
+| 108 | [shaders_postprocessing](shaders/shaders_postprocessing.c) | <img src="shaders/shaders_postprocessing.png" alt="shaders_postprocessing" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | **4.0** | [Ray](https://github.com/raysan5) |
+| 109 | [shaders_palette_switch](shaders/shaders_palette_switch.c) | <img src="shaders/shaders_palette_switch.png" alt="shaders_palette_switch" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Marco Lizza](https://github.com/MarcoLizza) |
+| 110 | [shaders_raymarching](shaders/shaders_raymarching.c) | <img src="shaders/shaders_raymarching.png" alt="shaders_raymarching" width="80"> | ⭐️⭐️⭐️⭐️ | 2.0 | **4.2** | [Ray](https://github.com/raysan5) |
+| 111 | [shaders_texture_drawing](shaders/shaders_texture_drawing.c) | <img src="shaders/shaders_texture_drawing.png" alt="shaders_texture_drawing" width="80"> | ⭐️⭐️☆☆ | 2.0 | 3.7 | [Michał Ciesielski](https://github.com/) |
+| 112 | [shaders_texture_outline](shaders/shaders_texture_outline.c) | <img src="shaders/shaders_texture_outline.png" alt="shaders_texture_outline" width="80"> | ⭐️⭐️⭐️☆ | **4.0** | **4.0** | [Samuel Skiff](https://github.com/GoldenThumbs) |
+| 113 | [shaders_texture_waves](shaders/shaders_texture_waves.c) | <img src="shaders/shaders_texture_waves.png" alt="shaders_texture_waves" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Anata](https://github.com/anatagawa) |
+| 114 | [shaders_julia_set](shaders/shaders_julia_set.c) | <img src="shaders/shaders_julia_set.png" alt="shaders_julia_set" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [eggmund](https://github.com/eggmund) |
+| 115 | [shaders_eratosthenes](shaders/shaders_eratosthenes.c) | <img src="shaders/shaders_eratosthenes.png" alt="shaders_eratosthenes" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | **4.0** | [ProfJski](https://github.com/ProfJski) |
+| 116 | [shaders_fog](shaders/shaders_fog.c) | <img src="shaders/shaders_fog.png" alt="shaders_fog" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 117 | [shaders_simple_mask](shaders/shaders_simple_mask.c) | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 118 | [shaders_hot_reloading](shaders/shaders_hot_reloading.c) | <img src="shaders/shaders_hot_reloading.png" alt="shaders_hot_reloading" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.5 | [Ray](https://github.com/raysan5) |
+| 119 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐️⭐️⭐️⭐️ | 3.7 | **4.2** | [seanpringle](https://github.com/seanpringle) |
+| 120 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 121 | [shaders_spotlight](shaders/shaders_spotlight.c) | <img src="shaders/shaders_spotlight.png" alt="shaders_spotlight" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 122 | [shaders_deferred_render](shaders/shaders_deferred_render.c) | <img src="shaders/shaders_deferred_render.png" alt="shaders_deferred_render" width="80"> | ⭐️⭐️⭐️⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
 
 ### category: audio
 
@@ -187,10 +188,10 @@ Examples using raylib audio functionality, including sound/music loading and pla
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 122 | [audio_module_playing](audio/audio_module_playing.c) | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="80"> | ⭐️☆☆☆ | 1.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 123 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
-| 124 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | **4.2** | [Ray](https://github.com/raysan5) |
-| 125 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
+| 123 | [audio_module_playing](audio/audio_module_playing.c) | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="80"> | ⭐️☆☆☆ | 1.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 124 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
+| 125 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | **4.2** | [Ray](https://github.com/raysan5) |
+| 126 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
 
 ### category: others
 
@@ -198,11 +199,11 @@ Examples showing raylib misc functionality that does not fit in other categories
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 126 | [rlgl_standalone](others/rlgl_standalone.c) | <img src="others/rlgl_standalone.png" alt="rlgl_standalone" width="80"> | ⭐️⭐️⭐️⭐️ | 1.6 | **4.0** | [Ray](https://github.com/raysan5) |
-| 127 | [rlgl_compute_shader](others/rlgl_compute_shader.c) | <img src="others/rlgl_compute_shader.png" alt="rlgl_compute_shader" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Teddy Astie](https://github.com/tsnake41) |
-| 128 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
-| 129 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Stephan Soller](https://github.com/arkanis) |
-| 130 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
+| 127 | [rlgl_standalone](others/rlgl_standalone.c) | <img src="others/rlgl_standalone.png" alt="rlgl_standalone" width="80"> | ⭐️⭐️⭐️⭐️ | 1.6 | **4.0** | [Ray](https://github.com/raysan5) |
+| 128 | [rlgl_compute_shader](others/rlgl_compute_shader.c) | <img src="others/rlgl_compute_shader.png" alt="rlgl_compute_shader" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Teddy Astie](https://github.com/tsnake41) |
+| 129 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
+| 130 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Stephan Soller](https://github.com/arkanis) |
+| 131 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
 
 As always contributions are welcome, feel free to send new examples! Here is an [examples template](examples_template.c) to start with!
 

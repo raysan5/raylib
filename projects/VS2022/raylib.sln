@@ -297,6 +297,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_splines_drawing", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_top_down_lights", "examples\shapes_top_down_lights.vcxproj", "{703BE7BA-5B99-4F70-806D-3A259F6A991E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rectangle_advanced", "examples\shapes_rectangle_advanced.vcxproj", "{703BE7BA-5B99-4F70-806D-3A259F6A991E}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_gpu_skinning", "examples\models_gpu_skinning.vcxproj", "{8245DAD9-D402-4D5C-8F45-32229CD3B263}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap", "examples\shaders_shadowmap.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
