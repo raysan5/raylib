@@ -520,6 +520,9 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+
     RGFW_window_resize(platform.window, RGFW_AREA(width, height));
 }
 
