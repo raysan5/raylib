@@ -1258,7 +1258,9 @@ RLAPI void DrawCircleV(Vector2 center, float radius, Color color);              
 RLAPI void DrawCircleLines(int centerX, int centerY, float radius, Color color);                         // Draw circle outline
 RLAPI void DrawCircleLinesV(Vector2 center, float radius, Color color);                                  // Draw circle outline (Vector version)
 RLAPI void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color color);             // Draw ellipse
+RLAPI void DrawEllipseRotation(int centerX, int centerY, float radiusH, float radiusV, Color color, float angle); // Draw ellipse with rotation
 RLAPI void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color);        // Draw ellipse outline
+RLAPI void DrawEllipseLinesRotation(int centerX, int centerY, float radiusH, float radiusV, Color color, float angle); // Draw ellipse outline with rotation
 RLAPI void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color); // Draw ring
 RLAPI void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color);    // Draw ring outline
 RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle

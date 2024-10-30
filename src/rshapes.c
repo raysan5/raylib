@@ -86,6 +86,7 @@ static Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic easing
+static Vector2 RotatePointAroundPoint(Vector2 point, Vector2 center, float angle); // Fetch new coordinates of a point after it rotates around a center point by a certain angle
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -480,6 +481,25 @@ void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color c
     rlEnd();
 }
 
+// Draw ellipse with rotation
+void DrawEllipseRotation(int centerX, int centerY, float radiusH, float radiusV, Color color, float angle)
+{
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        Vector2 center = (Vector2){(float)centerX, (float)centerY};
+        Vector2 startPoint = RotatePointAroundPoint((Vector2){center.x + radiusH, center.y}, center, angle);
+        for (int i = 0; i < 360; i += 10)
+        {
+            Vector2 endPoint = RotatePointAroundPoint((Vector2){center.x + cosf(DEG2RAD*(i + 10))*radiusH, center.y + sinf(DEG2RAD*(i + 10))*radiusV}, center, angle);
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(endPoint.x, endPoint.y);
+            rlVertex2f(startPoint.x, startPoint.y);
+
+            startPoint = endPoint;
+        }
+    rlEnd();
+}
+
 // Draw ellipse outline
 void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
@@ -489,6 +509,24 @@ void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Co
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(centerX + cosf(DEG2RAD*(i + 10))*radiusH, centerY + sinf(DEG2RAD*(i + 10))*radiusV);
             rlVertex2f(centerX + cosf(DEG2RAD*i)*radiusH, centerY + sinf(DEG2RAD*i)*radiusV);
+        }
+    rlEnd();
+}
+
+// Draw ellipse outline with rotation
+void DrawEllipseLinesRotation(int centerX, int centerY, float radiusH, float radiusV, Color color, float angle)
+{
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        Vector2 center = (Vector2){(float)centerX, (float)centerY};
+        Vector2 startPoint = RotatePointAroundPoint((Vector2){center.x + radiusH, center.y}, center, angle);
+        for (int i = 0; i < 360; i += 10)
+        {
+            Vector2 endPoint = RotatePointAroundPoint((Vector2){center.x + cosf(DEG2RAD*(i + 10))*radiusH, center.y + sinf(DEG2RAD*(i + 10))*radiusV}, center, angle);
+            rlVertex2f(startPoint.x, startPoint.y);
+            rlVertex2f(endPoint.x, endPoint.y);
+
+            startPoint = endPoint;
         }
     rlEnd();
 }
@@ -2409,6 +2447,23 @@ static float EaseCubicInOut(float t, float b, float c, float d)
     }
 
     return result;
+}
+
+// Fetch new coordinates of a point after it rotates around a center point by a certain angle
+static Vector2 RotatePointAroundPoint(Vector2 point, Vector2 center, float angle)
+{
+    // Vector center->point
+    float x = point.x - center.x;
+    float y = point.y - center.y;
+    
+    // new vector after rotation
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
+    float newX = x*cosres - y*sinres;
+    float newY = x*sinres + y*cosres;
+
+    // new point
+    return (Vector2){newX + center.x, newY + center.y};
 }
 
 #endif      // SUPPORT_MODULE_RSHAPES
