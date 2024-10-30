@@ -533,7 +533,8 @@ SHAPES = \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
-    shapes/shapes_rectangle_advanced
+    shapes/shapes_rectangle_advanced \
+    shapes/shapes_draw_ellipse
 
 TEXTURES = \
     textures/textures_background_scrolling \
