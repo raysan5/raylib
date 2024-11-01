@@ -516,7 +516,8 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
-    core/core_world_screen
+    core/core_world_screen \
+    core/core_clipboard_image
 
 SHAPES = \
     shapes/shapes_basic_shapes \

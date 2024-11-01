@@ -877,6 +877,28 @@ const char *GetClipboardText(void)
     return buffer;
 }
 
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = {0};
+
+// SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
+#if (defined(SDL_MAJOR_VERSION) && SDL_MAJOR_VERSION == 3 && defined(SDL_MAJOR_MINOR) && SDL_MAJOR_VERSION >= 1)
+    unsigned int dataSize = 0;
+    void* fileData = SDL_GetClipboardData("image/bmp", &dataSize); // returns NULL on failure;
+    if(fileData == NULL)
+    {
+        TRACELOG(LOG_WARNING, "Clipboard image: %s", SDL_GetError());
+    }
+
+    image = LoadImageFromMemory(".bmp", fileData, dataSize);
+#endif
+    return image;
+}
+#endif
+
+
 // Show mouse cursor
 void ShowCursor(void)
 {
