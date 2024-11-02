@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         BeginDrawing();
             ClearBackground(RAYWHITE);
             if (IsTextureValid(tex)) {
-                DrawTexture(tex, 0, 0, WHITE);
+                DrawTexture(tex, 0, 10 + 21, WHITE);
             }
             DrawText("Print Screen and Crtl+V", 10, 10, 21, BLACK);
         EndDrawing();
