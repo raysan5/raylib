@@ -2569,7 +2569,13 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     if (!FloatEquals(det, 0))
     {
         clone.m0 /= s.x;
+        clone.m4 /= s.x;
+        clone.m8 /= s.x;
+        clone.m1 /= s.y;
         clone.m5 /= s.y;
+        clone.m9 /= s.y;
+        clone.m2 /= s.z;
+        clone.m6 /= s.z;
         clone.m10 /= s.z;
 
         // Extract rotation
