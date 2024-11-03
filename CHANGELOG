@@ -155,6 +155,7 @@ WIP: Last update with commit from 02-Nov-2024
 [raymath] REVIEWED: Add extern "C" to raymath header for C++ (#3978) by @Jeffery Myers
 [raymath] REVIEWED: `QuaternionFromAxisAngle()`, remove redundant axis length calculation (#3900) by @jtainer
 [raymath] REVIEWED: `Vector3Perpendicular()`, avoid implicit conversion from float to double (#3799) by @João Foscarini
+[raymath] REVIEWED: `MatrixDecompose()`, incorrect output for certain scale and rotations (#4461) by @waveydave
 [raymath] REVIEWED: Small code refactor (#3753) by @Idir Carlos Aliane
 [rshapes] ADDED: `CheckCollisionCircleLine()` (#4018) by @kai-z99
 [rshapes] REVIEWED: Multisegment Bezier splines (#3744) by @Santiago Pelufo
