@@ -1508,7 +1508,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
     // Upload Bone Transforms
-    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
+    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
     }
@@ -1754,7 +1754,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
     // Upload Bone Transforms
-    if (material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1 && mesh.boneMatrices)
+    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatrices)
     {
         rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
     }
@@ -2367,7 +2367,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 // Update model animated bones transform matrices for a given frame
 // NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
 // to be uploaded to shader at drawing, in case GPU skinning is enabled
-void UpdateModelAnimationBoneMatrices(Model model, ModelAnimation anim, int frame)
+void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
 {
     if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
     {

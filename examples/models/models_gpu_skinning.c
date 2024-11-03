@@ -82,7 +82,7 @@ int main(void)
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
         characterModel.transform = MatrixTranslate(position.x, position.y, position.z);
-        UpdateModelAnimationBoneMatrices(characterModel, anim, animCurrentFrame);
+        UpdateModelAnimationBones(characterModel, anim, animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
