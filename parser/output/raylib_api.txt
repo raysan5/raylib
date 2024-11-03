@@ -4221,8 +4221,8 @@ Function 502: UpdateModelAnimation() (3 input parameters)
   Param[1]: model (type: Model)
   Param[2]: anim (type: ModelAnimation)
   Param[3]: frame (type: int)
-Function 503: UpdateModelAnimationBoneMatrices() (3 input parameters)
-  Name: UpdateModelAnimationBoneMatrices
+Function 503: UpdateModelAnimationBones() (3 input parameters)
+  Name: UpdateModelAnimationBones
   Return type: void
   Description: Update model animation mesh bone matrices (GPU skinning)
   Param[1]: model (type: Model)

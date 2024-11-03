@@ -7607,7 +7607,7 @@ return {
       }
     },
     {
-      name = "UpdateModelAnimationBoneMatrices",
+      name = "UpdateModelAnimationBones",
       description = "Update model animation mesh bone matrices (GPU skinning)",
       returnType = "void",
       params = {
