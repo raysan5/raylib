@@ -79,7 +79,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
       canvas.emscripten {
         border: 0px none;
         background: black;
-        width: 100%;
+        /* width: 100%; */
       }
 
       .spinner {
@@ -285,6 +285,10 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 }
 
                 statusElement.innerHTML = text;
+
+                // Temporary workaround for "canvas.emscripten { width: 100%; }" CSS not working with current emscripten (3.1.70)
+                // Revert this change when the issue is fixed upstream
+                document.getElementById('canvas').style.width = '100%';
             },
             totalDependencies: 0,
             monitorRunDependencies: function(left) {
