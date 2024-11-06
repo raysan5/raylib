@@ -514,7 +514,7 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
 
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #if !defined(SUPPORT_FILEFORMAT_BMP) || !defined(STBI_REQUIRED) || !defined(SUPPORT_MODULE_RTEXTURES)
-        #error "To enabled SUPPORT_CLIPBOARD_IMAGE, it also needs SUPPORT_FILEFORMAT_BMP, SUPPORT_MODULE_RTEXTURES and STBI_REQUIRED to be defined"
+        #error "To enabled SUPPORT_CLIPBOARD_IMAGE, it also needs SUPPORT_FILEFORMAT_BMP, SUPPORT_MODULE_RTEXTURES and STBI_REQUIRED to be defined. It should have been defined earlier"
     #endif
 #endif // SUPPORT_CLIPBOARD_IMAGE
 

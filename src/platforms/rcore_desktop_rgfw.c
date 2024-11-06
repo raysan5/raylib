@@ -664,6 +664,43 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
+
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+
+#ifdef _WIN32
+#   define WIN32_CLIPBOARD_IMPLEMENTATION
+#   define WINUSER_ALREADY_INCLUDED
+#   define WINBASE_ALREADY_INCLUDED
+#   define WINGDI_ALREADY_INCLUDED
+#   include "../external/win32_clipboard.h"
+#endif
+
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = {0};
+    unsigned long long int dataSize = 0;
+    void* fileData = NULL;
+
+#ifdef _WIN32
+    int width, height;
+    fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
+#else
+    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_GLFW doesn't implement `GetClipboardImage` for this OS");
+#endif
+
+    if (fileData == NULL)
+    {
+        TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
+    }
+    else
+    {
+        image = LoadImageFromMemory(".bmp", fileData, dataSize);
+    }
+    return image;
+}
+#endif // SUPPORT_CLIPBOARD_IMAGE
+
 // Show mouse cursor
 void ShowCursor(void)
 {
