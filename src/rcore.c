@@ -516,25 +516,15 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #if !defined(SUPPORT_FILEFORMAT_BMP) || !defined(STBI_REQUIRED) || !defined(SUPPORT_MODULE_RTEXTURES)
         #error "To enabled SUPPORT_CLIPBOARD_IMAGE, it also needs SUPPORT_FILEFORMAT_BMP, SUPPORT_MODULE_RTEXTURES and STBI_REQUIRED to be defined"
     #endif
-#endif
-
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)
     #include "platforms/rcore_desktop_glfw.c"
-    #if defined(SUPPORT_CLIPBOARD_IMAGE) && defined(_WIN32)
-        #include "platforms/rcore_clipboard_win32.c"
-    #endif
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
 #elif defined(PLATFORM_DESKTOP_RGFW)
     #include "platforms/rcore_desktop_rgfw.c"
-    #if defined(SUPPORT_CLIPBOARD_IMAGE) && defined(_WIN32)
-        #define WINUSER_ALREADY_INCLUDED
-        #define WINBASE_ALREADY_INCLUDED
-        #define WINGDI_ALREADY_INCLUDED
-        #include "platforms/rcore_clipboard_win32.c"
-    #endif
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)

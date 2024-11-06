@@ -1,8 +1,13 @@
 #if !defined(_WIN32)
 #   error "This module is only made for Windows OS"
-#else
-// Needs both `Image` and `LoadImageFromMemory` from `rtexture` >:C
+#endif
 
+#ifndef WIN32_CLIPBOARD_
+#define WIN32_CLIPBOARD_
+unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long long int *dataSize);
+#endif // WIN32_CLIPBOARD_
+
+#ifdef WIN32_CLIPBOARD_IMPLEMENTATION
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -176,21 +181,9 @@ typedef struct tagRGBQUAD {
 static BOOL           OpenClipboardRetrying(HWND handle); // Open clipboard with a number of retries
 static int            GetPixelDataOffset(BITMAPINFOHEADER bih);
 static unsigned char* GetClipboardImageData(int* width, int* height, unsigned int *dataSize);
-//----------------------------------------------------------------------------------
-// Module Functions Definition: Clipboard Image
-//----------------------------------------------------------------------------------
-
-Image GetClipboardImage(void)
-{
-    int width = 0, height = 0;
-    unsigned int dataSize = 0;
-    unsigned char* fileData = GetClipboardImageData(&width, &height, &dataSize);
-    Image image = LoadImageFromMemory(".bmp", fileData, dataSize);
-    return image;
-}
 
 
-static unsigned char* GetClipboardImageData(int* width, int* height, unsigned int *dataSize) 
+unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long long int *dataSize)
 {
     HWND win = NULL; // Get from somewhere but is doesnt seem to matter
     const char* msgString = "";
@@ -340,5 +333,5 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
 
     return bih.biSize + offset;
 }
-#endif
+#endif // WIN32_CLIPBOARD_IMPLEMENTATION
 // EOF
