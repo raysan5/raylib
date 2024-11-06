@@ -272,7 +272,7 @@ const char* SDL_GameControllerNameForIndex(int joystickIndex)
 {
     // NOTE: SDL3 uses the IDs itself (SDL_JoystickID) instead of SDL2 joystick_index
     const char* name = NULL;
-    int i, numJoysticks;
+    int numJoysticks = 0;
     SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks);
     if (joysticks) {
         if (joystickIndex < numJoysticks) {
@@ -294,19 +294,20 @@ int SDL_GetNumVideoDisplays(void)
     return monitorCount;
 }
 
+
+// SLD3 Migration:
+//    To emulate SDL2 this function should return `SDL_DISABLE` or `SDL_ENABLE`
+//    representing the *processing state* of the event before this function makes any changes to it.
 Uint8 SDL_EventState(Uint32 type, int state) {
+
+    Uint8 stateBefore = SDL_EventEnabled(type);
     switch (state)
     {
-        case SDL_DISABLE:
-            SDL_SetEventEnabled(type, false);
-            break;
-        case SDL_ENABLE:
-            SDL_SetEventEnabled(type, true);
-            break;
-        default:
-            TRACELOG(LOG_WARNING, "Event sate: unknow type");
-            break;
+        case SDL_DISABLE: SDL_SetEventEnabled(type, false); break;
+        case SDL_ENABLE: SDL_SetEventEnabled(type, true); break;
+        default: TRACELOG(LOG_WARNING, "Event sate: unknow type");
     }
+    return stateBefore;
 }
 
 void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode* mode)
@@ -336,7 +337,7 @@ SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth
 //     not reliable across platforms, approximately replaced by multiplying
 //     SDL_GetWindowDisplayScale() times 160 on iPhone and Android, and 96 on other platforms.
 int SDL_GetDisplayDPI(int displayIndex, float * ddpi, float * hdpi, float * vdpi) {
-    SDL_GetWindowDisplayScale(platform.window) * 96;
+    return SDL_GetWindowDisplayScale(platform.window) * 96;
 }
 
 SDL_Surface *SDL_CreateRGBSurfaceWithFormat(Uint32 flags, int width, int height, int depth, Uint32 format)
@@ -356,7 +357,7 @@ SDL_Surface *SDL_CreateRGBSurfaceWithFormatFrom(void *pixels, int width, int hei
 
 int SDL_NumJoysticks(void)
 {
-    int i, numJoysticks;
+    int numJoysticks;
     SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks);
     SDL_free(joysticks);
     return numJoysticks;
