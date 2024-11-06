@@ -283,14 +283,21 @@
         #define STBI_REQUIRED
     #endif
 
-    #ifndef SUPPORT_FILEFORMAT_BMP
+    #ifndef SUPPORT_FILEFORMAT_BMP // For clipboard image on Windows
         #define SUPPORT_FILEFORMAT_BMP 1
+    #endif
+
+    #ifndef SUPPORT_FILEFORMAT_PNG // Wayland uses png for prints, at least it was on 22 LTS ubuntu
+        #define SUPPORT_FILEFORMAT_PNG 1
+    #endif
+
+    #ifndef SUPPORT_FILEFORMAT_JPG
+        #define SUPPORT_FILEFORMAT_JPG 1
     #endif
 
     #ifndef SUPPORT_MODULE_RTEXTURES
         #define SUPPORT_MODULE_RTEXTURES 1
     #endif
-
 #endif
 
 #endif // CONFIG_H

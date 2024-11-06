@@ -1086,20 +1086,39 @@ const char *GetClipboardText(void)
 // Get clipboard image
 Image GetClipboardImage(void)
 {
-    Image image = {0};
+    // Let's hope compiler put these arrays in static memory
+    const char *image_formats[] = {
+        "image/bmp",
+        "image/png",
+        "image/jpg",
+        "image/tiff",
+    };
+    const char *image_extensions[] = {
+        ".bmp",
+        ".png",
+        ".jpg",
+        ".tiff",
+    };
 
+
+    Image image = {0};
     size_t dataSize = 0;
-    // NOTE: This pointer should be free with SDL_free() at some point.
-    // TODO: In case of failure let's try to cycle in to other mime types (formats)
-    void* fileData = SDL_GetClipboardData("image/bmp", &dataSize); // returns NULL on failure;
-    if (fileData == NULL)
+    void  *fileData = NULL;
+    for (int i = 0; i < SDL_arraysize(image_formats); ++i)
     {
-        TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data. %s", SDL_GetError());
+        // NOTE: This pointer should be free with SDL_free() at some point.
+        fileData = SDL_GetClipboardData(image_formats[i], &dataSize);
+        if (fileData) {
+            image = LoadImageFromMemory(image_extensions[i], fileData, dataSize);
+            if (IsImageValid(image))
+            {
+                TRACELOG(LOG_INFO, "Clipboard image: Got image from clipboard as a `%s` successfully", image_extensions[i]);
+                return image;
+            }
+        }
     }
-    else
-    {
-        image = LoadImageFromMemory(".bmp", fileData, dataSize);
-    }
+
+    TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data. %s", SDL_GetError());
     return image;
 }
 #endif
