@@ -335,3 +335,4 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
 }
 #endif // WIN32_CLIPBOARD_IMPLEMENTATION
 // EOF
+
