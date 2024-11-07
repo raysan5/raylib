@@ -1841,6 +1841,44 @@ const char *TextToCamel(const char *text)
     return buffer;
 }
 
+// Get inverted version of provided string
+const char *TextInvert(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL) {
+        int textLen = TextLength(text);
+        
+        if (textLen > MAX_TEXT_BUFFER_LENGTH) {
+            return NULL;
+        }
+
+        for (int i = 0; (i < textLen); i++) {
+            buffer[i] = text[textLen - i - 1]; // Invert string
+        }
+
+        // Securing the null terminator at the end of the inverted string
+        buffer[textLen] = '\0';
+    }
+
+    return buffer;
+}
+
+// Clear the content of the provided string
+void TextClear(char *text)
+{
+    if (text != NULL) {
+        int length = TextLength(text);
+
+        // Clearing text content
+        memset(text, 0, length);
+
+        // We set the null-terminator at the start of the cleared string
+        text[0] = '\0';
+    }
+}
+
 // Encode text codepoint into UTF-8 text
 // REQUIRES: memcpy()
 // WARNING: Allocated memory must be manually freed
