@@ -686,7 +686,7 @@ Image GetClipboardImage(void)
     int width, height;
     fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
 #else
-    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_GLFW doesn't implement `GetClipboardImage` for this OS");
+    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement `GetClipboardImage` for this OS");
 #endif
 
     if (fileData == NULL)
