@@ -180,8 +180,6 @@ typedef struct tagRGBQUAD {
 
 static BOOL           OpenClipboardRetrying(HWND handle); // Open clipboard with a number of retries
 static int            GetPixelDataOffset(BITMAPINFOHEADER bih);
-static unsigned char* GetClipboardImageData(int* width, int* height, unsigned int *dataSize);
-
 
 unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long long int *dataSize)
 {
