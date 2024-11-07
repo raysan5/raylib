@@ -336,8 +336,13 @@ SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth
 //     SDL_GetDisplayDPI() -
 //     not reliable across platforms, approximately replaced by multiplying
 //     SDL_GetWindowDisplayScale() times 160 on iPhone and Android, and 96 on other platforms.
+// returns 0 on success or a negative error code on failure
 int SDL_GetDisplayDPI(int displayIndex, float * ddpi, float * hdpi, float * vdpi) {
-    return SDL_GetWindowDisplayScale(platform.window) * 96;
+    float dpi = SDL_GetWindowDisplayScale(platform.window) * 96.0;
+    if (ddpi != NULL) *ddpi = dpi;
+    if (hdpi != NULL) *hdpi = dpi;
+    if (vdpi != NULL) *vdpi = dpi;
+    return 0;
 }
 
 SDL_Surface *SDL_CreateRGBSurfaceWithFormat(Uint32 flags, int width, int height, int depth, Uint32 format)
