@@ -462,7 +462,7 @@ CFLAGS += $(CUSTOM_CFLAGS)
 # Define include paths for required headers: INCLUDE_PATHS
 # NOTE: Several external required libraries (stb and others)
 #------------------------------------------------------------------------------------------------
-INCLUDE_PATHS = -I.
+INCLUDE_PATHS = -I. $(EXTRA_INCLUDE_PATHS)
 
 # Define additional directories containing required header files
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
