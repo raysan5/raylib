@@ -920,7 +920,7 @@ int GetCurrentMonitor(void)
 {
     int currentMonitor = 0;
 
-    // Be away that this returns an ID in SDL3 and a Index in SDL2
+    // Be aware that this returns an ID in SDL3 and a Index in SDL2
     currentMonitor = SDL_GetWindowDisplayIndex(platform.window);
 
     return currentMonitor;
