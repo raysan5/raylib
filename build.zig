@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 /// Minimum supported version of Zig
-const min_ver = "0.12.0";
+const min_ver = "0.13.0";
 
 comptime {
     const order = std.SemanticVersion.order;
@@ -15,7 +15,7 @@ comptime {
 // get the flags a second time when adding raygui
 var raylib_flags_arr: std.ArrayListUnmanaged([]const u8) = .{};
 
-// This has been tested with zig version 0.12.0
+// This has been tested with zig version 0.13.0
 pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     const raylib_dep = b.dependencyFromBuildZig(@This(), .{
         .target = target,
@@ -49,6 +49,30 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
         .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
         .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
         else => {},
+    }
+}
+
+fn createEmsdkStep(b: *std.Build, emsdk: *std.Build.Dependency) *std.Build.Step.Run {
+    if (builtin.os.tag == .windows) {
+        return b.addSystemCommand(&.{emsdk.path("emsdk.bat").getPath(b)});
+    } else {
+        return b.addSystemCommand(&.{emsdk.path("emsdk").getPath(b)});
+    }
+}
+
+fn emSdkSetupStep(b: *std.Build, emsdk: *std.Build.Dependency) !?*std.Build.Step.Run {
+    const dot_emsc_path = emsdk.path(".emscripten").getPath(b);
+    const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
+
+    if (!dot_emsc_exists) {
+        const emsdk_install = createEmsdkStep(b, emsdk);
+        emsdk_install.addArgs(&.{ "install", "latest" });
+        const emsdk_activate = createEmsdkStep(b, emsdk);
+        emsdk_activate.addArgs(&.{ "activate", "latest" });
+        emsdk_activate.step.dependOn(&emsdk_install.step);
+        return emsdk_activate;
+    } else {
+        return null;
     }
 }
 
@@ -223,6 +247,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
                     waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
                 }
+
                 setDesktopPlatform(raylib, options.platform);
             } else {
                 if (options.opengl_version == .auto) {
@@ -255,6 +280,13 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .macos => {
+            // Include xcode_frameworks for cross compilation
+            if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
+                raylib.addSystemFrameworkPath(dep.path("Frameworks"));
+                raylib.addSystemIncludePath(dep.path("include"));
+                raylib.addLibraryPath(dep.path("lib"));
+            }
+
             // On macos rglfw.c include Objective-C files.
             try raylib_flags_arr.append(b.allocator, "-ObjC");
             raylib.root_module.addCSourceFile(.{
@@ -271,20 +303,19 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
+            // Include emscripten for cross compilation
+            if (b.lazyDependency("emsdk", .{})) |dep| {
+                if (try emSdkSetupStep(b, dep)) |emSdkStep| {
+                    raylib.step.dependOn(&emSdkStep.step);
+                }
+
+                raylib.addIncludePath(dep.path("upstream/emscripten/cache/sysroot/include"));
+            }
+
             raylib.defineCMacro("PLATFORM_WEB", null);
             if (options.opengl_version == .auto) {
                 raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
             }
-
-            if (b.sysroot == null) {
-                @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
-            }
-
-            const cache_include = b.pathJoin(&.{ b.sysroot.?, "cache", "sysroot", "include" });
-
-            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
-            dir.close();
-            raylib.addIncludePath(.{ .cwd_relative = cache_include });
         },
         else => {
             @panic("Unsupported OS");
