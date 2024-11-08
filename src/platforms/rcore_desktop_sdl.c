@@ -451,7 +451,12 @@ void ToggleFullscreen(void)
 {
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
+
+#ifdef PLATFORM_DESKTOP_SDL3 // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
         {
@@ -474,7 +479,11 @@ void ToggleBorderlessWindowed(void)
 {
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
+#ifdef PLATFORM_DESKTOP_SDL3 // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
         {
@@ -523,7 +532,11 @@ void SetWindowState(unsigned int flags)
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
+    #ifdef PLATFORM_DESKTOP_SDL3 // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+        if ((monitor > 0) && (monitor <= monitorCount))
+    #else
         if ((monitor >= 0) && (monitor < monitorCount))
+    #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
             CORE.Window.fullscreen = true;
@@ -582,7 +595,11 @@ void SetWindowState(unsigned int flags)
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
+    #ifdef PLATFORM_DESKTOP_SDL3 // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+        if ((monitor > 0) && (monitor <= monitorCount))
+    #else
         if ((monitor >= 0) && (monitor < monitorCount))
+    #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         }
@@ -903,6 +920,7 @@ int GetCurrentMonitor(void)
 {
     int currentMonitor = 0;
 
+    // Be away that this returns an ID in SDL3 and a Index in SDL2
     currentMonitor = SDL_GetWindowDisplayIndex(platform.window);
 
     return currentMonitor;
