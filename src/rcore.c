@@ -512,6 +512,12 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+    #if !defined(SUPPORT_FILEFORMAT_BMP) || !defined(STBI_REQUIRED) || !defined(SUPPORT_MODULE_RTEXTURES)
+        #error "To enabled SUPPORT_CLIPBOARD_IMAGE, it also needs SUPPORT_FILEFORMAT_BMP, SUPPORT_MODULE_RTEXTURES and STBI_REQUIRED to be defined. It should have been defined earlier"
+    #endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
+
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)
     #include "platforms/rcore_desktop_glfw.c"
