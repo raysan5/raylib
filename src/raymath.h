@@ -113,25 +113,36 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 #if !defined(RL_VECTOR2_TYPE)
+#ifdef __clang__
+typedef float Vector2 __attribute__((ext_vector_type(2)));
+#else
 // Vector2 type
 typedef struct Vector2 {
     float x;
     float y;
 } Vector2;
+#endif
 #define RL_VECTOR2_TYPE
 #endif
 
 #if !defined(RL_VECTOR3_TYPE)
+#ifdef __clang__
+typedef float Vector3 __attribute__((ext_vector_type(3)));
+#else
 // Vector3 type
 typedef struct Vector3 {
     float x;
     float y;
     float z;
 } Vector3;
+#endif
 #define RL_VECTOR3_TYPE
 #endif
 
 #if !defined(RL_VECTOR4_TYPE)
+#ifdef __clang__
+typedef float Vector4 __attribute__((ext_vector_type(4)));
+#else
 // Vector4 type
 typedef struct Vector4 {
     float x;
@@ -139,6 +150,7 @@ typedef struct Vector4 {
     float z;
     float w;
 } Vector4;
+#endif
 #define RL_VECTOR4_TYPE
 #endif
 
