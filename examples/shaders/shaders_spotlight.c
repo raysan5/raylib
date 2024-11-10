@@ -135,7 +135,7 @@ int main(void)
         spots[i].inner = 28.0f * (i + 1);
         spots[i].radius = 48.0f * (i + 1);
 
-        SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position.x, SHADER_UNIFORM_VEC2);
+        SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position, SHADER_UNIFORM_VEC2);
         SetShaderValue(shdrSpot, spots[i].innerLoc, &spots[i].inner, SHADER_UNIFORM_FLOAT);
         SetShaderValue(shdrSpot, spots[i].radiusLoc, &spots[i].radius, SHADER_UNIFORM_FLOAT);
     }
@@ -173,7 +173,7 @@ int main(void)
                 if (spots[i].position.y > (screenHeight - 64)) spots[i].speed.y = -spots[i].speed.y;
             }
 
-            SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position.x, SHADER_UNIFORM_VEC2);
+            SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position, SHADER_UNIFORM_VEC2);
         }
 
         // Draw

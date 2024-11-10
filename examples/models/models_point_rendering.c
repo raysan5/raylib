@@ -102,9 +102,9 @@ int main()
                     for (int i = 0; i < numPoints; i++)
                     {
                         Vector3 pos = {
-                            .x = mesh.vertices[i*3 + 0],
-                            .y = mesh.vertices[i*3 + 1],
-                            .z = mesh.vertices[i*3 + 2],
+                            mesh.vertices[i*3 + 0],
+                            mesh.vertices[i*3 + 1],
+                            mesh.vertices[i*3 + 2],
                         };
                         Color color = {
                             .r = mesh.colors[i*4 + 0],

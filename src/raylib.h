@@ -212,25 +212,37 @@
 #endif
 
 // Vector2, 2 components
+#ifdef __clang__
+typedef float Vector2 __attribute__((ext_vector_type(2)));
+#else
 typedef struct Vector2 {
     float x;                // Vector x component
     float y;                // Vector y component
 } Vector2;
+#endif
 
 // Vector3, 3 components
+#ifdef __clang__
+typedef float Vector3 __attribute__((ext_vector_type(3)));
+#else
 typedef struct Vector3 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
 } Vector3;
+#endif
 
 // Vector4, 4 components
+#ifdef __clang__
+typedef float Vector4 __attribute__((ext_vector_type(4)));
+#else
 typedef struct Vector4 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
     float w;                // Vector w component
 } Vector4;
+#endif
 
 // Quaternion, 4 components (Vector4 alias)
 typedef Vector4 Quaternion;

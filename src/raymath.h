@@ -263,73 +263,110 @@ RMAPI Vector2 Vector2One(void)
 // Add two vectors (v1 + v2)
 RMAPI Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    return v1 + v2;
+#else
     Vector2 result = { v1.x + v2.x, v1.y + v2.y };
 
     return result;
+#endif
 }
 
 // Add vector and float value
 RMAPI Vector2 Vector2AddValue(Vector2 v, float add)
 {
+#ifdef __clang__
+    return v + add;
+#else
     Vector2 result = { v.x + add, v.y + add };
 
     return result;
+#endif
 }
 
 // Subtract two vectors (v1 - v2)
 RMAPI Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    return v1 - v2;
+#else
     Vector2 result = { v1.x - v2.x, v1.y - v2.y };
 
     return result;
+#endif
 }
 
 // Subtract vector by float value
 RMAPI Vector2 Vector2SubtractValue(Vector2 v, float sub)
 {
+#ifdef __clang__
+    return v - sub;
+#else
     Vector2 result = { v.x - sub, v.y - sub };
 
     return result;
-}
-
-// Calculate vector length
-RMAPI float Vector2Length(Vector2 v)
-{
-    float result = sqrtf((v.x*v.x) + (v.y*v.y));
-
-    return result;
+#endif
 }
 
 // Calculate vector square length
 RMAPI float Vector2LengthSqr(Vector2 v)
 {
+#ifdef __clang__
+    Vector2 tmp = v * v;
+    return tmp[0] + tmp[1];
+#else
     float result = (v.x*v.x) + (v.y*v.y);
+    return result;
+#endif
+}
+
+// Calculate vector length
+RMAPI float Vector2Length(Vector2 v)
+{
+#ifdef __clang__
+    return __builtin_elementwise_sqrt(Vector2LengthSqr(v));
+#else
+    float result = sqrtf((v.x*v.x) + (v.y*v.y));
 
     return result;
+#endif
 }
 
 // Calculate two vectors dot product
 RMAPI float Vector2DotProduct(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    Vector2 tmp = v1 * v2;
+    return tmp[0] + tmp[1];
+#else
     float result = (v1.x*v2.x + v1.y*v2.y);
 
     return result;
+#endif
 }
 
 // Calculate distance between two vectors
 RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    return Vector2Length(v1 - v2);
+#else
     float result = sqrtf((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
 
     return result;
+#endif
 }
 
 // Calculate square distance between two vectors
 RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    return Vector2LengthSqr(v1 - v2);
+#else
     float result = ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
 
     return result;
+#endif
 }
 
 // Calculate angle between two vectors
@@ -362,47 +399,59 @@ RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
 // Scale vector (multiply by value)
 RMAPI Vector2 Vector2Scale(Vector2 v, float scale)
 {
+#ifdef __clang__
+    return v * scale;
+#else
     Vector2 result = { v.x*scale, v.y*scale };
 
     return result;
+#endif
 }
 
 // Multiply vector by vector
 RMAPI Vector2 Vector2Multiply(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    return v1 * v2;
+#else
     Vector2 result = { v1.x*v2.x, v1.y*v2.y };
 
     return result;
+#endif
 }
 
 // Negate vector
 RMAPI Vector2 Vector2Negate(Vector2 v)
 {
+#ifdef __clang__
+    return -v;
+#else
     Vector2 result = { -v.x, -v.y };
 
     return result;
+#endif
 }
 
 // Divide vector by vector
 RMAPI Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 {
+#ifdef __clang__
+    return v1 / v2;
+#else
     Vector2 result = { v1.x/v2.x, v1.y/v2.y };
 
     return result;
+#endif
 }
 
 // Normalize provided vector
 RMAPI Vector2 Vector2Normalize(Vector2 v)
 {
     Vector2 result = { 0 };
-    float length = sqrtf((v.x*v.x) + (v.y*v.y));
+    float length = Vector2Length(v);
 
     if (length > 0)
-    {
-        float ilength = 1.0f/length;
-        result.x = v.x*ilength;
-        result.y = v.y*ilength;
-    }
+    	result = Vector2Scale(v, 1.0f/length);
 
     return result;
 }
@@ -625,41 +674,61 @@ RMAPI Vector3 Vector3AddValue(Vector3 v, float add)
 // Subtract two vectors
 RMAPI Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
+#ifdef __clang__
+    return v1 - v2;
+#else
     Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
 
     return result;
+#endif
 }
 
 // Subtract vector by float value
 RMAPI Vector3 Vector3SubtractValue(Vector3 v, float sub)
 {
+#ifdef __clang__
+    return v - sub;
+#else
     Vector3 result = { v.x - sub, v.y - sub, v.z - sub };
 
     return result;
+#endif
 }
 
 // Multiply vector by scalar
 RMAPI Vector3 Vector3Scale(Vector3 v, float scalar)
 {
+#ifdef __clang__
+    return v * scalar;
+#else
     Vector3 result = { v.x*scalar, v.y*scalar, v.z*scalar };
 
     return result;
+#endif
 }
 
 // Multiply vector by vector
 RMAPI Vector3 Vector3Multiply(Vector3 v1, Vector3 v2)
 {
+#ifdef __clang__
+    return v1 * v2;
+#else
     Vector3 result = { v1.x*v2.x, v1.y*v2.y, v1.z*v2.z };
 
     return result;
+#endif
 }
 
 // Calculate two vectors cross product
 RMAPI Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2)
 {
+#ifdef __clang__
+    return v1.yzx * v2.zxy - v1.zxy * v2.yzx;
+#else
     Vector3 result = { v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x };
 
     return result;
+#endif
 }
 
 // Calculate one vector perpendicular vector
@@ -691,33 +760,51 @@ RMAPI Vector3 Vector3Perpendicular(Vector3 v)
     return result;
 }
 
-// Calculate vector length
-RMAPI float Vector3Length(const Vector3 v)
-{
-    float result = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-
-    return result;
-}
-
 // Calculate vector square length
 RMAPI float Vector3LengthSqr(const Vector3 v)
 {
+#ifdef __clang__
+    Vector3 tmp = v*v;
+    return tmp[0] + tmp[1] + tmp[2];
+#else
     float result = v.x*v.x + v.y*v.y + v.z*v.z;
 
     return result;
+#endif
+}
+
+// Calculate vector length
+RMAPI float Vector3Length(const Vector3 v)
+{
+#ifdef __clang__
+    return sqrtf(Vector3LengthSqr(v));
+#else
+    float result = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+
+    return result;
+#endif
 }
 
 // Calculate two vectors dot product
 RMAPI float Vector3DotProduct(Vector3 v1, Vector3 v2)
 {
+#ifdef __clang__
+    Vector3 tmp = v1*v2;
+    return tmp[0] + tmp[1] + tmp[2];
+#else
     float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
 
     return result;
+#endif
 }
 
 // Calculate distance between two vectors
 RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
 {
+#ifdef __clang__
+    Vector3 dv = v2 - v1;
+    return Vector3Length(dv);
+#else
     float result = 0.0f;
 
     float dx = v2.x - v1.x;
@@ -726,11 +813,16 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
     result = sqrtf(dx*dx + dy*dy + dz*dz);
 
     return result;
+#endif
 }
 
 // Calculate square distance between two vectors
 RMAPI float Vector3DistanceSqr(Vector3 v1, Vector3 v2)
 {
+#ifdef __clang__
+    Vector3 dv = v2 - v1;
+    return Vector3LengthSqr(dv);
+#else
     float result = 0.0f;
 
     float dx = v2.x - v1.x;
@@ -739,6 +831,7 @@ RMAPI float Vector3DistanceSqr(Vector3 v1, Vector3 v2)
     result = dx*dx + dy*dy + dz*dz;
 
     return result;
+#endif
 }
 
 // Calculate angle between two vectors
@@ -757,9 +850,13 @@ RMAPI float Vector3Angle(Vector3 v1, Vector3 v2)
 // Negate provided vector (invert direction)
 RMAPI Vector3 Vector3Negate(Vector3 v)
 {
+#ifdef __clang__
+    return -v;
+#else
     Vector3 result = { -v.x, -v.y, -v.z };
 
     return result;
+#endif
 }
 
 // Divide vector by vector
@@ -775,15 +872,9 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
 {
     Vector3 result = v;
 
-    float length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length != 0.0f)
-    {
-        float ilength = 1.0f/length;
-
-        result.x *= ilength;
-        result.y *= ilength;
-        result.z *= ilength;
-    }
+    float length = Vector3Length(v);
+    if (length > 0)
+        result = Vector3Scale(v, 1.0f/length);
 
     return result;
 }
