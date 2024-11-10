@@ -3398,6 +3398,11 @@ return {
       returnType = "const char *"
     },
     {
+      name = "GetClipboardImage",
+      description = "Get clipboard image",
+      returnType = "Image"
+    },
+    {
       name = "EnableEventWaiting",
       description = "Enable waiting for events on EndDrawing(), no automatic event polling",
       returnType = "void"
@@ -7607,7 +7612,7 @@ return {
       }
     },
     {
-      name = "UpdateModelAnimationBoneMatrices",
+      name = "UpdateModelAnimationBones",
       description = "Update model animation mesh bone matrices (GPU skinning)",
       returnType = "void",
       params = {

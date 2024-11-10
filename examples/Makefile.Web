@@ -1,6 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
+#   raylib makefile for Web platform
 #
 #   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
 #
@@ -30,8 +30,11 @@ PLATFORM              ?= PLATFORM_WEB
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 5.0.0
+RAYLIB_VERSION        ?= 5.5.0
 RAYLIB_PATH           ?= ..
+
+# Define raylib source code path
+RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
@@ -51,6 +54,11 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
+
+# PLATFORM_WEB: Default properties
+BUILD_WEB_ASYNCIFY    ?= TRUE
+BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/shell.html
+BUILD_WEB_HEAP_SIZE   ?= 134217728
 
 # Use WebGL2 backend (OpenGL 3.0)
 # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
@@ -266,13 +274,17 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -sASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
     # -sFORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # -sASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
-    # -sEXPORTED_RUNTIME_METHODS=ccall  # require exporting some LEGACY_RUNTIME functions, ccall() is required by miniaudio
     # -sGL_ENABLE_GET_PROC_ADDRESS # enable using the *glGetProcAddress() family of functions, required for extensions loading
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-    LDFLAGS += -sUSE_GLFW=3 -sASYNCIFY -sEXPORTED_RUNTIME_METHODS=ccall
+    LDFLAGS += -sUSE_GLFW=3 -sEXPORTED_RUNTIME_METHODS=ccall
+    
+    # Build using asyncify
+    ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+        LDFLAGS += -sASYNCIFY
+    endif
 
     # NOTE: Flags required for WebGL 2.0 (OpenGL ES 3.0)
     # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
@@ -280,17 +292,20 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
         LDFLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
     endif
 
+    # Add debug mode flags if required
+    ifeq ($(BUILD_MODE),DEBUG)
+        LDFLAGS += -sASSERTIONS=1 --profiling
+    endif
+
+    # Define a custom shell .html and output extension
+    LDFLAGS += --shell-file $(BUILD_WEB_SHELL)
+    EXT = .html
+
     # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
-    # NOTE: Additional compilate flags for TOTAL_MEMORY, FORCE_FILESYSTEM and resources loading
-    # are specified per-example for optimization
-
-    # Define a custom shell .html and output extension
-    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
-    EXT = .html
 endif
 
 # Define libraries required on linking: LDLIBS
@@ -332,7 +347,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
-        LDLIBS = -lraylib -lGL -lpthread -lm
+        LDFLAGS += -L/usr/X11R7/lib -Wl,-R/usr/X11R7/lib
+        LDLIBS = -lraylib -lGL -lm -lpthread
 
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
@@ -408,7 +424,8 @@ SHAPES = \
     shapes/shapes_logo_raylib_anim \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_splines_drawing \
-    shapes/shapes_top_down_lights
+    shapes/shapes_top_down_lights \
+    shapes/shapes_rectangle_advanced
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -417,6 +434,7 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
+    textures/textures_image_channel \
     textures/textures_image_drawing \
     textures/textures_image_generation \
     textures/textures_image_kernel \
@@ -455,6 +473,7 @@ MODELS = \
     models/models_animation \
     models/models_gpu_skinning \
     models/models_billboard \
+    models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap \
     models/models_draw_cube_texture \
@@ -476,6 +495,7 @@ MODELS = \
 
 SHADERS = \
     shaders/shaders_basic_lighting \
+    shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_render \
     shaders/shaders_eratosthenes \
