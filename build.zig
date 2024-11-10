@@ -134,6 +134,25 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
+
+    if (options.shared) {
+        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
+    }
+
+    const raylib = if (options.shared)
+        b.addSharedLibrary(.{
+            .name = "raylib",
+            .target = target,
+            .optimize = optimize,
+        })
+    else
+        b.addStaticLibrary(.{
+            .name = "raylib",
+            .target = target,
+            .optimize = optimize,
+        });
+    raylib.linkLibC();
+
     if (options.config.len > 0) {
         // Sets a flag indiciating the use of a custom `config.h`
         try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
@@ -171,31 +190,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 if (u_flag_stripped.len == flag.len or u_flag_stripped[flag.len] == '=') continue :outer;
             }
 
-            // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(
-                b.allocator,
-                b.fmt("-D{s}={s}", .{ flag, value }),
-            );
+            // Otherwise, apply the default values from config.h
+            raylib.root_module.addCMacro(flag, value);
         }
     }
-
-    if (options.shared) {
-        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
-    }
-
-    const raylib = if (options.shared)
-        b.addSharedLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        })
-    else
-        b.addStaticLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        });
-    raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
