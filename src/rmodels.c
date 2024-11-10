@@ -603,7 +603,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < sides; i++)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sinf(DEG2RAD*i*angleStep)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angleStep)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i+1)*angleStep)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angleStep)*radiusBottom);
                 rlVertex3f(sinf(DEG2RAD*i*angleStep)*radiusBottom, 0, cosf(DEG2RAD*i*angleStep)*radiusBottom);
             }
 
