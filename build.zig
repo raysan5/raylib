@@ -42,12 +42,12 @@ pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 }
 
 fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
-    raylib.defineCMacro("PLATFORM_DESKTOP", null);
+    raylib.root_module.addCMacro("PLATFORM_DESKTOP", "1");
 
     switch (platform) {
-        .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
-        .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
-        .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
+        .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", "1"),
+        .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", "1"),
+        .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", "1"),
         else => {},
     }
 }
@@ -131,7 +131,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     try raylib_flags_arr.appendSlice(b.allocator, &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
-        "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
 
@@ -220,7 +219,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     if (options.opengl_version != .auto) {
-        raylib.defineCMacro(options.opengl_version.toCMacroStr(), null);
+        raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "1");
     }
 
     switch (target.result.os.tag) {
@@ -237,7 +236,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 try c_source_files.append("src/rglfw.c");
 
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.root_module.addCMacro("_GLFW_X11", "1");
                     raylib.linkSystemLibrary("GLX");
                     raylib.linkSystemLibrary("X11");
                     raylib.linkSystemLibrary("Xcursor");
@@ -257,7 +256,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         , .{});
                         @panic("`wayland-scanner` not found");
                     };
-                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.root_module.addCMacro("_GLFW_WAYLAND", "1");
                     raylib.linkSystemLibrary("EGL");
                     raylib.linkSystemLibrary("wayland-client");
                     raylib.linkSystemLibrary("xkbcommon");
@@ -276,16 +275,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
-                    raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "1");
                 }
 
                 raylib.linkSystemLibrary("EGL");
                 raylib.linkSystemLibrary("gbm");
                 raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
 
-                raylib.defineCMacro("PLATFORM_DRM", null);
-                raylib.defineCMacro("EGL_NO_X11", null);
-                raylib.defineCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
+                raylib.root_module.addCMacro("PLATFORM_DRM", "1");
+                raylib.root_module.addCMacro("EGL_NO_X11", "1");
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
@@ -313,6 +311,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
             // On macos rglfw.c include Objective-C files.
             try raylib_flags_arr.append(b.allocator, "-ObjC");
+            // Silence OpenGL deprecation warnings on macOS
+            try raylib_flags_arr.append(b.allocator, "-DGL_SILENCE_DEPRECATION=199309L");
             raylib.root_module.addCSourceFile(.{
                 .file = b.path("src/rglfw.c"),
                 .flags = raylib_flags_arr.items,
@@ -336,9 +336,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addIncludePath(dep.path("upstream/emscripten/cache/sysroot/include"));
             }
 
-            raylib.defineCMacro("PLATFORM_WEB", null);
+            raylib.root_module.addCMacro("PLATFORM_WEB", "1");
             if (options.opengl_version == .auto) {
-                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "1");
             }
         },
         else => {
