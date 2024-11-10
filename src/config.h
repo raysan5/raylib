@@ -71,6 +71,7 @@
 // Enabling this flag allows manual control of the frame processes, use at your own risk
 //#define SUPPORT_CUSTOM_FRAME_CONTROL    1
 
+
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_FILEPATH_CAPACITY        8192       // Maximum file paths capacity
@@ -271,5 +272,32 @@
 // utils: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
+
+
+// Enable partial support for clipboard image, only working on SDL3 or
+// being on both Windows OS + GLFW or Windows OS + RGFW
+#define SUPPORT_CLIPBOARD_IMAGE    1
+
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+    #ifndef STBI_REQUIRED
+        #define STBI_REQUIRED
+    #endif
+
+    #ifndef SUPPORT_FILEFORMAT_BMP // For clipboard image on Windows
+        #define SUPPORT_FILEFORMAT_BMP 1
+    #endif
+
+    #ifndef SUPPORT_FILEFORMAT_PNG // Wayland uses png for prints, at least it was on 22 LTS ubuntu
+        #define SUPPORT_FILEFORMAT_PNG 1
+    #endif
+
+    #ifndef SUPPORT_FILEFORMAT_JPG
+        #define SUPPORT_FILEFORMAT_JPG 1
+    #endif
+
+    #ifndef SUPPORT_MODULE_RTEXTURES
+        #define SUPPORT_MODULE_RTEXTURES 1
+    #endif
+#endif
 
 #endif // CONFIG_H

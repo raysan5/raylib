@@ -58,6 +58,7 @@
 #if defined(_WIN32)
     typedef void *PVOID;
     typedef PVOID HANDLE;
+    #include "../external/win32_clipboard.h"
     typedef HANDLE HWND;
     #define GLFW_EXPOSE_NATIVE_WIN32
     #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
@@ -965,6 +966,33 @@ const char *GetClipboardText(void)
 {
     return glfwGetClipboardString(platform.handle);
 }
+
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = {0};
+    unsigned long long int dataSize = 0;
+    void* fileData = NULL;
+
+#ifdef _WIN32
+    int width, height;
+    fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
+#else
+    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_GLFW doesn't implement `GetClipboardImage` for this OS");
+#endif
+
+    if (fileData == NULL)
+    {
+        TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
+    }
+    else
+    {
+        image = LoadImageFromMemory(".bmp", fileData, dataSize);
+    }
+    return image;
+}
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Show mouse cursor
 void ShowCursor(void)
@@ -1898,4 +1926,8 @@ static void JoystickCallback(int jid, int event)
     }
 }
 
+#ifdef _WIN32
+#   define WIN32_CLIPBOARD_IMPLEMENTATION
+#   include "../external/win32_clipboard.h"
+#endif
 // EOF
