@@ -1299,14 +1299,16 @@ static void ProcessKeyboard(void)
         {
             CORE.Input.Keyboard.currentKeyState[257] = 1;
 
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].key = 257;     // Add keys pressed into queue
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = -1;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
         else if (keysBuffer[i] == 0x7f)     // raylib KEY_BACKSPACE
         {
             CORE.Input.Keyboard.currentKeyState[259] = 1;
 
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].key = 257;     // Add keys pressed into queue
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = -1;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
         else
@@ -1318,7 +1320,8 @@ static void ProcessKeyboard(void)
             }
             else CORE.Input.Keyboard.currentKeyState[(int)keysBuffer[i]] = 1;
 
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keysBuffer[i];     // Add keys pressed into queue
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].key = keysBuffer[i];     // Add keys pressed into queue
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = -1;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
     }
@@ -1610,7 +1613,8 @@ static void PollKeyboardEvents(void)
                 {
                     if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                     {
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].key = keycode;
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = (int)event.code;
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
 

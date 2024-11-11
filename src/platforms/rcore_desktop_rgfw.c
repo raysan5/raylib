@@ -1001,7 +1001,8 @@ void PollInputEvents(void)
                     // If key was up, add it to the key pressed queue
                     if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
                     {
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].key = key;
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = event->keyCode;
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
 

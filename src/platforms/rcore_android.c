@@ -1225,7 +1225,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             {
                 CORE.Input.Keyboard.currentKeyState[key] = 1;   // Key down
 
-                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].key = key;
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = -1;
                 CORE.Input.Keyboard.keyPressedQueueCount++;
             }
             else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
