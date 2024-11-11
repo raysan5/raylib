@@ -7,17 +7,18 @@ Current Release:    raylib 5.0 (18 November 2023)
 Release:     raylib 5.5 (November 2024?)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - New rcore backend: RGFW
- - New raylib project creator tool
+ - New rcore backends: RGFW and SDL3
  - New platforms supported: Dreamcast, N64, PSP, PSVita, PS4
- - GPU Skinning (all platforms and GL versions)
- - raymath C++ operators
+ - Added GPU Skinning support (all platforms and GL versions)
+ - Added raymath C++ operators
+ - New tool: raylib project creator
 
 Detailed changes:
 
 WIP: Last update with commit from 02-Nov-2024
 
 [rcore] ADDED: Working directory info at initialization by @Ray
+[rcore] ADDED: `GetClipboardImage()`, supported by multiple backends (#4459) by @evertonse
 [rcore] ADDED: `MakeDirectory()`, supporting recursive directory creation by @Ray
 [rcore] ADDED: `ComputeSHA1()` (#4390) by @Anthony Carbajal
 [rcore] ADDED: `ComputeCRC32()` and `ComputeMD5()` by @Ray
@@ -203,6 +204,7 @@ WIP: Last update with commit from 02-Nov-2024
 [rtextures] REVIEWED: `ImageDrawRectangleRec()` (#3721) by @Le Juez Victor
 [rtextures] REVIEWED: `ImageDraw()`, don't try to blend images without alpha (#4395) by @Nikolas
 [rtextures] REVIEWED: `GenImagePerlinNoise()` being stretched (#4276) by @Bugsia
+[rtextures] REVIEWED: `GenImageGradientLinear()`, fix some angles (#4462) by @decromo
 [rtextures] REVIEWED: `DrawTexturePro()` to avoid negative dest rec #4316 by @Ray
 [rtextures] REVIEWED: `ColorToInt()`, fix undefined behaviour (#3996) by @OetkenPurveyorOfCode
 [rtextures] REVIEWED: Remove panorama cubemap layout option (#4425) by @Jeffery Myers
@@ -258,7 +260,9 @@ WIP: Last update with commit from 02-Nov-2024
 [rmodels] REVIEWED: `GenMeshSphere()`, fix artifacts (#4460) by @MikiZX1
 [rmodels] REVIEWED: `GenMeshTangents()`, read uninitialized values, fix bounding case (#4066) by @kai-z99
 [rmodels] REVIEWED: `GenMeshTangents()`, fixed out of bounds error (#3990) by @Salvador Galindo
+[rmodels] REVIEWED: `UpdateModelAnimation()`, performance speedup (#4470) by @JettMonstersGoBoom
 [rmodels] REVIEWED: `DrawCylinder()`, fix drawing due to imprecise angle (#4034) by @Paul Melis
+[rmodels] REVIEWED: `DrawCylinder()`, fix drawing of cap (#4478) by @JeffM2501
 [rmodels] REVIEWED: `DrawMesh()`, send full matModel to shader in DrawMesh (#4005) (#4022) by @David Holland
 [rmodels] REVIEWED: `DrawMesh()`, fix material specular map retrieval (#3758) by @Victor Gallet
 [rmodels] REVIEWED: `DrawModelEx()`, simplified multiplication of colors (#4002) by @Le Juez Victor
@@ -364,6 +368,7 @@ WIP: Last update with commit from 02-Nov-2024
 [build] REVIEWED: build.zig, remove all uses of deps/mingw (#3805) by @Peter0x44
 [build] REVIEWED: build.zig, fixed illegal instruction crash (#3682) by @WisonYe
 [build] REVIEWED: build.zig, fix broken build on #3863 (#3891) by @Nikolas Mauropoulos
+[build] REVIEWED: build.zig, improve cross-compilation (#4468) by @deathbeam
 [build] REVIEWED: CMake, update to raylib 5.0 (#3623) by @Peter0x44
 [build] REVIEWED: CMake, added PLATFORM option for Desktop SDL (#3809) by @mooff
 [build] REVIEWED: CMake, fix GRAPHICS_* check (#4359) by @Kacper Zybała
