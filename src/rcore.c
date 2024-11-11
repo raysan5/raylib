@@ -268,6 +268,7 @@ __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod)
 //----------------------------------------------------------------------------------
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
+typedef struct { int keycode; int scancode; } KeyCodes;
 
 // Core global state context data
 typedef struct CoreData {
@@ -310,7 +311,7 @@ typedef struct CoreData {
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame
 
-            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
+            KeyCodes keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
@@ -3035,7 +3036,8 @@ void PlayAutomationEvent(AutomationEvent event)
                     if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
                     {
                         // Add character to the queue
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = event.params[0];
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].keycode = event.params[0];
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = -1;
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
                 }
@@ -3163,26 +3165,35 @@ bool IsKeyUp(int key)
     return up;
 }
 
-// Get the last key pressed
-int GetKeyPressed(void)
+// Get the last key and scancode pressed
+int GetKeyPressedPro(int* scanCode)
 {
     int value = 0;
 
     if (CORE.Input.Keyboard.keyPressedQueueCount > 0)
     {
         // Get character from the queue head
-        value = CORE.Input.Keyboard.keyPressedQueue[0];
+        value = CORE.Input.Keyboard.keyPressedQueue[0].keycode;
+        if (scanCode != NULL)
+            *scanCode = CORE.Input.Keyboard.keyPressedQueue[0].scancode;
 
         // Shift elements 1 step toward the head
         for (int i = 0; i < (CORE.Input.Keyboard.keyPressedQueueCount - 1); i++)
             CORE.Input.Keyboard.keyPressedQueue[i] = CORE.Input.Keyboard.keyPressedQueue[i + 1];
 
         // Reset last character in the queue
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1] = 0;
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1].keycode = 0;
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1].scancode = -1;
         CORE.Input.Keyboard.keyPressedQueueCount--;
     }
 
     return value;
+}
+
+// Get the last key pressed
+int GetKeyPressed(void)
+{
+    return GetKeyPressedPro(NULL);
 }
 
 // Get the last char pressed
