@@ -988,7 +988,7 @@ Image GetClipboardImage(void)
     }
     else
     {
-        image = LoadImageFromMemory(".bmp", fileData, dataSize);
+        image = LoadImageFromMemory(".bmp", fileData, (int)dataSize);
     }
     return image;
 }
