@@ -298,19 +298,18 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .flags = raylib_flags_arr.items,
     });
 
-    if (options.raygui) {
-        const raygui_dep = b.dependency(options.raygui_dependency_name, .{});
-
-        var gen_step = b.addWriteFiles();
-        raylib.step.dependOn(&gen_step.step);
-
-        const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-        raylib.addCSourceFile(.{ .file = raygui_c_path, .flags = raylib_flags_arr.items });
-        raylib.addIncludePath(raygui_dep.path("src"));
-        raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
-    }
-
     return raylib;
+}
+
+pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency) void {
+    var gen_step = b.addWriteFiles();
+    raylib.step.dependOn(&gen_step.step);
+
+    const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+    raylib.addCSourceFile(.{ .file = raygui_c_path });
+    raylib.addIncludePath(raygui_dep.path("src"));
+
+    raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
 }
 
 pub const Options = struct {
@@ -319,7 +318,6 @@ pub const Options = struct {
     rshapes: bool = true,
     rtext: bool = true,
     rtextures: bool = true,
-    raygui: bool = false,
     platform: PlatformBackend = .glfw,
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
@@ -327,15 +325,12 @@ pub const Options = struct {
     /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: []const u8 = &.{},
 
-    raygui_dependency_name: []const u8 = "raygui",
-
     const defaults = Options{};
 
     fn getOptions(b: *std.Build) Options {
         return .{
             .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
             .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
-            .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
             .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
             .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
             .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
