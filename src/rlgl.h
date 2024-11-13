@@ -366,13 +366,35 @@
 typedef enum bool { false = 0, true = !false } bool;
 #endif
 
+#if !defined(RL_VECTOR4_TYPE)
+// Vector4 type
+#ifdef __clang__
+typedef float Vector4 __attribute__((ext_vector_type(4)));
+#else
+typedef struct Vector4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} Vector4;
+#endif
+#define RL_VECTOR4_TYPE
+#endif
+
 #if !defined(RL_MATRIX_TYPE)
-// Matrix, 4x4 components, column major, OpenGL style, right handed
+// Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
-    float m0, m4, m8, m12;      // Matrix first row (4 components)
-    float m1, m5, m9, m13;      // Matrix second row (4 components)
-    float m2, m6, m10, m14;     // Matrix third row (4 components)
-    float m3, m7, m11, m15;     // Matrix fourth row (4 components)
+union {
+struct {
+    float m0, m4, m8, m12;  // Matrix first row (4 components)
+    float m1, m5, m9, m13;  // Matrix second row (4 components)
+    float m2, m6, m10, m14; // Matrix third row (4 components)
+    float m3, m7, m11, m15; // Matrix fourth row (4 components)
+};
+struct {
+    Vector4 r0, r1, r2, r3; // Matrix rows (4 rows)
+};
+};
 } Matrix;
 #define RL_MATRIX_TYPE
 #endif

@@ -102,15 +102,15 @@ int main()
                     for (int i = 0; i < numPoints; i++)
                     {
                         Vector3 pos = {
-                            .x = mesh.vertices[i*3 + 0],
-                            .y = mesh.vertices[i*3 + 1],
-                            .z = mesh.vertices[i*3 + 2],
+                            mesh.vertices[i*3 + 0],
+                            mesh.vertices[i*3 + 1],
+                            mesh.vertices[i*3 + 2],
                         };
                         Color color = {
-                            .r = mesh.colors[i*4 + 0],
-                            .g = mesh.colors[i*4 + 1],
-                            .b = mesh.colors[i*4 + 2],
-                            .a = mesh.colors[i*4 + 3],
+                            mesh.colors[i*4 + 0],
+                            mesh.colors[i*4 + 1],
+                            mesh.colors[i*4 + 2],
+                            mesh.colors[i*4 + 3],
                         };
                         
                         DrawPoint3D(pos, color);
@@ -159,9 +159,9 @@ Mesh GenMeshPoints(int numPoints)
     // https://en.wikipedia.org/wiki/Spherical_coordinate_system
     for (int i = 0; i < numPoints; i++)
     {
-        float theta = PI*rand()/RAND_MAX;
-        float phi = 2.0f*PI*rand()/RAND_MAX;
-        float r = 10.0f*rand()/RAND_MAX;
+        float theta = PI*rand()/(float)RAND_MAX;
+        float phi = 2.0f*PI*rand()/(float)RAND_MAX;
+        float r = 10.0f*rand()/(float)RAND_MAX;
         
         mesh.vertices[i*3 + 0] = r*sin(theta)*cos(phi);
         mesh.vertices[i*3 + 1] = r*sin(theta)*sin(phi);

@@ -949,9 +949,10 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    Vector2 scale = {0};
-    glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
-    return scale;
+    float x;
+    float y;
+    glfwGetWindowContentScale(platform.handle, &x, &y);
+    return (Vector2){ x, y };
 }
 
 // Set clipboard text content

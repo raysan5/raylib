@@ -155,9 +155,9 @@ int main(void)
     for (int i = 0; i < MAX_CUBES; i++)
     {
         cubePositions[i] = (Vector3){
-            .x = (float)(rand()%10) - 5,
-            .y = (float)(rand()%5),
-            .z = (float)(rand()%10) - 5,
+            (float)(rand()%10) - 5,
+            (float)(rand()%5),
+            (float)(rand()%10) - 5,
         };
         
         cubeRotations[i] = (float)(rand()%360);

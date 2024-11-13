@@ -212,35 +212,54 @@
 #endif
 
 // Vector2, 2 components
+#ifdef __clang__
+typedef float Vector2 __attribute__((ext_vector_type(2)));
+#else
 typedef struct Vector2 {
     float x;                // Vector x component
     float y;                // Vector y component
 } Vector2;
+#endif
 
 // Vector3, 3 components
+#ifdef __clang__
+typedef float Vector3 __attribute__((ext_vector_type(3)));
+#else
 typedef struct Vector3 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
 } Vector3;
+#endif
 
 // Vector4, 4 components
+#ifdef __clang__
+typedef float Vector4 __attribute__((ext_vector_type(4)));
+#else
 typedef struct Vector4 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
     float w;                // Vector w component
 } Vector4;
+#endif
 
 // Quaternion, 4 components (Vector4 alias)
 typedef Vector4 Quaternion;
 
 // Matrix, 4x4 components, column major, OpenGL style, right-handed
 typedef struct Matrix {
+union {
+struct {
     float m0, m4, m8, m12;  // Matrix first row (4 components)
     float m1, m5, m9, m13;  // Matrix second row (4 components)
     float m2, m6, m10, m14; // Matrix third row (4 components)
     float m3, m7, m11, m15; // Matrix fourth row (4 components)
+};
+struct {
+    Vector4 r0, r1, r2, r3; // Matrix rows (4 rows)
+};
+};
 } Matrix;
 
 // Color, 4 components, R8G8B8A8 (32bit)

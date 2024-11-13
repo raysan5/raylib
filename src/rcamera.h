@@ -77,26 +77,65 @@
 // NOTE: Below types are required for standalone usage
 //----------------------------------------------------------------------------------
 #if defined(RCAMERA_STANDALONE)
-    // Vector2, 2 components
+    #if !defined(RL_VECTOR2_TYPE)
+    // Vector2 type
+    #ifdef __clang__
+    typedef float Vector2 __attribute__((ext_vector_type(2)));
+    #else
     typedef struct Vector2 {
-        float x;                // Vector x component
-        float y;                // Vector y component
+        float x;
+        float y;
     } Vector2;
+    #endif
+    #define RL_VECTOR2_TYPE
+    #endif
 
-    // Vector3, 3 components
+    #if !defined(RL_VECTOR3_TYPE)
+    // Vector3 type
+    #ifdef __clang__
+    typedef float Vector3 __attribute__((ext_vector_type(3)));
+    #else
     typedef struct Vector3 {
-        float x;                // Vector x component
-        float y;                // Vector y component
-        float z;                // Vector z component
+        float x;
+        float y;
+        float z;
     } Vector3;
+    #endif
+    #define RL_VECTOR3_TYPE
+    #endif
 
+    #if !defined(RL_VECTOR4_TYPE)
+    // Vector4 type
+    #ifdef __clang__
+    typedef float Vector4 __attribute__((ext_vector_type(4)));
+    #else
+    typedef struct Vector4 {
+        float x;
+        float y;
+        float z;
+        float w;
+    } Vector4;
+    #endif
+    #define RL_VECTOR4_TYPE
+    #endif
+
+    #if !defined(RL_MATRIX_TYPE)
     // Matrix, 4x4 components, column major, OpenGL style, right-handed
     typedef struct Matrix {
+    union {
+    struct {
         float m0, m4, m8, m12;  // Matrix first row (4 components)
         float m1, m5, m9, m13;  // Matrix second row (4 components)
         float m2, m6, m10, m14; // Matrix third row (4 components)
         float m3, m7, m11, m15; // Matrix fourth row (4 components)
+    };
+    struct {
+        Vector4 r0, r1, r2, r3; // Matrix rows (4 rows)
+    };
+    };
     } Matrix;
+    #define RL_MATRIX_TYPE
+    #endif
 
     // Camera type, defines a camera position/orientation in 3d space
     typedef struct Camera3D {

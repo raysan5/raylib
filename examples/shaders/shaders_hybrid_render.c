@@ -68,7 +68,7 @@ int main(void)
     marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
     // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
-    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
+    Vector2 screenCenter = { screenWidth/2.0f, screenHeight/2.0f};
     SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
 
     // Use Customized function to create writable depth texture buffer
