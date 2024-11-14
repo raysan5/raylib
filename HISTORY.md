@@ -475,16 +475,34 @@ Undoubtedly, this is the **biggest raylib update in 10 years**. Many new feature
 notes on raylib 5.5
 -------------------
 
-It's been **1 year** since latest raylib release and **11 years** since raylib 1.0 was officially released...
+One year after raylib 5.0 release, arribes raylib 5.5, the next big revision of the library. It's been **11 years** since raylib 1.0 release and in all this time it has never stopped growing and improving. With an outstanding number of new contributors and improvements, it's, again, the biggest raylib release to date.
 
 Some numbers for this release:
 
  - **+270** closed issues (for a TOTAL of **+1810**!)
- - **+760** commits since previous RELEASE (for a TOTAL of **+7730**!)
+ - **+800** commits since previous RELEASE (for a TOTAL of **+7750**!)
  - **+30** functions ADDED to raylib API (for a TOTAL of **580**!)
  - **+110** functions REVIEWED with fixes and improvements
  - **+140** new contributors (for a TOTAL of **+640**!)
 
 Highlights for `raylib 5.5`:
 
-TODO.
+ - **`NEW` raylib project creator tool**: A brand new support tool developed to help raylib users to setup new projects in a professional way. This tools generates a complete project structure with multiple build systems and ready for GitHub with CI/CD actions pre-configured. And only providing some project C files and basic properties!
+
+ - **`NEW` Platform backend supported: RGFW**: Thanks to the `rcore` platform-split implemented in `raylib 5.0`, adding new platforms backends has been greatly simplified, new backends can be added using provided template, self-contained in a single C module, completely portable. A new platform backend has been added: `RGFW`. `RGFW` is a **new** single-file header-only (`RGFW.h`) portable library intended for platform-functionality management (windowing and inputs); in this case for desktop platforms (Windows, Linux, macOS) and also for Web platform. It adds to the already existing platform backends supporting those same platforms: `GLFW` and `SDL`.
+ 
+ - **`NEW` Platform backend version supported: SDL3**: Previous `raylib 5.0` added experimental support for `SDL2` library, in this new `raylib` release some issues with SDL2 has been reviewed and it has been added support for the latest `SDL3` implementation. Now users can select at compile time the desired SDL version to use, increasing the number of potential platforms supported in the future!
+ 
+ - **`NEW` Retro-console platforms supported: Dreamcast, N64, PSP, PSVita, PS4**: Thanks to the platform-split on `raylib 5.0`, supporting new platform backends is easier than ever! Along the `OpenGL 1.1` graphics option supported by raylib, it opened the door to multiple retro-consoles backend implementations! It's amazing to see raylib running on +20 year old consoles like Dreamcast or PSP, considering the hardware constraints of those platforms and proves raylib versability! Those additional platforms can be found in separate repositories (links) and have been created by Antonio Jose Ramos Marquez (@psxdev).
+ 
+ - **`NEW` GPU Skinning support**: After lots of requests for this feature, it has been finally added to raylib thanks to Daniel Holden (@orangeduck) contribution. Adding GPU skinning was a tricky feature, considering it had to be available for all raylib supported platforms, including limited ones like Raspberry Pi with OpenGL ES 2.0, where some advance OpenGL features are not available (UBO, SSBO, Transform Feedback) but a multi-platform solution was found and this new advance feature was added. An [usage example] was also added and also in the process, current models animation system was greatly improved in performance, simplifiying the required math.
+ 
+ - **`NEW` [`raymath`](https://github.com/raysan5/raylib/blob/master/src/raymath.h) C++ operators**: After several requested for this feature, C++ math operators for `Vector2`, `Vector3`, `Vector4`, `Quaternion` and `Matrix` has been added to `raymath` as an extension to current implementation. Despite being only available for C++ because C does not support it, this operators simplify C++ code, when doing math operations.
+
+Beside those new big features, `raylib 5.5` comes with MANY other improvements: **Normals support on batching system**, **clipboard images reading support**, **CRC32/MD5/SHA1 hash computation**, **gamepad vibration support**, **improved font loading (no GPU required) with BDF fonts support**, **time-based camera movement**, **improved GLTF animations loading** and much much more, including many functions reviews and new functions added! 
+ 
+Make sure to check raylib [CHANGELOG]([CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG)) for a detailed list of changes!
+
+**After 11 years of development, `raylib 5.5` is the best raylib ever.**
+
+**Enjoy programming with raylib!** :)
