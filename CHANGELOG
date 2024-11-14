@@ -117,7 +117,7 @@ WIP: Last update with commit from 02-Nov-2024
 [rcore][RGFW] REVIEWED: Replace long switch with a lookup table (#4108) by @Colleague Riley
 [rcore][RGFW] REVIEWED: Fix MSVC build errors (#4441) by @Colleague Riley
 [rlgl] ADDED: More uniform data type options #4137 by @Ray
-[rlgl] ADDED: Vertex normals for RLGL immediate drawing mode (#3866) by @bohonghuang
+[rlgl] ADDED: Vertex normals for RLGL immediate drawing mode (#3866) by @bohonghuang -WARNING-
 [rlgl] ADDED: `rlCullDistance*()` variables and getters (#3912) by @KotzaBoss
 [rlgl] ADDED: `rlSetClipPlanes()` function (#3912) by @KotzaBoss
 [rlgl] ADDED: `isGpuReady` flag, allow font loading with no GPU acceleration by @Ray -WARNING-
@@ -150,7 +150,7 @@ WIP: Last update with commit from 02-Nov-2024
 [rcamera] REVIEWED: Cleaned away unused macros(#3762) by @Brian E
 [rcamera] REVIEWED: Fix for free camera mode (#3603) by @lesleyrs
 [rcamera] REVIEWED: `GetCameraRight()` (#3784) by @Danil
-[raymath] ADDED: C++ operator overloads for common math function (#4385) by @Jeffery Myers
+[raymath] ADDED: C++ operator overloads for common math function (#4385) by @Jeffery Myers  -WARNING-
 [raymath] ADDED: Vector4 math functions and Vector2 variants of some Vector3 functions (#3828) by @Bowserinator
 [raymath] REVIEWED: Fix MSVC warnings/errors in C++ (#4125) by @Jeffery Myers
 [raymath] REVIEWED: Add extern "C" to raymath header for C++ (#3978) by @Jeffery Myers
