@@ -9,12 +9,12 @@ BEGIN
     //BLOCK "080904E4"  // English UK
     BLOCK "040904E4"    // English US
     BEGIN
-      //VALUE "CompanyName", "raylib technologies"
+      VALUE "CompanyName", "raylib technologies"
       VALUE "FileDescription", "raylib application (www.raylib.com)"
       VALUE "FileVersion", "5.5.0"
-      VALUE "InternalName", "raylib app"
+      VALUE "InternalName", "raylib"
       VALUE "LegalCopyright", "(c) 2024 Ramon Santamaria (@raysan5)"
-      //VALUE "OriginalFilename", "raylib_app"
+      VALUE "OriginalFilename", "raylib"
       VALUE "ProductName", "raylib app"
       VALUE "ProductVersion", "5.5.0"
     END
