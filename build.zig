@@ -302,12 +302,14 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 }
 
 pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency) void {
+    const raylib_dep = b.dependencyFromBuildZig(@This(), .{});
     var gen_step = b.addWriteFiles();
     raylib.step.dependOn(&gen_step.step);
 
     const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
     raylib.addCSourceFile(.{ .file = raygui_c_path });
     raylib.addIncludePath(raygui_dep.path("src"));
+    raylib.addIncludePath(raylib_dep.path("src"));
 
     raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
 }
