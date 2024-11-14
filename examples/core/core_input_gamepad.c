@@ -196,7 +196,7 @@ int main(void)
                 {
 
                     // Draw background: generic
-                    DrawRectangleRounded((Rectangle){ 175, 110, 460, 220}, 0.3f, 0.0f, DARKGRAY);
+                    DrawRectangleRounded((Rectangle){ 175, 110, 460, 220}, 0.3f, 16, DARKGRAY);
 
                     // Draw buttons: basic
                     DrawCircle(365, 170, 12, RAYWHITE);
@@ -225,10 +225,10 @@ int main(void)
                     if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) DrawRectangle(217 + 54, 176, 30, 25, RED);
 
                     // Draw buttons: left-right back
-                    DrawRectangleRounded((Rectangle){ 215, 98, 100, 10}, 0.5f, 0.0f, DARKGRAY);
-                    DrawRectangleRounded((Rectangle){ 495, 98, 100, 10}, 0.5f, 0.0f, DARKGRAY);
-                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) DrawRectangleRounded((Rectangle){ 215, 98, 100, 10}, 0.5f, 0.0f, RED);
-                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) DrawRectangleRounded((Rectangle){ 495, 98, 100, 10}, 0.5f, 0.0f, RED);
+                    DrawRectangleRounded((Rectangle){ 215, 98, 100, 10}, 0.5f, 16, DARKGRAY);
+                    DrawRectangleRounded((Rectangle){ 495, 98, 100, 10}, 0.5f, 16, DARKGRAY);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) DrawRectangleRounded((Rectangle){ 215, 98, 100, 10}, 0.5f, 16, RED);
+                    if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) DrawRectangleRounded((Rectangle){ 495, 98, 100, 10}, 0.5f, 16, RED);
 
                     // Draw axis: left joystick
                     Color leftGamepadColor = BLACK;

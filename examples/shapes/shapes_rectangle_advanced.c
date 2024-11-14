@@ -290,10 +290,10 @@ int main(int argc, char *argv[])
     {
         // Update rectangle bounds
         //----------------------------------------------------------------------------------
-        double width = GetScreenWidth()/2.0, height = GetScreenHeight()/6.0;
+        float width = GetScreenWidth()/2.0f, height = GetScreenHeight()/6.0f;
         Rectangle rec = {
-            GetScreenWidth() / 2.0 - width/2,
-            GetScreenHeight() / 2.0 - (5)*(height/2),
+            GetScreenWidth() / 2.0f - width/2,
+            GetScreenHeight() / 2.0f - (5)*(height/2),
             width, height
         };
         //--------------------------------------------------------------------------------------
@@ -304,19 +304,19 @@ int main(int argc, char *argv[])
             ClearBackground(RAYWHITE);
 
             // Draw All Rectangles with different roundess  for each side and different gradients
-            DrawRectangleRoundedGradientH(rec, 0.8, 0.8, 36, BLUE, RED);
+            DrawRectangleRoundedGradientH(rec, 0.8f, 0.8f, 36, BLUE, RED);
 
             rec.y += rec.height + 1;
-            DrawRectangleRoundedGradientH(rec, 0.5, 1.0, 36, RED, PINK);
+            DrawRectangleRoundedGradientH(rec, 0.5f, 1.0f, 36, RED, PINK);
 
             rec.y += rec.height + 1;
-            DrawRectangleRoundedGradientH(rec, 1.0, 0.5, 36, RED, BLUE);
+            DrawRectangleRoundedGradientH(rec, 1.0f, 0.5f, 36, RED, BLUE);
 
             rec.y += rec.height + 1;
-            DrawRectangleRoundedGradientH(rec, 0.0, 1.0, 36, BLUE, BLACK);
+            DrawRectangleRoundedGradientH(rec, 0.0f, 1.0f, 36, BLUE, BLACK);
 
             rec.y += rec.height + 1;
-            DrawRectangleRoundedGradientH(rec, 1.0, 0.0, 36, BLUE, PINK);
+            DrawRectangleRoundedGradientH(rec, 1.0f, 0.0f, 36, BLUE, PINK);
         EndDrawing();
         //--------------------------------------------------------------------------------------
     }
