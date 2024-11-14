@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 5.0 (18 November 2023)
+Current Release:    raylib 5.5 (18 November 2024)
 
 -------------------------------------------------------------------------
-Release:     raylib 5.5 (November 2024?)
+Release:     raylib 5.5 (18 November 2024)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - New rcore backends: RGFW and SDL3
