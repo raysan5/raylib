@@ -66,9 +66,9 @@
 
     #if defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
         // NOTE: Those functions require linking with winmm library
-        #pragma warning(disable: 4273)
-        unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
-        #pragma warning(default: 4273) 
+        //#pragma warning(disable: 4273)
+        __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
+        //#pragma warning(default: 4273) 
     #endif
 #endif
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
