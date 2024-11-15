@@ -4244,7 +4244,7 @@ static Model LoadOBJ(const char *fileName)
     // walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
-        if (faceVertIndex >= nextShapeEnd)
+        if (faceId >= nextShapeEnd)
         {
             // try to find the last vert in the next shape
             nextShape++;
@@ -4295,7 +4295,7 @@ static Model LoadOBJ(const char *fileName)
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
         bool newMesh = false; // do we need a new mesh?
-        if (faceVertIndex >= nextShapeEnd)
+        if (faceId >= nextShapeEnd)
         {
             // try to find the last vert in the next shape
             nextShape++;
@@ -4357,7 +4357,7 @@ static Model LoadOBJ(const char *fileName)
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
         bool newMesh = false; // do we need a new mesh?
-        if (faceVertIndex >= nextShapeEnd)
+        if (faceId >= nextShapeEnd)
         {
             // try to find the last vert in the next shape
             nextShape++;
