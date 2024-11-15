@@ -29,19 +29,19 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input virtual controls");
 
-    const int dpadX = 90;
-    const int dpadY = 300;
-    const int dpadRad = 25;//radius of each pad
+    const float dpadX = 90;
+    const float dpadY = 300;
+    const float dpadRad = 25.0f;//radius of each pad
     Color dpadColor = BLUE;
     int dpadKeydown = -1;//-1 if not down, else 0,1,2,3 
 
     
     const float dpadCollider[4][2]= // collider array with x,y position
     {
-        {dpadX,dpadY-dpadRad*1.5},//up
-        {dpadX-dpadRad*1.5,dpadY},//left
-        {dpadX+dpadRad*1.5,dpadY},//right
-        {dpadX,dpadY+dpadRad*1.5}//down
+        {dpadX,dpadY-dpadRad*1.5f},//up
+        {dpadX-dpadRad*1.5f,dpadY},//left
+        {dpadX+dpadRad*1.5f,dpadY},//right
+        {dpadX,dpadY+dpadRad*1.5f}//down
     };
     const char dpadLabel[4]="XYBA";//label of Dpad
 
@@ -57,8 +57,8 @@ int main(void)
     // Update 
     //--------------------------------------------------------------------------
         dpadKeydown = -1; //reset
-        float inputX=0;
-        float inputY=0;
+        int inputX = 0;
+        int inputY = 0;
         if(GetTouchPointCount()>0)
         {//use touch pos
             inputX = GetTouchX();
@@ -97,18 +97,18 @@ int main(void)
             for(int i=0;i<4;i++)
             {
                 //draw all pad
-                DrawCircle(dpadCollider[i][0],dpadCollider[i][1],dpadRad,dpadColor);
+                DrawCircleV((Vector2) { dpadCollider[i][0], dpadCollider[i][1] }, dpadRad, dpadColor);
                 if(i!=dpadKeydown)
                 {
                     //draw label
                     DrawText(TextSubtext(dpadLabel,i,1),
-                             dpadCollider[i][0]-7,
-                             dpadCollider[i][1]-8,20,BLACK);
+                             (int)dpadCollider[i][0]-7,
+                             (int)dpadCollider[i][1]-8,20,BLACK);
                 }
             }
 
-            DrawRectangle(playerX-4,playerY-4,75,28,RED);
-            DrawText("Player",playerX,playerY,20,WHITE);
+            DrawRectangleRec((Rectangle) { playerX - 4, playerY - 4, 75, 28 }, RED);
+            DrawText("Player", (int)playerX, (int)playerY, 20, WHITE);
         EndDrawing();
     //--------------------------------------------------------------------------
     }
