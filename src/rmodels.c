@@ -2001,8 +2001,6 @@ bool ExportMesh(Mesh mesh, const char *fileName)
             }
         }
 
-        byteCount += sprintf(txtData + byteCount, "\n");
-
         // NOTE: Text data length exported is determined by '\0' (NULL) character
         success = SaveFileText(fileName, txtData);
 
