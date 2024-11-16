@@ -513,6 +513,10 @@ Beside those new big features, `raylib 5.5` comes with MANY other improvements:
  
 Make sure to check raylib [CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG) for a detailed list of changes!
 
+To end with, I want to **thank all the contributors (+640!**) that along the years have **greatly improved raylib** and pushed it further and better day after day. Thanks to all of them, raylib is the amazing library it is today.
+
+Last but not least, I want to thank **raylib sponsors and all the raylib community** for their support and continuous engagement with the library, creating and sharing amazing raylib projects on a daily basis. **Thanks for making raylib a great platform to enjoy games/tools/graphic programming!**
+
 **After 11 years of development, `raylib 5.5` is the best raylib ever.**
 
 **Enjoy programming with raylib!** :)
