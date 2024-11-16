@@ -1943,13 +1943,13 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount*(int)strlen("v 0000.00f 0000.00f 0000.00f") +
-                       mesh.vertexCount*(int)strlen("vt 0.000f 0.00f") +
-                       mesh.vertexCount*(int)strlen("vn 0.000f 0.00f 0.00f") +
+        int dataSize = mesh.vertexCount*(int)strlen("v -0000.000000f -0000.000000f -0000.000000f") +
+                       mesh.vertexCount*(int)strlen("vt -0.000000f -0.000000f") +
+                       mesh.vertexCount*(int)strlen("vn -0.0000f -0.0000f -0.0000f") +
                        mesh.triangleCount*(int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
-        char *txtData = (char *)RL_CALLOC(dataSize*2 + 2000, sizeof(char));
+        char *txtData = (char *)RL_CALLOC(dataSize + 1000, sizeof(char));
 
         int byteCount = 0;
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
