@@ -29,7 +29,7 @@ jobs:
     - name: Setup emsdk
       uses: mymindstorm/setup-emsdk@v14
       with:
-        version: 3.1.64
+        version: 3.1.71
         actions-cache-folder: 'emsdk-cache'
         
     - name: Setup Release Version
