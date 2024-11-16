@@ -795,7 +795,7 @@
         </Function>
         <Function name="GetClipboardText" retType="const char *" paramCount="0" desc="Get clipboard text content">
         </Function>
-        <Function name="GetClipboardImage" retType="Image" paramCount="0" desc="Get clipboard image">
+        <Function name="GetClipboardImage" retType="Image" paramCount="0" desc="Get clipboard image content">
         </Function>
         <Function name="EnableEventWaiting" retType="void" paramCount="0" desc="Enable waiting for events on EndDrawing(), no automatic event polling">
         </Function>

@@ -1230,7 +1230,7 @@ Function 046: GetClipboardText() (0 input parameters)
 Function 047: GetClipboardImage() (0 input parameters)
   Name: GetClipboardImage
   Return type: Image
-  Description: Get clipboard image
+  Description: Get clipboard image content
   No input parameters
 Function 048: EnableEventWaiting() (0 input parameters)
   Name: EnableEventWaiting

@@ -3399,7 +3399,7 @@ return {
     },
     {
       name = "GetClipboardImage",
-      description = "Get clipboard image",
+      description = "Get clipboard image content",
       returnType = "Image"
     },
     {
