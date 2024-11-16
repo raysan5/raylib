@@ -7,11 +7,11 @@ Current Release:    raylib 5.5 (18 November 2024)
 Release:     raylib 5.5 (18 November 2024)
 -------------------------------------------------------------------------
 KEY CHANGES:
+ - New tool: raylib project creator
  - New rcore backends: RGFW and SDL3
  - New platforms supported: Dreamcast, N64, PSP, PSVita, PS4
  - Added GPU Skinning support (all platforms and GL versions)
  - Added raymath C++ operators
- - New tool: raylib project creator
 
 Detailed changes:
 
@@ -241,6 +241,7 @@ WIP: Last update with commit from 02-Nov-2024
 [rmodels] REVIEWED: Multiple updates to gltf loading, improved macro (#4373) by @Harald Scheirich
 [rmodels] REVIEWED: `LoadOBJ()`, correctly split obj meshes by material (#4285) by @Jeffery Myers
 [rmodels] REVIEWED: `LoadOBJ()`, add warning when loading an OBJ with multiple materials (#4271) by @Jeffery Myers
+[rmodels] REVIEWED: `LoadOBJ()`, fix bug that fragmented the loaded meshes (#4494) by @Eike Decker
 [rmodels] REVIEWED: `LoadIQM()`, set model.meshMaterial[] (#4092) by @SuperUserNameMan
 [rmodels] REVIEWED: `LoadIQM()`, attempt to load texture from IQM at loadtime (#4029) by @Jett
 [rmodels] REVIEWED: `LoadM3D(), fix vertex colors for m3d files (#3859) by @Jeffery Myers
@@ -387,8 +388,9 @@ WIP: Last update with commit from 02-Nov-2024
 [build] REVIEWED: CMake, bump version required to avoid deprecated #3639 by @Ray
 [build] REVIEWED: CMake, fix examples linking -DPLATFORM=SDL (#3825) by @Peter0x44
 [build] REVIEWED: CMake, don't build for wayland by default (#4432) by @Peter0x44
-[build] REVIEWED: VS2022 project by @Ray
+[build] REVIEWED: VS2022, misc improvements by @Ray
 [build] REVIEWED: VS2022, fix build warnings (#4095) by @Jeffery Myers
+[build] REVIEWED: VS2022, added new examples (#4492) by @Jeffery Myers
 [build] REVIEWED: Fix fix-build-paths (#3849) by @Caleb Barger
 [build] REVIEWED: Fix build paths (#3835) by @Steve Biedermann
 [build] REVIEWED: Fix VSCode sample project for macOS (#3666) by @Tim Romero
