@@ -6,6 +6,8 @@
 *       - Windows (Win32, Win64)
 *       - Linux (X11/Wayland desktop mode)
 *       - MacOS (Cocoa)
+*       - HTML5 (Emscripten)
+*       - Others (untested)
 *
 *   LIMITATIONS:
 *       - TODO
@@ -46,7 +48,11 @@
 *
 **********************************************************************************************/
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(PLATFORM_WEB_RGFW)
+#define RGFW_NO_GL_HEADER 
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_ES2) && !defined(PLATFORM_WEB_RGFW)
     #define RGFW_OPENGL_ES2
 #endif
 

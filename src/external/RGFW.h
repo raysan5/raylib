@@ -1640,7 +1640,7 @@ RGFW_window* RGFW_window_basic_init(RGFW_rect rect, u16 args) {
 void RGFW_window_scaleToMonitor(RGFW_window* win) {
 	RGFW_monitor monitor = RGFW_window_getMonitor(win);
 	
-	RGFW_window_resize(win, RGFW_AREA((u32)(monitor.scaleX * (float)win->r.w), (u32)(monitor.scaleX * (float)win->r.h)));
+	RGFW_window_resize(win, RGFW_AREA((u32)(monitor.scaleX * (float)win->r.w), (u32)(monitor.scaleY * (float)win->r.h)));
 }
 #endif
 
@@ -3766,10 +3766,10 @@ Start of Linux / Unix defines
 		monitor.scaleX = (float) (dpi_width) / (float) 96;
 		monitor.scaleY = (float) (dpi_height) / (float) 96;		
 
-		if (monitor.scaleX > 1 && monitor.scaleX < 1.1)
+		if (isinf(monitor.scaleX) || (monitor.scaleX > 1 && monitor.scaleX < 1.1))
 			monitor.scaleX = 1;
 
-		if (monitor.scaleY > 1 && monitor.scaleY < 1.1)
+		if (isinf(monitor.scaleY) || (monitor.scaleY > 1 && monitor.scaleY < 1.1))
 			monitor.scaleY = 1;
 
 		XRRFreeCrtcInfo(ci);
@@ -5276,7 +5276,9 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 		if (RGFW_Shcore_dll == NULL) {
 			RGFW_Shcore_dll = LoadLibraryA("shcore.dll");
 			GetDpiForMonitorSRC = (PFN_GetDpiForMonitor)(void*)GetProcAddress(RGFW_Shcore_dll, "GetDpiForMonitor");
-			SetProcessDPIAware();
+			#if defined(_WIN64) || (_WIN32_WINNT >= 0x0600)
+				SetProcessDPIAware();
+			#endif
 		}
 		#endif
 
