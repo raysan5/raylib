@@ -115,7 +115,7 @@ int main(void)
 
         // Update camera computes movement internally depending on the camera mode
         // Some default standard keyboard/mouse inputs are hardcoded to simplify use
-        // For advance camera controls, it's reecommended to compute camera movement manually
+        // For advanced camera controls, it's recommended to compute camera movement manually
         UpdateCamera(&camera, cameraMode);                  // Update camera
 
 /*
