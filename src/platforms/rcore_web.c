@@ -809,7 +809,7 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-    
+
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 
     return image;

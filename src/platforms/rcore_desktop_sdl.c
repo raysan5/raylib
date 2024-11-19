@@ -244,7 +244,7 @@ static const int CursorsLUT[] = {
 // SDL3 Migration:
 //     SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
 //     and you can call SDL_GetWindowFullscreenMode()
-//     to see whether an exclusive fullscreen mode will be used 
+//     to see whether an exclusive fullscreen mode will be used
 //     or the borderless fullscreen desktop mode will be used
 #define SDL_WINDOW_FULLSCREEN_DESKTOP SDL_WINDOW_FULLSCREEN
 
@@ -269,7 +269,7 @@ const char *SDL_GameControllerNameForIndex(int joystickIndex)
     const char *name = NULL;
     int numJoysticks = 0;
     SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks);
-    
+
     if (joysticks)
     {
         if (joystickIndex < numJoysticks)
@@ -277,10 +277,10 @@ const char *SDL_GameControllerNameForIndex(int joystickIndex)
             SDL_JoystickID instance_id = joysticks[joystickIndex];
             name = SDL_GetGamepadNameForID(instance_id);
         }
-        
+
         SDL_free(joysticks);
     }
-    
+
     return name;
 }
 
@@ -288,7 +288,7 @@ int SDL_GetNumVideoDisplays(void)
 {
     int monitorCount = 0;
     SDL_DisplayID *displays = SDL_GetDisplays(&monitorCount);
-    
+
     // Safe because If `mem` is NULL, SDL_free does nothing
     SDL_free(displays);
 
@@ -300,21 +300,21 @@ int SDL_GetNumVideoDisplays(void)
 Uint8 SDL_EventState(Uint32 type, int state)
 {
     Uint8 stateBefore = SDL_EventEnabled(type);
-    
+
     switch (state)
     {
         case SDL_DISABLE: SDL_SetEventEnabled(type, false); break;
         case SDL_ENABLE: SDL_SetEventEnabled(type, true); break;
         default: TRACELOG(LOG_WARNING, "Event sate: unknow type");
     }
-    
+
     return stateBefore;
 }
 
 void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode* mode)
 {
     const SDL_DisplayMode* currMode = SDL_GetCurrentDisplayMode(displayID);
-    
+
     if (currMode == NULL) TRACELOG(LOG_WARNING, "No current display mode");
     else *mode = *currMode;
 }
@@ -335,11 +335,11 @@ SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth
 int SDL_GetDisplayDPI(int displayIndex, float *ddpi, float *hdpi, float *vdpi)
 {
     float dpi = SDL_GetWindowDisplayScale(platform.window)*96.0;
-    
+
     if (ddpi != NULL) *ddpi = dpi;
     if (hdpi != NULL) *hdpi = dpi;
     if (vdpi != NULL) *vdpi = dpi;
-    
+
     return 0;
 }
 
@@ -408,7 +408,7 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 void* SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
     TRACELOG(LOG_WARNING, "Getting clipboard data that is not text is only available in SDL3");
-    
+
     // We could possibly implement it ourselves in this case for some easier platforms
     return NULL;
 }
@@ -930,7 +930,7 @@ Vector2 GetMonitorPosition(int monitor)
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_Rect displayBounds;
-        
+
     #if defined(PLATFORM_DESKTOP_SDL3)
         if (SDL_GetDisplayUsableBounds(monitor, &displayBounds))
     #else
@@ -1124,12 +1124,12 @@ Image GetClipboardImage(void)
 
     size_t dataSize = 0;
     void  *fileData = NULL;
-    
+
     for (int i = 0; i < SDL_arraysize(imageFormats); ++i)
     {
         // NOTE: This pointer should be free with SDL_free() at some point
         fileData = SDL_GetClipboardData(imageFormats[i], &dataSize);
-        
+
         if (fileData)
         {
             image = LoadImageFromMemory(imageExtensions[i], fileData, dataSize);
@@ -1288,9 +1288,9 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
         CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
     }
-    
+
     SDL_free(fingers);
-    
+
 #else // SDL2
 
     CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
@@ -1395,7 +1395,7 @@ void PollInputEvents(void)
                     CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                    
+
                 #if defined(PLATFORM_DESKTOP_SDL3)
                     // const char *data;   /**< The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events */
                     // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed.
@@ -1410,7 +1410,7 @@ void PollInputEvents(void)
                 else if (CORE.Window.dropFileCount < 1024)
                 {
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                    
+
                 #if defined(PLATFORM_DESKTOP_SDL3)
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
                 #else
