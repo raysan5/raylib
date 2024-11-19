@@ -74,7 +74,7 @@ jobs:
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
       if: matrix.compiler == 'msvc16'
 
     - name: Build Library (MinGW-w64 32bit)
@@ -133,18 +133,15 @@ jobs:
       shell: cmd
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.RELEASE_NAME }}.zip
         path: ./build/${{ env.RELEASE_NAME }}.zip
         
     - name: Upload Artifact to Release
-      uses: actions/upload-release-asset@v1.0.1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./build/${{ env.RELEASE_NAME }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/${{ env.RELEASE_NAME }}.zip
-          asset_name: ${{ env.RELEASE_NAME }}.zip
-          asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'

@@ -12,7 +12,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2023 Jussi Viitala (@nullstare) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2024 Jussi Viitala (@nullstare) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -164,6 +164,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadMesh(mesh);       // Unload the mesh
     UnloadShader(shader);   // Unload shader
+    UnloadTexture(texture); // Unload texture
+    UnloadTexture(light);   // Unload texture
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -24,8 +24,6 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
 
@@ -452,7 +450,9 @@ GLFWAPI const GLFWvidmode* glfwGetVideoMode(GLFWmonitor* handle)
 
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
-    _glfw.platform.getVideoMode(monitor, &monitor->currentMode);
+    if (!_glfw.platform.getVideoMode(monitor, &monitor->currentMode))
+        return NULL;
+
     return &monitor->currentMode;
 }
 
@@ -489,7 +489,7 @@ GLFWAPI void glfwSetGamma(GLFWmonitor* handle, float gamma)
         // Apply gamma curve
         value = powf(value, 1.f / gamma) * 65535.f + 0.5f;
         // Clamp to value range
-        value = _glfw_fminf(value, 65535.f);
+        value = fminf(value, 65535.f);
 
         values[i] = (unsigned short) value;
     }

@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -60,7 +60,7 @@ int main(void)
         {
             if (!collision.hit)
             {
-                ray = GetMouseRay(GetMousePosition(), camera);
+                ray = GetScreenToWorldRay(GetMousePosition(), camera);
 
                 // Check collision between ray and box
                 collision = GetRayCollisionBox(ray,

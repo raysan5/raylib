@@ -9,7 +9,7 @@
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *
-*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

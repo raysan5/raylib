@@ -27,9 +27,9 @@ jobs:
       uses: actions/checkout@master
   
     - name: Setup emsdk
-      uses: mymindstorm/setup-emsdk@v12
+      uses: mymindstorm/setup-emsdk@v14
       with:
-        version: 3.1.30
+        version: 3.1.71
         actions-cache-folder: 'emsdk-cache'
         
     - name: Setup Release Version
@@ -69,18 +69,15 @@ jobs:
       shell: cmd
         
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.RELEASE_NAME }}.zip
         path: ./build/${{ env.RELEASE_NAME }}.zip
         
     - name: Upload Artifact to Release
-      uses: actions/upload-release-asset@v1.0.1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./build/${{ env.RELEASE_NAME }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/${{ env.RELEASE_NAME }}.zip
-          asset_name: ${{ env.RELEASE_NAME }}.zip
-          asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'

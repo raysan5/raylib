@@ -8,6 +8,6 @@ Description: A multi-platform library for OpenGL, window and input
 Version: @GLFW_VERSION@
 URL: https://www.glfw.org/
 Requires.private: @GLFW_PKG_CONFIG_REQUIRES_PRIVATE@
-Libs: -L${libdir} -l@GLFW_LIB_NAME@
+Libs: -L${libdir} -l@GLFW_LIB_NAME@@GLFW_LIB_NAME_SUFFIX@
 Libs.private: @GLFW_PKG_CONFIG_LIBS_PRIVATE@
 Cflags: -I${includedir}

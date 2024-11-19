@@ -2,7 +2,7 @@
 *
 *   raylib [shaders] example - Basic PBR
 *
-*   Example originally created with raylib 5.0, last time updated with raylib 5.5-dev
+*   Example originally created with raylib 5.0, last time updated with raylib 5.1-dev
 *
 *   Example contributed by Afan OLOVCIC (@_DevDad) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -22,7 +22,7 @@
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
+    #define GLSL_VERSION            120
 #endif
 
 #include <stdlib.h>             // Required for: NULL

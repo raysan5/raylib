@@ -31,8 +31,6 @@
 #define GLFW_LINUX_JOYSTICK_STATE         _GLFWjoystickLinux linjs;
 #define GLFW_LINUX_LIBRARY_JOYSTICK_STATE _GLFWlibraryLinux  linjs;
 
-#define GLFW_BUILD_LINUX_MAPPINGS
-
 // Linux-specific joystick data
 //
 typedef struct _GLFWjoystickLinux
@@ -52,6 +50,7 @@ typedef struct _GLFWlibraryLinux
     int                     inotify;
     int                     watch;
     regex_t                 regex;
+    GLFWbool                regexCompiled;
     GLFWbool                dropped;
 } _GLFWlibraryLinux;
 

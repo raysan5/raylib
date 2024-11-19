@@ -1,6 +1,6 @@
 ## C Coding Style Conventions
 
-Here it is a list with some of the code conventions used by raylib:
+Here is a list with some of the code conventions used by raylib:
 
 Code element | Convention | Example
 --- | :---: | ---
@@ -79,7 +79,7 @@ _NOTE: Avoid any space or special character in the files/dir naming!_
   
  - Data files should be organized by context and usage in the game, think about the loading requirements for data and put all the resources that need to be loaded at the same time together.
  - Use descriptive names for the files, it would be perfect if just reading the name of the file, it was possible to know what is that file and where fits in the game.
- - Here it is an example, note that some resources require to be loaded all at once while other require to be loaded only at initialization (gui, font).
+ - Here is an example, note that some resources require to be loaded all at once while other require to be loaded only at initialization (gui, font).
   
 ```
 resources/audio/fx/long_jump.wav

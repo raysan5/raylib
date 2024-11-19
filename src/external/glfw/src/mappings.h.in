@@ -60,7 +60,7 @@
 
 const char* _glfwDefaultMappings[] =
 {
-#if defined(GLFW_BUILD_WIN32_MAPPINGS)
+#if defined(_GLFW_WIN32)
 @GLFW_WIN32_MAPPINGS@
 "78696e70757401000000000000000000,XInput Gamepad (GLFW),platform:Windows,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,leftstick:b8,rightstick:b9,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
 "78696e70757402000000000000000000,XInput Wheel (GLFW),platform:Windows,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,leftstick:b8,rightstick:b9,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
@@ -69,14 +69,14 @@ const char* _glfwDefaultMappings[] =
 "78696e70757405000000000000000000,XInput Dance Pad (GLFW),platform:Windows,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,leftstick:b8,rightstick:b9,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
 "78696e70757406000000000000000000,XInput Guitar (GLFW),platform:Windows,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,leftstick:b8,rightstick:b9,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
 "78696e70757408000000000000000000,XInput Drum Kit (GLFW),platform:Windows,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,leftstick:b8,rightstick:b9,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
-#endif // GLFW_BUILD_WIN32_MAPPINGS
+#endif // _GLFW_WIN32
 
-#if defined(GLFW_BUILD_COCOA_MAPPINGS)
+#if defined(_GLFW_COCOA)
 @GLFW_COCOA_MAPPINGS@
-#endif // GLFW_BUILD_COCOA_MAPPINGS
+#endif // _GLFW_COCOA
 
-#if defined(GLFW_BUILD_LINUX_MAPPINGS)
+#if defined(GLFW_BUILD_LINUX_JOYSTICK)
 @GLFW_LINUX_MAPPINGS@
-#endif // GLFW_BUILD_LINUX_MAPPINGS
+#endif // GLFW_BUILD_LINUX_JOYSTICK
 };
 

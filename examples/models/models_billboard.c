@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -44,10 +44,12 @@ int main(void)
     // NOTE: Billboard locked on axis-Y
     Vector3 billUp = { 0.0f, 1.0f, 0.0f };
 
+    // Set the height of the rotating billboard to 1.0 with the aspect ratio fixed
+    Vector2 size = { source.width/source.height, 1.0f };
+
     // Rotate around origin
     // Here we choose to rotate around the image center
-    // NOTE: (-1, 1) is the range where origin.x, origin.y is inside the texture
-    Vector2 rotateOrigin = { 0.0f };
+    Vector2 origin = Vector2Scale(size, 0.5f);
 
     // Distance is needed for the correct billboard draw order
     // Larger distance (further away from the camera) should be drawn prior to smaller distance.
@@ -84,11 +86,11 @@ int main(void)
                 if (distanceStatic > distanceRotating) 
                 {
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
-                    DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, (Vector2) {1.0f, 1.0f}, rotateOrigin, rotation, WHITE);
+                    DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
                 } 
                 else
                 {
-                    DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, (Vector2) {1.0f, 1.0f}, rotateOrigin, rotation, WHITE);
+                    DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                 }
                 

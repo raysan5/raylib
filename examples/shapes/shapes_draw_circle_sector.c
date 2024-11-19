@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2023 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2024 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -63,11 +63,11 @@ int main(void)
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            GuiSliderBar((Rectangle){ 600, 40, 120, 20}, "StartAngle", NULL, &startAngle, 0, 720);
-            GuiSliderBar((Rectangle){ 600, 70, 120, 20}, "EndAngle", NULL, &endAngle, 0, 720);
+            GuiSliderBar((Rectangle){ 600, 40, 120, 20}, "StartAngle", TextFormat("%.2f", startAngle), &startAngle, 0, 720);
+            GuiSliderBar((Rectangle){ 600, 70, 120, 20}, "EndAngle", TextFormat("%.2f", endAngle), &endAngle, 0, 720);
 
-            GuiSliderBar((Rectangle){ 600, 140, 120, 20}, "Radius", NULL, &outerRadius, 0, 200);
-            GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", NULL, &segments, 0, 100);
+            GuiSliderBar((Rectangle){ 600, 140, 120, 20}, "Radius", TextFormat("%.2f", outerRadius), &outerRadius, 0, 200);
+            GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", TextFormat("%.2f", segments), &segments, 0, 100);
             //------------------------------------------------------------------------------
 
             minSegments = truncf(ceilf((endAngle - startAngle) / 90));

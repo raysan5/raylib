@@ -2,18 +2,18 @@
 *
 *   raylib [audio] example - Music stream processing effects
 *
-*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*   Example originally created with raylib 4.2, last time updated with raylib 5.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include <stdlib.h>         // Required for: NULL
+#include <stdlib.h> // Required for: NULL
 
 // Required delay effect variables
 static float *delayBuffer = NULL;
@@ -149,13 +149,17 @@ static void AudioProcessEffectLPF(void *buffer, unsigned int frames)
     static const float cutoff = 70.0f / 44100.0f; // 70 Hz lowpass filter
     const float k = cutoff / (cutoff + 0.1591549431f); // RC filter formula
 
+    // Converts the buffer data before using it
+    float *bufferData = (float *)buffer;
     for (unsigned int i = 0; i < frames*2; i += 2)
     {
-        float l = ((float *)buffer)[i], r = ((float *)buffer)[i + 1];
+        const float l = bufferData[i];
+        const float r = bufferData[i + 1];
+
         low[0] += k * (l - low[0]);
         low[1] += k * (r - low[1]);
-        ((float *)buffer)[i] = low[0];
-        ((float *)buffer)[i + 1] = low[1];
+        bufferData[i] = low[0];
+        bufferData[i + 1] = low[1];
     }
 }
 

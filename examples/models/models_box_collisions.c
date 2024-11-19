@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -109,7 +109,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Move player with cursors to collide", 220, 40, 20, GRAY);
+            DrawText("Move player with arrow keys to collide", 220, 40, 20, GRAY);
 
             DrawFPS(10, 10);
 

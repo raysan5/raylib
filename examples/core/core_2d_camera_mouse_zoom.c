@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2023 Jeffery Myers (@JeffM2501)
+*   Copyright (c) 2022-2024 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 
@@ -31,6 +31,8 @@ int main ()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
 
+    int zoomMode = 0;   // 0-Mouse Wheel, 1-Mouse Move
+
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -39,42 +41,69 @@ int main ()
     {
         // Update
         //----------------------------------------------------------------------------------
+        if (IsKeyPressed(KEY_ONE)) zoomMode = 0;
+        else if (IsKeyPressed(KEY_TWO)) zoomMode = 1;
+        
         // Translate based on mouse right click
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
             Vector2 delta = GetMouseDelta();
             delta = Vector2Scale(delta, -1.0f/camera.zoom);
-
             camera.target = Vector2Add(camera.target, delta);
         }
 
-        // Zoom based on mouse wheel
-        float wheel = GetMouseWheelMove();
-        if (wheel != 0)
+        if (zoomMode == 0)
         {
-            // Get the world point that is under the mouse
-            Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-            
-            // Set the offset to where the mouse is
-            camera.offset = GetMousePosition();
+            // Zoom based on mouse wheel
+            float wheel = GetMouseWheelMove();
+            if (wheel != 0)
+            {
+                // Get the world point that is under the mouse
+                Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
-            // Set the target to match, so that the camera maps the world space point 
-            // under the cursor to the screen space point under the cursor at any zoom
-            camera.target = mouseWorldPos;
+                // Set the offset to where the mouse is
+                camera.offset = GetMousePosition();
 
-            // Zoom increment
-            const float zoomIncrement = 0.125f;
+                // Set the target to match, so that the camera maps the world space point 
+                // under the cursor to the screen space point under the cursor at any zoom
+                camera.target = mouseWorldPos;
 
-            camera.zoom += (wheel*zoomIncrement);
-            if (camera.zoom < zoomIncrement) camera.zoom = zoomIncrement;
+                // Zoom increment
+                float scaleFactor = 1.0f + (0.25f*fabsf(wheel));
+                if (wheel < 0) scaleFactor = 1.0f/scaleFactor;
+                camera.zoom = Clamp(camera.zoom*scaleFactor, 0.125f, 64.0f);
+            }
         }
+        else
+        {
+            // Zoom based on mouse right click
+            if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+            {
+                // Get the world point that is under the mouse
+                Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
+                // Set the offset to where the mouse is
+                camera.offset = GetMousePosition();
+
+                // Set the target to match, so that the camera maps the world space point 
+                // under the cursor to the screen space point under the cursor at any zoom
+                camera.target = mouseWorldPos;
+            }
+            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+            {
+                // Zoom increment
+                float deltaX = GetMouseDelta().x;
+                float scaleFactor = 1.0f + (0.01f*fabsf(deltaX));
+                if (deltaX < 0) scaleFactor = 1.0f/scaleFactor;
+                camera.zoom = Clamp(camera.zoom*scaleFactor, 0.125f, 64.0f);
+            }
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-            ClearBackground(BLACK);
+            ClearBackground(RAYWHITE);
 
             BeginMode2D(camera);
 
@@ -87,11 +116,19 @@ int main ()
                 rlPopMatrix();
 
                 // Draw a reference circle
-                DrawCircle(100, 100, 50, YELLOW);
+                DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 50, MAROON);
                 
             EndMode2D();
+            
+            // Draw mouse reference
+            //Vector2 mousePos = GetWorldToScreen2D(GetMousePosition(), camera)
+            DrawCircleV(GetMousePosition(), 4, DARKGRAY);
+            DrawTextEx(GetFontDefault(), TextFormat("[%i, %i]", GetMouseX(), GetMouseY()), 
+                Vector2Add(GetMousePosition(), (Vector2){ -44, -24 }), 20, 2, BLACK);
 
-            DrawText("Mouse right button drag to move, mouse wheel to zoom", 10, 10, 20, WHITE);
+            DrawText("[1][2] Select mouse zoom mode (Wheel or Move)", 20, 20, 20, DARKGRAY);
+            if (zoomMode == 0) DrawText("Mouse left button drag to move, mouse wheel to zoom", 20, 50, 20, DARKGRAY);
+            else DrawText("Mouse left button drag to move, mouse press and move to zoom", 20, 50, 20, DARKGRAY);
         
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2023 Buğra Alptekin Sarı (@BugraAlptekinSari)
+*   Copyright (c) 2022-2024 Buğra Alptekin Sarı (@BugraAlptekinSari)
 *
 ********************************************************************************************/
 
@@ -116,7 +116,7 @@ int main(void)
                 DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
             EndShaderMode();
             
-            // Raserize Scene
+            // Rasterize Scene
             BeginMode3D(camera);
                 BeginShaderMode(shdrRaster);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, RED);
@@ -158,7 +158,7 @@ RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 {
     RenderTexture2D target = { 0 };
 
-    target.id = rlLoadFramebuffer(width, height);   // Load an empty framebuffer
+    target.id = rlLoadFramebuffer(); // Load an empty framebuffer
 
     if (target.id > 0)
     {

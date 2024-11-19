@@ -16,7 +16,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2023 Marco Lizza (@MarcoLizza) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2024 Marco Lizza (@MarcoLizza) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -109,7 +109,7 @@ int main(void)
         if (currentPalette >= MAX_PALETTES) currentPalette = 0;
         else if (currentPalette < 0) currentPalette = MAX_PALETTES - 1;
 
-        // Send new value to the shader to be used on drawing.
+        // Send palette data to the shader to be used on drawing
         // NOTE: We are sending RGB triplets w/o the alpha channel
         SetShaderValueV(shader, paletteLoc, palettes[currentPalette], SHADER_UNIFORM_IVEC3, COLORS_PER_PALETTE);
         //----------------------------------------------------------------------------------

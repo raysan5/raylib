@@ -3,7 +3,7 @@
 *   rcore - Window/display management, Graphic device/context management and input management
 *
 *   PLATFORMS SUPPORTED:
-*       > PLATFORM_DESKTOP (GLFW backend):
+*       > PLATFORM_DESKTOP_GLFW (GLFW backend):
 *           - Windows (Win32, Win64)
 *           - Linux (X11/Wayland desktop mode)
 *           - macOS/OSX (x64, arm64)
@@ -63,7 +63,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -81,6 +81,19 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
+
+//----------------------------------------------------------------------------------
+// Feature Test Macros required for this module
+//----------------------------------------------------------------------------------
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_XOPEN_SOURCE < 500)
+    #undef _XOPEN_SOURCE
+    #define _XOPEN_SOURCE 500 // Required for: readlink if compiled with c99 without gnu ext.
+#endif
+
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
 
 #include "raylib.h"                 // Declares module functions
 
@@ -105,12 +118,12 @@
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define RGESTURES_IMPLEMENTATION
-    #include "rgestures.h"           // Gestures detection functionality
+    #include "rgestures.h"          // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
     #define RCAMERA_IMPLEMENTATION
-    #include "rcamera.h"             // Camera system functionality
+    #include "rcamera.h"            // Camera system functionality
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -141,14 +154,20 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if defined(_WIN32)
+#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
     #ifndef MAX_PATH
         #define MAX_PATH 1025
     #endif
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
 __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
+__declspec(dllimport) unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+__declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
+    #include <unistd.h>
+#elif defined(__FreeBSD__)
+    #include <sys/types.h>
+    #include <sys/sysctl.h>
     #include <unistd.h>
 #elif defined(__APPLE__)
     #include <sys/syslimits.h>
@@ -172,14 +191,16 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 #endif
 
 #if defined(_WIN32)
-    #include <direct.h>             // Required for: _getch(), _chdir()
+    #include <io.h>                 // Required for: _access() [Used in FileExists()]
+    #include <direct.h>             // Required for: _getch(), _chdir(), _mkdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
-    #include <io.h>                 // Required for: _access() [Used in FileExists()]
+    #define MKDIR(dir) _mkdir(dir)
 #else
-    #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
+    #include <unistd.h>             // Required for: getch(), chdir(), mkdir(), access()
     #define GETCWD getcwd
     #define CHDIR chdir
+    #define MKDIR(dir) mkdir(dir, 0777)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -211,6 +232,9 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 #ifndef MAX_GAMEPAD_BUTTONS
     #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
 #endif
+#ifndef MAX_GAMEPAD_VIBRATION_TIME
+    #define MAX_GAMEPAD_VIBRATION_TIME     2.0f     // Maximum vibration time in seconds
+#endif
 #ifndef MAX_TOUCH_POINTS
     #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
 #endif
@@ -229,16 +253,15 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+#ifndef DIRECTORY_FILTER_TAG
+    #define DIRECTORY_FILTER_TAG       "DIR"        // Name tag used to request directory inclusion on directory scan
+#endif                                              // NOTE: Used in ScanDirectoryFiles(), ScanDirectoryFilesRecursively() and LoadDirectoryFilesEx()
+
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
 #define FLAG_CHECK(n, f) ((n) & (f))
-
-#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
-#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -281,16 +304,16 @@ typedef struct CoreData {
     struct {
         struct {
             int exitKey;                    // Default exit key
-            char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
-            char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
+            char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
+            char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
 
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
-            char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame.
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame
 
-            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input keys queue
+            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
-            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
+            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
 
         } Keyboard;
@@ -320,7 +343,7 @@ typedef struct CoreData {
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
-            int axisCount[MAX_GAMEPADS];                  // Register number of available gamepad axis
+            int axisCount[MAX_GAMEPADS];    // Register number of available gamepad axis
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             char name[MAX_GAMEPADS][64];    // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
@@ -347,16 +370,21 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported symbol, required for some bindings
 
-CoreData CORE = { 0 };               // Global CORE state context
+CoreData CORE = { 0 };                      // Global CORE state context
+
+// Flag to note GPU acceleration is available,
+// referenced from other modules to support GPU data loading
+// NOTE: Useful to allow Texture, RenderTexture, Font.texture, Mesh.vaoId/vboId, Shader loading
+bool isGpuReady = false;
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-static int screenshotCounter = 0;    // Screenshots counter
+static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-int gifFrameCounter = 0;             // GIF frames counter
-bool gifRecording = false;           // GIF recording state
-MsfGifState gifState = { 0 };        // MSGIF context state
+static unsigned int gifFrameCounter = 0;    // GIF frames counter
+static bool gifRecording = false;           // GIF recording state
+static MsfGifState gifState = { 0 };        // MSGIF context state
 #endif
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
@@ -471,7 +499,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *li
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
@@ -480,11 +508,40 @@ void __stdcall Sleep(unsigned long msTimeout);              // Required for: Wai
 const char *TextFormat(const char *text, ...);              // Formatting of text with variables to 'embed'
 #endif // !SUPPORT_MODULE_RTEXT
 
-// Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP)
-    #include "platforms/rcore_desktop.c"
+    #define PLATFORM_DESKTOP_GLFW
+#endif
+
+// We're using `#pragma message` because `#warning` is not adopted by MSVC.
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+    #if !defined(SUPPORT_MODULE_RTEXTURES)
+        #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
+    #endif
+
+    // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
+    #if !defined(SUPPORT_FILEFORMAT_BMP) && defined(_WIN32)
+        #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
+    #endif
+
+    // From what I've tested applications on Wayland saves images on clipboard as PNG.
+    #if (!defined(SUPPORT_FILEFORMAT_PNG) || !defined(SUPPORT_FILEFORMAT_JPG)) && !defined(_WIN32)
+        #pragma message ("Warning: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
+    #endif
+
+    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined.
+    // #if !defined(STBI_REQUIRED)
+    //     #pragma message ("Warning: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
+    // #endif
+
+#endif // SUPPORT_CLIPBOARD_IMAGE
+
+// Include platform-specific submodules
+#if defined(PLATFORM_DESKTOP_GLFW)
+    #include "platforms/rcore_desktop_glfw.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
+#elif defined(PLATFORM_DESKTOP_RGFW)
+    #include "platforms/rcore_desktop_rgfw.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
@@ -544,15 +601,16 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
 //void DisableCursor(void)
 
 // Initialize window and OpenGL context
-// NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
 {
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP_GLFW)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (GLFW)");
 #elif defined(PLATFORM_DESKTOP_SDL)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
+#elif defined(PLATFORM_DESKTOP_RGFW)
+    TRACELOG(LOG_INFO, "Platform backend: DESKTOP (RGFW)");
 #elif defined(PLATFORM_WEB)
     TRACELOG(LOG_INFO, "Platform backend: WEB (HTML5)");
 #elif defined(PLATFORM_DRM)
@@ -616,28 +674,31 @@ void InitWindow(int width, int height, const char *title)
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    isGpuReady = true; // Flag to note GPU has been initialized successfully
 
     // Setup default viewport
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    // Load default font
-    // WARNING: External function: Module required: rtext
-    LoadFontDefault();
-    #if defined(SUPPORT_MODULE_RSHAPES)
-    // Set font white rectangle for shapes drawing, so shapes and text can be batched together
-    // WARNING: rshapes module is required, if not available, default internal white rectangle is used
-    Rectangle rec = GetFontDefault().recs[95];
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-    {
-        // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
-        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
-    }
-    else
-    {
-        // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
-        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
-    }
+#if defined(SUPPORT_MODULE_RTEXT)
+    #if defined(SUPPORT_DEFAULT_FONT)
+        // Load default font
+        // WARNING: External function: Module required: rtext
+        LoadFontDefault();
+        #if defined(SUPPORT_MODULE_RSHAPES)
+        // Set font white rectangle for shapes drawing, so shapes and text can be batched together
+        // WARNING: rshapes module is required, if not available, default internal white rectangle is used
+        Rectangle rec = GetFontDefault().recs[95];
+        if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+        {
+            // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
+        }
+        else
+        {
+            // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
+            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+        }
+        #endif
     #endif
 #else
     #if defined(SUPPORT_MODULE_RSHAPES)
@@ -647,21 +708,14 @@ void InitWindow(int width, int height, const char *title)
     SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
     #endif
 #endif
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-    {
-        // Set default font texture filter for HighDPI (blurry)
-        // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
-        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
-    }
-#endif
 
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
+
+    TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", GetWorkingDirectory());
 }
 
 // Close window and unload OpenGL context
@@ -795,7 +849,7 @@ bool IsCursorHidden(void)
     return CORE.Input.Mouse.cursorHidden;
 }
 
-// Check if cursor is on the current screen.
+// Check if cursor is on the current screen
 bool IsCursorOnScreen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
@@ -838,23 +892,33 @@ void EndDrawing(void)
     // Draw record indicator
     if (gifRecording)
     {
+        #ifndef GIF_RECORD_FRAMERATE
         #define GIF_RECORD_FRAMERATE    10
-        gifFrameCounter++;
+        #endif
+        gifFrameCounter += (unsigned int)(GetFrameTime()*1000);
 
-        // NOTE: We record one gif frame every 10 game frames
-        if ((gifFrameCounter%GIF_RECORD_FRAMERATE) == 0)
+        // NOTE: We record one gif frame depending on the desired gif framerate
+        if (gifFrameCounter > 1000/GIF_RECORD_FRAMERATE)
         {
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
             Vector2 scale = GetWindowScaleDPI();
             unsigned char *screenData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-            msf_gif_frame(&gifState, screenData, 10, 16, (int)((float)CORE.Window.render.width*scale.x)*4);
+
+            #ifndef GIF_RECORD_BITRATE
+            #define GIF_RECORD_BITRATE 16
+            #endif
+
+            // Add the frame to the gif recording, given how many frames have passed in centiseconds
+            msf_gif_frame(&gifState, screenData, gifFrameCounter/10, GIF_RECORD_BITRATE, (int)((float)CORE.Window.render.width*scale.x)*4);
+            gifFrameCounter -= 1000/GIF_RECORD_FRAMERATE;
 
             RL_FREE(screenData);    // Free image data
         }
 
     #if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MODULE_RTEXT)
-        if (((gifFrameCounter/15)%2) == 1)
+        // Display the recording indicator every half-second
+        if ((int)(GetTime()/0.5)%2 == 1)
         {
             DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);                 // WARNING: Module required: rshapes
             DrawText("GIF RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);     // WARNING: Module required: rtext
@@ -944,9 +1008,6 @@ void BeginMode2D(Camera2D camera)
 
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
-
-    // Apply screen scaling if required
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale));
 }
 
 // Ends 2D mode with custom camera
@@ -955,7 +1016,8 @@ void EndMode2D(void)
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlLoadIdentity();               // Reset current matrix (modelview)
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 }
 
 // Initializes 3D mode with custom camera (3D)
@@ -973,10 +1035,10 @@ void BeginMode3D(Camera camera)
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Setup perspective projection
-        double top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
+        double top = rlGetCullDistanceNear()*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
-        rlFrustum(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlFrustum(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
@@ -984,7 +1046,7 @@ void BeginMode3D(Camera camera)
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
-        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlOrtho(-right, right, -top,top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
@@ -1008,7 +1070,7 @@ void EndMode3D(void)
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
 
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
     rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
 }
@@ -1053,6 +1115,11 @@ void EndTextureMode(void)
 
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
+
+    // Go back to the modelview state from BeginDrawing since we are back to the default FBO
+    rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+    rlLoadIdentity();               // Reset current matrix (modelview)
+    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
     // Reset current fbo to screen size
     CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -1183,17 +1250,17 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 
         // Compute camera projection matrices
         float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-        Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        Matrix proj = MatrixPerspective(fovy, aspect, rlGetCullDistanceNear(), rlGetCullDistanceFar());
 
         config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
         config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
         // Compute camera transformation matrices
-        // NOTE: Camera movement might seem more natural if we model the head.
+        // NOTE: Camera movement might seem more natural if we model the head
         // Our axis of rotation is the base of our head, so we might want to add
-        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-        config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-        config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions
+        config.viewOffset[0] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        config.viewOffset[1] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
         // Compute eyes Viewports
         /*
@@ -1260,6 +1327,8 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         //          vertex color location       = 3
         //          vertex tangent location     = 4
         //          vertex texcoord2 location   = 5
+        //          vertex boneIds location     = 6
+        //          vertex boneWeights location = 7
 
         // NOTE: If any location is not found, loc point becomes -1
 
@@ -1275,6 +1344,8 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_VERTEX_NORMAL] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
         shader.locs[SHADER_LOC_VERTEX_TANGENT] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
         shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+        shader.locs[SHADER_LOC_VERTEX_BONEIDS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
+        shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
 
         // Get handles to GLSL uniform locations (vertex shader)
         shader.locs[SHADER_LOC_MATRIX_MVP] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MVP);
@@ -1282,6 +1353,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_MATRIX_PROJECTION] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION);
         shader.locs[SHADER_LOC_MATRIX_MODEL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL);
         shader.locs[SHADER_LOC_MATRIX_NORMAL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL);
+        shader.locs[SHADER_LOC_BONE_MATRICES] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES);
 
         // Get handles to GLSL uniform locations (fragment shader)
         shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR);
@@ -1293,10 +1365,10 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     return shader;
 }
 
-// Check if a shader is ready
-bool IsShaderReady(Shader shader)
+// Check if a shader is valid (loaded on GPU)
+bool IsShaderValid(Shader shader)
 {
-    return ((shader.id > 0) &&          // Validate shader id (loaded successfully)
+    return ((shader.id > 0) &&          // Validate shader id (GPU loaded successfully)
             (shader.locs != NULL));     // Validate memory has been allocated for default shader locations
 
     // The following locations are tried to be set automatically (locs[i] >= 0),
@@ -1392,15 +1464,23 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 // Module Functions Definition: Screen-space Queries
 //----------------------------------------------------------------------------------
 
-// Get a ray trace from mouse position
-Ray GetMouseRay(Vector2 mouse, Camera camera)
+// Get a ray trace from screen position (i.e mouse)
+Ray GetScreenToWorldRay(Vector2 position, Camera camera)
+{
+    Ray ray = GetScreenToWorldRayEx(position, camera, GetScreenWidth(), GetScreenHeight());
+
+    return ray;
+}
+
+// Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
+Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height)
 {
     Ray ray = { 0 };
 
     // Calculate normalized device coordinates
     // NOTE: y value is negative
-    float x = (2.0f*mouse.x)/(float)GetScreenWidth() - 1.0f;
-    float y = 1.0f - (2.0f*mouse.y)/(float)GetScreenHeight();
+    float x = (2.0f*position.x)/(float)width - 1.0f;
+    float y = 1.0f - (2.0f*position.y)/(float)height;
     float z = 1.0f;
 
     // Store values in a vector
@@ -1414,11 +1494,11 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
-        double aspect = (double)CORE.Window.screen.width/(double)CORE.Window.screen.height;
+        double aspect = (double)width/(double)height;
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
@@ -1430,9 +1510,10 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     Vector3 nearPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
     Vector3 farPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
-    // Unproject the mouse cursor in the near plane.
-    // We need this as the source position because orthographic projects, compared to perspective doesn't have a
-    // convergence point, meaning that the "eye" of the camera is more like a plane than a point.
+    // Unproject the mouse cursor in the near plane
+    // We need this as the source position because orthographic projects,
+    // compared to perspective doesn't have a convergence point,
+    // meaning that the "eye" of the camera is more like a plane than a point
     Vector3 cameraPlanePointerPos = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, -1.0f }, matProj, matView);
 
     // Calculate normalized direction vector
@@ -1450,7 +1531,9 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
 // Get transform matrix for camera
 Matrix GetCameraMatrix(Camera camera)
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix mat = MatrixLookAt(camera.position, camera.target, camera.up);
+
+    return mat;
 }
 
 // Get camera 2d transform matrix
@@ -1461,12 +1544,12 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     //   1. Move it to target
     //   2. Rotate by -rotation and scale by (1/zoom)
     //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
-    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
+    //      not for the camera getting bigger, hence the invert. Same deal with rotation
     //   3. Move it by (-offset);
     //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
     //      we need to do it into opposite direction (inverse transform)
 
-    // Having camera transform in world-space, inverse of it gives the modelview transform.
+    // Having camera transform in world-space, inverse of it gives the modelview transform
     // Since (A*B*C)' = C'*B'*A', the modelview is
     //   1. Move to offset
     //   2. Rotate and Scale
@@ -1498,7 +1581,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
@@ -1507,7 +1590,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixOrtho(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     // Calculate view matrix from camera look at (and transpose it)
@@ -1631,7 +1714,7 @@ float GetFrameTime(void)
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
 void WaitTime(double seconds)
 {
-    if (seconds < 0) return;
+    if (seconds < 0) return;    // Security check
 
 #if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
     double destinationTime = GetTime() + seconds;
@@ -1657,7 +1740,7 @@ void WaitTime(double seconds)
         req.tv_sec = sec;
         req.tv_nsec = nsec;
 
-        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated
         while (nanosleep(&req, &req) == -1) continue;
     #endif
     #if defined(__APPLE__)
@@ -1676,7 +1759,6 @@ void WaitTime(double seconds)
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //void OpenURL(const char *url)
-
 
 // Set the seed for the random number generator
 void SetRandomSeed(unsigned int seed)
@@ -1725,7 +1807,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 #if defined(SUPPORT_RPRAND_GENERATOR)
     values = rprand_load_sequence(count, min, max);
 #else
-    if (count > ((unsigned int)abs(max - min) + 1)) return values;
+    if (count > ((unsigned int)abs(max - min) + 1)) return values;  // Security check
 
     values = (int *)RL_CALLOC(count, sizeof(int));
 
@@ -1780,7 +1862,7 @@ void TakeScreenshot(const char *fileName)
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
-    
+
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
@@ -1793,7 +1875,7 @@ void TakeScreenshot(const char *fileName)
 
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
-// because it sets up some flags for the window creation process.
+// because it sets up some flags for the window creation process
 // To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
@@ -1829,7 +1911,7 @@ bool FileExists(const char *fileName)
 // NOTE: Extensions checking is not case-sensitive
 bool IsFileExtension(const char *fileName, const char *ext)
 {
-    #define MAX_FILE_EXTENSION_SIZE  16
+    #define MAX_FILE_EXTENSION_LENGTH  16
 
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
@@ -1840,8 +1922,8 @@ bool IsFileExtension(const char *fileName, const char *ext)
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
 
-        char fileExtLower[MAX_FILE_EXTENSION_SIZE + 1] = { 0 };
-        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_SIZE); // WARNING: Module required: rtext
+        char fileExtLower[MAX_FILE_EXTENSION_LENGTH + 1] = { 0 };
+        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_LENGTH); // WARNING: Module required: rtext
 
         for (int i = 0; i < extCount; i++)
         {
@@ -1917,7 +1999,9 @@ const char *GetFileExtension(const char *fileName)
 static const char *strprbrk(const char *s, const char *charset)
 {
     const char *latestMatch = NULL;
+
     for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+
     return latestMatch;
 }
 
@@ -1925,9 +2009,10 @@ static const char *strprbrk(const char *s, const char *charset)
 const char *GetFileName(const char *filePath)
 {
     const char *fileName = NULL;
+
     if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
 
-    if (!fileName) return filePath;
+    if (fileName == NULL) return filePath;
 
     return fileName + 1;
 }
@@ -1935,22 +2020,24 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   256
+    #define MAX_FILENAME_LENGTH     256
 
-    static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
-    memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
+    static char fileName[MAX_FILENAME_LENGTH] = { 0 };
+    memset(fileName, 0, MAX_FILENAME_LENGTH);
 
-    if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
-
-    int size = (int)strlen(fileName);   // Get size in bytes
-
-    for (int i = 0; (i < size) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
+    if (filePath != NULL)
     {
-        if (fileName[i] == '.')
+        strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
+        int size = (int)strlen(fileName); // Get size in bytes
+
+        for (int i = size; i > 0; i--) // Reverse search '.'
         {
-            // NOTE: We break on first '.' found
-            fileName[i] = '\0';
-            break;
+            if (fileName[i] == '.')
+            {
+                // NOTE: We break on first '.' found
+                fileName[i] = '\0';
+                break;
+            }
         }
     }
 
@@ -2111,6 +2198,28 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
+#elif defined(__FreeBSD__)
+    size_t size = sizeof(appDir);
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+
+    if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
+    {
+        int len = strlen(appDir);
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '/')
+            {
+                appDir[i + 1] = '\0';
+                break;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '/';
+    }
+
 #endif
 
     return appDir;
@@ -2182,6 +2291,40 @@ void UnloadDirectoryFiles(FilePathList files)
     RL_FREE(files.paths);
 }
 
+// Create directories (including full path requested), returns 0 on success
+int MakeDirectory(const char *dirPath)
+{
+    if ((dirPath == NULL) || (dirPath[0] == '\0')) return 1; // Path is not valid
+    if (DirectoryExists(dirPath)) return 0; // Path already exists (is valid)
+
+    // Copy path string to avoid modifying original
+    int len = (int)strlen(dirPath) + 1;
+    char *pathcpy = (char *)RL_CALLOC(len, 1);
+    memcpy(pathcpy, dirPath, len);
+
+    // Iterate over pathcpy, create each subdirectory as needed
+    for (int i = 0; (i < len) && (pathcpy[i] != '\0'); i++)
+    {
+        if (pathcpy[i] == ':') i++;
+        else
+        {
+            if ((pathcpy[i] == '\\') || (pathcpy[i] == '/'))
+            {
+                pathcpy[i] = '\0';
+                if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+                pathcpy[i] = '/';
+            }
+        }
+    }
+
+    // Create final directory
+    if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+
+    RL_FREE(pathcpy);
+
+    return 0;
+}
+
 // Change working directory, returns true on success
 bool ChangeDirectory(const char *dir)
 {
@@ -2201,11 +2344,72 @@ bool IsPathFile(const char *path)
     return S_ISREG(result.st_mode);
 }
 
+// Check if fileName is valid for the platform/OS
+bool IsFileNameValid(const char *fileName)
+{
+    bool valid = true;
+
+    if ((fileName != NULL) && (fileName[0] != '\0'))
+    {
+        int length = (int)strlen(fileName);
+        bool allPeriods = true;
+
+        for (int i = 0; i < length; i++)
+        {
+            // Check invalid characters
+            if ((fileName[i] == '<') ||
+                (fileName[i] == '>') ||
+                (fileName[i] == ':') ||
+                (fileName[i] == '\"') ||
+                (fileName[i] == '/') ||
+                (fileName[i] == '\\') ||
+                (fileName[i] == '|') ||
+                (fileName[i] == '?') ||
+                (fileName[i] == '*')) { valid = false; break; }
+
+            // Check non-glyph characters
+            if ((unsigned char)fileName[i] < 32) { valid = false; break; }
+
+            // TODO: Check trailing periods/spaces?
+
+            // Check if filename is not all periods
+            if (fileName[i] != '.') allPeriods = false;
+        }
+
+        if (allPeriods) valid = false;
+
+/*
+        if (valid)
+        {
+            // Check invalid DOS names
+            if (length >= 3)
+            {
+                if (((fileName[0] == 'C') && (fileName[1] == 'O') && (fileName[2] == 'N')) ||   // CON
+                    ((fileName[0] == 'P') && (fileName[1] == 'R') && (fileName[2] == 'N')) ||   // PRN
+                    ((fileName[0] == 'A') && (fileName[1] == 'U') && (fileName[2] == 'X')) ||   // AUX
+                    ((fileName[0] == 'N') && (fileName[1] == 'U') && (fileName[2] == 'L'))) valid = false; // NUL
+            }
+
+            if (length >= 4)
+            {
+                if (((fileName[0] == 'C') && (fileName[1] == 'O') && (fileName[2] == 'M') && ((fileName[3] >= '0') && (fileName[3] <= '9'))) ||  // COM0-9
+                    ((fileName[0] == 'L') && (fileName[1] == 'P') && (fileName[2] == 'T') && ((fileName[3] >= '0') && (fileName[3] <= '9')))) valid = false; // LPT0-9
+            }
+        }
+*/
+    }
+
+    return valid;
+}
+
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
-    if (CORE.Window.dropFileCount > 0) return true;
-    else return false;
+    bool result = false;
+
+    if (CORE.Window.dropFileCount > 0) result = true;
+
+    return result;
 }
 
 // Load dropped filepaths
@@ -2239,15 +2443,16 @@ void UnloadDroppedFiles(FilePathList files)
 long GetFileModTime(const char *fileName)
 {
     struct stat result = { 0 };
+    long modTime = 0;
 
     if (stat(fileName, &result) == 0)
     {
         time_t mod = result.st_mtime;
 
-        return (long)mod;
+        modTime = (long)mod;
     }
 
-    return 0;
+    return modTime;
 }
 
 //----------------------------------------------------------------------------------
@@ -2316,7 +2521,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 
     char *encodedData = (char *)RL_MALLOC(*outputSize);
 
-    if (encodedData == NULL) return NULL;
+    if (encodedData == NULL) return NULL;   // Security check
 
     for (int i = 0, j = 0; i < dataSize;)
     {
@@ -2393,6 +2598,265 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 
     *outputSize = outSize;
     return decodedData;
+}
+
+// Compute CRC32 hash code
+unsigned int ComputeCRC32(unsigned char *data, int dataSize)
+{
+    static unsigned int crcTable[256] = {
+        0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
+        0x0eDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988, 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
+        0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE, 0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
+        0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC, 0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
+        0x3B6E20C8, 0x4C69105E, 0xD56041E4, 0xA2677172, 0x3C03E4D1, 0x4B04D447, 0xD20D85FD, 0xA50AB56B,
+        0x35B5A8FA, 0x42B2986C, 0xDBBBC9D6, 0xACBCF940, 0x32D86CE3, 0x45DF5C75, 0xDCD60DCF, 0xABD13D59,
+        0x26D930AC, 0x51DE003A, 0xC8D75180, 0xBFD06116, 0x21B4F4B5, 0x56B3C423, 0xCFBA9599, 0xB8BDA50F,
+        0x2802B89E, 0x5F058808, 0xC60CD9B2, 0xB10BE924, 0x2F6F7C87, 0x58684C11, 0xC1611DAB, 0xB6662D3D,
+        0x76DC4190, 0x01DB7106, 0x98D220BC, 0xEFD5102A, 0x71B18589, 0x06B6B51F, 0x9FBFE4A5, 0xE8B8D433,
+        0x7807C9A2, 0x0F00F934, 0x9609A88E, 0xE10E9818, 0x7F6A0DBB, 0x086D3D2D, 0x91646C97, 0xE6635C01,
+        0x6B6B51F4, 0x1C6C6162, 0x856530D8, 0xF262004E, 0x6C0695ED, 0x1B01A57B, 0x8208F4C1, 0xF50FC457,
+        0x65B0D9C6, 0x12B7E950, 0x8BBEB8EA, 0xFCB9887C, 0x62DD1DDF, 0x15DA2D49, 0x8CD37CF3, 0xFBD44C65,
+        0x4DB26158, 0x3AB551CE, 0xA3BC0074, 0xD4BB30E2, 0x4ADFA541, 0x3DD895D7, 0xA4D1C46D, 0xD3D6F4FB,
+        0x4369E96A, 0x346ED9FC, 0xAD678846, 0xDA60B8D0, 0x44042D73, 0x33031DE5, 0xAA0A4C5F, 0xDD0D7CC9,
+        0x5005713C, 0x270241AA, 0xBE0B1010, 0xC90C2086, 0x5768B525, 0x206F85B3, 0xB966D409, 0xCE61E49F,
+        0x5EDEF90E, 0x29D9C998, 0xB0D09822, 0xC7D7A8B4, 0x59B33D17, 0x2EB40D81, 0xB7BD5C3B, 0xC0BA6CAD,
+        0xEDB88320, 0x9ABFB3B6, 0x03B6E20C, 0x74B1D29A, 0xEAD54739, 0x9DD277AF, 0x04DB2615, 0x73DC1683,
+        0xE3630B12, 0x94643B84, 0x0D6D6A3E, 0x7A6A5AA8, 0xE40ECF0B, 0x9309FF9D, 0x0A00AE27, 0x7D079EB1,
+        0xF00F9344, 0x8708A3D2, 0x1E01F268, 0x6906C2FE, 0xF762575D, 0x806567CB, 0x196C3671, 0x6E6B06E7,
+        0xFED41B76, 0x89D32BE0, 0x10DA7A5A, 0x67DD4ACC, 0xF9B9DF6F, 0x8EBEEFF9, 0x17B7BE43, 0x60B08ED5,
+        0xD6D6A3E8, 0xA1D1937E, 0x38D8C2C4, 0x4FDFF252, 0xD1BB67F1, 0xA6BC5767, 0x3FB506DD, 0x48B2364B,
+        0xD80D2BDA, 0xAF0A1B4C, 0x36034AF6, 0x41047A60, 0xDF60EFC3, 0xA867DF55, 0x316E8EEF, 0x4669BE79,
+        0xCB61B38C, 0xBC66831A, 0x256FD2A0, 0x5268E236, 0xCC0C7795, 0xBB0B4703, 0x220216B9, 0x5505262F,
+        0xC5BA3BBE, 0xB2BD0B28, 0x2BB45A92, 0x5CB36A04, 0xC2D7FFA7, 0xB5D0CF31, 0x2CD99E8B, 0x5BDEAE1D,
+        0x9B64C2B0, 0xEC63F226, 0x756AA39C, 0x026D930A, 0x9C0906A9, 0xEB0E363F, 0x72076785, 0x05005713,
+        0x95BF4A82, 0xE2B87A14, 0x7BB12BAE, 0x0CB61B38, 0x92D28E9B, 0xE5D5BE0D, 0x7CDCEFB7, 0x0BDBDF21,
+        0x86D3D2D4, 0xF1D4E242, 0x68DDB3F8, 0x1FDA836E, 0x81BE16CD, 0xF6B9265B, 0x6FB077E1, 0x18B74777,
+        0x88085AE6, 0xFF0F6A70, 0x66063BCA, 0x11010B5C, 0x8F659EFF, 0xF862AE69, 0x616BFFD3, 0x166CCF45,
+        0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2, 0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
+        0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0, 0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
+        0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
+        0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
+    };
+
+    unsigned int crc = ~0u;
+
+    for (int i = 0; i < dataSize; i++) crc = (crc >> 8) ^ crcTable[data[i] ^ (crc & 0xff)];
+
+    return ~crc;
+}
+
+// Compute MD5 hash code
+// NOTE: Returns a static int[4] array (16 bytes)
+unsigned int *ComputeMD5(unsigned char *data, int dataSize)
+{
+    #define ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
+
+    static unsigned int hash[4] = { 0 };  // Hash to be returned
+
+    // WARNING: All variables are unsigned 32 bit and wrap modulo 2^32 when calculating
+
+    // NOTE: r specifies the per-round shift amounts
+    unsigned int r[] = {
+        7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+        5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20,
+        4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+        6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+    };
+
+    // Using binary integer part of the sines of integers (in radians) as constants
+    unsigned int k[] = {
+        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+        0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+        0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+        0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+        0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+        0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+        0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+        0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+        0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+        0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+        0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+        0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+        0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+        0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+        0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+        0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+    };
+
+    hash[0] = 0x67452301;
+    hash[1] = 0xefcdab89;
+    hash[2] = 0x98badcfe;
+    hash[3] = 0x10325476;
+
+    // Pre-processing: adding a single 1 bit
+    // Append '1' bit to message
+    // NOTE: The input bytes are considered as bits strings,
+    // where the first bit is the most significant bit of the byte
+
+    // Pre-processing: padding with zeros
+    // Append '0' bit until message length in bit 448 (mod 512)
+    // Append length mod (2 pow 64) to message
+
+    int newDataSize = ((((dataSize + 8)/64) + 1)*64) - 8;
+
+    unsigned char *msg = RL_CALLOC(newDataSize + 64, 1); // Initialize with '0' bits, allocating 64 extra bytes
+    memcpy(msg, data, dataSize);
+    msg[dataSize] = 128; // Write the '1' bit
+
+    unsigned int bitsLen = 8*dataSize;
+    memcpy(msg + newDataSize, &bitsLen, 4); // Append the len in bits at the end of the buffer
+
+    // Process the message in successive 512-bit chunks for each 512-bit chunk of message
+    for (int offset = 0; offset < newDataSize; offset += (512/8))
+    {
+        // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
+        unsigned int *w = (unsigned int *)(msg + offset);
+
+        // Initialize hash value for this chunk
+        unsigned int a = hash[0];
+        unsigned int b = hash[1];
+        unsigned int c = hash[2];
+        unsigned int d = hash[3];
+
+        for (int i = 0; i < 64; i++)
+        {
+            unsigned int f = 0;
+            unsigned int g = 0;
+
+            if (i < 16)
+            {
+                f = (b & c) | ((~b) & d);
+                g = i;
+            }
+            else if (i < 32)
+            {
+                f = (d & b) | ((~d) & c);
+                g = (5*i + 1)%16;
+            }
+            else if (i < 48)
+            {
+                f = b ^ c ^ d;
+                g = (3*i + 5)%16;
+            }
+            else
+            {
+                f = c ^ (b | (~d));
+                g = (7*i)%16;
+            }
+
+            unsigned int temp = d;
+            d = c;
+            c = b;
+            b = b + ROTATE_LEFT((a + f + k[i] + w[g]), r[i]);
+            a = temp;
+        }
+
+        // Add chunk's hash to result so far
+        hash[0] += a;
+        hash[1] += b;
+        hash[2] += c;
+        hash[3] += d;
+    }
+
+    RL_FREE(msg);
+
+    return hash;
+}
+
+// Compute SHA-1 hash code
+// NOTE: Returns a static int[5] array (20 bytes)
+unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
+    #define ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
+
+    static unsigned int hash[5] = { 0 };  // Hash to be returned
+
+    // Initialize hash values
+    hash[0] = 0x67452301;
+    hash[1] = 0xEFCDAB89;
+    hash[2] = 0x98BADCFE;
+    hash[3] = 0x10325476;
+    hash[4] = 0xC3D2E1F0;
+
+    // Pre-processing: adding a single 1 bit
+    // Append '1' bit to message
+    // NOTE: The input bytes are considered as bits strings,
+    // where the first bit is the most significant bit of the byte
+
+    // Pre-processing: padding with zeros
+    // Append '0' bit until message length in bit 448 (mod 512)
+    // Append length mod (2 pow 64) to message
+
+    int newDataSize = ((((dataSize + 8)/64) + 1)*64);
+
+    unsigned char *msg = RL_CALLOC(newDataSize, 1); // Initialize with '0' bits
+    memcpy(msg, data, dataSize);
+    msg[dataSize] = 128; // Write the '1' bit
+
+    unsigned int bitsLen = 8*dataSize;
+    msg[newDataSize-1] = bitsLen;
+
+    // Process the message in successive 512-bit chunks
+    for (int offset = 0; offset < newDataSize; offset += (512/8))
+    {
+        // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
+        unsigned int w[80] = {0};
+        for (int i = 0; i < 16; i++) {
+            w[i] = (msg[offset + (i * 4) + 0] << 24) |
+                   (msg[offset + (i * 4) + 1] << 16) |
+                   (msg[offset + (i * 4) + 2] << 8) |
+                   (msg[offset + (i * 4) + 3]);
+        }
+
+        // Message schedule: extend the sixteen 32-bit words into eighty 32-bit words:
+        for (int i = 16; i < 80; ++i) {
+            w[i] = ROTATE_LEFT(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
+        }
+
+        // Initialize hash value for this chunk
+        unsigned int a = hash[0];
+        unsigned int b = hash[1];
+        unsigned int c = hash[2];
+        unsigned int d = hash[3];
+        unsigned int e = hash[4];
+
+        for (int i = 0; i < 80; i++)
+        {
+            unsigned int f = 0;
+            unsigned int k = 0;
+
+            if (i < 20) {
+                f = (b & c) | ((~b) & d);
+                k = 0x5A827999;
+            } else if (i < 40) {
+                f = b ^ c ^ d;
+                k = 0x6ED9EBA1;
+            } else if (i < 60) {
+                f = (b & c) | (b & d) | (c & d);
+                k = 0x8F1BBCDC;
+            } else {
+                f = b ^ c ^ d;
+                k = 0xCA62C1D6;
+            }
+
+            unsigned int temp = ROTATE_LEFT(a, 5) + f + e + k + w[i];
+            e = d;
+            d = c;
+            c = ROTATE_LEFT(b, 30);
+            b = a;
+            a = temp;
+        }
+
+        // Add this chunk's hash to result so far
+        hash[0] += a;
+        hash[1] += b;
+        hash[2] += c;
+        hash[3] += d;
+        hash[4] += e;
+    }
+
+    free(msg);
+
+    return hash;
 }
 
 //----------------------------------------------------------------------------------
@@ -2480,13 +2944,10 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 }
 
 // Unload automation events list from file
-void UnloadAutomationEventList(AutomationEventList *list)
+void UnloadAutomationEventList(AutomationEventList list)
 {
 #if defined(SUPPORT_AUTOMATION_EVENTS)
-    RL_FREE(list->events);
-    list->events = NULL;
-    list->count = 0;
-    list->capacity = 0;
+    RL_FREE(list.events);
 #endif
 }
 
@@ -2605,8 +3066,8 @@ void PlayAutomationEvent(AutomationEvent event)
             } break;
             case INPUT_MOUSE_WHEEL_MOTION:  // param[0]: x delta, param[1]: y delta
             {
-                CORE.Input.Mouse.currentWheelMove.x = (float)event.params[0]; break;
-                CORE.Input.Mouse.currentWheelMove.y = (float)event.params[1]; break;
+                CORE.Input.Mouse.currentWheelMove.x = (float)event.params[0];
+                CORE.Input.Mouse.currentWheelMove.y = (float)event.params[1];
             } break;
             case INPUT_TOUCH_UP: CORE.Input.Touch.currentTouchState[event.params[0]] = false; break;            // param[0]: id
             case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[event.params[0]] = true; break;           // param[0]: id
@@ -2643,6 +3104,8 @@ void PlayAutomationEvent(AutomationEvent event)
             case ACTION_SETTARGETFPS: SetTargetFPS(event.params[0]); break;
             default: break;
         }
+
+        TRACELOG(LOG_INFO, "AUTOMATION PLAY: Frame: %i | Event type: %i | Event parameters: %i, %i, %i", event.frame, event.type, event.params[0], event.params[1], event.params[2]);
     }
 #endif
 }
@@ -2850,10 +3313,13 @@ int GetGamepadAxisCount(int gamepad)
 // Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
-    float value = 0;
+    float value = (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER)? -1.0f : 0.0f;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS) &&
-        (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) > 0.1f)) value = CORE.Input.Gamepad.axisState[gamepad][axis];      // 0.1f = GAMEPAD_AXIS_MINIMUM_DRIFT/DELTA
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS)) {
+        float movement = value < 0.0f ? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
+
+        if (movement > value) value = CORE.Input.Gamepad.axisState[gamepad][axis];
+    }
 
     return value;
 }
@@ -2921,13 +3387,15 @@ bool IsMouseButtonUp(int button)
 // Get mouse position X
 int GetMouseX(void)
 {
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    int mouseX = (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    return mouseX;
 }
 
 // Get mouse position Y
 int GetMouseY(void)
 {
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    int mouseY = (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    return mouseY;
 }
 
 // Get mouse position XY
@@ -2994,13 +3462,15 @@ Vector2 GetMouseWheelMoveV(void)
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-    return (int)CORE.Input.Touch.position[0].x;
+    int touchX = (int)CORE.Input.Touch.position[0].x;
+    return touchX;
 }
 
 // Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-    return (int)CORE.Input.Touch.position[0].y;
+    int touchY = (int)CORE.Input.Touch.position[0].y;
+    return touchY;
 }
 
 // Get touch position XY for a touch point index (relative to screen size)
@@ -3042,10 +3512,10 @@ int GetTouchPointCount(void)
 // Initialize hi-resolution timer
 void InitTimer(void)
 {
-    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
-    // High resolutions can also prevent the CPU power management system from entering power-saving modes.
-    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions
+    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
+    // High resolutions can also prevent the CPU power management system from entering power-saving modes
+    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
@@ -3194,10 +3664,21 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
                 if (filter != NULL)
                 {
-                    if (IsFileExtension(path, filter))
+                    if (IsPathFile(path))
                     {
-                        strcpy(files->paths[files->count], path);
-                        files->count++;
+                        if (IsFileExtension(path, filter))
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
+                    }
+                    else
+                    {
+                        if (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0)
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
                     }
                 }
                 else
@@ -3257,7 +3738,22 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         break;
                     }
                 }
-                else ScanDirectoryFilesRecursively(path, files, filter);
+                else
+                {
+                    if ((filter != NULL) && (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0))
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+
+                    if (files->count >= files->capacity)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
+                        break;
+                    }
+
+                    ScanDirectoryFilesRecursively(path, files, filter);
+                }
             }
         }
 
@@ -3268,7 +3764,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
 // Automation event recording
-// NOTE: Recording is by default done at EndDrawing(), after PollInputEvents()
+// NOTE: Recording is by default done at EndDrawing(), before PollInputEvents()
 static void RecordAutomationEvent(void)
 {
     // Checking events in current frame and save them into currentEventList
@@ -3370,7 +3866,7 @@ static void RecordAutomationEvent(void)
         currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
         currentEventList->events[currentEventList->count].type = INPUT_MOUSE_WHEEL_MOTION;
         currentEventList->events[currentEventList->count].params[0] = (int)CORE.Input.Mouse.currentWheelMove.x;
-        currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Mouse.currentWheelMove.y;;
+        currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Mouse.currentWheelMove.y;
         currentEventList->events[currentEventList->count].params[2] = 0;
 
         TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_MOUSE_WHEEL_MOTION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
@@ -3493,7 +3989,8 @@ static void RecordAutomationEvent(void)
         for (int axis = 0; axis < MAX_GAMEPAD_AXIS; axis++)
         {
             // Event type: INPUT_GAMEPAD_AXIS_MOTION
-            if (CORE.Input.Gamepad.axisState[gamepad][axis] > 0.1f)
+            float defaultMovement = (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER)? -1.0f : 0.0f;
+            if (GetGamepadAxisMovement(gamepad, axis) != defaultMovement)
             {
                 currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
                 currentEventList->events[currentEventList->count].type = INPUT_GAMEPAD_AXIS_MOTION;
@@ -3529,16 +4026,6 @@ static void RecordAutomationEvent(void)
     }
     //-------------------------------------------------------------------------------------
 #endif
-
-    // Window events recording
-    //-------------------------------------------------------------------------------------
-    // TODO.
-    //-------------------------------------------------------------------------------------
-
-    // Custom actions events recording
-    //-------------------------------------------------------------------------------------
-    // TODO.
-    //-------------------------------------------------------------------------------------
 }
 #endif
 

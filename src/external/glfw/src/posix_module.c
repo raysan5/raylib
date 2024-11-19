@@ -23,10 +23,10 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(GLFW_BUILD_POSIX_MODULE)
 
 #include <dlfcn.h>
 
@@ -48,4 +48,6 @@ GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name)
 {
     return dlsym(module, name);
 }
+
+#endif // GLFW_BUILD_POSIX_MODULE
 

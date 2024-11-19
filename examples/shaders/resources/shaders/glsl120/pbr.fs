@@ -1,7 +1,5 @@
 #version 120
 
-precision mediump float;
-
 #define MAX_LIGHTS              4
 #define LIGHT_DIRECTIONAL       0
 #define LIGHT_POINT             1
@@ -17,12 +15,12 @@ struct Light {
 };
 
 // Input vertex attributes (from vertex shader)
-varying in vec3 fragPosition;
-varying in vec2 fragTexCoord;
-varying in vec4 fragColor;
-varying in vec3 fragNormal;
-varying in vec4 shadowPos;
-varying in mat3 TBN;
+varying vec3 fragPosition;
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
+varying vec3 fragNormal;
+varying vec4 shadowPos;
+varying mat3 TBN;
 
 
 // Input uniform values

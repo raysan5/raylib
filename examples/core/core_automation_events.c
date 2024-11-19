@@ -88,7 +88,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         float deltaTime = 0.015f;//GetFrameTime();
-        
+       
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
@@ -98,7 +98,7 @@ int main(void)
             // Supports loading .rgs style files (text or binary) and .png style palette images
             if (IsFileExtension(droppedFiles.paths[0], ".txt;.rae"))
             {
-                UnloadAutomationEventList(&aelist);
+                UnloadAutomationEventList(aelist);
                 aelist = LoadAutomationEventList(droppedFiles.paths[0]);
                 
                 eventRecording = false;
@@ -157,11 +157,6 @@ int main(void)
         }
         else player.canJump = true;
 
-        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
-
-        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
-        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
-
         if (IsKeyPressed(KEY_R))
         {
             // Reset game state
@@ -176,11 +171,43 @@ int main(void)
         }
         //----------------------------------------------------------------------------------
 
+        // Events playing
+        // NOTE: Logic must be before Camera update because it depends on mouse-wheel value, 
+        // that can be set by the played event... but some other inputs could be affected
+        //----------------------------------------------------------------------------------
+        if (eventPlaying)
+        {
+            // NOTE: Multiple events could be executed in a single frame
+            while (playFrameCounter == aelist.events[currentPlayFrame].frame)
+            {
+                PlayAutomationEvent(aelist.events[currentPlayFrame]);
+                currentPlayFrame++;
+
+                if (currentPlayFrame == aelist.count)
+                {
+                    eventPlaying = false;
+                    currentPlayFrame = 0;
+                    playFrameCounter = 0;
+
+                    TraceLog(LOG_INFO, "FINISH PLAYING!");
+                    break;
+                }
+            }
+
+            playFrameCounter++;
+        }
+        //----------------------------------------------------------------------------------
+
         // Update camera
         //----------------------------------------------------------------------------------
         camera.target = player.position;
         camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
         float minX = 1000, minY = 1000, maxX = -1000, maxY = -1000;
+
+        // WARNING: On event replay, mouse-wheel internal value is set
+        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
+        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
+        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
 
         for (int i = 0; i < MAX_ENVIRONMENT_ELEMENTS; i++)
         {
@@ -200,8 +227,8 @@ int main(void)
         if (min.y > 0) camera.offset.y = screenHeight/2 - min.y;
         //----------------------------------------------------------------------------------
         
-        // Toggle events recording
-        if (IsKeyPressed(KEY_S))
+        // Events management
+        if (IsKeyPressed(KEY_S))    // Toggle events recording
         {
             if (!eventPlaying)
             {
@@ -222,7 +249,7 @@ int main(void)
                 }
             }
         }
-        else if (IsKeyPressed(KEY_A))
+        else if (IsKeyPressed(KEY_A)) // Toggle events playing (WARNING: Starts next frame)
         {
             if (!eventRecording && (aelist.count > 0))
             {
@@ -241,32 +268,7 @@ int main(void)
                 camera.zoom = 1.0f;
             }
         }
-        
-        if (eventPlaying)
-        {
-            // NOTE: Multiple events could be executed in a single frame
-            while (playFrameCounter == aelist.events[currentPlayFrame].frame)
-            {
-                TraceLog(LOG_INFO, "PLAYING: PlayFrameCount: %i | currentPlayFrame: %i | Event Frame: %i, param: %i", 
-                    playFrameCounter, currentPlayFrame, aelist.events[currentPlayFrame].frame, aelist.events[currentPlayFrame].params[0]);
-                
-                PlayAutomationEvent(aelist.events[currentPlayFrame]);
-                currentPlayFrame++;
 
-                if (currentPlayFrame == aelist.count)
-                {
-                    eventPlaying = false;
-                    currentPlayFrame = 0;
-                    playFrameCounter = 0;
-
-                    TraceLog(LOG_INFO, "FINISH PLAYING!");
-                    break;
-                }
-            }
-            
-            playFrameCounter++;
-        }
-        
         if (eventRecording || eventPlaying) frameCounter++;
         else frameCounter = 0;
         //----------------------------------------------------------------------------------

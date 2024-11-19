@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - custom frame control
 *
-*   NOTE: WARNING: This is an example for advance users willing to have full control over
+*   NOTE: WARNING: This is an example for advanced users willing to have full control over
 *   the frame processes. By default, EndDrawing() calls the following processes:
 *       1. Draw remaining batch data: rlDrawRenderBatchActive()
 *       2. SwapScreenBuffer()
@@ -22,7 +22,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2024 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

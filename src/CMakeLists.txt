@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib C)
-set(PROJECT_VERSION 4.5.0)
-set(API_VERSION 450)
+set(PROJECT_VERSION 5.5.0)
+set(API_VERSION 550)
 
 include(GNUInstallDirs)
 include(JoinPaths)
@@ -15,7 +15,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     endif()
 
     message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-    
+
     set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
@@ -29,6 +29,7 @@ set(raylib_public_headers
 
 # Sources to be compiled
 set(raylib_sources
+    raudio.c
     rcore.c
     rmodels.c
     rshapes.c
@@ -47,13 +48,11 @@ endif ()
 # Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
 
-if (USE_AUDIO)
+if (SUPPORT_MODULE_RAUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")
-    list(APPEND raylib_sources raudio.c)
 else ()
-    MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
+    MESSAGE(STATUS "Audio Backend: None (-DCUSTOMIZE_BUILD=ON -DSUPPORT_MODULE_RAUDIO=OFF)")
 endif ()
-
 
 add_library(raylib ${raylib_sources} ${raylib_public_headers})
 
@@ -69,7 +68,11 @@ else()
 endif()
 
 if (${PLATFORM} MATCHES "Web")
-    target_link_options(raylib PRIVATE "-sUSE_GLFW=3")
+    target_link_options(raylib PUBLIC "-sUSE_GLFW=3")
+    if(${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_ES3")
+        target_link_options(raylib PUBLIC "-sMIN_WEBGL_VERSION=2")
+        target_link_options(raylib PUBLIC "-sMAX_WEBGL_VERSION=2")
+    endif()
 endif()
 
 set_target_properties(raylib PROPERTIES

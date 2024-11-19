@@ -1,7 +1,8 @@
 //========================================================================
-// GLFW 3.4 macOS - www.glfw.org
+// GLFW 3.4 macOS (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -23,10 +24,11 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_COCOA)
+
 #include <sys/param.h> // For MAXPATHLEN
 
 // Needed for _NSGetProgname
@@ -174,7 +176,7 @@ static void createMenuBar(void)
 
 // Create key code translation tables
 //
-static void createKeyTables(void)
+static void createKeyTablesCocoa(void)
 {
     memset(_glfw.ns.keycodes, -1, sizeof(_glfw.ns.keycodes));
     memset(_glfw.ns.scancodes, -1, sizeof(_glfw.ns.scancodes));
@@ -492,78 +494,78 @@ GLFWbool _glfwConnectCocoa(int platformID, _GLFWplatform* platform)
 {
     const _GLFWplatform cocoa =
     {
-        GLFW_PLATFORM_COCOA,
-        _glfwInitCocoa,
-        _glfwTerminateCocoa,
-        _glfwGetCursorPosCocoa,
-        _glfwSetCursorPosCocoa,
-        _glfwSetCursorModeCocoa,
-        _glfwSetRawMouseMotionCocoa,
-        _glfwRawMouseMotionSupportedCocoa,
-        _glfwCreateCursorCocoa,
-        _glfwCreateStandardCursorCocoa,
-        _glfwDestroyCursorCocoa,
-        _glfwSetCursorCocoa,
-        _glfwGetScancodeNameCocoa,
-        _glfwGetKeyScancodeCocoa,
-        _glfwSetClipboardStringCocoa,
-        _glfwGetClipboardStringCocoa,
-        _glfwInitJoysticksCocoa,
-        _glfwTerminateJoysticksCocoa,
-        _glfwPollJoystickCocoa,
-        _glfwGetMappingNameCocoa,
-        _glfwUpdateGamepadGUIDCocoa,
-        _glfwFreeMonitorCocoa,
-        _glfwGetMonitorPosCocoa,
-        _glfwGetMonitorContentScaleCocoa,
-        _glfwGetMonitorWorkareaCocoa,
-        _glfwGetVideoModesCocoa,
-        _glfwGetVideoModeCocoa,
-        _glfwGetGammaRampCocoa,
-        _glfwSetGammaRampCocoa,
-        _glfwCreateWindowCocoa,
-        _glfwDestroyWindowCocoa,
-        _glfwSetWindowTitleCocoa,
-        _glfwSetWindowIconCocoa,
-        _glfwGetWindowPosCocoa,
-        _glfwSetWindowPosCocoa,
-        _glfwGetWindowSizeCocoa,
-        _glfwSetWindowSizeCocoa,
-        _glfwSetWindowSizeLimitsCocoa,
-        _glfwSetWindowAspectRatioCocoa,
-        _glfwGetFramebufferSizeCocoa,
-        _glfwGetWindowFrameSizeCocoa,
-        _glfwGetWindowContentScaleCocoa,
-        _glfwIconifyWindowCocoa,
-        _glfwRestoreWindowCocoa,
-        _glfwMaximizeWindowCocoa,
-        _glfwShowWindowCocoa,
-        _glfwHideWindowCocoa,
-        _glfwRequestWindowAttentionCocoa,
-        _glfwFocusWindowCocoa,
-        _glfwSetWindowMonitorCocoa,
-        _glfwWindowFocusedCocoa,
-        _glfwWindowIconifiedCocoa,
-        _glfwWindowVisibleCocoa,
-        _glfwWindowMaximizedCocoa,
-        _glfwWindowHoveredCocoa,
-        _glfwFramebufferTransparentCocoa,
-        _glfwGetWindowOpacityCocoa,
-        _glfwSetWindowResizableCocoa,
-        _glfwSetWindowDecoratedCocoa,
-        _glfwSetWindowFloatingCocoa,
-        _glfwSetWindowOpacityCocoa,
-        _glfwSetWindowMousePassthroughCocoa,
-        _glfwPollEventsCocoa,
-        _glfwWaitEventsCocoa,
-        _glfwWaitEventsTimeoutCocoa,
-        _glfwPostEmptyEventCocoa,
-        _glfwGetEGLPlatformCocoa,
-        _glfwGetEGLNativeDisplayCocoa,
-        _glfwGetEGLNativeWindowCocoa,
-        _glfwGetRequiredInstanceExtensionsCocoa,
-        _glfwGetPhysicalDevicePresentationSupportCocoa,
-        _glfwCreateWindowSurfaceCocoa,
+        .platformID = GLFW_PLATFORM_COCOA,
+        .init = _glfwInitCocoa,
+        .terminate = _glfwTerminateCocoa,
+        .getCursorPos = _glfwGetCursorPosCocoa,
+        .setCursorPos = _glfwSetCursorPosCocoa,
+        .setCursorMode = _glfwSetCursorModeCocoa,
+        .setRawMouseMotion = _glfwSetRawMouseMotionCocoa,
+        .rawMouseMotionSupported = _glfwRawMouseMotionSupportedCocoa,
+        .createCursor = _glfwCreateCursorCocoa,
+        .createStandardCursor = _glfwCreateStandardCursorCocoa,
+        .destroyCursor = _glfwDestroyCursorCocoa,
+        .setCursor = _glfwSetCursorCocoa,
+        .getScancodeName = _glfwGetScancodeNameCocoa,
+        .getKeyScancode = _glfwGetKeyScancodeCocoa,
+        .setClipboardString = _glfwSetClipboardStringCocoa,
+        .getClipboardString = _glfwGetClipboardStringCocoa,
+        .initJoysticks = _glfwInitJoysticksCocoa,
+        .terminateJoysticks = _glfwTerminateJoysticksCocoa,
+        .pollJoystick = _glfwPollJoystickCocoa,
+        .getMappingName = _glfwGetMappingNameCocoa,
+        .updateGamepadGUID = _glfwUpdateGamepadGUIDCocoa,
+        .freeMonitor = _glfwFreeMonitorCocoa,
+        .getMonitorPos = _glfwGetMonitorPosCocoa,
+        .getMonitorContentScale = _glfwGetMonitorContentScaleCocoa,
+        .getMonitorWorkarea = _glfwGetMonitorWorkareaCocoa,
+        .getVideoModes = _glfwGetVideoModesCocoa,
+        .getVideoMode = _glfwGetVideoModeCocoa,
+        .getGammaRamp = _glfwGetGammaRampCocoa,
+        .setGammaRamp = _glfwSetGammaRampCocoa,
+        .createWindow = _glfwCreateWindowCocoa,
+        .destroyWindow = _glfwDestroyWindowCocoa,
+        .setWindowTitle = _glfwSetWindowTitleCocoa,
+        .setWindowIcon = _glfwSetWindowIconCocoa,
+        .getWindowPos = _glfwGetWindowPosCocoa,
+        .setWindowPos = _glfwSetWindowPosCocoa,
+        .getWindowSize = _glfwGetWindowSizeCocoa,
+        .setWindowSize = _glfwSetWindowSizeCocoa,
+        .setWindowSizeLimits = _glfwSetWindowSizeLimitsCocoa,
+        .setWindowAspectRatio = _glfwSetWindowAspectRatioCocoa,
+        .getFramebufferSize = _glfwGetFramebufferSizeCocoa,
+        .getWindowFrameSize = _glfwGetWindowFrameSizeCocoa,
+        .getWindowContentScale = _glfwGetWindowContentScaleCocoa,
+        .iconifyWindow = _glfwIconifyWindowCocoa,
+        .restoreWindow = _glfwRestoreWindowCocoa,
+        .maximizeWindow = _glfwMaximizeWindowCocoa,
+        .showWindow = _glfwShowWindowCocoa,
+        .hideWindow = _glfwHideWindowCocoa,
+        .requestWindowAttention = _glfwRequestWindowAttentionCocoa,
+        .focusWindow = _glfwFocusWindowCocoa,
+        .setWindowMonitor = _glfwSetWindowMonitorCocoa,
+        .windowFocused = _glfwWindowFocusedCocoa,
+        .windowIconified = _glfwWindowIconifiedCocoa,
+        .windowVisible = _glfwWindowVisibleCocoa,
+        .windowMaximized = _glfwWindowMaximizedCocoa,
+        .windowHovered = _glfwWindowHoveredCocoa,
+        .framebufferTransparent = _glfwFramebufferTransparentCocoa,
+        .getWindowOpacity = _glfwGetWindowOpacityCocoa,
+        .setWindowResizable = _glfwSetWindowResizableCocoa,
+        .setWindowDecorated = _glfwSetWindowDecoratedCocoa,
+        .setWindowFloating = _glfwSetWindowFloatingCocoa,
+        .setWindowOpacity = _glfwSetWindowOpacityCocoa,
+        .setWindowMousePassthrough = _glfwSetWindowMousePassthroughCocoa,
+        .pollEvents = _glfwPollEventsCocoa,
+        .waitEvents = _glfwWaitEventsCocoa,
+        .waitEventsTimeout = _glfwWaitEventsTimeoutCocoa,
+        .postEmptyEvent = _glfwPostEmptyEventCocoa,
+        .getEGLPlatform = _glfwGetEGLPlatformCocoa,
+        .getEGLNativeDisplay = _glfwGetEGLNativeDisplayCocoa,
+        .getEGLNativeWindow = _glfwGetEGLNativeWindowCocoa,
+        .getRequiredInstanceExtensions = _glfwGetRequiredInstanceExtensionsCocoa,
+        .getPhysicalDevicePresentationSupport = _glfwGetPhysicalDevicePresentationSupportCocoa,
+        .createWindowSurface = _glfwCreateWindowSurfaceCocoa
     };
 
     *platform = cocoa;
@@ -617,7 +619,7 @@ int _glfwInitCocoa(void)
                name:NSTextInputContextKeyboardSelectionDidChangeNotification
              object:nil];
 
-    createKeyTables();
+    createKeyTablesCocoa();
 
     _glfw.ns.eventSource = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
     if (!_glfw.ns.eventSource)
@@ -689,4 +691,6 @@ void _glfwTerminateCocoa(void)
 
     } // autoreleasepool
 }
+
+#endif // _GLFW_COCOA
 

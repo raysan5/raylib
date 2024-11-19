@@ -1,8 +1,9 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.4 (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -23,8 +24,6 @@
 // 3. This notice may not be removed or altered from any source
 //    distribution.
 //
-//========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
 #include "internal.h"
@@ -61,12 +60,12 @@ static void fitToMonitor(_GLFWwindow* window)
     window->null.height = mode.height;
 }
 
-static void acquireMonitor(_GLFWwindow* window)
+static void acquireMonitorNull(_GLFWwindow* window)
 {
     _glfwInputMonitorWindow(window->monitor, window);
 }
 
-static void releaseMonitor(_GLFWwindow* window)
+static void releaseMonitorNull(_GLFWwindow* window)
 {
     if (window->monitor->window != window)
         return;
@@ -149,7 +148,7 @@ GLFWbool _glfwCreateWindowNull(_GLFWwindow* window,
     {
         _glfwShowWindowNull(window);
         _glfwFocusWindowNull(window);
-        acquireMonitor(window);
+        acquireMonitorNull(window);
 
         if (wndconfig->centerCursor)
             _glfwCenterCursorInContentArea(window);
@@ -170,7 +169,7 @@ GLFWbool _glfwCreateWindowNull(_GLFWwindow* window,
 void _glfwDestroyWindowNull(_GLFWwindow* window)
 {
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorNull(window);
 
     if (_glfw.null.focusedWindow == window)
         _glfw.null.focusedWindow = NULL;
@@ -205,14 +204,14 @@ void _glfwSetWindowMonitorNull(_GLFWwindow* window,
     }
 
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorNull(window);
 
     _glfwInputWindowMonitor(window, monitor);
 
     if (window->monitor)
     {
         window->null.visible = GLFW_TRUE;
-        acquireMonitor(window);
+        acquireMonitorNull(window);
         fitToMonitor(window);
     }
     else
@@ -260,8 +259,9 @@ void _glfwSetWindowSizeNull(_GLFWwindow* window, int width, int height)
     {
         window->null.width = width;
         window->null.height = height;
-        _glfwInputWindowSize(window, width, height);
         _glfwInputFramebufferSize(window, width, height);
+        _glfwInputWindowDamage(window);
+        _glfwInputWindowSize(window, width, height);
     }
 }
 
@@ -341,7 +341,7 @@ void _glfwIconifyWindowNull(_GLFWwindow* window)
         _glfwInputWindowIconify(window, GLFW_TRUE);
 
         if (window->monitor)
-            releaseMonitor(window);
+            releaseMonitorNull(window);
     }
 }
 
@@ -353,7 +353,7 @@ void _glfwRestoreWindowNull(_GLFWwindow* window)
         _glfwInputWindowIconify(window, GLFW_FALSE);
 
         if (window->monitor)
-            acquireMonitor(window);
+            acquireMonitorNull(window);
     }
     else if (window->null.maximized)
     {
@@ -568,7 +568,7 @@ EGLNativeWindowType _glfwGetEGLNativeWindowNull(_GLFWwindow* window)
 
 const char* _glfwGetScancodeNameNull(int scancode)
 {
-    if (scancode < GLFW_KEY_SPACE || scancode > GLFW_KEY_LAST)
+    if (scancode < GLFW_NULL_SC_FIRST || scancode > GLFW_NULL_SC_LAST)
     {
         _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode %i", scancode);
         return NULL;
@@ -576,117 +576,117 @@ const char* _glfwGetScancodeNameNull(int scancode)
 
     switch (scancode)
     {
-        case GLFW_KEY_APOSTROPHE:
+        case GLFW_NULL_SC_APOSTROPHE:
             return "'";
-        case GLFW_KEY_COMMA:
+        case GLFW_NULL_SC_COMMA:
             return ",";
-        case GLFW_KEY_MINUS:
-        case GLFW_KEY_KP_SUBTRACT:
+        case GLFW_NULL_SC_MINUS:
+        case GLFW_NULL_SC_KP_SUBTRACT:
             return "-";
-        case GLFW_KEY_PERIOD:
-        case GLFW_KEY_KP_DECIMAL:
+        case GLFW_NULL_SC_PERIOD:
+        case GLFW_NULL_SC_KP_DECIMAL:
             return ".";
-        case GLFW_KEY_SLASH:
-        case GLFW_KEY_KP_DIVIDE:
+        case GLFW_NULL_SC_SLASH:
+        case GLFW_NULL_SC_KP_DIVIDE:
             return "/";
-        case GLFW_KEY_SEMICOLON:
+        case GLFW_NULL_SC_SEMICOLON:
             return ";";
-        case GLFW_KEY_EQUAL:
-        case GLFW_KEY_KP_EQUAL:
+        case GLFW_NULL_SC_EQUAL:
+        case GLFW_NULL_SC_KP_EQUAL:
             return "=";
-        case GLFW_KEY_LEFT_BRACKET:
+        case GLFW_NULL_SC_LEFT_BRACKET:
             return "[";
-        case GLFW_KEY_RIGHT_BRACKET:
+        case GLFW_NULL_SC_RIGHT_BRACKET:
             return "]";
-        case GLFW_KEY_KP_MULTIPLY:
+        case GLFW_NULL_SC_KP_MULTIPLY:
             return "*";
-        case GLFW_KEY_KP_ADD:
+        case GLFW_NULL_SC_KP_ADD:
             return "+";
-        case GLFW_KEY_BACKSLASH:
-        case GLFW_KEY_WORLD_1:
-        case GLFW_KEY_WORLD_2:
+        case GLFW_NULL_SC_BACKSLASH:
+        case GLFW_NULL_SC_WORLD_1:
+        case GLFW_NULL_SC_WORLD_2:
             return "\\";
-        case GLFW_KEY_0:
-        case GLFW_KEY_KP_0:
+        case GLFW_NULL_SC_0:
+        case GLFW_NULL_SC_KP_0:
             return "0";
-        case GLFW_KEY_1:
-        case GLFW_KEY_KP_1:
+        case GLFW_NULL_SC_1:
+        case GLFW_NULL_SC_KP_1:
             return "1";
-        case GLFW_KEY_2:
-        case GLFW_KEY_KP_2:
+        case GLFW_NULL_SC_2:
+        case GLFW_NULL_SC_KP_2:
             return "2";
-        case GLFW_KEY_3:
-        case GLFW_KEY_KP_3:
+        case GLFW_NULL_SC_3:
+        case GLFW_NULL_SC_KP_3:
             return "3";
-        case GLFW_KEY_4:
-        case GLFW_KEY_KP_4:
+        case GLFW_NULL_SC_4:
+        case GLFW_NULL_SC_KP_4:
             return "4";
-        case GLFW_KEY_5:
-        case GLFW_KEY_KP_5:
+        case GLFW_NULL_SC_5:
+        case GLFW_NULL_SC_KP_5:
             return "5";
-        case GLFW_KEY_6:
-        case GLFW_KEY_KP_6:
+        case GLFW_NULL_SC_6:
+        case GLFW_NULL_SC_KP_6:
             return "6";
-        case GLFW_KEY_7:
-        case GLFW_KEY_KP_7:
+        case GLFW_NULL_SC_7:
+        case GLFW_NULL_SC_KP_7:
             return "7";
-        case GLFW_KEY_8:
-        case GLFW_KEY_KP_8:
+        case GLFW_NULL_SC_8:
+        case GLFW_NULL_SC_KP_8:
             return "8";
-        case GLFW_KEY_9:
-        case GLFW_KEY_KP_9:
+        case GLFW_NULL_SC_9:
+        case GLFW_NULL_SC_KP_9:
             return "9";
-        case GLFW_KEY_A:
+        case GLFW_NULL_SC_A:
             return "a";
-        case GLFW_KEY_B:
+        case GLFW_NULL_SC_B:
             return "b";
-        case GLFW_KEY_C:
+        case GLFW_NULL_SC_C:
             return "c";
-        case GLFW_KEY_D:
+        case GLFW_NULL_SC_D:
             return "d";
-        case GLFW_KEY_E:
+        case GLFW_NULL_SC_E:
             return "e";
-        case GLFW_KEY_F:
+        case GLFW_NULL_SC_F:
             return "f";
-        case GLFW_KEY_G:
+        case GLFW_NULL_SC_G:
             return "g";
-        case GLFW_KEY_H:
+        case GLFW_NULL_SC_H:
             return "h";
-        case GLFW_KEY_I:
+        case GLFW_NULL_SC_I:
             return "i";
-        case GLFW_KEY_J:
+        case GLFW_NULL_SC_J:
             return "j";
-        case GLFW_KEY_K:
+        case GLFW_NULL_SC_K:
             return "k";
-        case GLFW_KEY_L:
+        case GLFW_NULL_SC_L:
             return "l";
-        case GLFW_KEY_M:
+        case GLFW_NULL_SC_M:
             return "m";
-        case GLFW_KEY_N:
+        case GLFW_NULL_SC_N:
             return "n";
-        case GLFW_KEY_O:
+        case GLFW_NULL_SC_O:
             return "o";
-        case GLFW_KEY_P:
+        case GLFW_NULL_SC_P:
             return "p";
-        case GLFW_KEY_Q:
+        case GLFW_NULL_SC_Q:
             return "q";
-        case GLFW_KEY_R:
+        case GLFW_NULL_SC_R:
             return "r";
-        case GLFW_KEY_S:
+        case GLFW_NULL_SC_S:
             return "s";
-        case GLFW_KEY_T:
+        case GLFW_NULL_SC_T:
             return "t";
-        case GLFW_KEY_U:
+        case GLFW_NULL_SC_U:
             return "u";
-        case GLFW_KEY_V:
+        case GLFW_NULL_SC_V:
             return "v";
-        case GLFW_KEY_W:
+        case GLFW_NULL_SC_W:
             return "w";
-        case GLFW_KEY_X:
+        case GLFW_NULL_SC_X:
             return "x";
-        case GLFW_KEY_Y:
+        case GLFW_NULL_SC_Y:
             return "y";
-        case GLFW_KEY_Z:
+        case GLFW_NULL_SC_Z:
             return "z";
     }
 
@@ -695,7 +695,7 @@ const char* _glfwGetScancodeNameNull(int scancode)
 
 int _glfwGetKeyScancodeNull(int key)
 {
-    return key;
+    return _glfw.null.scancodes[key];
 }
 
 void _glfwGetRequiredInstanceExtensionsNull(char** extensions)

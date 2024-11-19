@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Android project (APK building)
 #
-#   Copyright (c) 2017-2023 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2017-2024 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -158,7 +158,8 @@ LDLIBS = -lm -lc -lraylib -llog -landroid -lEGL -lGLESv2 -lOpenSLES -ldl
 OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/obj/%.o, $(PROJECT_SOURCE_FILES))
 
 # Android APK building process... some steps required...
-# NOTE: typing 'make' will invoke the default target entry called 'all',
+# NOTE: typing 'make' will invoke the default target entry called 'all'
+# TODO: Use apksigner for APK signing, jarsigner is not recommended
 all: create_temp_project_dirs \
      copy_project_required_libs \
      copy_project_resources \
@@ -170,8 +171,14 @@ all: create_temp_project_dirs \
      compile_project_class \
      compile_project_class_dex \
      create_project_apk_package \
-     zipalign_project_apk_package \
-     sign_project_apk_package
+     sign_project_apk_package \
+     zipalign_project_apk_package
+
+# WARNING: About build signing process:
+#  - If using apksigner, zipalign must be used before the APK file has been signed.
+#  - If using jarsigner (not recommended), zipalign must be used after the APK file has been signed.
+# REF: https://developer.android.com/tools/zipalign
+# REF: https://developer.android.com/tools/apksigner
 
 # Create required temp directories for APK building
 create_temp_project_dirs:

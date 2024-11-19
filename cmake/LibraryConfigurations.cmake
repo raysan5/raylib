@@ -43,7 +43,7 @@ if (${PLATFORM} MATCHES "Desktop")
         if ("${OPENGL_LIBRARIES}" STREQUAL "")
             set(OPENGL_LIBRARIES "GL")
         endif ()
-        
+
         set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
 
         if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
@@ -58,8 +58,9 @@ if (${PLATFORM} MATCHES "Desktop")
 
 elseif (${PLATFORM} MATCHES "Web")
     set(PLATFORM_CPP "PLATFORM_WEB")
-    set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_GLFW=3 -s ASSERTIONS=1 --profiling")
+    if(NOT GRAPHICS)
+        set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+    endif()
     set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
 
 elseif (${PLATFORM} MATCHES "Android")
@@ -86,17 +87,23 @@ elseif ("${PLATFORM}" MATCHES "DRM")
     find_library(DRM drm)
     find_library(GBM gbm)
 
-    if (NOT CMAKE_CROSSCOMPILING)
+    if (NOT CMAKE_CROSSCOMPILING OR NOT CMAKE_SYSROOT)
         include_directories(/usr/include/libdrm)
     endif ()
     set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread m dl)
 
+elseif ("${PLATFORM}" MATCHES "SDL")
+    find_package(SDL2 REQUIRED)
+    set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+    set(LIBS_PRIVATE SDL2::SDL2)
+
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
-    set(${SUGGESTED_GRAPHICS} "${GRAPHICS}")
+    set(SUGGESTED_GRAPHICS "${GRAPHICS}")
+
     if (${OPENGL_VERSION} MATCHES "4.3")
-		set(GRAPHICS "GRAPHICS_API_OPENGL_43")
+        set(GRAPHICS "GRAPHICS_API_OPENGL_43")
     elseif (${OPENGL_VERSION} MATCHES "3.3")
         set(GRAPHICS "GRAPHICS_API_OPENGL_33")
     elseif (${OPENGL_VERSION} MATCHES "2.1")
@@ -108,8 +115,8 @@ if (NOT ${OPENGL_VERSION} MATCHES "OFF")
     elseif (${OPENGL_VERSION} MATCHES "ES 3.0")
         set(GRAPHICS "GRAPHICS_API_OPENGL_ES3")
     endif ()
-    if ("${SUGGESTED_GRAPHICS}" AND NOT "${SUGGESTED_GRAPHICS}" STREQUAL "${GRAPHICS}")
-        message(WARNING "You are overriding the suggested GRAPHICS=${SUGGESTED_GRAPHICS} with ${GRAPHICS}! This may fail")
+    if (NOT "${SUGGESTED_GRAPHICS}" STREQUAL "" AND NOT "${SUGGESTED_GRAPHICS}" STREQUAL "${GRAPHICS}")
+        message(WARNING "You are overriding the suggested GRAPHICS=${SUGGESTED_GRAPHICS} with ${GRAPHICS}! This may fail.")
     endif ()
 endif ()
 

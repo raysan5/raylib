@@ -54,6 +54,10 @@ packages/
 *.bc
 *.so
 *.so.*
+*.dll
+
+# Emscripten
+emsdk
 
 # Ignore wasm data in examples/
 examples/**/*.wasm
@@ -100,6 +104,7 @@ GRTAGS
 GTAGS
 
 # Zig programming language
+.zig-cache/
 zig-cache/
 zig-out/
 build/

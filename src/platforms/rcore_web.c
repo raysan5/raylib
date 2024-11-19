@@ -26,7 +26,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -73,6 +73,9 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
+    bool ourFullscreen;                 // Internal var to filter our handling of fullscreen vs the user handling of fullscreen
+    int unmaximizedWidth;               // Internal var to store the unmaximized window (canvas) width
+    int unmaximizedHeight;              // Internal var to store the unmaximized window (canvas) height
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -81,6 +84,25 @@ typedef struct {
 extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific data
+
+//----------------------------------------------------------------------------------
+// Local Variables Definition
+//----------------------------------------------------------------------------------
+static const char cursorLUT[11][12] = {
+    "default",     // 0  MOUSE_CURSOR_DEFAULT
+    "default",     // 1  MOUSE_CURSOR_ARROW
+    "text",        // 2  MOUSE_CURSOR_IBEAM
+    "crosshair",   // 3  MOUSE_CURSOR_CROSSHAIR
+    "pointer",     // 4  MOUSE_CURSOR_POINTING_HAND
+    "ew-resize",   // 5  MOUSE_CURSOR_RESIZE_EW
+    "ns-resize",   // 6  MOUSE_CURSOR_RESIZE_NS
+    "nwse-resize", // 7  MOUSE_CURSOR_RESIZE_NWSE
+    "nesw-resize", // 8  MOUSE_CURSOR_RESIZE_NESW
+    "move",        // 9  MOUSE_CURSOR_RESIZE_ALL
+    "not-allowed"  // 10 MOUSE_CURSOR_NOT_ALLOWED
+};
+
+Vector2 lockedMousePos = { 0 };
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -92,11 +114,12 @@ void ClosePlatform(void);        // Close platform
 static void ErrorCallback(int error, const char *description);                      // GLFW3 Error Callback, runs on GLFW3 error
 
 // Window callbacks events
-static void WindowSizeCallback(GLFWwindow *window, int width, int height);          // GLFW3 WindowSize Callback, runs when window is resized
-static void WindowIconifyCallback(GLFWwindow *window, int iconified);               // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-//static void WindowMaximizeCallback(GLFWwindow *window, int maximized);              // GLFW3 Window Maximize Callback, runs when window is maximized
-static void WindowFocusCallback(GLFWwindow *window, int focused);                   // GLFW3 WindowFocus Callback, runs when window get/lose focus
-static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);  // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowSizeCallback(GLFWwindow *window, int width, int height);              // GLFW3 WindowSize Callback, runs when window is resized
+static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+//static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                // GLFW3 Window Maximize Callback, runs when window is maximized
+static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);      // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
@@ -108,11 +131,13 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 
 // Emscripten window callback events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 
 // Emscripten input callback events
+static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 
@@ -140,6 +165,45 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
+    platform.ourFullscreen = true;
+    bool enterFullscreen = false;
+
+    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+    if (wasFullscreen)
+    {
+        if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterFullscreen = false;
+        else if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterFullscreen = true;
+        else
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            if (canvasStyleWidth > canvasWidth) enterFullscreen = false;
+            else enterFullscreen = true;
+        }
+
+        EM_ASM(document.exitFullscreen(););
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else enterFullscreen = true;
+
+    if (enterFullscreen)
+    {
+        // NOTE: The setTimeouts handle the browser mode change delay
+        EM_ASM
+        (
+            setTimeout(function()
+            {
+                Module.requestFullscreen(false, false);
+            }, 100);
+        );
+        CORE.Window.fullscreen = true;
+        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    }
+
+    // NOTE: Old notes below:
     /*
         EM_ASM
         (
@@ -204,20 +268,69 @@ void ToggleFullscreen(void)
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
         }
     */
-
-    CORE.Window.fullscreen = !CORE.Window.fullscreen; // Toggle fullscreen flag
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
+    platform.ourFullscreen = true;
+    bool enterBorderless = false;
+
+    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+    if (wasFullscreen)
+    {
+        if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterBorderless = false;
+        else if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterBorderless = true;
+        else
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
+            if (screenWidth == canvasWidth) enterBorderless = false;
+            else enterBorderless = true;
+        }
+
+        EM_ASM(document.exitFullscreen(););
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else enterBorderless = true;
+
+    if (enterBorderless)
+    {
+        // NOTE: 1. The setTimeouts handle the browser mode change delay
+        //       2. The style unset handles the possibility of a width="value%" like on the default shell.html file
+        EM_ASM
+        (
+            setTimeout(function()
+            {
+                Module.requestFullscreen(false, true);
+                setTimeout(function()
+                {
+                    canvas.style.width="unset";
+                }, 100);
+            }, 100);
+        );
+        CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+    }
 }
 
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
-    TRACELOG(LOG_WARNING, "MaximizeWindow() not available on target platform");
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE && !(CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
+    {
+        platform.unmaximizedWidth = CORE.Window.screen.width;
+        platform.unmaximizedHeight = CORE.Window.screen.height;
+
+        const int tabWidth = EM_ASM_INT( return window.innerWidth; );
+        const int tabHeight = EM_ASM_INT( return window.innerHeight; );
+
+        if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
+
+        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    }
 }
 
 // Set window state: minimized
@@ -229,19 +342,275 @@ void MinimizeWindow(void)
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE && (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
+    {
+        if (platform.unmaximizedWidth && platform.unmaximizedHeight) glfwSetWindowSize(platform.handle, platform.unmaximizedWidth, platform.unmaximizedHeight);
+
+        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+    }
 }
 
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "SetWindowState() not available on target platform");
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if ((flags & FLAG_VSYNC_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
+    {
+        // NOTE: Window state flag updated inside ToggleBorderlessWindowed() function
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed();
+        }
+        else ToggleBorderlessWindowed();
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
+    {
+        // NOTE: Window state flag updated inside ToggleFullscreen() function
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
+            if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || screenWidth == canvasWidth ) ToggleFullscreen();
+        }
+        else ToggleFullscreen();
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
+    {
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if ((flags & FLAG_WINDOW_UNDECORATED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if ((flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if ((flags & FLAG_WINDOW_MINIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) != (flags & FLAG_WINDOW_MAXIMIZED)) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
+    {
+        if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+        {
+            platform.unmaximizedWidth = CORE.Window.screen.width;
+            platform.unmaximizedHeight = CORE.Window.screen.height;
+
+            const int tabWidth = EM_ASM_INT( return window.innerWidth; );
+            const int tabHeight = EM_ASM_INT( return window.innerHeight; );
+
+            if (tabWidth && tabHeight) glfwSetWindowSize(platform.handle, tabWidth, tabHeight);
+
+            CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+        }
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if ((flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if ((flags & FLAG_WINDOW_TOPMOST) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if ((flags & FLAG_WINDOW_TRANSPARENT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if ((flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if ((flags & FLAG_MSAA_4X_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if ((flags & FLAG_INTERLACED_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if ((flags & FLAG_VSYNC_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
+    {
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
+            if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || (screenWidth == canvasWidth)) EM_ASM(document.exitFullscreen(););
+        }
+
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
+    {
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || (canvasStyleWidth > canvasWidth)) EM_ASM(document.exitFullscreen(););
+        }
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
+    {
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if ((flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if ((flags & FLAG_WINDOW_MINIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
+    {
+        if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+        {
+            if (platform.unmaximizedWidth && platform.unmaximizedHeight) glfwSetWindowSize(platform.handle, platform.unmaximizedWidth, platform.unmaximizedHeight);
+
+            CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+        }
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if ((flags & FLAG_WINDOW_UNDECORATED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if ((flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if ((flags & FLAG_WINDOW_TOPMOST) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if ((flags & FLAG_WINDOW_TRANSPARENT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if ((flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if ((flags & FLAG_MSAA_4X_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if ((flags & FLAG_INTERLACED_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Set icon for window
@@ -304,7 +673,9 @@ void SetWindowSize(int width, int height)
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on target platform");
+    if (opacity >= 1.0f) opacity = 1.0f;
+    else if (opacity <= 0.0f) opacity = 0.0f;
+    EM_ASM({ document.getElementById('canvas').style.opacity = $0; }, opacity);
 }
 
 // Set window focused
@@ -344,15 +715,19 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on target platform");
-    return 0;
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int width = 0;
+    width = EM_ASM_INT( { return screen.width; }, 0);
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on target platform");
-    return 0;
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int height = 0;
+    height = EM_ASM_INT( { return screen.height; }, 0);
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
@@ -386,8 +761,11 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    // NOTE: Returned position is relative to the current monitor where the browser window is located
+    Vector2 position = { 0, 0 };
+    position.x = (float)EM_ASM_INT( { return window.screenX; }, 0);
+    position.y = (float)EM_ASM_INT( { return window.screenY; }, 0);
+    return position;
 }
 
 // Get window scale DPI factor for current monitor
@@ -427,16 +805,36 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = { 0 };
+
+    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+
+    return image;
+}
+
 // Show mouse cursor
 void ShowCursor(void)
 {
-    CORE.Input.Mouse.cursorHidden = false;
+    if (CORE.Input.Mouse.cursorHidden)
+    {
+        EM_ASM( { document.getElementById("canvas").style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
+
+        CORE.Input.Mouse.cursorHidden = false;
+    }
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
-    CORE.Input.Mouse.cursorHidden = true;
+    if (!CORE.Input.Mouse.cursorHidden)
+    {
+        EM_ASM(document.getElementById('canvas').style.cursor = 'none';);
+
+        CORE.Input.Mouse.cursorHidden = true;
+    }
 }
 
 // Enables cursor (unlock cursor)
@@ -447,7 +845,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    CORE.Input.Mouse.cursorHidden = false;
+    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
 }
 
 // Disables cursor (lock cursor)
@@ -459,7 +857,7 @@ void DisableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    CORE.Input.Mouse.cursorHidden = true;
+    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -503,11 +901,44 @@ int SetGamepadMappings(const char *mappings)
     return 0;
 }
 
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
+{
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (duration > 0.0f))
+    {
+        if (leftMotor < 0.0f) leftMotor = 0.0f;
+        if (leftMotor > 1.0f) leftMotor = 1.0f;
+        if (rightMotor < 0.0f) rightMotor = 0.0f;
+        if (rightMotor > 1.0f) rightMotor = 1.0f;
+        if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
+        duration *= 1000.0f; // Convert duration to ms
+
+        // Note: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
+        //       and Firefox only supports the hapticActuators API
+        EM_ASM({
+            try
+            {
+                navigator.getGamepads()[$0].vibrationActuator.playEffect('dual-rumble', { startDelay: 0, duration: $3, weakMagnitude: $1, strongMagnitude: $2 });
+            }
+            catch (e)
+            {
+                try
+                {
+                    navigator.getGamepads()[$0].hapticActuators[0].pulse($2, $3);
+                }
+                catch (e) { }
+            }
+        }, gamepad, leftMotor, rightMotor, duration);
+    }
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
+    if (CORE.Input.Mouse.cursorHidden) lockedMousePos = CORE.Input.Mouse.currentPosition;
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
@@ -518,33 +949,17 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        const char *cursorName = NULL;
+        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { document.getElementById('canvas').style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+
         CORE.Input.Mouse.cursor = cursor;
-
-        switch (cursor)
-        {
-            case MOUSE_CURSOR_IBEAM: cursorName = "text"; break;
-            case MOUSE_CURSOR_CROSSHAIR: cursorName = "crosshair"; break;
-            case MOUSE_CURSOR_POINTING_HAND: cursorName = "pointer"; break;
-            case MOUSE_CURSOR_RESIZE_EW: cursorName = "ew-resize"; break;
-            case MOUSE_CURSOR_RESIZE_NS: cursorName = "ns-resize"; break;
-            case MOUSE_CURSOR_RESIZE_NWSE: cursorName = "nwse-resize"; break;
-            case MOUSE_CURSOR_RESIZE_NESW: cursorName = "nesw-resize"; break;
-            case MOUSE_CURSOR_RESIZE_ALL: cursorName = "move"; break;
-            case MOUSE_CURSOR_NOT_ALLOWED: cursorName = "not-allowed"; break;
-            case MOUSE_CURSOR_ARROW: // WARNING: It does not seem t be a specific cursor for arrow
-            case MOUSE_CURSOR_DEFAULT: cursorName = "default"; break;
-            default:
-            {
-                cursorName = "default";
-                CORE.Input.Mouse.cursor = MOUSE_CURSOR_DEFAULT;
-            } break;
-        }
-
-        // Set the cursor element on the canvas CSS
-        // The canvas is coded to the Id "canvas" on init
-        EM_ASM({document.getElementById("canvas").style.cursor = UTF8ToString($0);}, cursorName);
     }
+}
+
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
 }
 
 // Register all input events
@@ -591,7 +1006,6 @@ void PollInputEvents(void)
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
-
     // Gamepad support using emscripten API
     // NOTE: GLFW3 joystick functionality not available in web
 
@@ -637,7 +1051,7 @@ void PollInputEvents(void)
                     default: break;
                 }
 
-                if (button != -1)   // Check for valid button
+                if (button + 1 != 0)   // Check for valid button
                 {
                     if (gamepadState.digitalButton[j] == 1)
                     {
@@ -716,8 +1130,13 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
     else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
-        // NOTE: Some GLFW flags are not supported on HTML5
-        // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_SCALE_TO_MONITOR, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
+    // NOTE: Some GLFW flags are not supported on HTML5
+    // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
+
+    // Scale content area based on the monitor content scale where window is placed on
+    // NOTE: This feature requires emscripten 3.1.51
+    //if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+    //else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
@@ -774,6 +1193,9 @@ int InitPlatform(void)
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
     CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
+
+    // Init fullscreen toggle required var:
+    platform.ourFullscreen = false;
 
     if (CORE.Window.fullscreen)
     {
@@ -859,6 +1281,11 @@ int InitPlatform(void)
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
     glfwSetDropCallback(platform.handle, WindowDropCallback);
 
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+       glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
+    }
+
     // Set input callback events
     glfwSetKeyCallback(platform.handle, KeyCallback);
     glfwSetCharCallback(platform.handle, CharCallback);
@@ -908,7 +1335,7 @@ int InitPlatform(void)
     // Initialize input events callbacks
     //----------------------------------------------------------------------------
     // Setup callback functions for the DOM events
-    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
+    emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
     // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
@@ -925,6 +1352,10 @@ int InitPlatform(void)
 
     // Support mouse events
     emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
+
+    // Following the mouse delta when the mouse is locked
+    emscripten_set_mousemove_callback("#canvas", NULL, 1, EmscriptenMouseMoveCallback);
 
     // Support touch events
     emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
@@ -993,6 +1424,11 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     }
 
     // NOTE: Postprocessing texture is not scaled to new size
+}
+
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
+{
+    CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
@@ -1128,9 +1564,13 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
-    CORE.Input.Mouse.currentPosition.x = (float)x;
-    CORE.Input.Mouse.currentPosition.y = (float)y;
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    // If the pointer is not locked, follow the position
+    if (!CORE.Input.Mouse.cursorHidden)
+    {
+        CORE.Input.Mouse.currentPosition.x = (float)x;
+        CORE.Input.Mouse.currentPosition.y = (float)y;
+        CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    }
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
@@ -1156,6 +1596,18 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 #endif
 }
 
+static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+    // To emulate the GLFW_RAW_MOUSE_MOTION property.
+    if (CORE.Input.Mouse.cursorHidden)
+    {
+        CORE.Input.Mouse.previousPosition.x = lockedMousePos.x - mouseEvent->movementX;
+        CORE.Input.Mouse.previousPosition.y = lockedMousePos.y - mouseEvent->movementY;
+    }
+
+    return 1; // The event was consumed by the callback handler
+}
+
 // GLFW3 Scrolling Callback, runs on mouse wheel
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
@@ -1172,21 +1624,30 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // TODO: Implement EmscriptenFullscreenChangeCallback()?
+    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
+    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
+    if (platform.ourFullscreen) platform.ourFullscreen = false;
+    else
+    {
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (!wasFullscreen)
+        {
+            CORE.Window.fullscreen = false;
+            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+        }
+    }
 
     return 1; // The event was consumed by the callback handler
 }
 
 // Register window resize event
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
-{
-    // TODO: Implement EmscriptenWindowResizedCallback()?
+// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
+// {
+//     // TODO: Implement EmscriptenWindowResizedCallback()?
 
-    return 1; // The event was consumed by the callback handler
-}
-
-EM_JS(int, GetWindowInnerWidth, (), { return window.innerWidth; });
-EM_JS(int, GetWindowInnerHeight, (), { return window.innerHeight; });
+//     return 1; // The event was consumed by the callback handler
+// }
 
 // Register DOM element resize event
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
@@ -1196,14 +1657,14 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
     // This event is called whenever the window changes sizes,
     // so the size of the canvas object is explicitly retrieved below
-    int width = GetWindowInnerWidth();
-    int height = GetWindowInnerHeight();
+    int width = EM_ASM_INT( return window.innerWidth; );
+    int height = EM_ASM_INT( return window.innerHeight; );
 
-    if (width < CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
-    else if (width > CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
+    if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
+    else if (width > (int)CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
 
-    if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
-    else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
+    if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
+    else if (height > (int)CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
 
     emscripten_set_canvas_element_size("#canvas", width, height);
 
@@ -1228,6 +1689,20 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
     // This is only for registering mouse click events with emscripten and doesn't need to do anything
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Register pointer lock events
+static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
+{
+    CORE.Input.Mouse.cursorHidden = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
+
+    if (CORE.Input.Mouse.cursorHidden)
+    {
+        lockedMousePos = CORE.Input.Mouse.currentPosition;
+        CORE.Input.Mouse.previousPosition = lockedMousePos;
+    }
 
     return 1; // The event was consumed by the callback handler
 }
@@ -1283,6 +1758,13 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
     }
 
+    // Update mouse position if we detect a single touch.
+    if (CORE.Input.Touch.pointCount == 1)
+    {
+        CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.position[0].x;
+        CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.position[0].y;
+    }
+
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = {0};
 
@@ -1306,10 +1788,13 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
-
-    // Reset the pointCount for web, if it was the last Touch End event
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND && CORE.Input.Touch.pointCount == 1) CORE.Input.Touch.pointCount = 0;
 #endif
+
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
+    {
+        CORE.Input.Touch.pointCount--;
+        if (CORE.Input.Touch.pointCount < 0) CORE.Input.Touch.pointCount = 0;
+    }
 
     return 1; // The event was consumed by the callback handler
 }

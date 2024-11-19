@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2023 Karlo Licudine (@accidentalrebel)
+*   Copyright (c) 2020-2024 Karlo Licudine (@accidentalrebel)
 *
 ********************************************************************************************/
 
@@ -42,6 +42,9 @@ int main(void)
 
     const int blendCountMax = 4;
     BlendMode blendMode = 0;
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //---------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key

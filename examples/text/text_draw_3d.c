@@ -22,7 +22,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2023 Vlad Adrian (@demizdor)
+*   Copyright (c) 2021-2024 Vlad Adrian (@demizdor)
 *
 ********************************************************************************************/
 
@@ -195,7 +195,7 @@ int main(void)
         // Handle clicking the cube
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            Ray ray = GetMouseRay(GetMousePosition(), camera);
+            Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
 
             // Check collision between ray and box
             RayCollision collision = GetRayCollisionBox(ray,

@@ -55,7 +55,7 @@ jobs:
       run: | 
         sudo apt-get update -qq
         sudo apt-get install gcc-multilib
-        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-dev libxkbcommon-dev
         mkdir build
         cd build
         mkdir ${{ env.RELEASE_NAME }}
@@ -94,18 +94,15 @@ jobs:
         tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
         
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.RELEASE_NAME }}.tar.gz
         path: ./build/${{ env.RELEASE_NAME }}.tar.gz
         
     - name: Upload Artifact to Release
-      uses: actions/upload-release-asset@v1.0.1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./build/${{ env.RELEASE_NAME }}.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/${{ env.RELEASE_NAME }}.tar.gz
-          asset_name: ${{ env.RELEASE_NAME }}.tar.gz
-          asset_content_type: application/gzip
-      if: github.event_name == 'release' && github.event.action == 'published'  
+      if: github.event_name == 'release' && github.event.action == 'published'

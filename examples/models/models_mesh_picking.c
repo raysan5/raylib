@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2023 Joel Davis (@joeld42) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2024 Joel Davis (@joeld42) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -88,7 +88,7 @@ int main(void)
         Color cursorColor = WHITE;
 
         // Get ray and test against objects
-        ray = GetMouseRay(GetMousePosition(), camera);
+        ray = GetScreenToWorldRay(GetMousePosition(), camera);
 
         // Check ray collision against ground quad
         RayCollision groundHitInfo = GetRayCollisionQuad(ray, g0, g1, g2, g3);

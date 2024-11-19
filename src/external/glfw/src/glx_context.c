@@ -24,10 +24,10 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_X11)
 
 #include <string.h>
 #include <stdlib.h>
@@ -190,6 +190,7 @@ static void swapBuffersGLX(_GLFWwindow* window)
 static void swapIntervalGLX(int interval)
 {
     _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
+    assert(window != NULL);
 
     if (_glfw.glx.EXT_swap_control)
     {
@@ -713,4 +714,6 @@ GLFWAPI GLXWindow glfwGetGLXWindow(GLFWwindow* handle)
 
     return window->context.glx.window;
 }
+
+#endif // _GLFW_X11
 

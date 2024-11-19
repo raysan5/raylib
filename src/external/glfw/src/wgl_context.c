@@ -24,10 +24,10 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_WIN32)
 
 #include <stdlib.h>
 #include <assert.h>
@@ -115,6 +115,23 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             if (_glfw.wgl.EXT_colorspace)
                 ADD_ATTRIB(WGL_COLORSPACE_EXT);
         }
+
+        // NOTE: In a Parallels VM WGL_ARB_pixel_format returns fewer pixel formats than
+        //       DescribePixelFormat, violating the guarantees of the extension spec
+        // HACK: Iterate through the minimum of both counts
+
+        const int attrib = WGL_NUMBER_PIXEL_FORMATS_ARB;
+        int extensionCount;
+
+        if (!wglGetPixelFormatAttribivARB(window->context.wgl.dc,
+                                          1, 0, 1, &attrib, &extensionCount))
+        {
+            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                                 "WGL: Failed to retrieve pixel format attribute");
+            return 0;
+        }
+
+        nativeCount = _glfw_min(nativeCount, extensionCount);
     }
 
     usableConfigs = _glfw_calloc(nativeCount, sizeof(_GLFWfbconfig));
@@ -330,6 +347,7 @@ static void swapBuffersWGL(_GLFWwindow* window)
 static void swapIntervalWGL(int interval)
 {
     _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
+    assert(window != NULL);
 
     window->context.wgl.interval = interval;
 
@@ -775,4 +793,6 @@ GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
 
     return window->context.wgl.handle;
 }
+
+#endif // _GLFW_WIN32
 

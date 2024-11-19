@@ -44,7 +44,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -57,7 +57,7 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install gcc-multilib
-        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-dev libxkbcommon-dev
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -116,6 +116,7 @@ jobs:
           -**:cpp/unsigned-comparison-zero
           -**/cmake*/Modules/**
           -**/src/external/glfw/**
+          -**/src/external/**
         input: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
         output: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
 
@@ -127,7 +128,7 @@ jobs:
 
     - name: Upload CodeQL results as an artifact
       if: success() || failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: codeql-results
         path: ${{ steps.step1.outputs.sarif-output }}

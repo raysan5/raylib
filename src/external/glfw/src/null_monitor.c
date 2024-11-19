@@ -24,8 +24,6 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
 
@@ -111,9 +109,10 @@ GLFWvidmode* _glfwGetVideoModesNull(_GLFWmonitor* monitor, int* found)
     return mode;
 }
 
-void _glfwGetVideoModeNull(_GLFWmonitor* monitor, GLFWvidmode* mode)
+GLFWbool _glfwGetVideoModeNull(_GLFWmonitor* monitor, GLFWvidmode* mode)
 {
     *mode = getVideoMode();
+    return GLFW_TRUE;
 }
 
 GLFWbool _glfwGetGammaRampNull(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
@@ -130,7 +129,7 @@ GLFWbool _glfwGetGammaRampNull(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
             float value;
             value = i / (float) (monitor->null.ramp.size - 1);
             value = powf(value, 1.f / gamma) * 65535.f + 0.5f;
-            value = _glfw_fminf(value, 65535.f);
+            value = fminf(value, 65535.f);
 
             monitor->null.ramp.red[i]   = (unsigned short) value;
             monitor->null.ramp.green[i] = (unsigned short) value;

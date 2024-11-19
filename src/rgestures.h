@@ -21,7 +21,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -434,7 +434,7 @@ int GetGestureDetected(void)
     return (GESTURES.enabledFlags & GESTURES.current);
 }
 
-// Hold time measured in ms
+// Hold time measured in seconds
 float GetGestureHoldDuration(void)
 {
     // NOTE: time is calculated on current gesture HOLD
@@ -517,7 +517,7 @@ static double rgGetCurrentTime(void)
 #if defined(_WIN32)
     unsigned long long int clockFrequency, currentTime;
 
-    QueryPerformanceFrequency(&clockFrequency);     // BE CAREFUL: Costly operation!
+    QueryPerformanceFrequency(&clockFrequency); // BE CAREFUL: Costly operation!
     QueryPerformanceCounter(&currentTime);
 
     time = (double)currentTime/clockFrequency;  // Time in seconds

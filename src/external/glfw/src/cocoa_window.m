@@ -23,10 +23,10 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_COCOA)
 
 #include <float.h>
 #include <string.h>
@@ -111,7 +111,7 @@ static void updateCursorMode(_GLFWwindow* window)
 
 // Make the specified window and its video mode active on its monitor
 //
-static void acquireMonitor(_GLFWwindow* window)
+static void acquireMonitorCocoa(_GLFWwindow* window)
 {
     _glfwSetVideoModeCocoa(window->monitor, &window->videoMode);
     const CGRect bounds = CGDisplayBounds(window->monitor->ns.displayID);
@@ -127,7 +127,7 @@ static void acquireMonitor(_GLFWwindow* window)
 
 // Remove the window and restore the original video mode
 //
-static void releaseMonitor(_GLFWwindow* window)
+static void releaseMonitorCocoa(_GLFWwindow* window)
 {
     if (window->monitor->window != window)
         return;
@@ -158,7 +158,7 @@ static int translateFlags(NSUInteger flags)
 
 // Translates a macOS keycode to a GLFW keycode
 //
-static int translateKey(unsigned int key)
+static int translateKeyCocoa(unsigned int key)
 {
     if (key >= sizeof(_glfw.ns.keycodes) / sizeof(_glfw.ns.keycodes[0]))
         return GLFW_KEY_UNKNOWN;
@@ -277,7 +277,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)windowDidMiniaturize:(NSNotification *)notification
 {
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorCocoa(window);
 
     _glfwInputWindowIconify(window, GLFW_TRUE);
 }
@@ -285,7 +285,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)windowDidDeminiaturize:(NSNotification *)notification
 {
     if (window->monitor)
-        acquireMonitor(window);
+        acquireMonitorCocoa(window);
 
     _glfwInputWindowIconify(window, GLFW_FALSE);
 }
@@ -309,10 +309,15 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)windowDidChangeOcclusionState:(NSNotification* )notification
 {
-    if ([window->ns.object occlusionState] & NSWindowOcclusionStateVisible)
-        window->ns.occluded = GLFW_FALSE;
-    else
-        window->ns.occluded = GLFW_TRUE;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    if ([window->ns.object respondsToSelector:@selector(occlusionState)])
+    {
+        if ([window->ns.object occlusionState] & NSWindowOcclusionStateVisible)
+            window->ns.occluded = GLFW_FALSE;
+        else
+            window->ns.occluded = GLFW_TRUE;
+    }
+#endif
 }
 
 @end
@@ -508,7 +513,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
     if (xscale != window->ns.xscale || yscale != window->ns.yscale)
     {
-        if (window->ns.retina && window->ns.layer)
+        if (window->ns.scaleFramebuffer && window->ns.layer)
             [window->ns.layer setContentsScale:[window->ns.object backingScaleFactor]];
 
         window->ns.xscale = xscale;
@@ -556,7 +561,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)keyDown:(NSEvent *)event
 {
-    const int key = translateKey([event keyCode]);
+    const int key = translateKeyCocoa([event keyCode]);
     const int mods = translateFlags([event modifierFlags]);
 
     _glfwInputKey(window, key, [event keyCode], GLFW_PRESS, mods);
@@ -569,7 +574,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     int action;
     const unsigned int modifierFlags =
         [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
-    const int key = translateKey([event keyCode]);
+    const int key = translateKeyCocoa([event keyCode]);
     const int mods = translateFlags(modifierFlags);
     const NSUInteger keyFlag = translateKeyToModifierFlag(key);
 
@@ -588,7 +593,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)keyUp:(NSEvent *)event
 {
-    const int key = translateKey([event keyCode]);
+    const int key = translateKeyCocoa([event keyCode]);
     const int mods = translateFlags([event modifierFlags]);
     _glfwInputKey(window, key, [event keyCode], GLFW_RELEASE, mods);
 }
@@ -867,7 +872,7 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
         [window->ns.object setFrameAutosaveName:@(wndconfig->ns.frameName)];
 
     window->ns.view = [[GLFWContentView alloc] initWithGlfwWindow:window];
-    window->ns.retina = wndconfig->ns.retina;
+    window->ns.scaleFramebuffer = wndconfig->scaleFramebuffer;
 
     if (fbconfig->transparent)
     {
@@ -961,7 +966,7 @@ GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window,
     {
         _glfwShowWindowCocoa(window);
         _glfwFocusWindowCocoa(window);
-        acquireMonitor(window);
+        acquireMonitorCocoa(window);
 
         if (wndconfig->centerCursor)
             _glfwCenterCursorInContentArea(window);
@@ -991,7 +996,7 @@ void _glfwDestroyWindowCocoa(_GLFWwindow* window)
     [window->ns.object orderOut:nil];
 
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorCocoa(window);
 
     if (window->context.destroy)
         window->context.destroy(window);
@@ -1078,7 +1083,7 @@ void _glfwSetWindowSizeCocoa(_GLFWwindow* window, int width, int height)
     if (window->monitor)
     {
         if (window->monitor->window == window)
-            acquireMonitor(window);
+            acquireMonitorCocoa(window);
     }
     else
     {
@@ -1247,7 +1252,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
         if (monitor)
         {
             if (monitor->window == window)
-                acquireMonitor(window);
+                acquireMonitorCocoa(window);
         }
         else
         {
@@ -1265,7 +1270,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
     }
 
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorCocoa(window);
 
     _glfwInputWindowMonitor(window, monitor);
 
@@ -1277,7 +1282,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
 
     if (window->monitor)
     {
-        styleMask &= ~(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable);
+        styleMask &= ~(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable);
         styleMask |= NSWindowStyleMaskBorderless;
     }
     else
@@ -1303,7 +1308,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
         [window->ns.object setLevel:NSMainMenuWindowLevel + 1];
         [window->ns.object setHasShadow:NO];
 
-        acquireMonitor(window);
+        acquireMonitorCocoa(window);
     }
     else
     {
@@ -1652,14 +1657,15 @@ const char* _glfwGetScancodeNameCocoa(int scancode)
 {
     @autoreleasepool {
 
-    if (scancode < 0 || scancode > 0xff ||
-        _glfw.ns.keycodes[scancode] == GLFW_KEY_UNKNOWN)
+    if (scancode < 0 || scancode > 0xff)
     {
         _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode %i", scancode);
         return NULL;
     }
 
     const int key = _glfw.ns.keycodes[scancode];
+    if (key == GLFW_KEY_UNKNOWN)
+        return NULL;
 
     UInt32 deadKeyState = 0;
     UniChar characters[4];
@@ -1963,7 +1969,7 @@ VkResult _glfwCreateWindowSurfaceCocoa(VkInstance instance,
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
-    if (window->ns.retina)
+    if (window->ns.scaleFramebuffer)
         [window->ns.layer setContentsScale:[window->ns.object backingScaleFactor]];
 
     [window->ns.view setLayer:window->ns.layer];
@@ -2041,9 +2047,26 @@ GLFWAPI id glfwGetCocoaWindow(GLFWwindow* handle)
     {
         _glfwInputError(GLFW_PLATFORM_UNAVAILABLE,
                         "Cocoa: Platform not initialized");
-        return NULL;
+        return nil;
     }
 
     return window->ns.object;
 }
+
+GLFWAPI id glfwGetCocoaView(GLFWwindow* handle)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    _GLFW_REQUIRE_INIT_OR_RETURN(nil);
+
+    if (_glfw.platform.platformID != GLFW_PLATFORM_COCOA)
+    {
+        _glfwInputError(GLFW_PLATFORM_UNAVAILABLE,
+                        "Cocoa: Platform not initialized");
+        return nil;
+    }
+
+    return window->ns.view;
+}
+
+#endif // _GLFW_COCOA
 

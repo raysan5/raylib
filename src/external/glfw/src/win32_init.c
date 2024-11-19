@@ -1,8 +1,9 @@
 //========================================================================
-// GLFW 3.4 Win32 - www.glfw.org
+// GLFW 3.4 Win32 (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,10 +25,10 @@
 //    distribution.
 //
 //========================================================================
-// Please use C89 style variable declarations in this file because VS 2010
-//========================================================================
 
 #include "internal.h"
+
+#if defined(_GLFW_WIN32)
 
 #include <stdlib.h>
 
@@ -195,7 +196,7 @@ static void freeLibraries(void)
 
 // Create key code translation tables
 //
-static void createKeyTables(void)
+static void createKeyTablesWin32(void)
 {
     int scancode;
 
@@ -382,7 +383,7 @@ static GLFWbool createHelperWindow(void)
     if (!_glfw.win32.helperWindowClass)
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                             "WIn32: Failed to register helper window class");
+                             "Win32: Failed to register helper window class");
         return GLFW_FALSE;
     }
 
@@ -429,7 +430,6 @@ static GLFWbool createHelperWindow(void)
 
    return GLFW_TRUE;
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW internal API                      //////
@@ -603,78 +603,78 @@ GLFWbool _glfwConnectWin32(int platformID, _GLFWplatform* platform)
 {
     const _GLFWplatform win32 =
     {
-        GLFW_PLATFORM_WIN32,
-        _glfwInitWin32,
-        _glfwTerminateWin32,
-        _glfwGetCursorPosWin32,
-        _glfwSetCursorPosWin32,
-        _glfwSetCursorModeWin32,
-        _glfwSetRawMouseMotionWin32,
-        _glfwRawMouseMotionSupportedWin32,
-        _glfwCreateCursorWin32,
-        _glfwCreateStandardCursorWin32,
-        _glfwDestroyCursorWin32,
-        _glfwSetCursorWin32,
-        _glfwGetScancodeNameWin32,
-        _glfwGetKeyScancodeWin32,
-        _glfwSetClipboardStringWin32,
-        _glfwGetClipboardStringWin32,
-        _glfwInitJoysticksWin32,
-        _glfwTerminateJoysticksWin32,
-        _glfwPollJoystickWin32,
-        _glfwGetMappingNameWin32,
-        _glfwUpdateGamepadGUIDWin32,
-        _glfwFreeMonitorWin32,
-        _glfwGetMonitorPosWin32,
-        _glfwGetMonitorContentScaleWin32,
-        _glfwGetMonitorWorkareaWin32,
-        _glfwGetVideoModesWin32,
-        _glfwGetVideoModeWin32,
-        _glfwGetGammaRampWin32,
-        _glfwSetGammaRampWin32,
-        _glfwCreateWindowWin32,
-        _glfwDestroyWindowWin32,
-        _glfwSetWindowTitleWin32,
-        _glfwSetWindowIconWin32,
-        _glfwGetWindowPosWin32,
-        _glfwSetWindowPosWin32,
-        _glfwGetWindowSizeWin32,
-        _glfwSetWindowSizeWin32,
-        _glfwSetWindowSizeLimitsWin32,
-        _glfwSetWindowAspectRatioWin32,
-        _glfwGetFramebufferSizeWin32,
-        _glfwGetWindowFrameSizeWin32,
-        _glfwGetWindowContentScaleWin32,
-        _glfwIconifyWindowWin32,
-        _glfwRestoreWindowWin32,
-        _glfwMaximizeWindowWin32,
-        _glfwShowWindowWin32,
-        _glfwHideWindowWin32,
-        _glfwRequestWindowAttentionWin32,
-        _glfwFocusWindowWin32,
-        _glfwSetWindowMonitorWin32,
-        _glfwWindowFocusedWin32,
-        _glfwWindowIconifiedWin32,
-        _glfwWindowVisibleWin32,
-        _glfwWindowMaximizedWin32,
-        _glfwWindowHoveredWin32,
-        _glfwFramebufferTransparentWin32,
-        _glfwGetWindowOpacityWin32,
-        _glfwSetWindowResizableWin32,
-        _glfwSetWindowDecoratedWin32,
-        _glfwSetWindowFloatingWin32,
-        _glfwSetWindowOpacityWin32,
-        _glfwSetWindowMousePassthroughWin32,
-        _glfwPollEventsWin32,
-        _glfwWaitEventsWin32,
-        _glfwWaitEventsTimeoutWin32,
-        _glfwPostEmptyEventWin32,
-        _glfwGetEGLPlatformWin32,
-        _glfwGetEGLNativeDisplayWin32,
-        _glfwGetEGLNativeWindowWin32,
-        _glfwGetRequiredInstanceExtensionsWin32,
-        _glfwGetPhysicalDevicePresentationSupportWin32,
-        _glfwCreateWindowSurfaceWin32,
+        .platformID = GLFW_PLATFORM_WIN32,
+        .init = _glfwInitWin32,
+        .terminate = _glfwTerminateWin32,
+        .getCursorPos = _glfwGetCursorPosWin32,
+        .setCursorPos = _glfwSetCursorPosWin32,
+        .setCursorMode = _glfwSetCursorModeWin32,
+        .setRawMouseMotion = _glfwSetRawMouseMotionWin32,
+        .rawMouseMotionSupported = _glfwRawMouseMotionSupportedWin32,
+        .createCursor = _glfwCreateCursorWin32,
+        .createStandardCursor = _glfwCreateStandardCursorWin32,
+        .destroyCursor = _glfwDestroyCursorWin32,
+        .setCursor = _glfwSetCursorWin32,
+        .getScancodeName = _glfwGetScancodeNameWin32,
+        .getKeyScancode = _glfwGetKeyScancodeWin32,
+        .setClipboardString = _glfwSetClipboardStringWin32,
+        .getClipboardString = _glfwGetClipboardStringWin32,
+        .initJoysticks = _glfwInitJoysticksWin32,
+        .terminateJoysticks = _glfwTerminateJoysticksWin32,
+        .pollJoystick = _glfwPollJoystickWin32,
+        .getMappingName = _glfwGetMappingNameWin32,
+        .updateGamepadGUID = _glfwUpdateGamepadGUIDWin32,
+        .freeMonitor = _glfwFreeMonitorWin32,
+        .getMonitorPos = _glfwGetMonitorPosWin32,
+        .getMonitorContentScale = _glfwGetMonitorContentScaleWin32,
+        .getMonitorWorkarea = _glfwGetMonitorWorkareaWin32,
+        .getVideoModes = _glfwGetVideoModesWin32,
+        .getVideoMode = _glfwGetVideoModeWin32,
+        .getGammaRamp = _glfwGetGammaRampWin32,
+        .setGammaRamp = _glfwSetGammaRampWin32,
+        .createWindow = _glfwCreateWindowWin32,
+        .destroyWindow = _glfwDestroyWindowWin32,
+        .setWindowTitle = _glfwSetWindowTitleWin32,
+        .setWindowIcon = _glfwSetWindowIconWin32,
+        .getWindowPos = _glfwGetWindowPosWin32,
+        .setWindowPos = _glfwSetWindowPosWin32,
+        .getWindowSize = _glfwGetWindowSizeWin32,
+        .setWindowSize = _glfwSetWindowSizeWin32,
+        .setWindowSizeLimits = _glfwSetWindowSizeLimitsWin32,
+        .setWindowAspectRatio = _glfwSetWindowAspectRatioWin32,
+        .getFramebufferSize = _glfwGetFramebufferSizeWin32,
+        .getWindowFrameSize = _glfwGetWindowFrameSizeWin32,
+        .getWindowContentScale = _glfwGetWindowContentScaleWin32,
+        .iconifyWindow = _glfwIconifyWindowWin32,
+        .restoreWindow = _glfwRestoreWindowWin32,
+        .maximizeWindow = _glfwMaximizeWindowWin32,
+        .showWindow = _glfwShowWindowWin32,
+        .hideWindow = _glfwHideWindowWin32,
+        .requestWindowAttention = _glfwRequestWindowAttentionWin32,
+        .focusWindow = _glfwFocusWindowWin32,
+        .setWindowMonitor = _glfwSetWindowMonitorWin32,
+        .windowFocused = _glfwWindowFocusedWin32,
+        .windowIconified = _glfwWindowIconifiedWin32,
+        .windowVisible = _glfwWindowVisibleWin32,
+        .windowMaximized = _glfwWindowMaximizedWin32,
+        .windowHovered = _glfwWindowHoveredWin32,
+        .framebufferTransparent = _glfwFramebufferTransparentWin32,
+        .getWindowOpacity = _glfwGetWindowOpacityWin32,
+        .setWindowResizable = _glfwSetWindowResizableWin32,
+        .setWindowDecorated = _glfwSetWindowDecoratedWin32,
+        .setWindowFloating = _glfwSetWindowFloatingWin32,
+        .setWindowOpacity = _glfwSetWindowOpacityWin32,
+        .setWindowMousePassthrough = _glfwSetWindowMousePassthroughWin32,
+        .pollEvents = _glfwPollEventsWin32,
+        .waitEvents = _glfwWaitEventsWin32,
+        .waitEventsTimeout = _glfwWaitEventsTimeoutWin32,
+        .postEmptyEvent = _glfwPostEmptyEventWin32,
+        .getEGLPlatform = _glfwGetEGLPlatformWin32,
+        .getEGLNativeDisplay = _glfwGetEGLNativeDisplayWin32,
+        .getEGLNativeWindow = _glfwGetEGLNativeWindowWin32,
+        .getRequiredInstanceExtensions = _glfwGetRequiredInstanceExtensionsWin32,
+        .getPhysicalDevicePresentationSupport = _glfwGetPhysicalDevicePresentationSupportWin32,
+        .createWindowSurface = _glfwCreateWindowSurfaceWin32
     };
 
     *platform = win32;
@@ -686,7 +686,7 @@ int _glfwInitWin32(void)
     if (!loadLibraries())
         return GLFW_FALSE;
 
-    createKeyTables();
+    createKeyTablesWin32();
     _glfwUpdateKeyNamesWin32();
 
     if (_glfwIsWindows10Version1703OrGreaterWin32())
@@ -705,6 +705,9 @@ int _glfwInitWin32(void)
 
 void _glfwTerminateWin32(void)
 {
+    if (_glfw.win32.blankCursor)
+        DestroyIcon((HICON) _glfw.win32.blankCursor);
+
     if (_glfw.win32.deviceNotificationHandle)
         UnregisterDeviceNotification(_glfw.win32.deviceNotificationHandle);
 
@@ -724,4 +727,6 @@ void _glfwTerminateWin32(void)
 
     freeLibraries();
 }
+
+#endif // _GLFW_WIN32
 

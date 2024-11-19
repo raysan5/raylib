@@ -10,7 +10,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2023 Giancamillo Alessandroni (@NotManyIdeasDev) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2024 Giancamillo Alessandroni (@NotManyIdeasDev) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -69,18 +69,18 @@ int main(void)
         rotation += 60.0f*GetFrameTime();   // Rotate the rectangles, 60 degrees per second
 
         // Make the camera move to demonstrate the effect
-        cameraX = (sinf(GetTime())*50.0f) - 10.0f;
-        cameraY = cosf(GetTime())*30.0f;
+        cameraX = (sinf((float)GetTime())*50.0f) - 10.0f;
+        cameraY = cosf((float)GetTime())*30.0f;
 
         // Set the camera's target to the values computed above
         screenSpaceCamera.target = (Vector2){ cameraX, cameraY };
 
         // Round worldSpace coordinates, keep decimals into screenSpace coordinates
-        worldSpaceCamera.target.x = (int)screenSpaceCamera.target.x;
+        worldSpaceCamera.target.x = truncf(screenSpaceCamera.target.x);
         screenSpaceCamera.target.x -= worldSpaceCamera.target.x;
         screenSpaceCamera.target.x *= virtualRatio;
 
-        worldSpaceCamera.target.y = (int)screenSpaceCamera.target.y;
+        worldSpaceCamera.target.y = truncf(screenSpaceCamera.target.y);
         screenSpaceCamera.target.y -= worldSpaceCamera.target.y;
         screenSpaceCamera.target.y *= virtualRatio;
         //----------------------------------------------------------------------------------
