@@ -7,7 +7,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | Name                                                                                     | raylib Version   | Language                                                             | License              |
 | :--------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------: | :------------------: |
 | [raylib](https://github.com/raysan5/raylib)                                              | **5.0**          | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))      | Zlib                 |
-| [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.0**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
+| [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.5**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
 | [raylib-boo](https://github.com/Rabios/raylib-boo)                                       | 3.7              | [Boo](http://boo-language.github.io)                                 | MIT                  |
 | [raybit](https://github.com/Alex-Velez/raybit)                                       | **5.0**              | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                                 | MIT                  |
 | [Raylib-cs](https://github.com/ChrisDill/Raylib-cs)                                      | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
