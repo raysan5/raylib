@@ -664,42 +664,39 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
-
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
-
-#ifdef _WIN32
-#   define WIN32_CLIPBOARD_IMPLEMENTATION
-#   define WINUSER_ALREADY_INCLUDED
-#   define WINBASE_ALREADY_INCLUDED
-#   define WINGDI_ALREADY_INCLUDED
-#   include "../external/win32_clipboard.h"
+#if defined(_WIN32)
+    #define WIN32_CLIPBOARD_IMPLEMENTATION
+    #define WINUSER_ALREADY_INCLUDED
+    #define WINBASE_ALREADY_INCLUDED
+    #define WINGDI_ALREADY_INCLUDED
+    #include "../external/win32_clipboard.h"
 #endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
-    Image image = {0};
+    Image image = { 0 };
+    
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if defined(_WIN32)
     unsigned long long int dataSize = 0;
-    void* fileData = NULL;
-
-#ifdef _WIN32
-    int width, height;
+    void *fileData = NULL;
+    int width = 0;
+    int height = 0;
+    
     fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
+    
+    if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
+    else image = LoadImageFromMemory(".bmp", fileData, (int)dataSize);
 #else
-    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement `GetClipboardImage` for this OS");
+    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
-    if (fileData == NULL)
-    {
-        TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    }
-    else
-    {
-        image = LoadImageFromMemory(".bmp", fileData, dataSize);
-    }
     return image;
 }
-#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Show mouse cursor
 void ShowCursor(void)
