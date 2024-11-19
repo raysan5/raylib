@@ -475,7 +475,7 @@ Undoubtedly, this is the **biggest raylib update in 10 years**. Many new feature
 notes on raylib 5.5
 -------------------
 
-One year after raylib 5.0 release, arribes `raylib 5.5`, the next big revision of the library. It's been **11 years** since raylib 1.0 release and in all this time it has never stopped growing and improving. With an outstanding number of new contributors and improvements, it's, again, the biggest raylib release to date.
+One year after raylib 5.0 release, arrives `raylib 5.5`, the next big revision of the library. It's been **11 years** since raylib 1.0 release and in all this time it has never stopped growing and improving. With an outstanding number of new contributors and improvements, it's, again, the biggest raylib release to date.
 
 Some numbers for this release:
 
