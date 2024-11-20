@@ -921,6 +921,19 @@ int GetMonitorRefreshRate(int monitor)
     return refresh;
 }
 
+// Get specified monitor scale
+Vector2 GetMonitorScale(int monitor)
+{
+    Vector2 scale = { 1.0f, 1.0f };
+    int monitorCount = 0;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount)) glfwGetMonitorContentScale(monitors[monitor], &scale.x, &scale.y);
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+
+    return scale;
+}
+
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {

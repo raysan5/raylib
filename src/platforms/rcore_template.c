@@ -257,6 +257,13 @@ int GetMonitorRefreshRate(int monitor)
     return 0;
 }
 
+// Get specified monitor scale
+Vector2 GetMonitorScale(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorScale() not implemented on target platform");
+    return 0;
+}
+
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
