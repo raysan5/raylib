@@ -261,7 +261,7 @@ int GetMonitorRefreshRate(int monitor)
 Vector2 GetMonitorScale(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorScale() not implemented on target platform");
-    return 0;
+    return (Vector2){ 1.0f, 1.0f };
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
