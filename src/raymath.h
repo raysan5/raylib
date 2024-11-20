@@ -304,6 +304,14 @@ RMAPI float Vector2DotProduct(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Calculate two vectors cross product
+RMAPI float Vector2CrossProduct(Vector2 v1, Vector2 v2)
+{
+    float result = (v1.x*v2.y - v1.y*v2.x);
+
+    return result;
+}
+
 // Calculate distance between two vectors
 RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 {
