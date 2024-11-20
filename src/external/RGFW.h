@@ -487,12 +487,14 @@ typedef struct RGFW_Event {
 
 	u8 lockState;
 	
-	u8 button; /* !< which mouse button was pressed */
+	u8 button; /* !< which mouse (or joystick) button was pressed */
 	double scroll; /*!< the raw mouse scroll value */
 
 	u16 joystick; /*! which joystick this event applies to (if applicable to any) */
 	u8 axisesCount; /*!< number of axises */
-	RGFW_point axis[2]; /*!< x, y of axises (-100 to 100) */
+	
+	u8 whichAxis; /* which axis was effected */
+	RGFW_point axis[4]; /*!< x, y of axises (-100 to 100) */
 
 	u64 frameTime, frameTime2; /*!< this is used for counting the fps */
 } RGFW_Event;
@@ -2300,6 +2302,7 @@ This is where OS specific stuff starts
 						win->event.axis[e.number / 2].y = yAxis;
 						win->event.type = RGFW_jsAxisMove;
 						win->event.joystick = i;
+						win->event.whichAxis = e.number / 2;
 						RGFW_jsAxisCallback(win, i, win->event.axis, win->event.axisesCount);
 						return &win->event;
 
@@ -5699,6 +5702,8 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 			RGFW_point axis2 = RGFW_POINT(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY);
 
 			if (axis1.x != e->axis[0].x || axis1.y != e->axis[0].y || axis2.x != e->axis[1].x || axis2.y != e->axis[1].y) {
+				win->event.whichAxis = (axis1.x != e->axis[0].x || axis1.y != e->axis[0].y) ? 0 : 1;
+				
 				e->type = RGFW_jsAxisMove;
 
 				e->axis[0] = axis1;
@@ -8317,7 +8322,7 @@ EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreen
 
 	RGFW_events[RGFW_eventLen].type = RGFW_windowResized;
 	RGFW_eventLen++;
-
+	
 	RGFW_root->r = RGFW_RECT(0, 0, e->elementWidth, e->elementHeight);
 	RGFW_windowResizeCallback(RGFW_root, RGFW_root->r);
     return EM_TRUE;
@@ -8401,7 +8406,7 @@ EM_BOOL Emscripten_on_wheel(int eventType, const EmscriptenWheelEvent* e, void* 
 	RGFW_events[RGFW_eventLen].type = RGFW_mouseButtonPressed;
 	RGFW_events[RGFW_eventLen].point = RGFW_POINT(e->mouse.targetX, e->mouse.targetY);
 	RGFW_events[RGFW_eventLen].button = RGFW_mouseScrollUp + (e->deltaY < 0); 
-	RGFW_events[RGFW_eventLen].scroll = e->deltaY;
+	RGFW_events[RGFW_eventLen].scroll = e->deltaY < 0 ? 1 : -1;
 
 	RGFW_mouseButtons[RGFW_events[RGFW_eventLen].button].prev = RGFW_mouseButtons[RGFW_events[RGFW_eventLen].button].current;	
 	RGFW_mouseButtons[RGFW_events[RGFW_eventLen].button].current = 1;
@@ -8474,7 +8479,7 @@ EM_BOOL Emscripten_on_gamepad(int eventType, const EmscriptenGamepadEvent *gamep
 
 	if (gamepadEvent->index >= 4)
 		return 0;
-
+	
 	RGFW_joysticks[gamepadEvent->index] = gamepadEvent->connected;
 
     return 1; // The event was consumed by the callback handler
@@ -8534,8 +8539,7 @@ void EMSCRIPTEN_KEEPALIVE RGFW_makeSetValue(size_t index, char* file) {
 	*/
 
 	RGFW_events[RGFW_eventLen].type = RGFW_dnd;
-	char** arr = (char**)&RGFW_events[RGFW_eventLen].droppedFiles[index];
-	*arr = file;
+	strcpy((char*)RGFW_events[RGFW_eventLen].droppedFiles[index], file);
 }
 
 #include <sys/stat.h>
@@ -8689,49 +8693,58 @@ RGFW_window* RGFW_createWindow(const char* name, RGFW_rect rect, u16 args) {
 RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 	static u8 index = 0;
 	
-	if (index == 0) 
+	if (index == 0) { 
 		RGFW_resetKey();
-
+	}
+	
+	emscripten_sample_gamepad_data();
 	/* check gamepads */
     for (int i = 0; (i < emscripten_get_num_gamepads()) && (i < 4); i++) {
 		if (RGFW_joysticks[i] == 0)
-			continue;;
-		
+			continue;
         EmscriptenGamepadEvent gamepadState;
 
         if (emscripten_get_gamepad_status(i, &gamepadState) != EMSCRIPTEN_RESULT_SUCCESS)
 			break;
-
+		
 		// Register buttons data for every connected gamepad
 		for (int j = 0; (j < gamepadState.numButtons) && (j < 16); j++) {
 			u32 map[] = {
-				RGFW_JS_A, RGFW_JS_X, RGFW_JS_B, RGFW_JS_Y,
+				RGFW_JS_A, RGFW_JS_B, RGFW_JS_X, RGFW_JS_Y,
 				RGFW_JS_L1, RGFW_JS_R1, RGFW_JS_L2, RGFW_JS_R2,
 				RGFW_JS_SELECT, RGFW_JS_START,
-				0, 0,
+				404, 404,
 				RGFW_JS_UP, RGFW_JS_DOWN, RGFW_JS_LEFT, RGFW_JS_RIGHT
 			};
 
+
 			u32 button = map[j]; 
+			if (button == 404)
+				continue;
+
 			if (RGFW_jsPressed[i][button] != gamepadState.digitalButton[j]) {
-				win->event.type = RGFW_jsButtonPressed;
+				if (gamepadState.digitalButton[j])
+					win->event.type = RGFW_jsButtonPressed;
+				else
+					win->event.type = RGFW_jsButtonReleased;
+
 				win->event.joystick = i;
 				win->event.button = map[j];
+				RGFW_jsPressed[i][button] = gamepadState.digitalButton[j];
 				return &win->event;
 			}
-
-			RGFW_jsPressed[i][button] = gamepadState.digitalButton[j];
 		}
 
 		for (int j = 0; (j < gamepadState.numAxes) && (j < 4); j += 2) {
 			win->event.axisesCount = gamepadState.numAxes;
-			if (win->event.axis[j].x != gamepadState.axis[j] || 
-				win->event.axis[j].y != gamepadState.axis[j + 1]
+			if (win->event.axis[j].x != (i8)(gamepadState.axis[j] * 100.0f) || 
+				win->event.axis[j].y != (i8)(gamepadState.axis[j + 1] * 100.0f)
 			) {
-				win->event.axis[j].x = gamepadState.axis[j];
-				win->event.axis[j].y = gamepadState.axis[j + 1];
+				win->event.axis[j / 2].x = (i8)(gamepadState.axis[j] * 100.0f);
+				win->event.axis[j / 2].y = (i8)(gamepadState.axis[j + 1] * 100.0f);
 				win->event.type = RGFW_jsAxisMove;
 				win->event.joystick = i;
+				win->event.whichAxis = j / 2;
 				return &win->event;
 			}
 		}
@@ -8740,7 +8753,7 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 	/* check queued events */
 	if (RGFW_eventLen == 0)
 		return NULL;
-	
+
 	RGFW_events[index].frameTime = win->event.frameTime;
 	RGFW_events[index].frameTime2 = win->event.frameTime2;
 	RGFW_events[index].inFocus = win->event.inFocus;

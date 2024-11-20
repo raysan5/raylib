@@ -124,7 +124,8 @@ static bool RGFW_disableCursor = false;
 
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
-    [RGFW_Quote] = KEY_APOSTROPHE,
+    [RGFW_Return] = KEY_ENTER, 
+	[RGFW_Quote] = KEY_APOSTROPHE,
     [RGFW_Comma] = KEY_COMMA,
     [RGFW_Minus] = KEY_MINUS,
     [RGFW_Period] = KEY_PERIOD,
@@ -872,7 +873,7 @@ void PollInputEvents(void)
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
 #endif
-
+	
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -949,9 +950,9 @@ void PollInputEvents(void)
         }
 
         RGFW_Event *event = &platform.window->event;
-
         // All input events can be processed after polling
-        switch (event->type)
+        
+		switch (event->type)
         {
             case RGFW_quit: CORE.Window.shouldClose = true; break;
             case RGFW_dnd:      // Dropped file
@@ -967,7 +968,7 @@ void PollInputEvents(void)
 
                         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
                         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event->droppedFiles[i]);
-
+						
                         CORE.Window.dropFileCount++;
                     }
                     else if (CORE.Window.dropFileCount < 1024)
@@ -1000,8 +1001,7 @@ void PollInputEvents(void)
             // Keyboard events
             case RGFW_keyPressed:
             {
-                KeyboardKey key = ConvertScancodeToKey(event->keyCode);
-
+				KeyboardKey key = ConvertScancodeToKey(event->keyCode);
                 if (key != KEY_NULL)
                 {
                     // If key was up, add it to the key pressed queue
@@ -1038,9 +1038,10 @@ void PollInputEvents(void)
             // Check mouse events
             case RGFW_mouseButtonPressed:
             {
-                if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
+				if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
-                    CORE.Input.Mouse.currentWheelMove.y = event->scroll;
+                
+					CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
                 }
 
@@ -1056,8 +1057,7 @@ void PollInputEvents(void)
             } break;
             case RGFW_mouseButtonReleased:
             {
-
-                if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
+				if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
@@ -1161,53 +1161,55 @@ void PollInputEvents(void)
             case RGFW_jsAxisMove:
             {
                 int axis = -1;
-                for (int i = 0; i < event->axisesCount; i++)
-                {
-                    switch(i)
-                    {
-                        case 0:
-                        {
-                            if (abs(event->axis[i].x) > abs(event->axis[i].y))
-                            {
-                                axis = GAMEPAD_AXIS_LEFT_X;
-                                break;
-                            }
 
-                            axis = GAMEPAD_AXIS_LEFT_Y;
-                        } break;
-                        case 1:
-                        {
-                            if (abs(event->axis[i].x) > abs(event->axis[i].y))
-                            {
-                                axis = GAMEPAD_AXIS_RIGHT_X;
-                                break;
-                            }
+				float value = 0;
+				switch(event->whichAxis) {
+					case 0:
+					{
+						if (abs(event->axis[0].x) > abs(event->axis[0].y))
+						{
+							axis = GAMEPAD_AXIS_LEFT_X;
+							value = event->axis[0].x;
+							break;
+						}
 
-                            axis = GAMEPAD_AXIS_RIGHT_Y;
-                        } break;
-                        case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER; break;
-                        case 3: axis = GAMEPAD_AXIS_RIGHT_TRIGGER; break;
-                        default: break;
-                    }
+						value = event->axis[0].y;
+						axis = GAMEPAD_AXIS_LEFT_Y;
+					} break;
+					case 1:
+					{
+						if (abs(event->axis[1].x) > abs(event->axis[1].y))
+						{
+							axis = GAMEPAD_AXIS_RIGHT_X;
+							value = event->axis[1].x;
+							break;
+						}
 
-                    #ifdef __linux__
-                    float value = (event->axis[i].x + event->axis[i].y)/(float)32767;
-                    #else
-                    float value = (event->axis[i].x + -event->axis[i].y)/(float)32767;
-                    #endif
-                    CORE.Input.Gamepad.axisState[event->joystick][axis] = value;
+						value = event->axis[1].y;
+						axis = GAMEPAD_AXIS_RIGHT_Y;
+					} break;
+					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER; break;
+					case 3: axis = GAMEPAD_AXIS_RIGHT_TRIGGER; break;
+					default: break;
+				}
+				
+				#ifdef __linux__
+				value = (float)(value)/32767.0f;
+				#else
+				value = ((float)value / 100.0f);
+				#endif
+				CORE.Input.Gamepad.axisState[event->joystick][axis] = value;
 
-                    // Register button state for triggers in addition to their axes
-                    if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
-                    {
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-                        int pressed = (value > 0.1f);
-                        CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
-                        
-                        if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
-                        else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
-                    }
-                }
+				// Register button state for triggers in addition to their axes
+				if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
+				{
+					int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+					int pressed = (value > 0.1f);
+					CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
+					
+					if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+					else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+				}
             } break;
             default: break;
         }
@@ -1299,10 +1301,10 @@ int InitPlatform(void)
         I think this is needed by Raylib now ? 
         If so, rcore_destkop_sdl should be updated too
     */
-    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+    
+	SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
-    if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
-
+	if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 
     // Check surface and context activation
@@ -1374,7 +1376,6 @@ int InitPlatform(void)
 #endif
 
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
-
     return 0;
 }
 
@@ -1388,6 +1389,6 @@ void ClosePlatform(void)
 static KeyboardKey ConvertScancodeToKey(u32 keycode)
 {
     if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return 0;
-
-    return keyMappingRGFW[keycode];
+    
+	return keyMappingRGFW[keycode];
 }
