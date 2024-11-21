@@ -41,7 +41,7 @@ void main()
     }
 
     tc += center;
-    vec4 color = texture2D(texture0, tc/texSize)*colDiffuse*fragColor;;
+    vec4 color = texture(texture0, tc/texSize)*colDiffuse*fragColor;;
 
     finalColor = vec4(color.rgb, 1.0);;
 }
