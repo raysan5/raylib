@@ -771,8 +771,11 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-    return (Vector2){ 1.0f, 1.0f };
+    // NOTE: Returned scale is relative to the current monitor where the browser window is located
+    Vector2 scale = { 1.0f, 1.0f };
+    scale.x = (float)EM_ASM_DOUBLE( { return window.devicePixelRatio; } );
+    scale.y = scale.x;
+    return scale;
 }
 
 // Set clipboard text content
