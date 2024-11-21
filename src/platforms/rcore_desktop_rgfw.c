@@ -1166,49 +1166,34 @@ void PollInputEvents(void)
 				switch(event->whichAxis) {
 					case 0:
 					{
-						if (abs(event->axis[0].x) > abs(event->axis[0].y))
-						{
-							axis = GAMEPAD_AXIS_LEFT_X;
-							value = event->axis[0].x;
-							break;
-						}
-
-						value = event->axis[0].y;
-						axis = GAMEPAD_AXIS_LEFT_Y;
+						#ifndef __linux__
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
+						#else							
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 32767.0f;
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 32767.0f;
+						#endif
 					} break;
 					case 1:
 					{
-						if (abs(event->axis[1].x) > abs(event->axis[1].y))
-						{
-							axis = GAMEPAD_AXIS_RIGHT_X;
-							value = event->axis[1].x;
-							break;
-						}
-
-						value = event->axis[1].y;
-						axis = GAMEPAD_AXIS_RIGHT_Y;
+						#ifndef __linux__
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
+						#else							
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 32767.0f;
+						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 32767.0f;
+						#endif
 					} break;
-					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER; break;
-					case 3: axis = GAMEPAD_AXIS_RIGHT_TRIGGER; break;
+					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
+					case 3: { if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
+						int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+						int pressed = (value > 0.1f);
+						CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
+						
+						if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+						else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+					}
 					default: break;
-				}
-				
-				#ifdef __linux__
-				value = (float)(value)/32767.0f;
-				#else
-				value = ((float)value / 100.0f);
-				#endif
-				CORE.Input.Gamepad.axisState[event->joystick][axis] = value;
-
-				// Register button state for triggers in addition to their axes
-				if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
-				{
-					int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-					int pressed = (value > 0.1f);
-					CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
-					
-					if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
-					else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
 				}
             } break;
             default: break;

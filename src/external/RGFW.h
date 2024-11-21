@@ -8318,14 +8318,30 @@ EM_BOOL Emscripten_on_resize(int eventType, const EmscriptenUiEvent* e, void* us
 }
 
 EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreenChangeEvent* e, void* userData) {
-	RGFW_UNUSED(eventType); RGFW_UNUSED(userData);
+	static bool fullscreen = false;
+	static RGFW_rect ogRect; 
+	
+	if (fullscreen == false) {
+		ogRect = RGFW_root->r;
+	}
 
+	fullscreen = !fullscreen;
+
+	RGFW_UNUSED(eventType); RGFW_UNUSED(userData);
+	
 	RGFW_events[RGFW_eventLen].type = RGFW_windowResized;
 	RGFW_eventLen++;
 	
 	RGFW_root->r = RGFW_RECT(0, 0, e->elementWidth, e->elementHeight);
+
+	if (fullscreen == false) {
+		emscripten_set_canvas_element_size("#canvas", ogRect.w, ogRect.h);
+		RGFW_root->r = RGFW_RECT(0, 0, ogRect.w, ogRect.h);
+	}
+
+
 	RGFW_windowResizeCallback(RGFW_root, RGFW_root->r);
-    return EM_TRUE;
+	return EM_TRUE;
 }
 
 EM_BOOL Emscripten_on_focusin(int eventType, const EmscriptenFocusEvent* e, void* userData) {
@@ -8736,9 +8752,9 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 		}
 
 		for (int j = 0; (j < gamepadState.numAxes) && (j < 4); j += 2) {
-			win->event.axisesCount = gamepadState.numAxes;
-			if (win->event.axis[j].x != (i8)(gamepadState.axis[j] * 100.0f) || 
-				win->event.axis[j].y != (i8)(gamepadState.axis[j + 1] * 100.0f)
+			win->event.axisesCount = gamepadState.numAxes / 2;
+			if (win->event.axis[j / 2].x != (i8)(gamepadState.axis[j] * 100.0f) || 
+				win->event.axis[j / 2].y != (i8)(gamepadState.axis[j + 1] * 100.0f)
 			) {
 				win->event.axis[j / 2].x = (i8)(gamepadState.axis[j] * 100.0f);
 				win->event.axis[j / 2].y = (i8)(gamepadState.axis[j + 1] * 100.0f);
