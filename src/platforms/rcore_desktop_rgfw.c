@@ -1279,15 +1279,20 @@ int InitPlatform(void)
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
 
+
+#ifndef PLATFORM_WEB_RGFW
     RGFW_area screenSize = RGFW_getScreenSize();
     CORE.Window.display.width = screenSize.w;
     CORE.Window.display.height = screenSize.h;
-    /* 
+#else
+	CORE.Window.display.width = CORE.Window.screen.width;
+    CORE.Window.display.height = CORE.Window.screen.height;
+#endif
+	/* 
         I think this is needed by Raylib now ? 
         If so, rcore_destkop_sdl should be updated too
     */
-    
-	SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+	
 
 	if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
@@ -1301,12 +1306,6 @@ int InitPlatform(void)
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
         CORE.Window.currentFbo.height = CORE.Window.render.height;
-
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
     else
     {

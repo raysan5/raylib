@@ -8318,10 +8318,10 @@ EM_BOOL Emscripten_on_resize(int eventType, const EmscriptenUiEvent* e, void* us
 }
 
 EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreenChangeEvent* e, void* userData) {
-	static bool fullscreen = false;
+	static u8 fullscreen = RGFW_FALSE;
 	static RGFW_rect ogRect; 
 	
-	if (fullscreen == false) {
+	if (fullscreen == RGFW_FALSE) {
 		ogRect = RGFW_root->r;
 	}
 
@@ -8334,7 +8334,7 @@ EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreen
 	
 	RGFW_root->r = RGFW_RECT(0, 0, e->elementWidth, e->elementHeight);
 
-	if (fullscreen == false) {
+	if (fullscreen == RGFW_FALSE) {
 		emscripten_set_canvas_element_size("#canvas", ogRect.w, ogRect.h);
 		RGFW_root->r = RGFW_RECT(0, 0, ogRect.w, ogRect.h);
 	}
