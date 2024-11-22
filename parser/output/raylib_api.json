@@ -15,7 +15,7 @@
     {
       "name": "RAYLIB_VERSION_MINOR",
       "type": "INT",
-      "value": 5,
+      "value": 6,
       "description": ""
     },
     {
@@ -27,7 +27,7 @@
     {
       "name": "RAYLIB_VERSION",
       "type": "STRING",
-      "value": "5.5",
+      "value": "5.6-dev",
       "description": ""
     },
     {
