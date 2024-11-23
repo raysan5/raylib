@@ -587,7 +587,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return (Vector2){mons[monitor].rect.x, mons[monitor].rect.y};
+    return (Vector2){(float)mons[monitor].rect.x, (float)mons[monitor].rect.y};
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -611,7 +611,7 @@ int GetMonitorPhysicalWidth(int monitor)
 {
     RGFW_monitor* mons = RGFW_getMonitors();
 
-    return mons[monitor].physW;
+    return (int)mons[monitor].physW;
 }
 
 // Get selected monitor physical height in millimetres
@@ -619,7 +619,7 @@ int GetMonitorPhysicalHeight(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return mons[monitor].physH;
+    return (int)mons[monitor].physH;
 }
 
 // Get selected monitor refresh rate
@@ -640,7 +640,7 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    return (Vector2){ platform.window->r.x, platform.window->r.y };
+    return (Vector2){ (float)platform.window->r.x, (float)platform.window->r.y };
 }
 
 // Get window scale DPI factor for current monitor
@@ -654,7 +654,7 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    RGFW_writeClipboard(text, strlen(text));
+    RGFW_writeClipboard(text, (u32)strlen(text));
 }
 
 // Get clipboard text content
@@ -947,7 +947,7 @@ void PollInputEvents(void)
             case RGFW_quit: CORE.Window.shouldClose = true; break;
             case RGFW_dnd:      // Dropped file
             {
-                for (int i = 0; i < event->droppedFilesCount; i++)
+                for (u32 i = 0; i < event->droppedFilesCount; i++)
                 {
                     if (CORE.Window.dropFileCount == 0)
                     {
@@ -1031,7 +1031,7 @@ void PollInputEvents(void)
             {
                 if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
-                    CORE.Input.Mouse.currentWheelMove.y = event->scroll;
+                    CORE.Input.Mouse.currentWheelMove.y = (float)event->scroll;
                     break;
                 }
 
@@ -1050,7 +1050,7 @@ void PollInputEvents(void)
 
                 if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
-                    CORE.Input.Mouse.currentWheelMove.y = event->scroll;
+                    CORE.Input.Mouse.currentWheelMove.y = (float)event->scroll;
                     break;
                 }
 
