@@ -416,6 +416,8 @@ typedef RGFW_ENUM(u8, RGFW_event_types) {
 		RGFW_JS_L2 = 5, /*!< left trigger*/
 		RGFW_JS_R1 = 6, /*!< right bumper */
 		RGFW_JS_R2 = 7, /*!< right trigger */
+		RGFW_JS_L3 = 11, /* left thumb stick */
+		RGFW_JS_R3 = 12 /*!< right thumb stick */
 	};
 #endif
 
@@ -2263,13 +2265,14 @@ This is where OS specific stuff starts
 #if defined(RGFW_WAYLAND) || defined(RGFW_X11)
 	int RGFW_eventWait_forceStop[] = {0, 0, 0}; /* for wait events */
 
+
+
 	#ifdef __linux__
 		#include <linux/joystick.h>
 		#include <fcntl.h>
 		#include <unistd.h>
-		
+
 		RGFW_Event* RGFW_linux_updateJoystick(RGFW_window* win) {
-			static int xAxis = 0, yAxis = 0;
 			u8 i;
 			for (i = 0; i < RGFW_joystickCount; i++) {
 				struct js_event e;
@@ -2287,22 +2290,28 @@ This is where OS specific stuff starts
 					case JS_EVENT_BUTTON:
 						win->event.type = e.value ? RGFW_jsButtonPressed : RGFW_jsButtonReleased;
 						win->event.button = e.number;
-						RGFW_jsPressed[i][e.number] = e.value;
+						RGFW_jsPressed[i][e.number + 1] = e.value;
 						RGFW_jsButtonCallback(win, i, e.number, e.value);
+						
 						return &win->event;
 					case JS_EVENT_AXIS:
+						size_t axis = e.number / 2;
+						if (axis == 2) axis = 1;
+
 						ioctl(RGFW_joysticks[i], JSIOCGAXES, &win->event.axisesCount);
+						win->event.axisesCount = 2;
+						
+						if (axis < 3) { 
+							if (e.number == 0 || e.number == 3)	
+								win->event.axis[axis].x = (e.value / 32767.0f) * 100;
+							else if (e.number == 1 || e.number == 4) {
+								win->event.axis[axis].y = (e.value / 32767.0f) * 100;
+							}
+						}
 
-						if ((e.number == 0 || e.number % 2) && e.number != 1)
-							xAxis = e.value;
-						else
-							yAxis = e.value;
-
-						win->event.axis[e.number / 2].x = xAxis;
-						win->event.axis[e.number / 2].y = yAxis;
 						win->event.type = RGFW_jsAxisMove;
 						win->event.joystick = i;
-						win->event.whichAxis = e.number / 2;
+						win->event.whichAxis = axis;
 						RGFW_jsAxisCallback(win, i, win->event.axis, win->event.axisesCount);
 						return &win->event;
 
@@ -8332,13 +8341,17 @@ EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreen
 	RGFW_events[RGFW_eventLen].type = RGFW_windowResized;
 	RGFW_eventLen++;
 	
-	RGFW_root->r = RGFW_RECT(0, 0, e->elementWidth, e->elementHeight);
-
+	RGFW_root->r = RGFW_RECT(0, 0, e->screenWidth, e->screenHeight);
+	
 	if (fullscreen == RGFW_FALSE) {
-		emscripten_set_canvas_element_size("#canvas", ogRect.w, ogRect.h);
 		RGFW_root->r = RGFW_RECT(0, 0, ogRect.w, ogRect.h);
 	}
 
+	emscripten_set_canvas_element_size("#canvas", RGFW_root->r.w, RGFW_root->r.h);
+
+	#ifdef LEGACY_GL_EMULATION
+	EM_ASM("Module.canvas.focus()");	
+	#endif
 
 	RGFW_windowResizeCallback(RGFW_root, RGFW_root->r);
 	return EM_TRUE;
@@ -8729,7 +8742,7 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 				RGFW_JS_A, RGFW_JS_B, RGFW_JS_X, RGFW_JS_Y,
 				RGFW_JS_L1, RGFW_JS_R1, RGFW_JS_L2, RGFW_JS_R2,
 				RGFW_JS_SELECT, RGFW_JS_START,
-				404, 404,
+				RGFW_JS_L3, RGFW_JS_R3,
 				RGFW_JS_UP, RGFW_JS_DOWN, RGFW_JS_LEFT, RGFW_JS_RIGHT
 			};
 

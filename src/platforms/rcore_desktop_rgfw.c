@@ -865,6 +865,28 @@ char RSGL_keystrToChar(const char *str)
     return '\0';
 }
 
+int RGFW_jsConvTable[18] = {
+	[RGFW_JS_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+	[RGFW_JS_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+	[RGFW_JS_A] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+	[RGFW_JS_X] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+	[RGFW_JS_L1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+	[RGFW_JS_R1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+	[RGFW_JS_L2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+	[RGFW_JS_R2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+	[RGFW_JS_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+	[RGFW_JS_HOME] = GAMEPAD_BUTTON_MIDDLE,
+	[RGFW_JS_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+	[RGFW_JS_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+	[RGFW_JS_RIGHT] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+	[RGFW_JS_DOWN] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+	[RGFW_JS_LEFT] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+	[RGFW_JS_L3] = GAMEPAD_BUTTON_LEFT_THUMB,	
+	[RGFW_JS_R3] = GAMEPAD_BUTTON_RIGHT_THUMB,
+};
+
+
+
 // Register all input events
 void PollInputEvents(void)
 {
@@ -1092,32 +1114,7 @@ void PollInputEvents(void)
             } break;
             case RGFW_jsButtonPressed:
             {
-                int button = -1;
-
-                switch (event->button)
-                {
-                    case RGFW_JS_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
-                    case RGFW_JS_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-                    case RGFW_JS_A: button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
-                    case RGFW_JS_X: button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
-
-                    case RGFW_JS_L1: button = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
-                    case RGFW_JS_R1: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
-
-                    case RGFW_JS_L2: button = GAMEPAD_BUTTON_LEFT_TRIGGER_2; break;
-                    case RGFW_JS_R2: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_2; break;
-
-                    case RGFW_JS_SELECT: button = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
-                    case RGFW_JS_HOME: button = GAMEPAD_BUTTON_MIDDLE; break;
-                    case RGFW_JS_START: button = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
-
-                    case RGFW_JS_UP: button = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
-                    case RGFW_JS_RIGHT: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
-                    case RGFW_JS_DOWN: button = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
-                    case RGFW_JS_LEFT: button = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
-
-                    default: break;
-                }
+				int button = RGFW_jsConvTable[event->button];
 
                 if (button >= 0)
                 {
@@ -1127,36 +1124,10 @@ void PollInputEvents(void)
             } break;
             case RGFW_jsButtonReleased:
             {
-                int button = -1;
-                switch (event->button)
-                {
-                    case RGFW_JS_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
-                    case RGFW_JS_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-                    case RGFW_JS_A: button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
-                    case RGFW_JS_X: button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
+				int button = RGFW_jsConvTable[event->button];
 
-                    case RGFW_JS_L1: button = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
-                    case RGFW_JS_R1: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
-
-                    case RGFW_JS_L2: button = GAMEPAD_BUTTON_LEFT_TRIGGER_2; break;
-                    case RGFW_JS_R2: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_2; break;
-
-                    case RGFW_JS_SELECT: button = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
-                    case RGFW_JS_HOME: button = GAMEPAD_BUTTON_MIDDLE; break;
-                    case RGFW_JS_START: button = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
-
-                    case RGFW_JS_UP: button = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
-                    case RGFW_JS_RIGHT: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
-                    case RGFW_JS_DOWN: button = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
-                    case RGFW_JS_LEFT: button = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
-                    default: break;
-                }
-
-                if (button >= 0)
-                {
-                    CORE.Input.Gamepad.currentButtonState[event->joystick][button] = 0;
-                    if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
-                }
+                CORE.Input.Gamepad.currentButtonState[event->joystick][button] = 0;
+                if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
             } break;
             case RGFW_jsAxisMove:
             {
@@ -1166,23 +1137,13 @@ void PollInputEvents(void)
 				switch(event->whichAxis) {
 					case 0:
 					{
-						#ifndef __linux__
 						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
 						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
-						#else							
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 32767.0f;
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 32767.0f;
-						#endif
 					} break;
 					case 1:
 					{
-						#ifndef __linux__
 						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
 						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
-						#else							
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 32767.0f;
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 32767.0f;
-						#endif
 					} break;
 					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
 					case 3: { if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
