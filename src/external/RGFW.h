@@ -59,7 +59,7 @@
  	#define RGFW_EXPORT - Use when building RGFW 
     #define RGFW_IMPORT - Use when linking with RGFW (not as a single-header)
 	
-	#define RGFW_STD_INT - force the use stdint.h (for systems that might not have stdint.h (msvc)) 
+	#define RGFW_USE_INT - force the use c-types rather than stdint.h (for systems that might not have stdint.h (msvc)) 
 */
 
 /*
@@ -168,15 +168,15 @@
 #define RGFW_HEADER
 
 #if !defined(u8)
-	#if ((defined(_MSC_VER) || defined(__SYMBIAN32__)) && !defined(RGFW_STD_INT)) /* MSVC might not have stdint.h */
+	#ifdef RGFW_USE_INT /* optional for any system that might not have stdint.h */
 		typedef unsigned char 	u8;
 		typedef signed char		i8;
 		typedef unsigned short  u16;
 		typedef signed short 	i16;
-		typedef unsigned int 	u32;
-		typedef signed int		i32;
-		typedef unsigned long	u64;
-		typedef signed long		i64;
+		typedef unsigned long int 	u32;
+		typedef signed long int		i32;
+		typedef unsigned long long	u64;
+		typedef signed long long		i64;
 	#else /* use stdint standard types instead of c ""standard"" types */
 		#include <stdint.h>
 
@@ -2294,7 +2294,7 @@ This is where OS specific stuff starts
 						RGFW_jsButtonCallback(win, i, e.number, e.value);
 						
 						return &win->event;
-					case JS_EVENT_AXIS:
+					case JS_EVENT_AXIS: {
 						size_t axis = e.number / 2;
 						if (axis == 2) axis = 1;
 
@@ -2314,7 +2314,7 @@ This is where OS specific stuff starts
 						win->event.whichAxis = axis;
 						RGFW_jsAxisCallback(win, i, win->event.axis, win->event.axisesCount);
 						return &win->event;
-
+					}
 						default: break;
 					}
 				}

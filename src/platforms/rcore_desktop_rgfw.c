@@ -1253,8 +1253,8 @@ int InitPlatform(void)
         I think this is needed by Raylib now ? 
         If so, rcore_destkop_sdl should be updated too
     */
+	//SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 	
-
 	if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 
