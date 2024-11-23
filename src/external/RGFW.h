@@ -1787,12 +1787,12 @@ u32 RGFW_window_checkFPS(RGFW_window* win, u32 fpsCap) {
 	u64 deltaTime = RGFW_getTimeNS() - win->event.frameTime;
 
 	u32 output_fps = 0;
-	u64 fps = round(1e+9 / deltaTime);
+	u64 fps = (u64)round(1e+9 / deltaTime);
 	output_fps= fps;
 
 	if (fpsCap && fps > fpsCap) {
-		u64 frameTimeNS = 1e+9 / fpsCap;
-		u64 sleepTimeMS = (frameTimeNS - deltaTime) / 1e6;
+		u64 frameTimeNS = (u64)(1e+9 / fpsCap);
+		u64 sleepTimeMS = (u64)((frameTimeNS - deltaTime) / 1e6);
 
 		if (sleepTimeMS > 0) {
 			RGFW_sleep(sleepTimeMS);
@@ -1806,7 +1806,7 @@ u32 RGFW_window_checkFPS(RGFW_window* win, u32 fpsCap) {
 		return (u32) output_fps;
 	
 	deltaTime = RGFW_getTimeNS() - win->event.frameTime2;
-	output_fps = round(1e+9 / deltaTime);
+	output_fps = (u64)round(1e+9 / deltaTime);
 	win->event.frameTime2 = RGFW_getTimeNS();
 
 	return output_fps;
