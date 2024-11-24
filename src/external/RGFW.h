@@ -5209,11 +5209,15 @@ static HMODULE wglinstance = NULL;
 
 			if (RGFW_XInput_dll) {
 				XInputGetStateSRC = (PFN_XInputGetState)(void*)GetProcAddress(RGFW_XInput_dll, "XInputGetState");
-			
-				if (XInputGetStateSRC == NULL)
-					printf("Failed to load XInputGetState");
+				XInputGetKeystrokeSRC = (PFN_XInputGetKeystroke)(void*)GetProcAddress(RGFW_XInput_dll, "XInputGetKeystroke");	
 			}
 		}
+		
+		if (XInputGetStateSRC == NULL)
+			printf("RGFW ERR: Failed to load XInputGetState\n");
+		if (XInputGetKeystrokeSRC == NULL)
+			printf("RGFW ERR: Failed to load XInputGetKeystroke\n");
+
 	}
 	#endif
 
@@ -5656,7 +5660,6 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 
 	static i32 RGFW_checkXInput(RGFW_window* win, RGFW_Event* e) {
 		RGFW_UNUSED(win)
-		
 		size_t i;
 		for (i = 0; i < 4; i++) {
 			XINPUT_KEYSTROKE keystroke;
