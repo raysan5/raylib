@@ -1339,6 +1339,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 int GetGlyphIndex(Font font, int codepoint)
 {
     int index = 0;
+    if (!IsFontValid(font)) return index;
 
 #define SUPPORT_UNORDERED_CHARSET
 #if defined(SUPPORT_UNORDERED_CHARSET)

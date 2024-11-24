@@ -1855,6 +1855,8 @@ void SeekMusicStream(Music music, float position)
 
     ma_mutex_lock(&AUDIO.System.lock);
     music.stream.buffer->framesProcessed = positionInFrames;
+    music.stream.buffer->isSubBufferProcessed[0] = true;
+    music.stream.buffer->isSubBufferProcessed[1] = true;
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
