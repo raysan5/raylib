@@ -12,8 +12,6 @@ comptime {
 }
 
 fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
-    raylib.defineCMacro("PLATFORM_DESKTOP", null);
-
     switch (platform) {
         .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
         .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
@@ -58,6 +56,7 @@ const config_h_flags = outer: {
     var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
     while (lines.next()) |line| {
         if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+        if (std.mem.containsAtLeast(u8, line, 1, "MODULE")) continue;
         if (std.mem.startsWith(u8, line, "//")) continue;
         if (std.mem.startsWith(u8, line, "#if")) continue;
 
@@ -94,10 +93,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         });
     }
 
+    // Sets a flag indiciating the use of a custom `config.h`
+    try raylib_flags_arr.append("-DEXTERNAL_CONFIG_FLAGS");
     if (options.config.len > 0) {
-        // Sets a flag indiciating the use of a custom `config.h`
-        try raylib_flags_arr.append("-DEXTERNAL_CONFIG_FLAGS");
-
         // Splits a space-separated list of config flags into multiple flags
         //
         // Note: This means certain flags like `-x c++` won't be processed properly.
@@ -126,6 +124,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             // Otherwise, append default value from config.h to compile flags
             try raylib_flags_arr.append(flag);
         }
+    } else {
+        // Set default config if no custome config got set
+        try raylib_flags_arr.appendSlice(&config_h_flags);
     }
 
     const raylib = if (options.shared)
@@ -150,26 +151,32 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     var c_source_files = try std.ArrayList([]const u8).initCapacity(b.allocator, 2);
     c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c", "src/utils.c" });
 
-    if (options.raudio) {
-        try c_source_files.append("src/raudio.c");
-    }
-    if (options.rmodels) {
-        try c_source_files.append("src/rmodels.c");
-    }
     if (options.rshapes) {
         try c_source_files.append("src/rshapes.c");
-    }
-    if (options.rtext) {
-        try c_source_files.append("src/rtext.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RSHAPES");
     }
     if (options.rtextures) {
         try c_source_files.append("src/rtextures.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RTEXTURES");
+    }
+    if (options.rtext) {
+        try c_source_files.append("src/rtext.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RTEXT");
+    }
+    if (options.rmodels) {
+        try c_source_files.append("src/rmodels.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RMODELS");
+    }
+    if (options.raudio) {
+        try c_source_files.append("src/raudio.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RAUDIO");
     }
 
     if (options.opengl_version != .auto) {
         raylib.defineCMacro(options.opengl_version.toCMacroStr(), null);
     }
 
+    raylib.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
             try c_source_files.append("src/rglfw.c");
@@ -329,7 +336,7 @@ pub const Options = struct {
 
     const defaults = Options{};
 
-    fn getOptions(b: *std.Build) Options {
+    pub fn getOptions(b: *std.Build) Options {
         return .{
             .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
             .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
