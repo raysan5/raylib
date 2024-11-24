@@ -2694,6 +2694,11 @@ inline bool operator != (const Vector2& lhs, const Vector2& rhs)
     return !FloatEquals(lhs.x, rhs.x) || !FloatEquals(lhs.y, rhs.y);
 }
 
+inline float operator ^ (const Vector2& lhs, const Vector2& rhs)
+{
+    return Vector2CrossProduct(lhs, rhs);
+}
+
 // Vector3 operators
 static constexpr Vector3 Vector3Zeros = { 0, 0, 0 };
 static constexpr Vector3 Vector3Ones = { 1, 1, 1 };
@@ -2786,6 +2791,11 @@ inline bool operator == (const Vector3& lhs, const Vector3& rhs)
 inline bool operator != (const Vector3& lhs, const Vector3& rhs)
 {
     return !FloatEquals(lhs.x, rhs.x) || !FloatEquals(lhs.y, rhs.y) || !FloatEquals(lhs.z, rhs.z);
+}
+
+inline Vector3 operator ^ (const Vector3& lhs, const Vector3& rhs)
+{
+    return Vector3CrossProduct(lhs, rhs);
 }
 
 // Vector4 operators
