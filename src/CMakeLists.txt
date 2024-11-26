@@ -90,7 +90,16 @@ if (BUILD_SHARED_LIBS)
     set_property(TARGET raylib PROPERTY C_VISIBILITY_PRESET hidden)
 endif ()
 
-target_link_libraries(raylib PRIVATE "${LIBS_PRIVATE}")
+
+# If building as a static lib *AND* using internal GLFW we
+# need to set it up as a PRIVATE import so cmake doesn't complain
+# it isn't declared on an install rule
+if (INTERNAL_GLFW AND BUILD_SHARED_LIBS)
+    target_link_libraries(raylib PRIVATE glfw)
+endif()
+
+target_link_libraries(raylib PUBLIC "${LIBS_PRIVATE}")
+
 
 # Sets some compile time definitions for the pre-processor
 # If CUSTOMIZE_BUILD option is on you will not use config.h by default
