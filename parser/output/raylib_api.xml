@@ -674,7 +674,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="581">
+    <Functions count="582">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1180,6 +1180,9 @@
         <Function name="GetKeyPressed" retType="int" paramCount="0" desc="Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty">
         </Function>
         <Function name="GetCharPressed" retType="int" paramCount="0" desc="Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty">
+        </Function>
+        <Function name="GetKeyPressedPro" retType="int" paramCount="1" desc="Get key pressed (keycode), and optional scancode, call it multiple times for keys queued, returns 0 when the queue is empty">
+            <Param type="int*" name="scanCode" desc="" />
         </Function>
         <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
             <Param type="int" name="key" desc="" />

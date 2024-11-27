@@ -1177,6 +1177,7 @@ RLAPI bool IsKeyReleased(int key);                            // Check if a key 
 RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
 RLAPI int GetKeyPressed(void);                                // Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty
 RLAPI int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
+RLAPI int GetKeyPressedPro(int* scanCode);                       // Get key pressed (keycode), and optional scancode, call it multiple times for keys queued, returns 0 when the queue is empty
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
 // Input-related functions: gamepads
