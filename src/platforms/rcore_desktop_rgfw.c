@@ -865,24 +865,24 @@ char RSGL_keystrToChar(const char *str)
     return '\0';
 }
 
-int RGFW_jsConvTable[18] = {
-	[RGFW_JS_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
-	[RGFW_JS_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-	[RGFW_JS_A] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-	[RGFW_JS_X] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-	[RGFW_JS_L1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
-	[RGFW_JS_R1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-	[RGFW_JS_L2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-	[RGFW_JS_R2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
-	[RGFW_JS_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
-	[RGFW_JS_HOME] = GAMEPAD_BUTTON_MIDDLE,
-	[RGFW_JS_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
-	[RGFW_JS_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
-	[RGFW_JS_RIGHT] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-	[RGFW_JS_DOWN] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-	[RGFW_JS_LEFT] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-	[RGFW_JS_L3] = GAMEPAD_BUTTON_LEFT_THUMB,	
-	[RGFW_JS_R3] = GAMEPAD_BUTTON_RIGHT_THUMB,
+int RGFW_gpConvTable[18] = {
+	[RGFW_GP_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+	[RGFW_GP_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+	[RGFW_GP_A] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+	[RGFW_GP_X] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+	[RGFW_GP_L1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+	[RGFW_GP_R1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+	[RGFW_GP_L2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+	[RGFW_GP_R2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+	[RGFW_GP_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+	[RGFW_GP_HOME] = GAMEPAD_BUTTON_MIDDLE,
+	[RGFW_GP_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+	[RGFW_GP_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+	[RGFW_GP_RIGHT] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+	[RGFW_GP_DOWN] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+	[RGFW_GP_LEFT] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+	[RGFW_GP_L3] = GAMEPAD_BUTTON_LEFT_THUMB,	
+	[RGFW_GP_R3] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
 
 
@@ -959,15 +959,15 @@ void PollInputEvents(void)
 
     while (RGFW_window_checkEvent(platform.window))
     {
-        if ((platform.window->event.type >= RGFW_jsButtonPressed) && (platform.window->event.type <= RGFW_jsAxisMove))
+        if ((platform.window->event.type >= RGFW_gpButtonPressed) && (platform.window->event.type <= RGFW_gpAxisMove))
         {
-            if (!CORE.Input.Gamepad.ready[platform.window->event.joystick])
+            if (!CORE.Input.Gamepad.ready[platform.window->event.gamepad])
             {
-                CORE.Input.Gamepad.ready[platform.window->event.joystick] = true;
-                CORE.Input.Gamepad.axisCount[platform.window->event.joystick] = platform.window->event.axisesCount;
-                CORE.Input.Gamepad.name[platform.window->event.joystick][0] = '\0';
-                CORE.Input.Gamepad.axisState[platform.window->event.joystick][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
-                CORE.Input.Gamepad.axisState[platform.window->event.joystick][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+                CORE.Input.Gamepad.ready[platform.window->event.gamepad] = true;
+                CORE.Input.Gamepad.axisCount[platform.window->event.gamepad] = platform.window->event.axisesCount;
+                CORE.Input.Gamepad.name[platform.window->event.gamepad][0] = '\0';
+                CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+                CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
             }
         }
 
@@ -1112,24 +1112,24 @@ void PollInputEvents(void)
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
             } break;
-            case RGFW_jsButtonPressed:
+            case RGFW_gpButtonPressed:
             {
-				int button = RGFW_jsConvTable[event->button];
+				int button = RGFW_gpConvTable[event->button];
 
                 if (button >= 0)
                 {
-                    CORE.Input.Gamepad.currentButtonState[event->joystick][button] = 1;
+                    CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = 1;
                     CORE.Input.Gamepad.lastButtonPressed = button;
                 }
             } break;
-            case RGFW_jsButtonReleased:
+            case RGFW_gpButtonReleased:
             {
-				int button = RGFW_jsConvTable[event->button];
+				int button = RGFW_gpConvTable[event->button];
 
-                CORE.Input.Gamepad.currentButtonState[event->joystick][button] = 0;
+                CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = 0;
                 if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
             } break;
-            case RGFW_jsAxisMove:
+            case RGFW_gpAxisMove:
             {
                 int axis = -1;
 
@@ -1137,19 +1137,19 @@ void PollInputEvents(void)
 				switch(event->whichAxis) {
 					case 0:
 					{
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
+						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
+						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
 					} break;
 					case 1:
 					{
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
-						CORE.Input.Gamepad.axisState[event->joystick][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
+						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
+						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
 					} break;
 					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
 					case 3: { if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
 						int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
 						int pressed = (value > 0.1f);
-						CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
+						CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = pressed;
 						
 						if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
 						else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
@@ -1316,7 +1316,7 @@ int InitPlatform(void)
 #ifdef RGFW_X11
     for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
     {
-        RGFW_registerJoystick(platform.window, i);
+        RGFW_registergamepad(platform.window, i);
     }
 #endif
 
