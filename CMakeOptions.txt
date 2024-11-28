@@ -24,7 +24,7 @@ enum_option(USE_EXTERNAL_GLFW "OFF;IF_POSSIBLE;ON" "Link raylib against system G
 option(GLFW_BUILD_WAYLAND "Build the bundled GLFW with Wayland support" OFF)
 option(GLFW_BUILD_X11 "Build the bundled GLFW with X11 support" ON)
 
-option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage" OFF)
+option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage)" OFF)
 set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
 
 include(ParseConfigHeader)
