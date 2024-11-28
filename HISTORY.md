@@ -475,7 +475,7 @@ Undoubtedly, this is the **biggest raylib update in 10 years**. Many new feature
 notes on raylib 5.5
 -------------------
 
-One year after raylib 5.0 release, arribes `raylib 5.5`, the next big revision of the library. It's been **11 years** since raylib 1.0 release and in all this time it has never stopped growing and improving. With an outstanding number of new contributors and improvements, it's, again, the biggest raylib release to date.
+One year after raylib 5.0 release, arrives `raylib 5.5`, the next big revision of the library. It's been **11 years** since raylib 1.0 release and in all this time it has never stopped growing and improving. With an outstanding number of new contributors and improvements, it's, again, the biggest raylib release to date.
 
 Some numbers for this release:
 
@@ -487,7 +487,7 @@ Some numbers for this release:
 
 Highlights for `raylib 5.5`:
 
- - **`NEW` raylib pre-configured Windows package**: The new raylib **postable and self-contained Windows package** for `raylib 5.5`, intended for nobel devs that start in programming world, comes with one big addition: support for **C code building for Web platform with one-single-mouse-click!** For the last 10 years, the pre-configured raylib Windows package allowed to edit simple C projects on Notepad++ and easely compile Windows executables with an automatic script; this new release adds the possibility to compile the same C projects for Web platform with a simple mouse click. This new addition **greatly simplifies C to WebAssembly project building for new users**. The `raylib Windows Installer` package can be downloaded for free from [raylib on itch.io](https://raysan5.itch.io/raylib).
+ - **`NEW` raylib pre-configured Windows package**: The new raylib **portable and self-contained Windows package** for `raylib 5.5`, intended for nobel devs that start in programming world, comes with one big addition: support for **C code building for Web platform with one-single-mouse-click!** For the last 10 years, the pre-configured raylib Windows package allowed to edit simple C projects on Notepad++ and easely compile Windows executables with an automatic script; this new release adds the possibility to compile the same C projects for Web platform with a simple mouse click. This new addition **greatly simplifies C to WebAssembly project building for new users**. The `raylib Windows Installer` package can be downloaded for free from [raylib on itch.io](https://raysan5.itch.io/raylib).
 
  - **`NEW` raylib project creator tool**: A brand new tool developed to help raylib users to **setup new projects in a professional way**. `raylib project creator` generates a complete project structure with **multiple build systems ready-to-use** and **GitHub CI/CD actions pre-configured**. It only requires providing some C files and basic project parameters! The tools is [free and open-source](https://raysan5.itch.io/raylib-project-creator), and [it can be used online](https://raysan5.itch.io/raylib-project-creator)!.
 

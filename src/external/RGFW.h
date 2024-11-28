@@ -88,6 +88,7 @@
 		Joshua Rowe (omnisci3nce) - bug fix, review (macOS)
 		@lesleyrs -> bug fix, review (OpenGL)
 		Nick Porcino (meshula) - testing, organization, review (MacOS, examples)
+		@DarekParodia -> code review (X11) (C++)
 */
 
 #if _MSC_VER
@@ -344,12 +345,12 @@ typedef RGFW_ENUM(u8, RGFW_event_types) {
 
 		RGFW_Event.button holds which mouse button was pressed
 	*/
-	RGFW_jsButtonPressed, /*!< a joystick button was pressed */
-	RGFW_jsButtonReleased, /*!< a joystick button was released */
-	RGFW_jsAxisMove, /*!< an axis of a joystick was moved*/
-	/*! joystick event note
-		RGFW_Event.joystick holds which joystick was altered, if any
-		RGFW_Event.button holds which joystick button was pressed
+	RGFW_gpButtonPressed, /*!< a gamepad button was pressed */
+	RGFW_gpButtonReleased, /*!< a gamepad button was released */
+	RGFW_gpAxisMove, /*!< an axis of a gamepad was moved*/
+	/*! gamepad event note
+		RGFW_Event.gamepad holds which gamepad was altered, if any
+		RGFW_Event.button holds which gamepad button was pressed
 
 		RGFW_Event.axis holds the data of all the axis
 		RGFW_Event.axisCount says how many axis there are
@@ -398,26 +399,26 @@ typedef RGFW_ENUM(u8, RGFW_event_types) {
 #define RGFW_CAPSLOCK (1L << 1)
 #define RGFW_NUMLOCK (1L << 2)
 
-/*! joystick button codes (based on xbox/playstation), you may need to change these values per controller */
-#ifndef RGFW_joystick_codes
-	typedef RGFW_ENUM(u8, RGFW_joystick_codes) {
-		RGFW_JS_A = 0, /*!< or PS X button */
-		RGFW_JS_B = 1, /*!< or PS circle button */
-		RGFW_JS_Y = 2, /*!< or PS triangle button */
-		RGFW_JS_X = 3, /*!< or PS square button */
-		RGFW_JS_START = 9, /*!< start button */
-		RGFW_JS_SELECT = 8, /*!< select button */
-		RGFW_JS_HOME = 10, /*!< home button */
-		RGFW_JS_UP = 13, /*!< dpad up */
-		RGFW_JS_DOWN = 14, /*!< dpad down*/
-		RGFW_JS_LEFT = 15, /*!< dpad left */
-		RGFW_JS_RIGHT = 16, /*!< dpad right */
-		RGFW_JS_L1 = 4, /*!< left bump */
-		RGFW_JS_L2 = 5, /*!< left trigger*/
-		RGFW_JS_R1 = 6, /*!< right bumper */
-		RGFW_JS_R2 = 7, /*!< right trigger */
-		RGFW_JS_L3 = 11, /* left thumb stick */
-		RGFW_JS_R3 = 12 /*!< right thumb stick */
+/*! gamepad button codes (based on xbox/playstation), you may need to change these values per controller */
+#ifndef RGFW_gamepad_codes
+	typedef RGFW_ENUM(u8, RGFW_gamepad_codes) {
+		RGFW_GP_A = 0, /*!< or PS X button */
+		RGFW_GP_B = 1, /*!< or PS circle button */
+		RGFW_GP_Y = 2, /*!< or PS triangle button */
+		RGFW_GP_X = 3, /*!< or PS square button */
+		RGFW_GP_START = 9, /*!< start button */
+		RGFW_GP_SELECT = 8, /*!< select button */
+		RGFW_GP_HOME = 10, /*!< home button */
+		RGFW_GP_UP = 13, /*!< dpad up */
+		RGFW_GP_DOWN = 14, /*!< dpad down*/
+		RGFW_GP_LEFT = 15, /*!< dpad left */
+		RGFW_GP_RIGHT = 16, /*!< dpad right */
+		RGFW_GP_L1 = 4, /*!< left bump */
+		RGFW_GP_L2 = 5, /*!< left trigger*/
+		RGFW_GP_R1 = 6, /*!< right bumper */
+		RGFW_GP_R2 = 7, /*!< right trigger */
+		RGFW_GP_L3 = 11, /* left thumb stick */
+		RGFW_GP_R3 = 12 /*!< right thumb stick */
 	};
 #endif
 
@@ -489,10 +490,10 @@ typedef struct RGFW_Event {
 
 	u8 lockState;
 	
-	u8 button; /* !< which mouse (or joystick) button was pressed */
+	u8 button; /* !< which mouse (or gamepad) button was pressed */
 	double scroll; /*!< the raw mouse scroll value */
 
-	u16 joystick; /*! which joystick this event applies to (if applicable to any) */
+	u16 gamepad; /*! which gamepad this event applies to (if applicable to any) */
 	u8 axisesCount; /*!< number of axises */
 	
 	u8 whichAxis; /* which axis was effected */
@@ -633,6 +634,8 @@ RGFWDEF void RGFW_setClassName(char* name);
 
 /*! this has to be set before createWindow is called, else the fulscreen size is used */
 RGFWDEF void RGFW_setBufferSize(RGFW_area size); /*!< the buffer cannot be resized (by RGFW) */
+
+/* NOTE: (windows)If the executable has an icon resource named RGFW_ICON, it will be set as the initial icon for the window.*/
 
 RGFWDEF RGFW_window* RGFW_createWindow(
 	const char* name, /* name of the window */
@@ -873,10 +876,10 @@ typedef void (* RGFW_windowrefreshfunc)(RGFW_window* win);
 typedef void (* RGFW_keyfunc)(RGFW_window* win, u32 keycode, char keyName[16], u8 lockState, b8 pressed);
 /*! RGFW_mouseButtonPressed / RGFW_mouseButtonReleased, the window that got the event, the button that was pressed, the scroll value, if it was a press (else it's a release)  */
 typedef void (* RGFW_mousebuttonfunc)(RGFW_window* win, u8 button, double scroll, b8 pressed);
-/*! RGFW_jsButtonPressed / RGFW_jsButtonReleased, the window that got the event, the button that was pressed, the scroll value, if it was a press (else it's a release) */
-typedef void (* RGFW_jsButtonfunc)(RGFW_window* win, u16 joystick, u8 button, b8 pressed);
-/*! RGFW_jsAxisMove, the window that got the event, the joystick in question, the axis values and the amount of axises */
-typedef void (* RGFW_jsAxisfunc)(RGFW_window* win, u16 joystick, RGFW_point axis[2], u8 axisesCount);
+/*!gp /gp, the window that got the event, the button that was pressed, the scroll value, if it was a press (else it's a release) */
+typedef void (* RGFW_gpButtonfunc)(RGFW_window* win, u16 gamepad, u8 button, b8 pressed);
+/*! RGFW_gpAxisMove, the window that got the event, the gamepad in question, the axis values and the amount of axises */
+typedef void (* RGFW_gpAxisfunc)(RGFW_window* win, u16 gamepad, RGFW_point axis[2], u8 axisesCount);
 
 
 /*!  RGFW_dnd, the window that had the drop, the drop data and the amount files dropped returns previous callback function (if it was set) */
@@ -908,9 +911,9 @@ RGFWDEF RGFW_keyfunc RGFW_setKeyCallback(RGFW_keyfunc func);
 /*! set callback for a mouse button (press / release ) event returns previous callback function (if it was set)  */
 RGFWDEF RGFW_mousebuttonfunc RGFW_setMouseButtonCallback(RGFW_mousebuttonfunc func);
 /*! set callback for a controller button (press / release ) event returns previous callback function (if it was set)  */
-RGFWDEF RGFW_jsButtonfunc RGFW_setjsButtonCallback(RGFW_jsButtonfunc func);
-/*! set callback for a joystick axis mov event returns previous callback function (if it was set)  */
-RGFWDEF RGFW_jsAxisfunc RGFW_setjsAxisCallback(RGFW_jsAxisfunc func);
+RGFWDEF RGFW_gpButtonfunc RGFW_setgpButtonCallback(RGFW_gpButtonfunc func);
+/*! set callback for a gamepad axis mov event returns previous callback function (if it was set)  */
+RGFWDEF RGFW_gpAxisfunc RGFW_setgpAxisCallback(RGFW_gpAxisfunc func);
 
 /** @} */ 
 
@@ -941,15 +944,15 @@ RGFWDEF RGFW_jsAxisfunc RGFW_setjsAxisCallback(RGFW_jsAxisfunc func);
 
 /** @} */ 
 
-/** * @defgroup joystick
+/** * @defgroup gamepad
 * @{ */ 
 
-/*! joystick count starts at 0*/
-/*!< register joystick to window based on a number (the number is based on when it was connected eg. /dev/js0)*/
-RGFWDEF u16 RGFW_registerJoystick(RGFW_window* win, i32 jsNumber);
-RGFWDEF u16 RGFW_registerJoystickF(RGFW_window* win, char* file);
+/*! gamepad count starts at 0*/
+/*!< register gamepad to window based on a number (the number is based on when it was connected eg. /dev/js0)*/
+RGFWDEF u16 RGFW_registerGamepad(RGFW_window* win, i32 gpNumber);
+RGFWDEF u16 RGFW_registerGamepadF(RGFW_window* win, char* file);
 
-RGFWDEF u32 RGFW_isPressedJS(RGFW_window* win, u16 controller, u8 button);
+RGFWDEF u32 RGFW_isPressedGP(RGFW_window* win, u16 controller, u8 button);
 
 /** @} */ 
 
@@ -1446,11 +1449,11 @@ char RGFW_keyCodeToCharAuto(u32 keycode, u8 lockState) { return RGFW_keyCodeToCh
 	this is the end of keycode data
 */
 
-/* joystick data */
-u8 RGFW_jsPressed[4][16]; /*!< if a key is currently pressed or not (per joystick) */
+/* gamepad data */
+u8 RGFW_gpPressed[4][16]; /*!< if a key is currently pressed or not (per gamepad) */
 
-i32 RGFW_joysticks[4]; /*!< limit of 4 joysticks at a time */
-u16 RGFW_joystickCount; /*!< the actual amount of joysticks */
+i32 RGFW_gamepads[4]; /*!< limit of 4 gamepads at a time */
+u16 RGFW_gamepadCount; /*!< the actual amount of gamepads */
 
 /* 
 	event callback defines start here
@@ -1472,8 +1475,8 @@ void RGFW_dndInitfuncEMPTY(RGFW_window* win, RGFW_point point) {RGFW_UNUSED(win)
 void RGFW_windowrefreshfuncEMPTY(RGFW_window* win) {RGFW_UNUSED(win); }
 void RGFW_keyfuncEMPTY(RGFW_window* win, u32 keycode, char keyName[16], u8 lockState, b8 pressed) {RGFW_UNUSED(win); RGFW_UNUSED(keycode); RGFW_UNUSED(keyName); RGFW_UNUSED(lockState); RGFW_UNUSED(pressed);}
 void RGFW_mousebuttonfuncEMPTY(RGFW_window* win, u8 button, double scroll, b8 pressed) {RGFW_UNUSED(win); RGFW_UNUSED(button); RGFW_UNUSED(scroll); RGFW_UNUSED(pressed);}
-void RGFW_jsButtonfuncEMPTY(RGFW_window* win, u16 joystick, u8 button, b8 pressed){RGFW_UNUSED(win); RGFW_UNUSED(joystick); RGFW_UNUSED(button); RGFW_UNUSED(pressed); }
-void RGFW_jsAxisfuncEMPTY(RGFW_window* win, u16 joystick, RGFW_point axis[2], u8 axisesCount){RGFW_UNUSED(win); RGFW_UNUSED(joystick); RGFW_UNUSED(axis); RGFW_UNUSED(axisesCount); }
+void RGFW_gpButtonfuncEMPTY(RGFW_window* win, u16 gamepad, u8 button, b8 pressed){RGFW_UNUSED(win); RGFW_UNUSED(gamepad); RGFW_UNUSED(button); RGFW_UNUSED(pressed); }
+void RGFW_gpAxisfuncEMPTY(RGFW_window* win, u16 gamepad, RGFW_point axis[2], u8 axisesCount){RGFW_UNUSED(win); RGFW_UNUSED(gamepad); RGFW_UNUSED(axis); RGFW_UNUSED(axisesCount); }
 
 #ifdef RGFW_ALLOC_DROPFILES
 void RGFW_dndfuncEMPTY(RGFW_window* win, char** droppedFiles, u32 droppedFilesCount) {RGFW_UNUSED(win); RGFW_UNUSED(droppedFiles); RGFW_UNUSED(droppedFilesCount);}
@@ -1492,8 +1495,8 @@ RGFW_dndfunc RGFW_dndCallback = RGFW_dndfuncEMPTY;
 RGFW_dndInitfunc RGFW_dndInitCallback = RGFW_dndInitfuncEMPTY;
 RGFW_keyfunc RGFW_keyCallback = RGFW_keyfuncEMPTY;
 RGFW_mousebuttonfunc RGFW_mouseButtonCallback = RGFW_mousebuttonfuncEMPTY;
-RGFW_jsButtonfunc RGFW_jsButtonCallback = RGFW_jsButtonfuncEMPTY;
-RGFW_jsAxisfunc RGFW_jsAxisCallback = RGFW_jsAxisfuncEMPTY;
+RGFW_gpButtonfunc RGFW_gpButtonCallback = RGFW_gpButtonfuncEMPTY;
+RGFW_gpAxisfunc RGFW_gpAxisCallback = RGFW_gpAxisfuncEMPTY;
 
 void RGFW_window_checkEvents(RGFW_window* win, i32 waitMS) { 
 	RGFW_window_eventWait(win, waitMS);
@@ -1564,14 +1567,14 @@ RGFW_mousebuttonfunc RGFW_setMouseButtonCallback(RGFW_mousebuttonfunc func) {
     RGFW_mouseButtonCallback = func;
     return prev;
 }
-RGFW_jsButtonfunc RGFW_setjsButtonCallback(RGFW_jsButtonfunc func) {
-    RGFW_jsButtonfunc prev = (RGFW_jsButtonCallback == RGFW_jsButtonfuncEMPTY) ? NULL : RGFW_jsButtonCallback;
-    RGFW_jsButtonCallback = func;
+RGFW_gpButtonfunc RGFW_setgpButtonCallback(RGFW_gpButtonfunc func) {
+    RGFW_gpButtonfunc prev = (RGFW_gpButtonCallback == RGFW_gpButtonfuncEMPTY) ? NULL : RGFW_gpButtonCallback;
+    RGFW_gpButtonCallback = func;
     return prev;
 }
-RGFW_jsAxisfunc RGFW_setjsAxisCallback(RGFW_jsAxisfunc func) {
-    RGFW_jsAxisfunc prev = (RGFW_jsAxisCallback == RGFW_jsAxisfuncEMPTY) ? NULL : RGFW_jsAxisCallback;
-    RGFW_jsAxisCallback = func;
+RGFW_gpAxisfunc RGFW_setgpAxisCallback(RGFW_gpAxisfunc func) {
+    RGFW_gpAxisfunc prev = (RGFW_gpAxisCallback == RGFW_gpAxisfuncEMPTY) ? NULL : RGFW_gpAxisCallback;
+    RGFW_gpAxisCallback = func;
     return prev;
 }
 /* 
@@ -1633,7 +1636,7 @@ RGFW_window* RGFW_window_basic_init(RGFW_rect rect, u16 args) {
 	win->r = rect;
 	win->event.inFocus = 1;
 	win->event.droppedFilesCount = 0;
-	RGFW_joystickCount = 0;
+	RGFW_gamepadCount = 0;
 	win->_winArgs = 0;
 	win->event.lockState = 0;
 
@@ -1812,9 +1815,9 @@ u32 RGFW_window_checkFPS(RGFW_window* win, u32 fpsCap) {
 	return output_fps;
 }
 
-u32 RGFW_isPressedJS(RGFW_window* win, u16 c, u8 button) { 
+u32 RGFW_isPressedGP(RGFW_window* win, u16 c, u8 button) { 
 	RGFW_UNUSED(win);
-	return RGFW_jsPressed[c][button]; 
+	return RGFW_gpPressed[c][button]; 
 }
 
 #if defined(RGFW_X11) || defined(RGFW_WINDOWS)
@@ -2272,33 +2275,33 @@ This is where OS specific stuff starts
 		#include <fcntl.h>
 		#include <unistd.h>
 
-		RGFW_Event* RGFW_linux_updateJoystick(RGFW_window* win) {
+		RGFW_Event* RGFW_linux_updateGamepad(RGFW_window* win) {
 			u8 i;
-			for (i = 0; i < RGFW_joystickCount; i++) {
+			for (i = 0; i < RGFW_gamepadCount; i++) {
 				struct js_event e;
 
 
-				if (RGFW_joysticks[i] == 0)
+				if (RGFW_gamepads[i] == 0)
 					continue;
 
-				i32 flags = fcntl(RGFW_joysticks[i], F_GETFL, 0);
-				fcntl(RGFW_joysticks[i], F_SETFL, flags | O_NONBLOCK);
+				i32 flags = fcntl(RGFW_gamepads[i], F_GETFL, 0);
+				fcntl(RGFW_gamepads[i], F_SETFL, flags | O_NONBLOCK);
 
 				ssize_t bytes;
-				while ((bytes = read(RGFW_joysticks[i], &e, sizeof(e))) > 0) {
+				while ((bytes = read(RGFW_gamepads[i], &e, sizeof(e))) > 0) {
 					switch (e.type) {
 					case JS_EVENT_BUTTON:
-						win->event.type = e.value ? RGFW_jsButtonPressed : RGFW_jsButtonReleased;
+						win->event.type = e.value ? RGFW_gpButtonPressed : RGFW_gpButtonReleased;
 						win->event.button = e.number;
-						RGFW_jsPressed[i][e.number + 1] = e.value;
-						RGFW_jsButtonCallback(win, i, e.number, e.value);
+						RGFW_gpPressed[i][e.number + 1] = e.value;
+						RGFW_gpButtonCallback(win, i, e.number, e.value);
 						
 						return &win->event;
 					case JS_EVENT_AXIS: {
 						size_t axis = e.number / 2;
 						if (axis == 2) axis = 1;
 
-						ioctl(RGFW_joysticks[i], JSIOCGAXES, &win->event.axisesCount);
+						ioctl(RGFW_gamepads[i], JSIOCGAXES, &win->event.axisesCount);
 						win->event.axisesCount = 2;
 						
 						if (axis < 3) { 
@@ -2309,10 +2312,10 @@ This is where OS specific stuff starts
 							}
 						}
 
-						win->event.type = RGFW_jsAxisMove;
-						win->event.joystick = i;
+						win->event.type = RGFW_gpAxisMove;
+						win->event.gamepad = i;
 						win->event.whichAxis = axis;
-						RGFW_jsAxisCallback(win, i, win->event.axis, win->event.axisesCount);
+						RGFW_gpAxisCallback(win, i, win->event.axis, win->event.axisesCount);
 						return &win->event;
 					}
 						default: break;
@@ -2785,7 +2788,7 @@ Start of Linux / Unix defines
 		win->event.type = 0;
 
 #ifdef __linux__
-	RGFW_Event* event = RGFW_linux_updateJoystick(win);
+	RGFW_Event* event = RGFW_linux_updateGamepad(win);
 	if (event != NULL)
 		return event;
 #endif
@@ -2805,7 +2808,7 @@ Start of Linux / Unix defines
 
 		u32 i;
 		win->event.type = 0;
-
+		XEvent reply = { ClientMessage };
 
 		switch (E.type) {
 		case KeyPress:
@@ -2944,7 +2947,6 @@ Start of Linux / Unix defines
 			if ((win->_winArgs & RGFW_ALLOW_DND) == 0)
 				break;
 
-			XEvent reply = { ClientMessage };
 			reply.xclient.window = xdnd.source;
 			reply.xclient.format = 32;
 			reply.xclient.data.l[0] = (long) win->src.window;
@@ -3963,8 +3965,8 @@ Start of Linux / Unix defines
 			}
 
 			u8 i;
-			for (i = 0; i < RGFW_joystickCount; i++)
-				close(RGFW_joysticks[i]);
+			for (i = 0; i < RGFW_gamepadCount; i++)
+				close(RGFW_gamepads[i]);
 		}
 
 		/* set cleared display / window to NULL for error checking */
@@ -3987,43 +3989,43 @@ Start of Linux / Unix defines
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
-	u16 RGFW_registerJoystickF(RGFW_window* win, char* file) {
+	u16 RGFW_registerGamepadF(RGFW_window* win, char* file) {
 		assert(win != NULL);
 
 #ifdef __linux__
 
 		i32 js = open(file, O_RDONLY);
 
-		if (js && RGFW_joystickCount < 4) {
-			RGFW_joystickCount++;
+		if (js && RGFW_gamepadCount < 4) {
+			RGFW_gamepadCount++;
 
-			RGFW_joysticks[RGFW_joystickCount - 1] = open(file, O_RDONLY);
+			RGFW_gamepads[RGFW_gamepadCount - 1] = open(file, O_RDONLY);
 
 			u8 i;
 			for (i = 0; i < 16; i++)
-				RGFW_jsPressed[RGFW_joystickCount - 1][i] = 0;
+				RGFW_gpPressed[RGFW_gamepadCount - 1][i] = 0;
 
 		}
 
 		else {
 #ifdef RGFW_PRINT_ERRORS
 			RGFW_error = 1;
-			fprintf(stderr, "Error RGFW_registerJoystickF : Cannot open file %s\n", file);
+			fprintf(stderr, "Error RGFW_registerGamepadF : Cannot open file %s\n", file);
 #endif
 		}
 
-		return RGFW_joystickCount - 1;
+		return RGFW_gamepadCount - 1;
 #endif
 	}
 	
-	u16 RGFW_registerJoystick(RGFW_window* win, i32 jsNumber) {
+	u16 RGFW_registerGamepad(RGFW_window* win, i32 gpNumber) {
 		assert(win != NULL);
 
 #ifdef __linux__
 		char file[15];
-		sprintf(file, "/dev/input/js%i", jsNumber);
+		sprintf(file, "/dev/input/js%i", gpNumber);
 
-		return RGFW_registerJoystickF(win, file);
+		return RGFW_registerGamepadF(win, file);
 #endif
 	}
 	
@@ -4059,7 +4061,7 @@ Start of Linux / Unix defines
 			{ ConnectionNumber(win->src.display), POLLIN, 0 },
 			#endif
 			{ RGFW_eventWait_forceStop[0], POLLIN, 0 },
-			#ifdef __linux__ /* blank space for 4 joystick files*/
+			#ifdef __linux__ /* blank space for 4 gamepad files*/
 			{ -1, POLLIN, 0 }, {-1, POLLIN, 0 }, {-1, POLLIN, 0 },  {-1, POLLIN, 0} 
 			#endif
 		};
@@ -4067,11 +4069,11 @@ Start of Linux / Unix defines
 		u8 index = 2;
 		
 		#if defined(__linux__)
-			for (i = 0; i < RGFW_joystickCount; i++) {
-				if (RGFW_joysticks[i] == 0)
+			for (i = 0; i < RGFW_gamepadCount; i++) {
+				if (RGFW_gamepads[i] == 0)
 					continue;
 
-				fds[index].fd = RGFW_joysticks[i];
+				fds[index].fd = RGFW_gamepads[i];
 				index++;
 			}
 		#endif
@@ -4757,7 +4759,7 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 		}
 
 		#ifdef __linux__
-			RGFW_Event* event = RGFW_linux_updateJoystick(win);
+			RGFW_Event* event = RGFW_linux_updateGamepad(win);
 			if (event != NULL)
 				return event;
 		#endif
@@ -5083,7 +5085,7 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 #define wglGetSwapIntervalEXT wglGetSwapIntervalEXTSrc
 
 
-	void* RGFWjoystickApi = NULL;
+	void* RGFWgamepadApi = NULL;
 
 	/* these two wgl functions need to be preloaded */
 	typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hdc, HGLRC hglrc, const int *attribList);
@@ -5198,22 +5200,29 @@ static HMODULE wglinstance = NULL;
 		u32 i;
 		static const char* names[] = { 
 			"xinput1_4.dll",
-			"xinput1_3.dll",
 			"xinput9_1_0.dll",
 			"xinput1_2.dll",
 			"xinput1_1.dll"
 		};
 
-		for (i = 0; i < sizeof(names) / sizeof(const char*);  i++) {
+		for (i = 0; i < sizeof(names) / sizeof(const char*) && (XInputGetStateSRC == NULL || XInputGetStateSRC != NULL);  i++) {
 			RGFW_XInput_dll = LoadLibraryA(names[i]);
 
-			if (RGFW_XInput_dll) {
+			if (RGFW_XInput_dll == NULL)
+				continue;
+
+			if (XInputGetStateSRC == NULL)
 				XInputGetStateSRC = (PFN_XInputGetState)(void*)GetProcAddress(RGFW_XInput_dll, "XInputGetState");
-			
-				if (XInputGetStateSRC == NULL)
-					printf("Failed to load XInputGetState");
-			}
+	
+			if (XInputGetKeystrokeSRC == NULL)
+				XInputGetKeystrokeSRC = (PFN_XInputGetKeystroke)(void*)GetProcAddress(RGFW_XInput_dll, "XInputGetKeystroke");	
 		}
+		
+		if (XInputGetStateSRC == NULL)
+			printf("RGFW ERR: Failed to load XInputGetState\n");
+		if (XInputGetKeystrokeSRC == NULL)
+			printf("RGFW ERR: Failed to load XInputGetKeystroke\n");
+
 	}
 	#endif
 
@@ -5288,7 +5297,7 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 		if (RGFW_Shcore_dll == NULL) {
 			RGFW_Shcore_dll = LoadLibraryA("shcore.dll");
 			GetDpiForMonitorSRC = (PFN_GetDpiForMonitor)(void*)GetProcAddress(RGFW_Shcore_dll, "GetDpiForMonitor");
-			#if defined(_WIN64) || (_WIN32_WINNT >= 0x0600)
+			#if (_WIN32_WINNT >= 0x0600)
 				SetProcessDPIAware();
 			#endif
 		}
@@ -5333,6 +5342,11 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 		Class.hCursor = LoadCursor(NULL, IDC_ARROW);
 		Class.lpfnWndProc = WndProc;
 
+		Class.hIcon = LoadImageA(GetModuleHandleW(NULL), "RGFW_ICON", IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);		
+		if (Class.hIcon == NULL) {
+            Class.hIcon = LoadImageA(NULL, IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+        }
+
 		RegisterClassA(&Class);
 
 		DWORD window_style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -5345,7 +5359,8 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 			if (!(args & RGFW_NO_RESIZE))
 				window_style |= WS_SIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
 		} else
-			window_style |= WS_POPUP | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX;
+			window_style |= WS_POPUP | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX; 
+
 
 		HWND dummyWin = CreateWindowA(Class.lpszClassName, name, window_style, win->r.x, win->r.y, win->r.w, win->r.h, 0, 0, inh, 0);
 
@@ -5637,26 +5652,27 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 
 
 	u8 RGFW_xinput2RGFW[] = {
-		RGFW_JS_A, /* or PS X button */
-		RGFW_JS_B, /* or PS circle button */
-		RGFW_JS_X, /* or PS square button */
-		RGFW_JS_Y, /* or PS triangle button */
-		RGFW_JS_R1, /* right bumper */
-		RGFW_JS_L1, /* left bump */
-		RGFW_JS_L2, /* left trigger*/
-		RGFW_JS_R2, /* right trigger */
+		RGFW_GP_A, /* or PS X button */
+		RGFW_GP_B, /* or PS circle button */
+		RGFW_GP_X, /* or PS square button */
+		RGFW_GP_Y, /* or PS triangle button */
+		RGFW_GP_R1, /* right bumper */
+		RGFW_GP_L1, /* left bump */
+		RGFW_GP_L2, /* left trigger*/
+		RGFW_GP_R2, /* right trigger */
 		0, 0, 0, 0, 0, 0, 0, 0,
-		RGFW_JS_UP, /* dpad up */
-		RGFW_JS_DOWN, /* dpad down*/
-		RGFW_JS_LEFT, /* dpad left */
-		RGFW_JS_RIGHT, /* dpad right */
-		RGFW_JS_START, /* start button */
-		RGFW_JS_SELECT/* select button */
+		RGFW_GP_UP, /* dpad up */
+		RGFW_GP_DOWN, /* dpad down*/
+		RGFW_GP_LEFT, /* dpad left */
+		RGFW_GP_RIGHT, /* dpad right */
+		RGFW_GP_START, /* start button */
+		RGFW_GP_SELECT,/* select button */
+		RGFW_GP_L3, 
+		RGFW_GP_R3, 
 	};
 
 	static i32 RGFW_checkXInput(RGFW_window* win, RGFW_Event* e) {
 		RGFW_UNUSED(win)
-		
 		size_t i;
 		for (i = 0; i < 4; i++) {
 			XINPUT_KEYSTROKE keystroke;
@@ -5669,14 +5685,14 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 			if ((keystroke.Flags & XINPUT_KEYSTROKE_REPEAT) == 0 && result != ERROR_EMPTY) {
 				if (result != ERROR_SUCCESS)
 					return 0;
-
-				if (keystroke.VirtualKey > VK_PAD_BACK)
+				
+				if (keystroke.VirtualKey > VK_PAD_RTHUMB_PRESS)
 					continue;
-
-				// RGFW_jsButtonPressed + 1 = RGFW_jsButtonReleased
-				e->type = RGFW_jsButtonPressed + !(keystroke.Flags & XINPUT_KEYSTROKE_KEYDOWN);
+					
+				//gp + 1 = RGFW_gpButtonReleased
+				e->type = RGFW_gpButtonPressed + !(keystroke.Flags & XINPUT_KEYSTROKE_KEYDOWN);
 				e->button = RGFW_xinput2RGFW[keystroke.VirtualKey - 0x5800];
-				RGFW_jsPressed[i][e->button] = !(keystroke.Flags & XINPUT_KEYSTROKE_KEYDOWN);
+				RGFW_gpPressed[i][e->button] = !(keystroke.Flags & XINPUT_KEYSTROKE_KEYDOWN);
 
 				return 1;
 			}
@@ -5686,6 +5702,7 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 				XInputGetState((DWORD) i, &state) == ERROR_DEVICE_NOT_CONNECTED
 			)
 				return 0;
+
 #define INPUT_DEADZONE  ( 0.24f * (float)(0x7FFF) )  // Default to 24% of the +/- 32767 range.   This is a reasonable default value but can be altered if needed.
 
 			if ((state.Gamepad.sThumbLX < INPUT_DEADZONE &&
@@ -5707,22 +5724,26 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 			}
 
 			e->axisesCount = 2;
-			RGFW_point axis1 = RGFW_POINT(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY);
-			RGFW_point axis2 = RGFW_POINT(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY);
+			RGFW_point axis1 = RGFW_POINT(((float)state.Gamepad.sThumbLX / 32768.0f) * 100, ((float)state.Gamepad.sThumbLY / -32768.0f) * 100);
+			RGFW_point axis2 = RGFW_POINT(((float)state.Gamepad.sThumbRX / 32768.0f) * 100, ((float)state.Gamepad.sThumbRY / -32768.0f) * 100);
 
-			if (axis1.x != e->axis[0].x || axis1.y != e->axis[0].y || axis2.x != e->axis[1].x || axis2.y != e->axis[1].y) {
-				win->event.whichAxis = (axis1.x != e->axis[0].x || axis1.y != e->axis[0].y) ? 0 : 1;
+			if (axis1.x != e->axis[0].x || axis1.y != e->axis[0].y){ 
+				win->event.whichAxis = 0;
 				
-				e->type = RGFW_jsAxisMove;
+				e->type = RGFW_gpAxisMove;
 
 				e->axis[0] = axis1;
-				e->axis[1] = axis2;
 
 				return 1;
 			}
 
-			e->axis[0] = axis1;
-			e->axis[1] = axis2;
+			if (axis2.x != e->axis[1].x || axis2.y != e->axis[1].y) {
+				win->event.whichAxis = 1;
+				e->type = RGFW_gpAxisMove;
+				e->axis[1] = axis2;
+
+				return 1;
+			}
 		}
 
 		return 0;
@@ -6517,19 +6538,19 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 		CloseClipboard();
 	}
 
-	u16 RGFW_registerJoystick(RGFW_window* win, i32 jsNumber) {
+	u16 RGFW_registerGamepad(RGFW_window* win, i32 gpNumber) {
 		assert(win != NULL);
 
-		RGFW_UNUSED(jsNumber)
+		RGFW_UNUSED(gpNumber)
 
-		return RGFW_registerJoystickF(win, (char*) "");
+		return RGFW_registerGamepadF(win, (char*) "");
 	}
 
-	u16 RGFW_registerJoystickF(RGFW_window* win, char* file) {
+	u16 RGFW_registerGamepadF(RGFW_window* win, char* file) {
 		assert(win != NULL);
 		RGFW_UNUSED(file)
 
-		return RGFW_joystickCount - 1;
+		return RGFW_gamepadCount - 1;
 	}
 
 	void RGFW_window_moveMouse(RGFW_window* win, RGFW_point p) {
@@ -8127,20 +8148,20 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 		NSPasteBoard_setString(NSPasteboard_generalPasteboard(), text, NSPasteboardTypeString);
 	}
 
-	u16 RGFW_registerJoystick(RGFW_window* win, i32 jsNumber) {
-		RGFW_UNUSED(jsNumber);
+	u16 RGFW_registerGamepad(RGFW_window* win, i32 gpNumber) {
+		RGFW_UNUSED(gpNumber);
 
 		assert(win != NULL);
 
-		return RGFW_registerJoystickF(win, (char*) "");
+		return RGFW_registerGamepadF(win, (char*) "");
 	}
 
-	u16 RGFW_registerJoystickF(RGFW_window* win, char* file) {
+	u16 RGFW_registerGamepadF(RGFW_window* win, char* file) {
 		RGFW_UNUSED(file);
 
 		assert(win != NULL);
 
-		return RGFW_joystickCount - 1;
+		return RGFW_gamepadCount - 1;
 	}
 
 	#ifdef RGFW_OPENGL
@@ -8343,17 +8364,28 @@ EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreen
 	
 	RGFW_root->r = RGFW_RECT(0, 0, e->screenWidth, e->screenHeight);
 	
+	EM_ASM("Module.canvas.focus();");
+	
 	if (fullscreen == RGFW_FALSE) {
 		RGFW_root->r = RGFW_RECT(0, 0, ogRect.w, ogRect.h);
+		// emscripten_request_fullscreen("#canvas", 0);
+	} else {
+		#if __EMSCRIPTEN_major__  >= 1 && __EMSCRIPTEN_minor__  >= 29 && __EMSCRIPTEN_tiny__  >= 0
+			EmscriptenFullscreenStrategy FSStrat = {0};
+			FSStrat.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH;//EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT;// : EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH;
+			FSStrat.canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF;
+			FSStrat.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
+			emscripten_request_fullscreen_strategy("#canvas", 1, &FSStrat);
+		#else	
+			emscripten_request_fullscreen("#canvas", 1);
+		#endif
+	
 	}
 
 	emscripten_set_canvas_element_size("#canvas", RGFW_root->r.w, RGFW_root->r.h);
 
-	#ifdef LEGACY_GL_EMULATION
-	EM_ASM("Module.canvas.focus()");	
-	#endif
-
 	RGFW_windowResizeCallback(RGFW_root, RGFW_root->r);
+	
 	return EM_TRUE;
 }
 
@@ -8509,7 +8541,7 @@ EM_BOOL Emscripten_on_gamepad(int eventType, const EmscriptenGamepadEvent *gamep
 	if (gamepadEvent->index >= 4)
 		return 0;
 	
-	RGFW_joysticks[gamepadEvent->index] = gamepadEvent->connected;
+	RGFW_gamepads[gamepadEvent->index] = gamepadEvent->connected;
 
     return 1; // The event was consumed by the callback handler
 }
@@ -8729,7 +8761,7 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 	emscripten_sample_gamepad_data();
 	/* check gamepads */
     for (int i = 0; (i < emscripten_get_num_gamepads()) && (i < 4); i++) {
-		if (RGFW_joysticks[i] == 0)
+		if (RGFW_gamepads[i] == 0)
 			continue;
         EmscriptenGamepadEvent gamepadState;
 
@@ -8739,11 +8771,11 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 		// Register buttons data for every connected gamepad
 		for (int j = 0; (j < gamepadState.numButtons) && (j < 16); j++) {
 			u32 map[] = {
-				RGFW_JS_A, RGFW_JS_B, RGFW_JS_X, RGFW_JS_Y,
-				RGFW_JS_L1, RGFW_JS_R1, RGFW_JS_L2, RGFW_JS_R2,
-				RGFW_JS_SELECT, RGFW_JS_START,
-				RGFW_JS_L3, RGFW_JS_R3,
-				RGFW_JS_UP, RGFW_JS_DOWN, RGFW_JS_LEFT, RGFW_JS_RIGHT
+				RGFW_GP_A, RGFW_GP_B, RGFW_GP_X, RGFW_GP_Y,
+				RGFW_GP_L1, RGFW_GP_R1, RGFW_GP_L2, RGFW_GP_R2,
+				RGFW_GP_SELECT, RGFW_GP_START,
+				RGFW_GP_L3, RGFW_GP_R3,
+				RGFW_GP_UP, RGFW_GP_DOWN, RGFW_GP_LEFT, RGFW_GP_RIGHT
 			};
 
 
@@ -8751,15 +8783,15 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 			if (button == 404)
 				continue;
 
-			if (RGFW_jsPressed[i][button] != gamepadState.digitalButton[j]) {
+			if (RGFW_gpPressed[i][button] != gamepadState.digitalButton[j]) {
 				if (gamepadState.digitalButton[j])
-					win->event.type = RGFW_jsButtonPressed;
+					win->event.type = RGFW_gpButtonPressed;
 				else
-					win->event.type = RGFW_jsButtonReleased;
+					win->event.type = RGFW_gpButtonReleased;
 
-				win->event.joystick = i;
+				win->event.gamepad = i;
 				win->event.button = map[j];
-				RGFW_jsPressed[i][button] = gamepadState.digitalButton[j];
+				RGFW_gpPressed[i][button] = gamepadState.digitalButton[j];
 				return &win->event;
 			}
 		}
@@ -8771,8 +8803,8 @@ RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
 			) {
 				win->event.axis[j / 2].x = (i8)(gamepadState.axis[j] * 100.0f);
 				win->event.axis[j / 2].y = (i8)(gamepadState.axis[j + 1] * 100.0f);
-				win->event.type = RGFW_jsAxisMove;
-				win->event.joystick = i;
+				win->event.type = RGFW_gpAxisMove;
+				win->event.gamepad = i;
 				win->event.whichAxis = j / 2;
 				return &win->event;
 			}
