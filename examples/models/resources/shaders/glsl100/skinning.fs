@@ -1,17 +1,20 @@
 #version 100
 
+precision mediump float;
+
 // Input vertex attributes (from vertex shader)
-in vec2 fragTexCoord;
-in vec4 fragColor;
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
-// Output fragment color
-out vec4 finalColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
 void main()
 {
-    vec4 texelColor = texture(texture0, fragTexCoord);
-    finalColor = texelColor*colDiffuse*fragColor;
+    // Fetch color from texture sampler
+    vec4 texelColor = texture2D(texture0, fragTexCoord);
+    
+    // Calculate final fragment color
+    gl_FragColor = texelColor*colDiffuse*fragColor;
 }

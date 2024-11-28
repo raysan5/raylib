@@ -12,12 +12,18 @@ endif()
 # Also adding only on desktop (web also uses glfw but it is more limited and is added using an emcc linker flag)
 if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MATCHES "Desktop")
     MESSAGE(STATUS "Using raylib's GLFW")
+    set(INTERNAL_GLFW ON CACHE INTERNAL "" FORCE)
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
     set(GLFW_LIBRARY_TYPE "OBJECT" CACHE STRING "" FORCE)
-    
+
+
+    if (NOT BUILD_SHARED_LIBS)
+        message(STATUS "Enabling install of GLFW static libs because raylib will be built statically")
+        set(GLFW_INSTALL ON CACHE BOOL "" FORCE)
+    endif ()
 
     add_subdirectory(external/glfw)
 
@@ -25,7 +31,7 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
     if (BUILD_SHARED_LIBS)
         set_property(TARGET glfw PROPERTY C_VISIBILITY_PRESET hidden)
     endif()
-    
+
     list(APPEND raylib_sources $<TARGET_OBJECTS:glfw>)
     include_directories(BEFORE SYSTEM external/glfw/include)
 elseif("${PLATFORM}" STREQUAL "DRM")

@@ -4,8 +4,11 @@
 *
 *   Welcome to raylib!
 *
-*   To test examples, just press F6 and execute raylib_compile_execute script
+*   To test examples, just press F6 and execute 'raylib_compile_execute' script
 *   Note that compiled executable is placed in the same folder as .c file
+*
+*   To test the examples on Web, press F6 and execute 'raylib_compile_execute_web' script
+*   Web version of the program is generated in the same folder as .c file
 *
 *   You can find all basic examples on C:\raylib\raylib\examples folder or
 *   raylib official webpage: www.raylib.com
