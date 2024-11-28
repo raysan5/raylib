@@ -4335,6 +4335,14 @@ return {
       }
     },
     {
+      name = "GetKeyName",
+      description = "Get name of a QWERTY key on the current keyboard layout (eg returns string "q" for KEY_A on an AZERTY keyboard)",
+      returnType = "const char *",
+      params = {
+        {type = "int", name = "key"}
+      }
+    },
+    {
       name = "IsGamepadAvailable",
       description = "Check if a gamepad is available",
       returnType = "bool",

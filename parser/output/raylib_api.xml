@@ -674,7 +674,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="581">
+    <Functions count="582">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1182,6 +1182,9 @@
         <Function name="GetCharPressed" retType="int" paramCount="0" desc="Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty">
         </Function>
         <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
+            <Param type="int" name="key" desc="" />
+        </Function>
+        <Function name="GetKeyName" retType="const char *" paramCount="1" desc="Get name of a QWERTY key on the current keyboard layout (eg returns string "q" for KEY_A on an AZERTY keyboard)">
             <Param type="int" name="key" desc="" />
         </Function>
         <Function name="IsGamepadAvailable" retType="bool" paramCount="1" desc="Check if a gamepad is available">
