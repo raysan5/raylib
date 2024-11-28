@@ -18,8 +18,10 @@ endif ()
 join_paths(libdir_for_pc_file "\${exec_prefix}" "${CMAKE_INSTALL_LIBDIR}")
 join_paths(includedir_for_pc_file "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
 configure_file(../raylib.pc.in raylib.pc @ONLY)
+configure_file(../cmake/raylib-config-version.cmake raylib-config-version.cmake @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-include(SetupCmakeConfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/raylib-config-version.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/raylib")
+install(FILES ${PROJECT_SOURCE_DIR}/../cmake/raylib-config.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/raylib")
 
 # populates raylib_{FOUND, INCLUDE_DIRS, LIBRARIES, LDFLAGS, DEFINITIONS}
 include(PopulateConfigVariablesLocally)
