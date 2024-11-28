@@ -1790,12 +1790,12 @@ u32 RGFW_window_checkFPS(RGFW_window* win, u32 fpsCap) {
 	u64 deltaTime = RGFW_getTimeNS() - win->event.frameTime;
 
 	u32 output_fps = 0;
-	u64 fps = (u64)round(1e+9 / deltaTime);
+	u64 fps = round(1e+9 / deltaTime);
 	output_fps= fps;
 
 	if (fpsCap && fps > fpsCap) {
-		u64 frameTimeNS = (u64)(1e+9 / fpsCap);
-		u64 sleepTimeMS = (u64)((frameTimeNS - deltaTime) / 1e6);
+		u64 frameTimeNS = 1e+9 / fpsCap;
+		u64 sleepTimeMS = (frameTimeNS - deltaTime) / 1e6;
 
 		if (sleepTimeMS > 0) {
 			RGFW_sleep(sleepTimeMS);
@@ -1809,7 +1809,7 @@ u32 RGFW_window_checkFPS(RGFW_window* win, u32 fpsCap) {
 		return (u32) output_fps;
 	
 	deltaTime = RGFW_getTimeNS() - win->event.frameTime2;
-	output_fps = (u64)round(1e+9 / deltaTime);
+	output_fps = round(1e+9 / deltaTime);
 	win->event.frameTime2 = RGFW_getTimeNS();
 
 	return output_fps;
@@ -2662,579 +2662,591 @@ Start of Linux / Unix defines
 		}
 
 		if (args & RGFW_NO_RESIZE) { /* make it so the user can't resize the window*/
-			XSizeHints* sh = XAllocSizeHints();
-			sh->flags = (1L << 4) | (1L << 5);
-			sh->min_width = sh->max_width = win->r.w;
-			sh->min_height = sh->max_height = win->r.h;
+			XSizeHints sh = {0};
+			sh.flags = (1L << 4) | (1L << 5);
+			sh.min_width = sh.max_width = win->r.w;
+			sh.min_height = sh.max_height = win->r.h;
 
-			XSetWMSizeHints((Display*) win->src.display, (Drawable) win->src.window, sh, XA_WM_NORMAL_HINTS);
-			XFree(sh);
+			XSetWMSizeHints((Display*) win->src.display, (Drawable) win->src.window, &sh, XA_WM_NORMAL_HINTS);
+
+			win->_winArgs |= RGFW_NO_RESIZE;
 		}
 
-		if (args & RGFW_NO_BORDER) {
-			RGFW_window_setBorder(win, 0);
-		}
+			if (args & RGFW_NO_BORDER) {
+				RGFW_window_setBorder(win, 0);
+			}
 
-		XSelectInput((Display*) win->src.display, (Drawable) win->src.window, event_mask); /*!< tell X11 what events we want*/
+			XSelectInput((Display*) win->src.display, (Drawable) win->src.window, event_mask); /*!< tell X11 what events we want*/
 
-		/* make it so the user can't close the window until the program does*/
-		if (wm_delete_window == 0)
-			wm_delete_window = XInternAtom((Display*) win->src.display, "WM_DELETE_WINDOW", False);
+			/* make it so the user can't close the window until the program does*/
+			if (wm_delete_window == 0)
+				wm_delete_window = XInternAtom((Display*) win->src.display, "WM_DELETE_WINDOW", False);
 
-		XSetWMProtocols((Display*) win->src.display, (Drawable) win->src.window, &wm_delete_window, 1);
+			XSetWMProtocols((Display*) win->src.display, (Drawable) win->src.window, &wm_delete_window, 1);
 
-		/* connect the context to the window*/
+			/* connect the context to the window*/
 #ifdef RGFW_OPENGL
-		if ((args & RGFW_NO_INIT_API) == 0)
-			glXMakeCurrent((Display*) win->src.display, (Drawable) win->src.window, (GLXContext) win->src.ctx);
+			if ((args & RGFW_NO_INIT_API) == 0)
+				glXMakeCurrent((Display*) win->src.display, (Drawable) win->src.window, (GLXContext) win->src.ctx);
 #endif
 
-		/* set the background*/
-		XStoreName((Display*) win->src.display, (Drawable) win->src.window, name); /*!< set the name*/
+			/* set the background*/
+			XStoreName((Display*) win->src.display, (Drawable) win->src.window, name); /*!< set the name*/
 
-		XMapWindow((Display*) win->src.display, (Drawable) win->src.window);						  /* draw the window*/
-		XMoveWindow((Display*) win->src.display, (Drawable) win->src.window, win->r.x, win->r.y); /*!< move the window to it's proper cords*/
+			XMapWindow((Display*) win->src.display, (Drawable) win->src.window);						  /* draw the window*/
+			XMoveWindow((Display*) win->src.display, (Drawable) win->src.window, win->r.x, win->r.y); /*!< move the window to it's proper cords*/
 
-		if (args & RGFW_ALLOW_DND) { /* init drag and drop atoms and turn on drag and drop for this window */
-			win->_winArgs |= RGFW_ALLOW_DND;
+			if (args & RGFW_ALLOW_DND) { /* init drag and drop atoms and turn on drag and drop for this window */
+				win->_winArgs |= RGFW_ALLOW_DND;
 
-			XdndTypeList = XInternAtom((Display*) win->src.display, "XdndTypeList", False);
-			XdndSelection = XInternAtom((Display*) win->src.display, "XdndSelection", False);
+				XdndTypeList = XInternAtom((Display*) win->src.display, "XdndTypeList", False);
+				XdndSelection = XInternAtom((Display*) win->src.display, "XdndSelection", False);
 
-			/* client messages */
-			XdndEnter = XInternAtom((Display*) win->src.display, "XdndEnter", False);
-			XdndPosition = XInternAtom((Display*) win->src.display, "XdndPosition", False);
-			XdndStatus = XInternAtom((Display*) win->src.display, "XdndStatus", False);
-			XdndLeave = XInternAtom((Display*) win->src.display, "XdndLeave", False);
-			XdndDrop = XInternAtom((Display*) win->src.display, "XdndDrop", False);
-			XdndFinished = XInternAtom((Display*) win->src.display, "XdndFinished", False);
+				/* client messages */
+				XdndEnter = XInternAtom((Display*) win->src.display, "XdndEnter", False);
+				XdndPosition = XInternAtom((Display*) win->src.display, "XdndPosition", False);
+				XdndStatus = XInternAtom((Display*) win->src.display, "XdndStatus", False);
+				XdndLeave = XInternAtom((Display*) win->src.display, "XdndLeave", False);
+				XdndDrop = XInternAtom((Display*) win->src.display, "XdndDrop", False);
+				XdndFinished = XInternAtom((Display*) win->src.display, "XdndFinished", False);
 
-			/* actions */
-			XdndActionCopy = XInternAtom((Display*) win->src.display, "XdndActionCopy", False);
+				/* actions */
+				XdndActionCopy = XInternAtom((Display*) win->src.display, "XdndActionCopy", False);
 
-			XtextUriList = XInternAtom((Display*) win->src.display, "text/uri-list", False); 
-			XtextPlain = XInternAtom((Display*) win->src.display, "text/plain", False);
+				XtextUriList = XInternAtom((Display*) win->src.display, "text/uri-list", False); 
+				XtextPlain = XInternAtom((Display*) win->src.display, "text/plain", False);
 
-			XdndAware = XInternAtom((Display*) win->src.display, "XdndAware", False);
-			const u8 version = 5;
+				XdndAware = XInternAtom((Display*) win->src.display, "XdndAware", False);
+				const u8 version = 5;
 
-			XChangeProperty((Display*) win->src.display, (Window) win->src.window,
-				XdndAware, 4, 32,
-				PropModeReplace, &version, 1); /*!< turns on drag and drop */
+				XChangeProperty((Display*) win->src.display, (Window) win->src.window,
+					XdndAware, 4, 32,
+					PropModeReplace, &version, 1); /*!< turns on drag and drop */
+			}
+
+			#ifdef RGFW_EGL
+				if ((args & RGFW_NO_INIT_API) == 0)
+					RGFW_createOpenGLContext(win);
+			#endif
+
+			RGFW_window_setMouseDefault(win);
+
+			RGFW_windowsOpen++;
+
+			return win; /*return newly created window*/
 		}
 
-		#ifdef RGFW_EGL
-			if ((args & RGFW_NO_INIT_API) == 0)
-				RGFW_createOpenGLContext(win);
-		#endif
+		RGFW_area RGFW_getScreenSize(void) {
+			assert(RGFW_root != NULL);
 
-		RGFW_window_setMouseDefault(win);
-
-		RGFW_windowsOpen++;
-
-		return win; /*return newly created window*/
-	}
-
-	RGFW_area RGFW_getScreenSize(void) {
-		assert(RGFW_root != NULL);
-
-		Screen* scrn = DefaultScreenOfDisplay((Display*) RGFW_root->src.display);
-		return RGFW_AREA(scrn->width, scrn->height);
-	}
-
-	RGFW_point RGFW_getGlobalMousePoint(void) {
-		assert(RGFW_root != NULL);
-
-		RGFW_point RGFWMouse;
-
-		i32 x, y;
-		u32 z;
-		Window window1, window2;
-		XQueryPointer((Display*) RGFW_root->src.display, XDefaultRootWindow((Display*) RGFW_root->src.display), &window1, &window2, &RGFWMouse.x, &RGFWMouse.y, &x, &y, &z);
- 
-		return RGFWMouse;
-	}
-
-	RGFW_point RGFW_window_getMousePoint(RGFW_window* win) {
-		assert(win != NULL);
-
-		RGFW_point RGFWMouse;
-
-		i32 x, y;
-		u32 z;
-		Window window1, window2;
-		XQueryPointer((Display*) win->src.display, win->src.window, &window1, &window2, &x, &y, &RGFWMouse.x, &RGFWMouse.y, &z);
-
-		return RGFWMouse;
-	}
-
-	int xAxis = 0, yAxis = 0;
-
-	RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
-		assert(win != NULL);
-
-		static struct {
-			long source, version;
-			i32 format;
-		} xdnd;
-
-		if (win->event.type == 0) 
-			RGFW_resetKey();
-
-		if (win->event.type == RGFW_quit) {
-			return NULL;
+			Screen* scrn = DefaultScreenOfDisplay((Display*) RGFW_root->src.display);
+			return RGFW_AREA(scrn->width, scrn->height);
 		}
 
-		win->event.type = 0;
+		RGFW_point RGFW_getGlobalMousePoint(void) {
+			assert(RGFW_root != NULL);
+
+			RGFW_point RGFWMouse;
+
+			i32 x, y;
+			u32 z;
+			Window window1, window2;
+			XQueryPointer((Display*) RGFW_root->src.display, XDefaultRootWindow((Display*) RGFW_root->src.display), &window1, &window2, &RGFWMouse.x, &RGFWMouse.y, &x, &y, &z);
+	 
+			return RGFWMouse;
+		}
+
+		RGFW_point RGFW_window_getMousePoint(RGFW_window* win) {
+			assert(win != NULL);
+
+			RGFW_point RGFWMouse;
+
+			i32 x, y;
+			u32 z;
+			Window window1, window2;
+			XQueryPointer((Display*) win->src.display, win->src.window, &window1, &window2, &x, &y, &RGFWMouse.x, &RGFWMouse.y, &z);
+
+			return RGFWMouse;
+		}
+
+		int xAxis = 0, yAxis = 0;
+
+		RGFW_Event* RGFW_window_checkEvent(RGFW_window* win) {
+			assert(win != NULL);
+
+			static struct {
+				long source, version;
+				i32 format;
+			} xdnd;
+
+			if (win->event.type == 0) 
+				RGFW_resetKey();
+
+			if (win->event.type == RGFW_quit) {
+				return NULL;
+			}
+
+			win->event.type = 0;
 
 #ifdef __linux__
-	RGFW_Event* event = RGFW_linux_updateGamepad(win);
-	if (event != NULL)
-		return event;
+		RGFW_Event* event = RGFW_linux_updateGamepad(win);
+		if (event != NULL)
+			return event;
 #endif
 
-		XPending(win->src.display);
+			XPending(win->src.display);
 
-		XEvent E; /*!< raw X11 event */
+			XEvent E; /*!< raw X11 event */
 
-		/* if there is no unread qued events, get a new one */
-		if ((QLength(win->src.display) || XEventsQueued((Display*) win->src.display, QueuedAlready) + XEventsQueued((Display*) win->src.display, QueuedAfterReading)) 
-			&& win->event.type != RGFW_quit
-		)
-			XNextEvent((Display*) win->src.display, &E);
-		else {
-			return NULL;
-		}
-
-		u32 i;
-		win->event.type = 0;
-		XEvent reply = { ClientMessage };
-
-		switch (E.type) {
-		case KeyPress:
-		case KeyRelease: {
-			win->event.repeat = RGFW_FALSE;
-			/* check if it's a real key release */
-			if (E.type == KeyRelease && XEventsQueued((Display*) win->src.display, QueuedAfterReading)) { /* get next event if there is one*/
-				XEvent NE;
-				XPeekEvent((Display*) win->src.display, &NE);
-
-				if (E.xkey.time == NE.xkey.time && E.xkey.keycode == NE.xkey.keycode) /* check if the current and next are both the same*/
-					win->event.repeat = RGFW_TRUE;
+			/* if there is no unread qued events, get a new one */
+			if ((QLength(win->src.display) || XEventsQueued((Display*) win->src.display, QueuedAlready) + XEventsQueued((Display*) win->src.display, QueuedAfterReading)) 
+				&& win->event.type != RGFW_quit
+			)
+				XNextEvent((Display*) win->src.display, &E);
+			else {
+				return NULL;
 			}
 
-			/* set event key data */
-			KeySym sym = (KeySym)XkbKeycodeToKeysym((Display*) win->src.display, E.xkey.keycode, 0, E.xkey.state & ShiftMask ? 1 : 0);
-			win->event.keyCode = RGFW_apiKeyCodeToRGFW(E.xkey.keycode);
-			
-			char* str = (char*)XKeysymToString(sym);
-			if (str != NULL)
-				strncpy(win->event.keyName, str, 16);
+			u32 i;
+			win->event.type = 0;
+			XEvent reply = { ClientMessage };
 
-			win->event.keyName[15] = '\0';		
+			switch (E.type) {
+			case KeyPress:
+			case KeyRelease: {
+				win->event.repeat = RGFW_FALSE;
+				/* check if it's a real key release */
+				if (E.type == KeyRelease && XEventsQueued((Display*) win->src.display, QueuedAfterReading)) { /* get next event if there is one*/
+					XEvent NE;
+					XPeekEvent((Display*) win->src.display, &NE);
 
-			RGFW_keyboard[win->event.keyCode].prev = RGFW_isPressed(win, win->event.keyCode);
-			
-			/* get keystate data */
-			win->event.type = (E.type == KeyPress) ? RGFW_keyPressed : RGFW_keyReleased;
-
-			XKeyboardState keystate;
-			XGetKeyboardControl((Display*) win->src.display, &keystate);
-
-			RGFW_updateLockState(win, (keystate.led_mask & 1), (keystate.led_mask & 2));
-			RGFW_keyboard[win->event.keyCode].current = (E.type == KeyPress);
-			RGFW_keyCallback(win, win->event.keyCode, win->event.keyName, win->event.lockState, (E.type == KeyPress));
-			break;
-		}
-		case ButtonPress:
-		case ButtonRelease:
-			win->event.type = RGFW_mouseButtonPressed + (E.type == ButtonRelease); // the events match 
-			
-			switch(win->event.button) {
-				case RGFW_mouseScrollUp:
-					win->event.scroll = 1;
-					break;
-				case RGFW_mouseScrollDown:
-					win->event.scroll = -1;
-					break;
-				default: break;
-			}
-
-			win->event.button = E.xbutton.button;
-			RGFW_mouseButtons[win->event.button].prev = RGFW_mouseButtons[win->event.button].current;
-
-			if (win->event.repeat == RGFW_FALSE)
-				win->event.repeat = RGFW_isPressed(win, win->event.keyCode);
-
-			RGFW_mouseButtons[win->event.button].current = (E.type == ButtonPress);
-			RGFW_mouseButtonCallback(win, win->event.button, win->event.scroll, (E.type == ButtonPress));
-			break;
-
-		case MotionNotify:	
-			win->event.point.x = E.xmotion.x;
-			win->event.point.y = E.xmotion.y;
-			
-			if ((win->_winArgs & RGFW_HOLD_MOUSE)) {
-				win->event.point.y = E.xmotion.y;
-
-				win->event.point.x = win->_lastMousePoint.x - abs(win->event.point.x);
-				win->event.point.y = win->_lastMousePoint.y - abs(win->event.point.y);
-			}
-
-			win->_lastMousePoint = RGFW_POINT(E.xmotion.x, E.xmotion.y);
-
-			win->event.type = RGFW_mousePosChanged;
-			RGFW_mousePosCallback(win, win->event.point);
-			break;
-
-		case GenericEvent: {
-			/* MotionNotify is used for mouse events if the mouse isn't held */                
-			if (!(win->_winArgs & RGFW_HOLD_MOUSE)) {
-            	XFreeEventData(win->src.display, &E.xcookie);
-				break;
-			}
-			
-            XGetEventData(win->src.display, &E.xcookie);
-            if (E.xcookie.evtype == XI_RawMotion) {
-				XIRawEvent *raw = (XIRawEvent *)E.xcookie.data;
-				if (raw->valuators.mask_len == 0) {
-					XFreeEventData(win->src.display, &E.xcookie);
-					break;
+					if (E.xkey.time == NE.xkey.time && E.xkey.keycode == NE.xkey.keycode) /* check if the current and next are both the same*/
+						win->event.repeat = RGFW_TRUE;
 				}
 
-                double deltaX = 0.0f; 
-				double deltaY = 0.0f;
-
-                /* check if relative motion data exists where we think it does */
-				if (XIMaskIsSet(raw->valuators.mask, 0) != 0)
-					deltaX += raw->raw_values[0];
-				if (XIMaskIsSet(raw->valuators.mask, 1) != 0)
-					deltaY += raw->raw_values[1];
-
-				win->event.point = RGFW_POINT((i32)deltaX, (i32)deltaY);
+				/* set event key data */
+				KeySym sym = (KeySym)XkbKeycodeToKeysym((Display*) win->src.display, E.xkey.keycode, 0, E.xkey.state & ShiftMask ? 1 : 0);
+				win->event.keyCode = RGFW_apiKeyCodeToRGFW(E.xkey.keycode);
 				
-				RGFW_window_moveMouse(win, RGFW_POINT(win->r.x + (win->r.w / 2), win->r.y + (win->r.h / 2)));
+				char* str = (char*)XKeysymToString(sym);
+				if (str != NULL)
+					strncpy(win->event.keyName, str, 16);
+
+				win->event.keyName[15] = '\0';		
+
+				RGFW_keyboard[win->event.keyCode].prev = RGFW_isPressed(win, win->event.keyCode);
+				
+				/* get keystate data */
+				win->event.type = (E.type == KeyPress) ? RGFW_keyPressed : RGFW_keyReleased;
+
+				XKeyboardState keystate;
+				XGetKeyboardControl((Display*) win->src.display, &keystate);
+
+				RGFW_updateLockState(win, (keystate.led_mask & 1), (keystate.led_mask & 2));
+				RGFW_keyboard[win->event.keyCode].current = (E.type == KeyPress);
+				RGFW_keyCallback(win, win->event.keyCode, win->event.keyName, win->event.lockState, (E.type == KeyPress));
+				break;
+			}
+			case ButtonPress:
+			case ButtonRelease:
+				win->event.type = RGFW_mouseButtonPressed + (E.type == ButtonRelease); // the events match 
+				
+				switch(win->event.button) {
+					case RGFW_mouseScrollUp:
+						win->event.scroll = 1;
+						break;
+					case RGFW_mouseScrollDown:
+						win->event.scroll = -1;
+						break;
+					default: break;
+				}
+
+				win->event.button = E.xbutton.button;
+				RGFW_mouseButtons[win->event.button].prev = RGFW_mouseButtons[win->event.button].current;
+
+				if (win->event.repeat == RGFW_FALSE)
+					win->event.repeat = RGFW_isPressed(win, win->event.keyCode);
+
+				RGFW_mouseButtons[win->event.button].current = (E.type == ButtonPress);
+				RGFW_mouseButtonCallback(win, win->event.button, win->event.scroll, (E.type == ButtonPress));
+				break;
+
+			case MotionNotify:	
+				win->event.point.x = E.xmotion.x;
+				win->event.point.y = E.xmotion.y;
+				
+				if ((win->_winArgs & RGFW_HOLD_MOUSE)) {
+					win->event.point.y = E.xmotion.y;
+
+					win->event.point.x = win->_lastMousePoint.x - abs(win->event.point.x);
+					win->event.point.y = win->_lastMousePoint.y - abs(win->event.point.y);
+				}
+
+				win->_lastMousePoint = RGFW_POINT(E.xmotion.x, E.xmotion.y);
 
 				win->event.type = RGFW_mousePosChanged;
 				RGFW_mousePosCallback(win, win->event.point);
-            }
+				break;
 
-            XFreeEventData(win->src.display, &E.xcookie);
-			break;
-		}
-		
-		case Expose:
-			win->event.type = RGFW_windowRefresh;
-			RGFW_windowRefreshCallback(win);
-			break;
+			case GenericEvent: {
+				/* MotionNotify is used for mouse events if the mouse isn't held */                
+				if (!(win->_winArgs & RGFW_HOLD_MOUSE)) {
+					XFreeEventData(win->src.display, &E.xcookie);
+					break;
+				}
+				
+				XGetEventData(win->src.display, &E.xcookie);
+				if (E.xcookie.evtype == XI_RawMotion) {
+					XIRawEvent *raw = (XIRawEvent *)E.xcookie.data;
+					if (raw->valuators.mask_len == 0) {
+						XFreeEventData(win->src.display, &E.xcookie);
+						break;
+					}
 
-		case ClientMessage:
-			/* if the client closed the window*/
-			if (E.xclient.data.l[0] == (i64) wm_delete_window) {
-				win->event.type = RGFW_quit;
-				RGFW_windowQuitCallback(win);
+					double deltaX = 0.0f; 
+					double deltaY = 0.0f;
+
+					/* check if relative motion data exists where we think it does */
+					if (XIMaskIsSet(raw->valuators.mask, 0) != 0)
+						deltaX += raw->raw_values[0];
+					if (XIMaskIsSet(raw->valuators.mask, 1) != 0)
+						deltaY += raw->raw_values[1];
+
+					win->event.point = RGFW_POINT((i32)deltaX, (i32)deltaY);
+					
+					RGFW_window_moveMouse(win, RGFW_POINT(win->r.x + (win->r.w / 2), win->r.y + (win->r.h / 2)));
+
+					win->event.type = RGFW_mousePosChanged;
+					RGFW_mousePosCallback(win, win->event.point);
+				}
+
+				XFreeEventData(win->src.display, &E.xcookie);
 				break;
 			}
 			
-			/* reset DND values */
-			if (win->event.droppedFilesCount) {
-				for (i = 0; i < win->event.droppedFilesCount; i++)
-					win->event.droppedFiles[i][0] = '\0';
-			}
-
-			win->event.droppedFilesCount = 0;
-
-			if ((win->_winArgs & RGFW_ALLOW_DND) == 0)
+			case Expose:
+				win->event.type = RGFW_windowRefresh;
+				RGFW_windowRefreshCallback(win);
 				break;
 
-			reply.xclient.window = xdnd.source;
-			reply.xclient.format = 32;
-			reply.xclient.data.l[0] = (long) win->src.window;
-			reply.xclient.data.l[1] = 0;
-			reply.xclient.data.l[2] = None;
-
-			if (E.xclient.message_type == XdndEnter) {
-				unsigned long count;
-				Atom* formats;
-				Atom real_formats[6];
-
-				Bool list = E.xclient.data.l[1] & 1;
-
-				xdnd.source = E.xclient.data.l[0];
-				xdnd.version = E.xclient.data.l[1] >> 24;
-				xdnd.format = None;
-
-				if (xdnd.version > 5)
+			case ClientMessage:
+				/* if the client closed the window*/
+				if (E.xclient.data.l[0] == (i64) wm_delete_window) {
+					win->event.type = RGFW_quit;
+					RGFW_windowQuitCallback(win);
 					break;
-
-				if (list) {
-					Atom actualType;
-					i32 actualFormat;
-					unsigned long bytesAfter;
-
-					XGetWindowProperty((Display*) win->src.display,
-						xdnd.source,
-						XdndTypeList,
-						0,
-						LONG_MAX,
-						False,
-						4,
-						&actualType,
-						&actualFormat,
-						&count,
-						&bytesAfter,
-						(u8**) &formats);
-				} else {
-					count = 0;
-
-					if (E.xclient.data.l[2] != None)
-						real_formats[count++] = E.xclient.data.l[2];
-					if (E.xclient.data.l[3] != None)
-						real_formats[count++] = E.xclient.data.l[3];
-					if (E.xclient.data.l[4] != None)
-						real_formats[count++] = E.xclient.data.l[4];
-					
-					formats = real_formats;
+				}
+				
+				/* reset DND values */
+				if (win->event.droppedFilesCount) {
+					for (i = 0; i < win->event.droppedFilesCount; i++)
+						win->event.droppedFiles[i][0] = '\0';
 				}
 
-				unsigned long i;
-				for (i = 0; i < count; i++) {
-				    if (formats[i] == XtextUriList || formats[i] == XtextPlain) {
-						xdnd.format = formats[i];
-						break;
-					}
-				}
+				win->event.droppedFilesCount = 0;
 
-				if (list) {
-					XFree(formats);
-				}
-
-				break;
-			}
-			if (E.xclient.message_type == XdndPosition) {
-				const i32 xabs = (E.xclient.data.l[2] >> 16) & 0xffff;
-				const i32 yabs = (E.xclient.data.l[2]) & 0xffff;
-				Window dummy;
-				i32 xpos, ypos;
-
-				if (xdnd.version > 5)
+				if ((win->_winArgs & RGFW_ALLOW_DND) == 0)
 					break;
-
-				XTranslateCoordinates((Display*) win->src.display,
-					XDefaultRootWindow((Display*) win->src.display),
-					(Window) win->src.window,
-					xabs, yabs,
-					&xpos, &ypos,
-					&dummy);
-
-				win->event.point.x = xpos;
-				win->event.point.y = ypos;
 
 				reply.xclient.window = xdnd.source;
-				reply.xclient.message_type = XdndStatus;
+				reply.xclient.format = 32;
+				reply.xclient.data.l[0] = (long) win->src.window;
+				reply.xclient.data.l[1] = 0;
+				reply.xclient.data.l[2] = None;
+
+				if (E.xclient.message_type == XdndEnter) {
+					unsigned long count;
+					Atom* formats;
+					Atom real_formats[6];
+
+					Bool list = E.xclient.data.l[1] & 1;
+
+					xdnd.source = E.xclient.data.l[0];
+					xdnd.version = E.xclient.data.l[1] >> 24;
+					xdnd.format = None;
+
+					if (xdnd.version > 5)
+						break;
+
+					if (list) {
+						Atom actualType;
+						i32 actualFormat;
+						unsigned long bytesAfter;
+
+						XGetWindowProperty((Display*) win->src.display,
+							xdnd.source,
+							XdndTypeList,
+							0,
+							LONG_MAX,
+							False,
+							4,
+							&actualType,
+							&actualFormat,
+							&count,
+							&bytesAfter,
+							(u8**) &formats);
+					} else {
+						count = 0;
+
+						if (E.xclient.data.l[2] != None)
+							real_formats[count++] = E.xclient.data.l[2];
+						if (E.xclient.data.l[3] != None)
+							real_formats[count++] = E.xclient.data.l[3];
+						if (E.xclient.data.l[4] != None)
+							real_formats[count++] = E.xclient.data.l[4];
+						
+						formats = real_formats;
+					}
+
+					unsigned long i;
+					for (i = 0; i < count; i++) {
+						if (formats[i] == XtextUriList || formats[i] == XtextPlain) {
+							xdnd.format = formats[i];
+							break;
+						}
+					}
+
+					if (list) {
+						XFree(formats);
+					}
+
+					break;
+				}
+				if (E.xclient.message_type == XdndPosition) {
+					const i32 xabs = (E.xclient.data.l[2] >> 16) & 0xffff;
+					const i32 yabs = (E.xclient.data.l[2]) & 0xffff;
+					Window dummy;
+					i32 xpos, ypos;
+
+					if (xdnd.version > 5)
+						break;
+
+					XTranslateCoordinates((Display*) win->src.display,
+						XDefaultRootWindow((Display*) win->src.display),
+						(Window) win->src.window,
+						xabs, yabs,
+						&xpos, &ypos,
+						&dummy);
+
+					win->event.point.x = xpos;
+					win->event.point.y = ypos;
+
+					reply.xclient.window = xdnd.source;
+					reply.xclient.message_type = XdndStatus;
+
+					if (xdnd.format) {
+						reply.xclient.data.l[1] = 1;
+						if (xdnd.version >= 2)
+							reply.xclient.data.l[4] = XdndActionCopy;
+					}
+
+					XSendEvent((Display*) win->src.display, xdnd.source, False, NoEventMask, &reply);
+					XFlush((Display*) win->src.display);
+					break;
+				}
+
+				if (E.xclient.message_type != XdndDrop)
+					break;
+
+				if (xdnd.version > 5)
+					break;
+
+				win->event.type = RGFW_dnd_init;
 
 				if (xdnd.format) {
-					reply.xclient.data.l[1] = 1;
-					if (xdnd.version >= 2)
-						reply.xclient.data.l[4] = XdndActionCopy;
+					Time time = CurrentTime;
+
+					if (xdnd.version >= 1)
+						time = E.xclient.data.l[2];
+
+					XConvertSelection((Display*) win->src.display,
+						XdndSelection,
+						xdnd.format,
+						XdndSelection,
+						(Window) win->src.window,
+						time);
+				} else if (xdnd.version >= 2) {
+					XEvent reply = { ClientMessage };
+
+					XSendEvent((Display*) win->src.display, xdnd.source,
+						False, NoEventMask, &reply);
+					XFlush((Display*) win->src.display);
 				}
 
-				XSendEvent((Display*) win->src.display, xdnd.source, False, NoEventMask, &reply);
-				XFlush((Display*) win->src.display);
+				RGFW_dndInitCallback(win, win->event.point);
 				break;
-			}
-
-			if (E.xclient.message_type != XdndDrop)
-				break;
-
-			if (xdnd.version > 5)
-				break;
-
-			win->event.type = RGFW_dnd_init;
-
-			if (xdnd.format) {
-				Time time = CurrentTime;
-
-				if (xdnd.version >= 1)
-					time = E.xclient.data.l[2];
-
-				XConvertSelection((Display*) win->src.display,
-					XdndSelection,
-					xdnd.format,
-					XdndSelection,
-					(Window) win->src.window,
-					time);
-			} else if (xdnd.version >= 2) {
-				XEvent reply = { ClientMessage };
-
-				XSendEvent((Display*) win->src.display, xdnd.source,
-					False, NoEventMask, &reply);
-				XFlush((Display*) win->src.display);
-			}
-
-			RGFW_dndInitCallback(win, win->event.point);
-			break;
-		case SelectionNotify: {
-			/* this is only for checking for xdnd drops */
-			if (E.xselection.property != XdndSelection || !(win->_winArgs | RGFW_ALLOW_DND))
-				break;
-
-			char* data;
-			unsigned long result;
-
-			Atom actualType;
-			i32 actualFormat;
-			unsigned long bytesAfter;
-
-			XGetWindowProperty((Display*) win->src.display, E.xselection.requestor, E.xselection.property, 0, LONG_MAX, False, E.xselection.target, &actualType, &actualFormat, &result, &bytesAfter, (u8**) &data);
-
-			if (result == 0)
-				break;
-
-			/*
-			SOURCED FROM GLFW _glfwParseUriList
-			Copyright (c) 2002-2006 Marcus Geelnard
-			Copyright (c) 2006-2019 Camilla Löwy
-			*/
-
-			const char* prefix = (const char*)"file://";
-
-			char* line;
-
-			win->event.droppedFilesCount = 0;
-
-			win->event.type = RGFW_dnd;
-
-			while ((line = strtok(data, "\r\n"))) {
-				char path[RGFW_MAX_PATH];
-
-				data = NULL;
-
-				if (line[0] == '#')
-					continue;
-
-				char* l;
-				for (l = line; 1; l++) {
-					if ((l - line) > 7)
-						break;
-					else if (*l != prefix[(l - line)])
-						break;
-					else if (*l == '\0' && prefix[(l - line)] == '\0') {
-						line += 7;
-						while (*line != '/')
-							line++;
-						break;
-					} else if (*l == '\0')
-						break;
-				}
-
-				win->event.droppedFilesCount++;
-
-				size_t index = 0;
-				while (*line) {
-					if (line[0] == '%' && line[1] && line[2]) {
-						const char digits[3] = { line[1], line[2], '\0' };
-						path[index] = (char) strtol(digits, NULL, 16);
-						line += 2;
-					} else
-						path[index] = *line;
-
-					index++;
-					line++;
-				}
-				path[index] = '\0';
-				strncpy(win->event.droppedFiles[win->event.droppedFilesCount - 1], path, index + 1);
-			}
-
-			if (data)
-				XFree(data);
-
-			if (xdnd.version >= 2) {
-				reply.xclient.message_type = XdndFinished;
-				reply.xclient.data.l[1] = result;
-				reply.xclient.data.l[2] = XdndActionCopy;
-
-				XSendEvent((Display*) win->src.display, xdnd.source, False, NoEventMask, &reply);
-				XFlush((Display*) win->src.display);
-			}
-
-			RGFW_dndCallback(win, win->event.droppedFiles, win->event.droppedFilesCount);
-			break;
-		}
-		case FocusIn:
-			win->event.inFocus = 1;
-			win->event.type = RGFW_focusIn;
-			RGFW_focusCallback(win, 1);
-			break;
-
-			break;
-		case FocusOut:
-			win->event.inFocus = 0;
-			win->event.type = RGFW_focusOut;
-			RGFW_focusCallback(win, 0);
-			break;
-		
-		case EnterNotify: {
-			win->event.type = RGFW_mouseEnter;
-			win->event.point.x = E.xcrossing.x;
-			win->event.point.y = E.xcrossing.y;
-			RGFW_mouseNotifyCallBack(win, win->event.point, 1);
-			break;
-		}
-
-		case LeaveNotify: {
-			win->event.type = RGFW_mouseLeave;
-			RGFW_mouseNotifyCallBack(win, win->event.point, 0);
-			break;
-		}
-
-		case ConfigureNotify: {
-				/* detect resize */
-      			if (E.xconfigure.width != win->r.w || E.xconfigure.height != win->r.h) {
-					win->event.type = RGFW_windowResized;
-					win->r = RGFW_RECT(win->r.x, win->r.y, E.xconfigure.width, E.xconfigure.height);
-					RGFW_windowResizeCallback(win, win->r);
+			case SelectionNotify: {
+				/* this is only for checking for xdnd drops */
+				if (E.xselection.property != XdndSelection || !(win->_winArgs | RGFW_ALLOW_DND))
 					break;
-      			}  
-      
-      			/* detect move */
-      			if (E.xconfigure.x != win->r.x || E.xconfigure.y != win->r.y) {
-					win->event.type = RGFW_windowMoved;
-					win->r = RGFW_RECT(E.xconfigure.x, E.xconfigure.y, win->r.w, win->r.h);
-					RGFW_windowMoveCallback(win, win->r);
+
+				char* data;
+				unsigned long result;
+
+				Atom actualType;
+				i32 actualFormat;
+				unsigned long bytesAfter;
+
+				XGetWindowProperty((Display*) win->src.display, E.xselection.requestor, E.xselection.property, 0, LONG_MAX, False, E.xselection.target, &actualType, &actualFormat, &result, &bytesAfter, (u8**) &data);
+
+				if (result == 0)
 					break;
-				} 
+
+				/*
+				SOURCED FROM GLFW _glfwParseUriList
+				Copyright (c) 2002-2006 Marcus Geelnard
+				Copyright (c) 2006-2019 Camilla Löwy
+				*/
+
+				const char* prefix = (const char*)"file://";
+
+				char* line;
+
+				win->event.droppedFilesCount = 0;
+
+				win->event.type = RGFW_dnd;
+
+				while ((line = strtok(data, "\r\n"))) {
+					char path[RGFW_MAX_PATH];
+
+					data = NULL;
+
+					if (line[0] == '#')
+						continue;
+
+					char* l;
+					for (l = line; 1; l++) {
+						if ((l - line) > 7)
+							break;
+						else if (*l != prefix[(l - line)])
+							break;
+						else if (*l == '\0' && prefix[(l - line)] == '\0') {
+							line += 7;
+							while (*line != '/')
+								line++;
+							break;
+						} else if (*l == '\0')
+							break;
+					}
+
+					win->event.droppedFilesCount++;
+
+					size_t index = 0;
+					while (*line) {
+						if (line[0] == '%' && line[1] && line[2]) {
+							const char digits[3] = { line[1], line[2], '\0' };
+							path[index] = (char) strtol(digits, NULL, 16);
+							line += 2;
+						} else
+							path[index] = *line;
+
+						index++;
+						line++;
+					}
+					path[index] = '\0';
+					strncpy(win->event.droppedFiles[win->event.droppedFilesCount - 1], path, index + 1);
+				}
+
+				if (data)
+					XFree(data);
+
+				if (xdnd.version >= 2) {
+					reply.xclient.message_type = XdndFinished;
+					reply.xclient.data.l[1] = result;
+					reply.xclient.data.l[2] = XdndActionCopy;
+
+					XSendEvent((Display*) win->src.display, xdnd.source, False, NoEventMask, &reply);
+					XFlush((Display*) win->src.display);
+				}
+
+				RGFW_dndCallback(win, win->event.droppedFiles, win->event.droppedFilesCount);
+				break;
+			}
+			case FocusIn:
+				win->event.inFocus = 1;
+				win->event.type = RGFW_focusIn;
+				RGFW_focusCallback(win, 1);
+				break;
 
 				break;
+			case FocusOut:
+				win->event.inFocus = 0;
+				win->event.type = RGFW_focusOut;
+				RGFW_focusCallback(win, 0);
+				break;
+			
+			case EnterNotify: {
+				win->event.type = RGFW_mouseEnter;
+				win->event.point.x = E.xcrossing.x;
+				win->event.point.y = E.xcrossing.y;
+				RGFW_mouseNotifyCallBack(win, win->event.point, 1);
+				break;
+			}
+
+			case LeaveNotify: {
+				win->event.type = RGFW_mouseLeave;
+				RGFW_mouseNotifyCallBack(win, win->event.point, 0);
+				break;
+			}
+
+			case ConfigureNotify: {
+					/* detect resize */
+					if (E.xconfigure.width != win->r.w || E.xconfigure.height != win->r.h) {
+						win->event.type = RGFW_windowResized;
+						win->r = RGFW_RECT(win->r.x, win->r.y, E.xconfigure.width, E.xconfigure.height);
+						RGFW_windowResizeCallback(win, win->r);
+						break;
+					}  
+		  
+					/* detect move */
+					if (E.xconfigure.x != win->r.x || E.xconfigure.y != win->r.y) {
+						win->event.type = RGFW_windowMoved;
+						win->r = RGFW_RECT(E.xconfigure.x, E.xconfigure.y, win->r.w, win->r.h);
+						RGFW_windowMoveCallback(win, win->r);
+						break;
+					} 
+
+					break;
+			}
+			default: {
+				break;
+			}
+			}
+
+			XFlush((Display*) win->src.display);
+
+			if (win->event.type)
+				return &win->event;
+			else
+				return NULL;
 		}
-		default: {
-			break;
+
+		void RGFW_window_move(RGFW_window* win, RGFW_point v) {
+			assert(win != NULL);
+			win->r.x = v.x;
+			win->r.y = v.y;
+
+			XMoveWindow((Display*) win->src.display, (Window) win->src.window, v.x, v.y);
 		}
-		}
-
-		XFlush((Display*) win->src.display);
-
-		if (win->event.type)
-			return &win->event;
-		else
-			return NULL;
-	}
-
-	void RGFW_window_move(RGFW_window* win, RGFW_point v) {
-		assert(win != NULL);
-		win->r.x = v.x;
-		win->r.y = v.y;
-
-		XMoveWindow((Display*) win->src.display, (Window) win->src.window, v.x, v.y);
-	}
 
 
-	void RGFW_window_resize(RGFW_window* win, RGFW_area a) {
-		assert(win != NULL);
-		win->r.w = a.w;
-		win->r.h = a.h;
+		void RGFW_window_resize(RGFW_window* win, RGFW_area a) {
+			assert(win != NULL);
+			win->r.w = a.w;
+			win->r.h = a.h;
 
-		XResizeWindow((Display*) win->src.display, (Window) win->src.window, a.w, a.h);
+
+			XResizeWindow((Display*) win->src.display, (Window) win->src.window, a.w, a.h);
+			
+			if (!(win->_winArgs & RGFW_NO_RESIZE))
+				return;
+
+			XSizeHints sh = {0};
+			sh.flags = (1L << 4) | (1L << 5);
+			sh.min_width = sh.max_width = a.w;
+			sh.min_height = sh.max_height = a.h;
+
+			XSetWMSizeHints((Display*) win->src.display, (Drawable) win->src.window, &sh, XA_WM_NORMAL_HINTS);
 	}
 
 	void RGFW_window_setMinSize(RGFW_window* win, RGFW_area a) {
