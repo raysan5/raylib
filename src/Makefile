@@ -172,6 +172,15 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
         PLATFORM_SHELL = sh
     endif
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = sh
+    endif
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),LINUX)
         ifndef PLATFORM_SHELL
@@ -252,6 +261,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # On DRM OpenGL ES 2.0 must be used
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
@@ -424,6 +436,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # without EGL_NO_X11 eglplatform.h tears Xlib.h in which tears X.h in
     # which contains a conflicting type Font
     CFLAGS += -DEGL_NO_X11
+    CFLAGS += -Werror=implicit-function-declaration
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
     CFLAGS += -Werror=implicit-function-declaration
 endif
 # Use Wayland display on Linux desktop
@@ -616,6 +631,12 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     LDLIBS = -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl
+    ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
+        LDLIBS += -latomic
+    endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
+    LDLIBS = -lGLESv2 -lEGL -lGL -lpthread -lrt -lm -ldl
     ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
         LDLIBS += -latomic
     endif
