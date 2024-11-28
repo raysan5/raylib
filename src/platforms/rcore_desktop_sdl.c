@@ -1939,7 +1939,7 @@ int InitPlatform(void)
     // NOTE: No need to call InitTimer(), let SDL manage it internally
     CORE.Time.previous = GetTime();     // Get time as double
 
-    #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    #if defined(_WIN32) && !defined(DISABLE_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
     SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1"); // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
     #endif
     //----------------------------------------------------------------------------

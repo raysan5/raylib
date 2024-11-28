@@ -41,11 +41,11 @@
 *       #define SUPPORT_PARTIALBUSY_WAIT_LOOP
 *           Use a partial-busy wait loop, in this case frame sleeps for most of the time and runs a busy-wait-loop at the end
 *
-*       #define SUPPORT_SCREEN_CAPTURE
-*           Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
+*       #define DISABLE_SCREEN_CAPTURE
+*           Disable automatic screen capture of current screen pressing F12, defined in KeyCallback()
 *
-*       #define SUPPORT_GIF_RECORDING
-*           Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
+*       #define DISABLE_GIF_RECORDING
+*           Disable automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
 *       #define SUPPORT_COMPRESSION_API
 *           Support CompressData() and DecompressData() functions, those functions use zlib implementation
@@ -126,7 +126,7 @@
     #include "rcamera.h"            // Camera system functionality
 #endif
 
-#if defined(SUPPORT_GIF_RECORDING)
+#if !defined(DISABLE_GIF_RECORDING)
     #define MSF_GIF_MALLOC(contextPointer, newSize) RL_MALLOC(newSize)
     #define MSF_GIF_REALLOC(contextPointer, oldMemory, oldSize, newSize) RL_REALLOC(oldMemory, newSize)
     #define MSF_GIF_FREE(contextPointer, oldMemory, oldSize) RL_FREE(oldMemory)
@@ -377,11 +377,11 @@ CoreData CORE = { 0 };                      // Global CORE state context
 // NOTE: Useful to allow Texture, RenderTexture, Font.texture, Mesh.vaoId/vboId, Shader loading
 bool isGpuReady = false;
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#if !defined(DISABLE_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
-#if defined(SUPPORT_GIF_RECORDING)
+#if !defined(DISABLE_GIF_RECORDING)
 static unsigned int gifFrameCounter = 0;    // GIF frames counter
 static bool gifRecording = false;           // GIF recording state
 static MsfGifState gifState = { 0 };        // MSGIF context state
@@ -721,7 +721,7 @@ void InitWindow(int width, int height, const char *title)
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
-#if defined(SUPPORT_GIF_RECORDING)
+#if !defined(DISABLE_GIF_RECORDING)
     if (gifRecording)
     {
         MsfGifResult result = msf_gif_end(&gifState);
@@ -888,7 +888,7 @@ void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-#if defined(SUPPORT_GIF_RECORDING)
+#if !defined(DISABLE_GIF_RECORDING)
     // Draw record indicator
     if (gifRecording)
     {
@@ -958,10 +958,10 @@ void EndDrawing(void)
     PollInputEvents();      // Poll user events (before next frame update)
 #endif
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
-    if (IsKeyPressed(KEY_F12))
+#if !defined(DISABLE_SCREEN_CAPTURE)
+    if (IsKeyPressed(KEY_F11))
     {
-#if defined(SUPPORT_GIF_RECORDING)
+#if !defined(DISABLE_GIF_RECORDING)
         if (IsKeyDown(KEY_LEFT_CONTROL))
         {
             if (gifRecording)
@@ -988,13 +988,13 @@ void EndDrawing(void)
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING
+#endif  // ! DISABLE_GIF_RECORDING
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
     }
-#endif  // SUPPORT_SCREEN_CAPTURE
+#endif  // ! DISABLE_SCREEN_CAPTURE
 
     CORE.Time.frameCounter++;
 }
@@ -3094,7 +3094,7 @@ void PlayAutomationEvent(AutomationEvent event)
             case WINDOW_RESIZE: SetWindowSize(event.params[0], event.params[1]); break;
 
             // Custom event
-    #if defined(SUPPORT_SCREEN_CAPTURE)
+    #if !defined(DISABLE_SCREEN_CAPTURE)
             case ACTION_TAKE_SCREENSHOT:
             {
                 TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
@@ -3516,7 +3516,7 @@ void InitTimer(void)
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
     // High resolutions can also prevent the CPU power management system from entering power-saving modes
     // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
+#if defined(_WIN32) && !defined(DISABLE_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
