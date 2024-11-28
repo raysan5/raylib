@@ -135,6 +135,12 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
         PLATFORM_OS = LINUX
     endif
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+endif
 
 # RAYLIB_PATH adjustment for LINUX platform
 # TODO: Do we really need this?
@@ -282,6 +288,10 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     INCLUDE_PATHS += -I/usr/include/libdrm
+endif
+
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
+    INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
 endif
 
 # Include GLFW required for examples/others/rlgl_standalone.c
@@ -474,6 +484,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
+    LDLIBS = -lraylib -lGLESv2 -lEGL -lwayland-client -lwayland-egl -lpthread -lrt -lm -lGL -ldl -latomic
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
@@ -702,6 +715,10 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
+	find . -type f -executable -delete
+	rm -fv *.o
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_COMMA)
 	find . -type f -executable -delete
 	rm -fv *.o
 endif
