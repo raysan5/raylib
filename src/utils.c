@@ -104,7 +104,7 @@ void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 void TraceLog(int logType, const char *text, ...)
 {
-#if defined(SUPPORT_TRACELOG)
+#if SUPPORT_TRACELOG
     // Message has level below current threshold, don't emit
     if (logType < logTypeLevel) return;
 
@@ -191,7 +191,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
             data = loadFileData(fileName, dataSize);
             return data;
         }
-#if defined(SUPPORT_STANDARD_FILEIO)
+#if SUPPORT_STANDARD_FILEIO
         FILE *file = fopen(fileName, "rb");
 
         if (file != NULL)
@@ -261,7 +261,7 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
         {
             return saveFileData(fileName, data, dataSize);
         }
-#if defined(SUPPORT_STANDARD_FILEIO)
+#if SUPPORT_STANDARD_FILEIO
         FILE *file = fopen(fileName, "wb");
 
         if (file != NULL)
@@ -353,7 +353,7 @@ char *LoadFileText(const char *fileName)
             text = loadFileText(fileName);
             return text;
         }
-#if defined(SUPPORT_STANDARD_FILEIO)
+#if SUPPORT_STANDARD_FILEIO
         FILE *file = fopen(fileName, "rt");
 
         if (file != NULL)
@@ -415,7 +415,7 @@ bool SaveFileText(const char *fileName, char *text)
         {
             return saveFileText(fileName, text);
         }
-#if defined(SUPPORT_STANDARD_FILEIO)
+#if SUPPORT_STANDARD_FILEIO
         FILE *file = fopen(fileName, "wt");
 
         if (file != NULL)

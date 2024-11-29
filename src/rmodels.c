@@ -47,7 +47,7 @@
     #include "config.h"     // Defines module configuration flags
 #endif
 
-#if defined(SUPPORT_MODULE_RMODELS)
+#if SUPPORT_MODULE_RMODELS
 
 #include "utils.h"          // Required for: TRACELOG(), LoadFileData(), LoadFileText(), SaveFileText()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
@@ -58,7 +58,7 @@
 #include <string.h>         // Required for: memcmp(), strlen(), strncpy()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
-#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
     #define TINYOBJ_MALLOC RL_MALLOC
     #define TINYOBJ_CALLOC RL_CALLOC
     #define TINYOBJ_REALLOC RL_REALLOC
@@ -68,7 +68,7 @@
     #include "external/tinyobj_loader_c.h"      // OBJ/MTL file formats loading
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
     #define CGLTF_MALLOC RL_MALLOC
     #define CGLTF_FREE RL_FREE
 
@@ -76,7 +76,7 @@
     #include "external/cgltf.h"         // glTF file format loading
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
     #define VOX_MALLOC RL_MALLOC
     #define VOX_CALLOC RL_CALLOC
     #define VOX_REALLOC RL_REALLOC
@@ -86,8 +86,8 @@
     #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_M3D)
-    #define M3D_MALLOC RL_MALLOC
+#if SUPPORT_FILEFORMAT_M3D
+#define M3D_MALLOC RL_MALLOC
     #define M3D_REALLOC RL_REALLOC
     #define M3D_FREE RL_FREE
 
@@ -95,7 +95,7 @@
     #include "external/m3d.h"           // Model3D file format loading
 #endif
 
-#if defined(SUPPORT_MESH_GENERATION)
+#if SUPPORT_MESH_GENERATION
     #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
     #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
     #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
@@ -146,25 +146,25 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if SUPPORT_FILEFORMAT_OBJ
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
 static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount);   // Load IQM animation data
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount);  // Load GLTF animation data
 #endif
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
 static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount);   // Load M3D animation data
 #endif
-#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
 #endif
 
@@ -1091,19 +1091,19 @@ Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if SUPPORT_FILEFORMAT_OBJ
     if (IsFileExtension(fileName, ".obj")) model = LoadOBJ(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
     if (IsFileExtension(fileName, ".iqm")) model = LoadIQM(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
     if (IsFileExtension(fileName, ".gltf") || IsFileExtension(fileName, ".glb")) model = LoadGLTF(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
     if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
     if (IsFileExtension(fileName, ".m3d")) model = LoadM3D(fileName);
 #endif
 
@@ -2111,7 +2111,7 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
     return success;
 }
 
-#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
 // Process obj materials
 static void ProcessMaterialsOBJ(Material *materials, tinyobj_material_t *mats, int materialCount)
 {
@@ -2155,7 +2155,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 
     // TODO: Support IQM and GLTF for materials parsing
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_MTL
     if (IsFileExtension(fileName, ".mtl"))
     {
         tinyobj_material_t *mats = NULL;
@@ -2248,13 +2248,13 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 {
     ModelAnimation *animations = NULL;
 
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
     if (IsFileExtension(fileName, ".iqm")) animations = LoadModelAnimationsIQM(fileName, animCount);
 #endif
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
     if (IsFileExtension(fileName, ".m3d")) animations = LoadModelAnimationsM3D(fileName, animCount);
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
     if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadModelAnimationsGLTF(fileName, animCount);
 #endif
 
@@ -2402,7 +2402,7 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
     return result;
 }
 
-#if defined(SUPPORT_MESH_GENERATION)
+#if SUPPORT_MESH_GENERATION
 // Generate polygonal mesh
 Mesh GenMeshPoly(int sides, float radius)
 {
@@ -4157,7 +4157,7 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_IQM) || defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_IQM || SUPPORT_FILEFORMAT_GLTF
 // Build pose from parent joints
 // NOTE: Required for animations loading (required by IQM and GLTF)
 static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform *transforms)
@@ -4180,7 +4180,7 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if SUPPORT_FILEFORMAT_OBJ
 // Load OBJ mesh data
 //
 // Keep the following information in mind when reading this
@@ -4425,7 +4425,7 @@ static Model LoadOBJ(const char *fileName)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
 // Load IQM mesh data
 static Model LoadIQM(const char *fileName)
 {
@@ -5043,7 +5043,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
 
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
 // Load file data callback for cgltf
 static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, const char *path, cgltf_size *size, void **data)
 {
@@ -6219,7 +6219,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
 // Load VOX (MagicaVoxel) mesh data
 static Model LoadVOX(const char *fileName)
 {
@@ -6329,7 +6329,7 @@ static Model LoadVOX(const char *fileName)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
 // Hook LoadFileData()/UnloadFileData() calls to M3D loaders
 unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, (int *)len); }
 void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
