@@ -9,7 +9,9 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib](https://github.com/raysan5/raylib)                                              | **5.0**          | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))      | Zlib                 |
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.5**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
 | [raylib-boo](https://github.com/Rabios/raylib-boo)                                       | 3.7              | [Boo](http://boo-language.github.io)                                 | MIT                  |
-| [raybit](https://github.com/Alex-Velez/raybit)                                       | **5.0**              | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                                 | MIT                  |
+| [raybit](https://github.com/Alex-Velez/raybit)                                           | **5.0**          | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                 | MIT                  |
+| [raylib-c3] (https://github.com/c3lang/vendor/tree/main/libraries/raylib5.c3l)           | **5.0**          | [C3] (https://c3-lang.org)                                           | MIT                  |
+| [raylib-c3] (https://github.com/c3lang/vendor/tree/main/libraries/raylib55.c3l)          | **5.5**          | [C3] (https://c3-lang.org)                                           | MIT                  |
 | [Raylib-cs](https://github.com/ChrisDill/Raylib-cs)                                      | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
 | [Raylib-CsLo](https://github.com/NotNotTech/Raylib-CsLo)                                 | 4.2              | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
 | [Raylib-CSharp-Vinculum](https://github.com/ZeroElectric/Raylib-CSharp-Vinculum)         | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
@@ -22,7 +24,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [ray-cyber](https://github.com/fubark/ray-cyber)                                         | **5.0**          | [Cyber](https://cyberscript.dev)                                     | MIT                  |
 | [dart-raylib](https://gitlab.com/wolfenrain/dart-raylib)                                 | 4.0              | [Dart](https://dart.dev)                                             | MIT                  |
 | [bindbc-raylib3](https://github.com/o3o/bindbc-raylib3)                                  | **5.0**          | [D](https://dlang.org)                                               | BSL-1.0              |
-| [dray](https://github.com/redthing1/dray)                                                | **5.0**              | [D](https://dlang.org)                                               | Apache-2.0           |
+| [dray](https://github.com/redthing1/dray)                                                | **5.0**          | [D](https://dlang.org)                                               | Apache-2.0           |
 | [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **5.5**          | [D](https://dlang.org)                                               | Zlib                 |
 | [rayex](https://github.com/shiryel/rayex)                                                | 3.7              | [elixir](https://elixir-lang.org)                                    | Apache-2.0           |
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 4.5              | [Factor](https://factorcode.org)                                     | BSD                  |
