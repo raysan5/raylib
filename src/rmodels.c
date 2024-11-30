@@ -5110,7 +5110,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             image = LoadImage(TextFormat("%s/%s", texPath, cgltfImage->uri));
         }
     }
-    else if (cgltfImage->buffer_view->buffer->data != NULL)    // Check if image is provided as data buffer
+    else if (cgltfImage->buffer_view != NULL && cgltfImage->buffer_view->buffer->data != NULL)    // Check if image is provided as data buffer
     {
         unsigned char *data = RL_MALLOC(cgltfImage->buffer_view->size);
         int offset = (int)cgltfImage->buffer_view->offset;
