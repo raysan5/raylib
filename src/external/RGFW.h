@@ -1155,8 +1155,8 @@ typedef RGFW_ENUM(u8, RGFW_mouseIcons) {
 /*
 Example to get you started :
 
-linux : gcc main.c -lX11 -lXcursor -lGL
-windows : gcc main.c -lopengl32 -lshell32 -lgdi32
+linux : gcc main.c -lX11 -lXrandr -lGL
+windows : gcc main.c -lopengl32 -lwinmm -lshell32 -lgdi32
 macos : gcc main.c -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
 
 #define RGFW_IMPLEMENTATION
@@ -1203,7 +1203,7 @@ int main() {
 		windows:
 			gcc -shared RGFW.o -lwinmm -lopengl32 -lshell32 -lgdi32 -o RGFW.dll
 		linux:
-			gcc -shared RGFW.o -lX11 -lXcursor -lGL -lXrandr -o RGFW.so
+			gcc -shared RGFW.o -lX11 -lGL -lXrandr -o RGFW.so
 		macos:
 			gcc -shared RGFW.o -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
 */
