@@ -328,9 +328,9 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
     return result;
 }
 
-// Calculate the signed angle from v1 to v2, relative to the origin (0, 0).
-// NOTE: In Raylib's 2D coordinate system (positive X right, positive Y down),
-//       positive angles appear clockwise, and negative angles appear counterclockwise.
+// Calculate the signed angle from v1 to v2, relative to the origin (0, 0)
+// NOTE: Coordinate system convention: positive X right, positive Y down,
+// positive angles appear clockwise, and negative angles appear counterclockwise
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = 0.0f;
