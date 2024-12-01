@@ -86,6 +86,10 @@ void CloseWindow(void);
     #define Size NSSIZE
 #endif
 
+#define RGFW_MALLOC RL_MALLOC
+#define RGFW_FREE RL_FREE
+#define RGFW_CALLOC RL_CALLOC
+
 #include "../external/RGFW.h"
 
 #if defined(_WIN32) || defined(_WIN64)

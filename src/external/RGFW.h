@@ -63,6 +63,69 @@
 */
 
 /*
+Example to get you started :
+
+linux : gcc main.c -lX11 -lXrandr -lGL
+windows : gcc main.c -lopengl32 -lwinmm -lshell32 -lgdi32
+macos : gcc main.c -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
+
+#define RGFW_IMPLEMENTATION
+#include "RGFW.h"
+
+u8 icon[4 * 3 * 3] = {0xFF, 0x00, 0x00, 0xFF,    0xFF, 0x00, 0x00, 0xFF,     0xFF, 0x00, 0x00, 0xFF,   0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,     0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF};
+
+int main() {
+	RGFW_window* win = RGFW_createWindow("name", RGFW_RECT(500, 500, 500, 500), (u64)0);
+
+	RGFW_window_setIcon(win, icon, RGFW_AREA(3, 3), 4);
+
+	for (;;) {
+		RGFW_window_checkEvent(win); // NOTE: checking events outside of a while loop may cause input lag
+		if (win->event.type == RGFW_quit || RGFW_isPressed(win, RGFW_Escape))
+			break;
+
+		RGFW_window_swapBuffers(win);
+
+		glClearColor(0xFF, 0XFF, 0xFF, 0xFF);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	RGFW_window_close(win);
+}
+
+	compiling :
+
+	if you wish to compile the library all you have to do is create a new file with this in it
+
+	rgfw.c
+	#define RGFW_IMPLEMENTATION
+	#include "RGFW.h"
+
+	You may also want to add 
+	`#define RGFW_EXPORT` when compiling and 
+	`#define RGFW_IMPORT`when linking RGFW on it's own:
+	this reduces inline functions and prevents bloat in the object file
+
+	then you can use gcc (or whatever compile you wish to use) to compile the library into object file
+
+	ex. gcc -c RGFW.c -fPIC
+
+	after you compile the library into an object file, you can also turn the object file into an static or shared library
+
+	(commands ar and gcc can be replaced with whatever equivalent your system uses)
+	static : ar rcs RGFW.a RGFW.o
+	shared :
+		windows:
+			gcc -shared RGFW.o -lwinmm -lopengl32 -lshell32 -lgdi32 -o RGFW.dll
+		linux:
+			gcc -shared RGFW.o -lX11 -lGL -lXrandr -o RGFW.so
+		macos:
+			gcc -shared RGFW.o -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
+*/
+
+
+
+/*
 	Credits :
 		EimaMei/Sacode : Much of the code for creating windows using winapi, Wrote the Silicon library, helped with MacOS Support, siliapp.h -> referencing 
 
@@ -1151,63 +1214,6 @@ typedef RGFW_ENUM(u8, RGFW_mouseIcons) {
 /** @} */ 
 
 #endif /* RGFW_HEADER */
-
-/*
-Example to get you started :
-
-linux : gcc main.c -lX11 -lXrandr -lGL
-windows : gcc main.c -lopengl32 -lwinmm -lshell32 -lgdi32
-macos : gcc main.c -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
-
-#define RGFW_IMPLEMENTATION
-#include "RGFW.h"
-
-u8 icon[4 * 3 * 3] = {0xFF, 0x00, 0x00, 0xFF,    0xFF, 0x00, 0x00, 0xFF,     0xFF, 0x00, 0x00, 0xFF,   0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,     0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF};
-
-int main() {
-	RGFW_window* win = RGFW_createWindow("name", RGFW_RECT(500, 500, 500, 500), (u64)0);
-
-	RGFW_window_setIcon(win, icon, RGFW_AREA(3, 3), 4);
-
-	for (;;) {
-		RGFW_window_checkEvent(win); // NOTE: checking events outside of a while loop may cause input lag
-		if (win->event.type == RGFW_quit || RGFW_isPressed(win, RGFW_Escape))
-			break;
-
-		RGFW_window_swapBuffers(win);
-
-		glClearColor(0xFF, 0XFF, 0xFF, 0xFF);
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
-
-	RGFW_window_close(win);
-}
-
-	compiling :
-
-	if you wish to compile the library all you have to do is create a new file with this in it
-
-	rgfw.c
-	#define RGFW_IMPLEMENTATION
-	#include "RGFW.h"
-
-	then you can use gcc (or whatever compile you wish to use) to compile the library into object file
-
-	ex. gcc -c RGFW.c -fPIC
-
-	after you compile the library into an object file, you can also turn the object file into an static or shared library
-
-	(commands ar and gcc can be replaced with whatever equivalent your system uses)
-	static : ar rcs RGFW.a RGFW.o
-	shared :
-		windows:
-			gcc -shared RGFW.o -lwinmm -lopengl32 -lshell32 -lgdi32 -o RGFW.dll
-		linux:
-			gcc -shared RGFW.o -lX11 -lGL -lXrandr -o RGFW.so
-		macos:
-			gcc -shared RGFW.o -framework Foundation -framework AppKit -framework OpenGL -framework CoreVideo
-*/
-
 #ifdef RGFW_X11
 	#define RGFW_OS_BASED_VALUE(l, w, m, h, ww) l
 #elif defined(RGFW_WINDOWS)
@@ -8391,15 +8397,15 @@ EM_BOOL Emscripten_on_fullscreenchange(int eventType, const EmscriptenFullscreen
 		#else	
 			emscripten_request_fullscreen("#canvas", 1);
 		#endif
-	
 	}
 
 	emscripten_set_canvas_element_size("#canvas", RGFW_root->r.w, RGFW_root->r.h);
 
 	RGFW_windowResizeCallback(RGFW_root, RGFW_root->r);
-	
 	return EM_TRUE;
 }
+
+
 
 EM_BOOL Emscripten_on_focusin(int eventType, const EmscriptenFocusEvent* e, void* userData) {
 	RGFW_UNUSED(eventType); RGFW_UNUSED(userData); RGFW_UNUSED(e);
