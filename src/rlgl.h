@@ -3959,7 +3959,7 @@ void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDrawArraysInstanced(GL_TRIANGLES, 0, count, instances);
+    glDrawArraysInstanced(GL_TRIANGLES, offset, count, instances);
 #endif
 }
 
