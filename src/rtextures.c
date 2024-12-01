@@ -3567,7 +3567,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     ImageDrawLine(dst, x1, y1, x2, y2, color);
 
     // Determine if the line is more horizontal or vertical
-    if (dx != 0 && abs(dy/dx) < 1)
+    if ((dx != 0) && (abs(dy/dx) < 1))
     {
         // Line is more horizontal
         // Calculate half the width of the line

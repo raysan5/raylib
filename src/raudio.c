@@ -2461,23 +2461,18 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
 
         float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
 
-        /* At this point we can convert the data to our mixing format. */
+        // At this point we can convert the data to our mixing format
         ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);    /* Safe cast. */
         ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
         ma_data_converter_process_pcm_frames(&audioBuffer->converter, inputBuffer, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
 
-        totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration; /* Safe cast. */
+        totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration; // Safe cast
 
-        if (inputFramesProcessedThisIteration < inputFramesToProcessThisIteration)
-        {
-            break;  /* Ran out of input data. */
-        }
+        if (inputFramesProcessedThisIteration < inputFramesToProcessThisIteration) break;  // Ran out of input data
 
-        /* This should never be hit, but will add it here for safety. Ensures we get out of the loop when no input nor output frames are processed. */
-        if (inputFramesProcessedThisIteration == 0 && outputFramesProcessedThisIteration == 0)
-        {
-            break;
-        }
+        // This should never be hit, but added here for safety
+        // Ensures we get out of the loop when no input nor output frames are processed
+        if ((inputFramesProcessedThisIteration == 0) && (outputFramesProcessedThisIteration == 0)) break;
     }
 
     return totalOutputFramesProcessed;
