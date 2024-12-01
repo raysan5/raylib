@@ -1,6 +1,6 @@
 #version 100
 
-precision highp  float;
+precision highp float;
 
 #define MAX_LIGHTS              4
 #define LIGHT_DIRECTIONAL       0
