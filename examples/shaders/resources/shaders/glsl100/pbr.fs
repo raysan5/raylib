@@ -24,7 +24,6 @@ varying vec3 fragNormal;
 varying vec4 shadowPos;
 varying mat3 TBN;
 
-
 // Input uniform values
 uniform int numOfLights;
 uniform sampler2D albedoMap;
