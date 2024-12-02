@@ -30,7 +30,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 4.5              | [Factor](https://factorcode.org)                                     | BSD                  |
 | [raylib-freebasic](https://github.com/WIITD/raylib-freebasic)                            | **5.0**          | [FreeBASIC](https://www.freebasic.net)                               | MIT                  |
 | [fortran-raylib](https://github.com/interkosmos/fortran-raylib)                          | **5.5**          | [Fortran](https://fortran-lang.org)                                  | ISC                  |
-| [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **5.0**          | [Go](https://golang.org)                                             | Zlib                 |
+| [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **5.5**          | [Go](https://golang.org)                                             | Zlib                 |
 | [raylib-guile](https://github.com/petelliott/raylib-guile)                               | **auto**         | [Guile](https://www.gnu.org/software/guile)                          | Zlib                 |
 | [gforth-raylib](https://github.com/ArnautDaniel/gforth-raylib)                           | 3.5              | [Gforth](https://gforth.org)                                         | **???**              |
 | [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **5.5-dev**      | [Haskell](https://haskell.org)                                       | Apache-2.0           |
