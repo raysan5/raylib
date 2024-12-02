@@ -5060,6 +5060,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 {
     Image image = { 0 };
 
+    if (cgltfImage == NULL) return image;
+
     if (cgltfImage->uri != NULL)     // Check if image data is provided as an uri (base64 or path)
     {
         if ((strlen(cgltfImage->uri) > 5) &&
