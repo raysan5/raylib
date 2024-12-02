@@ -42,7 +42,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [Raylib.jl](https://github.com/chengchingwen/Raylib.jl)                                  | 4.2              | [Julia](https://julialang.org)                                       | Zlib                 |
 | [kaylib](https://github.com/electronstudio/kaylib)                                       | 3.7              | [Kotlin/native](https://kotlinlang.org)                              | **???**              |
 | [KaylibKit](https://codeberg.org/Kenta/KaylibKit)                                        | 4.5              | [Kotlin/native](https://kotlinlang.org)                              | Zlib                 |
-| [raylib-lua](https://github.com/TSnake41/raylib-lua)                                     | 4.5              | [Lua](http://www.lua.org)                                            | ISC                  |
+| [raylib-lua](https://github.com/TSnake41/raylib-lua)                                     | 5.0              | [Lua](http://www.lua.org)                                            | ISC                  |
 | [raylua](https://github.com/Rabios/raylua)                                               | 4.0              | [Lua](http://www.lua.org)                                            | MIT                  |
 | [raylib-matte](https://github.com/jcorks/raylib-matte)                                   | 4.6-dev          | [Matte](https://github.com/jcorks/matte)                             | MIT                  |
 | [Raylib.nelua](https://github.com/AuzFox/Raylib.nelua)                                   | **5.0**          | [nelua](https://nelua.io)                                            | Zlib                 |
