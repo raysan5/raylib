@@ -5664,7 +5664,7 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Load primitive indices data (if provided)
-                if (mesh->primitives[p].indices != NULL && mesh->primitives[p].indices->buffer_view != NULL)
+                if ((mesh->primitives[p].indices != NULL) && (mesh->primitives[p].indices->buffer_view != NULL))
                 {
                     cgltf_accessor *attribute = mesh->primitives[p].indices;
 
