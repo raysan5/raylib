@@ -5063,6 +5063,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 {
     Image image = { 0 };
 
+    if (cgltfImage == NULL) return image;
+
     if (cgltfImage->uri != NULL)     // Check if image data is provided as an uri (base64 or path)
     {
         if ((strlen(cgltfImage->uri) > 5) &&
@@ -5658,7 +5660,7 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Load primitive indices data (if provided)
-                if (mesh->primitives[p].indices != NULL)
+                if ((mesh->primitives[p].indices != NULL) && (mesh->primitives[p].indices->buffer_view != NULL))
                 {
                     cgltf_accessor *attribute = mesh->primitives[p].indices;
 

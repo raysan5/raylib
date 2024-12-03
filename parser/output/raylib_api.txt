@@ -1886,15 +1886,15 @@ Function 167: GetCharPressed() (0 input parameters)
   Return type: int
   Description: Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
   No input parameters
-Function 168: SetExitKey() (1 input parameters)
+Function 168: GetKeyName() (1 input parameters)
+  Name: GetKeyName
+  Return type: const char *
+  Description: Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)
+  Param[1]: key (type: int)
+Function 169: SetExitKey() (1 input parameters)
   Name: SetExitKey
   Return type: void
   Description: Set a custom key to exit program (default is ESC)
-  Param[1]: key (type: int)
-Function 169: GetKeyName() (1 input parameters)
-  Name: GetKeyName
-  Return type: const char *
-  Description: Get name of a QWERTY key on the current keyboard layout (eg returns string "q" for KEY_A on an AZERTY keyboard)
   Param[1]: key (type: int)
 Function 170: IsGamepadAvailable() (1 input parameters)
   Name: IsGamepadAvailable
