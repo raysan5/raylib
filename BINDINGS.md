@@ -8,7 +8,6 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | :--------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------: | :------------------: |
 | [raylib](https://github.com/raysan5/raylib)                                              | **5.5**          | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))      | Zlib                 |
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.5**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
-| [raylib-boo](https://github.com/Rabios/raylib-boo)                                       | 3.7              | [Boo](http://boo-language.github.io)                                 | MIT                  |
 | [raybit](https://github.com/Alex-Velez/raybit)                                           | **5.0**          | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                 | MIT                  |
 | [raylib-c3](https://github.com/c3lang/vendor/tree/main/libraries/raylib55.c3l)           | **5.5**          | [C3](https://c3-lang.org)                                            | MIT                  |
 | [Raylib-cs](https://github.com/ChrisDill/Raylib-cs)                                      | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
@@ -43,7 +42,6 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [kaylib](https://github.com/electronstudio/kaylib)                                       | 3.7              | [Kotlin/native](https://kotlinlang.org)                              | **???**              |
 | [KaylibKit](https://codeberg.org/Kenta/KaylibKit)                                        | 4.5              | [Kotlin/native](https://kotlinlang.org)                              | Zlib                 |
 | [raylib-lua](https://github.com/TSnake41/raylib-lua)                                     | 5.0              | [Lua](http://www.lua.org)                                            | ISC                  |
-| [raylua](https://github.com/Rabios/raylua)                                               | 4.0              | [Lua](http://www.lua.org)                                            | MIT                  |
 | [raylib-matte](https://github.com/jcorks/raylib-matte)                                   | 4.6-dev          | [Matte](https://github.com/jcorks/matte)                             | MIT                  |
 | [Raylib.nelua](https://github.com/AuzFox/Raylib.nelua)                                   | **5.0**          | [nelua](https://nelua.io)                                            | Zlib                 |
 | [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 5.6-dev              | [Ruby](https://www.ruby-lang.org/en)                                 | Zlib                 |
