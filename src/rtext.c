@@ -60,7 +60,7 @@
     #include "config.h"     // Defines module configuration flags
 #endif
 
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
 
 #include "utils.h"          // Required for: LoadFile*()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
@@ -71,7 +71,7 @@
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
-#if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wunused-function"
@@ -87,7 +87,7 @@
     #endif
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wunused-function"
@@ -125,7 +125,7 @@
 // Global variables
 //----------------------------------------------------------------------------------
 extern bool isGpuReady;
-#if defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_DEFAULT_FONT
 // Default font provided by raylib
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
@@ -139,15 +139,15 @@ static Font defaultFont = { 0 };
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_FNT)
+#if SUPPORT_FILEFORMAT_FNT
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
 static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
-#if defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_DEFAULT_FONT
 extern void LoadFontDefault(void);
 extern void UnloadFontDefault(void);
 #endif
@@ -155,7 +155,7 @@ extern void UnloadFontDefault(void);
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_DEFAULT_FONT
 // Load raylib default font
 extern void LoadFontDefault(void)
 {
@@ -318,7 +318,7 @@ extern void UnloadFontDefault(void)
 // Get the default font, useful to be used with extended parameters
 Font GetFontDefault()
 {
-#if defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_DEFAULT_FONT
     return defaultFont;
 #else
     Font font = { 0 };
@@ -345,15 +345,15 @@ Font LoadFont(const char *fileName)
 
     Font font = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
-#if defined(SUPPORT_FILEFORMAT_FNT)
+#if SUPPORT_FILEFORMAT_FNT
     if (IsFileExtension(fileName, ".fnt")) font = LoadBMFont(fileName);
     else
 #endif
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
     if (IsFileExtension(fileName, ".bdf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
@@ -535,7 +535,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     font.glyphCount = (codepointCount > 0)? codepointCount : 95;
     font.glyphPadding = 0;
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     if (TextIsEqual(fileExtLower, ".ttf") ||
         TextIsEqual(fileExtLower, ".otf"))
     {
@@ -543,7 +543,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     }
     else
 #endif
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
     if (TextIsEqual(fileExtLower, ".bdf"))
     {
         font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, font.glyphCount, &font.baseSize);
@@ -554,7 +554,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
         font.glyphs = NULL;
     }
 
-#if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     if (font.glyphs != NULL)
     {
         font.glyphPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
@@ -614,7 +614,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
     GlyphInfo *chars = NULL;
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     // Load font data (including pixel data) from TTF memory file
     // NOTE: Loaded information should be enough to generate font image atlas, using any packaging method
     if (fileData != NULL)
@@ -734,7 +734,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
 // Generate image font atlas using chars info
 // NOTE: Packing method: 0-Default, 1-Skyline
-#if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
 Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
@@ -901,7 +901,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         RL_FREE(context);
     }
 
-#if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
+#if SUPPORT_FONT_ATLAS_WHITE_REC
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
     // useful to use as the white texture to draw shapes with raylib, using this rectangle
     // shapes and text can be backed into a single draw call: SetShapesTexture()
@@ -1487,7 +1487,7 @@ float TextToFloat(const char *text)
     return value*sign;
 }
 
-#if defined(SUPPORT_TEXT_MANIPULATION)
+#if SUPPORT_TEXT_MANIPULATION
 // Copy one string to another, returns bytes copied
 int TextCopy(char *dst, const char *src)
 {
@@ -2136,7 +2136,7 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_FNT) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_FNT || SUPPORT_FILEFORMAT_BDF
 // Read a line from memory
 // REQUIRES: memcpy()
 // NOTE: Returns the number of bytes read
@@ -2150,7 +2150,7 @@ static int GetLine(const char *origin, char *buffer, int maxLength)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_FNT)
+#if SUPPORT_FILEFORMAT_FNT
 // Load a BMFont file (AngelCode font file)
 // REQUIRES: strstr(), sscanf(), strrchr(), memcpy()
 static Font LoadBMFont(const char *fileName)
@@ -2320,7 +2320,7 @@ static Font LoadBMFont(const char *fileName)
 
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
 
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)

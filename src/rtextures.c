@@ -68,7 +68,7 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
-#if defined(SUPPORT_MODULE_RTEXTURES)
+#if SUPPORT_MODULE_RTEXTURES
 
 #include "utils.h"              // Required for: TRACELOG()
 #include "rlgl.h"               // OpenGL abstraction layer to multiple versions
@@ -79,47 +79,47 @@
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
 
 // Support only desired texture formats on stb_image
-#if !defined(SUPPORT_FILEFORMAT_BMP)
+#if !SUPPORT_FILEFORMAT_BMP
     #define STBI_NO_BMP
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PNG)
+#if !SUPPORT_FILEFORMAT_PNG
     #define STBI_NO_PNG
 #endif
-#if !defined(SUPPORT_FILEFORMAT_TGA)
+#if !SUPPORT_FILEFORMAT_TGA
     #define STBI_NO_TGA
 #endif
-#if !defined(SUPPORT_FILEFORMAT_JPG)
+#if !SUPPORT_FILEFORMAT_JPG
     #define STBI_NO_JPEG        // Image format .jpg and .jpeg
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PSD)
+#if !SUPPORT_FILEFORMAT_PSD
     #define STBI_NO_PSD
 #endif
-#if !defined(SUPPORT_FILEFORMAT_GIF)
+#if !SUPPORT_FILEFORMAT_GIF
     #define STBI_NO_GIF
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PIC)
+#if !SUPPORT_FILEFORMAT_PIC
     #define STBI_NO_PIC
 #endif
-#if !defined(SUPPORT_FILEFORMAT_HDR)
+#if !SUPPORT_FILEFORMAT_HDR
     #define STBI_NO_HDR
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PNM)
+#if !SUPPORT_FILEFORMAT_PNM
     #define STBI_NO_PNM
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_DDS)
+#if SUPPORT_FILEFORMAT_DDS
     #define RL_GPUTEX_SUPPORT_DDS
 #endif
-#if defined(SUPPORT_FILEFORMAT_PKM)
+#if SUPPORT_FILEFORMAT_PNM
     #define RL_GPUTEX_SUPPORT_PKM
 #endif
-#if defined(SUPPORT_FILEFORMAT_KTX)
+#if SUPPORT_FILEFORMAT_KTX
     #define RL_GPUTEX_SUPPORT_KTX
 #endif
-#if defined(SUPPORT_FILEFORMAT_PVR)
+#if SUPPORT_FILEFORMAT_PVR
     #define RL_GPUTEX_SUPPORT_PVR
 #endif
-#if defined(SUPPORT_FILEFORMAT_ASTC)
+#if SUPPORT_FILEFORMAT_ASTC
     #define RL_GPUTEX_SUPPORT_ASTC
 #endif
 
@@ -128,15 +128,15 @@
     #define STBI_NO_SIMD
 #endif
 
-#if (defined(SUPPORT_FILEFORMAT_BMP) || \
-     defined(SUPPORT_FILEFORMAT_PNG) || \
-     defined(SUPPORT_FILEFORMAT_TGA) || \
-     defined(SUPPORT_FILEFORMAT_JPG) || \
-     defined(SUPPORT_FILEFORMAT_PSD) || \
-     defined(SUPPORT_FILEFORMAT_GIF) || \
-     defined(SUPPORT_FILEFORMAT_HDR) || \
-     defined(SUPPORT_FILEFORMAT_PIC) || \
-     defined(SUPPORT_FILEFORMAT_PNM))
+#if (SUPPORT_FILEFORMAT_BMP || \
+     SUPPORT_FILEFORMAT_PNG || \
+     SUPPORT_FILEFORMAT_TGA || \
+     SUPPORT_FILEFORMAT_JPG || \
+     SUPPORT_FILEFORMAT_PSD || \
+     SUPPORT_FILEFORMAT_GIF || \
+     SUPPORT_FILEFORMAT_HDR || \
+     SUPPORT_FILEFORMAT_PIC || \
+     SUPPORT_FILEFORMAT_PNM)
 
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
@@ -158,11 +158,11 @@
     #endif
 #endif
 
-#if (defined(SUPPORT_FILEFORMAT_DDS) || \
-     defined(SUPPORT_FILEFORMAT_PKM) || \
-     defined(SUPPORT_FILEFORMAT_KTX) || \
-     defined(SUPPORT_FILEFORMAT_PVR) || \
-     defined(SUPPORT_FILEFORMAT_ASTC))
+#if (SUPPORT_FILEFORMAT_DDS || \
+     SUPPORT_FILEFORMAT_PNM || \
+     SUPPORT_FILEFORMAT_KTX || \
+     SUPPORT_FILEFORMAT_PVR || \
+     SUPPORT_FILEFORMAT_ASTC)
 
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
@@ -178,7 +178,7 @@
     #endif
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_QOI)
+#if SUPPORT_FILEFORMAT_QOI
     #define QOI_MALLOC RL_MALLOC
     #define QOI_FREE RL_FREE
 
@@ -196,7 +196,7 @@
 
 #endif
 
-#if defined(SUPPORT_IMAGE_EXPORT)
+#if SUPPORT_IMAGE_EXPORT
     #define STBIW_MALLOC RL_MALLOC
     #define STBIW_FREE RL_FREE
     #define STBIW_REALLOC RL_REALLOC
@@ -205,7 +205,7 @@
     #include "external/stb_image_write.h"   // Required for: stbi_write_*()
 #endif
 
-#if defined(SUPPORT_IMAGE_GENERATION)
+#if SUPPORT_IMAGE_GENERATION
     #define STB_PERLIN_IMPLEMENTATION
     #include "external/stb_perlin.h"        // Required for: stb_perlin_fbm_noise3
 #endif
@@ -267,15 +267,15 @@ Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_PNG) || \
-    defined(SUPPORT_FILEFORMAT_BMP) || \
-    defined(SUPPORT_FILEFORMAT_TGA) || \
-    defined(SUPPORT_FILEFORMAT_JPG) || \
-    defined(SUPPORT_FILEFORMAT_GIF) || \
-    defined(SUPPORT_FILEFORMAT_PIC) || \
-    defined(SUPPORT_FILEFORMAT_HDR) || \
-    defined(SUPPORT_FILEFORMAT_PNM) || \
-    defined(SUPPORT_FILEFORMAT_PSD)
+#if SUPPORT_FILEFORMAT_PNG || \
+    SUPPORT_FILEFORMAT_BMP || \
+    SUPPORT_FILEFORMAT_TGA || \
+    SUPPORT_FILEFORMAT_JPG || \
+    SUPPORT_FILEFORMAT_GIF || \
+    SUPPORT_FILEFORMAT_PIC || \
+    SUPPORT_FILEFORMAT_HDR || \
+    SUPPORT_FILEFORMAT_PNM || \
+    SUPPORT_FILEFORMAT_PSD
 
     #define STBI_REQUIRED
 #endif
@@ -337,7 +337,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
     Image image = { 0 };
     int frameCount = 0;
 
-#if defined(SUPPORT_FILEFORMAT_GIF)
+#if SUPPORT_FILEFORMAT_GIF
     if (IsFileExtension(fileName, ".gif"))
     {
         int dataSize = 0;
@@ -382,7 +382,7 @@ Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileDat
     // Security check for input data
     if ((fileType == NULL) || (fileData == NULL) || (dataSize == 0)) return image;
 
-#if defined(SUPPORT_FILEFORMAT_GIF)
+#if SUPPORT_FILEFORMAT_GIF
     if ((strcmp(fileType, ".gif") == 0) || (strcmp(fileType, ".GIF") == 0))
     {
         if (fileData != NULL)
@@ -429,30 +429,30 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     }
 
     if ((false)
-#if defined(SUPPORT_FILEFORMAT_PNG)
+#if SUPPORT_FILEFORMAT_PNG
         || (strcmp(fileType, ".png") == 0) || (strcmp(fileType, ".PNG") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_BMP)
+#if SUPPORT_FILEFORMAT_BMP
         || (strcmp(fileType, ".bmp") == 0) || (strcmp(fileType, ".BMP") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_TGA)
+#if SUPPORT_FILEFORMAT_TGA
         || (strcmp(fileType, ".tga") == 0) || (strcmp(fileType, ".TGA") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_JPG)
+#if SUPPORT_FILEFORMAT_JPG
         || (strcmp(fileType, ".jpg") == 0) || (strcmp(fileType, ".jpeg") == 0)
         || (strcmp(fileType, ".JPG") == 0) || (strcmp(fileType, ".JPEG") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_GIF)
+#if SUPPORT_FILEFORMAT_GIF
         || (strcmp(fileType, ".gif") == 0) || (strcmp(fileType, ".GIF") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_PIC)
+#if SUPPORT_FILEFORMAT_PIC
         || (strcmp(fileType, ".pic") == 0) || (strcmp(fileType, ".PIC") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_PNM)
+#if SUPPORT_FILEFORMAT_PNM
         || (strcmp(fileType, ".ppm") == 0) || (strcmp(fileType, ".pgm") == 0)
         || (strcmp(fileType, ".PPM") == 0) || (strcmp(fileType, ".PGM") == 0)
 #endif
-#if defined(SUPPORT_FILEFORMAT_PSD)
+#if SUPPORT_FILEFORMAT_PSD
         || (strcmp(fileType, ".psd") == 0) || (strcmp(fileType, ".PSD") == 0)
 #endif
         )
@@ -477,7 +477,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
         }
 #endif
     }
-#if defined(SUPPORT_FILEFORMAT_HDR)
+#if SUPPORT_FILEFORMAT_HDR
     else if ((strcmp(fileType, ".hdr") == 0) || (strcmp(fileType, ".HDR") == 0))
     {
 #if defined(STBI_REQUIRED)
@@ -500,7 +500,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_QOI)
+#if SUPPORT_FILEFORMAT_QOI
     else if ((strcmp(fileType, ".qoi") == 0) || (strcmp(fileType, ".QOI") == 0))
     {
         if (fileData != NULL)
@@ -514,31 +514,31 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
         }
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_DDS)
+#if SUPPORT_FILEFORMAT_DDS
     else if ((strcmp(fileType, ".dds") == 0) || (strcmp(fileType, ".DDS") == 0))
     {
         image.data = rl_load_dds_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_PKM)
+#if SUPPORT_FILEFORMAT_PKM
     else if ((strcmp(fileType, ".pkm") == 0) || (strcmp(fileType, ".PKM") == 0))
     {
         image.data = rl_load_pkm_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_KTX)
+#if SUPPORT_FILEFORMAT_KTX
     else if ((strcmp(fileType, ".ktx") == 0) || (strcmp(fileType, ".KTX") == 0))
     {
         image.data = rl_load_ktx_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_PVR)
+#if SUPPORT_FILEFORMAT_PVR
     else if ((strcmp(fileType, ".pvr") == 0) || (strcmp(fileType, ".PVR") == 0))
     {
         image.data = rl_load_pvr_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_ASTC)
+#if SUPPORT_FILEFORMAT_ASTC
     else if ((strcmp(fileType, ".astc") == 0) || (strcmp(fileType, ".ASTC") == 0))
     {
         image.data = rl_load_astc_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
@@ -628,7 +628,7 @@ bool ExportImage(Image image, const char *fileName)
     // Security check for input data
     if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return result;
 
-#if defined(SUPPORT_IMAGE_EXPORT)
+#if SUPPORT_IMAGE_EXPORT
     int channels = 4;
     bool allocatedData = false;
     unsigned char *imgData = (unsigned char *)image.data;
@@ -644,7 +644,7 @@ bool ExportImage(Image image, const char *fileName)
         allocatedData = true;
     }
 
-#if defined(SUPPORT_FILEFORMAT_PNG)
+#if SUPPORT_FILEFORMAT_PNG
     if (IsFileExtension(fileName, ".png"))
     {
         int dataSize = 0;
@@ -655,17 +655,17 @@ bool ExportImage(Image image, const char *fileName)
 #else
     if (false) { }
 #endif
-#if defined(SUPPORT_FILEFORMAT_BMP)
+#if SUPPORT_FILEFORMAT_BMP
     else if (IsFileExtension(fileName, ".bmp")) result = stbi_write_bmp(fileName, image.width, image.height, channels, imgData);
 #endif
-#if defined(SUPPORT_FILEFORMAT_TGA)
+#if SUPPORT_FILEFORMAT_TGA
     else if (IsFileExtension(fileName, ".tga")) result = stbi_write_tga(fileName, image.width, image.height, channels, imgData);
 #endif
-#if defined(SUPPORT_FILEFORMAT_JPG)
+#if SUPPORT_FILEFORMAT_JPG
     else if (IsFileExtension(fileName, ".jpg") ||
              IsFileExtension(fileName, ".jpeg")) result = stbi_write_jpg(fileName, image.width, image.height, channels, imgData, 90);  // JPG quality: between 1 and 100
 #endif
-#if defined(SUPPORT_FILEFORMAT_QOI)
+#if SUPPORT_FILEFORMAT_QOI
     else if (IsFileExtension(fileName, ".qoi"))
     {
         channels = 0;
@@ -685,7 +685,7 @@ bool ExportImage(Image image, const char *fileName)
         }
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_KTX)
+#if SUPPORT_FILEFORMAT_KTX
     else if (IsFileExtension(fileName, ".ktx"))
     {
         result = rl_save_ktx(fileName, image.data, image.width, image.height, image.format, image.mipmaps);
@@ -716,7 +716,7 @@ unsigned char *ExportImageToMemory(Image image, const char *fileType, int *dataS
     // Security check for input data
     if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return NULL;
 
-#if defined(SUPPORT_IMAGE_EXPORT)
+#if SUPPORT_IMAGE_EXPORT
     int channels = 4;
 
     if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) channels = 1;
@@ -724,7 +724,7 @@ unsigned char *ExportImageToMemory(Image image, const char *fileType, int *dataS
     else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) channels = 3;
     else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) channels = 4;
 
-#if defined(SUPPORT_FILEFORMAT_PNG)
+#if SUPPORT_FILEFORMAT_PNG
     if ((strcmp(fileType, ".png") == 0) || (strcmp(fileType, ".PNG") == 0))
     {
         fileData = stbi_write_png_to_mem((const unsigned char *)image.data, image.width*channels, image.width, image.height, channels, dataSize);
@@ -741,7 +741,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
 {
     bool success = false;
 
-#if defined(SUPPORT_IMAGE_EXPORT)
+#if SUPPORT_IMAGE_EXPORT
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -814,7 +814,7 @@ Image GenImageColor(int width, int height, Color color)
     return image;
 }
 
-#if defined(SUPPORT_IMAGE_GENERATION)
+#if SUPPORT_IMAGE_GENERATION
 // Generate image: linear gradient
 // The direction value specifies the direction of the gradient (in degrees)
 // with 0 being vertical (from top to bottom), 90 being horizontal (from left to right)
@@ -1449,7 +1449,7 @@ void ImageFormat(Image *image, int newFormat)
             if (image->mipmaps > 1)
             {
                 image->mipmaps = 1;
-            #if defined(SUPPORT_IMAGE_MANIPULATION)
+            #if SUPPORT_IMAGE_MANIPULATION
                 if (image->data != NULL) ImageMipmaps(image);
             #endif
             }
@@ -1462,7 +1462,7 @@ void ImageFormat(Image *image, int newFormat)
 Image ImageText(const char *text, int fontSize, Color color)
 {
     Image imText = { 0 };
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = fontSize/defaultFontSize;
@@ -1479,7 +1479,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
     Image imText = { 0 };
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
     int size = (int)strlen(text);   // Get size in bytes of text
 
     int textOffsetX = 0;            // Image drawing position X
@@ -1869,7 +1869,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     }
 }
 
-#if defined(SUPPORT_IMAGE_MANIPULATION)
+#if SUPPORT_IMAGE_MANIPULATION
 // Convert image to POT (power-of-two)
 // NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
 void ImageToPOT(Image *image, Color fill)
@@ -4068,7 +4068,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 // Draw text (default font) within an image (destination)
 void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
 {
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_MODULE_RTEXT && SUPPORT_DEFAULT_FONT
     // Make sure default font is loaded to be used on image text drawing
     if (GetFontDefault().texture.id == 0) LoadFontDefault();
 
