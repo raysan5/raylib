@@ -2665,12 +2665,12 @@ inline const Vector2& operator *= (Vector2& lhs, const Matrix& rhs)
 
 inline Vector2 operator / (const Vector2& lhs, const float& rhs)
 {
-    return Vector2Scale(lhs, 1.0f / rhs);
+    return Vector2Scale(lhs, 1.0f/rhs);
 }
 
 inline const Vector2& operator /= (Vector2& lhs, const float& rhs)
 {
-    lhs = Vector2Scale(lhs, 1.0f / rhs);
+    lhs = Vector2Scale(lhs, 1.0f/rhs);
     return lhs;
 }
 
@@ -2759,12 +2759,12 @@ inline const Vector3& operator *= (Vector3& lhs, const Matrix& rhs)
 
 inline Vector3 operator / (const Vector3& lhs, const float& rhs)
 {
-    return Vector3Scale(lhs, 1.0f / rhs);
+    return Vector3Scale(lhs, 1.0f/rhs);
 }
 
 inline const Vector3& operator /= (Vector3& lhs, const float& rhs)
 {
-    lhs = Vector3Scale(lhs, 1.0f / rhs);
+    lhs = Vector3Scale(lhs, 1.0f/rhs);
     return lhs;
 }
 
@@ -2843,12 +2843,12 @@ inline const Vector4& operator *= (Vector4& lhs, const Vector4& rhs)
 
 inline Vector4 operator / (const Vector4& lhs, const float& rhs)
 {
-    return Vector4Scale(lhs, 1.0f / rhs);
+    return Vector4Scale(lhs, 1.0f/rhs);
 }
 
 inline const Vector4& operator /= (Vector4& lhs, const float& rhs)
 {
-    lhs = Vector4Scale(lhs, 1.0f / rhs);
+    lhs = Vector4Scale(lhs, 1.0f/rhs);
     return lhs;
 }
 

@@ -2765,7 +2765,8 @@ unsigned int *ComputeMD5(unsigned char *data, int dataSize)
 
 // Compute SHA-1 hash code
 // NOTE: Returns a static int[5] array (20 bytes)
-unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
+unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
+{
     #define ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
     static unsigned int hash[5] = { 0 };  // Hash to be returned
@@ -2800,17 +2801,16 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
     {
         // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
         unsigned int w[80] = {0};
-        for (int i = 0; i < 16; i++) {
-            w[i] = (msg[offset + (i * 4) + 0] << 24) |
-                   (msg[offset + (i * 4) + 1] << 16) |
-                   (msg[offset + (i * 4) + 2] << 8) |
-                   (msg[offset + (i * 4) + 3]);
+        for (int i = 0; i < 16; i++)
+        {
+            w[i] = (msg[offset + (i*4) + 0] << 24) |
+                   (msg[offset + (i*4) + 1] << 16) |
+                   (msg[offset + (i*4) + 2] << 8) |
+                   (msg[offset + (i*4) + 3]);
         }
 
         // Message schedule: extend the sixteen 32-bit words into eighty 32-bit words:
-        for (int i = 16; i < 80; ++i) {
-            w[i] = ROTATE_LEFT(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
-        }
+        for (int i = 16; i < 80; i++) w[i] = ROTATE_LEFT(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
 
         // Initialize hash value for this chunk
         unsigned int a = hash[0];
@@ -2824,16 +2824,23 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize) {
             unsigned int f = 0;
             unsigned int k = 0;
 
-            if (i < 20) {
+            if (i < 20)
+            {
                 f = (b & c) | ((~b) & d);
                 k = 0x5A827999;
-            } else if (i < 40) {
+            }
+            else if (i < 40)
+            {
                 f = b ^ c ^ d;
                 k = 0x6ED9EBA1;
-            } else if (i < 60) {
+            }
+            else if (i < 60)
+            {
                 f = (b & c) | (b & d) | (c & d);
                 k = 0x8F1BBCDC;
-            } else {
+            }
+            else
+            {
                 f = b ^ c ^ d;
                 k = 0xCA62C1D6;
             }
