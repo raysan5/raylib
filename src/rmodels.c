@@ -2308,6 +2308,65 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
     }
 }
 
+// Update model animated bones transform matrices by blendin between two different given frames of different ModelAnimation(could be same too)
+// NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
+// to be uploaded to shader at drawing, in case GPU skinning is enabled
+void UpdateModelAnimationBonesWithBlending(Model model, ModelAnimation animA, int frameA, ModelAnimation animB, int frameB, float blendFactor)
+{
+    if ((animA.frameCount > 0) && (animA.bones != NULL) && (animA.framePoses != NULL) &&
+        (animB.frameCount > 0) && (animB.bones != NULL) && (animB.framePoses != NULL) &&
+        (blendFactor >= 0.0f) && (blendFactor <= 1.0))
+    {
+        frameA = frameA % animA.frameCount;
+        frameB = frameB % animB.frameCount;
+
+        for (int i = 0; i < model.meshCount; i++)
+        {
+            if (model.meshes[i].boneMatrices)
+            {
+                assert(model.meshes[i].boneCount == animA.boneCount);
+                assert(model.meshes[i].boneCount == animB.boneCount);
+
+                for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
+                {
+                    Vector3 inTranslation = model.bindPose[boneId].translation;
+                    Quaternion inRotation = model.bindPose[boneId].rotation;
+                    Vector3 inScale = model.bindPose[boneId].scale;
+
+                    Vector3 outATranslation = animA.framePoses[frameA][boneId].translation;
+                    Quaternion outARotation = animA.framePoses[frameA][boneId].rotation;
+                    Vector3 outAScale = animA.framePoses[frameA][boneId].scale;
+
+                    Vector3 outBTranslation = animB.framePoses[frameB][boneId].translation;
+                    Quaternion outBRotation = animB.framePoses[frameB][boneId].rotation;
+                    Vector3 outBScale = animB.framePoses[frameB][boneId].scale;
+
+                    Vector3 outTranslation = Vector3Lerp(outATranslation, outBTranslation, blendFactor);
+                    Quaternion outRotation = QuaternionSlerp(outARotation, outBRotation, blendFactor);
+                    Vector3 outScale = Vector3Lerp(outAScale, outBScale, blendFactor);
+
+                    Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
+                    Quaternion invRotation = QuaternionInvert(inRotation);
+                    Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
+
+                    Vector3 boneTranslation = Vector3Add(
+                        Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
+                        outRotation), outTranslation);
+                    Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
+                    Vector3 boneScale = Vector3Multiply(outScale, invScale);
+
+                    Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
+                        QuaternionToMatrix(boneRotation),
+                        MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
+                        MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+
+                    model.meshes[i].boneMatrices[boneId] = boneMatrix;
+                }
+            }
+        }
+    }
+}
+
 // at least 2x speed up vs the old method
 // Update model animated vertex data (positions and normals) for a given frame
 // NOTE: Updated data is uploaded to GPU
