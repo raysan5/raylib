@@ -50,6 +50,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <fcntl.h>
+
+#include <linux/input.h>
 
 #include <wayland-client.h>
 #include <wayland-server.h>
@@ -64,6 +67,18 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+
+struct finger {
+  TouchAction action;
+  TouchAction gesture_action;
+  int x;
+  int y;
+};
+
+struct touch {
+  struct finger fingers[1];
+  int fd;
+};
 
 // hold all the low level wayland stuff
 struct wayland_platform {
@@ -94,6 +109,7 @@ struct egl_platform {
 typedef struct {
     struct wayland_platform wayland;
     struct egl_platform egl;
+    struct touch touch;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -272,6 +288,30 @@ static int init_egl () {
    return 0;
 }
 
+static int init_touch(const char *dev_path) {
+  platform.touch.fd = open(dev_path, O_RDONLY|O_NONBLOCK);
+  if (platform.touch.fd < 0) {
+    TRACELOG(LOG_WARNING, "COMMA: Failed to open touch device at %s", dev_path);
+    return -1;
+  }
+
+  platform.touch.fingers[0].x = -1;
+  platform.touch.fingers[0].y = -1;
+  platform.touch.fingers[0].action = TOUCH_ACTION_UP;
+  platform.touch.fingers[0].gesture_action = TOUCH_ACTION_UP;
+
+  CORE.Input.Touch.currentTouchState[0] = 0;
+  CORE.Input.Mouse.currentPosition.x = -1;
+  CORE.Input.Mouse.currentPosition.y = -1;
+  CORE.Input.Mouse.currentButtonState[0] = 0;
+
+  CORE.Input.Touch.previousTouchState[0] = 0;
+  CORE.Input.Mouse.previousPosition.x = -1;
+  CORE.Input.Mouse.previousPosition.y = -1;
+  CORE.Input.Mouse.previousButtonState[0] = 0;
+
+  return 0;
+}
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -551,6 +591,72 @@ const char *GetKeyName(int key) {
 
 // Register all input events
 void PollInputEvents(void) {
+  // represents to which finger an event belongs
+  static int slot = 0;
+
+  // must be called every frames
+  UpdateGestures();
+
+  CORE.Input.Touch.previousTouchState[0] = CORE.Input.Touch.currentTouchState[0];
+  CORE.Input.Mouse.previousButtonState[0] = CORE.Input.Mouse.currentButtonState[0];
+  CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+  CORE.Input.Touch.pointCount = 0;
+
+  struct input_event event = {0};
+  while (read(platform.touch.fd, &event, sizeof(struct input_event)) == sizeof(struct input_event)) {
+    if (event.type == SYN_REPORT && slot == 0) { // sync event for main finger
+
+      CORE.Input.Touch.pointCount = 1;
+
+      if (platform.touch.fingers[slot].action == TOUCH_ACTION_DOWN) {
+        // detect new touch on screen
+        platform.touch.fingers[slot].gesture_action = platform.touch.fingers[slot].gesture_action == TOUCH_ACTION_UP ? TOUCH_ACTION_DOWN : TOUCH_ACTION_MOVE;
+
+        CORE.Input.Touch.position[0].x = platform.touch.fingers[0].x;
+        CORE.Input.Touch.position[0].y = platform.touch.fingers[0].y;
+        CORE.Input.Touch.currentTouchState[0] = 1;
+        // map touch state on mouse for conveniance
+        CORE.Input.Mouse.currentPosition.x = platform.touch.fingers[0].x;
+        CORE.Input.Mouse.currentPosition.y = platform.touch.fingers[0].y;
+        CORE.Input.Mouse.currentButtonState[0] = 1;
+
+      } else if (platform.touch.fingers[slot].action == TOUCH_ACTION_UP) {
+        // finger off the screen
+        platform.touch.fingers[0].gesture_action = TOUCH_ACTION_UP;
+
+        CORE.Input.Touch.position[0].x = -1;
+        CORE.Input.Touch.position[0].y = -1;
+        CORE.Input.Touch.currentTouchState[0] = 0;
+        CORE.Input.Mouse.currentButtonState[0] = 0;
+        CORE.Input.Touch.previousTouchState[0] = 1;
+        CORE.Input.Mouse.previousButtonState[0] = 1;
+      }
+
+      // interpret gestures (scroll, pinch, drag, ...)
+      GestureEvent gestureEvent = {0};
+      gestureEvent.touchAction = platform.touch.fingers[0].gesture_action;
+      gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+      gestureEvent.pointId[0] = 0;
+      gestureEvent.position[0] = CORE.Input.Touch.position[0];
+      ProcessGestureEvent(gestureEvent);
+    }
+
+    if (event.type == EV_ABS) {
+      if (event.code == ABS_MT_SLOT) { // new finger on the screen
+        slot = event.value;
+      }
+
+      if (slot == 0) { // only handle events for main finger
+        if (event.code == ABS_MT_TRACKING_ID) {
+          platform.touch.fingers[slot].action = event.value == -1 ? TOUCH_ACTION_UP : TOUCH_ACTION_DOWN;
+        } else if (event.code == ABS_MT_POSITION_X) {
+          platform.touch.fingers[slot].y = CORE.Window.screen.height - event.value;
+        } else if (event.code == ABS_MT_POSITION_Y) {
+          platform.touch.fingers[slot].x = event.value;
+        }
+      }
+    }
+  }
 }
 
 //----------------------------------------------------------------------------------
@@ -578,6 +684,11 @@ int InitPlatform(void) {
 
   if (init_egl()) {
     TRACELOG(LOG_FATAL, "COMMA: Failed to initialize EGL");
+    return -1;
+  }
+
+  if (init_touch("/dev/input/event2")) {
+    TRACELOG(LOG_FATAL, "COMMA: Failed to initialize touch device");
     return -1;
   }
 
