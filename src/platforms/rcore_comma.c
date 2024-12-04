@@ -589,9 +589,8 @@ const char *GetKeyName(int key) {
   return "";
 }
 
-// Register all input events
 void PollInputEvents(void) {
-  // represents to which finger an event belongs
+  // slot i is for events of finger i
   static int slot = 0;
 
   // must be called every frames
@@ -612,32 +611,32 @@ void PollInputEvents(void) {
         // detect new touch on screen
         platform.touch.fingers[slot].gesture_action = platform.touch.fingers[slot].gesture_action == TOUCH_ACTION_UP ? TOUCH_ACTION_DOWN : TOUCH_ACTION_MOVE;
 
-        CORE.Input.Touch.position[0].x = platform.touch.fingers[0].x;
-        CORE.Input.Touch.position[0].y = platform.touch.fingers[0].y;
-        CORE.Input.Touch.currentTouchState[0] = 1;
+        CORE.Input.Touch.position[slot].x = platform.touch.fingers[slot].x;
+        CORE.Input.Touch.position[slot].y = platform.touch.fingers[slot].y;
+        CORE.Input.Touch.currentTouchState[slot] = 1;
         // map touch state on mouse for conveniance
-        CORE.Input.Mouse.currentPosition.x = platform.touch.fingers[0].x;
-        CORE.Input.Mouse.currentPosition.y = platform.touch.fingers[0].y;
-        CORE.Input.Mouse.currentButtonState[0] = 1;
+        CORE.Input.Mouse.currentPosition.x = platform.touch.fingers[slot].x;
+        CORE.Input.Mouse.currentPosition.y = platform.touch.fingers[slot].y;
+        CORE.Input.Mouse.currentButtonState[slot] = 1;
 
       } else if (platform.touch.fingers[slot].action == TOUCH_ACTION_UP) {
         // finger off the screen
-        platform.touch.fingers[0].gesture_action = TOUCH_ACTION_UP;
+        platform.touch.fingers[slot].gesture_action = TOUCH_ACTION_UP;
 
-        CORE.Input.Touch.position[0].x = -1;
-        CORE.Input.Touch.position[0].y = -1;
-        CORE.Input.Touch.currentTouchState[0] = 0;
-        CORE.Input.Mouse.currentButtonState[0] = 0;
-        CORE.Input.Touch.previousTouchState[0] = 1;
-        CORE.Input.Mouse.previousButtonState[0] = 1;
+        CORE.Input.Touch.position[slot].x = -1;
+        CORE.Input.Touch.position[slot].y = -1;
+        CORE.Input.Touch.currentTouchState[slot] = 0;
+        CORE.Input.Mouse.currentButtonState[slot] = 0;
+        CORE.Input.Touch.previousTouchState[slot] = 1;
+        CORE.Input.Mouse.previousButtonState[slot] = 1;
       }
 
       // interpret gestures (scroll, pinch, drag, ...)
       GestureEvent gestureEvent = {0};
-      gestureEvent.touchAction = platform.touch.fingers[0].gesture_action;
+      gestureEvent.touchAction = platform.touch.fingers[slot].gesture_action;
       gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-      gestureEvent.pointId[0] = 0;
-      gestureEvent.position[0] = CORE.Input.Touch.position[0];
+      gestureEvent.pointId[slot] = slot;
+      gestureEvent.position[slot] = CORE.Input.Touch.position[slot];
       ProcessGestureEvent(gestureEvent);
     }
 
