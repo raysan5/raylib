@@ -2062,16 +2062,36 @@ void rlEnablePolygonOffsetFill(void) { glEnable(GL_POLYGON_OFFSET_FILL); }
 void rlDisablePolygonOffsetFill(void) { glDisable(GL_POLYGON_OFFSET_FILL); }
 
 // Enable depth offset for lines
-void rlEnablePolygonOffsetLine(void) { glEnable(GL_POLYGON_OFFSET_LINE); }
+void rlEnablePolygonOffsetLine(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    glEnable(GL_POLYGON_OFFSET_LINE);
+#endif
+}
 
 // Disable depth offset for lines
-void rlDisablePolygonOffsetLine(void) { glDisable(GL_POLYGON_OFFSET_LINE); }
+void rlDisablePolygonOffsetLine(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    glDisable(GL_POLYGON_OFFSET_LINE);
+#endif
+}
 
 // Enable depth offset for points
-void rlEnablePolygonOffsetPoint(void) { glEnable(GL_POLYGON_OFFSET_POINT); }
+void rlEnablePolygonOffsetPoint(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    glEnable(GL_POLYGON_OFFSET_POINT);
+#endif
+}
 
 // Disable depth offset for points
-void rlDisablePolygonOffsetPoint(void) { glDisable(GL_POLYGON_OFFSET_POINT); }
+void rlDisablePolygonOffsetPoint(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    glDisable(GL_POLYGON_OFFSET_POINT);
+#endif
+}
 
 // Set polygon depth offset
 void rlSetPolygonOffset(float factor, float units) { glPolygonOffset(factor, units); }
