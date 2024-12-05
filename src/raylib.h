@@ -801,7 +801,8 @@ typedef enum {
     SHADER_LOC_MAP_BRDF,            // Shader location: sampler2d texture: brdf
     SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
     SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
-    SHADER_LOC_BONE_MATRICES        // Shader location: array of matrices uniform: boneMatrices
+    SHADER_LOC_BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
+    SHADER_LOC_VERTEX_INSTANCE_TX   // Shader location: vertex attribute: instanceTransform
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO

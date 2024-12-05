@@ -1734,12 +1734,12 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // no faster, since we're transferring all the transform matrices anyway
     instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
-    // Instances transformation matrices are send to shader attribute location: SHADER_LOC_MATRIX_MODEL
+    // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCE_TX
     for (unsigned int i = 0; i < 4; i++)
     {
-        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
-        rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 1);
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
+        rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 1);
     }
 
     rlDisableVertexBuffer();
