@@ -1089,6 +1089,12 @@ void DrawGrid(int slices, float spacing)
 // Load model from files (mesh and material)
 Model LoadModel(const char *fileName)
 {
+    return LoadModelEx(fileName, true);
+}
+
+// Load model from files (mesh and material) without Uploading Vertex data to GPU
+Model LoadModelEx(const char *fileName, bool upload)
+{
     Model model = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
@@ -1110,12 +1116,15 @@ Model LoadModel(const char *fileName)
     // Make sure model transform is set to identity matrix!
     model.transform = MatrixIdentity();
 
-    if ((model.meshCount != 0) && (model.meshes != NULL))
+    if(upload)
     {
-        // Upload vertex data to GPU (static meshes)
-        for (int i = 0; i < model.meshCount; i++) UploadMesh(&model.meshes[i], false);
+        if ((model.meshCount != 0) && (model.meshes != NULL))
+        {
+            // Upload vertex data to GPU (static meshes)
+            for (int i = 0; i < model.meshCount; i++) UploadMesh(&model.meshes[i], false);
+        }
+        else TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load model mesh(es) data", fileName);
     }
-    else TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load model mesh(es) data", fileName);
 
     if (model.materialCount == 0)
     {
@@ -1185,6 +1194,17 @@ bool IsModelValid(Model model)
     }
 
     return result;
+}
+
+// Upload model data to GPU (RAM and/or VRAM)
+void UploadModel(const Model *model, bool dynamic)
+{
+    if ((model->meshCount != 0) && (model->meshes != NULL))
+    {
+        // Upload vertex data to GPU (static meshes)
+        for (int i = 0; i < model->meshCount; i++) UploadMesh(&model->meshes[i], false);
+    }
+    else TRACELOG(LOG_WARNING, "Model: [%s] Failed to load model mesh(es) data");
 }
 
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)
@@ -4407,7 +4427,7 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_shapes_free(objShapes, objShapeCount);
     tinyobj_materials_free(objMaterials, objMaterialCount);
 
-    for (int i = 0; i < model.meshCount; i++) UploadMesh(model.meshes + i, true);
+    
 
     // Restore current working directory
     if (CHDIR(currentDir) != 0)
