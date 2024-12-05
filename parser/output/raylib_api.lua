@@ -2591,8 +2591,28 @@ return {
           description = "Shader uniform type: ivec4 (4 int)"
         },
         {
-          name = "SHADER_UNIFORM_SAMPLER2D",
+          name = "SHADER_UNIFORM_UINT",
           value = 8,
+          description = "Shader uniform type: unsigned int"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC2",
+          value = 9,
+          description = "Shader uniform type: uivec2 (2 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC3",
+          value = 10,
+          description = "Shader uniform type: uivec3 (3 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC4",
+          value = 11,
+          description = "Shader uniform type: uivec4 (4 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_SAMPLER2D",
+          value = 12,
           description = "Shader uniform type: sampler2d"
         }
       }
