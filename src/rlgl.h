@@ -691,6 +691,13 @@ RLAPI void rlDisableSmoothLines(void);                  // Disable line aliasing
 RLAPI void rlEnableStereoRender(void);                  // Enable stereo rendering
 RLAPI void rlDisableStereoRender(void);                 // Disable stereo rendering
 RLAPI bool rlIsStereoRenderEnabled(void);               // Check if stereo render is enabled
+RLAPI void rlEnablePolygonOffsetFill(void);             // Enable depth offset for faces
+RLAPI void rlDisablePolygonOffsetFill(void);            // Disable depth offset for faces
+RLAPI void rlEnablePolygonOffsetLine(void);             // Enable depth offset for lines
+RLAPI void rlDisablePolygonOffsetLine(void);            // Disable depth offset for lines
+RLAPI void rlEnablePolygonOffsetPoint(void);            // Enable depth offset for points
+RLAPI void rlDisablePolygonOffsetPoint(void);           // Disable depth offset for points
+RLAPI void rlSetPolygonOffset(float factor, float units);// Set polygon depth offset
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                  // Clear used screen buffers (color and depth)
@@ -2047,6 +2054,27 @@ bool rlIsStereoRenderEnabled(void)
     return false;
 #endif
 }
+
+// Enable depth offset for faces
+void rlEnablePolygonOffsetFill(void) { glEnable(GL_POLYGON_OFFSET_FILL); }
+
+// Disable depth offset for faces
+void rlDisablePolygonOffsetFill(void) { glDisable(GL_POLYGON_OFFSET_FILL); }
+
+// Enable depth offset for lines
+void rlEnablePolygonOffsetLine(void) { glEnable(GL_POLYGON_OFFSET_LINE); }
+
+// Disable depth offset for lines
+void rlDisablePolygonOffsetLine(void) { glDisable(GL_POLYGON_OFFSET_LINE); }
+
+// Enable depth offset for points
+void rlEnablePolygonOffsetPoint(void) { glEnable(GL_POLYGON_OFFSET_POINT); }
+
+// Disable depth offset for points
+void rlDisablePolygonOffsetPoint(void) { glDisable(GL_POLYGON_OFFSET_POINT); }
+
+// Set polygon depth offset
+void rlSetPolygonOffset(float factor, float units) { glPolygonOffset(factor, units); }
 
 // Clear color buffer with color
 void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
