@@ -2315,7 +2315,7 @@ void UpdateModelAnimationBonesWithBlending(Model model, ModelAnimation animA, in
 {
     if ((animA.frameCount > 0) && (animA.bones != NULL) && (animA.framePoses != NULL) &&
         (animB.frameCount > 0) && (animB.bones != NULL) && (animB.framePoses != NULL) &&
-        (blendFactor >= 0.0f) && (blendFactor <= 1.0))
+        (blendFactor >= 0.0f) && (blendFactor <= 1.0f))
     {
         frameA = frameA % animA.frameCount;
         frameB = frameB % animB.frameCount;
