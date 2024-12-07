@@ -474,6 +474,18 @@ typedef enum {
     RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } rlPixelFormat;
 
+// Texture parameters: filter mode
+// NOTE 1: Filtering considers mipmaps if available in the texture
+// NOTE 2: Filter is accordingly set for minification and magnification
+typedef enum {
+    RL_TEXTURE_FILTER_POINT = 0,        // No filter, just pixel approximation
+    RL_TEXTURE_FILTER_BILINEAR,         // Linear filtering
+    RL_TEXTURE_FILTER_TRILINEAR,        // Trilinear filtering (linear with mipmaps)
+    RL_TEXTURE_FILTER_ANISOTROPIC_4X,   // Anisotropic filtering 4x
+    RL_TEXTURE_FILTER_ANISOTROPIC_8X,   // Anisotropic filtering 8x
+    RL_TEXTURE_FILTER_ANISOTROPIC_16X,  // Anisotropic filtering 16x
+} rlTextureFilter;
+
 // Color blending modes (pre-defined)
 typedef enum {
     RL_BLEND_ALPHA = 0,                 // Blend textures considering alpha (default)
