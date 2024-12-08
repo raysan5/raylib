@@ -516,7 +516,7 @@ typedef RGFW_ENUM(u8, RGFW_event_types) {
 		char name[128]; /*!< monitor name */
 		RGFW_rect rect; /*!< monitor Workarea */
 		float scaleX, scaleY; /*!< monitor content scale*/
-		float physW, physH; /*!< monitor physical size */
+		float physW, physH; /*!< monitor physical size in inches*/
 	} RGFW_monitor;
 
 	/*
@@ -2969,6 +2969,7 @@ Start of Linux / Unix defines
 
 					xdnd.source = E.xclient.data.l[0];
 					xdnd.version = E.xclient.data.l[1] >> 24;
+
 					xdnd.format = None;
 
 					if (xdnd.version > 5)
@@ -3157,6 +3158,8 @@ Start of Linux / Unix defines
 					XFree(data);
 
 				if (xdnd.version >= 2) {
+					XEvent reply = { ClientMessage };
+					reply.xclient.format = 32;
 					reply.xclient.message_type = XdndFinished;
 					reply.xclient.data.l[1] = result;
 					reply.xclient.data.l[2] = XdndActionCopy;
@@ -3759,8 +3762,8 @@ Start of Linux / Unix defines
 		RGFW_area size = RGFW_getScreenSize();
 
 		monitor.rect = RGFW_RECT(0, 0, size.w, size.h);
-		monitor.physW = DisplayWidthMM(display, screen);
-		monitor.physH = DisplayHeightMM(display, screen);
+		monitor.physW = DisplayWidthMM(display, screen) / 25.4;
+		monitor.physH = DisplayHeightMM(display, screen) / 25.4;
 		
 		XGetSystemContentScale(display, &monitor.scaleX, &monitor.scaleY);
 		XRRScreenResources* sr = XRRGetScreenResourcesCurrent(display, RootWindow(display, screen));
@@ -3773,8 +3776,8 @@ Start of Linux / Unix defines
 		}
 		
 		if (ci == NULL) {
-			float dpi_width = round((double)monitor.rect.w/(((double)monitor.physW)/25.4));
-			float dpi_height = round((double)monitor.rect.h/(((double)monitor.physH)/25.4));
+			float dpi_width = round((double)monitor.rect.w/(double)monitor.physW);
+			float dpi_height = round((double)monitor.rect.h/(double)monitor.physH);
 		
 			monitor.scaleX = (float) (dpi_width) / (float) 96;
 			monitor.scaleY = (float) (dpi_height) / (float) 96;
@@ -3784,16 +3787,16 @@ Start of Linux / Unix defines
 		}
 	    
 		XRROutputInfo* info = XRRGetOutputInfo (display, sr, sr->outputs[screen]);
-		monitor.physW = info->mm_width;
-		monitor.physH = info->mm_height;
+		monitor.physW = info->mm_width / 25.4;
+		monitor.physH = info->mm_height / 25.4;
 
 		monitor.rect.x = ci->x;
 		monitor.rect.y = ci->y;
 		monitor.rect.w = ci->width;
 		monitor.rect.h = ci->height;
 		
-		float dpi_width = round((double)monitor.rect.w/(((double)monitor.physW)/25.4));
-		float dpi_height = round((double)monitor.rect.h/(((double)monitor.physH)/25.4));
+		float dpi_width = round((double)monitor.rect.w/(double)monitor.physW);
+		float dpi_height = round((double)monitor.rect.h/(double)monitor.physH);
 
 		monitor.scaleX = (float) (dpi_width) / (float) 96;
 		monitor.scaleY = (float) (dpi_height) / (float) 96;		
@@ -8101,11 +8104,20 @@ RGFW_UNUSED(win); /*!< if buffer rendering is not being used */
 		monitor.rect = RGFW_RECT((int) bounds.origin.x, (int) bounds.origin.y, (int) bounds.size.width, (int) bounds.size.height);
 
 		CGSize screenSizeMM = CGDisplayScreenSize(display);
-		monitor.physW = screenSizeMM.width;
-		monitor.physH = screenSizeMM.height;
+		monitor.physW = (float)screenSizeMM.width / 25.4f;
+		monitor.physH = (float)screenSizeMM.height / 25.4f;
 
-		monitor.scaleX = ((monitor.rect.w / (screenSizeMM.width / 25.4)) / 96) + 0.25;
-		monitor.scaleY = ((monitor.rect.h / (screenSizeMM.height / 25.4)) / 96) + 0.25;
+		float dpi_width = round((double)monitor.rect.w/(double)monitor.physW);
+		float dpi_height = round((double)monitor.rect.h/(double)monitor.physH);
+
+		monitor.scaleX = (float) (dpi_width) / (float) 96;
+		monitor.scaleY = (float) (dpi_height) / (float) 96;		
+
+		if (isinf(monitor.scaleX) || (monitor.scaleX > 1 && monitor.scaleX < 1.1))
+			monitor.scaleX = 1;
+
+		if (isinf(monitor.scaleY) || (monitor.scaleY > 1 && monitor.scaleY < 1.1))
+			monitor.scaleY = 1;
 
 		return monitor;
 	}
