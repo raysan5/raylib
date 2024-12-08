@@ -584,6 +584,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation \
+    models/models_animation_blending \
     models/models_billboard \
     models/models_bone_socket \
     models/models_box_collisions \
