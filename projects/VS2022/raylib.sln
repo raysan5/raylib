@@ -309,6 +309,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_bone_socket", "examp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_vertex_displacement", "examples\shaders_vertex_displacement.vcxproj", "{CCA63A76-D9FC-4130-9F67-4D97F9770D53}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_blending", "examples\models_animation_blending.vcxproj", "{AFDDE100-2D36-4749-817D-12E54C56312F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.DLL|x64 = Debug.DLL|x64

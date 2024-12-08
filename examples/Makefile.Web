@@ -472,6 +472,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation \
+    models/models_animation_blending \
     models/models_gpu_skinning \
     models/models_billboard \
     models/models_bone_socket \
