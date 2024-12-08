@@ -1550,7 +1550,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
     {
         // Open ogg audio stream
-        stb_vorbis* ctxOgg = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
+        stb_vorbis *ctxOgg = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
 
         if (ctxOgg != NULL)
         {
@@ -2462,7 +2462,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
         float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
 
         // At this point we can convert the data to our mixing format
-        ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);    /* Safe cast. */
+        ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);
         ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
         ma_data_converter_process_pcm_frames(&audioBuffer->converter, inputBuffer, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
 

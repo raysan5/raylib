@@ -801,7 +801,8 @@ typedef enum {
     SHADER_LOC_MAP_BRDF,            // Shader location: sampler2d texture: brdf
     SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
     SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
-    SHADER_LOC_BONE_MATRICES        // Shader location: array of matrices uniform: boneMatrices
+    SHADER_LOC_BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
+    SHADER_LOC_VERTEX_INSTANCE_TX   // Shader location: vertex attribute: instanceTransform
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
@@ -817,6 +818,10 @@ typedef enum {
     SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
     SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
     SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
+    SHADER_UNIFORM_UINT,            // Shader uniform type: unsigned int
+    SHADER_UNIFORM_UIVEC2,          // Shader uniform type: uivec2 (2 unsigned int)
+    SHADER_UNIFORM_UIVEC3,          // Shader uniform type: uivec3 (3 unsigned int)
+    SHADER_UNIFORM_UIVEC4,          // Shader uniform type: uivec4 (4 unsigned int)
     SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
 } ShaderUniformDataType;
 
