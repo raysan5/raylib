@@ -539,7 +539,7 @@
             <Value name="SHADER_LOC_BONE_MATRICES" integer="28" desc="Shader location: array of matrices uniform: boneMatrices" />
             <Value name="SHADER_LOC_VERTEX_INSTANCE_TX" integer="29" desc="Shader location: vertex attribute: instanceTransform" />
         </Enum>
-        <Enum name="ShaderUniformDataType" valueCount="9" desc="Shader uniform data type">
+        <Enum name="ShaderUniformDataType" valueCount="13" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
             <Value name="SHADER_UNIFORM_VEC2" integer="1" desc="Shader uniform type: vec2 (2 float)" />
             <Value name="SHADER_UNIFORM_VEC3" integer="2" desc="Shader uniform type: vec3 (3 float)" />
@@ -548,7 +548,11 @@
             <Value name="SHADER_UNIFORM_IVEC2" integer="5" desc="Shader uniform type: ivec2 (2 int)" />
             <Value name="SHADER_UNIFORM_IVEC3" integer="6" desc="Shader uniform type: ivec3 (3 int)" />
             <Value name="SHADER_UNIFORM_IVEC4" integer="7" desc="Shader uniform type: ivec4 (4 int)" />
-            <Value name="SHADER_UNIFORM_SAMPLER2D" integer="8" desc="Shader uniform type: sampler2d" />
+            <Value name="SHADER_UNIFORM_UINT" integer="8" desc="Shader uniform type: unsigned int" />
+            <Value name="SHADER_UNIFORM_UIVEC2" integer="9" desc="Shader uniform type: uivec2 (2 unsigned int)" />
+            <Value name="SHADER_UNIFORM_UIVEC3" integer="10" desc="Shader uniform type: uivec3 (3 unsigned int)" />
+            <Value name="SHADER_UNIFORM_UIVEC4" integer="11" desc="Shader uniform type: uivec4 (4 unsigned int)" />
+            <Value name="SHADER_UNIFORM_SAMPLER2D" integer="12" desc="Shader uniform type: sampler2d" />
         </Enum>
         <Enum name="ShaderAttributeDataType" valueCount="4" desc="Shader attribute data types">
             <Value name="SHADER_ATTRIB_FLOAT" integer="0" desc="Shader attribute type: float" />
