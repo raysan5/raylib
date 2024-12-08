@@ -115,9 +115,9 @@ int main(void)
                 
             EndMode3D();
 
-            DrawText("Use the U/J Arrow to adjust blend factor", 10, 10, 20, GRAY);
-            DrawText("Use the T/G to switch animation", 10, 30, 20, GRAY);
-            DrawText("Use the Y/H to switch animation", 10, 50, 20, GRAY);
+            DrawText("Use the U/J to adjust blend factor", 10, 10, 20, GRAY);
+            DrawText("Use the T/G to switch first animation", 10, 30, 20, GRAY);
+            DrawText("Use the Y/H to switch second animation", 10, 50, 20, GRAY);
             DrawText(TextFormat("Animations: %s, %s", modelAnimations[animIndex0].name, modelAnimations[animIndex1].name), 10, 70, 20, BLACK);
             DrawText(TextFormat("Blend Factor: %f", blendFactor), 10, 86, 20, BLACK);
 

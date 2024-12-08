@@ -137,7 +137,7 @@ Examples using raylib models functionality, including models loading/generation 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
 | 85 | [models_animation](models/models_animation.c) | <img src="models/models_animation.png" alt="models_animation" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [culacant](https://github.com/culacant) |
-| 86 | [models_animation_blending](models/models_animation_blending.c) | <img src="models/models_animation_blending.png" alt="models_animation" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [Kirandeep-Singh-Khehra](https://github.com/Kirandeep-Singh-Khehra) |
+| 86 | [models_animation_blending](models/models_animation_blending.c) | <img src="models/models_animation_blending.png" alt="models_animation_blending" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.5 | [Kirandeep-Singh-Khehra](https://github.com/Kirandeep-Singh-Khehra) |
 | 87 | [models_billboard](models/models_billboard.c) | <img src="models/models_billboard.png" alt="models_billboard" width="80"> | ⭐️⭐️⭐️☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
 | 88 | [models_box_collisions](models/models_box_collisions.c) | <img src="models/models_box_collisions.png" alt="models_box_collisions" width="80"> | ⭐️☆☆☆ | 1.3 | 3.5 | [Ray](https://github.com/raysan5) |
 | 89 | [models_cubicmap](models/models_cubicmap.c) | <img src="models/models_cubicmap.png" alt="models_cubicmap" width="80"> | ⭐️⭐️☆☆ | 1.8 | 3.5 | [Ray](https://github.com/raysan5) |
