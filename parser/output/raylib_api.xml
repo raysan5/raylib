@@ -507,7 +507,7 @@
             <Value name="MATERIAL_MAP_PREFILTER" integer="9" desc="Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
             <Value name="MATERIAL_MAP_BRDF" integer="10" desc="Brdf material" />
         </Enum>
-        <Enum name="ShaderLocationIndex" valueCount="29" desc="Shader location index">
+        <Enum name="ShaderLocationIndex" valueCount="30" desc="Shader location index">
             <Value name="SHADER_LOC_VERTEX_POSITION" integer="0" desc="Shader location: vertex attribute: position" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD01" integer="1" desc="Shader location: vertex attribute: texcoord01" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD02" integer="2" desc="Shader location: vertex attribute: texcoord02" />
@@ -537,6 +537,7 @@
             <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: boneIds" />
             <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: boneWeights" />
             <Value name="SHADER_LOC_BONE_MATRICES" integer="28" desc="Shader location: array of matrices uniform: boneMatrices" />
+            <Value name="SHADER_LOC_VERTEX_INSTANCE_TX" integer="29" desc="Shader location: vertex attribute: instanceTransform" />
         </Enum>
         <Enum name="ShaderUniformDataType" valueCount="9" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />

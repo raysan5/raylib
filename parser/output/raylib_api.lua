@@ -2543,6 +2543,11 @@ return {
           name = "SHADER_LOC_BONE_MATRICES",
           value = 28,
           description = "Shader location: array of matrices uniform: boneMatrices"
+        },
+        {
+          name = "SHADER_LOC_VERTEX_INSTANCE_TX",
+          value = 29,
+          description = "Shader location: vertex attribute: instanceTransform"
         }
       }
     },
