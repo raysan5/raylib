@@ -12,6 +12,8 @@
 *   Copyright (c) 2024 Kirandeep (@Kirandeep-Singh-Khehra)
 * 
 *   Note: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
+*   Note: This example uses CPU for updating meshes.
+*           For GPU skinning see comments with 'INFO:'.
 *
 ********************************************************************************************/
 

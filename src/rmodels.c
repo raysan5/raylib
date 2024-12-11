@@ -2308,7 +2308,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
     }
 }
 
-// Update model animated bones transform matrices by blendin between two different given frames of different ModelAnimation(could be same too)
+// Update model animated bones transform matrices by interpolating between two different given frames of different ModelAnimation(could be same too)
 // NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
 // to be uploaded to shader at drawing, in case GPU skinning is enabled
 void UpdateModelAnimationBonesLerp(Model model, ModelAnimation animA, int frameA, ModelAnimation animB, int frameB, float value)
@@ -2434,61 +2434,7 @@ void UpdateModelVertsToCurrentBones(Model model)
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 {
     UpdateModelAnimationBones(model,anim,frame);
-    for (int m = 0; m < model.meshCount; m++)
-    {
-        Mesh mesh = model.meshes[m];
-        Vector3 animVertex = { 0 };
-        Vector3 animNormal = { 0 };
-        int boneId = 0;
-        int boneCounter = 0;
-        float boneWeight = 0.0;
-        bool updated = false;           // Flag to check when anim vertex information is updated
-        const int vValues = mesh.vertexCount*3;
-        for (int vCounter = 0; vCounter < vValues; vCounter += 3)
-        {
-            mesh.animVertices[vCounter] = 0;
-            mesh.animVertices[vCounter + 1] = 0;
-            mesh.animVertices[vCounter + 2] = 0;
-            if (mesh.animNormals != NULL)
-            {
-                mesh.animNormals[vCounter] = 0;
-                mesh.animNormals[vCounter + 1] = 0;
-                mesh.animNormals[vCounter + 2] = 0;
-            }
-                // Iterates over 4 bones per vertex
-            for (int j = 0; j < 4; j++, boneCounter++)
-            {
-                boneWeight = mesh.boneWeights[boneCounter];
-                boneId = mesh.boneIds[boneCounter];
-
-                // Early stop when no transformation will be applied
-                if (boneWeight == 0.0f) continue;
-                animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                animVertex = Vector3Transform(animVertex,model.meshes[m].boneMatrices[boneId]);
-                mesh.animVertices[vCounter] += animVertex.x*boneWeight;
-                mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
-                mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
-                updated = true;
-
-                // Normals processing
-                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                if (mesh.normals != NULL)
-                {
-                    animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal,model.meshes[m].boneMatrices[boneId]);
-                    mesh.animNormals[vCounter] += animNormal.x*boneWeight;
-                    mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
-                    mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
-                }
-            }
-        }
-
-        if (updated)
-        {
-            rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
-            rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
-        }
-    }
+    UpdateModelVertsToCurrentBones(model);
 }
 
 // Unload animation array data
