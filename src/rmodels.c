@@ -96,9 +96,9 @@
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)
-    #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
-    #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
-    #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
+    #define PAR_MALLOC(T, N) ((T *)RL_MALLOC(N*sizeof(T)))
+    #define PAR_CALLOC(T, N) ((T *)RL_CALLOC(N*sizeof(T), 1))
+    #define PAR_REALLOC(T, BUF, N) ((T *)RL_REALLOC(BUF, sizeof(T)*(N)))
     #define PAR_FREE RL_FREE
 
     #if defined(_MSC_VER)           // Disable some MSVC warning
@@ -1734,12 +1734,12 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // no faster, since we're transferring all the transform matrices anyway
     instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
-    // Instances transformation matrices are send to shader attribute location: SHADER_LOC_MATRIX_MODEL
+    // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCE_TX
     for (unsigned int i = 0; i < 4; i++)
     {
-        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
-        rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 1);
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
+        rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 1);
     }
 
     rlDisableVertexBuffer();
@@ -1943,13 +1943,14 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount*(int)strlen("v 0000.00f 0000.00f 0000.00f") +
-                       mesh.vertexCount*(int)strlen("vt 0.000f 0.00f") +
-                       mesh.vertexCount*(int)strlen("vn 0.000f 0.00f 0.00f") +
-                       mesh.triangleCount*(int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
+        int vc = mesh.vertexCount;
+        int dataSize = vc*(int)strlen("v -0000.000000f -0000.000000f -0000.000000f\n") +
+                       vc*(int)strlen("vt -0.000000f -0.000000f\n") +
+                       vc*(int)strlen("vn -0.0000f -0.0000f -0.0000f\n") +
+                       mesh.triangleCount*snprintf(NULL, 0, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", vc, vc, vc, vc, vc, vc, vc, vc, vc);
 
         // NOTE: Text data buffer size is estimated considering mesh data size
-        char *txtData = (char *)RL_CALLOC(dataSize*2 + 2000, sizeof(char));
+        char *txtData = (char *)RL_CALLOC(dataSize + 1000, sizeof(char));
 
         int byteCount = 0;
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
@@ -1969,17 +1970,17 @@ bool ExportMesh(Mesh mesh, const char *fileName)
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            byteCount += sprintf(txtData + byteCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "v %.6f %.6f %.6f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
         {
-            byteCount += sprintf(txtData + byteCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+            byteCount += sprintf(txtData + byteCount, "vt %.6f %.6f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "vn %.4f %.4f %.4f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
         if (mesh.indices != NULL)
@@ -1999,8 +2000,6 @@ bool ExportMesh(Mesh mesh, const char *fileName)
                 byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", v, v, v, v + 1, v + 1, v + 1, v + 2, v + 2, v + 2);
             }
         }
-
-        byteCount += sprintf(txtData + byteCount, "\n");
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
         success = SaveFileText(fileName, txtData);
@@ -2309,7 +2308,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
     }
 }
 
-// at least 2x speed up vs the old method 
+// at least 2x speed up vs the old method
 // Update model animated vertex data (positions and normals) for a given frame
 // NOTE: Updated data is uploaded to GPU
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
@@ -2341,14 +2340,16 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             {
                 boneWeight = mesh.boneWeights[boneCounter];
                 boneId = mesh.boneIds[boneCounter];
+
                 // Early stop when no transformation will be applied
                 if (boneWeight == 0.0f) continue;
                 animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
                 animVertex = Vector3Transform(animVertex,model.meshes[m].boneMatrices[boneId]);
-                mesh.animVertices[vCounter] += animVertex.x * boneWeight;
-                mesh.animVertices[vCounter+1] += animVertex.y * boneWeight;
-                mesh.animVertices[vCounter+2] += animVertex.z * boneWeight;
+                mesh.animVertices[vCounter] += animVertex.x*boneWeight;
+                mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
+                mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
                 updated = true;
+
                 // Normals processing
                 // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
                 if (mesh.normals != NULL)
@@ -2361,6 +2362,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 }
             }
         }
+
         if (updated)
         {
             rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
@@ -2726,11 +2728,11 @@ Mesh GenMeshCube(float width, float height, float length)
 #else               // Use par_shapes library to generate cube mesh
 /*
 // Platonic solids:
-par_shapes_mesh* par_shapes_create_tetrahedron();       // 4 sides polyhedron (pyramid)
-par_shapes_mesh* par_shapes_create_cube();              // 6 sides polyhedron (cube)
-par_shapes_mesh* par_shapes_create_octahedron();        // 8 sides polyhedron (diamond)
-par_shapes_mesh* par_shapes_create_dodecahedron();      // 12 sides polyhedron
-par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
+par_shapes_mesh *par_shapes_create_tetrahedron();       // 4 sides polyhedron (pyramid)
+par_shapes_mesh *par_shapes_create_cube();              // 6 sides polyhedron (cube)
+par_shapes_mesh *par_shapes_create_octahedron();        // 8 sides polyhedron (diamond)
+par_shapes_mesh *par_shapes_create_dodecahedron();      // 12 sides polyhedron
+par_shapes_mesh *par_shapes_create_icosahedron();       // 20 sides polyhedron
 */
     // Platonic solid generation: cube (6 sides)
     // NOTE: No normals/texcoords generated by default
@@ -3841,7 +3843,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     for (int i = 0; i < 4; i++)
     {
         points[i] = Vector3Subtract(points[i], origin3D);
-        if (rotation != 0.0) points[i] = Vector3RotateByAxisAngle(points[i], forward, rotation * DEG2RAD);
+        if (rotation != 0.0) points[i] = Vector3RotateByAxisAngle(points[i], forward, rotation*DEG2RAD);
         points[i] = Vector3Add(points[i], position);
     }
 
@@ -4050,7 +4052,7 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
         for (int i = 0; i < triangleCount; i++)
         {
             Vector3 a, b, c;
-            Vector3* vertdata = (Vector3*)mesh.vertices;
+            Vector3 *vertdata = (Vector3 *)mesh.vertices;
 
             if (mesh.indices)
             {
@@ -4191,30 +4193,27 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 static Model LoadOBJ(const char *fileName)
 {
     tinyobj_attrib_t objAttributes = { 0 };
-    tinyobj_shape_t* objShapes = NULL;
+    tinyobj_shape_t *objShapes = NULL;
     unsigned int objShapeCount = 0;
 
-    tinyobj_material_t* objMaterials = NULL;
+    tinyobj_material_t *objMaterials = NULL;
     unsigned int objMaterialCount = 0;
 
     Model model = { 0 };
     model.transform = MatrixIdentity();
 
-    char* fileText = LoadFileText(fileName);
+    char *fileText = LoadFileText(fileName);
 
     if (fileText == NULL)
     {
-        TRACELOG(LOG_ERROR, "MODEL Unable to read obj file %s", fileName);
+        TRACELOG(LOG_ERROR, "MODEL: [%s] Unable to read obj file", fileName);
         return model;
     }
 
     char currentDir[1024] = { 0 };
     strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
-    const char* workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
-    if (CHDIR(workingDir) != 0)
-    {
-        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
-    }
+    const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
+    if (CHDIR(workingDir) != 0) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
 
     unsigned int dataSize = (unsigned int)strlen(fileText);
 
@@ -4223,7 +4222,7 @@ static Model LoadOBJ(const char *fileName)
 
     if (ret != TINYOBJ_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "MODEL Unable to read obj data %s", fileName);
+        TRACELOG(LOG_ERROR, "MODEL: Unable to read obj data %s", fileName);
         return model;
     }
 
@@ -4234,52 +4233,51 @@ static Model LoadOBJ(const char *fileName)
     int lastMaterial = -1;
     unsigned int meshIndex = 0;
 
-    // count meshes
+    // Count meshes
     unsigned int nextShapeEnd = objAttributes.num_face_num_verts;
 
-    // see how many verts till the next shape
-
+    // See how many verts till the next shape
     if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
 
-    // walk all the faces
+    // Walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
-        if (faceVertIndex >= nextShapeEnd)
+        if (faceId >= nextShapeEnd)
         {
-            // try to find the last vert in the next shape
+            // Try to find the last vert in the next shape
             nextShape++;
             if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
-            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+            else nextShapeEnd = objAttributes.num_face_num_verts; // This is actually the total number of face verts in the file, not faces
             meshIndex++;
         }
-        else if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial)
+        else if ((lastMaterial != -1) && (objAttributes.material_ids[faceId] != lastMaterial))
         {
-            meshIndex++;// if this is a new material, we need to allocate a new mesh
+            meshIndex++; // If this is a new material, we need to allocate a new mesh
         }
 
         lastMaterial = objAttributes.material_ids[faceId];
         faceVertIndex += objAttributes.face_num_verts[faceId];
     }
 
-    // allocate the base meshes and materials
+    // Allocate the base meshes and materials
     model.meshCount = meshIndex + 1;
-    model.meshes = (Mesh*)MemAlloc(sizeof(Mesh) * model.meshCount);
+    model.meshes = (Mesh *)MemAlloc(sizeof(Mesh)*model.meshCount);
 
     if (objMaterialCount > 0)
     {
         model.materialCount = objMaterialCount;
-        model.materials = (Material*)MemAlloc(sizeof(Material) * objMaterialCount);
+        model.materials = (Material *)MemAlloc(sizeof(Material)*objMaterialCount);
     }
-    else // we must allocate at least one material
+    else // We must allocate at least one material
     {
         model.materialCount = 1;
-        model.materials = (Material*)MemAlloc(sizeof(Material) * 1);
+        model.materials = (Material *)MemAlloc(sizeof(Material)*1);
     }
 
-    model.meshMaterial = (int*)MemAlloc(sizeof(int) * model.meshCount);
+    model.meshMaterial = (int *)MemAlloc(sizeof(int)*model.meshCount);
 
-    // see how many verts are in each mesh
-    unsigned int* localMeshVertexCounts = (unsigned int*)MemAlloc(sizeof(unsigned int) * model.meshCount);
+    // See how many verts are in each mesh
+    unsigned int *localMeshVertexCounts = (unsigned int *)MemAlloc(sizeof(unsigned int)*model.meshCount);
 
     faceVertIndex = 0;
     nextShapeEnd = objAttributes.num_face_num_verts;
@@ -4288,23 +4286,22 @@ static Model LoadOBJ(const char *fileName)
     unsigned int localMeshVertexCount = 0;
 
     nextShape = 1;
-    if (objShapeCount > 1)
-        nextShapeEnd = objShapes[nextShape].face_offset;
+    if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
 
-    // walk all the faces
+    // Walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
-        bool newMesh = false; // do we need a new mesh?
-        if (faceVertIndex >= nextShapeEnd)
+        bool newMesh = false; // Do we need a new mesh?
+        if (faceId >= nextShapeEnd)
         {
-            // try to find the last vert in the next shape
+            // Try to find the last vert in the next shape
             nextShape++;
             if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
             else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
 
             newMesh = true;
         }
-        else if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial)
+        else if ((lastMaterial != -1) && (objAttributes.material_ids[faceId] != lastMaterial))
         {
             newMesh = true;
         }
@@ -4322,50 +4319,52 @@ static Model LoadOBJ(const char *fileName)
         faceVertIndex += objAttributes.face_num_verts[faceId];
         localMeshVertexCount += objAttributes.face_num_verts[faceId];
     }
+
     localMeshVertexCounts[meshIndex] = localMeshVertexCount;
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        // allocate the buffers for each mesh
+        // Allocate the buffers for each mesh
         unsigned int vertexCount = localMeshVertexCounts[i];
 
         model.meshes[i].vertexCount = vertexCount;
-        model.meshes[i].triangleCount = vertexCount / 3;
+        model.meshes[i].triangleCount = vertexCount/3;
 
-        model.meshes[i].vertices = (float*)MemAlloc(sizeof(float) * vertexCount * 3);
-        model.meshes[i].normals = (float*)MemAlloc(sizeof(float) * vertexCount * 3);
-        model.meshes[i].texcoords = (float*)MemAlloc(sizeof(float) * vertexCount * 2);
-        model.meshes[i].colors = (unsigned char*)MemAlloc(sizeof(unsigned char) * vertexCount * 4);
+        model.meshes[i].vertices = (float *)MemAlloc(sizeof(float)*vertexCount*3);
+        model.meshes[i].normals = (float *)MemAlloc(sizeof(float)*vertexCount*3);
+        model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
+        model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
     }
 
     MemFree(localMeshVertexCounts);
     localMeshVertexCounts = NULL;
 
-    // fill meshes
+    // Fill meshes
     faceVertIndex = 0;
 
     nextShapeEnd = objAttributes.num_face_num_verts;
 
-    // see how many verts till the next shape
+    // See how many verts till the next shape
     nextShape = 1;
     if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
     lastMaterial = -1;
     meshIndex = 0;
     localMeshVertexCount = 0;
 
-    // walk all the faces
+    // Walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
-        bool newMesh = false; // do we need a new mesh?
-        if (faceVertIndex >= nextShapeEnd)
+        bool newMesh = false; // Do we need a new mesh?
+        if (faceId >= nextShapeEnd)
         {
-            // try to find the last vert in the next shape
+            // Try to find the last vert in the next shape
             nextShape++;
             if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
-            else nextShapeEnd = objAttributes.num_face_num_verts; // this is actually the total number of face verts in the file, not faces
+            else nextShapeEnd = objAttributes.num_face_num_verts; // This is actually the total number of face verts in the file, not faces
             newMesh = true;
         }
-        // if this is a new material, we need to allocate a new mesh
+
+        // If this is a new material, we need to allocate a new mesh
         if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial) newMesh = true;
         lastMaterial = objAttributes.material_ids[faceId];
 
@@ -4376,8 +4375,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         int matId = 0;
-        if (lastMaterial >= 0 && lastMaterial < (int)objMaterialCount)
-            matId = lastMaterial;
+        if ((lastMaterial >= 0) && (lastMaterial < (int)objMaterialCount)) matId = lastMaterial;
 
         model.meshMaterial[meshIndex] = matId;
 
@@ -4387,19 +4385,15 @@ static Model LoadOBJ(const char *fileName)
             int normalIndex = objAttributes.faces[faceVertIndex].vn_idx;
             int texcordIndex = objAttributes.faces[faceVertIndex].vt_idx;
 
-            for (int i = 0; i < 3; i++)
-                model.meshes[meshIndex].vertices[localMeshVertexCount * 3 + i] = objAttributes.vertices[vertIndex * 3 + i];
+            for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
 
-            for (int i = 0; i < 3; i++)
-                model.meshes[meshIndex].normals[localMeshVertexCount * 3 + i] = objAttributes.normals[normalIndex * 3 + i];
+            for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
 
-            for (int i = 0; i < 2; i++)
-                model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + i] = objAttributes.texcoords[texcordIndex * 2 + i];
+            for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
 
-            model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount * 2 + 1];
+            model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
 
-            for (int i = 0; i < 4; i++)
-                model.meshes[meshIndex].colors[localMeshVertexCount * 4 + i] = 255;
+            for (int i = 0; i < 4; i++) model.meshes[meshIndex].colors[localMeshVertexCount*4 + i] = 255;
 
             faceVertIndex++;
             localMeshVertexCount++;
@@ -4413,8 +4407,7 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_shapes_free(objShapes, objShapeCount);
     tinyobj_materials_free(objMaterials, objMaterialCount);
 
-    for (int i = 0; i < model.meshCount; i++)
-        UploadMesh(model.meshes + i, true);
+    for (int i = 0; i < model.meshCount; i++) UploadMesh(model.meshes + i, true);
 
     // Restore current working directory
     if (CHDIR(currentDir) != 0)
@@ -5070,6 +5063,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 {
     Image image = { 0 };
 
+    if (cgltfImage == NULL) return image;
+
     if (cgltfImage->uri != NULL)     // Check if image data is provided as an uri (base64 or path)
     {
         if ((strlen(cgltfImage->uri) > 5) &&
@@ -5111,7 +5106,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             image = LoadImage(TextFormat("%s/%s", texPath, cgltfImage->uri));
         }
     }
-    else if (cgltfImage->buffer_view->buffer->data != NULL)    // Check if image is provided as data buffer
+    else if (cgltfImage->buffer_view != NULL && cgltfImage->buffer_view->buffer->data != NULL)    // Check if image is provided as data buffer
     {
         unsigned char *data = RL_MALLOC(cgltfImage->buffer_view->size);
         int offset = (int)cgltfImage->buffer_view->offset;
@@ -5665,7 +5660,7 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Load primitive indices data (if provided)
-                if (mesh->primitives[p].indices != NULL)
+                if ((mesh->primitives[p].indices != NULL) && (mesh->primitives[p].indices->buffer_view != NULL))
                 {
                     cgltf_accessor *attribute = mesh->primitives[p].indices;
 
@@ -5682,7 +5677,7 @@ static Model LoadGLTF(const char *fileName)
                     else if (attribute->component_type == cgltf_component_type_r_8u)
                     {
                         // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = RL_MALLOC(attribute->count * sizeof(unsigned short));
+                        model.meshes[meshIndex].indices = RL_MALLOC(attribute->count*sizeof(unsigned short));
                         LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned char, model.meshes[meshIndex].indices, unsigned short)
 
                     }
@@ -5737,7 +5732,7 @@ static Model LoadGLTF(const char *fileName)
 
             for (int i = 0; i < model.boneCount; i++)
             {
-                cgltf_node* node = skin.joints[i];
+                cgltf_node *node = skin.joints[i];
                 cgltf_float worldTransform[16];
                 cgltf_node_transform_world(node, worldTransform);
                 Matrix worldMatrix = {

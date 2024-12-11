@@ -246,7 +246,7 @@ bool WindowShouldClose(void)
 
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
-{   
+{
     RGFW_window_maximize(platform.window);
     ToggleBorderlessWindowed();
 }
@@ -587,7 +587,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return (Vector2){mons[monitor].rect.x, mons[monitor].rect.y};
+    return (Vector2){(float)mons[monitor].rect.x, (float)mons[monitor].rect.y};
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -611,7 +611,7 @@ int GetMonitorPhysicalWidth(int monitor)
 {
     RGFW_monitor* mons = RGFW_getMonitors();
 
-    return mons[monitor].physW;
+    return (int)mons[monitor].physW;
 }
 
 // Get selected monitor physical height in millimetres
@@ -619,7 +619,7 @@ int GetMonitorPhysicalHeight(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return mons[monitor].physH;
+    return (int)mons[monitor].physH;
 }
 
 // Get selected monitor refresh rate
@@ -640,7 +640,7 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    return (Vector2){ platform.window->r.x, platform.window->r.y };
+    return (Vector2){ (float)platform.window->r.x, (float)platform.window->r.y };
 }
 
 // Get window scale DPI factor for current monitor
@@ -654,7 +654,7 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    RGFW_writeClipboard(text, strlen(text));
+    RGFW_writeClipboard(text, (u32)strlen(text));
 }
 
 // Get clipboard text content
@@ -664,42 +664,39 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
-
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
-
-#ifdef _WIN32
-#   define WIN32_CLIPBOARD_IMPLEMENTATION
-#   define WINUSER_ALREADY_INCLUDED
-#   define WINBASE_ALREADY_INCLUDED
-#   define WINGDI_ALREADY_INCLUDED
-#   include "../external/win32_clipboard.h"
+#if defined(_WIN32)
+    #define WIN32_CLIPBOARD_IMPLEMENTATION
+    #define WINUSER_ALREADY_INCLUDED
+    #define WINBASE_ALREADY_INCLUDED
+    #define WINGDI_ALREADY_INCLUDED
+    #include "../external/win32_clipboard.h"
 #endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
-    Image image = {0};
+    Image image = { 0 };
+
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if defined(_WIN32)
     unsigned long long int dataSize = 0;
-    void* fileData = NULL;
+    void *fileData = NULL;
+    int width = 0;
+    int height = 0;
 
-#ifdef _WIN32
-    int width, height;
     fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
-#else
-    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement `GetClipboardImage` for this OS");
-#endif
 
-    if (fileData == NULL)
-    {
-        TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    }
-    else
-    {
-        image = LoadImageFromMemory(".bmp", fileData, dataSize);
-    }
+    if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
+    else image = LoadImageFromMemory(".bmp", fileData, (int)dataSize);
+#else
+    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+#endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
+
     return image;
 }
-#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Show mouse cursor
 void ShowCursor(void)
@@ -950,7 +947,7 @@ void PollInputEvents(void)
             case RGFW_quit: CORE.Window.shouldClose = true; break;
             case RGFW_dnd:      // Dropped file
             {
-                for (int i = 0; i < event->droppedFilesCount; i++)
+                for (u32 i = 0; i < event->droppedFilesCount; i++)
                 {
                     if (CORE.Window.dropFileCount == 0)
                     {
@@ -1035,7 +1032,7 @@ void PollInputEvents(void)
             {
                 if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
-                    CORE.Input.Mouse.currentWheelMove.y = event->scroll;
+                    CORE.Input.Mouse.currentWheelMove.y = (float)event->scroll;
                     break;
                 }
 
@@ -1054,7 +1051,7 @@ void PollInputEvents(void)
 
                 if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
-                    CORE.Input.Mouse.currentWheelMove.y = event->scroll;
+                    CORE.Input.Mouse.currentWheelMove.y = (float)event->scroll;
                     break;
                 }
 
@@ -1198,7 +1195,7 @@ void PollInputEvents(void)
                         int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event->joystick][button] = pressed;
-                        
+
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
                         else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
                     }
@@ -1290,8 +1287,8 @@ int InitPlatform(void)
     RGFW_area screenSize = RGFW_getScreenSize();
     CORE.Window.display.width = screenSize.w;
     CORE.Window.display.height = screenSize.h;
-    /* 
-        I think this is needed by Raylib now ? 
+    /*
+        I think this is needed by Raylib now ?
         If so, rcore_destkop_sdl should be updated too
     */
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);

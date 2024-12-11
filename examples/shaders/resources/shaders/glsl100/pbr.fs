@@ -1,6 +1,6 @@
 #version 100
 
-precision mediump float;
+precision highp float;
 
 #define MAX_LIGHTS              4
 #define LIGHT_DIRECTIONAL       0
@@ -17,13 +17,12 @@ struct Light {
 };
 
 // Input vertex attributes (from vertex shader)
-varying in vec3 fragPosition;
-varying in vec2 fragTexCoord;
-varying in vec4 fragColor;
-varying in vec3 fragNormal;
-varying in vec4 shadowPos;
-varying in mat3 TBN;
-
+varying vec3 fragPosition;
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
+varying vec3 fragNormal;
+varying vec4 shadowPos;
+varying mat3 TBN;
 
 // Input uniform values
 uniform int numOfLights;
@@ -113,7 +112,7 @@ vec3 pbr(){
         vec3 baseRefl = mix(vec3(0.04),albedo.rgb,metallic);
         vec3 Lo = vec3(0.0);  // acumulate lighting lum
 
-        for(int i=0;i<numOfLights;++i){
+        for(int i=0;i<4;++i){
 
             vec3 L = normalize(lights[i].position - fragPosition);  // calc light vector
             vec3 H = normalize(V + L);                              // calc halfway bisecting vector

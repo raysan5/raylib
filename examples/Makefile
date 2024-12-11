@@ -54,10 +54,15 @@
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM              ?= PLATFORM_DESKTOP
 
-ifeq ($(PLATFORM), PLATFORM_DESKTOP)
-    TARGET_PLATFORM = PLATFORM_DESKTOP_GLFW
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))
+    TARGET_PLATFORM := $(PLATFORM)
+    override PLATFORM = PLATFORM_DESKTOP
 else
-    TARGET_PLATFORM = $(PLATFORM)
+    ifeq ($(PLATFORM), PLATFORM_DESKTOP)
+        TARGET_PLATFORM = PLATFORM_DESKTOP_GLFW
+    else
+        TARGET_PLATFORM = $(PLATFORM)
+    endif
 endif
 
 # Define required raylib variables
@@ -156,7 +161,7 @@ RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Emscripten required variables
-		EMSDK_PATH         ?= C:/emsdk
+		EMSDK_PATH         ?= C:/raylib/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
 		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
@@ -653,7 +658,7 @@ OTHERS = \
 ifeq ($(TARGET_PLATFORM), PLATFORM_DESKTOP_GFLW)
     OTHERS += others/rlgl_standalone
 endif
-    
+
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 

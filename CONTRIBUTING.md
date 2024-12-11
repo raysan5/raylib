@@ -54,7 +54,7 @@ To open new issues for raylib (bug, enhancement, discussion...), just try to fol
  - If applicable, attach some screenshot of the issue and a .zip file with the code sample and required resources.
  - On issue description, add a brackets tag about the raylib module that relates to this issue. 
  If don't know which module, just report the issue, I will review it.
- - You can check other issues to see how is being done!
+ - You can check other issues to see how it's being done!
 
 ### Sending a Pull-Request
 

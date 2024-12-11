@@ -119,7 +119,7 @@ RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 ifeq ($(PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Emscripten required variables
-		EMSDK_PATH         ?= C:/emsdk
+		EMSDK_PATH         ?= C:/raylib/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
 		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
@@ -280,7 +280,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
     LDFLAGS += -sUSE_GLFW=3 -sEXPORTED_RUNTIME_METHODS=ccall
-    
+
     # Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
         LDFLAGS += -sASYNCIFY
@@ -383,6 +383,7 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
+    core/core_basic_window_web \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
@@ -587,6 +588,9 @@ core/core_automation_events : core/core_automation_events.c
 core/core_basic_window: core/core_basic_window.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_basic_window_web: core/core_basic_window_web.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_basic_screen_manager: core/core_basic_screen_manager.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -623,6 +627,9 @@ core/core_input_mouse_wheel: core/core_input_mouse_wheel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_multitouch: core/core_input_multitouch.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_input_virtual_controls: core/core_input_virtual_controls.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
@@ -746,6 +753,10 @@ textures/textures_fog_of_war: textures/textures_fog_of_war.c
 textures/textures_gif_player: textures/textures_gif_player.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/scarfy_run.gif@resources/scarfy_run.gif
+
+textures/textures_image_channel: textures/textures_image_channel.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/fudesumi.png@resources/fudesumi.png
 
 textures/textures_image_drawing: textures/textures_image_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -907,6 +918,13 @@ models/models_billboard: models/models_billboard.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/billboard.png@resources/billboard.png
 
+models/models_bone_socket: models/models_bone_socket.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/models/gltf/greenman_hat.glb@resources/models/gltf/greenman_hat.glb \
+    --preload-file models/resources/models/gltf/greenman_sword.glb@resources/models/gltf/greenman_sword.glb \
+    --preload-file models/resources/models/gltf/greenman_shield.glb@resources/models/gltf/greenman_shield.glb
+
 models/models_box_collisions: models/models_box_collisions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -961,6 +979,9 @@ models/models_mesh_picking: models/models_mesh_picking.c
 models/models_orthographic_projection: models/models_orthographic_projection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+models/models_point_rendering: models/models_point_rendering.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -987,6 +1008,24 @@ shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
     --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
     --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
     --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
+
+shaders/shaders_basic_pbr: shaders/shaders_basic_pbr.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/pbr.vs@resources/shaders/glsl100/pbr.vs \
+    --preload-file shaders/resources/shaders/glsl120/pbr.vs@resources/shaders/glsl120/pbr.vs \
+    --preload-file shaders/resources/shaders/glsl330/pbr.vs@resources/shaders/glsl330/pbr.vs \
+    --preload-file shaders/resources/shaders/glsl100/pbr.fs@resources/shaders/glsl100/pbr.fs \
+    --preload-file shaders/resources/shaders/glsl120/pbr.fs@resources/shaders/glsl120/pbr.fs \
+    --preload-file shaders/resources/shaders/glsl330/pbr.fs@resources/shaders/glsl330/pbr.fs \
+    --preload-file shaders/resources/models/old_car_new.glb@resources/models/old_car_new.glb \
+    --preload-file shaders/resources/old_car_d.png@resources/old_car_d.png \
+    --preload-file shaders/resources/old_car_mra.png@resources/old_car_mra.png \
+    --preload-file shaders/resources/old_car_n.png@resources/old_car_n.png \
+    --preload-file shaders/resources/old_car_e.png@resources/old_car_e.png \
+    --preload-file shaders/resources/models/plane.glb@resources/models/plane.glb \
+    --preload-file shaders/resources/road_a.png@resources/road_a.png \
+    --preload-file shaders/resources/road_mra.png@resources/road_mra.png \
+    --preload-file shaders/resources/road_n.png@resources/road_n.png
 
 shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
@@ -1061,6 +1100,14 @@ shaders/shaders_raymarching: shaders/shaders_raymarching.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
 
+shaders/shaders_shadowmap: shaders/shaders_shadowmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl120/shadowmap.vs@resources/shaders/glsl120/shadowmap.vs \
+    --preload-file shaders/resources/shaders/glsl330/shadowmap.vs@resources/shaders/glsl330/shadowmap.vs \
+    --preload-file shaders/resources/shaders/glsl120/shadowmap.fs@resources/shaders/glsl120/shadowmap.fs \
+    --preload-file shaders/resources/shaders/glsl330/shadowmap.fs@resources/shaders/glsl330/shadowmap.fs \
+    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb
+
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
@@ -1100,6 +1147,13 @@ shaders/shaders_texture_waves: shaders/shaders_texture_waves.c
 shaders/shaders_write_depth: shaders/shaders_write_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
+
+shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
+    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.vs@resources/shaders/glsl330/vertex_displacement.vs \
+    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs \
+    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
 
 
 # Compile AUDIO examples
