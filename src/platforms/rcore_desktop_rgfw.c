@@ -128,8 +128,8 @@ static bool RGFW_disableCursor = false;
 
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
-    [RGFW_Return] = KEY_ENTER, 
-	[RGFW_Quote] = KEY_APOSTROPHE,
+    [RGFW_Return] = KEY_ENTER,
+    [RGFW_Quote] = KEY_APOSTROPHE,
     [RGFW_Comma] = KEY_COMMA,
     [RGFW_Minus] = KEY_MINUS,
     [RGFW_Period] = KEY_PERIOD,
@@ -598,7 +598,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return (Vector2){mons[monitor].rect.x, mons[monitor].rect.y};
+    return (Vector2){(float)mons[monitor].rect.x, (float)mons[monitor].rect.y};
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -630,7 +630,7 @@ int GetMonitorPhysicalHeight(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return mons[monitor].physH;
+    return (int)mons[monitor].physH;
 }
 
 // Get selected monitor refresh rate
@@ -651,7 +651,7 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    return (Vector2){ platform.window->r.x, platform.window->r.y };
+    return (Vector2){ (float)platform.window->r.x, (float)platform.window->r.y };
 }
 
 // Get window scale DPI factor for current monitor
@@ -665,7 +665,7 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    RGFW_writeClipboard(text, strlen(text));
+    RGFW_writeClipboard(text, (u32)strlen(text));
 }
 
 // Get clipboard text content
@@ -1027,7 +1027,7 @@ void PollInputEvents(void)
             // Keyboard events
             case RGFW_keyPressed:
             {
-				KeyboardKey key = ConvertScancodeToKey(event->keyCode);
+                KeyboardKey key = ConvertScancodeToKey(event->keyCode);
                 if (key != KEY_NULL)
                 {
                     // If key was up, add it to the key pressed queue
@@ -1064,10 +1064,9 @@ void PollInputEvents(void)
             // Check mouse events
             case RGFW_mouseButtonPressed:
             {
-				if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
+                if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
-                
-					CORE.Input.Mouse.currentWheelMove.y = event->scroll;
+                    CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
                 }
 
@@ -1083,7 +1082,7 @@ void PollInputEvents(void)
             } break;
             case RGFW_mouseButtonReleased:
             {
-				if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
+                if ((event->button == RGFW_mouseScrollUp) || (event->button == RGFW_mouseScrollDown))
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
@@ -1138,7 +1137,8 @@ void PollInputEvents(void)
                 int axis = -1;
 
 				float value = 0;
-				switch(event->whichAxis) {
+				switch(event->whichAxis) 
+                {
 					case 0:
 					{
 						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
@@ -1150,7 +1150,9 @@ void PollInputEvents(void)
 						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
 					} break;
 					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
-					case 3: { if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
+					case 3: 
+                    { 
+                        if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
 						int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
 						int pressed = (value > 0.1f);
 						CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = pressed;
