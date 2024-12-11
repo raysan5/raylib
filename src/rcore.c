@@ -268,7 +268,7 @@ __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod)
 //----------------------------------------------------------------------------------
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
-typedef struct { int keycode; int scancode; } KeyCodes;
+typedef struct { int keycode; int scancode; } KeyInfo;
 
 // Core global state context data
 typedef struct CoreData {
@@ -311,7 +311,7 @@ typedef struct CoreData {
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame
 
-            KeyCodes keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
+            KeyInfo keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
