@@ -48,6 +48,7 @@ int main(void)
     // Load gltf model
     Model characterModel = LoadModel("resources/models/gltf/robot.glb"); // Load character model
     
+/* INFO: Uncomment this to use GPU skinning
     // Load skinning shader
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
                                        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
@@ -56,6 +57,7 @@ int main(void)
     {
         characterModel.materials[i].shader = skinningShader;
     }
+*/
 
     // Load gltf model animations
     int animsCount = 0;
@@ -93,7 +95,10 @@ int main(void)
 
         // Update bones
         // Note: Same animation frame index is used below. By default it loops both animations
-        UpdateModelAnimationBonesWithBlending(characterModel, modelAnimations[animIndex0], animCurrentFrame, modelAnimations[animIndex1], animCurrentFrame, blendFactor);        
+        UpdateModelAnimationBonesLerp(characterModel, modelAnimations[animIndex0], animCurrentFrame, modelAnimations[animIndex1], animCurrentFrame, blendFactor);
+
+// INFO: Comment the following line to use GPU skinning
+        UpdateModelVertsToCurrentBones(characterModel);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -103,12 +108,17 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
+
+/* INFO: Uncomment this to use GPU skinning
                 // Draw character mesh, pose calculation is done in shader (GPU skinning)
                 for (int i = 0; i < characterModel.meshCount; i++)
                 {
                     DrawMesh(characterModel.meshes[i], characterModel.materials[characterModel.meshMaterial[i]], characterModel.transform);
                 }
+*/
+
+// INFO: Comment the following line to use GPU skinning
+                DrawModel(characterModel, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
 
 
                 DrawGrid(10, 1.0f);
@@ -129,7 +139,9 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModelAnimations(modelAnimations, animsCount); // Unload model animation
     UnloadModel(characterModel);    // Unload model and meshes/material
-    UnloadShader(skinningShader);   // Unload GPU skinning shader
+
+// INFO: Uncomment the following line to use GPU skinning
+    // UnloadShader(skinningShader);   // Unload GPU skinning shader
     
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
