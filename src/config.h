@@ -284,6 +284,8 @@
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
 #endif
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX 9
+
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience

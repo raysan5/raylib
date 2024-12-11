@@ -795,7 +795,7 @@ Enum 08: MaterialMapIndex (11 values)
   Value[MATERIAL_MAP_IRRADIANCE]: 8
   Value[MATERIAL_MAP_PREFILTER]: 9
   Value[MATERIAL_MAP_BRDF]: 10
-Enum 09: ShaderLocationIndex (29 values)
+Enum 09: ShaderLocationIndex (30 values)
   Name: ShaderLocationIndex
   Description: Shader location index
   Value[SHADER_LOC_VERTEX_POSITION]: 0
@@ -827,7 +827,8 @@ Enum 09: ShaderLocationIndex (29 values)
   Value[SHADER_LOC_VERTEX_BONEIDS]: 26
   Value[SHADER_LOC_VERTEX_BONEWEIGHTS]: 27
   Value[SHADER_LOC_BONE_MATRICES]: 28
-Enum 10: ShaderUniformDataType (9 values)
+  Value[SHADER_LOC_VERTEX_INSTANCE_TX]: 29
+Enum 10: ShaderUniformDataType (13 values)
   Name: ShaderUniformDataType
   Description: Shader uniform data type
   Value[SHADER_UNIFORM_FLOAT]: 0
@@ -838,7 +839,11 @@ Enum 10: ShaderUniformDataType (9 values)
   Value[SHADER_UNIFORM_IVEC2]: 5
   Value[SHADER_UNIFORM_IVEC3]: 6
   Value[SHADER_UNIFORM_IVEC4]: 7
-  Value[SHADER_UNIFORM_SAMPLER2D]: 8
+  Value[SHADER_UNIFORM_UINT]: 8
+  Value[SHADER_UNIFORM_UIVEC2]: 9
+  Value[SHADER_UNIFORM_UIVEC3]: 10
+  Value[SHADER_UNIFORM_UIVEC4]: 11
+  Value[SHADER_UNIFORM_SAMPLER2D]: 12
 Enum 11: ShaderAttributeDataType (4 values)
   Name: ShaderAttributeDataType
   Description: Shader attribute data types
@@ -1886,15 +1891,15 @@ Function 167: GetCharPressed() (0 input parameters)
   Return type: int
   Description: Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
   No input parameters
-Function 168: SetExitKey() (1 input parameters)
+Function 168: GetKeyName() (1 input parameters)
+  Name: GetKeyName
+  Return type: const char *
+  Description: Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)
+  Param[1]: key (type: int)
+Function 169: SetExitKey() (1 input parameters)
   Name: SetExitKey
   Return type: void
   Description: Set a custom key to exit program (default is ESC)
-  Param[1]: key (type: int)
-Function 169: GetKeyName() (1 input parameters)
-  Name: GetKeyName
-  Return type: const char *
-  Description: Get name of a QWERTY key on the current keyboard layout (eg returns string "q" for KEY_A on an AZERTY keyboard)
   Param[1]: key (type: int)
 Function 170: IsGamepadAvailable() (1 input parameters)
   Name: IsGamepadAvailable

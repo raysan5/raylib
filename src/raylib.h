@@ -801,7 +801,8 @@ typedef enum {
     SHADER_LOC_MAP_BRDF,            // Shader location: sampler2d texture: brdf
     SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
     SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
-    SHADER_LOC_BONE_MATRICES        // Shader location: array of matrices uniform: boneMatrices
+    SHADER_LOC_BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
+    SHADER_LOC_VERTEX_INSTANCE_TX   // Shader location: vertex attribute: instanceTransform
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
@@ -817,6 +818,10 @@ typedef enum {
     SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
     SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
     SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
+    SHADER_UNIFORM_UINT,            // Shader uniform type: unsigned int
+    SHADER_UNIFORM_UIVEC2,          // Shader uniform type: uivec2 (2 unsigned int)
+    SHADER_UNIFORM_UIVEC3,          // Shader uniform type: uivec3 (3 unsigned int)
+    SHADER_UNIFORM_UIVEC4,          // Shader uniform type: uivec4 (4 unsigned int)
     SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
 } ShaderUniformDataType;
 
@@ -1177,8 +1182,8 @@ RLAPI bool IsKeyReleased(int key);                            // Check if a key 
 RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
 RLAPI int GetKeyPressed(void);                                // Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty
 RLAPI int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
+RLAPI const char *GetKeyName(int key);                        // Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
-RLAPI const char *GetKeyName(int key);                        // Get name of a QWERTY key on the current keyboard layout (eg returns string "q" for KEY_A on an AZERTY keyboard)
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                                        // Check if a gamepad is available

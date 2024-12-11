@@ -154,7 +154,7 @@ RLAPI void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAr
 RLAPI void CameraRoll(Camera *camera, float angle);
 
 RLAPI Matrix GetCameraViewMatrix(Camera *camera);
-RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
+RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
 
 #if defined(__cplusplus)
 }

@@ -355,6 +355,9 @@
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
 #endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX 9
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -997,6 +1000,9 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS
     #define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS  "vertexBoneWeights" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX  "instanceTransform" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX
 #endif
 
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_MVP
@@ -3959,7 +3965,7 @@ void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDrawArraysInstanced(GL_TRIANGLES, 0, count, instances);
+    glDrawArraysInstanced(GL_TRIANGLES, offset, count, instances);
 #endif
 }
 
@@ -4216,6 +4222,7 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX);
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
     glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);

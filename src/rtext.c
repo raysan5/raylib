@@ -1282,7 +1282,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 {
     Vector2 textSize = { 0 };
 
-    if ((isGpuReady && (font.texture.id == 0)) || 
+    if ((isGpuReady && (font.texture.id == 0)) ||
         (text == NULL) || (text[0] == '\0')) return textSize; // Security check
 
     int size = TextLength(text);    // Get size in bytes of text
@@ -2325,9 +2325,9 @@ static Font LoadBMFont(const char *fileName)
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)
 {
-    if (hex >= '0' && hex <= '9') return hex - '0';
-    else if (hex >= 'a' && hex <= 'f') return hex - 'a' + 10;
-    else if (hex >= 'A' && hex <= 'F') return hex - 'A' + 10;
+    if ((hex >= '0') && (hex <= '9')) return hex - '0';
+    else if ((hex >= 'a') && (hex <= 'f')) return hex - 'a' + 10;
+    else if ((hex >= 'A') && (hex <= 'F')) return hex - 'A' + 10;
     else return 0;
 }
 
