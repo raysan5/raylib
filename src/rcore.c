@@ -268,7 +268,7 @@ __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod)
 //----------------------------------------------------------------------------------
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
-typedef struct { int keycode; int scancode; } KeyInfo;
+typedef struct { int keycode; int mappedcode; } KeyInfo;
 
 // Core global state context data
 typedef struct CoreData {
@@ -3062,7 +3062,7 @@ void PlayAutomationEvent(AutomationEvent event)
                     {
                         // Add character to the queue
                         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].keycode = event.params[0];
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = -1;
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].mappedcode = -1;
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
                 }
@@ -3200,7 +3200,7 @@ int GetKeyPressedPro(int* scanCode)
         // Get character from the queue head
         value = CORE.Input.Keyboard.keyPressedQueue[0].keycode;
         if (scanCode != NULL)
-            *scanCode = CORE.Input.Keyboard.keyPressedQueue[0].scancode;
+            *scanCode = CORE.Input.Keyboard.keyPressedQueue[0].mappedcode;
 
         // Shift elements 1 step toward the head
         for (int i = 0; i < (CORE.Input.Keyboard.keyPressedQueueCount - 1); i++)
@@ -3208,7 +3208,7 @@ int GetKeyPressedPro(int* scanCode)
 
         // Reset last character in the queue
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1].keycode = 0;
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1].scancode = -1;
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount - 1].mappedcode = -1;
         CORE.Input.Keyboard.keyPressedQueueCount--;
     }
 

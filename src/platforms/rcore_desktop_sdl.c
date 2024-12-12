@@ -1477,9 +1477,9 @@ void PollInputEvents(void)
             {
             #if defined(PLATFORM_DESKTOP_SDL3)
                 // SDL3 Migration: The following structures have been removed: * SDL_Keysym
-                KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
+                KeyboardKey key = ConvertScancodeToKey(event.key.mappedcode);
             #else
-                KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
+                KeyboardKey key = ConvertScancodeToKey(event.key.keysym.mappedcode);
             #endif
 
                 if (key != KEY_NULL)
@@ -1487,8 +1487,11 @@ void PollInputEvents(void)
                     // If key was up, add it to the key pressed queue
                     if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
                     {
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].keycode = key;
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = event.key.keysym.sym;
+						// SDL calls the physical key value from the hardware a scancode.
+						CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].keycode = key;
+
+                        // SDL calls the key value that is mapped to the layout a virtual keysym.
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].mappedcode = event.key.keysym.sym;
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
 
@@ -1508,9 +1511,9 @@ void PollInputEvents(void)
             {
 
             #if defined(PLATFORM_DESKTOP_SDL3)
-                KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
+                KeyboardKey key = ConvertScancodeToKey(event.key.mappedcode);
             #else
-                KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
+                KeyboardKey key = ConvertScancodeToKey(event.key.keysym.mappedcode);
             #endif
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
             } break;

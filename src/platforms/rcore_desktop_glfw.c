@@ -1804,7 +1804,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     {
         // Add character to the queue
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].keycode = key;
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].scancode = scancode;
+        // glfw calls the key value that is mapped to the layout a scancode.
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount].mappedcode = scancode;
         CORE.Input.Keyboard.keyPressedQueueCount++;
     }
 
