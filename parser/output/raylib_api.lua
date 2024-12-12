@@ -4360,6 +4360,14 @@ return {
       }
     },
     {
+      name = "GetKeyPressedPro",
+      description = "Get key pressed (keycode), and optional scancode, call it multiple times for keys queued, returns 0 when the queue is empty",
+      returnType = "int",
+      params = {
+        {type = "int*", name = "scanCode"}
+      }
+    },
+    {
       name = "SetExitKey",
       description = "Set a custom key to exit program (default is ESC)",
       returnType = "void",
