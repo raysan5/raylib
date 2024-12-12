@@ -1520,8 +1520,8 @@ RLAPI const char *TextToPascal(const char *text);                               
 RLAPI const char *TextToSnake(const char *text);                                            // Get Snake case notation version of provided string
 RLAPI const char *TextToCamel(const char *text);                                            // Get Camel case notation version of provided string
 
-RLAPI int TextToInteger(const char *text);                                                  // Get integer value from text (negative values not supported)
-RLAPI float TextToFloat(const char *text);                                                  // Get float value from text (negative values not supported)
+RLAPI int TextToInteger(const char *text);                                                  // Get integer value from text
+RLAPI float TextToFloat(const char *text);                                                  // Get float value from text
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
