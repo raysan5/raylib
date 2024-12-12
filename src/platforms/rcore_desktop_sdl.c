@@ -68,7 +68,7 @@
     #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
 #endif
 
-#if ((defined(SDL_MAJOR_VERSION) && SDL_MAJOR_VERSION == 3) && (defined(SDL_MINOR_VERSION) && SDL_MINOR_VERSION >= 1))
+#if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
     #ifndef PLATFORM_DESKTOP_SDL3
         #define PLATFORM_DESKTOP_SDL3
     #endif
@@ -405,7 +405,7 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 
 // Since SDL2 doesn't have this function we leave a stub
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
-void* SDL_GetClipboardData(const char *mime_type, size_t *size)
+void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
     TRACELOG(LOG_WARNING, "Getting clipboard data that is not text is only available in SDL3");
 
@@ -1971,7 +1971,7 @@ void ClosePlatform(void)
 // Scancode to keycode mapping
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {
-    if (sdlScancode >= 0 && sdlScancode < SCANCODE_MAPPED_NUM)
+    if ((sdlScancode >= 0) && (sdlScancode < SCANCODE_MAPPED_NUM))
     {
         return mapScancodeToKey[sdlScancode];
     }

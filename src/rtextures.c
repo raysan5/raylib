@@ -833,10 +833,7 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
     // bottom-right or vice-versa), pixel (0, 0) is the farthest point on the gradient
     // (i.e. the pixel which should become one of the gradient's ends color); while for
     // directions that lie in the second or fourth quadrant, that point is pixel (width, 0).
-    float maxPosValue =
-            ((signbit(sinDir) != 0) == (signbit(cosDir) != 0))
-            ? fabsf(startingPos)
-            : fabsf(startingPos+width*cosDir);
+    float maxPosValue = ((signbit(sinDir) != 0) == (signbit(cosDir) != 0))? fabsf(startingPos) : fabsf(startingPos + width*cosDir);
     for (int i = 0; i < width; i++)
     {
         for (int j = 0; j < height; j++)

@@ -2063,7 +2063,7 @@ const char *GetDirectoryPath(const char *filePath)
 
     // In case provided path does not contain a root drive letter (C:\, D:\) nor leading path separator (\, /),
     // we add the current directory path to dirPath
-    if (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/')
+    if ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))
     {
         // For security, we set starting path to current directory,
         // obtained path will be concatenated to this

@@ -485,7 +485,7 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    RGFW_window_setName(platform.window, (char*)title);
+    RGFW_window_setName(platform.window, (char *)title);
     CORE.Window.title = title;
 }
 
@@ -542,9 +542,9 @@ void SetWindowFocused(void)
 void *GetWindowHandle(void)
 {
 #ifdef RGFW_WEBASM
-    return (void*)platform.window->src.ctx;
+    return (void *)platform.window->src.ctx;
 #else
-    return (void*)platform.window->src.window;
+    return (void *)platform.window->src.window;
 #endif
 }
 
@@ -587,7 +587,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return (Vector2){(float)mons[monitor].rect.x, (float)mons[monitor].rect.y};
+    return (Vector2){ (float)mons[monitor].rect.x, (float)mons[monitor].rect.y };
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -609,7 +609,7 @@ int GetMonitorHeight(int monitor)
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    RGFW_monitor* mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors();
 
     return (int)mons[monitor].physW;
 }
@@ -654,7 +654,7 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    RGFW_writeClipboard(text, (u32)strlen(text));
+    RGFW_writeClipboard(text, strlen(text));
 }
 
 // Get clipboard text content
@@ -1336,7 +1336,7 @@ int InitPlatform(void)
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     //----------------------------------------------------------------------------
-    rlLoadExtensions((void*)RGFW_getProcAddress);
+    rlLoadExtensions((void *)RGFW_getProcAddress);
     //----------------------------------------------------------------------------
 
     // TODO: Initialize input events system
