@@ -1341,6 +1341,9 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
     else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
+    // Enable FLAG_WINDOW_ALWAYS_RUN by default
+    if ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0) CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
+
     // NOTE: Some GLFW flags are not supported on HTML5
     if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
     else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
