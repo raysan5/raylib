@@ -170,6 +170,16 @@ typedef struct float16 {
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
 
+#if defined(RL_USE_SIMD)
+  #if defined(__SSE2__)
+    #include <emmintrin.h> // Required for: _mm_set_ps(), _mm_mul_ps(), _mm_add_ps(), _mm_cvtss_f32()
+  #endif
+
+  #if defined(__SSE3__)
+    #include <pmmintrin.h> // Required for: _mm_hadd_ps()
+  #endif
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
 //----------------------------------------------------------------------------------
@@ -707,9 +717,23 @@ RMAPI float Vector3LengthSqr(const Vector3 v)
 // Calculate two vectors dot product
 RMAPI float Vector3DotProduct(Vector3 v1, Vector3 v2)
 {
-    float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+#if defined(__SSE2__) && defined(RL_USE_SIMD)
+    __m128 vecA = _mm_set_ps(0.0f, v1.z, v1.y, v1.x);
+    __m128 vecB = _mm_set_ps(0.0f, v2.z, v2.y, v2.x);
 
-    return result;
+    __m128 mul = _mm_mul_ps(vecA, vecB);
+
+  #if defined(__SSE3__)
+    __m128 sum = _mm_hadd_ps(mul, mul);
+    sum = _mm_hadd_ps(sum, sum);
+  #else // Non __SSE3__
+    __m128 sum1 = _mm_add_ps(mul, _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(2, 3, 0, 1)));
+    __m128 sum = _mm_add_ps(sum1, _mm_shuffle_ps(sum1, sum1, _MM_SHUFFLE(1, 0, 3, 2)));
+  #endif
+    return _mm_cvtss_f32(sum);
+#else // Non SIMD
+    return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+#endif
 }
 
 // Calculate distance between two vectors
