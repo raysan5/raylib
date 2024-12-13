@@ -1336,7 +1336,25 @@ RMAPI float Vector4LengthSqr(Vector4 v)
 
 RMAPI float Vector4DotProduct(Vector4 v1, Vector4 v2)
 {
-    float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w);
+    float result = 0.0f;
+#if defined (__SSE2__) && defined(RL_USE_SIMD)
+    __m128 vecA = _mm_set_ps(v1.w, v1.z, v1.y, v1.x);
+    __m128 vecB = _mm_set_ps(v2.w, v2.z, v2.y, v2.x);
+
+    __m128 mul = _mm_mul_ps(vecA, vecB);
+
+    #if defined(__SSE3__)
+        __m128 sum = _mm_hadd_ps(mul, mul);
+        sum = _mm_hadd_ps(sum, sum);
+    #else // Non __SSE3__
+        __m128 sum1 = _mm_add_ps(mul, _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(2, 3, 0, 1)));
+        __m128 sum = _mm_add_ps(sum1, _mm_shuffle_ps(sum1, sum1, _MM_SHUFFLE(1, 0, 3, 2)));
+    #endif
+
+    result = _mm_cvtss_f32(sum);
+#else // Non SIMD
+    result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w);
+#endif
     return result;
 }
 
