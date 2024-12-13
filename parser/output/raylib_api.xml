@@ -2487,10 +2487,10 @@
         <Function name="TextToCamel" retType="const char *" paramCount="1" desc="Get Camel case notation version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text (negative values not supported)">
+        <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToFloat" retType="float" paramCount="1" desc="Get float value from text (negative values not supported)">
+        <Function name="TextToFloat" retType="float" paramCount="1" desc="Get float value from text">
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="DrawLine3D" retType="void" paramCount="3" desc="Draw a line in 3D world space">
