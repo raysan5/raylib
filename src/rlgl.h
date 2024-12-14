@@ -1890,16 +1890,6 @@ void rlActiveDrawBuffers(int count)
         else
         {
             unsigned int buffers[8] = {
-#if defined(GRAPHICS_API_OPENGL_ES3)
-                GL_COLOR_ATTACHMENT0_EXT,
-                GL_COLOR_ATTACHMENT1_EXT,
-                GL_COLOR_ATTACHMENT2_EXT,
-                GL_COLOR_ATTACHMENT3_EXT,
-                GL_COLOR_ATTACHMENT4_EXT,
-                GL_COLOR_ATTACHMENT5_EXT,
-                GL_COLOR_ATTACHMENT6_EXT,
-                GL_COLOR_ATTACHMENT7_EXT,
-#else
                 GL_COLOR_ATTACHMENT0,
                 GL_COLOR_ATTACHMENT1,
                 GL_COLOR_ATTACHMENT2,
@@ -1908,14 +1898,9 @@ void rlActiveDrawBuffers(int count)
                 GL_COLOR_ATTACHMENT5,
                 GL_COLOR_ATTACHMENT6,
                 GL_COLOR_ATTACHMENT7,
-#endif
             };
 
-#if defined(GRAPHICS_API_OPENGL_ES3)
-            glDrawBuffersEXT(count, buffers);
-#else
             glDrawBuffers(count, buffers);
-#endif
         }
     }
     else TRACELOG(LOG_WARNING, "GL: One color buffer active by default");
