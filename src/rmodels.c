@@ -2270,38 +2270,62 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
     {
         if (frame >= anim.frameCount) frame = frame%anim.frameCount;
 
+        // Get first mesh which have bones
+        int firstMeshWithBones = -1;
+
         for (int i = 0; i < model.meshCount; i++)
         {
             if (model.meshes[i].boneMatrices)
             {
                 assert(model.meshes[i].boneCount == anim.boneCount);
-
-                for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
+                if (firstMeshWithBones == -1)
                 {
-                    Vector3 inTranslation = model.bindPose[boneId].translation;
-                    Quaternion inRotation = model.bindPose[boneId].rotation;
-                    Vector3 inScale = model.bindPose[boneId].scale;
+                    firstMeshWithBones = i;
+                }
+            }
+        }
 
-                    Vector3 outTranslation = anim.framePoses[frame][boneId].translation;
-                    Quaternion outRotation = anim.framePoses[frame][boneId].rotation;
-                    Vector3 outScale = anim.framePoses[frame][boneId].scale;
+        // Update all bones and boneMatrices of first mesh with bones.
+        for (int boneId = 0; boneId < anim.boneCount; boneId++)
+        {
+            Vector3 inTranslation = model.bindPose[boneId].translation;
+            Quaternion inRotation = model.bindPose[boneId].rotation;
+            Vector3 inScale = model.bindPose[boneId].scale;
 
-                    Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
-                    Quaternion invRotation = QuaternionInvert(inRotation);
-                    Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
+            Vector3 outTranslation = anim.framePoses[frame][boneId].translation;
+            Quaternion outRotation = anim.framePoses[frame][boneId].rotation;
+            Vector3 outScale = anim.framePoses[frame][boneId].scale;
 
-                    Vector3 boneTranslation = Vector3Add(
-                        Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
-                        outRotation), outTranslation);
-                    Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
-                    Vector3 boneScale = Vector3Multiply(outScale, invScale);
+            Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
+            Quaternion invRotation = QuaternionInvert(inRotation);
+            Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
 
-                    Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
-                        QuaternionToMatrix(boneRotation),
-                        MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
-                        MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+            Vector3 boneTranslation = Vector3Add(
+                Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
+                outRotation), outTranslation);
+            Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
+            Vector3 boneScale = Vector3Multiply(outScale, invScale);
 
-                    model.meshes[i].boneMatrices[boneId] = boneMatrix;
+            Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
+                QuaternionToMatrix(boneRotation),
+                MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
+                MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+
+            model.meshes[firstMeshWithBones].boneMatrices[boneId] = boneMatrix;
+        }
+
+        // Update remaining meshes with bones (Use Deep copy because shallow copy results in double free with 'UnloadModel()')
+        if (firstMeshWithBones != -1)
+        {
+            for (int i = firstMeshWithBones + 1; i < model.meshCount; i++)
+            {
+                if (model.meshes[i].boneMatrices)
+                {
+                    memcpy(
+                        model.meshes[i].boneMatrices,
+                        model.meshes[firstMeshWithBones].boneMatrices,
+                        model.meshes[i].boneCount * sizeof(model.meshes[i].boneMatrices[0])
+                    );
                 }
             }
         }
