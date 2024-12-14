@@ -1088,6 +1088,7 @@ RLAPI int GetFPS(void);                                           // Get current
 RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
 RLAPI void PollInputEvents(void);                                 // Register all input events
 RLAPI void WaitTime(double seconds);                              // Wait for some time (halt program execution)
+RLAPI int GetDrawCalls(void);                                     // Returns draw calls made during the last tick
 
 // Random values generation functions
 RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator

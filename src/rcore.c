@@ -955,6 +955,7 @@ void EndDrawing(void)
         CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
     }
 
+    rlSwapDrawCallsCounter();
     PollInputEvents();      // Poll user events (before next frame update)
 #endif
 
@@ -1752,6 +1753,13 @@ void WaitTime(double seconds)
         while (GetTime() < destinationTime) { }
     #endif
 #endif
+}
+
+// Returns the draw calls of the previous tick
+// This is because we don't know the full count until the current tick ends
+int GetDrawCalls(void)
+{
+    return rlGetPreviousDrawCalls();
 }
 
 //----------------------------------------------------------------------------------

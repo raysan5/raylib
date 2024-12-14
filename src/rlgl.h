@@ -718,6 +718,8 @@ RLAPI int rlGetFramebufferHeight(void);                 // Get default framebuff
 RLAPI unsigned int rlGetTextureIdDefault(void);         // Get default texture id
 RLAPI unsigned int rlGetShaderIdDefault(void);          // Get default shader id
 RLAPI int *rlGetShaderLocsDefault(void);                // Get default shader locations
+RLAPI int rlGetPreviousDrawCalls(void);                 // Get previous ticks draw calls
+RLAPI void rlSwapDrawCallsCounter(void);                // Swap previous with current draw calls (marks end of a tick)
 
 // Render batch management
 // NOTE: rlgl provides a default render batch to behave like OpenGL 1.1 immediate mode
@@ -1087,6 +1089,8 @@ typedef struct rlglData {
 
         int framebufferWidth;               // Current framebuffer width
         int framebufferHeight;              // Current framebuffer height
+        int currentDrawCalls;               // Draw calls made in the current tick (might be incomplete)
+        int previousDrawCalls;              // Draw calls made during the last tick
 
     } State;            // Renderer state
     struct {
@@ -1109,6 +1113,7 @@ typedef struct rlglData {
 
         float maxAnisotropyLevel;           // Maximum anisotropy level supported (minimum is 2.0f)
         int maxDepthBits;                   // Maximum bits for depth component
+
 
     } ExtSupported;     // Extensions supported flags
 } rlglData;
@@ -2724,6 +2729,20 @@ int *rlGetShaderLocsDefault(void)
     return locs;
 }
 
+// Get previous ticks draw calls
+RLAPI int rlGetPreviousDrawCalls(void)
+{
+    return RLGL.State.previousDrawCalls;
+}
+
+// Swap previous with current draw calls (marks end of a tick)
+RLAPI void rlSwapDrawCallsCounter(void)
+{
+    RLGL.State.previousDrawCalls = RLGL.State.currentDrawCalls;
+    RLGL.State.currentDrawCalls = 0; // Reset counter
+}
+
+
 // Render batch management
 //------------------------------------------------------------------------------------------------
 // Load render batch
@@ -2983,6 +3002,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
         // Draw buffers
         if (RLGL.State.vertexCounter > 0)
         {
+            RLGL.State.currentDrawCalls++;
             // Set current shader and upload current MVP matrix
             glUseProgram(RLGL.State.currentShaderId);
 
