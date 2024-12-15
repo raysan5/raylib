@@ -23,6 +23,7 @@ endif()
 # Used as public API to be included into other projects
 set(raylib_public_headers
     raylib.h
+    rcamera.h
     rlgl.h
     raymath.h
     )
