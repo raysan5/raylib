@@ -497,20 +497,21 @@ void ToggleBorderlessWindowed(void)
 void MaximizeWindow(void)
 {
     SDL_MaximizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
     SDL_MinimizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
 }
 
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    SDL_ShowWindow(platform.window);
+    SDL_RestoreWindow(platform.window);
+    // CORE.Window.flags will be removed on PollInputEvents()
 }
 
 // Set window configuration state using flags
@@ -1448,6 +1449,22 @@ void PollInputEvents(void)
                         CORE.Window.currentFbo.width = width;
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;
+
+                        #ifndef PLATFORM_DESKTOP_SDL3
+                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
+                        if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0)
+                        {
+                            int borderTop = 0;
+                            int borderLeft = 0;
+                            int borderBottom = 0;
+                            int borderRight = 0;
+                            SDL_GetWindowBordersSize(platform.window, &borderTop, &borderLeft, &borderBottom, &borderRight);
+                            SDL_Rect usableBounds;
+                            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(platform.window), &usableBounds);
+
+                            if ((width + borderLeft + borderRight != usableBounds.w) && (height + borderTop + borderBottom != usableBounds.h)) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+                        }
+                        #endif
                     } break;
                     case SDL_WINDOWEVENT_ENTER:
                     {
@@ -1457,13 +1474,32 @@ void PollInputEvents(void)
                     {
                         CORE.Input.Mouse.cursorOnScreen = false;
                     } break;
-                    case SDL_WINDOWEVENT_HIDDEN:
                     case SDL_WINDOWEVENT_MINIMIZED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+                    } break;
+                    case SDL_WINDOWEVENT_MAXIMIZED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+                    } break;
+                    case SDL_WINDOWEVENT_RESTORED:
+                    {
+                        if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MINIMIZED) == 0)
+                        {
+                            if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+                        }
+
+                        #ifdef PLATFORM_DESKTOP_SDL3
+                        if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MAXIMIZED) == 0)
+                        {
+                            if ((CORE.Window.flags & SDL_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~SDL_WINDOW_MAXIMIZED;
+                        }
+                        #endif
+                    } break;
+                    case SDL_WINDOWEVENT_HIDDEN:
                     case SDL_WINDOWEVENT_FOCUS_LOST:
                     case SDL_WINDOWEVENT_SHOWN:
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
-                    case SDL_WINDOWEVENT_MAXIMIZED:
-                    case SDL_WINDOWEVENT_RESTORED:
             #if defined(PLATFORM_DESKTOP_SDL3)
                         break;
             #else
