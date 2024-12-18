@@ -780,6 +780,12 @@ int SetGamepadMappings(const char *mappings)
     return 0;
 }
 
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
+{
+    TRACELOG(LOG_WARNING, "GamepadSetVibration() not available on target platform");
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
