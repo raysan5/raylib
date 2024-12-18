@@ -1427,7 +1427,7 @@ void PollInputEvents(void)
 
             // Window events are also polled (Minimized, maximized, close...)
 
-        #ifndef PLATFORM_DESKTOP_SDL3
+            #ifndef PLATFORM_DESKTOP_SDL3
             // SDL3 states:
             //     The SDL_WINDOWEVENT_* events have been moved to top level events,
             //     and SDL_WINDOWEVENT has been removed.
@@ -1437,7 +1437,7 @@ void PollInputEvents(void)
             {
                 switch (event.window.event)
                 {
-        #endif
+            #endif
                     case SDL_WINDOWEVENT_RESIZED:
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                     {
@@ -1466,6 +1466,7 @@ void PollInputEvents(void)
                         }
                         #endif
                     } break;
+
                     case SDL_WINDOWEVENT_ENTER:
                     {
                         CORE.Input.Mouse.cursorOnScreen = true;
@@ -1474,6 +1475,7 @@ void PollInputEvents(void)
                     {
                         CORE.Input.Mouse.cursorOnScreen = false;
                     } break;
+
                     case SDL_WINDOWEVENT_MINIMIZED:
                     {
                         if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
@@ -1496,13 +1498,26 @@ void PollInputEvents(void)
                         }
                         #endif
                     } break;
+
                     case SDL_WINDOWEVENT_HIDDEN:
-                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) == 0) CORE.Window.flags |= FLAG_WINDOW_HIDDEN;
+                    } break;
                     case SDL_WINDOWEVENT_SHOWN:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;
+                    } break;
+
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
-            #if defined(PLATFORM_DESKTOP_SDL3)
-                        break;
-            #else
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
+                    } break;
+                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+                    } break;
+
+            #ifndef PLATFORM_DESKTOP_SDL3
                     default: break;
                 }
             } break;
