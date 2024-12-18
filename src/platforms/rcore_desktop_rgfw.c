@@ -168,7 +168,6 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_SuperL] = KEY_LEFT_SUPER,
     #ifndef RGFW_MACOS
     [RGFW_ShiftR] = KEY_RIGHT_SHIFT,
-
     [RGFW_AltR] = KEY_RIGHT_ALT,
     #endif
     [RGFW_Space] = KEY_SPACE,
@@ -675,7 +674,7 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
-#if SUPPORT_CLIPBOARD_IMAGE
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
 #if defined(_WIN32)
     #define WIN32_CLIPBOARD_IMPLEMENTATION
     #define WINUSER_ALREADY_INCLUDED
@@ -692,10 +691,10 @@ Image GetClipboardImage(void)
 
 #if SUPPORT_CLIPBOARD_IMAGE
 #if defined(_WIN32)
+    int width = 0;
+    int height = 0;
     unsigned long long int dataSize = 0;
-    void *fileData = NULL;
-    int width, height;
-    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    void *fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
     
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", fileData, dataSize);
@@ -737,9 +736,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     RGFW_disableCursor = true;
-
     RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
-
     HideCursor();
 }
 
@@ -792,7 +789,7 @@ int SetGamepadMappings(const char *mappings)
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
-    TRACELOG(LOG_WARNING, "GamepadSetVibration() not available on target platform");
+    TRACELOG(LOG_WARNING, "SetGamepadVibration() not available on target platform");
 }
 
 // Set mouse position XY
@@ -870,6 +867,7 @@ char RSGL_keystrToChar(const char *str)
     return '\0';
 }
 
+// Gamepad buttons conversion table
 int RGFW_gpConvTable[18] = {
 	[RGFW_GP_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
 	[RGFW_GP_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
@@ -889,8 +887,6 @@ int RGFW_gpConvTable[18] = {
 	[RGFW_GP_L3] = GAMEPAD_BUTTON_LEFT_THUMB,	
 	[RGFW_GP_R3] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
-
-
 
 // Register all input events
 void PollInputEvents(void)
@@ -912,7 +908,6 @@ void PollInputEvents(void)
     // Register previous mouse position
 
     // Reset last gamepad button/axis registered state
-
     for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
     {
         // Check if gamepad is available
@@ -1219,34 +1214,19 @@ int InitPlatform(void)
 
     if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_NO_BORDER;
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_NO_RESIZE;
-
     if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_TRANSPARENT_WINDOW;
-
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_FULLSCREEN;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
     // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_21)
-    {
-        RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
-    }
-    else if (rlGetVersion() == RL_OPENGL_33)
-    {
-        RGFW_setGLVersion(RGFW_GL_CORE, 3, 3);
-    }
-    else if (rlGetVersion() == RL_OPENGL_43)
-    {
-        RGFW_setGLVersion(RGFW_GL_CORE, 4, 1);
-    }
+    if (rlGetVersion() == RL_OPENGL_21) RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
+    else if (rlGetVersion() == RL_OPENGL_33) RGFW_setGLVersion(RGFW_GL_CORE, 3, 3);
+    else if (rlGetVersion() == RL_OPENGL_43) RGFW_setGLVersion(RGFW_GL_CORE, 4, 1);
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-    {
-        RGFW_setGLSamples(4);
-    }
+    if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLSamples(4);
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
-
 
 #ifndef PLATFORM_WEB_RGFW
     RGFW_area screenSize = RGFW_getScreenSize();
@@ -1256,10 +1236,8 @@ int InitPlatform(void)
 	CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
 #endif
-	/* 
-        I think this is needed by Raylib now ? 
-        If so, rcore_destkop_sdl should be updated too
-    */
+	// TODO: Is this needed by raylib now? 
+    // If so, rcore_desktop_sdl should be updated too
 	//SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 	
 	if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
