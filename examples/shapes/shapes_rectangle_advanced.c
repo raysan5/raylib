@@ -61,7 +61,7 @@ void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, float rou
     const Vector2 centers[4] = { point[8], point[9], point[10], point[11] };
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
