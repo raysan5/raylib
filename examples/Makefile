@@ -20,6 +20,8 @@
 #         - Linux (X11 desktop mode)
 #         - macOS/OSX (x64, arm64 (not tested))
 #         - Others (not tested)
+#     > PLATFORM_WEB_RGFW:
+#         - HTML5 (WebAssembly)
 #     > PLATFORM_WEB:
 #         - HTML5 (WebAssembly)
 #     > PLATFORM_DRM:
@@ -51,7 +53,7 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_WEB_RGFW
 PLATFORM              ?= PLATFORM_DESKTOP
 
 ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))
@@ -107,7 +109,7 @@ BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 
 # Determine PLATFORM_OS when required
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW PLATFORM_WEB))
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW PLATFORM_WEB PLATFORM_WEB_RGFW))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -158,7 +160,7 @@ endif
 # Define raylib release directory for compiled library
 RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 
-ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Emscripten required variables
 		EMSDK_PATH         ?= C:/raylib/emsdk
@@ -184,8 +186,8 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         CC = clang
     endif
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
-    # HTML5 emscripten compiler
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+	# HTML5 emscripten compiler
     # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
@@ -203,7 +205,7 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     ifeq ($(OS),Windows_NT)
         MAKE = mingw32-make
     else
@@ -231,11 +233,11 @@ CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
-    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
         CFLAGS += -sASSERTIONS=1 --profiling
     endif
-else
-    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+else  
+   ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
         ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
             CFLAGS += -O3
         else
@@ -325,7 +327,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     endif
     LDFLAGS += -L$(SDL_LIBRARY_PATH)
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # -Os                        # size optimization
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
     # -sUSE_GLFW=3              # Use glfw3 library (context/input management)
@@ -341,9 +343,14 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-    LDFLAGS += -sUSE_GLFW=3 -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sFORCE_FILESYSTEM=1
 
-    # Build using asyncify
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+        LDFLAGS += -sUSE_GLFW=3
+    endif
+
+    LDFLAGS += -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sFORCE_FILESYSTEM=1
+  	 
+	# Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
         LDFLAGS += -sASYNCIFY
     endif
@@ -480,9 +487,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Libraries for web (HTML5) compiling
-    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
+    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.web.a
 endif
 
 # Define source code object files required
@@ -681,7 +688,7 @@ others: $(OTHERS)
 %: %.c
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 	$(MAKE) -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
-else ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+else ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
 	$(MAKE) -f Makefile.Web $@
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -D$(TARGET_PLATFORM)
@@ -710,7 +717,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
 	rm -fv *.o
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.wasm *.html *.js *.data
     else
