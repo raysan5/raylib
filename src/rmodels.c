@@ -2281,6 +2281,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
                 if (firstMeshWithBones == -1)
                 {
                     firstMeshWithBones = i;
+                    break;
                 }
             }
         }
@@ -2314,18 +2315,17 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
             model.meshes[firstMeshWithBones].boneMatrices[boneId] = boneMatrix;
         }
 
-        // Update remaining meshes with bones (Use Deep copy because shallow copy results in double free with 'UnloadModel()')
+        // Update remaining meshes with bones
+        // NOTE: Using deep copy because shallow copy results in double free with 'UnloadModel()'
         if (firstMeshWithBones != -1)
         {
             for (int i = firstMeshWithBones + 1; i < model.meshCount; i++)
             {
                 if (model.meshes[i].boneMatrices)
                 {
-                    memcpy(
-                        model.meshes[i].boneMatrices,
+                    memcpy(model.meshes[i].boneMatrices,
                         model.meshes[firstMeshWithBones].boneMatrices,
-                        model.meshes[i].boneCount * sizeof(model.meshes[i].boneMatrices[0])
-                    );
+                        model.meshes[i].boneCount * sizeof(model.meshes[i].boneMatrices[0]));
                 }
             }
         }
@@ -2338,6 +2338,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 {
     UpdateModelAnimationBones(model,anim,frame);
+    
     for (int m = 0; m < model.meshCount; m++)
     {
         Mesh mesh = model.meshes[m];
@@ -2346,8 +2347,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         int boneId = 0;
         int boneCounter = 0;
         float boneWeight = 0.0;
-        bool updated = false;           // Flag to check when anim vertex information is updated
+        bool updated = false; // Flag to check when anim vertex information is updated
         const int vValues = mesh.vertexCount*3;
+        
         for (int vCounter = 0; vCounter < vValues; vCounter += 3)
         {
             mesh.animVertices[vCounter] = 0;
