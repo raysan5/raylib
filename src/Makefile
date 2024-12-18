@@ -662,8 +662,8 @@ raylib: $(OBJS)
 ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # Compile raylib libray for web
     #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
-	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
-	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
+	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(OBJS)
+	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).web.a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))
