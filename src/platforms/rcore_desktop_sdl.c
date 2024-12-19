@@ -1499,6 +1499,8 @@ void PollInputEvents(void)
                             if ((CORE.Window.flags & SDL_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~SDL_WINDOW_MAXIMIZED;
                         }
                         #endif
+
+                        if ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0) CORE.Time.previous = GetTime();
                     } break;
 
                     case SDL_WINDOWEVENT_HIDDEN:
