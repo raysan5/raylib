@@ -1277,6 +1277,24 @@ int MeasureText(const char *text, int fontSize)
     return (int)textSize.x;
 }
 
+// Gives you the position (Vector2) for your text so it will be Centered in specific area for default font
+Vector2 CentralizeText(const char *text, int fontSize, Vector2 anchorPosition, Vector2 areaSize)
+{
+    Vector2 textPosition = { 0.0f, 0.0f };
+
+    // Check if default font has been loaded
+    if (GetFontDefault().texture.id != 0)
+    {
+        int defaultFontSize = 10;   // Default Font chars height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
+
+        textPosition = CentralizeTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, anchorPosition, areaSize);
+    }
+
+    return textPosition;
+}
+
 // Measure string size for Font
 Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {
@@ -1332,6 +1350,18 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     textSize.y = textHeight;
 
     return textSize;
+}
+
+// Gives you the position (Vector2) for your text so it will be Centered in specific area for Font
+Vector2 CentralizeTextEx(Font font, const char *text, float fontSize, float spacing, Vector2 anchorPosition, Vector2 areaSize)
+{
+    Vector2 textPosition = { 0 };
+    Vector2 textSize = MeasureTextEx(font, text, fontSize, spacing);
+
+    textPosition.x = anchorPosition.x + ((areaSize.x - textSize.x) / 2.0f);
+    textPosition.y = anchorPosition.y + ((areaSize.y - textSize.y) / 2.0f);
+
+    return textPosition;
 }
 
 // Get index position for a unicode character on font
