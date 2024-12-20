@@ -1739,7 +1739,12 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
     if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
-    else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+    else
+    {
+        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+
+        if ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0) CORE.Time.previous = GetTime();
+    }
 }
 
 // GLFW3 WindowMaximize Callback, runs when window is maximized/restored
