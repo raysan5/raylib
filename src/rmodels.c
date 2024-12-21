@@ -2350,6 +2350,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         bool updated = false; // Flag to check when anim vertex information is updated
         const int vValues = mesh.vertexCount*3;
         
+        if ((mesh.boneWeights==NULL) || (mesh.boneIds==NULL)) continue; //  skip if missing bone data, causes segfault without on some models
+
         for (int vCounter = 0; vCounter < vValues; vCounter += 3)
         {
             mesh.animVertices[vCounter] = 0;
