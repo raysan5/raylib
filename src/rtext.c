@@ -247,11 +247,11 @@ extern void LoadFontDefault(void)
                 // we must consider data as little-endian order (alpha + gray)
                 ((unsigned short *)imFont.data)[i + j] = 0xffff;
             }
-            #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-            else ((unsigned short *)imFont.data)[i + j] = 0x00ff;
-            #else
-            else ((unsigned short *)imFont.data)[i + j] = 0xff00;
-            #endif
+            else 
+            { 
+                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
+                ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
+            }
         }
 
         counter++;
