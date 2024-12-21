@@ -46,7 +46,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.Reso
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
 
-                exe.defineCMacro("PLATFORM_DESKTOP", null);
+                exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
             },
             .linux => {
                 exe.linkSystemLibrary("GL");
@@ -55,7 +55,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.Reso
                 exe.linkSystemLibrary("m");
                 exe.linkSystemLibrary("X11");
 
-                exe.defineCMacro("PLATFORM_DESKTOP", null);
+                exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
             },
             .macos => {
                 exe.linkFramework("Foundation");
@@ -65,7 +65,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.Reso
                 exe.linkFramework("CoreVideo");
                 exe.linkFramework("IOKit");
 
-                exe.defineCMacro("PLATFORM_DESKTOP", null);
+                exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
             },
             else => {
                 @panic("Unsupported OS");
