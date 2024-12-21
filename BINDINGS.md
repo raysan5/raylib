@@ -10,7 +10,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.5**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
 | [raybit](https://github.com/Alex-Velez/raybit)                                           | **5.0**          | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                 | MIT                  |
 | [raylib-c3](https://github.com/c3lang/vendor/tree/main/libraries/raylib55.c3l)           | **5.5**          | [C3](https://c3-lang.org)                                            | MIT                  |
-| [Raylib-cs](https://github.com/ChrisDill/Raylib-cs)                                      | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
+| [Raylib-cs](https://github.com/ChrisDill/Raylib-cs)                                      | **5.5**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
 | [Raylib-CsLo](https://github.com/NotNotTech/Raylib-CsLo)                                 | 4.2              | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
 | [Raylib-CSharp-Vinculum](https://github.com/ZeroElectric/Raylib-CSharp-Vinculum)         | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
 | [Raylib-CSharp](https://github.com/MrScautHD/Raylib-CSharp)                              | **5.1-dev**      | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MIT                  |
