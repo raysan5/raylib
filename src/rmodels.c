@@ -1209,7 +1209,7 @@ void UnloadModel(Model model)
     // Unload animation data
     RL_FREE(model.bones);
     RL_FREE(model.bindPose);
-
+    RL_FREE(model.boneMatrices);
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (and meshes) from RAM and VRAM");
 }
 
@@ -1508,9 +1508,9 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
     // Upload Bone Transforms
-    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatrices)
+    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatricesPtr)
     {
-        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
+        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatricesPtr, mesh.boneCount);
     }
 #endif
     //-----------------------------------------------------
@@ -1754,9 +1754,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
     // Upload Bone Transforms
-    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatrices)
+    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatricesPtr)
     {
-        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
+        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatricesPtr, mesh.boneCount);
     }
 #endif
 
@@ -1932,7 +1932,6 @@ void UnloadMesh(Mesh mesh)
     RL_FREE(mesh.animNormals);
     RL_FREE(mesh.boneWeights);
     RL_FREE(mesh.boneIds);
-    RL_FREE(mesh.boneMatrices);
 }
 
 // Export mesh data to file
@@ -2270,22 +2269,6 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
     {
         if (frame >= anim.frameCount) frame = frame%anim.frameCount;
 
-        // Get first mesh which have bones
-        int firstMeshWithBones = -1;
-
-        for (int i = 0; i < model.meshCount; i++)
-        {
-            if (model.meshes[i].boneMatrices)
-            {
-                assert(model.meshes[i].boneCount == anim.boneCount);
-                if (firstMeshWithBones == -1)
-                {
-                    firstMeshWithBones = i;
-                    break;
-                }
-            }
-        }
-
         // Update all bones and boneMatrices of first mesh with bones.
         for (int boneId = 0; boneId < anim.boneCount; boneId++)
         {
@@ -2312,22 +2295,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
                 MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
                 MatrixScale(boneScale.x, boneScale.y, boneScale.z));
 
-            model.meshes[firstMeshWithBones].boneMatrices[boneId] = boneMatrix;
-        }
-
-        // Update remaining meshes with bones
-        // NOTE: Using deep copy because shallow copy results in double free with 'UnloadModel()'
-        if (firstMeshWithBones != -1)
-        {
-            for (int i = firstMeshWithBones + 1; i < model.meshCount; i++)
-            {
-                if (model.meshes[i].boneMatrices)
-                {
-                    memcpy(model.meshes[i].boneMatrices,
-                        model.meshes[firstMeshWithBones].boneMatrices,
-                        model.meshes[i].boneCount * sizeof(model.meshes[i].boneMatrices[0]));
-                }
-            }
+            model.boneMatrices[boneId] = boneMatrix;
         }
     }
 }
@@ -2372,7 +2340,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 // Early stop when no transformation will be applied
                 if (boneWeight == 0.0f) continue;
                 animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                animVertex = Vector3Transform(animVertex,model.meshes[m].boneMatrices[boneId]);
+                animVertex = Vector3Transform(animVertex,model.boneMatrices[boneId]);
                 mesh.animVertices[vCounter] += animVertex.x*boneWeight;
                 mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
                 mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
@@ -2383,7 +2351,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 if (mesh.normals != NULL)
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal,model.meshes[m].boneMatrices[boneId]);
+                    animNormal = Vector3Transform(animNormal,model.boneMatrices[boneId]);
                     mesh.animNormals[vCounter] += animNormal.x*boneWeight;
                     mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
                     mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
@@ -4807,16 +4775,10 @@ static Model LoadIQM(const char *fileName)
     }
 
     BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
-
-    for (int i = 0; i < model.meshCount; i++)
+    model.boneMatrices = RL_CALLOC(model.boneCount,sizeof(Matrix));
+    for (int j = 0; j < model.boneCount; j++)
     {
-        model.meshes[i].boneCount = model.boneCount;
-        model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
-
-        for (int j = 0; j < model.meshes[i].boneCount; j++)
-        {
-            model.meshes[i].boneMatrices[j] = MatrixIdentity();
-        }
+       model.boneMatrices[j] = MatrixIdentity();
     }
 
     UnloadFileData(fileData);
@@ -5907,14 +5869,10 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Bone Transform Matrices
-                model.meshes[meshIndex].boneCount = model.boneCount;
-                model.meshes[meshIndex].boneMatrices = RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
+                if (model.boneMatrices==NULL)
+                    model.boneMatrices = RL_CALLOC(model.boneCount, sizeof(Matrix));
 
-                for (int j = 0; j < model.meshes[meshIndex].boneCount; j++)
-                {
-                    model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
-                }
-
+                model.meshes[meshIndex].boneMatricesPtr = model.boneMatrices;
                 meshIndex++;       // Move to next mesh
             }
 
@@ -6687,12 +6645,9 @@ static Model LoadM3D(const char *fileName)
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
 
-                model.meshes[i].boneCount = model.boneCount;
-                model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
-                for (j = 0; j < model.meshes[i].boneCount; j++)
-                {
-                    model.meshes[i].boneMatrices[j] = MatrixIdentity();
-                }
+                if (model.boneMatrices==NULL)
+                    model.boneMatrices = RL_CALLOC(model.boneCount, sizeof(Matrix));
+                model.meshes[i].boneMatricesPtr = model.boneMatrices;
             }
         }
 
