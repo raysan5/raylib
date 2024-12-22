@@ -326,6 +326,76 @@ Font GetFontDefault()
 #endif
 }
 
+// Returns number of all available codepoints
+// Returns 0 if not valid format or file data has 0 valid glyphs
+// Returns -1 if can't allocate new array to replace codepoints (internal function error)
+int GetFontAvailableCodepoints(const char *fileName, int **codepoints) {
+    
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    int result = 0;
+
+    if (fileData != NULL)
+    {
+        result = GetFontAvailableCodepointsFromMemory(GetFileExtension(fileName), fileData, dataSize, codepoints);
+        UnloadFileData(fileData);
+    }
+
+    return result;
+}
+
+// Returns number of all available codepoints
+// Returns 0 if not valid format or file data has 0 valid glyphs
+// Returns -1 if can't allocate new array to replace codepoints (internal function error)
+int GetFontAvailableCodepointsFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int **codepoints) {
+    
+    char fileExtLower[16] = { 0 };
+    strncpy(fileExtLower, TextToLower(fileType), 16 - 1);
+
+#if defined(SUPPORT_FILEFORMAT_TTF)
+    if (TextIsEqual(fileExtLower, ".ttf") ||
+        TextIsEqual(fileExtLower, ".otf"))
+    {
+        // Load font info from memory data
+        stbtt_fontinfo fontInfo;
+        stbtt_InitFont(&fontInfo, fileData, stbtt_GetFontOffsetForIndex(fileData, 0));
+
+        // First count number of available glyphs
+        int codepointCount = 0;
+        for (int i = 0; i < MAX_GLYPHS; i++) {
+            if (stbtt_FindGlyphIndex(&fontInfo, i) != 0) {
+                codepointCount++;
+            }
+        }
+
+        // Allocate memory for codepoints array if codepointCount > 0
+        int *temp_codepoints = NULL;
+        if (codepointCount > 0) {
+            temp_codepoints = (int *)malloc(codepointCount * sizeof(int));
+            if (!temp_codepoints)
+                return -1;
+        }
+
+        // Fill codepoints array
+        int index = 0;
+        for (int i = 0; i < MAX_GLYPHS; i++) {
+            if (stbtt_FindGlyphIndex(&fontInfo, i) != 0) {
+                temp_codepoints[index++] = i;
+            }
+        }
+
+        // Replace output array
+        *codepoints = temp_codepoints;
+        return codepointCount;
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_BDF)
+    // TODO: Not supported yet
+#endif
+
+    return 0;
+}
+
 // Load Font from file into GPU memory (VRAM)
 Font LoadFont(const char *fileName)
 {
