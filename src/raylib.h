@@ -360,9 +360,8 @@ typedef struct Mesh {
     float *animNormals;     // Animated normals (after bones transformations)
     unsigned char *boneIds; // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
     float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
+    Matrix *boneMatrices;   // Bones animated transformation matrices
     int boneCount;          // Number of bones
-    Matrix *boneMatricesPtr;    // POINTER to Models bones transformation matrices
-                                // DO NOT FREE THIS
 
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
@@ -415,7 +414,6 @@ typedef struct Model {
     // Animation data
     int boneCount;          // Number of bones
     BoneInfo *bones;        // Bones information (skeleton)
-    Matrix *boneMatrices;   // Bones animated transformation matrices, moved these here to boost perf a little and remove wasted memory duplication
     Transform *bindPose;    // Bones base transformation (pose)
 } Model;
 
