@@ -115,6 +115,7 @@
 #ifndef MAX_TEXTSPLIT_COUNT
     #define MAX_TEXTSPLIT_COUNT                  128        // Maximum number of substrings to split: TextSplit()
 #endif
+#define MAX_GLYPHS                             65536        // Maximum number of glyphs in a font that need to be scanned
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
