@@ -2297,13 +2297,12 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
             Quaternion outRotation = anim.framePoses[frame][boneId].rotation;
             Vector3 outScale = anim.framePoses[frame][boneId].scale;
 
-            Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
             Quaternion invRotation = QuaternionInvert(inRotation);
+            Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), invRotation);
             Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
 
-            Vector3 boneTranslation = Vector3Add(
-                Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
-                outRotation), outTranslation);
+            Vector3 boneTranslation = Vector3Add(Vector3RotateByQuaternion(
+                Vector3Multiply(outScale, invTranslation), outRotation), outTranslation);
             Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
             Vector3 boneScale = Vector3Multiply(outScale, invScale);
 
