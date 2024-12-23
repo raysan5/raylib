@@ -2380,7 +2380,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 if (mesh.normals != NULL)
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal,model.meshes[m].boneMatrices[boneId]);
+                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.meshes[m].boneMatrices[boneId])));
                     mesh.animNormals[vCounter] += animNormal.x*boneWeight;
                     mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
                     mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
