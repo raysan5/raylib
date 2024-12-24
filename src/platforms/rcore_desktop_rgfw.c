@@ -686,7 +686,6 @@ const char *GetClipboardText(void)
 #endif
 #endif
 
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
 // Get clipboard image
 Image GetClipboardImage(void)
 {
