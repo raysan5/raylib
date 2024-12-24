@@ -677,8 +677,7 @@ const char *GetClipboardText(void)
 
 
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
-
-#ifdef _WIN32
+#if defined(_WIN32)
     #define WIN32_CLIPBOARD_IMPLEMENTATION
     #define WINUSER_ALREADY_INCLUDED
     #define WINBASE_ALREADY_INCLUDED
@@ -686,13 +685,6 @@ const char *GetClipboardText(void)
     #include "../external/win32_clipboard.h"
 #endif
 #endif
-
-// Get clipboard image
-Image GetClipboardImage(void)
-{
-    Image image = { 0 };
-    unsigned long long int dataSize = 0;
-    void *fileData = NULL;
 
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
 // Get clipboard image
