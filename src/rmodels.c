@@ -2286,7 +2286,6 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
             }
         }
 
-        if ((mesh.boneWeights==NULL) || (mesh.boneIds==NULL)) continue; //  skip if missing bone data, causes segfault without on some models
 
         // Update all bones and boneMatrices of first mesh with bones.
         for (int boneId = 0; boneId < anim.boneCount; boneId++)
@@ -2351,6 +2350,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         float boneWeight = 0.0;
         bool updated = false; // Flag to check when anim vertex information is updated
         const int vValues = mesh.vertexCount*3;
+
+        if ((mesh.boneWeights==NULL) || (mesh.boneIds==NULL)) continue; //  skip if missing bone data, causes segfault without on some models
 
         for (int vCounter = 0; vCounter < vValues; vCounter += 3)
         {
