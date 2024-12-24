@@ -2286,6 +2286,8 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
             }
         }
 
+        if ((mesh.boneWeights==NULL) || (mesh.boneIds==NULL)) continue; //  skip if missing bone data, causes segfault without on some models
+
         // Update all bones and boneMatrices of first mesh with bones.
         for (int boneId = 0; boneId < anim.boneCount; boneId++)
         {
