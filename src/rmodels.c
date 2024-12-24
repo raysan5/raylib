@@ -2380,7 +2380,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
                 // Normals processing
                 // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                if (mesh.normals != NULL)
+                if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
                     animNormal = Vector3Transform(animNormal,model.meshes[m].boneMatrices[boneId]);
@@ -2394,7 +2394,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         if (updated)
         {
             rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
-            rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
+            if (mesh.normals != NULL)
+                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
         }
     }
 }
