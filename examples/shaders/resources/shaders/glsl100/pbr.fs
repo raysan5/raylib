@@ -1,6 +1,6 @@
 #version 100
 
-precision highp  float;
+precision highp float;
 
 #define MAX_LIGHTS              4
 #define LIGHT_DIRECTIONAL       0
@@ -23,7 +23,6 @@ varying vec4 fragColor;
 varying vec3 fragNormal;
 varying vec4 shadowPos;
 varying mat3 TBN;
-
 
 // Input uniform values
 uniform int numOfLights;

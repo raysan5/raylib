@@ -56,10 +56,15 @@
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_WEB_RGFW
 PLATFORM              ?= PLATFORM_DESKTOP
 
-ifeq ($(PLATFORM), PLATFORM_DESKTOP)
-    TARGET_PLATFORM = PLATFORM_DESKTOP_GLFW
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))
+    TARGET_PLATFORM := $(PLATFORM)
+    override PLATFORM = PLATFORM_DESKTOP
 else
-    TARGET_PLATFORM = $(PLATFORM)
+    ifeq ($(PLATFORM), PLATFORM_DESKTOP)
+        TARGET_PLATFORM = PLATFORM_DESKTOP_GLFW
+    else
+        TARGET_PLATFORM = $(PLATFORM)
+    endif
 endif
 
 # Define required raylib variables
@@ -484,7 +489,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Libraries for web (HTML5) compiling
-    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
+    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.web.a
 endif
 
 # Define source code object files required
@@ -660,7 +665,7 @@ OTHERS = \
 ifeq ($(TARGET_PLATFORM), PLATFORM_DESKTOP_GFLW)
     OTHERS += others/rlgl_standalone
 endif
-    
+
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 

@@ -61,11 +61,10 @@
 #------------------------------------------------------------------------------------------------
 # Define target platform
 PLATFORM             ?= PLATFORM_DESKTOP
-
 ifeq ($(PLATFORM), PLATFORM_DESKTOP)
-    TARGET_PLATFORM = PLATFORM_DESKTOP_GLFW
+    TARGET_PLATFORM   = PLATFORM_DESKTOP_GLFW
 else
-    TARGET_PLATFORM = $(PLATFORM)
+    TARGET_PLATFORM   = $(PLATFORM)
 endif
 
 # Define required raylib variables
@@ -121,7 +120,6 @@ GLFW_LINUX_ENABLE_X11      ?= TRUE
 SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
 SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/lib
 SDL_LIBRARIES         ?= -lSDL2 -lSDL2main
-
 
 # Determine if the file has root access (only required to install raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
@@ -664,8 +662,8 @@ raylib: $(OBJS)
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Compile raylib libray for web
     #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
-	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
-	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
+	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(OBJS)
+	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).web.a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW))

@@ -95,11 +95,19 @@ int main(void)
     
     rlEnableFramebuffer(gBuffer.framebuffer);
 
-    // Since we are storing position and normal data in these textures, 
-    // we need to use a floating point format.
-    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
+    // NOTE: Vertex positions are stored in a texture for simplicity. A better approach would use a depth texture
+    // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position, 
+    // depth, and the inverse view/projection matrices.
 
-    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
+    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios. 
+    // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
+    // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`.
+    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+
+    // Similarly, 16-bit precision is used for normals ensures OpenGL ES 3 compatibility.
+    // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations.
+    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+
     // Albedo (diffuse color) and specular strength can be combined into one texture.
     // The color in RGB, and the specular strength in the alpha channel.
     gBuffer.albedoSpecTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);

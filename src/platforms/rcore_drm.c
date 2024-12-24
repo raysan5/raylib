@@ -622,7 +622,7 @@ int SetGamepadMappings(const char *mappings)
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
-    TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "SetGamepadVibration() not implemented on target platform");
 }
 
 // Set mouse position XY
@@ -1529,7 +1529,7 @@ static void ConfigureEvdevDevice(char *device)
             platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
         }
     }
-    else if (isGamepad && !isMouse && !isKeyboard && platform.gamepadCount < MAX_GAMEPADS)
+    else if (isGamepad && !isMouse && !isKeyboard && (platform.gamepadCount < MAX_GAMEPADS))
     {
         deviceKindStr = "gamepad";
         int index = platform.gamepadCount++;
@@ -1893,7 +1893,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
 
         TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced)) continue;
+        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !allowInterlaced) continue;
 
         if ((mode->hdisplay == width) && (mode->vdisplay == height) && (mode->vrefresh == fps)) return i;
     }
@@ -1923,7 +1923,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
             continue;
         }
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced))
+        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !allowInterlaced)
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM shouldn't choose an interlaced mode");
             continue;

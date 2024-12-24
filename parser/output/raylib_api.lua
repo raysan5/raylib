@@ -2543,6 +2543,11 @@ return {
           name = "SHADER_LOC_BONE_MATRICES",
           value = 28,
           description = "Shader location: array of matrices uniform: boneMatrices"
+        },
+        {
+          name = "SHADER_LOC_VERTEX_INSTANCE_TX",
+          value = 29,
+          description = "Shader location: vertex attribute: instanceTransform"
         }
       }
     },
@@ -2591,8 +2596,28 @@ return {
           description = "Shader uniform type: ivec4 (4 int)"
         },
         {
-          name = "SHADER_UNIFORM_SAMPLER2D",
+          name = "SHADER_UNIFORM_UINT",
           value = 8,
+          description = "Shader uniform type: unsigned int"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC2",
+          value = 9,
+          description = "Shader uniform type: uivec2 (2 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC3",
+          value = 10,
+          description = "Shader uniform type: uivec3 (3 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC4",
+          value = 11,
+          description = "Shader uniform type: uivec4 (4 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_SAMPLER2D",
+          value = 12,
           description = "Shader uniform type: sampler2d"
         }
       }
@@ -4325,6 +4350,14 @@ return {
       name = "GetCharPressed",
       description = "Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty",
       returnType = "int"
+    },
+    {
+      name = "GetKeyName",
+      description = "Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)",
+      returnType = "const char *",
+      params = {
+        {type = "int", name = "key"}
+      }
     },
     {
       name = "SetExitKey",
@@ -6936,7 +6969,7 @@ return {
     },
     {
       name = "TextToInteger",
-      description = "Get integer value from text (negative values not supported)",
+      description = "Get integer value from text",
       returnType = "int",
       params = {
         {type = "const char *", name = "text"}
@@ -6944,7 +6977,7 @@ return {
     },
     {
       name = "TextToFloat",
-      description = "Get float value from text (negative values not supported)",
+      description = "Get float value from text",
       returnType = "float",
       params = {
         {type = "const char *", name = "text"}

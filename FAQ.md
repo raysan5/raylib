@@ -90,7 +90,7 @@ I personally consider raylib a graphics library with some high-level features ra
 
 ### What does raylib provide that other engines or libraries don't?
 
-I would say "simplicity" and "enjoyment" at a really low level of coding but actually is up to the user to discover it, to try it and to see if it fits their needs. raylib is not good for everyone but it's worth a try.
+I would say "simplicity" and "enjoyment" at a really low level of coding but actually it is up to the user to discover it, to try it and to see if it fits their needs. raylib is not good for everyone but it's worth a try.
 
 ### How does raylib compare to Unity/Unreal/Godot?
 

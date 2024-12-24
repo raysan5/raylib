@@ -23,6 +23,7 @@ endif()
 # Used as public API to be included into other projects
 set(raylib_public_headers
     raylib.h
+    rcamera.h
     rlgl.h
     raymath.h
     )
@@ -90,16 +91,7 @@ if (BUILD_SHARED_LIBS)
     set_property(TARGET raylib PROPERTY C_VISIBILITY_PRESET hidden)
 endif ()
 
-
-# If building as a static lib *AND* using internal GLFW we
-# need to set it up as a PRIVATE import so cmake doesn't complain
-# it isn't declared on an install rule
-if (INTERNAL_GLFW AND BUILD_SHARED_LIBS)
-    target_link_libraries(raylib PRIVATE glfw)
-endif()
-
-target_link_libraries(raylib PUBLIC "${LIBS_PRIVATE}")
-
+target_link_libraries(raylib "${LIBS_PRIVATE}")
 
 # Sets some compile time definitions for the pre-processor
 # If CUSTOMIZE_BUILD option is on you will not use config.h by default

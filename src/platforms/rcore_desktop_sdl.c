@@ -23,7 +23,7 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - SDL 2 or SLD 3 (main library): Windowing and inputs management
+*       - SDL 2 or SDL 3 (main library): Windowing and inputs management
 *       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
@@ -68,7 +68,7 @@
     #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
 #endif
 
-#if ((defined(SDL_MAJOR_VERSION) && SDL_MAJOR_VERSION == 3) && (defined(SDL_MINOR_VERSION) && SDL_MINOR_VERSION >= 1))
+#if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
     #ifndef PLATFORM_DESKTOP_SDL3
         #define PLATFORM_DESKTOP_SDL3
     #endif
@@ -405,7 +405,7 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 
 // Since SDL2 doesn't have this function we leave a stub
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
-void* SDL_GetClipboardData(const char *mime_type, size_t *size)
+void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
     TRACELOG(LOG_WARNING, "Getting clipboard data that is not text is only available in SDL3");
 
@@ -497,20 +497,21 @@ void ToggleBorderlessWindowed(void)
 void MaximizeWindow(void)
 {
     SDL_MaximizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
     SDL_MinimizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
 }
 
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    SDL_ShowWindow(platform.window);
+    SDL_RestoreWindow(platform.window);
+    // CORE.Window.flags will be removed on PollInputEvents()
 }
 
 // Set window configuration state using flags
@@ -1426,7 +1427,7 @@ void PollInputEvents(void)
 
             // Window events are also polled (Minimized, maximized, close...)
 
-        #ifndef PLATFORM_DESKTOP_SDL3
+            #ifndef PLATFORM_DESKTOP_SDL3
             // SDL3 states:
             //     The SDL_WINDOWEVENT_* events have been moved to top level events,
             //     and SDL_WINDOWEVENT has been removed.
@@ -1436,7 +1437,7 @@ void PollInputEvents(void)
             {
                 switch (event.window.event)
                 {
-        #endif
+            #endif
                     case SDL_WINDOWEVENT_RESIZED:
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                     {
@@ -1448,7 +1449,24 @@ void PollInputEvents(void)
                         CORE.Window.currentFbo.width = width;
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;
+
+                        #ifndef PLATFORM_DESKTOP_SDL3
+                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
+                        if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0)
+                        {
+                            int borderTop = 0;
+                            int borderLeft = 0;
+                            int borderBottom = 0;
+                            int borderRight = 0;
+                            SDL_GetWindowBordersSize(platform.window, &borderTop, &borderLeft, &borderBottom, &borderRight);
+                            SDL_Rect usableBounds;
+                            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(platform.window), &usableBounds);
+
+                            if ((width + borderLeft + borderRight != usableBounds.w) && (height + borderTop + borderBottom != usableBounds.h)) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+                        }
+                        #endif
                     } break;
+
                     case SDL_WINDOWEVENT_ENTER:
                     {
                         CORE.Input.Mouse.cursorOnScreen = true;
@@ -1457,16 +1475,49 @@ void PollInputEvents(void)
                     {
                         CORE.Input.Mouse.cursorOnScreen = false;
                     } break;
-                    case SDL_WINDOWEVENT_HIDDEN:
+
                     case SDL_WINDOWEVENT_MINIMIZED:
-                    case SDL_WINDOWEVENT_FOCUS_LOST:
-                    case SDL_WINDOWEVENT_SHOWN:
-                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+                    } break;
                     case SDL_WINDOWEVENT_MAXIMIZED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+                    } break;
                     case SDL_WINDOWEVENT_RESTORED:
-            #if defined(PLATFORM_DESKTOP_SDL3)
-                        break;
-            #else
+                    {
+                        if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MINIMIZED) == 0)
+                        {
+                            if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+                        }
+
+                        #ifdef PLATFORM_DESKTOP_SDL3
+                        if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MAXIMIZED) == 0)
+                        {
+                            if ((CORE.Window.flags & SDL_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~SDL_WINDOW_MAXIMIZED;
+                        }
+                        #endif
+                    } break;
+
+                    case SDL_WINDOWEVENT_HIDDEN:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) == 0) CORE.Window.flags |= FLAG_WINDOW_HIDDEN;
+                    } break;
+                    case SDL_WINDOWEVENT_SHOWN:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;
+                    } break;
+
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
+                    } break;
+                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+                    } break;
+
+            #ifndef PLATFORM_DESKTOP_SDL3
                     default: break;
                 }
             } break;
@@ -1971,7 +2022,7 @@ void ClosePlatform(void)
 // Scancode to keycode mapping
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {
-    if (sdlScancode >= 0 && sdlScancode < SCANCODE_MAPPED_NUM)
+    if ((sdlScancode >= 0) && (sdlScancode < SCANCODE_MAPPED_NUM))
     {
         return mapScancodeToKey[sdlScancode];
     }

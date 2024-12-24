@@ -129,6 +129,7 @@ static bool RGFW_disableCursor = false;
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
     [RGFW_Return] = KEY_ENTER,
+    [RGFW_Return] = KEY_ENTER,
     [RGFW_Apostrophe] = KEY_APOSTROPHE,
     [RGFW_Comma] = KEY_COMMA,
     [RGFW_Minus] = KEY_MINUS,
@@ -168,7 +169,6 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_SuperL] = KEY_LEFT_SUPER,
     #ifndef RGFW_MACOS
     [RGFW_ShiftR] = KEY_RIGHT_SHIFT,
-
     [RGFW_AltR] = KEY_RIGHT_ALT,
     #endif
     [RGFW_Space] = KEY_SPACE,
@@ -496,7 +496,7 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    RGFW_window_setName(platform.window, (char*)title);
+    RGFW_window_setName(platform.window, (char *)title);
     CORE.Window.title = title;
 }
 
@@ -553,9 +553,9 @@ void SetWindowFocused(void)
 void *GetWindowHandle(void)
 {
 #ifdef RGFW_WEBASM
-    return (void*)platform.window->src.ctx;
+    return (void *)platform.window->src.ctx;
 #else
-    return (void*)platform.window->src.window;
+    return (void *)platform.window->src.window;
 #endif
 }
 
@@ -598,7 +598,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return (Vector2){(float)mons[monitor].rect.x, (float)mons[monitor].rect.y};
+    return (Vector2){ (float)mons[monitor].rect.x, (float)mons[monitor].rect.y };
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -620,7 +620,7 @@ int GetMonitorHeight(int monitor)
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    RGFW_monitor* mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors();
 
     return mons[monitor].physW;
 }
@@ -665,7 +665,7 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    RGFW_writeClipboard(text, (u32)strlen(text));
+    RGFW_writeClipboard(text, strlen(text));
 }
 
 // Get clipboard text content
@@ -685,19 +685,25 @@ const char *GetClipboardText(void)
 #   define WINGDI_ALREADY_INCLUDED
 #   include "../external/win32_clipboard.h"
 #endif
+#endif
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
-    Image image = {0};
+    Image image = { 0 };
     unsigned long long int dataSize = 0;
-    void* fileData = NULL;
+    void *fileData = NULL;
 
-#ifdef _WIN32
-    int width, height;
-    fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if defined(_WIN32)
+    int width = 0;
+    int height = 0;
+    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    
+    if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
+    else image = LoadImageFromMemory(".bmp", fileData, dataSize);
 #else
-    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement `GetClipboardImage` for this OS");
+    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
 #endif
 
     if (fileData == NULL)
@@ -742,9 +748,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     RGFW_disableCursor = true;
-
     RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
-
     HideCursor();
 }
 
@@ -792,6 +796,12 @@ int SetGamepadMappings(const char *mappings)
 {
     TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on target platform");
     return 0;
+}
+
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
+{
+    TRACELOG(LOG_WARNING, "SetGamepadVibration() not available on target platform");
 }
 
 // Set mouse position XY
@@ -857,7 +867,6 @@ void PollInputEvents(void)
     // Register previous mouse position
 
     // Reset last gamepad button/axis registered state
-
     for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
     {
         // Check if gamepad is available
@@ -1164,34 +1173,19 @@ int InitPlatform(void)
 
     if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_NO_BORDER;
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_NO_RESIZE;
-
     if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_TRANSPARENT_WINDOW;
-
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_FULLSCREEN;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
     // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_21)
-    {
-        RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
-    }
-    else if (rlGetVersion() == RL_OPENGL_33)
-    {
-        RGFW_setGLVersion(RGFW_GL_CORE, 3, 3);
-    }
-    else if (rlGetVersion() == RL_OPENGL_43)
-    {
-        RGFW_setGLVersion(RGFW_GL_CORE, 4, 1);
-    }
+    if (rlGetVersion() == RL_OPENGL_21) RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
+    else if (rlGetVersion() == RL_OPENGL_33) RGFW_setGLVersion(RGFW_GL_CORE, 3, 3);
+    else if (rlGetVersion() == RL_OPENGL_43) RGFW_setGLVersion(RGFW_GL_CORE, 4, 1);
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-    {
-        RGFW_setGLSamples(4);
-    }
+    if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLSamples(4);
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
-
 
 #ifndef PLATFORM_WEB_RGFW
     RGFW_area screenSize = RGFW_getScreenSize();
@@ -1201,10 +1195,8 @@ int InitPlatform(void)
 	CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
 #endif
-	/* 
-        I think this is needed by Raylib now ? 
-        If so, rcore_destkop_sdl should be updated too
-    */
+	// TODO: Is this needed by raylib now? 
+    // If so, rcore_desktop_sdl should be updated too
 	//SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 	
 	if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
@@ -1244,7 +1236,7 @@ int InitPlatform(void)
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     //----------------------------------------------------------------------------
-    rlLoadExtensions((void*)RGFW_getProcAddress);
+    rlLoadExtensions((void *)RGFW_getProcAddress);
     //----------------------------------------------------------------------------
 
     // TODO: Initialize input events system

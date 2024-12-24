@@ -1,11 +1,11 @@
 #version 100
 
 // Input vertex attributes
-attribute  vec3 vertexPosition;
-attribute  vec2 vertexTexCoord;
-attribute  vec3 vertexNormal;
-attribute  vec3 vertexTangent;
-attribute  vec4 vertexColor;
+attribute vec3 vertexPosition;
+attribute vec2 vertexTexCoord;
+attribute vec3 vertexNormal;
+attribute vec3 vertexTangent;
+attribute vec4 vertexColor;
 
 // Input uniform values
 uniform mat4 mvp;
