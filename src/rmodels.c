@@ -2286,6 +2286,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
             }
         }
 
+
         // Update all bones and boneMatrices of first mesh with bones.
         for (int boneId = 0; boneId < anim.boneCount; boneId++)
         {
@@ -2350,6 +2351,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         bool updated = false; // Flag to check when anim vertex information is updated
         const int vValues = mesh.vertexCount*3;
 
+        if ((mesh.boneWeights==NULL) || (mesh.boneIds==NULL)) continue; //  skip if missing bone data, causes segfault without on some models
+
         for (int vCounter = 0; vCounter < vValues; vCounter += 3)
         {
             mesh.animVertices[vCounter] = 0;
@@ -2378,7 +2381,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
                 // Normals processing
                 // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                if (mesh.normals != NULL)
+                if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
                     animNormal = Vector3Transform(animNormal,model.meshes[m].boneMatrices[boneId]);
@@ -2392,7 +2395,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         if (updated)
         {
             rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
-            rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
+            if (mesh.normals != NULL)
+                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
         }
     }
 }
