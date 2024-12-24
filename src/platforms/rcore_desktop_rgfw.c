@@ -674,7 +674,6 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
-
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
 #if defined(_WIN32)
     #define WIN32_CLIPBOARD_IMPLEMENTATION
@@ -689,19 +688,18 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-    unsigned long long int dataSize = 0;
-    void *fileData = NULL;
 
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if SUPPORT_CLIPBOARD_IMAGE
 #if defined(_WIN32)
     int width = 0;
     int height = 0;
-    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    unsigned long long int dataSize = 0;
+    void *fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
     
-    if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
+    if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", fileData, dataSize);
 #else
-    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
+    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW does not implement `GetClipboardImage()` for this OS");
 #endif
 #endif // SUPPORT_CLIPBOARD_IMAGE
 
@@ -893,7 +891,7 @@ int RGFW_gpConvTable[18] = {
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
@@ -1164,7 +1162,7 @@ void PollInputEvents(void)
             default: break;
         }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
         if (touchAction > -1)
         {
             // Process mouse events as touches to be able to use mouse-gestures
