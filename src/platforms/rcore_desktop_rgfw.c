@@ -1014,7 +1014,7 @@ void PollInputEvents(void)
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
-                }
+                } else CORE.Input.Mouse.currentWheelMove.y = 0;
 
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
@@ -1032,7 +1032,7 @@ void PollInputEvents(void)
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
-                }
+                } else CORE.Input.Mouse.currentWheelMove.y = 0;
 
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
