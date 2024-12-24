@@ -23,7 +23,7 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - SDL 2 or SLD 3 (main library): Windowing and inputs management
+*       - SDL 2 or SDL 3 (main library): Windowing and inputs management
 *       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
