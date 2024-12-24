@@ -4204,7 +4204,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             ImageFormat(&faces, image.format);
 
             Image mipmapped = ImageCopy(image);
-        #if defined(SUPPORT_IMAGE_MANIPULATION)
+        #if SUPPORT_IMAGE_MANIPULATION 
             ImageMipmaps(&mipmapped);
             ImageMipmaps(&faces);
         #endif
