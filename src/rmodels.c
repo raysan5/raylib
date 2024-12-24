@@ -2277,7 +2277,6 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
         {
             if (model.meshes[i].boneMatrices)
             {
-                assert(model.meshes[i].boneCount == anim.boneCount);
                 if (firstMeshWithBones == -1)
                 {
                     firstMeshWithBones = i;
@@ -2285,7 +2284,6 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
                 }
             }
         }
-
 
         // Update all bones and boneMatrices of first mesh with bones.
         for (int boneId = 0; boneId < anim.boneCount; boneId++)
@@ -2351,7 +2349,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         bool updated = false; // Flag to check when anim vertex information is updated
         const int vValues = mesh.vertexCount*3;
 
-        if ((mesh.boneWeights==NULL) || (mesh.boneIds==NULL)) continue; //  skip if missing bone data, causes segfault without on some models
+        // Skip if missing bone data, causes segfault without on some models
+        if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
 
         for (int vCounter = 0; vCounter < vValues; vCounter += 3)
         {
@@ -2364,7 +2363,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 mesh.animNormals[vCounter + 1] = 0;
                 mesh.animNormals[vCounter + 2] = 0;
             }
-                // Iterates over 4 bones per vertex
+
+            // Iterates over 4 bones per vertex
             for (int j = 0; j < 4; j++, boneCounter++)
             {
                 boneWeight = mesh.boneWeights[boneCounter];
@@ -2395,8 +2395,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         if (updated)
         {
             rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
-            if (mesh.normals != NULL)
-                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
+            if (mesh.normals != NULL) rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0); // Update vertex normals
         }
     }
 }
