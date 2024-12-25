@@ -129,7 +129,8 @@ static bool RGFW_disableCursor = false;
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_KEY_NULL] = KEY_NULL,
     [RGFW_Return] = KEY_ENTER,
-    [RGFW_Quote] = KEY_APOSTROPHE,
+    [RGFW_Return] = KEY_ENTER,
+    [RGFW_Apostrophe] = KEY_APOSTROPHE,
     [RGFW_Comma] = KEY_COMMA,
     [RGFW_Minus] = KEY_MINUS,
     [RGFW_Period] = KEY_PERIOD,
@@ -817,59 +818,6 @@ const char *GetKeyName(int key)
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
-// TODO: Review function to avoid duplicate with RSGL
-char RSGL_keystrToChar(const char *str)
-{
-    if (str[1] == 0) return str[0];
-
-    static const char *map[] = {
-        "asciitilde", "`",
-        "grave", "~",
-        "exclam", "!",
-        "at", "@",
-        "numbersign", "#",
-        "dollar", "$",
-        "percent", "%%",
-        "asciicircum", "^",
-        "ampersand", "&",
-        "asterisk", "*",
-        "parenleft", "(",
-        "parenright", ")",
-        "underscore", "_",
-        "minus", "-",
-        "plus", "+",
-        "equal", "=",
-        "braceleft", "{",
-        "bracketleft", "[",
-        "bracketright", "]",
-        "braceright", "}",
-        "colon", ":",
-        "semicolon", ";",
-        "quotedbl", "\"",
-        "apostrophe", "'",
-        "bar", "|",
-        "backslash", "\'",
-        "less", "<",
-        "comma", ",",
-        "greater", ">",
-        "period", ".",
-        "question", "?",
-        "slash", "/",
-        "space", " ",
-        "Return", "\n",
-        "Enter", "\n",
-        "enter", "\n",
-    };
-
-    for (unsigned char i = 0; i < (sizeof(map)/sizeof(char *)); i += 2)
-    {
-        if (strcmp(map[i], str) == 0) return *map[i + 1];
-    }
-
-    return '\0';
-}
-
-// Gamepad buttons conversion table
 int RGFW_gpConvTable[18] = {
 	[RGFW_GP_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
 	[RGFW_GP_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
@@ -1025,7 +973,7 @@ void PollInputEvents(void)
             // Keyboard events
             case RGFW_keyPressed:
             {
-                KeyboardKey key = ConvertScancodeToKey(event->keyCode);
+                KeyboardKey key = ConvertScancodeToKey(event->key);
                 if (key != KEY_NULL)
                 {
                     // If key was up, add it to the key pressed queue
@@ -1049,13 +997,13 @@ void PollInputEvents(void)
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
                     // Add character (codepoint) to the queue
-                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RSGL_keystrToChar(event->keyName);
+                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = event->keyChar;
                     CORE.Input.Keyboard.charPressedQueueCount++;
                 }
             } break;
             case RGFW_keyReleased:
             {
-                KeyboardKey key = ConvertScancodeToKey(event->keyCode);
+                KeyboardKey key = ConvertScancodeToKey(event->key);
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
             } break;
 
@@ -1066,7 +1014,7 @@ void PollInputEvents(void)
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
-                }
+                } else CORE.Input.Mouse.currentWheelMove.y = 0;
 
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
@@ -1084,7 +1032,7 @@ void PollInputEvents(void)
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
-                }
+                } else CORE.Input.Mouse.currentWheelMove.y = 0;
 
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
@@ -1303,7 +1251,7 @@ int InitPlatform(void)
 #ifdef RGFW_X11
     for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
     {
-        RGFW_registergamepad(platform.window, i);
+        RGFW_registerGamepad(platform.window, i);
     }
 #endif
 
