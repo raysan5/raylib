@@ -571,7 +571,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+        CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
@@ -658,7 +658,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+        CORE.Window.flags &= ~FLAG_WINDOW_ALWAYS_RUN;
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
@@ -1378,6 +1378,8 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
+    if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0)) SDL_WaitEvent(NULL);
+
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)
     {
@@ -1497,6 +1499,8 @@ void PollInputEvents(void)
                             if ((CORE.Window.flags & SDL_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~SDL_WINDOW_MAXIMIZED;
                         }
                         #endif
+
+                        if ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0) CORE.Time.previous = GetTime();
                     } break;
 
                     case SDL_WINDOWEVENT_HIDDEN:
