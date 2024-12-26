@@ -133,6 +133,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
 // static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
 
 // Emscripten input callback events
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
@@ -1369,6 +1370,10 @@ int InitPlatform(void)
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+
+    // Support focus events
+    emscripten_set_blur_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1730,6 +1735,18 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
     return 1; // The event was consumed by the callback handler
+}
+
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData)
+{
+    EM_BOOL consumed = 1;
+    switch (eventType)
+    {
+        case EMSCRIPTEN_EVENT_BLUR: WindowFocusCallback(userData, 0); break;
+        case EMSCRIPTEN_EVENT_FOCUS: WindowFocusCallback(userData, 1); break;
+        default: consumed = 0; break;
+    }
+    return consumed;
 }
 
 // Register touch input events
