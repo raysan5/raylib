@@ -1378,7 +1378,8 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0)) SDL_WaitEvent(NULL);
+    if ((CORE.Window.eventWaiting) || (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0))) SDL_WaitEvent(NULL);
+    if (CORE.Window.eventWaiting) CORE.Time.previous = GetTime();
 
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)
