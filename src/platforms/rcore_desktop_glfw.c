@@ -1248,11 +1248,12 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+    if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
+    {
+        glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+        CORE.Time.previous = GetTime();
+    }
     else glfwPollEvents();      // Poll input events: keyboard/mouse/window events (callbacks) -> Update keys state
-
-    // While window minimized, stop loop execution
-    while (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)) glfwWaitEvents();
 
     CORE.Window.shouldClose = glfwWindowShouldClose(platform.handle);
 
@@ -1739,12 +1740,7 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
     if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
-    else
-    {
-        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
-
-        if ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0) CORE.Time.previous = GetTime();
-    }
+    else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
 }
 
 // GLFW3 WindowMaximize Callback, runs when window is maximized/restored
