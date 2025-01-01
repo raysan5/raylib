@@ -1782,6 +1782,20 @@ void SetRandomSeed(unsigned int seed)
 }
 
 // Get a random value between min and max included
+float GetRandomFloat(float min, float max)
+{
+    if (min > max)
+    {
+        float tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    int r = GetRandomValue(0, RAND_MAX);
+    return r * (max - min) / RAND_MAX + min;
+}
+
+// Get a random value between min and max included
 int GetRandomValue(int min, int max)
 {
     int value = 0;

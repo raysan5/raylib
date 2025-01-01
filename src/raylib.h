@@ -1092,6 +1092,7 @@ RLAPI void WaitTime(double seconds);                              // Wait for so
 // Random values generation functions
 RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator
 RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
+RLAPI float GetRandomFloat(float min, float max);                 // Get a random value between min and max (both included)
 RLAPI int *LoadRandomSequence(unsigned int count, int min, int max); // Load random values sequence, no values repeated
 RLAPI void UnloadRandomSequence(int *sequence);                   // Unload random values sequence
 
