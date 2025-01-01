@@ -124,7 +124,21 @@ endif ()
 # The rlgl_standalone example only targets desktop, without shared libraries.
 if (BUILD_SHARED_LIBS OR NOT ${PLATFORM} MATCHES "Desktop")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+endif()
 
+# The audio examples fail to link if raylib is built without raudio
+if (NOT SUPPORT_MODULE_RAUDIO)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_mixed_processor.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_module_playing.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_music_stream.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_raw_stream.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_sound_loading.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_sound_multi.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_stream_effects.c)
+
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/embedded_files_loading.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/textures/textures_sprite_button.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/textures/textures_sprite_explosion.c)
 endif()
 
 include_directories(BEFORE SYSTEM others/external/include)
