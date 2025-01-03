@@ -123,17 +123,17 @@
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"                // Vector2, Vector3, Quaternion and Matrix functionality
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     #define RGESTURES_IMPLEMENTATION
     #include "rgestures.h"          // Gestures detection functionality
 #endif
 
-#if defined(SUPPORT_CAMERA_SYSTEM)
+#if SUPPORT_CAMERA_SYSTEM
     #define RCAMERA_IMPLEMENTATION
     #include "rcamera.h"            // Camera system functionality
 #endif
 
-#if defined(SUPPORT_GIF_RECORDING)
+#if SUPPORT_GIF_RECORDING
     #define MSF_GIF_MALLOC(contextPointer, newSize) RL_MALLOC(newSize)
     #define MSF_GIF_REALLOC(contextPointer, oldMemory, oldSize, newSize) RL_REALLOC(oldMemory, newSize)
     #define MSF_GIF_FREE(contextPointer, oldMemory, oldSize) RL_FREE(oldMemory)
@@ -142,7 +142,7 @@
     #include "external/msf_gif.h"   // GIF recording functionality
 #endif
 
-#if defined(SUPPORT_COMPRESSION_API)
+#if SUPPORT_COMPRESSION_API
     #define SINFL_IMPLEMENTATION
     #define SINFL_NO_SIMD
     #include "external/sinfl.h"     // Deflate (RFC 1951) decompressor
@@ -151,7 +151,7 @@
     #include "external/sdefl.h"     // Deflate (RFC 1951) compressor
 #endif
 
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     #define RPRAND_IMPLEMENTATION
     #include "external/rprand.h"
 #endif
@@ -384,17 +384,17 @@ CoreData CORE = { 0 };                      // Global CORE state context
 // NOTE: Useful to allow Texture, RenderTexture, Font.texture, Mesh.vaoId/vboId, Shader loading
 bool isGpuReady = false;
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#if SUPPORT_SCREEN_CAPTURE
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
-#if defined(SUPPORT_GIF_RECORDING)
+#if SUPPORT_GIF_RECORDING
 static unsigned int gifFrameCounter = 0;    // GIF frames counter
 static bool gifRecording = false;           // GIF recording state
 static MsfGifState gifState = { 0 };        // MSGIF context state
 #endif
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
 // Automation events type
 typedef enum AutomationEventType {
     EVENT_NONE = 0,
@@ -487,7 +487,7 @@ static bool automationEventRecording = false;               // Recording automat
 // NOTE: Those functions are common for all platforms!
 //----------------------------------------------------------------------------------
 
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_MODULE_RTEXT && SUPPORT_DEFAULT_FONT
 extern void LoadFontDefault(void);      // [Module: text] Loads default font on InitWindow()
 extern void UnloadFontDefault(void);    // [Module: text] Unloads default font from GPU memory
 #endif
@@ -502,7 +502,7 @@ static void SetupViewport(int width, int height);           // Set viewport for 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
 #endif
 
@@ -511,7 +511,7 @@ static void RecordAutomationEvent(void); // Record frame events (to internal eve
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
 
-#if !defined(SUPPORT_MODULE_RTEXT)
+#if !SUPPORT_MODULE_RTEXT
 const char *TextFormat(const char *text, ...);              // Formatting of text with variables to 'embed'
 #endif // !SUPPORT_MODULE_RTEXT
 
@@ -520,18 +520,18 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
 #endif
 
 // We're using `#pragma message` because `#warning` is not adopted by MSVC.
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
-    #if !defined(SUPPORT_MODULE_RTEXTURES)
+#if SUPPORT_CLIPBOARD_IMAGE
+    #if !SUPPORT_MODULE_RTEXTURES
         #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
     #endif
 
     // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
-    #if !defined(SUPPORT_FILEFORMAT_BMP) && defined(_WIN32)
+    #if !SUPPORT_FILEFORMAT_BMP && defined(_WIN32)
         #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
     #endif
 
     // From what I've tested applications on Wayland saves images on clipboard as PNG.
-    #if (!defined(SUPPORT_FILEFORMAT_PNG) || !defined(SUPPORT_FILEFORMAT_JPG)) && !defined(_WIN32)
+    #if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
         #pragma message ("Warning: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
     #endif
 
@@ -635,27 +635,27 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Supported raylib modules:");
     TRACELOG(LOG_INFO, "    > rcore:..... loaded (mandatory)");
     TRACELOG(LOG_INFO, "    > rlgl:...... loaded (mandatory)");
-#if defined(SUPPORT_MODULE_RSHAPES)
+#if SUPPORT_MODULE_RSHAPES
     TRACELOG(LOG_INFO, "    > rshapes:... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rshapes:... not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RTEXTURES)
+#if SUPPORT_MODULE_RTEXTURES
     TRACELOG(LOG_INFO, "    > rtextures:. loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rtextures:. not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
     TRACELOG(LOG_INFO, "    > rtext:..... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rtext:..... not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RMODELS)
+#if SUPPORT_MODULE_RMODELS
     TRACELOG(LOG_INFO, "    > rmodels:... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rmodels:... not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RAUDIO)
+#if SUPPORT_MODULE_RAUDIO
     TRACELOG(LOG_INFO, "    > raudio:.... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
@@ -688,12 +688,12 @@ void InitWindow(int width, int height, const char *title)
     // Setup default viewport
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-#if defined(SUPPORT_MODULE_RTEXT)
-    #if defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_MODULE_RTEXT
+    #if SUPPORT_DEFAULT_FONT
         // Load default font
         // WARNING: External function: Module required: rtext
         LoadFontDefault();
-        #if defined(SUPPORT_MODULE_RSHAPES)
+        #if SUPPORT_MODULE_RSHAPES
         // Set font white rectangle for shapes drawing, so shapes and text can be batched together
         // WARNING: rshapes module is required, if not available, default internal white rectangle is used
         Rectangle rec = GetFontDefault().recs[95];
@@ -710,7 +710,7 @@ void InitWindow(int width, int height, const char *title)
         #endif
     #endif
 #else
-    #if defined(SUPPORT_MODULE_RSHAPES)
+    #if SUPPORT_MODULE_RSHAPES
     // Set default texture and rectangle to be used for shapes drawing
     // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
     Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
@@ -730,7 +730,7 @@ void InitWindow(int width, int height, const char *title)
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
-#if defined(SUPPORT_GIF_RECORDING)
+#if SUPPORT_GIF_RECORDING
     if (gifRecording)
     {
         MsfGifResult result = msf_gif_end(&gifState);
@@ -739,7 +739,7 @@ void CloseWindow(void)
     }
 #endif
 
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_MODULE_RTEXT && SUPPORT_DEFAULT_FONT
     UnloadFontDefault();        // WARNING: Module required: rtext
 #endif
 
@@ -897,7 +897,7 @@ void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-#if defined(SUPPORT_GIF_RECORDING)
+#if SUPPORT_GIF_RECORDING
     // Draw record indicator
     if (gifRecording)
     {
@@ -925,7 +925,7 @@ void EndDrawing(void)
             RL_FREE(screenData);    // Free image data
         }
 
-    #if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MODULE_RTEXT)
+    #if SUPPORT_MODULE_RSHAPES && SUPPORT_MODULE_RTEXT
         // Display the recording indicator every half-second
         if ((int)(GetTime()/0.5)%2 == 1)
         {
@@ -938,11 +938,11 @@ void EndDrawing(void)
     }
 #endif
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     if (automationEventRecording) RecordAutomationEvent();    // Event recording
 #endif
 
-#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+#if !SUPPORT_CUSTOM_FRAME_CONTROL
     SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
 
     // Frame time control system
@@ -967,10 +967,10 @@ void EndDrawing(void)
     PollInputEvents();      // Poll user events (before next frame update)
 #endif
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#if SUPPORT_SCREEN_CAPTURE
     if (IsKeyPressed(KEY_F12))
     {
-#if defined(SUPPORT_GIF_RECORDING)
+#if SUPPORT_GIF_RECORDING
         if (IsKeyDown(KEY_LEFT_CONTROL))
         {
             if (gifRecording)
@@ -1667,7 +1667,7 @@ int GetFPS(void)
 {
     int fps = 0;
 
-#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+#if !SUPPORT_CUSTOM_FRAME_CONTROL
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
     #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 milliseconds
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
@@ -1727,14 +1727,14 @@ void WaitTime(double seconds)
 {
     if (seconds < 0) return;    // Security check
 
-#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+#if SUPPORT_BUSY_WAIT_LOOP || SUPPORT_PARTIALBUSY_WAIT_LOOP
     double destinationTime = GetTime() + seconds;
 #endif
 
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
+#if SUPPORT_BUSY_WAIT_LOOP
     while (GetTime() < destinationTime) { }
 #else
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+    #if SUPPORT_PARTIALBUSY_WAIT_LOOP
         double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
     #else
         double sleepSeconds = seconds;
@@ -1758,7 +1758,7 @@ void WaitTime(double seconds)
         usleep(sleepSeconds*1000000.0);
     #endif
 
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+    #if SUPPORT_PARTIALBUSY_WAIT_LOOP
         while (GetTime() < destinationTime) { }
     #endif
 #endif
@@ -1774,7 +1774,7 @@ void WaitTime(double seconds)
 // Set the seed for the random number generator
 void SetRandomSeed(unsigned int seed)
 {
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     rprand_set_seed(seed);
 #else
     srand(seed);
@@ -1793,7 +1793,7 @@ int GetRandomValue(int min, int max)
         min = tmp;
     }
 
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     value = rprand_get_value(min, max);
 #else
     // WARNING: Ranges higher than RAND_MAX will return invalid results
@@ -1815,7 +1815,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 {
     int *values = NULL;
 
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     values = rprand_load_sequence(count, min, max);
 #else
     if (count > ((unsigned int)abs(max - min) + 1)) return values;  // Security check
@@ -1852,7 +1852,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 // Unload random values sequence
 void UnloadRandomSequence(int *sequence)
 {
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     rprand_unload_sequence(sequence);
 #else
     RL_FREE(sequence);
@@ -1863,7 +1863,7 @@ void UnloadRandomSequence(int *sequence)
 // NOTE: Provided fileName should not contain paths, saving to working directory
 void TakeScreenshot(const char *fileName)
 {
-#if defined(SUPPORT_MODULE_RTEXTURES)
+#if SUPPORT_MODULE_RTEXTURES
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
@@ -1929,7 +1929,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if (fileExt != NULL)
     {
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
+#if SUPPORT_MODULE_RTEXT && SUPPORT_TEXT_MANIPULATION
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
 
@@ -2477,7 +2477,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
 
     unsigned char *compData = NULL;
 
-#if defined(SUPPORT_COMPRESSION_API)
+#if SUPPORT_COMPRESSION_API
     // Compress data and generate a valid DEFLATE stream
     struct sdefl *sdefl = RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
     int bounds = sdefl_bound(dataSize);
@@ -2497,7 +2497,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 {
     unsigned char *data = NULL;
 
-#if defined(SUPPORT_COMPRESSION_API)
+#if SUPPORT_COMPRESSION_API
     // Decompress data from a valid DEFLATE stream
     data = (unsigned char *)RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
@@ -2890,7 +2890,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
     list.events = (AutomationEvent *)RL_CALLOC(MAX_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     list.capacity = MAX_AUTOMATION_EVENTS;
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     if (fileName == NULL) TRACELOG(LOG_INFO, "AUTOMATION: New empty events list loaded successfully");
     else
     {
@@ -2964,7 +2964,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 // Unload automation events list from file
 void UnloadAutomationEventList(AutomationEventList list)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     RL_FREE(list.events);
 #endif
 }
@@ -2974,7 +2974,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 {
     bool success = false;
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     // Export events as binary file
     // TODO: Save to memory buffer and SaveFileData()
     /*
@@ -3023,7 +3023,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 // Setup automation event list to record to
 void SetAutomationEventList(AutomationEventList *list)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     currentEventList = list;
 #endif
 }
@@ -3037,7 +3037,7 @@ void SetAutomationEventBaseFrame(int frame)
 // Start recording automation events (AutomationEventList must be set)
 void StartAutomationEventRecording(void)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     automationEventRecording = true;
 #endif
 }
@@ -3045,7 +3045,7 @@ void StartAutomationEventRecording(void)
 // Stop recording automation events
 void StopAutomationEventRecording(void)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     automationEventRecording = false;
 #endif
 }
@@ -3053,7 +3053,7 @@ void StopAutomationEventRecording(void)
 // Play a recorded automation event
 void PlayAutomationEvent(AutomationEvent event)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     // WARNING: When should event be played? After/before/replace PollInputEvents()? -> Up to the user!
 
     if (!automationEventRecording)      // TODO: Allow recording events while playing?
@@ -3102,7 +3102,7 @@ void PlayAutomationEvent(AutomationEvent event)
             {
                 CORE.Input.Gamepad.axisState[event.params[0]][event.params[1]] = ((float)event.params[2]/32768.0f);
             } break;
-    #if defined(SUPPORT_GESTURES_SYSTEM)
+    #if SUPPORT_GESTURES_SYSTEM
             case INPUT_GESTURE: GESTURES.current = event.params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
     #endif
             // Window event
@@ -3112,7 +3112,7 @@ void PlayAutomationEvent(AutomationEvent event)
             case WINDOW_RESIZE: SetWindowSize(event.params[0], event.params[1]); break;
 
             // Custom event
-    #if defined(SUPPORT_SCREEN_CAPTURE)
+    #if SUPPORT_SCREEN_CAPTURE
             case ACTION_TAKE_SCREENSHOT:
             {
                 TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
@@ -3535,7 +3535,7 @@ void InitTimer(void)
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
     // High resolutions can also prevent the CPU power management system from entering power-saving modes
     // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
+#if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
@@ -3781,7 +3781,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
 }
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
 // Automation event recording
 // NOTE: Recording is by default done at EndDrawing(), before PollInputEvents()
 static void RecordAutomationEvent(void)
@@ -4026,7 +4026,7 @@ static void RecordAutomationEvent(void)
     }
     //-------------------------------------------------------------------------------------
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // Gestures input currentEventList->events recording
     //-------------------------------------------------------------------------------------
     if (GESTURES.current != GESTURE_NONE)
@@ -4048,7 +4048,7 @@ static void RecordAutomationEvent(void)
 }
 #endif
 
-#if !defined(SUPPORT_MODULE_RTEXT)
+#if !SUPPORT_MODULE_RTEXT
 // Formatting of text with variables to 'embed'
 // WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
 const char *TextFormat(const char *text, ...)
