@@ -1,0 +1,35 @@
+name: iOS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/android.yml'
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Build Xcode15 project
+      run: |
+        cd projects/Xcode15
+        curl -L https://github.com/raysan5/raylib/files/14743869/libEGL.xcframework.zip --output libEGL.xcframework.zip
+        curl -L https://github.com/raysan5/raylib/files/14743873/libGLESv2.xcframework.zip --output libGLESv2.xcframework.zip
+        mkdir -p raylib/Frameworks
+        unzip -q libEGL.xcframework.zip -d raylib/Frameworks/libEGL.xcframework
+        unzip -q libGLESv2.xcframework.zip -d raylib/Frameworks/libGLESv2.xcframework
+        rm libEGL.xcframework.zip
+        rm libGLESv2.xcframework.zip
+        xcodebuild -project raylib.xcodeproj -scheme raylib -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14' build
+  
