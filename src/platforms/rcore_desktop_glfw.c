@@ -223,11 +223,9 @@ void ToggleBorderlessWindowed(void)
                 if (!wasOnFullscreen) CORE.Window.previousPosition = CORE.Window.position;
                 CORE.Window.previousScreen = CORE.Window.screen;
 
-                // Set undecorated and topmost modes and flags
+                // Set undecorated flag
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_FALSE);
                 CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
-                glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_TRUE);
-                CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
 
                 // Get monitor position and size
                 int monitorPosX = 0;
@@ -247,9 +245,7 @@ void ToggleBorderlessWindowed(void)
             }
             else
             {
-                // Remove topmost and undecorated modes and flags
-                glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_FALSE);
-                CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
+                // Remove undecorated flag
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
                 CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
 
