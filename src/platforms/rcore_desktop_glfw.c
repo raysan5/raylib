@@ -1017,6 +1017,9 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
+    // Reset mouse position within the window area before disabling cursor
+    SetMousePosition(CORE.Window.screen.width, CORE.Window.screen.height);
+
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set cursor position in the middle
