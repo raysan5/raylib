@@ -738,6 +738,8 @@ RLAPI void rlSetTexture(unsigned int id);               // Set current texture f
 RLAPI unsigned int rlLoadVertexArray(void);             // Load vertex array (vao) if supported
 RLAPI unsigned int rlLoadVertexBuffer(const void *buffer, int size, bool dynamic); // Load a vertex buffer object
 RLAPI unsigned int rlLoadVertexBufferElement(const void *buffer, int size, bool dynamic); // Load vertex buffer elements object
+RLAPI void rlReloadVertexBuffer(unsigned int id, const void *buffer, int size, bool dynamic); // Reload an existing vertex buffer object
+RLAPI void rlReloadVertexBufferElement(unsigned int id, const void *buffer, int size, bool dynamic); // Reload an existing vertex buffer elements object
 RLAPI void rlUpdateVertexBuffer(unsigned int bufferId, const void *data, int dataSize, int offset); // Update vertex buffer object data on GPU buffer
 RLAPI void rlUpdateVertexBufferElements(unsigned int id, const void *data, int dataSize, int offset); // Update vertex buffer elements data on GPU buffer
 RLAPI void rlUnloadVertexArray(unsigned int vaoId);     // Unload vertex array (vao)
@@ -3857,6 +3859,24 @@ unsigned int rlLoadVertexBufferElement(const void *buffer, int size, bool dynami
 #endif
 
     return id;
+}
+
+// Reload an existing vertex buffer object
+void rlReloadVertexBuffer(unsigned int id, const void *buffer, int size, bool dynamic)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBindBuffer(GL_ARRAY_BUFFER, id);
+    glBufferData(GL_ARRAY_BUFFER, size, buffer, dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+#endif
+}
+
+// Reload an existing vertex buffer elements object
+void rlReloadVertexBufferElement(unsigned int id, const void *buffer, int size, bool dynamic)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, buffer, dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+#endif
 }
 
 // Enable vertex buffer (VBO)
