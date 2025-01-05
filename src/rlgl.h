@@ -10,7 +10,7 @@
 *       When choosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
 *       initialized on rlglInit() to accumulate vertex data
 *
-*       When an internal state change is required all the stored vertex data is renderer in batch,
+*       When an internal state change is required all the stored vertex data is rendered in batch,
 *       additionally, rlDrawRenderBatchActive() could be called to force flushing of the batch
 *
 *       Some resources are also loaded for convenience, here the complete list:
