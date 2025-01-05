@@ -63,7 +63,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         // If anyone moves this frame, how far will they move based on the time since the last frame
-        // this moves thigns at 10 world units per second, regardless of the actual FPS
+        // this moves things at 10 world units per second, regardless of the actual FPS
         float offsetThisFrame = 10.0f*GetFrameTime();
 
         // Move Player1 forward and backwards (no turning)
