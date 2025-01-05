@@ -1812,7 +1812,23 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 
     if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
     {
-        CORE.Input.Touch.pointCount--;
+        // Identify the EMSCRIPTEN_EVENT_TOUCHEND and remove it from the list
+        for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+        {
+            if (touchEvent->touches[i].isChanged)
+            {
+                // Move all touch points one position up
+                for (int j = i; j < CORE.Input.Touch.pointCount - 1; j++)
+                {
+                    CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[j + 1];
+                    CORE.Input.Touch.position[j] = CORE.Input.Touch.position[j + 1];
+                }
+                // Decrease touch points count to remove the last one
+                CORE.Input.Touch.pointCount--;
+                break;
+            }
+        }
+        // Clamp pointCount to avoid negative values
         if (CORE.Input.Touch.pointCount < 0) CORE.Input.Touch.pointCount = 0;
     }
 
