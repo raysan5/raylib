@@ -1654,6 +1654,14 @@ int InitPlatform(void)
     {
         if (glfwJoystickPresent(i)) strcpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i));
     }
+
+    // Initialize mouse positions:
+    const double xpos, ypos;
+    glfwGetCursorPos(platform.handle, &xpos, &ypos);
+    CORE.Input.Mouse.previousPosition.x = (float)xpos;
+    CORE.Input.Mouse.previousPosition.y = (float)ypos;
+    CORE.Input.Mouse.currentPosition.x = (float)xpos;
+    CORE.Input.Mouse.currentPosition.y = (float)ypos;
     //----------------------------------------------------------------------------
 
     // Initialize timming system
