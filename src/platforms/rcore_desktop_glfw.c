@@ -1656,7 +1656,7 @@ int InitPlatform(void)
     }
 
     // Initialize mouse positions:
-    const double xpos, ypos;
+    double xpos, ypos;
     glfwGetCursorPos(platform.handle, &xpos, &ypos);
     CORE.Input.Mouse.previousPosition.x = (float)xpos;
     CORE.Input.Mouse.previousPosition.y = (float)ypos;
