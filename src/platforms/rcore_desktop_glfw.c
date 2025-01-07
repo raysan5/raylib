@@ -1873,6 +1873,13 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     CORE.Input.Mouse.currentPosition.y = (float)y;
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
+    static bool firstMouseInput = true;
+    if (firstMouseInput)
+    {
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+        firstMouseInput = false;
+    }
+
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
