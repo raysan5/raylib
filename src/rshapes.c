@@ -1141,8 +1141,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     }
 
     float stepLength = 90.0f/(float)segments;
-    const float outerRadius = radius + lineThick - 0.5f;
-    const float innerRadius = radius - 0.5f;
+    const float outerRadius = radius + lineThick, innerRadius = radius;
 
     /*
     Quick sketch to make sense of all of this,
