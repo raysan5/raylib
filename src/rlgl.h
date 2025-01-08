@@ -3666,28 +3666,36 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
 {
-    unsigned char *screenData = (unsigned char *)RL_CALLOC(width*height*4, sizeof(unsigned char));
+    unsigned char *imgData = (unsigned char *)RL_CALLOC(width*height*4, sizeof(unsigned char));
 
     // NOTE 1: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     // NOTE 2: We are getting alpha channel! Be careful, it can be transparent if not cleared properly!
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
 
     // Flip image vertically!
-    unsigned char *imgData = (unsigned char *)RL_MALLOC(width*height*4*sizeof(unsigned char));
-
-    for (int y = height - 1; y >= 0; y--)
+    // NOTE: Alpha value has already been applied to RGB in framebuffer, we don't need it!
+    for (int y = height - 1; y >= height / 2; y--)
     {
-        for (int x = 0; x < (width*4); x++)
+        for (int x = 0; x < (width*4); x += 4)
         {
-            imgData[((height - 1) - y)*width*4 + x] = screenData[(y*width*4) + x];  // Flip line
+            size_t s = ((height - 1) - y)*width*4 + x;
+            size_t e = y*width*4 + x;
 
-            // Set alpha component value to 255 (no trasparent image retrieval)
-            // NOTE: Alpha value has already been applied to RGB in framebuffer, we don't need it!
-            if (((x + 1)%4) == 0) imgData[((height - 1) - y)*width*4 + x] = 255;
+            unsigned char r = imgData[s];
+            unsigned char g = imgData[s+1];
+            unsigned char b = imgData[s+2];
+
+            imgData[s] = imgData[e];
+            imgData[s+1] = imgData[e+1];
+            imgData[s+2] = imgData[e+2];
+            imgData[s+3] = 255; // Set alpha component value to 255 (no trasparent image retrieval)
+
+            imgData[e] = r;
+            imgData[e+1] = g;
+            imgData[e+2] = b;
+            imgData[e+3] = 255; // Ditto
         }
     }
-
-    RL_FREE(screenData);
 
     return imgData;     // NOTE: image data should be freed
 }
