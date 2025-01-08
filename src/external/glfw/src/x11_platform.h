@@ -1002,3 +1002,6 @@ GLFWbool _glfwChooseVisualGLX(const _GLFWwndconfig* wndconfig,
                               const _GLFWfbconfig* fbconfig,
                               Visual** visual, int* depth);
 
+// Workaround for raylib to call disableCursor() earlier
+void raylibFixEarlyDisableCursor(_GLFWwindow* window);
+

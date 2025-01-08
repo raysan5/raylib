@@ -625,3 +625,6 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
                                const _GLFWctxconfig* ctxconfig,
                                const _GLFWfbconfig* fbconfig);
 
+// Workaround for raylib to call disableCursor() earlier
+void raylibFixEarlyDisableCursor(_GLFWwindow* window);
+

@@ -2174,11 +2174,11 @@ void _glfwPollEventsWin32(void)
         // NOTE: Re-center the cursor only if it has moved since the last call,
         //       to avoid breaking glfwWaitEvents with WM_MOUSEMOVE
         // The re-center is required in order to prevent the mouse cursor stopping at the edges of the screen.
-        if (window->win32.lastCursorPosX != width / 2 ||
-            window->win32.lastCursorPosY != height / 2)
-        {
+//        if (window->win32.lastCursorPosX != width / 2 ||
+//            window->win32.lastCursorPosY != height / 2)
+//        {
             _glfwSetCursorPosWin32(window, width / 2, height / 2);
-        }
+//        }
     }
 }
 
@@ -2588,6 +2588,17 @@ GLFWAPI HWND glfwGetWin32Window(GLFWwindow* handle)
     }
 
     return window->win32.handle;
+}
+
+// Workaround for raylib to call disableCursor() earlier
+void raylibFixEarlyDisableCursor(_GLFWwindow* window)
+{
+    _glfw.win32.disabledCursorWindow = window;
+    _glfwGetCursorPosWin32(window, &_glfw.win32.restoreCursorPosX, &_glfw.win32.restoreCursorPosY);
+    updateCursorImage(window);
+    _glfwCenterCursorInContentArea(window);
+    captureCursor(window);
+    if (window->rawMouseMotion) enableRawMouseMotion(window);
 }
 
 #endif // _GLFW_WIN32

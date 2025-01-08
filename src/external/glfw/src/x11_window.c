@@ -2805,11 +2805,11 @@ void _glfwPollEventsX11(void)
 
         // NOTE: Re-center the cursor only if it has moved since the last call,
         //       to avoid breaking glfwWaitEvents with MotionNotify
-        if (window->x11.lastCursorPosX != width / 2 ||
-            window->x11.lastCursorPosY != height / 2)
-        {
+//        if (window->x11.lastCursorPosX != width / 2 ||
+//            window->x11.lastCursorPosY != height / 2)
+//        {
             _glfwSetCursorPosX11(window, width / 2, height / 2);
-        }
+//        }
     }
 
     XFlush(_glfw.x11.display);
@@ -3352,6 +3352,17 @@ GLFWAPI const char* glfwGetX11SelectionString(void)
     }
 
     return getSelectionString(_glfw.x11.PRIMARY);
+}
+
+// Workaround for raylib to call disableCursor() earlier
+void raylibFixEarlyDisableCursor(_GLFWwindow* window)
+{
+    if (window->rawMouseMotion) enableRawMouseMotion(window);
+    _glfw.x11.disabledCursorWindow = window;
+    _glfwGetCursorPosX11(window, &_glfw.x11.restoreCursorPosX, &_glfw.x11.restoreCursorPosY);
+    updateCursorImage(window);
+    _glfwCenterCursorInContentArea(window);
+    captureCursor(window);
 }
 
 #endif // _GLFW_X11
