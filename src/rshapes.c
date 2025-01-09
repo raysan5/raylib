@@ -807,22 +807,25 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-    Matrix mat = rlGetMatrixModelview();
-    float zoomFactor = 0.5f/mat.m0;
+    Matrix mat = rlGetMatrixTransform();
+    float xOffset = 0.5f/mat.m0;
+    float yOffset = 0.5f/mat.m5;
+
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f((float)posX - zoomFactor, (float)posY);
-        rlVertex2f((float)posX + (float)width + zoomFactor, (float)posY);
+        rlVertex2f((float)posX + xOffset, (float)posY + yOffset);
+        rlVertex2f((float)posX + (float)width - xOffset, (float)posY + yOffset);
 
-        rlVertex2f((float)posX + (float)width, (float)posY - zoomFactor);
-        rlVertex2f((float)posX + (float)width, (float)posY + (float)height + zoomFactor);
+        rlVertex2f((float)posX + (float)width - xOffset, (float)posY + yOffset);
+        rlVertex2f((float)posX + (float)width - xOffset, (float)posY + (float)height - yOffset);
 
-        rlVertex2f((float)posX + (float)width + zoomFactor, (float)posY + (float)height);
-        rlVertex2f((float)posX - zoomFactor, (float)posY + (float)height);
+        rlVertex2f((float)posX + (float)width - xOffset, (float)posY + (float)height - yOffset);
+        rlVertex2f((float)posX + xOffset, (float)posY + (float)height - yOffset);
 
-        rlVertex2f((float)posX, (float)posY + (float)height + zoomFactor);
-        rlVertex2f((float)posX, (float)posY - zoomFactor);
+        rlVertex2f((float)posX + xOffset, (float)posY + (float)height - yOffset);
+        rlVertex2f((float)posX + xOffset, (float)posY + yOffset);
     rlEnd();
+
 /*
 // Previous implementation, it has issues... but it does not require view matrix...
 #if defined(SUPPORT_QUADS_DRAW_MODE)
@@ -845,7 +848,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         rlVertex2f((float)posX + 1, (float)posY + (float)height);
         rlVertex2f((float)posX + 1, (float)posY + 1);
     rlEnd();
-//#endif
+#endif
 */
 }
 
