@@ -757,7 +757,7 @@ RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width,
 RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType); // Get OpenGL internal formats
 RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get name string for pixel format
 RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
-RLAPI void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps); // Generate mipmap data for selected texture
+RLAPI void rlGenTextureMipmaps(unsigned int id, int width, int height, int *mipmaps); // Generate mipmap data for selected texture
 RLAPI void *rlReadTexturePixels(unsigned int id, int width, int height, int format); // Read texture pixel data
 RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
 
@@ -3569,7 +3569,7 @@ void rlUnloadTexture(unsigned int id)
 
 // Generate mipmap data for selected texture
 // NOTE: Only supports GPU mipmap generation
-void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps)
+void rlGenTextureMipmaps(unsigned int id, int width, int height, int *mipmaps)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindTexture(GL_TEXTURE_2D, id);
