@@ -69,6 +69,16 @@ elseif (${PLATFORM} MATCHES "Android")
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     list(APPEND raylib_sources ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
     include_directories(${ANDROID_NDK}/sources/android/native_app_glue)
+
+    # NOTE: Here we manually remove, before adding our flags, '-Wl,--no-undefined' which is set by default and
+    #       conflicts with '-Wl,-undefined,dynamic_lookup' that allows compilation despite the missing definition
+    #       of 'void main(void)' which is called by raylib in `android_main()`
+    #       We also take this opportunity to remove other problematic
+    #       or unnecessary flags in our case.
+
+    string(REPLACE "-Wl,--no-undefined -Qunused-arguments" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    string(REPLACE "-static-libstdc++" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -u ANativeActivity_onCreate -Wl,-undefined,dynamic_lookup")
 
     find_library(OPENGL_LIBRARY OpenGL)
