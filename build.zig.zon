@@ -5,7 +5,7 @@
 
     .dependencies = .{
         .xcode_frameworks = .{
-            .url = "git+https://github.com/hexops/xcode-frameworks#a6bf82e032d4d9923ad5c222d466710fcc05f249",
+            .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
             .hash = "12208da4dfcd9b53fb367375fb612ec73f38e53015f1ce6ae6d6e8437a637078e170",
             .lazy = true,
         },
