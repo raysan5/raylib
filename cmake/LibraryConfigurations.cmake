@@ -70,11 +70,9 @@ elseif (${PLATFORM} MATCHES "Android")
     list(APPEND raylib_sources ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
     include_directories(${ANDROID_NDK}/sources/android/native_app_glue)
 
-    # NOTE: Here we manually remove, before adding our flags, '-Wl,--no-undefined' which is set by default and
-    #       conflicts with '-Wl,-undefined,dynamic_lookup' that allows compilation despite the missing definition
-    #       of 'void main(void)' which is called by raylib in `android_main()`
-    #       We also take this opportunity to remove other problematic
-    #       or unnecessary flags in our case.
+    # NOTE: We remove '-Wl,--no-undefined' (set by default) as it conflicts with '-Wl,-undefined,dynamic_lookup' needed 
+    #       for compiling with the missing 'void main(void)' declaration in `android_main()`.
+    #       We also remove other unnecessary or problematic flags.
 
     string(REPLACE "-Wl,--no-undefined -Qunused-arguments" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
     string(REPLACE "-static-libstdc++" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
