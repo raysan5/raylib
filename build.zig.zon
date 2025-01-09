@@ -6,7 +6,7 @@
     .dependencies = .{
         .xcode_frameworks = .{
             .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
-            .hash = "122007ebf8ade1abcff8e6ce3d10a103da80b3798de3903c2da7f25eb6b530282bec",
+            .hash = "122098b9174895f9708bc824b0f9e550c401892c40a900006459acf2cbf78acd99bb",
             .lazy = true,
         },
         .emsdk = .{
