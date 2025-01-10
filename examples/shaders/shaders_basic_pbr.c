@@ -84,7 +84,7 @@ int main()
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "basic pbr");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic pbr");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -263,7 +263,7 @@ int main()
             
             DrawText("Toggle lights: [1][2][3][4]", 10, 40, 20, LIGHTGRAY);
 
-            //DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
+            DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
             
             DrawFPS(10, 10);
 
