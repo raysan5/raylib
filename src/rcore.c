@@ -299,6 +299,7 @@ typedef struct CoreData {
     } Window;
     struct {
         const char *basePath;               // Base path for data storage
+        const char *screenshotPath;         // Path for screenshot storage
 
     } Storage;
     struct {
@@ -670,6 +671,10 @@ void InitWindow(int width, int height, const char *title)
     //--------------------------------------------------------------
     InitPlatform();
     //--------------------------------------------------------------
+
+    // Now that InitPlatform() has been made, we have a valid basePath.
+    // Lets default ScreenshotPath to it.
+    CORE.Storage.screenshotPath = CORE.Storage.basePath;
 
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
@@ -1849,6 +1854,14 @@ void UnloadRandomSequence(int *sequence)
 #endif
 }
 
+bool SetScreenshotPath(const char *screenshotDir)
+{
+	// TODO: verify directory exist
+	CORE.Storage.screenshotPath = screenshotDir;
+
+	return true;
+}
+
 // Takes a screenshot of current screen
 // NOTE: Provided fileName should not contain paths, saving to working directory
 void TakeScreenshot(const char *fileName)
@@ -1862,7 +1875,7 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.screenshotPath, GetFileName(fileName)));
 
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
