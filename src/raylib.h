@@ -1510,15 +1510,15 @@ RLAPI const char *TextFormat(const char *text, ...);                            
 RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
 RLAPI char *TextReplace(const char *text, const char *replace, const char *by);             // Replace text string (WARNING: memory must be freed!)
 RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a position (WARNING: memory must be freed!)
-RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
-RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                 // Split text into multiple strings
+RLAPI char *TextJoin(const char **textList, int count, const char *delimiter);              // Join text strings with delimiter
+RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
 RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
-RLAPI const char *TextToUpper(const char *text);                                            // Get upper case version of provided string
-RLAPI const char *TextToLower(const char *text);                                            // Get lower case version of provided string
-RLAPI const char *TextToPascal(const char *text);                                           // Get Pascal case notation version of provided string
-RLAPI const char *TextToSnake(const char *text);                                            // Get Snake case notation version of provided string
-RLAPI const char *TextToCamel(const char *text);                                            // Get Camel case notation version of provided string
+RLAPI char *TextToUpper(const char *text);                                                  // Get upper case version of provided string
+RLAPI char *TextToLower(const char *text);                                                  // Get lower case version of provided string
+RLAPI char *TextToPascal(const char *text);                                                 // Get Pascal case notation version of provided string
+RLAPI char *TextToSnake(const char *text);                                                  // Get Snake case notation version of provided string
+RLAPI char *TextToCamel(const char *text);                                                  // Get Camel case notation version of provided string
 
 RLAPI int TextToInteger(const char *text);                                                  // Get integer value from text
 RLAPI float TextToFloat(const char *text);                                                  // Get float value from text
