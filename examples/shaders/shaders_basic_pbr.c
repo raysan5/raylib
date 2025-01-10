@@ -22,7 +22,7 @@
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
+    #define GLSL_VERSION            120
 #endif
 
 #include <stdlib.h>             // Required for: NULL
@@ -84,7 +84,7 @@ int main()
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic pbr");
+    InitWindow(screenWidth, screenHeight, "basic pbr");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -143,10 +143,17 @@ int main()
     car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.0f;
     car.materials[0].maps[MATERIAL_MAP_OCCLUSION].value = 1.0f;
     car.materials[0].maps[MATERIAL_MAP_EMISSION].color = (Color){ 255, 162, 0, 255 };
-
     // Setup materials[0].maps default textures
     car.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture("resources/old_car_d.png");
-    car.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTexture("resources/old_car_mra.png");
+    
+    //Load RMA texture and convert it to an image to extract channels
+    Texture2D carTexture=LoadTexture("resources/old_car_mra.png");
+    Image carImage =LoadImageFromTexture(carTexture);
+    //RMA textures -> R corresponds to Roughness, G to Metalness, and B to Occlusion
+    //Using different channels of RMA map for different parameters
+    car.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTextureFromImage(ImageFromChannel(carImage,1));
+    car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].texture = LoadTextureFromImage(ImageFromChannel(carImage,0));
+    car.materials[0].maps[MATERIAL_MAP_OCCLUSION].texture = LoadTextureFromImage(ImageFromChannel(carImage,2));
     car.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/old_car_n.png");
     car.materials[0].maps[MATERIAL_MAP_EMISSION].texture = LoadTexture("resources/old_car_e.png");
     
@@ -165,9 +172,14 @@ int main()
     floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.0f;
     floor.materials[0].maps[MATERIAL_MAP_OCCLUSION].value = 1.0f;
     floor.materials[0].maps[MATERIAL_MAP_EMISSION].color = BLACK;
-
     floor.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture("resources/road_a.png");
-    floor.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTexture("resources/road_mra.png");
+
+    Texture2D floorTexture=LoadTexture("resources/road_mra.png");
+    Image floorImage=LoadImageFromTexture(floorTexture);
+    //Using different channels of RMA map for different parameters
+    floor.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTextureFromImage(ImageFromChannel(floorImage,1));
+    floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].texture = LoadTextureFromImage(ImageFromChannel(floorImage,0));
+    floor.materials[0].maps[MATERIAL_MAP_OCCLUSION].texture = LoadTextureFromImage(ImageFromChannel(floorImage,2));
     floor.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/road_n.png");
 
     // Models texture tiling parameter can be stored in the Material struct if required (CURRENTLY NOT USED)
@@ -199,7 +211,7 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
-
+        //if (IsKeyPressedRepeat(KEY_RIGHT)){UpdateCamera(&camera,CAMERA_ORBITAL);};
         // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
         float cameraPos[3] = {camera.position.x, camera.position.y, camera.position.z};
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
@@ -251,7 +263,7 @@ int main()
             
             DrawText("Toggle lights: [1][2][3][4]", 10, 40, 20, LIGHTGRAY);
 
-            DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
+            //DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
             
             DrawFPS(10, 10);
 
@@ -261,8 +273,14 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadImage(floorImage);
+    UnloadTexture(floorTexture);
+    UnloadImage(carImage);
+    UnloadTexture(carTexture);
     // Unbind (disconnect) shader from car.material[0] 
     // to avoid UnloadMaterial() trying to unload it automatically
+    
+    
     car.materials[0].shader = (Shader){ 0 };
     UnloadMaterial(car.materials[0]);
     car.materials[0].maps = NULL;
