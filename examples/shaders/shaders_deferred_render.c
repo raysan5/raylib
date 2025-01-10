@@ -134,14 +134,15 @@ int main(void)
     }
 
     // Now we initialize the sampler2D uniform's in the deferred shader.
-    // We do this by setting the uniform's value to the color channel slot we earlier
-    // bound our textures to.
+    // We do this by setting the uniform's values to the texture units that
+    // we later bind our g-buffer textures to.
     rlEnableShader(deferredShader.id);
-
-        rlSetUniformSampler(rlGetLocationUniform(deferredShader.id, "gPosition"), 0);
-        rlSetUniformSampler(rlGetLocationUniform(deferredShader.id, "gNormal"), 1);
-        rlSetUniformSampler(rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), 2);
-
+        int texUnitPosition = 0;
+        int texUnitNormal = 1;
+        int texUnitAlbedoSpec = 2;
+        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gPosition"), &texUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
+        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gNormal"), &texUnitNormal, RL_SHADER_UNIFORM_SAMPLER2D);
+        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), &texUnitAlbedoSpec, RL_SHADER_UNIFORM_SAMPLER2D);
     rlDisableShader();
 
     // Assign out lighting shader to model
@@ -208,11 +209,10 @@ int main(void)
         // Draw
         // ---------------------------------------------------------------------------------
         BeginDrawing();
-        
-            ClearBackground(RAYWHITE);
-        
+
             // Draw to the geometry buffer by first activating it
             rlEnableFramebuffer(gBuffer.framebuffer);
+            rlClearColor(0, 0, 0, 0);
             rlClearScreenBuffers();  // Clear color and depth buffer
             
             rlDisableColorBlend();
@@ -246,14 +246,14 @@ int main(void)
                     BeginMode3D(camera);
                         rlDisableColorBlend();
                         rlEnableShader(deferredShader.id);
-                            // Activate our g-buffer textures
-                            // These will now be bound to the sampler2D uniforms `gPosition`, `gNormal`,
+                            // Bind our g-buffer textures
+                            // We are binding them to locations that we earlier set in sampler2D uniforms `gPosition`, `gNormal`,
                             // and `gAlbedoSpec`
-                            rlActiveTextureSlot(0);
+                            rlActiveTextureSlot(texUnitPosition);
                             rlEnableTexture(gBuffer.positionTexture);
-                            rlActiveTextureSlot(1);
+                            rlActiveTextureSlot(texUnitNormal);
                             rlEnableTexture(gBuffer.normalTexture);
-                            rlActiveTextureSlot(2);
+                            rlActiveTextureSlot(texUnitAlbedoSpec);
                             rlEnableTexture(gBuffer.albedoSpecTexture);
 
                             // Finally, we draw a fullscreen quad to our default framebuffer
@@ -269,8 +269,8 @@ int main(void)
                     rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
                     rlDisableFramebuffer();
 
-                    // Since our shader is now done and disabled, we can draw our lights in default
-                    // forward rendering
+                    // Since our shader is now done and disabled, we can draw spheres
+                    // that represent light positions in default forward rendering
                     BeginMode3D(camera);
                         rlEnableShader(rlGetShaderIdDefault());
                             for(int i = 0; i < MAX_LIGHTS; i++)
