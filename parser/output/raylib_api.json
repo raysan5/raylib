@@ -9678,7 +9678,7 @@
       "returnType": "char *",
       "params": [
         {
-          "type": "const char **",
+          "type": "char **",
           "name": "textList"
         },
         {

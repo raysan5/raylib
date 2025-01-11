@@ -2454,7 +2454,7 @@
             <Param type="int" name="position" desc="" />
         </Function>
         <Function name="TextJoin" retType="char *" paramCount="3" desc="Join text strings with delimiter">
-            <Param type="const char **" name="textList" desc="" />
+            <Param type="char **" name="textList" desc="" />
             <Param type="int" name="count" desc="" />
             <Param type="const char *" name="delimiter" desc="" />
         </Function>
