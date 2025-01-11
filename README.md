@@ -1,10 +1,10 @@
 <img align="left" style="width:260px" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
 
-**raylib is a simple and easy-to-use library to enjoy videogames programming.**
+**raylib is a simple and easy-to-use library to enjoy videogame programming.**
 
-raylib is highly inspired by Borland BGI graphics lib and by XNA framework and it's especially well suited for prototyping, tooling, graphical applications, embedded systems and education.
+raylib is highly inspired by Borland BGI graphics lib and by XNA framework and it's especially well suited to prototyping, tooling, graphical applications, embedded systems and education.
 
-*NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; no fancy interface, no visual helpers, no debug button... just coding in the most pure spartan-programmers way.*
+*NOTE for ADVENTURERS: raylib is a programming library to enjoy videogame programming; no fancy interface, no visual helpers, no debug button... just coding in the most pure spartan-programmers way.*
 
 Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
@@ -45,11 +45,11 @@ features
   - **Full 3D support**, including 3D Shapes, Models, Billboards, Heightmaps and more! 
   - Flexible Materials system, supporting classic maps and **PBR maps**
   - **Animated 3D models** supported (skeletal bones animation) (IQM, M3D, glTF)
-  - Shaders support, including model shaders and **postprocessing** shaders
+  - Shader support, including model shaders and **postprocessing** shaders
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, QOA, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Huge examples collection with [+140 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
+  - Huge example collection with [+140 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
   - Bindings to [+70 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**
 
@@ -100,9 +100,9 @@ raylib is also available via multiple package managers on multiple OS distributi
 
 *Note that the Wiki is open for edit, if you find some issues while building raylib for your target platform, feel free to edit the Wiki or open an issue related to it.*
 
-#### Setup raylib with multiple IDEs
+#### Set up raylib with multiple IDEs
 
-raylib has been developed on Windows platform using [Notepad++](https://notepad-plus-plus.org/) and [MinGW GCC](https://www.mingw-w64.org/) compiler but it can be used with other IDEs on multiple platforms.
+raylib has been developed on the Windows platform using [Notepad++](https://notepad-plus-plus.org/) and [MinGW GCC](https://www.mingw-w64.org/) compiler but it can be used with other IDEs on multiple platforms.
 
 [Projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use **project templates** to build raylib and code examples with multiple IDEs.
 
@@ -111,9 +111,9 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 learning and docs
 ------------------
 
-raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
+raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available in the library, a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
 
-Some additional documentation about raylib design can be found in [raylib GitHub Wiki](https://github.com/raysan5/raylib/wiki). Here are the relevant links:
+Some additional documentation about raylib's design can be found in [raylib GitHub Wiki](https://github.com/raysan5/raylib/wiki). Here are the relevant links:
 
  - [raylib cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html)
  - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
@@ -125,7 +125,7 @@ Some additional documentation about raylib design can be found in [raylib GitHub
 contact and networks
 ---------------------
 
-raylib is present in several networks and raylib community is growing everyday. If you are using raylib and enjoying it, feel free to join us in any of these networks. The most active network is our [Discord server](https://discord.gg/raylib)! :)
+raylib is present in several networks and the raylib community is growing every day. If you are using raylib and enjoying it, feel free to join us in any of these networks. The most active network is our [Discord server](https://discord.gg/raylib)! :)
 
  - Webpage: [https://www.raylib.com](https://www.raylib.com)
  - Discord: [https://discord.gg/raylib](https://discord.gg/raylib)
@@ -147,4 +147,4 @@ license
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
 
-raylib uses internally some libraries for window/graphics/inputs management and also to support different file formats loading, all those libraries are embedded with and are available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for details.
+raylib uses some libraries internally for window/graphics/input management and also to support different file format loading, all those libraries are embedded with and are available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for details.
