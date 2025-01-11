@@ -51,16 +51,16 @@ mat3 transpose(mat3 m)
 
 void main()
 {
-    // calc binormal from vertex normal and tangent
+    // Compute binormal from vertex normal and tangent
     vec3 vertexBinormal = cross(vertexNormal, vertexTangent);
-    // calc fragment normal based on normal transformations
-    mat3 normalMatrix = transpose(inverse(mat3(matModel)));
-    // calc fragment position based on model transformations
 
+    // Compute fragment normal based on normal transformations
+    mat3 normalMatrix = transpose(inverse(mat3(matModel)));
+
+    // Compute fragment position based on model transformations
     fragPosition = vec3(matModel*vec4(vertexPosition, 1.0));
 
     fragTexCoord = vertexTexCoord*2.0;
-
     fragNormal = normalize(normalMatrix*vertexNormal);
     vec3 fragTangent = normalize(normalMatrix*vertexTangent);
     fragTangent = normalize(fragTangent - dot(fragTangent, fragNormal)*fragNormal);
@@ -70,5 +70,5 @@ void main()
     TBN = transpose(mat3(fragTangent, fragBinormal, fragNormal));
 
     // Calculate final vertex position
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
+    gl_Position = mvp*vec4(vertexPosition, 1.0);
 }
