@@ -247,8 +247,8 @@ extern void LoadFontDefault(void)
                 // we must consider data as little-endian order (alpha + gray)
                 ((unsigned short *)imFont.data)[i + j] = 0xffff;
             }
-            else 
-            { 
+            else
+            {
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
             }
