@@ -3704,14 +3704,14 @@ Function 429: TextInsert() (3 input parameters)
   Param[3]: position (type: int)
 Function 430: TextJoin() (3 input parameters)
   Name: TextJoin
-  Return type: const char *
+  Return type: char *
   Description: Join text strings with delimiter
-  Param[1]: textList (type: const char **)
+  Param[1]: textList (type: char **)
   Param[2]: count (type: int)
   Param[3]: delimiter (type: const char *)
 Function 431: TextSplit() (3 input parameters)
   Name: TextSplit
-  Return type: const char **
+  Return type: char **
   Description: Split text into multiple strings
   Param[1]: text (type: const char *)
   Param[2]: delimiter (type: char)
@@ -3731,27 +3731,27 @@ Function 433: TextFindIndex() (2 input parameters)
   Param[2]: find (type: const char *)
 Function 434: TextToUpper() (1 input parameters)
   Name: TextToUpper
-  Return type: const char *
+  Return type: char *
   Description: Get upper case version of provided string
   Param[1]: text (type: const char *)
 Function 435: TextToLower() (1 input parameters)
   Name: TextToLower
-  Return type: const char *
+  Return type: char *
   Description: Get lower case version of provided string
   Param[1]: text (type: const char *)
 Function 436: TextToPascal() (1 input parameters)
   Name: TextToPascal
-  Return type: const char *
+  Return type: char *
   Description: Get Pascal case notation version of provided string
   Param[1]: text (type: const char *)
 Function 437: TextToSnake() (1 input parameters)
   Name: TextToSnake
-  Return type: const char *
+  Return type: char *
   Description: Get Snake case notation version of provided string
   Param[1]: text (type: const char *)
 Function 438: TextToCamel() (1 input parameters)
   Name: TextToCamel
-  Return type: const char *
+  Return type: char *
   Description: Get Camel case notation version of provided string
   Param[1]: text (type: const char *)
 Function 439: TextToInteger() (1 input parameters)

@@ -34,7 +34,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -247,8 +247,8 @@ extern void LoadFontDefault(void)
                 // we must consider data as little-endian order (alpha + gray)
                 ((unsigned short *)imFont.data)[i + j] = 0xffff;
             }
-            else 
-            { 
+            else
+            {
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
             }
@@ -989,7 +989,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2024 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "// ---------------------------------------------------------------------------------- //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
@@ -1629,7 +1629,7 @@ char *TextInsert(const char *text, const char *insert, int position)
 
 // Join text strings with delimiter
 // REQUIRES: memset(), memcpy()
-const char *TextJoin(const char **textList, int count, const char *delimiter)
+char *TextJoin(char **textList, int count, const char *delimiter)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
@@ -1663,7 +1663,7 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
 
 // Split string into multiple strings
 // REQUIRES: memset()
-const char **TextSplit(const char *text, char delimiter, int *count)
+char **TextSplit(const char *text, char delimiter, int *count)
 {
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
     // inserted between strings defined by "delimiter" parameter. No memory is dynamically allocated,
@@ -1671,7 +1671,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     //      1. Maximum number of possible split strings is set by MAX_TEXTSPLIT_COUNT
     //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
 
-    static const char *result[MAX_TEXTSPLIT_COUNT] = { NULL };
+    static char *result[MAX_TEXTSPLIT_COUNT] = { NULL };
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
@@ -1727,7 +1727,7 @@ int TextFindIndex(const char *text, const char *find)
 // Get upper case version of provided string
 // WARNING: Limited functionality, only basic characters set
 // TODO: Support UTF-8 diacritics to upper-case, check codepoints
-const char *TextToUpper(const char *text)
+char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
@@ -1746,7 +1746,7 @@ const char *TextToUpper(const char *text)
 
 // Get lower case version of provided string
 // WARNING: Limited functionality, only basic characters set
-const char *TextToLower(const char *text)
+char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
@@ -1765,7 +1765,7 @@ const char *TextToLower(const char *text)
 
 // Get Pascal case notation version of provided string
 // WARNING: Limited functionality, only basic characters set
-const char *TextToPascal(const char *text)
+char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
@@ -1793,7 +1793,7 @@ const char *TextToPascal(const char *text)
 
 // Get snake case notation version of provided string
 // WARNING: Limited functionality, only basic characters set
-const char *TextToSnake(const char *text)
+char *TextToSnake(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
@@ -1821,7 +1821,7 @@ const char *TextToSnake(const char *text)
 
 // Get Camel case notation version of provided string
 // WARNING: Limited functionality, only basic characters set
-const char *TextToCamel(const char *text)
+char *TextToCamel(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);

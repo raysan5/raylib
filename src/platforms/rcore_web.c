@@ -26,7 +26,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -133,6 +133,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
 // static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
 
 // Emscripten input callback events
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
@@ -1369,6 +1370,10 @@ int InitPlatform(void)
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+
+    // Support focus events
+    emscripten_set_blur_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1732,6 +1737,18 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     return 1; // The event was consumed by the callback handler
 }
 
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData)
+{
+    EM_BOOL consumed = 1;
+    switch (eventType)
+    {
+        case EMSCRIPTEN_EVENT_BLUR: WindowFocusCallback(userData, 0); break;
+        case EMSCRIPTEN_EVENT_FOCUS: WindowFocusCallback(userData, 1); break;
+        default: consumed = 0; break;
+    }
+    return consumed;
+}
+
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
@@ -1795,7 +1812,23 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 
     if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
     {
-        CORE.Input.Touch.pointCount--;
+        // Identify the EMSCRIPTEN_EVENT_TOUCHEND and remove it from the list
+        for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+        {
+            if (touchEvent->touches[i].isChanged)
+            {
+                // Move all touch points one position up
+                for (int j = i; j < CORE.Input.Touch.pointCount - 1; j++)
+                {
+                    CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[j + 1];
+                    CORE.Input.Touch.position[j] = CORE.Input.Touch.position[j + 1];
+                }
+                // Decrease touch points count to remove the last one
+                CORE.Input.Touch.pointCount--;
+                break;
+            }
+        }
+        // Clamp pointCount to avoid negative values
         if (CORE.Input.Touch.pointCount < 0) CORE.Input.Touch.pointCount = 0;
     }
 

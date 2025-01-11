@@ -21,7 +21,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -1960,7 +1960,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         byteCount += sprintf(txtData + byteCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
         byteCount += sprintf(txtData + byteCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
         byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
-        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018-2024 Ramon Santamaria (@raysan5)                          //\n");
+        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)                          //\n");
         byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
         byteCount += sprintf(txtData + byteCount, "# Vertex Count:     %i\n", mesh.vertexCount);
@@ -4570,12 +4570,14 @@ static Model LoadIQM(const char *fileName)
     if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
+        UnloadFileData(fileData);
         return model;
     }
 
     if (iqmHeader->version != IQM_VERSION)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqmHeader->version);
+        UnloadFileData(fileData);
         return model;
     }
 
@@ -4891,12 +4893,14 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
     if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
+        UnloadFileData(fileData);
         return NULL;
     }
 
     if (iqmHeader->version != IQM_VERSION)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqmHeader->version);
+        UnloadFileData(fileData);
         return NULL;
     }
 

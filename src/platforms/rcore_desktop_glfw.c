@@ -30,7 +30,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -223,11 +223,9 @@ void ToggleBorderlessWindowed(void)
                 if (!wasOnFullscreen) CORE.Window.previousPosition = CORE.Window.position;
                 CORE.Window.previousScreen = CORE.Window.screen;
 
-                // Set undecorated and topmost modes and flags
+                // Set undecorated flag
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_FALSE);
                 CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
-                glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_TRUE);
-                CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
 
                 // Get monitor position and size
                 int monitorPosX = 0;
@@ -247,9 +245,7 @@ void ToggleBorderlessWindowed(void)
             }
             else
             {
-                // Remove topmost and undecorated modes and flags
-                glfwSetWindowAttrib(platform.handle, GLFW_FLOATING, GLFW_FALSE);
-                CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
+                // Remove undecorated flag
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
                 CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
 
@@ -1021,6 +1017,9 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
+    // Reset mouse position within the window area before disabling cursor
+    SetMousePosition(CORE.Window.screen.width, CORE.Window.screen.height);
+
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set cursor position in the middle
@@ -1248,11 +1247,12 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+    if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
+    {
+        glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+        CORE.Time.previous = GetTime();
+    }
     else glfwPollEvents();      // Poll input events: keyboard/mouse/window events (callbacks) -> Update keys state
-
-    // While window minimized, stop loop execution
-    while (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)) glfwWaitEvents();
 
     CORE.Window.shouldClose = glfwWindowShouldClose(platform.handle);
 

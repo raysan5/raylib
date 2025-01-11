@@ -9675,10 +9675,10 @@
     {
       "name": "TextJoin",
       "description": "Join text strings with delimiter",
-      "returnType": "const char *",
+      "returnType": "char *",
       "params": [
         {
-          "type": "const char **",
+          "type": "char **",
           "name": "textList"
         },
         {
@@ -9694,7 +9694,7 @@
     {
       "name": "TextSplit",
       "description": "Split text into multiple strings",
-      "returnType": "const char **",
+      "returnType": "char **",
       "params": [
         {
           "type": "const char *",
@@ -9747,7 +9747,7 @@
     {
       "name": "TextToUpper",
       "description": "Get upper case version of provided string",
-      "returnType": "const char *",
+      "returnType": "char *",
       "params": [
         {
           "type": "const char *",
@@ -9758,7 +9758,7 @@
     {
       "name": "TextToLower",
       "description": "Get lower case version of provided string",
-      "returnType": "const char *",
+      "returnType": "char *",
       "params": [
         {
           "type": "const char *",
@@ -9769,7 +9769,7 @@
     {
       "name": "TextToPascal",
       "description": "Get Pascal case notation version of provided string",
-      "returnType": "const char *",
+      "returnType": "char *",
       "params": [
         {
           "type": "const char *",
@@ -9780,7 +9780,7 @@
     {
       "name": "TextToSnake",
       "description": "Get Snake case notation version of provided string",
-      "returnType": "const char *",
+      "returnType": "char *",
       "params": [
         {
           "type": "const char *",
@@ -9791,7 +9791,7 @@
     {
       "name": "TextToCamel",
       "description": "Get Camel case notation version of provided string",
-      "returnType": "const char *",
+      "returnType": "char *",
       "params": [
         {
           "type": "const char *",

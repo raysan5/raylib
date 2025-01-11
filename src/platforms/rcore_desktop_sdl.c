@@ -29,7 +29,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -571,7 +571,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+        CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
@@ -658,7 +658,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+        CORE.Window.flags &= ~FLAG_WINDOW_ALWAYS_RUN;
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
@@ -1377,6 +1377,12 @@ void PollInputEvents(void)
     */
 
     CORE.Window.resizedLastFrame = false;
+
+    if ((CORE.Window.eventWaiting) || (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0)))
+    {
+        SDL_WaitEvent(NULL);
+        CORE.Time.previous = GetTime();
+    }
 
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)

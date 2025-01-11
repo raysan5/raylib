@@ -286,7 +286,7 @@ int main(void)
                 DrawGrid(10, 2.0f);
 
                 // Use a shader to handle the depth buffer issue with transparent textures
-                // NOTE: more info at https://bedroomcoders.co.uk/raylib-billboards-advanced-use/
+                // NOTE: more info at https://bedroomcoders.co.uk/posts/198
                 BeginShaderMode(alphaDiscard);
 
                     // Draw the 3D text above the red cube

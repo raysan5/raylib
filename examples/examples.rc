@@ -13,7 +13,7 @@ BEGIN
       VALUE "FileDescription", "raylib example"
       VALUE "FileVersion", "1.0"
       VALUE "InternalName", "raylib-example"
-      VALUE "LegalCopyright", "(c) 2024 raylib technologies (@raylibtech)"
+      VALUE "LegalCopyright", "(c) 2025 raylib technologies (@raylibtech)"
       //VALUE "OriginalFilename", "raylib_app.exe"
       VALUE "ProductName", "raylib-example"
       VALUE "ProductVersion", "1.0"
