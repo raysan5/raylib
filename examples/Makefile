@@ -330,20 +330,20 @@ endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # -Os                        # size optimization
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
-    # -sUSE_GLFW=3              # Use glfw3 library (context/input management)
-    # -sALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
-    # -sTOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB) (67108864 = 64MB)
-    # -sUSE_PTHREADS=1          # multithreading support
-    # -sWASM=0                  # disable Web Assembly, emitted by default
-    # -sASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
-    # -sFORCE_FILESYSTEM=1      # force filesystem to load/save files data
-    # -sASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
-    # -sGL_ENABLE_GET_PROC_ADDRESS # enable using the *glGetProcAddress() family of functions, required for extensions loading
+    # -sUSE_GLFW=3               # Use glfw3 library (context/input management)
+    # -sALLOW_MEMORY_GROWTH=1    # to allow memory resizing -> WARNING: Audio buffers could FAIL!
+    # -sTOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB) (67108864 = 64MB)
+    # -sUSE_PTHREADS=1           # multithreading support
+    # -sWASM=0                   # disable Web Assembly, emitted by default
+    # -sASYNCIFY                 # lets synchronous C/C++ code interact with asynchronous JS
+    # -sFORCE_FILESYSTEM=1       # force filesystem to load/save files data
+    # -sASSERTIONS=1             # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
+    # -sMINIFY_HTML=0            # minify generated html from shell.html
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-
+    # --shell-file shell.html    # define a custom shell .html and output extension
     ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
         LDFLAGS += -sUSE_GLFW=3
     endif
@@ -547,10 +547,11 @@ SHAPES = \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_splines_drawing \
-    shapes/shapes_top_down_lights \
-    shapes/shapes_rectangle_advanced
+    shapes/shapes_top_down_lights
+
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -603,6 +604,7 @@ MODELS = \
     models/models_draw_cube_texture \
     models/models_first_person_maze \
     models/models_geometric_shapes \
+    models/models_gpu_skinning \
     models/models_heightmap \
     models/models_loading \
     models/models_loading_gltf \
@@ -614,9 +616,9 @@ MODELS = \
     models/models_point_rendering \
     models/models_rlgl_solar_system \
     models/models_skybox \
+    models/models_tesseract_view \
     models/models_waving_cubes \
-    models/models_yaw_pitch_roll \
-    models/models_gpu_skinning
+    models/models_yaw_pitch_roll
 
 SHADERS = \
     shaders/shaders_basic_lighting \
