@@ -29,7 +29,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5), Colleague Riley and contributors
+*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5), Colleague Riley and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -86,8 +86,8 @@ void CloseWindow(void);
     #define Size NSSIZE
 #endif
 
-#define RGFW_MALLOC RL_MALLOC
-#define RGFW_FREE RL_FREE
+#define RGFW_ALLOC(ptr, size) (RGFW_UNUSED(ptr),RL_MALLOC(size))
+#define RGFW_FREE(ptr, size) (RGFW_UNUSED(ptr),RL_FREE(size))
 #define RGFW_CALLOC RL_CALLOC
 
 #include "../external/RGFW.h"
@@ -127,15 +127,15 @@ static PlatformData platform = { NULL }; // Platform specific
 static bool RGFW_disableCursor = false;
 
 static const unsigned short keyMappingRGFW[] = {
-    [RGFW_KEY_NULL] = KEY_NULL,
-    [RGFW_Return] = KEY_ENTER,
-    [RGFW_Return] = KEY_ENTER,
-    [RGFW_Apostrophe] = KEY_APOSTROPHE,
-    [RGFW_Comma] = KEY_COMMA,
-    [RGFW_Minus] = KEY_MINUS,
-    [RGFW_Period] = KEY_PERIOD,
-    [RGFW_Slash] = KEY_SLASH,
-    [RGFW_Escape] = KEY_ESCAPE,
+    [RGFW_keyNULL] = KEY_NULL,
+    [RGFW_return] = KEY_ENTER,
+    [RGFW_return] = KEY_ENTER,
+    [RGFW_apostrophe] = KEY_APOSTROPHE,
+    [RGFW_comma] = KEY_COMMA,
+    [RGFW_minus] = KEY_MINUS,
+    [RGFW_period] = KEY_PERIOD,
+    [RGFW_slash] = KEY_SLASH,
+    [RGFW_escape] = KEY_ESCAPE,
     [RGFW_F1] = KEY_F1,
     [RGFW_F2] = KEY_F2,
     [RGFW_F3] = KEY_F3,
@@ -148,7 +148,7 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_F10] = KEY_F10,
     [RGFW_F11] = KEY_F11,
     [RGFW_F12] = KEY_F12,
-    [RGFW_Backtick] = KEY_GRAVE,
+    [RGFW_backtick] = KEY_GRAVE,
     [RGFW_0] = KEY_ZERO,
     [RGFW_1] = KEY_ONE,
     [RGFW_2] = KEY_TWO,
@@ -159,19 +159,19 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_7] = KEY_SEVEN,
     [RGFW_8] = KEY_EIGHT,
     [RGFW_9] = KEY_NINE,
-    [RGFW_Equals] = KEY_EQUAL,
-    [RGFW_BackSpace] = KEY_BACKSPACE,
-    [RGFW_Tab] = KEY_TAB,
-    [RGFW_CapsLock] = KEY_CAPS_LOCK,
-    [RGFW_ShiftL] = KEY_LEFT_SHIFT,
-    [RGFW_ControlL] = KEY_LEFT_CONTROL,
-    [RGFW_AltL] = KEY_LEFT_ALT,
-    [RGFW_SuperL] = KEY_LEFT_SUPER,
+    [RGFW_equals] = KEY_EQUAL,
+    [RGFW_backSpace] = KEY_BACKSPACE,
+    [RGFW_tab] = KEY_TAB,
+    [RGFW_capsLock] = KEY_CAPS_LOCK,
+    [RGFW_shiftL] = KEY_LEFT_SHIFT,
+    [RGFW_controlL] = KEY_LEFT_CONTROL,
+    [RGFW_altL] = KEY_LEFT_ALT,
+    [RGFW_superL] = KEY_LEFT_SUPER,
     #ifndef RGFW_MACOS
-    [RGFW_ShiftR] = KEY_RIGHT_SHIFT,
-    [RGFW_AltR] = KEY_RIGHT_ALT,
+    [RGFW_shiftR] = KEY_RIGHT_SHIFT,
+    [RGFW_altR] = KEY_RIGHT_ALT,
     #endif
-    [RGFW_Space] = KEY_SPACE,
+    [RGFW_space] = KEY_SPACE,
 
     [RGFW_a] = KEY_A,
     [RGFW_b] = KEY_B,
@@ -199,23 +199,23 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_x] = KEY_X,
     [RGFW_y] = KEY_Y,
     [RGFW_z] = KEY_Z,
-    [RGFW_Bracket] = KEY_LEFT_BRACKET,
-    [RGFW_BackSlash] = KEY_BACKSLASH,
-    [RGFW_CloseBracket] = KEY_RIGHT_BRACKET,
-    [RGFW_Semicolon] = KEY_SEMICOLON,
-    [RGFW_Insert] = KEY_INSERT,
-    [RGFW_Home] = KEY_HOME,
-    [RGFW_PageUp] = KEY_PAGE_UP,
-    [RGFW_Delete] = KEY_DELETE,
-    [RGFW_End] = KEY_END,
-    [RGFW_PageDown] = KEY_PAGE_DOWN,
-    [RGFW_Right] = KEY_RIGHT,
-    [RGFW_Left] = KEY_LEFT,
-    [RGFW_Down] = KEY_DOWN,
-    [RGFW_Up] = KEY_UP,
-    [RGFW_Numlock] = KEY_NUM_LOCK,
+    [RGFW_bracket] = KEY_LEFT_BRACKET,
+    [RGFW_backSlash] = KEY_BACKSLASH,
+    [RGFW_closeBracket] = KEY_RIGHT_BRACKET,
+    [RGFW_semicolon] = KEY_SEMICOLON,
+    [RGFW_insert] = KEY_INSERT,
+    [RGFW_home] = KEY_HOME,
+    [RGFW_pageUp] = KEY_PAGE_UP,
+    [RGFW_delete] = KEY_DELETE,
+    [RGFW_end] = KEY_END,
+    [RGFW_pageDown] = KEY_PAGE_DOWN,
+    [RGFW_right] = KEY_RIGHT,
+    [RGFW_left] = KEY_LEFT,
+    [RGFW_down] = KEY_DOWN,
+    [RGFW_up] = KEY_UP,
+    [RGFW_numLock] = KEY_NUM_LOCK,
     [RGFW_KP_Slash] = KEY_KP_DIVIDE,
-    [RGFW_Multiply] = KEY_KP_MULTIPLY,
+    [RGFW_multiply] = KEY_KP_MULTIPLY,
     [RGFW_KP_Minus] = KEY_KP_SUBTRACT,
     [RGFW_KP_Return] = KEY_KP_ENTER,
     [RGFW_KP_1] = KEY_KP_1,
@@ -819,23 +819,23 @@ const char *GetKeyName(int key)
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
 int RGFW_gpConvTable[18] = {
-	[RGFW_GP_Y] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
-	[RGFW_GP_B] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-	[RGFW_GP_A] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-	[RGFW_GP_X] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-	[RGFW_GP_L1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
-	[RGFW_GP_R1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-	[RGFW_GP_L2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-	[RGFW_GP_R2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
-	[RGFW_GP_SELECT] = GAMEPAD_BUTTON_MIDDLE_LEFT,
-	[RGFW_GP_HOME] = GAMEPAD_BUTTON_MIDDLE,
-	[RGFW_GP_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
-	[RGFW_GP_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
-	[RGFW_GP_RIGHT] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-	[RGFW_GP_DOWN] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-	[RGFW_GP_LEFT] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-	[RGFW_GP_L3] = GAMEPAD_BUTTON_LEFT_THUMB,	
-	[RGFW_GP_R3] = GAMEPAD_BUTTON_RIGHT_THUMB,
+	[RGFW_gamepadY] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+	[RGFW_gamepadB] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+	[RGFW_gamepadA] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+	[RGFW_gamepadX] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+	[RGFW_gamepadL1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+	[RGFW_gamepadR1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+	[RGFW_gamepadL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+	[RGFW_gamepadR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+	[RGFW_gamepadSelect] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+	[RGFW_gamepadHome] = GAMEPAD_BUTTON_MIDDLE,
+	[RGFW_gamepadStart] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+	[RGFW_gamepadUp] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+	[RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+	[RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+	[RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+	[RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,	
+	[RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
 
 // Register all input events
@@ -896,8 +896,7 @@ void PollInputEvents(void)
     CORE.Window.resizedLastFrame = false;
 
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-    #define RGFW_HOLD_MOUSE     (1L<<2)
-    if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
+    if (platform.window->_flags & RGFW_HOLD_MOUSE)
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -909,7 +908,7 @@ void PollInputEvents(void)
 
     while (RGFW_window_checkEvent(platform.window))
     {
-        if ((platform.window->event.type >= RGFW_gpButtonPressed) && (platform.window->event.type <= RGFW_gpAxisMove))
+        if ((platform.window->event.type >= RGFW_gamepadButtonPressed) && (platform.window->event.type <= RGFW_gamepadAxisMove))
         {
             if (!CORE.Input.Gamepad.ready[platform.window->event.gamepad])
             {
@@ -921,13 +920,13 @@ void PollInputEvents(void)
             }
         }
 
-        RGFW_Event *event = &platform.window->event;
+        RGFW_event *event = &platform.window->event;
         // All input events can be processed after polling
         
 		switch (event->type)
         {
             case RGFW_quit: CORE.Window.shouldClose = true; break;
-            case RGFW_dnd:      // Dropped file
+            case RGFW_DND:      // Dropped file
             {
                 for (int i = 0; i < event->droppedFilesCount; i++)
                 {
@@ -1019,7 +1018,7 @@ void PollInputEvents(void)
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
                 else if (btn == RGFW_mouseRight) btn = 2;
-                else if (btn == RGFW_mouseMiddle) btn = 3;
+                else if (btn == RGFW_mouseMiddle) btn = 3; 
 
                 CORE.Input.Mouse.currentButtonState[btn - 1] = 1;
                 CORE.Input.Touch.currentTouchState[btn - 1] = 1;
@@ -1046,7 +1045,7 @@ void PollInputEvents(void)
             } break;
             case RGFW_mousePosChanged:
             {
-                if (platform.window->_winArgs & RGFW_HOLD_MOUSE)
+                if (platform.window->_flags & RGFW_HOLD_MOUSE)
                 {
                     CORE.Input.Mouse.currentPosition.x += (float)event->point.x;
                     CORE.Input.Mouse.currentPosition.y += (float)event->point.y;
@@ -1061,7 +1060,7 @@ void PollInputEvents(void)
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
             } break;
-            case RGFW_gpButtonPressed:
+            case RGFW_gamepadButtonPressed:
             {
 				int button = RGFW_gpConvTable[event->button];
 
@@ -1071,14 +1070,14 @@ void PollInputEvents(void)
                     CORE.Input.Gamepad.lastButtonPressed = button;
                 }
             } break;
-            case RGFW_gpButtonReleased:
+            case RGFW_gamepadButtonReleased:
             {
 				int button = RGFW_gpConvTable[event->button];
 
                 CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = 0;
                 if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
             } break;
-            case RGFW_gpAxisMove:
+            case RGFW_gamepadAxisMove:
             {
                 int axis = -1;
 
@@ -1153,26 +1152,26 @@ void PollInputEvents(void)
 int InitPlatform(void)
 {
     // Initialize RGFW internal global state, only required systems
-    unsigned int flags = RGFW_CENTER | RGFW_ALLOW_DND;
+    unsigned int flags = RGFW_windowCenter | RGFW_windowAllowDND;
 
     // Check window creation flags
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
     {
         CORE.Window.fullscreen = true;
-        flags |= RGFW_FULLSCREEN;
+        flags |= RGFW_windowFullscreen;
     }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_NO_BORDER;
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_NO_RESIZE;
-    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_TRANSPARENT_WINDOW;
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_FULLSCREEN;
+    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_windowNoBorder;
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_windowNoResize;
+    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_windowTransparent;
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_windowFullscreen;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
     // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_21) RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
-    else if (rlGetVersion() == RL_OPENGL_33) RGFW_setGLVersion(RGFW_GL_CORE, 3, 3);
-    else if (rlGetVersion() == RL_OPENGL_43) RGFW_setGLVersion(RGFW_GL_CORE, 4, 1);
+    if (rlGetVersion() == RL_OPENGL_21) RGFW_setGLVersion(RGFW_glCore, 2, 1);
+    else if (rlGetVersion() == RL_OPENGL_33) RGFW_setGLVersion(RGFW_glCore, 3, 3);
+    else if (rlGetVersion() == RL_OPENGL_43) RGFW_setGLVersion(RGFW_glCore, 4, 1);
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLSamples(4);
 
