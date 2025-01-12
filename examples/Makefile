@@ -513,7 +513,6 @@ CORE = \
     core/core_custom_logging \
     core/core_drop_files \
     core/core_input_gamepad \
-    core/core_input_gamepad_info \
     core/core_input_gestures \
     core/core_input_gestures_web \
     core/core_input_keys \

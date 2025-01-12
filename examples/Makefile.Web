@@ -394,7 +394,6 @@ CORE = \
     core/core_custom_logging \
     core/core_drop_files \
     core/core_input_gamepad \
-    core/core_input_gamepad_info \
     core/core_input_gestures \
     core/core_input_gestures_web \
     core/core_input_keys \
@@ -614,9 +613,6 @@ core/core_input_gamepad: core/core_input_gamepad.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file core/resources/ps3.png@resources/ps3.png \
     --preload-file core/resources/xbox.png@resources/xbox.png
-
-core/core_input_gamepad_info: core/core_input_gamepad_info.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_gestures: core/core_input_gestures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
