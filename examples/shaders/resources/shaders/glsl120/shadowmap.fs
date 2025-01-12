@@ -46,34 +46,34 @@ void main()
     vec4 finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
 
     // Shadow calculations
-    vec4 fragPosLightSpace = lightVP * vec4(fragPosition, 1);
+    vec4 fragPosLightSpace = lightVP*vec4(fragPosition, 1);
     fragPosLightSpace.xyz /= fragPosLightSpace.w; // Perform the perspective division
-    fragPosLightSpace.xyz = (fragPosLightSpace.xyz + 1.0f) / 2.0f; // Transform from [-1, 1] range to [0, 1] range
+    fragPosLightSpace.xyz = (fragPosLightSpace.xyz + 1.0)/2.0; // Transform from [-1, 1] range to [0, 1] range
     vec2 sampleCoords = fragPosLightSpace.xy;
     float curDepth = fragPosLightSpace.z;
+
     // Slope-scale depth bias: depth biasing reduces "shadow acne" artifacts, where dark stripes appear all over the scene.
     // The solution is adding a small bias to the depth
     // In this case, the bias is proportional to the slope of the surface, relative to the light
-    float bias = max(0.0008 * (1.0 - dot(normal, l)), 0.00008);
+    float bias = max(0.0008*(1.0 - dot(normal, l)), 0.00008);
     int shadowCounter = 0;
     const int numSamples = 9;
+    
     // PCF (percentage-closer filtering) algorithm:
     // Instead of testing if just one point is closer to the current point,
     // we test the surrounding points as well.
     // This blurs shadow edges, hiding aliasing artifacts.
-    vec2 texelSize = vec2(1.0f / float(shadowMapResolution));
+    vec2 texelSize = vec2(1.0/float(shadowMapResolution));
     for (int x = -1; x <= 1; x++)
     {
         for (int y = -1; y <= 1; y++)
         {
-            float sampleDepth = texture2D(shadowMap, sampleCoords + texelSize * vec2(x, y)).r;
-            if (curDepth - bias > sampleDepth)
-            {
-                shadowCounter++;
-            }
+            float sampleDepth = texture2D(shadowMap, sampleCoords + texelSize*vec2(x, y)).r;
+            if (curDepth - bias > sampleDepth) shadowCounter++;
         }
     }
-    finalColor = mix(finalColor, vec4(0, 0, 0, 1), float(shadowCounter) / float(numSamples));
+    
+    finalColor = mix(finalColor, vec4(0, 0, 0, 1), float(shadowCounter)/float(numSamples));
 
     // Add ambient lighting whether in shadow or not
     finalColor += texelColor*(ambient/10.0)*colDiffuse;
