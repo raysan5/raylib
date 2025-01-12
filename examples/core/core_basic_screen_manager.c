@@ -46,7 +46,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        switch(currentScreen)
+        switch (currentScreen)
         {
             case LOGO:
             {

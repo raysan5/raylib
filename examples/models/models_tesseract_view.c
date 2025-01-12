@@ -74,7 +74,7 @@ int main(void)
 
             // Projection from XYZW to XYZ from perspective point (0, 0, 0, 3)
             // NOTE: Trace a ray from (0, 0, 0, 3) > p and continue until W = 0
-            float c = 3/(3 - p.w);
+            float c = 3.0f/(3.0f - p.w);
             p.x = c * p.x;
             p.y = c * p.y;
             p.z = c * p.z;
@@ -95,7 +95,7 @@ int main(void)
                 for (int i = 0; i < 16; i++)
                 {
                     // Draw spheres to indicate the W value
-                    DrawSphere(transformed[i], fabsf(wValues[i]*0.1), RED);
+                    DrawSphere(transformed[i], fabsf(wValues[i]*0.1f), RED);
 
                     for (int j = 0; j < 16; j++)
                     {

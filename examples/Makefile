@@ -344,11 +344,12 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
     # --shell-file shell.html    # define a custom shell .html and output extension
+    LDFLAGS += -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sFORCE_FILESYSTEM=1 -sMINIFY_HTML=0
+    
+    # Using GLFW3 library (instead of RGFW)
     ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
         LDFLAGS += -sUSE_GLFW=3
     endif
-
-    LDFLAGS += -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sFORCE_FILESYSTEM=1
   	 
 	# Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)

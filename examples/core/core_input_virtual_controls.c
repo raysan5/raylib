@@ -115,26 +115,10 @@ int main(void)
         // Move player according to pressed button
         switch (pressedButton)
         {
-            case BUTTON_UP:
-            {
-                playerPosition.y -= playerSpeed*GetFrameTime();
-                break;
-            }
-            case BUTTON_LEFT:
-            {
-                playerPosition.x -= playerSpeed*GetFrameTime();
-                break;
-            }
-            case BUTTON_RIGHT:
-            {
-                playerPosition.x += playerSpeed*GetFrameTime();
-                break;
-            }
-            case BUTTON_DOWN:
-            {
-                playerPosition.y += playerSpeed*GetFrameTime();
-                break;
-            }
+            case BUTTON_UP: playerPosition.y -= playerSpeed*GetFrameTime(); break;
+            case BUTTON_LEFT: playerPosition.x -= playerSpeed*GetFrameTime(); break;
+            case BUTTON_RIGHT: playerPosition.x += playerSpeed*GetFrameTime(); break;
+            case BUTTON_DOWN: playerPosition.y += playerSpeed*GetFrameTime(); break;
             default: break;
         };
 

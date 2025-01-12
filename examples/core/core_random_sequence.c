@@ -174,7 +174,6 @@ static void DrawTextCenterKeyHelp(const char *key, const char *text, int posX, i
     int pressSize = MeasureText("Press", fontSize); 
     int keySize = MeasureText(key, fontSize); 
     int textSize = MeasureText(text, fontSize); 
-    int totalSize = pressSize + 2*spaceSize + keySize + 2*spaceSize + textSize;
     int textSizeCurrent = 0;
 
     DrawText("Press", posX, posY, fontSize, color);
