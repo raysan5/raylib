@@ -669,7 +669,7 @@ void SetClipboardText(const char *text)
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
+// NOTE: returned string is allocated and freed by RGFW
 const char *GetClipboardText(void)
 {
     return RGFW_readClipboard(NULL);

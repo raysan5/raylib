@@ -1729,6 +1729,10 @@ RGFW_window* RGFW_createWindow(const char* name, RGFW_rect rect, RGFW_windowFlag
 
 RGFWDEF void RGFW_window_basic_init(RGFW_window* win, RGFW_rect rect, RGFW_windowFlags flags);
 
+#if defined(RGFW_X11) || defined(RGFW_WINDOWS)
+RGFW_mouse* RGFW_hiddenMouse = NULL;
+#endif
+
 /* do a basic initialization for RGFW_window, this is to standard it for each OS */
 void RGFW_window_basic_init(RGFW_window* win, RGFW_rect rect, RGFW_windowFlags flags) {
 	/* clear out dnd info */
@@ -1755,6 +1759,13 @@ void RGFW_window_basic_init(RGFW_window* win, RGFW_rect rect, RGFW_windowFlags f
 	/* rect based the requested flags */
 	if (flags & RGFW_windowFullscreen)
 		rect = RGFW_RECT(0, 0, screenR.w, screenR.h);
+
+	#if defined(RGFW_X11) || defined(RGFW_WINDOWS)
+	if (RGFW_hiddenMouse == NULL) {
+		u8 RGFW_blk[] = { 0, 0, 0, 0 };
+		RGFW_hiddenMouse = RGFW_loadMouse(RGFW_blk, RGFW_AREA(1, 1), 4);
+	}
+	#endif
 
 	/* set and init the new window's data */
 	win->r = rect;
@@ -1973,14 +1984,8 @@ RGFW_gamepadType RGFW_getGamepadType(RGFW_window* win, u16 controller) {
 
 #if defined(RGFW_X11) || defined(RGFW_WINDOWS)
 void RGFW_window_showMouse(RGFW_window* win, i8 show) {
-	static void* mouse = NULL;
-	if (mouse == NULL) {
-		u8 RGFW_blk[] = { 0, 0, 0, 0 };
-		mouse = RGFW_loadMouse(RGFW_blk, RGFW_AREA(1, 1), 4);
-	}
-
 	if (show == 0)
-		RGFW_window_setMouse(win, mouse);
+		RGFW_window_setMouse(win, RGFW_hiddenMouse);
 	else
 		RGFW_window_setMouseDefault(win);
 }
@@ -4299,6 +4304,11 @@ void RGFW_window_close(RGFW_window* win) {
 				close(RGFW_gamepads[i]);
 		}
 		#endif
+
+		if (RGFW_hiddenMouse != NULL) {
+			RGFW_freeMouse(RGFW_hiddenMouse);
+			RGFW_hiddenMouse = 0;
+		}
 	}
 
 	RGFW_clipboard_switch(NULL);
@@ -6812,6 +6822,11 @@ void RGFW_window_close(RGFW_window* win) {
 
 		RGFW_FREE_LIBRARY(RGFW_wgl_dll);
 		RGFW_root = NULL;
+
+		if (RGFW_hiddenMouse != NULL) {
+			RGFW_freeMouse(RGFW_hiddenMouse);
+			RGFW_hiddenMouse = 0;
+		}
 	}
 
 	RGFW_clipboard_switch(NULL);
