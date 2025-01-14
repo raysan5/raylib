@@ -887,7 +887,7 @@ void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color)
 void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color)
 {
     // Not a rounded rectangle
-    if ((roundness <= 0.0f) || (rec.width < 1) || (rec.height < 1 ))
+    if (roundness <= 0.0f)
     {
         DrawRectangleRec(rec, color);
         return;

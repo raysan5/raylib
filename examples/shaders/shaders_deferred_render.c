@@ -273,7 +273,7 @@ int main(void)
                     // that represent light positions in default forward rendering
                     BeginMode3D(camera);
                         rlEnableShader(rlGetShaderIdDefault());
-                            for(int i = 0; i < MAX_LIGHTS; i++)
+                            for (int i = 0; i < MAX_LIGHTS; i++)
                             {
                                 if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
                                 else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));

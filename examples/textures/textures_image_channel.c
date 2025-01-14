@@ -24,7 +24,6 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-
     const int screenWidth = 800;
     const int screenHeight = 450;
 
@@ -60,8 +59,6 @@ int main(void)
     UnloadImage(imageBlue);
     UnloadImage(backgroundImage);
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-
     Rectangle fudesumiRec = {0, 0, fudesumiImage.width, fudesumiImage.height};
 
     Rectangle fudesumiPos = {50, 10, fudesumiImage.width*0.8f, fudesumiImage.height*0.8f};
@@ -70,11 +67,17 @@ int main(void)
     Rectangle bluePos = { 410, 230, fudesumiPos.width / 2, fudesumiPos.height / 2 };
     Rectangle alphaPos = { 600, 230, fudesumiPos.width / 2, fudesumiPos.height / 2 };
 
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        // Draw
+        //----------------------------------------------------------------------------------
+        // TODO...
+        //----------------------------------------------------------------------------------
+        
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();

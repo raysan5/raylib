@@ -279,8 +279,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_automation_events", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_mixed_processor", "examples\audio_mixed_processor.vcxproj", "{A4B0D971-3CD6-41C9-8AB2-055D25A33373}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_gamepad_info", "examples\core_input_gamepad_info.vcxproj", "{27AA7BDA-0C34-4733-9009-73D3E64234FB}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_mouse_wheel", "examples\core_input_mouse_wheel.vcxproj", "{15CDD310-6980-42A6-8082-3A6B7730D13F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_smooth_pixelperfect", "examples\core_smooth_pixelperfect.vcxproj", "{71DB4284-5B1C-4E86-9AF5-B91542D44A6F}"
