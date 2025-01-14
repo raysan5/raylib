@@ -142,6 +142,8 @@ static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPoin
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 
+static const char *GetCanvasId(void);
+
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
@@ -824,7 +826,7 @@ void ShowCursor(void)
 {
     if (CORE.Input.Mouse.cursorHidden)
     {
-        EM_ASM( { document.getElementById("canvas").style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
+        EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
 
         CORE.Input.Mouse.cursorHidden = false;
     }
@@ -835,7 +837,7 @@ void HideCursor(void)
 {
     if (!CORE.Input.Mouse.cursorHidden)
     {
-        EM_ASM(document.getElementById('canvas').style.cursor = 'none';);
+        EM_ASM(Module.canvas.style.cursor = 'none';);
 
         CORE.Input.Mouse.cursorHidden = true;
     }
@@ -856,7 +858,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     // TODO: figure out how not to hard code the canvas ID here.
-    emscripten_request_pointerlock("#canvas", 1);
+    emscripten_request_pointerlock(GetCanvasId(), 1);
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
@@ -1355,25 +1357,25 @@ int InitPlatform(void)
     // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
 
     // Support mouse events
-    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
     emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
 
     // Following the mouse delta when the mouse is locked
-    emscripten_set_mousemove_callback("#canvas", NULL, 1, EmscriptenMouseMoveCallback);
+    emscripten_set_mousemove_callback(GetCanvasId(), NULL, 1, EmscriptenMouseMoveCallback);
 
     // Support touch events
-    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchstart_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
 
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 
     // Support focus events
-    emscripten_set_blur_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
-    emscripten_set_focus_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1674,7 +1676,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
     else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
 
-    emscripten_set_canvas_element_size("#canvas", width, height);
+    emscripten_set_canvas_element_size(GetCanvasId(), width, height);
 
     SetupViewport(width, height); // Reset viewport and projection matrix for new size
 
@@ -1760,7 +1762,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
     // we are looking for actual CSS size: canvas.style.width and canvas.style.height
     // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
-    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size(GetCanvasId(), &canvasWidth, &canvasHeight);
 
     for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
@@ -1833,6 +1835,22 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     }
 
     return 1; // The event was consumed by the callback handler
+}
+
+// obtaining the canvas id provided by the module configuration
+EM_JS(char*, GetCanvasIdJs, (), {
+    var canvasId = "#" + Module.canvas.id;
+    var lengthBytes = lengthBytesUTF8(canvasId) + 1;
+    var stringOnWasmHeap = _malloc(lengthBytes);
+    stringToUTF8(canvasId, stringOnWasmHeap, lengthBytes);
+    return stringOnWasmHeap;
+});
+
+static const char *GetCanvasId(void)
+{
+    static char *canvasId = NULL;
+    if (canvasId == NULL) canvasId = GetCanvasIdJs();
+    return canvasId;
 }
 
 // EOF
