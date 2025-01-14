@@ -22,7 +22,7 @@
 #define MIN_POINTS 1000         // 1 thousand
 
 // Generate mesh using points
-Mesh GenMeshPoints(int numPoints);
+static Mesh GenMeshPoints(int numPoints);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -56,7 +56,7 @@ int main()
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while(!WindowShouldClose())
+    while (!WindowShouldClose())
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ int main()
 }
 
 // Generate a spherical point cloud
-Mesh GenMeshPoints(int numPoints)
+static Mesh GenMeshPoints(int numPoints)
 {
     Mesh mesh = { 
         .triangleCount = 1,
@@ -159,9 +159,9 @@ Mesh GenMeshPoints(int numPoints)
     // https://en.wikipedia.org/wiki/Spherical_coordinate_system
     for (int i = 0; i < numPoints; i++)
     {
-        float theta = PI*rand()/RAND_MAX;
-        float phi = 2.0f*PI*rand()/RAND_MAX;
-        float r = 10.0f*rand()/RAND_MAX;
+        float theta = ((float)PI*rand())/RAND_MAX;
+        float phi = (2.0f*PI*rand())/RAND_MAX;
+        float r = (10.0f*rand())/RAND_MAX;
         
         mesh.vertices[i*3 + 0] = r*sin(theta)*cos(phi);
         mesh.vertices[i*3 + 1] = r*sin(theta)*sin(phi);

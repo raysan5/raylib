@@ -88,7 +88,7 @@ int main(void)
             DrawRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, WHITE);
 
-            switch(currentTexture)
+            switch (currentTexture)
             {
                 case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RAYWHITE); break;
                 case 1: DrawText("HORIZONTAL GRADIENT", 540, 10, 20, RAYWHITE); break;

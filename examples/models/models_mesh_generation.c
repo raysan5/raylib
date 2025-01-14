@@ -112,7 +112,7 @@ int main(void)
             DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
 
-            switch(currentModel)
+            switch (currentModel)
             {
                 case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
                 case 1: DrawText("CUBE", 680, 10, 20, DARKBLUE); break;
