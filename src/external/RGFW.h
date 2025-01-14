@@ -1,6 +1,6 @@
 /*
 *
-*	RGFW 1.5
+*	RGFW 1.5.1-dev
 *
 * Copyright (C) 2022-25 ColleagueRiley
 *
@@ -9301,7 +9301,7 @@ void EMSCRIPTEN_KEEPALIVE RGFW_handleKeyEvent(char* key, char* code, b8 press) {
 	RGFW_eventLen++;
 
 	RGFW_keyboard[physicalKey].prev = RGFW_keyboard[physicalKey].current;
-	RGFW_keyboard[physicalKey].current = 0;
+	RGFW_keyboard[physicalKey].current = press;
 
 	RGFW_keyCallback(RGFW_root, physicalKey, mappedKey, RGFW_root->event.keyMod, press);
 
@@ -9456,14 +9456,10 @@ RGFW_window* RGFW_createWindowPtr(const char* name, RGFW_rect rect, RGFW_windowF
 				Module._RGFW_handleKeyEvent(stringToNewUTF8(event.key), stringToNewUTF8(event.code),  1);
 			},
 		true);
-	});
-
-
-	EM_ASM({
-		window.addEventListener("keydown",
+		window.addEventListener("keyup",
 			(event) => {
 				Module._RGFW_handleKeyMods(event.getModifierState("CapsLock"), event.getModifierState("NumLock"), event.getModifierState("Control"), event.getModifierState("Alt"), event.getModifierState("Shift"), event.getModifierState("Meta"));
-				Module._RGFW_handleKeyEvent(stringToNewUTF8(event.key), stringToNewUTF8(event.code),  1);
+				Module._RGFW_handleKeyEvent(stringToNewUTF8(event.key), stringToNewUTF8(event.code),  0);
 			},
 		true);
 	});
