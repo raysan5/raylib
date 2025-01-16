@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - Texture drawing
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   NOTE: This example illustrates how to draw into a blank texture using a shader
 *
 *   Example originally created with raylib 2.0, last time updated with raylib 3.7
@@ -34,8 +36,6 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");
-*
-*   Example complexity rating: [★★☆☆] 2/4
 
     Image imBlank = GenImageColor(1024, 1024, BLANK);
     Texture2D texture = LoadTextureFromImage(imBlank);  // Load blank texture to fill on shader
