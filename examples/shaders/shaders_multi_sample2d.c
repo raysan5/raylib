@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Multiple sample2D with default batch system
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *

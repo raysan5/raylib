@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - Draw a texture along a segmented curve
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example contributed by Jeffery Myers and reviewed by Ramon Santamaria (@raysan5)

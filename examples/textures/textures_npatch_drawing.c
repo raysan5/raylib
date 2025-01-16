@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - N-patch drawing
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
 *   Example originally created with raylib 2.0, last time updated with raylib 2.5

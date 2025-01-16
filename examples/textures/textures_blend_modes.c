@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - blend modes
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
 *   Example originally created with raylib 3.5, last time updated with raylib 3.5

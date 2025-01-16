@@ -28,6 +28,8 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh generation");
+*
+*   Example complexity rating: [★★☆☆] 2/4
 
     // We generate a checked image for texturing
     Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);

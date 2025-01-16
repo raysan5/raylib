@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - Waving cubes
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 3.7
 *
 *   Example contributed by Codecat (@codecat) and reviewed by Ramon Santamaria (@raysan5)

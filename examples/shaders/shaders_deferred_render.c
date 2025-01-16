@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - deferred rendering
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5

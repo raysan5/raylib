@@ -2,6 +2,8 @@
 *
 *   raylib [shapes] example - Cubic-bezier lines
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 1.7, last time updated with raylib 1.7
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

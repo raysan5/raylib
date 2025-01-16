@@ -2,6 +2,8 @@
 *
 *   raylib [shapes] example - Draw basic shapes 2d (rectangle, circle, line...)
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 1.0, last time updated with raylib 4.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

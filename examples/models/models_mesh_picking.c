@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - Mesh picking in 3d mode, ground plane, triangle, mesh
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 1.7, last time updated with raylib 4.0
 *
 *   Example contributed by Joel Davis (@joeld42) and reviewed by Ramon Santamaria (@raysan5)

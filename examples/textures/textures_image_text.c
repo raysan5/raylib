@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [texture] example - Image text drawing using TTF generated font
+*   raylib [textures] example - Image text drawing using TTF generated font
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *

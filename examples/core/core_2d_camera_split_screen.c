@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - 2d camera split screen
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Addapted from the core_3d_camera_split_screen example: 
 *       https://github.com/raysan5/raylib/blob/master/examples/core/core_3d_camera_split_screen.c
 *

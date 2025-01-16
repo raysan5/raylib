@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Gamepad information
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: This example requires a Gamepad connected to the system
 *         Check raylib.h for buttons configuration
 *

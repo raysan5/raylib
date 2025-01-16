@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - automation events
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example based on 2d_camera_platformer example by arvyy (@arvyy)

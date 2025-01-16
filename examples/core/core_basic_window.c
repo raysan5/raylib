@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Basic window
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Welcome to raylib!
 *
 *   To test examples, just press F6 and execute 'raylib_compile_execute' script

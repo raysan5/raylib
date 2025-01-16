@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - custom frame control
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: WARNING: This is an example for advanced users willing to have full control over
 *   the frame processes. By default, EndDrawing() calls the following processes:
 *       1. Draw remaining batch data: rlDrawRenderBatchActive()

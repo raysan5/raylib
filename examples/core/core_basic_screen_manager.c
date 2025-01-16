@@ -2,6 +2,8 @@
 *
 *   raylib [core] examples - basic screen manager
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: This example illustrates a very simple screen manager based on a states machines
 *
 *   Example originally created with raylib 4.0, last time updated with raylib 4.0

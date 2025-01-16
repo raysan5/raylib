@@ -36,6 +36,8 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - particles blending");
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 
     // Particles pool, reuse them!
     Particle mouseTail[MAX_PARTICLES] = { 0 };
