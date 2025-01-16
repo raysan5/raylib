@@ -684,9 +684,10 @@ RLAPI void rlSetCullFace(int mode);                     // Set face culling mode
 RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
-RLAPI void rlEnableWireMode(void);                      // Enable wire mode
 RLAPI void rlEnablePointMode(void);                     // Enable point mode
-RLAPI void rlDisableWireMode(void);                     // Disable wire (and point) mode
+RLAPI void rlDisablePointMode(void);                    // Disable point mode
+RLAPI void rlEnableWireMode(void);                      // Enable wire mode
+RLAPI void rlDisableWireMode(void);                     // Disable wire mode
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
 RLAPI float rlGetLineWidth(void);                       // Get the line drawing width
 RLAPI void rlEnableSmoothLines(void);                   // Enable line aliasing
@@ -1967,6 +1968,15 @@ void rlEnableWireMode(void)
 #endif
 }
 
+// Disable wire mode
+void rlDisableWireMode(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
+}
+
 // Enable point mode
 void rlEnablePointMode(void)
 {
@@ -1977,8 +1987,8 @@ void rlEnablePointMode(void)
 #endif
 }
 
-// Disable wire mode
-void rlDisableWireMode(void)
+// Disable point mode
+void rlDisablePointMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
