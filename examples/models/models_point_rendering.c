@@ -163,9 +163,9 @@ static Mesh GenMeshPoints(int numPoints)
         float phi = (2.0f*PI*rand())/RAND_MAX;
         float r = (10.0f*rand())/RAND_MAX;
         
-        mesh.vertices[i*3 + 0] = r*sin(theta)*cos(phi);
-        mesh.vertices[i*3 + 1] = r*sin(theta)*sin(phi);
-        mesh.vertices[i*3 + 2] = r*cos(theta);
+        mesh.vertices[i*3 + 0] = r*sinf(theta)*cosf(phi);
+        mesh.vertices[i*3 + 1] = r*sinf(theta)*sinf(phi);
+        mesh.vertices[i*3 + 2] = r*cosf(theta);
         
         Color color = ColorFromHSV(r*360.0f, 1.0f, 1.0f);
         
