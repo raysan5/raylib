@@ -76,11 +76,11 @@ int main(void)
     Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 2.0f, 2.0f));
 
     // Load geometry buffer (G-buffer) shader and deferred shader
-    Shader gbufferShader = LoadShader("resources/shaders/glsl330/gbuffer.vs",
-                               "resources/shaders/glsl330/gbuffer.fs");
+    Shader gbufferShader = LoadShader(TextFormat("resources/shaders/glsl%i/gbuffer.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/gbuffer.fs", GLSL_VERSION));
 
-    Shader deferredShader = LoadShader("resources/shaders/glsl330/deferred_shading.vs",
-                               "resources/shaders/glsl330/deferred_shading.fs");
+    Shader deferredShader = LoadShader(TextFormat("resources/shaders/glsl%i/deferred_shading.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/deferred_shading.fs", GLSL_VERSION));
     deferredShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(deferredShader, "viewPosition");
 
     // Initialize the G-buffer
@@ -130,7 +130,6 @@ int main(void)
     if (!rlFramebufferComplete(gBuffer.framebuffer))
     {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
-        exit(1);
     }
 
     // Now we initialize the sampler2D uniform's in the deferred shader.

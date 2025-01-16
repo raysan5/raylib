@@ -1042,10 +1042,10 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
-    --preload-file shaders/resources/shaders/glsl330/gbuffer.vs@resources/shaders/glsl330/gbuffer.vs \
-    --preload-file shaders/resources/shaders/glsl330/gbuffer.fs@resources/shaders/glsl330/gbuffer.fs \
-    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs \
-    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs
+    --preload-file shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
+    --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
+    --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
+    --preload-file shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
 
 shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
