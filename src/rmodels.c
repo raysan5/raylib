@@ -183,6 +183,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 }
 
 // Draw a point in 3D space, actually a small line
+// WARNING: OpenGL ES 2.0 does not support point mode drawing
 void DrawPoint3D(Vector3 position, Color color)
 {
     rlPushMatrix();
@@ -3779,6 +3780,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 }
 
 // Draw a model points
+// WARNING: OpenGL ES 2.0 does not support point mode drawing
 void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
 {
     rlEnablePointMode();
@@ -3787,10 +3789,11 @@ void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
     DrawModel(model, position, scale, tint);
 
     rlEnableBackfaceCulling();
-    rlDisableWireMode();
+    rlDisablePointMode();
 }
 
 // Draw a model points
+// WARNING: OpenGL ES 2.0 does not support point mode drawing
 void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
     rlEnablePointMode();
@@ -3799,7 +3802,7 @@ void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, floa
     DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
 
     rlEnableBackfaceCulling();
-    rlDisableWireMode();
+    rlDisablePointMode();
 }
 
 // Draw a billboard
