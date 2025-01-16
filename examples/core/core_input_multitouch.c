@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Input multitouch
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 2.1, last time updated with raylib 2.5
 *
 *   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)

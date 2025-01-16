@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - Plane rotations (yaw, pitch, roll)
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *
 *   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)

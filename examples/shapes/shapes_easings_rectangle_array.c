@@ -2,6 +2,8 @@
 *
 *   raylib [shapes] example - easings rectangle array
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   NOTE: This example requires 'easings.h' library, provided on raylib/src. Just copy
 *   the library to same directory as example or make sure it's available on include path.
 *

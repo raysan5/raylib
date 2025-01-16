@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - 2D Camera platformer
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 3.0
 *
 *   Example contributed by arvyy (@arvyy) and reviewed by Ramon Santamaria (@raysan5)

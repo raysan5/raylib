@@ -2,6 +2,8 @@
 *
 *   raylib [audio] example - Raw audio streaming
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 1.6, last time updated with raylib 4.2
 *
 *   Example created by Ramon Santamaria (@raysan5) and reviewed by James Hofmann (@triplefox)

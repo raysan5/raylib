@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - VR Simulator (Oculus Rift CV1 parameters)
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
