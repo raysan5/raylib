@@ -5,6 +5,8 @@
 *   rlgl library is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
 *
+*   Example originally created with raylib 1.6, last time updated with raylib 4.0
+*
 *   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile.
 *       It could work on other platforms if redesigned for those platforms (out-of-scope)
 *

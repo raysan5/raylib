@@ -6,6 +6,8 @@
 *
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
+*   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
+*
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
