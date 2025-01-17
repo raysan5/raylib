@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023-2024 Afan OLOVCIC (@_DevDad)
+*   Copyright (c) 2023-2025 Afan OLOVCIC (@_DevDad)
 *
 *   Model: "Old Rusty Car" (https://skfb.ly/LxRy) by Renafox, 
 *   licensed under Creative Commons Attribution-NonCommercial 

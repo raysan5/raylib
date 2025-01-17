@@ -13,7 +13,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2024 Karlo Licudine (@accidentalrebel)
+*   Copyright (c) 2020-2025 Karlo Licudine (@accidentalrebel)
 *
 ********************************************************************************************/
 

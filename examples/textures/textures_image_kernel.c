@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Karim Salem (@kimo-s)
+*   Copyright (c) 2015-2025 Karim Salem (@kimo-s)
 *
 ********************************************************************************************/
 
