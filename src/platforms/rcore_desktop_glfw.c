@@ -1652,7 +1652,11 @@ int InitPlatform(void)
     // Retrieve gamepad names
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (glfwJoystickPresent(i)) strcpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i));
+        if (glfwJoystickPresent(i))
+        {
+          strncpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i), sizeof(CORE.Input.Gamepad.name[i]) - 1);
+          CORE.Input.Gamepad.name[i][sizeof(CORE.Input.Gamepad.name[i]) - 1] = '\0';
+        }
     }
     //----------------------------------------------------------------------------
 
@@ -1915,11 +1919,12 @@ static void JoystickCallback(int jid, int event)
 {
     if (event == GLFW_CONNECTED)
     {
-        strcpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid));
+        strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), sizeof(CORE.Input.Gamepad.name[jid]) - 1);
+        CORE.Input.Gamepad.name[jid][sizeof(CORE.Input.Gamepad.name[jid]) - 1] = '\0';
     }
     else if (event == GLFW_DISCONNECTED)
     {
-        memset(CORE.Input.Gamepad.name[jid], 0, 64);
+        memset(CORE.Input.Gamepad.name[jid], 0, sizeof(CORE.Input.Gamepad.name[jid]));
     }
 }
 
