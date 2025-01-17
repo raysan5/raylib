@@ -35,8 +35,8 @@ int main(void)
         SKYBLUE, BLUE, DARKBLUE, PURPLE, VIOLET, DARKPURPLE, BEIGE, BROWN, DARKBROWN,
         LIGHTGRAY, GRAY, DARKGRAY, BLACK };
 
-    // Define colorsRecs data (for every rectangle)
-    Rectangle colorsRecs[MAX_COLORS_COUNT] = { 0 };
+    // Define colorsRecs data (for every rayRectangle)
+    rayRectangle colorsRecs[MAX_COLORS_COUNT] = { 0 };
 
     for (int i = 0; i < MAX_COLORS_COUNT; i++)
     {
@@ -52,7 +52,7 @@ int main(void)
     float brushSize = 20.0f;
     bool mouseWasPressed = false;
 
-    Rectangle btnSaveRec = { 750, 10, 40, 30 };
+    rayRectangle btnSaveRec = { 750, 10, 40, 30 };
     bool btnSaveMouseHover = false;
     bool showSaveMessage = false;
     int saveMessageCounter = 0;
@@ -177,7 +177,7 @@ int main(void)
         ClearBackground(RAYWHITE);
 
         // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-        DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2) { 0, 0 }, WHITE);
+        DrawTextureRec(target.texture, (rayRectangle) { 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2) { 0, 0 }, WHITE);
 
         // Draw drawing circle for reference
         if (mousePos.y > 50)
@@ -187,27 +187,27 @@ int main(void)
         }
 
         // Draw top panel
-        DrawRectangle(0, 0, GetScreenWidth(), 50, RAYWHITE);
+        DrawrayRectangle(0, 0, GetScreenWidth(), 50, RAYWHITE);
         DrawLine(0, 50, GetScreenWidth(), 50, LIGHTGRAY);
 
-        // Draw color selection rectangles
-        for (int i = 0; i < MAX_COLORS_COUNT; i++) DrawRectangleRec(colorsRecs[i], colors[i]);
-        DrawRectangleLines(10, 10, 30, 30, LIGHTGRAY);
+        // Draw color selection rayRectangles
+        for (int i = 0; i < MAX_COLORS_COUNT; i++) DrawrayRectangleRec(colorsRecs[i], colors[i]);
+        DrawrayRectangleLines(10, 10, 30, 30, LIGHTGRAY);
 
-        if (colorMouseHover >= 0) DrawRectangleRec(colorsRecs[colorMouseHover], Fade(WHITE, 0.6f));
+        if (colorMouseHover >= 0) DrawrayRectangleRec(colorsRecs[colorMouseHover], Fade(WHITE, 0.6f));
 
-        DrawRectangleLinesEx((Rectangle){ colorsRecs[colorSelected].x - 2, colorsRecs[colorSelected].y - 2,
+        DrawrayRectangleLinesEx((rayRectangle){ colorsRecs[colorSelected].x - 2, colorsRecs[colorSelected].y - 2,
                              colorsRecs[colorSelected].width + 4, colorsRecs[colorSelected].height + 4 }, 2, BLACK);
 
         // Draw save image button
-        DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover ? RED : BLACK);
+        DrawrayRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover ? RED : BLACK);
         DrawText("SAVE!", 755, 20, 10, btnSaveMouseHover ? RED : BLACK);
 
         // Draw save image message
         if (showSaveMessage)
         {
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
-            DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
+            DrawrayRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
+            DrawrayRectangle(0, 150, GetScreenWidth(), 80, BLACK);
             DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
         }
 
@@ -219,7 +219,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(target);    // Unload render texture
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -144,7 +144,7 @@ int main(void)
                 DrawTexture(whiteTex, 0, 0, WHITE);
             EndShaderMode();
 
-            DrawRectangleLines(GetMouseX() - brushSize/2, GetMouseY() - brushSize/2, brushSize, brushSize, RED);
+            DrawrayRectangleLines(GetMouseX() - brushSize/2, GetMouseY() - brushSize/2, brushSize, brushSize, RED);
 
             DrawText("Use Mouse wheel to increase/decrease brush size", 10, 10, 20, WHITE);
             DrawFPS(GetScreenWidth() - 100, 10);
@@ -167,7 +167,7 @@ int main(void)
     UnloadTexture(whiteTex);            // Unload white texture
     UnloadShader(golRenderShader);      // Unload rendering fragment shader
 
-    CloseWindow();                      // Close window and OpenGL context
+    rayCloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

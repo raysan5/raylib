@@ -111,9 +111,9 @@ int main(void)
 
             DrawText("MUSIC SHOULD BE PLAYING!", 245, 150, 20, LIGHTGRAY);
 
-            DrawRectangle(200, 180, 400, 12, LIGHTGRAY);
-            DrawRectangle(200, 180, (int)(timePlayed*400.0f), 12, MAROON);
-            DrawRectangleLines(200, 180, 400, 12, GRAY);
+            DrawrayRectangle(200, 180, 400, 12, LIGHTGRAY);
+            DrawrayRectangle(200, 180, (int)(timePlayed*400.0f), 12, MAROON);
+            DrawrayRectangleLines(200, 180, 400, 12, GRAY);
 
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 230, 20, LIGHTGRAY);
             DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 260, 20, LIGHTGRAY);
@@ -133,7 +133,7 @@ int main(void)
 
     RL_FREE(delayBuffer);       // Free delay buffer
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

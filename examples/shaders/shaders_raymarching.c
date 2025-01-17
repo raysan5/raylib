@@ -94,10 +94,10 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // We only draw a white full-screen rectangle,
+            // We only draw a white full-screen rayRectangle,
             // frame is generated in shader using raymarching
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
+                DrawrayRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
             DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", GetScreenWidth() - 280, GetScreenHeight() - 20, 10, BLACK);
@@ -110,7 +110,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);           // Unload shader
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

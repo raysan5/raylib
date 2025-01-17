@@ -13,7 +13,7 @@
 
 #include "raylib.h"
 
-#define NUM_FRAMES  3       // Number of frames (rectangles) for the button sprite texture
+#define NUM_FRAMES  3       // Number of frames (rayRectangles) for the button sprite texture
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -32,12 +32,12 @@ int main(void)
     Sound fxButton = LoadSound("resources/buttonfx.wav");   // Load button sound
     Texture2D button = LoadTexture("resources/button.png"); // Load button texture
 
-    // Define frame rectangle for drawing
+    // Define frame rayRectangle for drawing
     float frameHeight = (float)button.height/NUM_FRAMES;
-    Rectangle sourceRec = { 0, 0, (float)button.width, frameHeight };
+    rayRectangle sourceRec = { 0, 0, (float)button.width, frameHeight };
 
     // Define button bounds on screen
-    Rectangle btnBounds = { screenWidth/2.0f - button.width/2.0f, screenHeight/2.0f - button.height/NUM_FRAMES/2.0f, (float)button.width, frameHeight };
+    rayRectangle btnBounds = { screenWidth/2.0f - button.width/2.0f, screenHeight/2.0f - button.height/NUM_FRAMES/2.0f, (float)button.width, frameHeight };
 
     int btnState = 0;               // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
     bool btnAction = false;         // Button action should be activated
@@ -72,7 +72,7 @@ int main(void)
             // TODO: Any desired action
         }
 
-        // Calculate button frame rectangle to draw depending on button state
+        // Calculate button frame rayRectangle to draw depending on button state
         sourceRec.y = btnState*frameHeight;
         //----------------------------------------------------------------------------------
 
@@ -95,7 +95,7 @@ int main(void)
 
     CloseAudioDevice();     // Close audio device
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

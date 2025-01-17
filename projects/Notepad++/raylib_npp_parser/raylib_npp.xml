@@ -10,7 +10,7 @@
                 <Param name="const char *title" />
             </Overload>
         </KeyWord>
-        <KeyWord name="CloseWindow" func="yes">
+        <KeyWord name="rayCloseWindow" func="yes">
             <Overload retVal="void" descr="Close window and unload OpenGL context"></Overload>
         </KeyWord>
         <KeyWord name="WindowShouldClose" func="yes">
@@ -198,7 +198,7 @@
         </KeyWord>
 
         <!-- Cursor-related functions -->
-        <KeyWord name="ShowCursor" func="yes">
+        <KeyWord name="rayShowCursor" func="yes">
             <Overload retVal="void" descr="Shows cursor"></Overload>
         </KeyWord>
         <KeyWord name="HideCursor" func="yes">
@@ -975,13 +975,13 @@
         <!-------------------------------------------------------------------------------------- -->
         <!-- Basic Shapes Drawing Functions (Module: shapes) -->
         <!-------------------------------------------------------------------------------------- -->
-        <!-- Set texture and rectangle to be used on shapes drawing -->
+        <!-- Set texture and rayRectangle to be used on shapes drawing -->
         <!-- NOTE: It can be useful when using basic shapes and one single font, -->
-        <!-- defining a font char white rectangle would allow drawing everything in a single draw call -->
+        <!-- defining a font char white rayRectangle would allow drawing everything in a single draw call -->
         <KeyWord name="SetShapesTexture" func="yes">
-            <Overload retVal="void" descr="Set texture and rectangle to be used on shapes drawing">
+            <Overload retVal="void" descr="Set texture and rayRectangle to be used on shapes drawing">
                 <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
+                <Param name="rayRectangle source" />
             </Overload>
         </KeyWord>
 
@@ -1137,8 +1137,8 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangle" func="yes">
-            <Overload retVal="void" descr="Draw a color-filled rectangle">
+        <KeyWord name="DrawrayRectangle" func="yes">
+            <Overload retVal="void" descr="Draw a color-filled rayRectangle">
                 <Param name="int posX" />
                 <Param name="int posY" />
                 <Param name="int width" />
@@ -1146,29 +1146,29 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleV" func="yes">
-            <Overload retVal="void" descr="Draw a color-filled rectangle (Vector version)">
+        <KeyWord name="DrawrayRectangleV" func="yes">
+            <Overload retVal="void" descr="Draw a color-filled rayRectangle (Vector version)">
                 <Param name="Vector2 position" />
                 <Param name="Vector2 size" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleRec" func="yes">
-            <Overload retVal="void" descr="Draw a color-filled rectangle">
-                <Param name="Rectangle rec" />
+        <KeyWord name="DrawrayRectangleRec" func="yes">
+            <Overload retVal="void" descr="Draw a color-filled rayRectangle">
+                <Param name="rayRectangle rec" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectanglePro" func="yes">
-            <Overload retVal="void" descr="Draw a color-filled rectangle with pro parameters">
-                <Param name="Rectangle rec" />
+        <KeyWord name="DrawrayRectanglePro" func="yes">
+            <Overload retVal="void" descr="Draw a color-filled rayRectangle with pro parameters">
+                <Param name="rayRectangle rec" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleGradientV" func="yes">
-            <Overload retVal="void" descr="Draw a vertical-gradient-filled rectangle">
+        <KeyWord name="DrawrayRectangleGradientV" func="yes">
+            <Overload retVal="void" descr="Draw a vertical-gradient-filled rayRectangle">
                 <Param name="int posX" />
                 <Param name="int posY" />
                 <Param name="int width" />
@@ -1177,8 +1177,8 @@
                 <Param name="Color color2" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleGradientH" func="yes">
-            <Overload retVal="void" descr="Draw a horizontal-gradient-filled rectangle">
+        <KeyWord name="DrawrayRectangleGradientH" func="yes">
+            <Overload retVal="void" descr="Draw a horizontal-gradient-filled rayRectangle">
                 <Param name="int posX" />
                 <Param name="int posY" />
                 <Param name="int width" />
@@ -1187,17 +1187,17 @@
                 <Param name="Color color2" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleGradientEx" func="yes">
-            <Overload retVal="void" descr="Draw a gradient-filled rectangle with custom vertex colors">
-                <Param name="Rectangle rec" />
+        <KeyWord name="DrawrayRectangleGradientEx" func="yes">
+            <Overload retVal="void" descr="Draw a gradient-filled rayRectangle with custom vertex colors">
+                <Param name="rayRectangle rec" />
                 <Param name="Color col1" />
                 <Param name="Color col2" />
                 <Param name="Color col3" />
                 <Param name="Color col4" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleLines" func="yes">
-            <Overload retVal="void" descr="Draw rectangle outline">
+        <KeyWord name="DrawrayRectangleLines" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle outline">
                 <Param name="int posX" />
                 <Param name="int posY" />
                 <Param name="int width" />
@@ -1205,24 +1205,24 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleLinesEx" func="yes">
-            <Overload retVal="void" descr="Draw rectangle outline with extended parameters">
-                <Param name="Rectangle rec" />
+        <KeyWord name="DrawrayRectangleLinesEx" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle outline with extended parameters">
+                <Param name="rayRectangle rec" />
                 <Param name="float lineThick" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleRounded" func="yes">
-            <Overload retVal="void" descr="Draw rectangle with rounded edges">
-                <Param name="Rectangle rec" />
+        <KeyWord name="DrawrayRectangleRounded" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle with rounded edges">
+                <Param name="rayRectangle rec" />
                 <Param name="float roundness" />
                 <Param name="int segments" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawRectangleRoundedLines" func="yes">
-            <Overload retVal="void" descr="Draw rectangle with rounded edges outline">
-                <Param name="Rectangle rec" />
+        <KeyWord name="DrawrayRectangleRoundedLines" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle with rounded edges outline">
+                <Param name="rayRectangle rec" />
                 <Param name="float roundness" />
                 <Param name="int segments" />
                 <Param name="float lineThick" />
@@ -1423,9 +1423,9 @@
 
         <!-- Basic shapes collision detection functions -->
         <KeyWord name="CheckCollisionRecs" func="yes">
-            <Overload retVal="bool" descr="Check collision between two rectangles">
-                <Param name="Rectangle rec1" />
-                <Param name="Rectangle rec2" />
+            <Overload retVal="bool" descr="Check collision between two rayRectangles">
+                <Param name="rayRectangle rec1" />
+                <Param name="rayRectangle rec2" />
             </Overload>
         </KeyWord>
         <KeyWord name="CheckCollisionCircles" func="yes">
@@ -1437,16 +1437,16 @@
             </Overload>
         </KeyWord>
         <KeyWord name="CheckCollisionCircleRec" func="yes">
-            <Overload retVal="bool" descr="Check collision between circle and rectangle">
+            <Overload retVal="bool" descr="Check collision between circle and rayRectangle">
                 <Param name="Vector2 center" />
                 <Param name="float radius" />
-                <Param name="Rectangle rec" />
+                <Param name="rayRectangle rec" />
             </Overload>
         </KeyWord>
         <KeyWord name="CheckCollisionPointRec" func="yes">
-            <Overload retVal="bool" descr="Check if point is inside rectangle">
+            <Overload retVal="bool" descr="Check if point is inside rayRectangle">
                 <Param name="Vector2 point" />
-                <Param name="Rectangle rec" />
+                <Param name="rayRectangle rec" />
             </Overload>
         </KeyWord>
         <KeyWord name="CheckCollisionPointCircle" func="yes">
@@ -1489,9 +1489,9 @@
             </Overload>
         </KeyWord>
         <KeyWord name="GetCollisionRec" func="yes">
-            <Overload retVal="Rectangle" descr="Get collision rectangle for two rectangles collision">
-                <Param name="Rectangle rec1" />
-                <Param name="Rectangle rec2" />
+            <Overload retVal="rayRectangle" descr="Get collision rayRectangle for two rayRectangles collision">
+                <Param name="rayRectangle rec1" />
+                <Param name="rayRectangle rec2" />
             </Overload>
         </KeyWord>
 
@@ -1658,7 +1658,7 @@
         <KeyWord name="ImageFromImage" func="yes">
             <Overload retVal="Image" descr="Create an image from another image piece">
                 <Param name="Image image" />
-                <Param name="Rectangle rec" />
+                <Param name="rayRectangle rec" />
             </Overload>
         </KeyWord>
         <KeyWord name="ImageText" func="yes">
@@ -1690,9 +1690,9 @@
             </Overload>
         </KeyWord>
         <KeyWord name="ImageCrop" func="yes">
-            <Overload retVal="void" descr="Crop an image to a defined rectangle">
+            <Overload retVal="void" descr="Crop an image to a defined rayRectangle">
                 <Param name="Image *image" />
-                <Param name="Rectangle crop" />
+                <Param name="rayRectangle crop" />
             </Overload>
         </KeyWord>
         <KeyWord name="ImageAlphaCrop" func="yes">
@@ -1847,7 +1847,7 @@
             </Overload>
         </KeyWord>
         <KeyWord name="GetImageAlphaBorder" func="yes">
-            <Overload retVal="Rectangle" descr="Get image alpha border rectangle">
+            <Overload retVal="rayRectangle" descr="Get image alpha border rayRectangle">
                 <Param name="Image image" />
                 <Param name="float threshold" />
             </Overload>
@@ -1935,8 +1935,8 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="ImageDrawRectangle" func="yes">
-            <Overload retVal="void" descr="Draw rectangle within an image">
+        <KeyWord name="ImageDrawrayRectangle" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle within an image">
                 <Param name="Image *dst" />
                 <Param name="int posX" />
                 <Param name="int posY" />
@@ -1945,25 +1945,25 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="ImageDrawRectangleV" func="yes">
-            <Overload retVal="void" descr="Draw rectangle within an image (Vector version)">
+        <KeyWord name="ImageDrawrayRectangleV" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle within an image (Vector version)">
                 <Param name="Image *dst" />
                 <Param name="Vector2 position" />
                 <Param name="Vector2 size" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="ImageDrawRectangleRec" func="yes">
-            <Overload retVal="void" descr="Draw rectangle within an image">
+        <KeyWord name="ImageDrawrayRectangleRec" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle within an image">
                 <Param name="Image *dst" />
-                <Param name="Rectangle rec" />
+                <Param name="rayRectangle rec" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="ImageDrawRectangleLines" func="yes">
-            <Overload retVal="void" descr="Draw rectangle lines within an image">
+        <KeyWord name="ImageDrawrayRectangleLines" func="yes">
+            <Overload retVal="void" descr="Draw rayRectangle lines within an image">
                 <Param name="Image *dst" />
-                <Param name="Rectangle rec" />
+                <Param name="rayRectangle rec" />
                 <Param name="int thick" />
                 <Param name="Color color" />
             </Overload>
@@ -1972,8 +1972,8 @@
             <Overload retVal="void" descr="Draw a source image within a destination image (tint applied to source)">
                 <Param name="Image *dst" />
                 <Param name="Image src" />
-                <Param name="Rectangle srcRec" />
-                <Param name="Rectangle dstRec" />
+                <Param name="rayRectangle srcRec" />
+                <Param name="rayRectangle dstRec" />
                 <Param name="Color tint" />
             </Overload>
         </KeyWord>
@@ -2050,9 +2050,9 @@
             </Overload>
         </KeyWord>
         <KeyWord name="UpdateTextureRec" func="yes">
-            <Overload retVal="void" descr="Update GPU texture rectangle with new data">
+            <Overload retVal="void" descr="Update GPU texture rayRectangle with new data">
                 <Param name="Texture2D texture" />
-                <Param name="Rectangle rec" />
+                <Param name="rayRectangle rec" />
                 <Param name="const void *pixels" />
             </Overload>
         </KeyWord>
@@ -2102,18 +2102,18 @@
             </Overload>
         </KeyWord>
         <KeyWord name="DrawTextureRec" func="yes">
-            <Overload retVal="void" descr="Draw a part of a texture defined by a rectangle">
+            <Overload retVal="void" descr="Draw a part of a texture defined by a rayRectangle">
                 <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
+                <Param name="rayRectangle source" />
                 <Param name="Vector2 position" />
                 <Param name="Color tint" />
             </Overload>
         </KeyWord>
         <KeyWord name="DrawTexturePro" func="yes">
-            <Overload retVal="void" descr="Draw a part of a texture defined by a rectangle with 'pro' parameters">
+            <Overload retVal="void" descr="Draw a part of a texture defined by a rayRectangle with 'pro' parameters">
                 <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
-                <Param name="Rectangle dest" />
+                <Param name="rayRectangle source" />
+                <Param name="rayRectangle dest" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
                 <Param name="Color tint" />
@@ -2123,7 +2123,7 @@
             <Overload retVal="void" descr="Draws a texture (or part of it) that stretches or shrinks nicely">
                 <Param name="Texture2D texture" />
                 <Param name="NPatchInfo nPatchInfo" />
-                <Param name="Rectangle dest" />
+                <Param name="rayRectangle dest" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
                 <Param name="Color tint" />
@@ -2270,7 +2270,7 @@
         <KeyWord name="GenImageFontAtlas" func="yes">
             <Overload retVal="Image" descr="Generate image font atlas using chars info">
                 <Param name="const GlyphInfo *glyphs" />
-                <Param name="Rectangle **glyphRecs" />
+                <Param name="rayRectangle **glyphRecs" />
                 <Param name="int glyphCount" />
                 <Param name="int fontSize" />
                 <Param name="int padding" />
@@ -2387,7 +2387,7 @@
             </Overload>
         </KeyWord>
         <KeyWord name="GetGlyphAtlasRec" func="yes">
-            <Overload retVal="Rectangle" descr="Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
+            <Overload retVal="rayRectangle" descr="Get glyph rayRectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
                 <Param name="Font font" />
                 <Param name="int codepoint" />
             </Overload>
@@ -2806,7 +2806,7 @@
             <Overload retVal="void" descr="Draw a billboard texture defined by source">
                 <Param name="Camera camera" />
                 <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
+                <Param name="rayRectangle source" />
                 <Param name="Vector3 position" />
                 <Param name="Vector2 size" />
                 <Param name="Color tint" />
@@ -2816,13 +2816,13 @@
             <Overload retVal="void" descr="Draw a billboard texture defined by source and rotation">
                 <Param name="Camera camera" />
                 <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
+                <Param name="rayRectangle source" />
                 <Param name="Vector3 position" />
                 <Param name="Vector3 up" />
                 <Param name="Vector2 size" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
-                <Param name="0ó¿8± " />
+                <Param name="0ï¿½8ï¿½ " />
             </Overload>
         </KeyWord>
 

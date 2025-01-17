@@ -92,7 +92,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
         
-            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
+            DrawTextureRec(target.texture, (rayRectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ int main(void)
     UnloadRenderTextureDepthTex(target);
     UnloadShader(shader);
 
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

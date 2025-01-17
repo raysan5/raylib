@@ -36,20 +36,20 @@ int main(void)
     Vector2 origin = { 0.0f, 0.0f };
 
     // Position and size of the n-patches
-    Rectangle dstRec1 = { 480.0f, 160.0f, 32.0f, 32.0f };
-    Rectangle dstRec2 = { 160.0f, 160.0f, 32.0f, 32.0f };
-    Rectangle dstRecH = { 160.0f, 93.0f, 32.0f, 32.0f };
-    Rectangle dstRecV = { 92.0f, 160.0f, 32.0f, 32.0f };
+    rayRectangle dstRec1 = { 480.0f, 160.0f, 32.0f, 32.0f };
+    rayRectangle dstRec2 = { 160.0f, 160.0f, 32.0f, 32.0f };
+    rayRectangle dstRecH = { 160.0f, 93.0f, 32.0f, 32.0f };
+    rayRectangle dstRecV = { 92.0f, 160.0f, 32.0f, 32.0f };
 
     // A 9-patch (NPATCH_NINE_PATCH) changes its sizes in both axis
-    NPatchInfo ninePatchInfo1 = { (Rectangle){ 0.0f, 0.0f, 64.0f, 64.0f }, 12, 40, 12, 12, NPATCH_NINE_PATCH };
-    NPatchInfo ninePatchInfo2 = { (Rectangle){ 0.0f, 128.0f, 64.0f, 64.0f }, 16, 16, 16, 16, NPATCH_NINE_PATCH };
+    NPatchInfo ninePatchInfo1 = { (rayRectangle){ 0.0f, 0.0f, 64.0f, 64.0f }, 12, 40, 12, 12, NPATCH_NINE_PATCH };
+    NPatchInfo ninePatchInfo2 = { (rayRectangle){ 0.0f, 128.0f, 64.0f, 64.0f }, 16, 16, 16, 16, NPATCH_NINE_PATCH };
 
     // A horizontal 3-patch (NPATCH_THREE_PATCH_HORIZONTAL) changes its sizes along the x axis only
-    NPatchInfo h3PatchInfo = { (Rectangle){ 0.0f,  64.0f, 64.0f, 64.0f }, 8, 8, 8, 8, NPATCH_THREE_PATCH_HORIZONTAL };
+    NPatchInfo h3PatchInfo = { (rayRectangle){ 0.0f,  64.0f, 64.0f, 64.0f }, 8, 8, 8, 8, NPATCH_THREE_PATCH_HORIZONTAL };
 
     // A vertical 3-patch (NPATCH_THREE_PATCH_VERTICAL) changes its sizes along the y axis only
-    NPatchInfo v3PatchInfo = { (Rectangle){ 0.0f, 192.0f, 64.0f, 64.0f }, 6, 6, 6, 6, NPATCH_THREE_PATCH_VERTICAL };
+    NPatchInfo v3PatchInfo = { (rayRectangle){ 0.0f, 192.0f, 64.0f, 64.0f }, 6, 6, 6, 6, NPATCH_THREE_PATCH_VERTICAL };
 
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ int main(void)
             DrawTextureNPatch(nPatchTexture, v3PatchInfo, dstRecV, origin, 0.0f, WHITE);
 
             // Draw the source texture
-            DrawRectangleLines(5, 88, 74, 266, BLUE);
+            DrawrayRectangleLines(5, 88, 74, 266, BLUE);
             DrawTexture(nPatchTexture, 10, 93, WHITE);
             DrawText("TEXTURE", 15, 360, 10, DARKGRAY);
 
@@ -107,7 +107,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadTexture(nPatchTexture);       // Texture unloading
 
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

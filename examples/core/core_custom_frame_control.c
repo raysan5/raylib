@@ -82,7 +82,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            for (int i = 0; i < GetScreenWidth()/200; i++) DrawRectangle(200*i, 0, 1, GetScreenHeight(), SKYBLUE);
+            for (int i = 0; i < GetScreenWidth()/200; i++) DrawrayRectangle(200*i, 0, 1, GetScreenHeight(), SKYBLUE);
             
             DrawCircle((int)position, GetScreenHeight()/2 - 25, 50, RED);
             
@@ -123,7 +123,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

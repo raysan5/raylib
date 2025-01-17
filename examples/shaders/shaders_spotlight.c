@@ -186,7 +186,7 @@ int main(void)
             for (int n = 0; n < MAX_STARS; n++)
             {
                 // Single pixel is just too small these days!
-                DrawRectangle((int)stars[n].position.x, (int)stars[n].position.y, 2, 2, WHITE);
+                DrawrayRectangle((int)stars[n].position.x, (int)stars[n].position.y, 2, 2, WHITE);
             }
 
             for (int i = 0; i < 16; i++)
@@ -198,11 +198,11 @@ int main(void)
 
             // Draw spot lights
             BeginShaderMode(shdrSpot);
-                // Instead of a blank rectangle you could render here
+                // Instead of a blank rayRectangle you could render here
                 // a render texture of the full screen used to do screen
                 // scaling (slight adjustment to shader would be required
                 // to actually pay attention to the colour!)
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawrayRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
             DrawFPS(10, 10);
@@ -220,7 +220,7 @@ int main(void)
     UnloadTexture(texRay);
     UnloadShader(shdrSpot);
 
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

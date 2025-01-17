@@ -32,8 +32,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera split screen");
 
-    Rectangle player1 = { 200, 200, PLAYER_SIZE, PLAYER_SIZE };
-    Rectangle player2 = { 250, 200, PLAYER_SIZE, PLAYER_SIZE };
+    rayRectangle player1 = { 200, 200, PLAYER_SIZE, PLAYER_SIZE };
+    rayRectangle player2 = { 250, 200, PLAYER_SIZE, PLAYER_SIZE };
 
     Camera2D camera1 = { 0 };
     camera1.target = (Vector2){ player1.x, player1.y };
@@ -50,8 +50,8 @@ int main(void)
     RenderTexture screenCamera1 = LoadRenderTexture(screenWidth/2, screenHeight);
     RenderTexture screenCamera2 = LoadRenderTexture(screenWidth/2, screenHeight);
 
-    // Build a flipped rectangle the size of the split view to use for drawing later
-    Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenCamera1.texture.width, (float)-screenCamera1.texture.height };
+    // Build a flipped rayRectangle the size of the split view to use for drawing later
+    rayRectangle splitScreenRect = { 0.0f, 0.0f, (float)screenCamera1.texture.width, (float)-screenCamera1.texture.height };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -101,11 +101,11 @@ int main(void)
                     }
                 }
 
-                DrawRectangleRec(player1, RED);
-                DrawRectangleRec(player2, BLUE);
+                DrawrayRectangleRec(player1, RED);
+                DrawrayRectangleRec(player2, BLUE);
             EndMode2D();
             
-            DrawRectangle(0, 0, GetScreenWidth()/2, 30, Fade(RAYWHITE, 0.6f));
+            DrawrayRectangle(0, 0, GetScreenWidth()/2, 30, Fade(RAYWHITE, 0.6f));
             DrawText("PLAYER1: W/S/A/D to move", 10, 10, 10, MAROON);
             
         EndTextureMode();
@@ -134,12 +134,12 @@ int main(void)
                     }
                 }
 
-                DrawRectangleRec(player1, RED);
-                DrawRectangleRec(player2, BLUE);
+                DrawrayRectangleRec(player1, RED);
+                DrawrayRectangleRec(player2, BLUE);
                 
             EndMode2D();
             
-            DrawRectangle(0, 0, GetScreenWidth()/2, 30, Fade(RAYWHITE, 0.6f));
+            DrawrayRectangle(0, 0, GetScreenWidth()/2, 30, Fade(RAYWHITE, 0.6f));
             DrawText("PLAYER2: UP/DOWN/LEFT/RIGHT to move", 10, 10, 10, DARKBLUE);
             
         EndTextureMode();
@@ -151,7 +151,7 @@ int main(void)
             DrawTextureRec(screenCamera1.texture, splitScreenRect, (Vector2){ 0, 0 }, WHITE);
             DrawTextureRec(screenCamera2.texture, splitScreenRect, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
             
-            DrawRectangle(GetScreenWidth()/2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
+            DrawrayRectangle(GetScreenWidth()/2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
         EndDrawing();
     }
 
@@ -160,7 +160,7 @@ int main(void)
     UnloadRenderTexture(screenCamera1); // Unload render texture
     UnloadRenderTexture(screenCamera2); // Unload render texture
 
-    CloseWindow();                      // Close window and OpenGL context
+    rayCloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

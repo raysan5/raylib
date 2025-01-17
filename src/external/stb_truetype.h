@@ -217,7 +217,7 @@
 //  Displaying a character:
 //    Compute the bounding box of the character. It will contain signed values
 //    relative to <current_point, baseline>. I.e. if it returns x0,y0,x1,y1,
-//    then the character should be displayed in the rectangle from
+//    then the character should be displayed in the rayRectangle from
 //    <current_point+SF*x0, baseline+SF*y0> to <current_point+SF*x1,baseline+SF*y1).
 //
 //  Advancing for the next character:
@@ -3187,7 +3187,7 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
 
                sign = e->direction;
 
-               // area of the rectangle covered from sy0..y_crossing
+               // area of the rayRectangle covered from sy0..y_crossing
                area = sign * (y_crossing-sy0);
 
                // area of the triangle (x_top,sy0), (x1+1,sy0), (x1+1,y_crossing)
@@ -3200,14 +3200,14 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
                }
 
                // in second pixel, area covered by line segment found in first pixel
-               // is always a rectangle 1 wide * the height of that line segment; this
+               // is always a rayRectangle 1 wide * the height of that line segment; this
                // is exactly what the variable 'area' stores. it also gets a contribution
                // from the line segment within it. the THIRD pixel will get the first
-               // pixel's rectangle contribution, the second pixel's rectangle contribution,
+               // pixel's rayRectangle contribution, the second pixel's rayRectangle contribution,
                // and its own contribution. the 'own contribution' is the same in every pixel except
                // the leftmost and rightmost, a trapezoid that slides down in each pixel.
                // the second pixel's contribution to the third pixel will be the
-               // rectangle 1 wide times the height change in the second pixel, which is dy.
+               // rayRectangle 1 wide times the height change in the second pixel, which is dy.
 
                step = sign * dy * 1; // dy is dy/dx, change in y for every 1 change in x,
                // which multiplied by 1-pixel-width is how much pixel area changes for each step in x
@@ -3220,7 +3220,7 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
                STBTT_assert(STBTT_fabs(area) <= 1.01f); // accumulated error from area += step unless we round step down
                STBTT_assert(sy1 > y_final-0.01f);
 
-               // area covered in the last pixel is the rectangle from all the pixels to the left,
+               // area covered in the last pixel is the rayRectangle from all the pixels to the left,
                // plus the trapezoid filled by the line segment in this pixel all the way to the right edge
                scanline[x2] += area + sign * stbtt__position_trapezoid_area(sy1-y_final, (float) x2, x2+1.0f, x_bottom, x2+1.0f);
 
@@ -3879,7 +3879,7 @@ STBTT_DEF void stbtt_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int p
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// rectangle packing replacement routines if you don't have stb_rect_pack.h
+// rayRectangle packing replacement routines if you don't have stb_rect_pack.h
 //
 
 #ifndef STB_RECT_PACK_VERSION

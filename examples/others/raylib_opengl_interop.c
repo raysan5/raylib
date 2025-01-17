@@ -120,7 +120,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(WHITE);
 
-            DrawRectangle(10, 10, 210, 30, MAROON);
+            DrawrayRectangle(10, 10, 210, 30, MAROON);
             DrawText(TextFormat("%zu particles in one vertex buffer", MAX_PARTICLES), 20, 20, 10, RAYWHITE);
             
             rlDrawRenderBatchActive();      // Draw iternal buffers data (previous draw calls)
@@ -159,7 +159,7 @@ int main(void)
 
     UnloadShader(shader);   // Unload shader
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

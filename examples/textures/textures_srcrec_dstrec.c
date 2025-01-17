@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Texture source and destination rectangles
+*   raylib [textures] example - Texture source and destination rayRectangles
 *
 *   Example originally created with raylib 1.3, last time updated with raylib 1.3
 *
@@ -23,7 +23,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rayRectangles");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
@@ -32,13 +32,13 @@ int main(void)
     int frameWidth = scarfy.width/6;
     int frameHeight = scarfy.height;
 
-    // Source rectangle (part of the texture to use for drawing)
-    Rectangle sourceRec = { 0.0f, 0.0f, (float)frameWidth, (float)frameHeight };
+    // Source rayRectangle (part of the texture to use for drawing)
+    rayRectangle sourceRec = { 0.0f, 0.0f, (float)frameWidth, (float)frameHeight };
 
-    // Destination rectangle (screen rectangle where drawing part of texture)
-    Rectangle destRec = { screenWidth/2.0f, screenHeight/2.0f, frameWidth*2.0f, frameHeight*2.0f };
+    // Destination rayRectangle (screen rayRectangle where drawing part of texture)
+    rayRectangle destRec = { screenWidth/2.0f, screenHeight/2.0f, frameWidth*2.0f, frameHeight*2.0f };
 
-    // Origin of the texture (rotation/scale point), it's relative to destination rectangle size
+    // Origin of the texture (rotation/scale point), it's relative to destination rayRectangle size
     Vector2 origin = { (float)frameWidth, (float)frameHeight };
 
     int rotation = 0;
@@ -62,7 +62,7 @@ int main(void)
 
             // NOTE: Using DrawTexturePro() we can easily rotate and scale the part of the texture we draw
             // sourceRec defines the part of the texture we use for drawing
-            // destRec defines the rectangle where our texture part will fit (scaling it to fit)
+            // destRec defines the rayRectangle where our texture part will fit (scaling it to fit)
             // origin defines the point of the texture used as reference for rotation and scaling
             // rotation defines the texture rotation (using origin as rotation point)
             DrawTexturePro(scarfy, sourceRec, destRec, origin, (float)rotation, WHITE);
@@ -80,7 +80,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadTexture(scarfy);        // Texture unloading
 
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

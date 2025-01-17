@@ -37,9 +37,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F90FCDC5-EE14-4B89-96DB-4392E28F34AF}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shapes_rectangle_scaling</RootNamespace>
+    <RootNamespace>shapes_rayRectangle_scaling</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shapes_rectangle_scaling</ProjectName>
+    <ProjectName>shapes_rayRectangle_scaling</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shapes\shapes_rectangle_scaling.c" />
+    <ClCompile Include="..\..\..\examples\shapes\shapes_rayRectangle_scaling.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - easings rectangle array
+*   raylib [shapes] example - easings rayRectangle array
 *
 *   NOTE: This example requires 'easings.h' library, provided on raylib/src. Just copy
 *   the library to same directory as example or make sure it's available on include path.
@@ -36,9 +36,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings rectangle array");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings rayRectangle array");
 
-    Rectangle recs[MAX_RECS_X*MAX_RECS_Y] = { 0 };
+    rayRectangle recs[MAX_RECS_X*MAX_RECS_Y] = { 0 };
 
     for (int y = 0; y < MAX_RECS_Y; y++)
     {
@@ -53,7 +53,7 @@ int main(void)
 
     float rotation = 0.0f;
     int framesCounter = 0;
-    int state = 0;                  // Rectangles animation state: 0-Playing, 1-Finished
+    int state = 0;                  // rayRectangles animation state: 0-Playing, 1-Finished
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ int main(void)
             {
                 for (int i = 0; i < MAX_RECS_X*MAX_RECS_Y; i++)
                 {
-                    DrawRectanglePro(recs[i], (Vector2){ recs[i].width/2, recs[i].height/2 }, rotation, RED);
+                    DrawrayRectanglePro(recs[i], (Vector2){ recs[i].width/2, recs[i].height/2 }, rotation, RED);
                 }
             }
             else if (state == 1) DrawText("PRESS [SPACE] TO PLAY AGAIN!", 240, 200, 20, GRAY);
@@ -116,7 +116,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

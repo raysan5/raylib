@@ -105,20 +105,20 @@ int main(void)
                 case STATE_WAITING: DrawText("PRESS ENTER to START LOADING DATA", 150, 170, 20, DARKGRAY); break;
                 case STATE_LOADING:
                 {
-                    DrawRectangle(150, 200, atomic_load_explicit(&dataProgress, memory_order_relaxed), 60, SKYBLUE);
+                    DrawrayRectangle(150, 200, atomic_load_explicit(&dataProgress, memory_order_relaxed), 60, SKYBLUE);
                     if ((framesCounter/15)%2) DrawText("LOADING DATA...", 240, 210, 40, DARKBLUE);
 
                 } break;
                 case STATE_FINISHED:
                 {
-                    DrawRectangle(150, 200, 500, 60, LIME);
+                    DrawrayRectangle(150, 200, 500, 60, LIME);
                     DrawText("DATA LOADED!", 250, 210, 40, GREEN);
 
                 } break;
                 default: break;
             }
 
-            DrawRectangleLines(150, 200, 500, 60, DARKGRAY);
+            DrawrayRectangleLines(150, 200, 500, 60, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

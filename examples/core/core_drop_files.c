@@ -79,8 +79,8 @@ int main(void)
 
                 for (int i = 0; i < filePathCounter; i++)
                 {
-                    if (i%2 == 0) DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
-                    else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
+                    if (i%2 == 0) DrawrayRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
+                    else DrawrayRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
 
                     DrawText(filePaths[i], 120, 100 + 40*i, 10, GRAY);
                 }
@@ -99,7 +99,7 @@ int main(void)
         RL_FREE(filePaths[i]); // Free allocated memory for all filepaths
     }
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

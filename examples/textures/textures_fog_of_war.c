@@ -105,8 +105,8 @@ int main(void)
             ClearBackground(BLANK);
             for (unsigned int y = 0; y < map.tilesY; y++)
                 for (unsigned int x = 0; x < map.tilesX; x++)
-                    if (map.tileFog[y*map.tilesX + x] == 0) DrawRectangle(x, y, 1, 1, BLACK);
-                    else if (map.tileFog[y*map.tilesX + x] == 2) DrawRectangle(x, y, 1, 1, Fade(BLACK, 0.8f));
+                    if (map.tileFog[y*map.tilesX + x] == 0) DrawrayRectangle(x, y, 1, 1, BLACK);
+                    else if (map.tileFog[y*map.tilesX + x] == 2) DrawrayRectangle(x, y, 1, 1, Fade(BLACK, 0.8f));
         EndTextureMode();
 
         BeginDrawing();
@@ -118,19 +118,19 @@ int main(void)
                 for (unsigned int x = 0; x < map.tilesX; x++)
                 {
                     // Draw tiles from id (and tile borders)
-                    DrawRectangle(x*MAP_TILE_SIZE, y*MAP_TILE_SIZE, MAP_TILE_SIZE, MAP_TILE_SIZE,
+                    DrawrayRectangle(x*MAP_TILE_SIZE, y*MAP_TILE_SIZE, MAP_TILE_SIZE, MAP_TILE_SIZE,
                                   (map.tileIds[y*map.tilesX + x] == 0)? BLUE : Fade(BLUE, 0.9f));
-                    DrawRectangleLines(x*MAP_TILE_SIZE, y*MAP_TILE_SIZE, MAP_TILE_SIZE, MAP_TILE_SIZE, Fade(DARKBLUE, 0.5f));
+                    DrawrayRectangleLines(x*MAP_TILE_SIZE, y*MAP_TILE_SIZE, MAP_TILE_SIZE, MAP_TILE_SIZE, Fade(DARKBLUE, 0.5f));
                 }
             }
 
             // Draw player
-            DrawRectangleV(playerPosition, (Vector2){ PLAYER_SIZE, PLAYER_SIZE }, RED);
+            DrawrayRectangleV(playerPosition, (Vector2){ PLAYER_SIZE, PLAYER_SIZE }, RED);
 
 
             // Draw fog of war (scaled to full map, bilinear filtering)
-            DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
-                           (Rectangle){ 0, 0, (float)map.tilesX*MAP_TILE_SIZE, (float)map.tilesY*MAP_TILE_SIZE },
+            DrawTexturePro(fogOfWar.texture, (rayRectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
+                           (rayRectangle){ 0, 0, (float)map.tilesX*MAP_TILE_SIZE, (float)map.tilesY*MAP_TILE_SIZE },
                            (Vector2){ 0, 0 }, 0.0f, WHITE);
 
             // Draw player current tile
@@ -148,7 +148,7 @@ int main(void)
 
     UnloadRenderTexture(fogOfWar);  // Unload render texture
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

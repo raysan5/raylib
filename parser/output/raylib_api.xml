@@ -17,7 +17,7 @@
         <Define name="RL_FREE(ptr)" type="MACRO" value="free(ptr)" desc="" />
         <Define name="CLITERAL(type)" type="MACRO" value="type" desc="" />
         <Define name="RL_COLOR_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_RECTANGLE_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_rayRectangle_TYPE" type="GUARD" value="" desc="" />
         <Define name="RL_VECTOR2_TYPE" type="GUARD" value="" desc="" />
         <Define name="RL_VECTOR3_TYPE" type="GUARD" value="" desc="" />
         <Define name="RL_VECTOR4_TYPE" type="GUARD" value="" desc="" />
@@ -98,11 +98,11 @@
             <Field type="unsigned char" name="b" desc="Color blue value" />
             <Field type="unsigned char" name="a" desc="Color alpha value" />
         </Struct>
-        <Struct name="Rectangle" fieldCount="4" desc="Rectangle, 4 components">
-            <Field type="float" name="x" desc="Rectangle top-left corner position x" />
-            <Field type="float" name="y" desc="Rectangle top-left corner position y" />
-            <Field type="float" name="width" desc="Rectangle width" />
-            <Field type="float" name="height" desc="Rectangle height" />
+        <Struct name="rayRectangle" fieldCount="4" desc="rayRectangle, 4 components">
+            <Field type="float" name="x" desc="rayRectangle top-left corner position x" />
+            <Field type="float" name="y" desc="rayRectangle top-left corner position y" />
+            <Field type="float" name="width" desc="rayRectangle width" />
+            <Field type="float" name="height" desc="rayRectangle height" />
         </Struct>
         <Struct name="Image" fieldCount="5" desc="Image, pixel data stored in CPU memory (RAM)">
             <Field type="void *" name="data" desc="Image raw data" />
@@ -124,7 +124,7 @@
             <Field type="Texture" name="depth" desc="Depth buffer attachment texture" />
         </Struct>
         <Struct name="NPatchInfo" fieldCount="6" desc="NPatchInfo, n-patch layout info">
-            <Field type="Rectangle" name="source" desc="Texture source rectangle" />
+            <Field type="rayRectangle" name="source" desc="Texture source rayRectangle" />
             <Field type="int" name="left" desc="Left border offset" />
             <Field type="int" name="top" desc="Top border offset" />
             <Field type="int" name="right" desc="Right border offset" />
@@ -143,7 +143,7 @@
             <Field type="int" name="glyphCount" desc="Number of glyph characters" />
             <Field type="int" name="glyphPadding" desc="Padding around the glyph characters" />
             <Field type="Texture2D" name="texture" desc="Texture atlas containing the glyphs" />
-            <Field type="Rectangle *" name="recs" desc="Rectangles in texture for the glyphs" />
+            <Field type="rayRectangle *" name="recs" desc="rayRectangles in texture for the glyphs" />
             <Field type="GlyphInfo *" name="glyphs" desc="Glyphs info data" />
         </Struct>
         <Struct name="Camera3D" fieldCount="5" desc="Camera, defines position/orientation in 3d space">
@@ -668,7 +668,7 @@
         </Function>
         <Function name="WindowShouldClose" retType="bool" paramCount="0" desc="Check if KEY_ESCAPE pressed or Close icon pressed">
         </Function>
-        <Function name="CloseWindow" retType="void" paramCount="0" desc="Close window and unload OpenGL context">
+        <Function name="rayCloseWindow" retType="void" paramCount="0" desc="Close window and unload OpenGL context">
         </Function>
         <Function name="IsWindowReady" retType="bool" paramCount="0" desc="Check if window has been initialized successfully">
         </Function>
@@ -792,7 +792,7 @@
         <Function name="WaitTime" retType="void" paramCount="1" desc="Wait for some time (halt program execution)">
             <Param type="double" name="seconds" desc="" />
         </Function>
-        <Function name="ShowCursor" retType="void" paramCount="0" desc="Shows cursor">
+        <Function name="rayShowCursor" retType="void" paramCount="0" desc="Shows cursor">
         </Function>
         <Function name="HideCursor" retType="void" paramCount="0" desc="Hides cursor">
         </Function>
@@ -1226,9 +1226,9 @@
             <Param type="Vector3" name="rotation" desc="" />
             <Param type="float" name="zoom" desc="" />
         </Function>
-        <Function name="SetShapesTexture" retType="void" paramCount="2" desc="Set texture and rectangle to be used on shapes drawing">
+        <Function name="SetShapesTexture" retType="void" paramCount="2" desc="Set texture and rayRectangle to be used on shapes drawing">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="rayRectangle" name="source" desc="" />
         </Function>
         <Function name="DrawPixel" retType="void" paramCount="3" desc="Draw a pixel">
             <Param type="int" name="posX" desc="" />
@@ -1367,29 +1367,29 @@
             <Param type="int" name="segments" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangle" retType="void" paramCount="5" desc="Draw a color-filled rectangle">
+        <Function name="DrawrayRectangle" retType="void" paramCount="5" desc="Draw a color-filled rayRectangle">
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleV" retType="void" paramCount="3" desc="Draw a color-filled rectangle (Vector version)">
+        <Function name="DrawrayRectangleV" retType="void" paramCount="3" desc="Draw a color-filled rayRectangle (Vector version)">
             <Param type="Vector2" name="position" desc="" />
             <Param type="Vector2" name="size" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleRec" retType="void" paramCount="2" desc="Draw a color-filled rectangle">
-            <Param type="Rectangle" name="rec" desc="" />
+        <Function name="DrawrayRectangleRec" retType="void" paramCount="2" desc="Draw a color-filled rayRectangle">
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectanglePro" retType="void" paramCount="4" desc="Draw a color-filled rectangle with pro parameters">
-            <Param type="Rectangle" name="rec" desc="" />
+        <Function name="DrawrayRectanglePro" retType="void" paramCount="4" desc="Draw a color-filled rayRectangle with pro parameters">
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleGradientV" retType="void" paramCount="6" desc="Draw a vertical-gradient-filled rectangle">
+        <Function name="DrawrayRectangleGradientV" retType="void" paramCount="6" desc="Draw a vertical-gradient-filled rayRectangle">
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
             <Param type="int" name="width" desc="" />
@@ -1397,7 +1397,7 @@
             <Param type="Color" name="color1" desc="" />
             <Param type="Color" name="color2" desc="" />
         </Function>
-        <Function name="DrawRectangleGradientH" retType="void" paramCount="6" desc="Draw a horizontal-gradient-filled rectangle">
+        <Function name="DrawrayRectangleGradientH" retType="void" paramCount="6" desc="Draw a horizontal-gradient-filled rayRectangle">
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
             <Param type="int" name="width" desc="" />
@@ -1405,33 +1405,33 @@
             <Param type="Color" name="color1" desc="" />
             <Param type="Color" name="color2" desc="" />
         </Function>
-        <Function name="DrawRectangleGradientEx" retType="void" paramCount="5" desc="Draw a gradient-filled rectangle with custom vertex colors">
-            <Param type="Rectangle" name="rec" desc="" />
+        <Function name="DrawrayRectangleGradientEx" retType="void" paramCount="5" desc="Draw a gradient-filled rayRectangle with custom vertex colors">
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="Color" name="col1" desc="" />
             <Param type="Color" name="col2" desc="" />
             <Param type="Color" name="col3" desc="" />
             <Param type="Color" name="col4" desc="" />
         </Function>
-        <Function name="DrawRectangleLines" retType="void" paramCount="5" desc="Draw rectangle outline">
+        <Function name="DrawrayRectangleLines" retType="void" paramCount="5" desc="Draw rayRectangle outline">
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleLinesEx" retType="void" paramCount="3" desc="Draw rectangle outline with extended parameters">
-            <Param type="Rectangle" name="rec" desc="" />
+        <Function name="DrawrayRectangleLinesEx" retType="void" paramCount="3" desc="Draw rayRectangle outline with extended parameters">
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="float" name="lineThick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleRounded" retType="void" paramCount="4" desc="Draw rectangle with rounded edges">
-            <Param type="Rectangle" name="rec" desc="" />
+        <Function name="DrawrayRectangleRounded" retType="void" paramCount="4" desc="Draw rayRectangle with rounded edges">
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="float" name="roundness" desc="" />
             <Param type="int" name="segments" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="5" desc="Draw rectangle with rounded edges outline">
-            <Param type="Rectangle" name="rec" desc="" />
+        <Function name="DrawrayRectangleRoundedLines" retType="void" paramCount="5" desc="Draw rayRectangle with rounded edges outline">
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="float" name="roundness" desc="" />
             <Param type="int" name="segments" desc="" />
             <Param type="float" name="lineThick" desc="" />
@@ -1481,9 +1481,9 @@
             <Param type="float" name="lineThick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="CheckCollisionRecs" retType="bool" paramCount="2" desc="Check collision between two rectangles">
-            <Param type="Rectangle" name="rec1" desc="" />
-            <Param type="Rectangle" name="rec2" desc="" />
+        <Function name="CheckCollisionRecs" retType="bool" paramCount="2" desc="Check collision between two rayRectangles">
+            <Param type="rayRectangle" name="rec1" desc="" />
+            <Param type="rayRectangle" name="rec2" desc="" />
         </Function>
         <Function name="CheckCollisionCircles" retType="bool" paramCount="4" desc="Check collision between two circles">
             <Param type="Vector2" name="center1" desc="" />
@@ -1491,14 +1491,14 @@
             <Param type="Vector2" name="center2" desc="" />
             <Param type="float" name="radius2" desc="" />
         </Function>
-        <Function name="CheckCollisionCircleRec" retType="bool" paramCount="3" desc="Check collision between circle and rectangle">
+        <Function name="CheckCollisionCircleRec" retType="bool" paramCount="3" desc="Check collision between circle and rayRectangle">
             <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="radius" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="rayRectangle" name="rec" desc="" />
         </Function>
-        <Function name="CheckCollisionPointRec" retType="bool" paramCount="2" desc="Check if point is inside rectangle">
+        <Function name="CheckCollisionPointRec" retType="bool" paramCount="2" desc="Check if point is inside rayRectangle">
             <Param type="Vector2" name="point" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="rayRectangle" name="rec" desc="" />
         </Function>
         <Function name="CheckCollisionPointCircle" retType="bool" paramCount="3" desc="Check if point is inside circle">
             <Param type="Vector2" name="point" desc="" />
@@ -1529,9 +1529,9 @@
             <Param type="Vector2" name="p2" desc="" />
             <Param type="int" name="threshold" desc="" />
         </Function>
-        <Function name="GetCollisionRec" retType="Rectangle" paramCount="2" desc="Get collision rectangle for two rectangles collision">
-            <Param type="Rectangle" name="rec1" desc="" />
-            <Param type="Rectangle" name="rec2" desc="" />
+        <Function name="GetCollisionRec" retType="rayRectangle" paramCount="2" desc="Get collision rayRectangle for two rayRectangles collision">
+            <Param type="rayRectangle" name="rec1" desc="" />
+            <Param type="rayRectangle" name="rec2" desc="" />
         </Function>
         <Function name="LoadImage" retType="Image" paramCount="1" desc="Load image from file into CPU memory (RAM)">
             <Param type="const char *" name="fileName" desc="" />
@@ -1642,7 +1642,7 @@
         </Function>
         <Function name="ImageFromImage" retType="Image" paramCount="2" desc="Create an image from another image piece">
             <Param type="Image" name="image" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="rayRectangle" name="rec" desc="" />
         </Function>
         <Function name="ImageText" retType="Image" paramCount="3" desc="Create an image from text (default font)">
             <Param type="const char *" name="text" desc="" />
@@ -1664,9 +1664,9 @@
             <Param type="Image *" name="image" desc="" />
             <Param type="Color" name="fill" desc="" />
         </Function>
-        <Function name="ImageCrop" retType="void" paramCount="2" desc="Crop an image to a defined rectangle">
+        <Function name="ImageCrop" retType="void" paramCount="2" desc="Crop an image to a defined rayRectangle">
             <Param type="Image *" name="image" desc="" />
-            <Param type="Rectangle" name="crop" desc="" />
+            <Param type="rayRectangle" name="crop" desc="" />
         </Function>
         <Function name="ImageAlphaCrop" retType="void" paramCount="2" desc="Crop image depending on alpha value">
             <Param type="Image *" name="image" desc="" />
@@ -1769,7 +1769,7 @@
         <Function name="UnloadImagePalette" retType="void" paramCount="1" desc="Unload colors palette loaded with LoadImagePalette()">
             <Param type="Color *" name="colors" desc="" />
         </Function>
-        <Function name="GetImageAlphaBorder" retType="Rectangle" paramCount="2" desc="Get image alpha border rectangle">
+        <Function name="GetImageAlphaBorder" retType="rayRectangle" paramCount="2" desc="Get image alpha border rayRectangle">
             <Param type="Image" name="image" desc="" />
             <Param type="float" name="threshold" desc="" />
         </Function>
@@ -1833,7 +1833,7 @@
             <Param type="int" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawRectangle" retType="void" paramCount="6" desc="Draw rectangle within an image">
+        <Function name="ImageDrawrayRectangle" retType="void" paramCount="6" desc="Draw rayRectangle within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="int" name="posX" desc="" />
             <Param type="int" name="posY" desc="" />
@@ -1841,28 +1841,28 @@
             <Param type="int" name="height" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawRectangleV" retType="void" paramCount="4" desc="Draw rectangle within an image (Vector version)">
+        <Function name="ImageDrawrayRectangleV" retType="void" paramCount="4" desc="Draw rayRectangle within an image (Vector version)">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="Vector2" name="size" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawRectangleRec" retType="void" paramCount="3" desc="Draw rectangle within an image">
+        <Function name="ImageDrawrayRectangleRec" retType="void" paramCount="3" desc="Draw rayRectangle within an image">
             <Param type="Image *" name="dst" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawRectangleLines" retType="void" paramCount="4" desc="Draw rectangle lines within an image">
+        <Function name="ImageDrawrayRectangleLines" retType="void" paramCount="4" desc="Draw rayRectangle lines within an image">
             <Param type="Image *" name="dst" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="int" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ImageDraw" retType="void" paramCount="5" desc="Draw a source image within a destination image (tint applied to source)">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Image" name="src" desc="" />
-            <Param type="Rectangle" name="srcRec" desc="" />
-            <Param type="Rectangle" name="dstRec" desc="" />
+            <Param type="rayRectangle" name="srcRec" desc="" />
+            <Param type="rayRectangle" name="dstRec" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="ImageDrawText" retType="void" paramCount="6" desc="Draw text (using default font) within an image (destination)">
@@ -1912,9 +1912,9 @@
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="const void *" name="pixels" desc="" />
         </Function>
-        <Function name="UpdateTextureRec" retType="void" paramCount="3" desc="Update GPU texture rectangle with new data">
+        <Function name="UpdateTextureRec" retType="void" paramCount="3" desc="Update GPU texture rayRectangle with new data">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="rayRectangle" name="rec" desc="" />
             <Param type="const void *" name="pixels" desc="" />
         </Function>
         <Function name="GenTextureMipmaps" retType="void" paramCount="1" desc="Generate GPU mipmaps for a texture">
@@ -1946,16 +1946,16 @@
             <Param type="float" name="scale" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTextureRec" retType="void" paramCount="4" desc="Draw a part of a texture defined by a rectangle">
+        <Function name="DrawTextureRec" retType="void" paramCount="4" desc="Draw a part of a texture defined by a rayRectangle">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="rayRectangle" name="source" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTexturePro" retType="void" paramCount="6" desc="Draw a part of a texture defined by a rectangle with 'pro' parameters">
+        <Function name="DrawTexturePro" retType="void" paramCount="6" desc="Draw a part of a texture defined by a rayRectangle with 'pro' parameters">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
-            <Param type="Rectangle" name="dest" desc="" />
+            <Param type="rayRectangle" name="source" desc="" />
+            <Param type="rayRectangle" name="dest" desc="" />
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
@@ -1963,7 +1963,7 @@
         <Function name="DrawTextureNPatch" retType="void" paramCount="6" desc="Draws a texture (or part of it) that stretches or shrinks nicely">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="NPatchInfo" name="nPatchInfo" desc="" />
-            <Param type="Rectangle" name="dest" desc="" />
+            <Param type="rayRectangle" name="dest" desc="" />
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
@@ -2064,7 +2064,7 @@
         </Function>
         <Function name="GenImageFontAtlas" retType="Image" paramCount="6" desc="Generate image font atlas using chars info">
             <Param type="const GlyphInfo *" name="glyphs" desc="" />
-            <Param type="Rectangle **" name="glyphRecs" desc="" />
+            <Param type="rayRectangle **" name="glyphRecs" desc="" />
             <Param type="int" name="glyphCount" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int" name="padding" desc="" />
@@ -2147,7 +2147,7 @@
             <Param type="Font" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
         </Function>
-        <Function name="GetGlyphAtlasRec" retType="Rectangle" paramCount="2" desc="Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
+        <Function name="GetGlyphAtlasRec" retType="rayRectangle" paramCount="2" desc="Get glyph rayRectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
             <Param type="Font" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
         </Function>
@@ -2433,7 +2433,7 @@
         <Function name="DrawBillboardRec" retType="void" paramCount="6" desc="Draw a billboard texture defined by source">
             <Param type="Camera" name="camera" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="rayRectangle" name="source" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector2" name="size" desc="" />
             <Param type="Color" name="tint" desc="" />
@@ -2441,7 +2441,7 @@
         <Function name="DrawBillboardPro" retType="void" paramCount="9" desc="Draw a billboard texture defined by source and rotation">
             <Param type="Camera" name="camera" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="rayRectangle" name="source" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector3" name="up" desc="" />
             <Param type="Vector2" name="size" desc="" />

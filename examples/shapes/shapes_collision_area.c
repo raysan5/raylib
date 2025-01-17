@@ -28,13 +28,13 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - collision area");
 
     // Box A: Moving box
-    Rectangle boxA = { 10, GetScreenHeight()/2.0f - 50, 200, 100 };
+    rayRectangle boxA = { 10, GetScreenHeight()/2.0f - 50, 200, 100 };
     int boxASpeedX = 4;
 
     // Box B: Mouse moved box
-    Rectangle boxB = { GetScreenWidth()/2.0f - 30, GetScreenHeight()/2.0f - 30, 60, 60 };
+    rayRectangle boxB = { GetScreenWidth()/2.0f - 30, GetScreenHeight()/2.0f - 30, 60, 60 };
 
-    Rectangle boxCollision = { 0 }; // Collision rectangle
+    rayRectangle boxCollision = { 0 }; // Collision rayRectangle
 
     int screenUpperLimit = 40;      // Top menu limits
 
@@ -69,7 +69,7 @@ int main(void)
         // Check boxes collision
         collision = CheckCollisionRecs(boxA, boxB);
 
-        // Get collision rectangle (only on collision)
+        // Get collision rayRectangle (only on collision)
         if (collision) boxCollision = GetCollisionRec(boxA, boxB);
 
         // Pause Box A movement
@@ -82,15 +82,15 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawRectangle(0, 0, screenWidth, screenUpperLimit, collision? RED : BLACK);
+            DrawrayRectangle(0, 0, screenWidth, screenUpperLimit, collision? RED : BLACK);
 
-            DrawRectangleRec(boxA, GOLD);
-            DrawRectangleRec(boxB, BLUE);
+            DrawrayRectangleRec(boxA, GOLD);
+            DrawrayRectangleRec(boxB, BLUE);
 
             if (collision)
             {
                 // Draw collision area
-                DrawRectangleRec(boxCollision, LIME);
+                DrawrayRectangleRec(boxCollision, LIME);
 
                 // Draw collision message
                 DrawText("COLLISION!", GetScreenWidth()/2 - MeasureText("COLLISION!", 20)/2, screenUpperLimit/2 - 10, 20, BLACK);
@@ -110,7 +110,7 @@ int main(void)
 
     // De-Initialization
     //---------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //----------------------------------------------------------
 
     return 0;

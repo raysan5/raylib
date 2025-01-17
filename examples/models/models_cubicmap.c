@@ -71,7 +71,7 @@ int main(void)
             EndMode3D();
 
             DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
-            DrawRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
+            DrawrayRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
 
             DrawText("cubicmap image used to", 658, 90, 10, GRAY);
             DrawText("generate map 3d model", 658, 104, 10, GRAY);
@@ -88,7 +88,7 @@ int main(void)
     UnloadTexture(texture);     // Unload map texture
     UnloadModel(model);         // Unload map model
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

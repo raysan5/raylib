@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Rectangle bounds
+*   raylib [text] example - rayRectangle bounds
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
@@ -15,8 +15,8 @@
 
 #include "raylib.h"
 
-static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
+static void DrawTextBoxed(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rayRectangle limits
+static void DrawTextBoxedSelectable(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rayRectangle limits with support for text selection
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - draw text inside a rectangle");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - draw text inside a rayRectangle");
 
     const char text[] = "Text cannot escape\tthis container\t...word wrap also works when active so here's \
 a long text for testing.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
@@ -37,10 +37,10 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
     bool resizing = false;
     bool wordWrap = true;
 
-    Rectangle container = { 25.0f, 25.0f, screenWidth - 50.0f, screenHeight - 250.0f };
-    Rectangle resizer = { container.x + container.width - 17, container.y + container.height - 17, 14, 14 };
+    rayRectangle container = { 25.0f, 25.0f, screenWidth - 50.0f, screenHeight - 250.0f };
+    rayRectangle resizer = { container.x + container.width - 17, container.y + container.height - 17, 14, 14 };
 
-    // Minimum width and heigh for the container rectangle
+    // Minimum width and heigh for the container rayRectangle
     const float minWidth = 60;
     const float minHeight = 60;
     const float maxWidth = screenWidth - 50.0f;
@@ -83,7 +83,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouse, resizer)) resizing = true;
         }
 
-        // Move resizer rectangle properly
+        // Move resizer rayRectangle properly
         resizer.x = container.x + container.width - 17;
         resizer.y = container.y + container.height - 17;
 
@@ -96,16 +96,16 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 
             ClearBackground(RAYWHITE);
 
-            DrawRectangleLinesEx(container, 3, borderColor);    // Draw container border
+            DrawrayRectangleLinesEx(container, 3, borderColor);    // Draw container border
 
             // Draw text in container (add some padding)
-            DrawTextBoxed(font, text, (Rectangle){ container.x + 4, container.y + 4, container.width - 4, container.height - 4 }, 20.0f, 2.0f, wordWrap, GRAY);
+            DrawTextBoxed(font, text, (rayRectangle){ container.x + 4, container.y + 4, container.width - 4, container.height - 4 }, 20.0f, 2.0f, wordWrap, GRAY);
 
-            DrawRectangleRec(resizer, borderColor);             // Draw the resize box
+            DrawrayRectangleRec(resizer, borderColor);             // Draw the resize box
 
             // Draw bottom info
-            DrawRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
-            DrawRectangleRec((Rectangle){ 382.0f, screenHeight - 34.0f, 12.0f, 12.0f }, MAROON);
+            DrawrayRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
+            DrawrayRectangleRec((rayRectangle){ 382.0f, screenHeight - 34.0f, 12.0f, 12.0f }, MAROON);
 
             DrawText("Word Wrap: ", 313, screenHeight-115, 20, BLACK);
             if (wordWrap) DrawText("ON", 447, screenHeight - 115, 20, RED);
@@ -121,7 +121,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
@@ -131,21 +131,21 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 // Module functions definition
 //--------------------------------------------------------------------------------------
 
-// Draw text using font inside rectangle limits
-static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
+// Draw text using font inside rayRectangle limits
+static void DrawTextBoxed(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
 {
     DrawTextBoxedSelectable(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
 }
 
-// Draw text using font inside rectangle limits with support for text selection
-static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
+// Draw text using font inside rayRectangle limits with support for text selection
+static void DrawTextBoxedSelectable(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
     int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
     float textOffsetY = 0;          // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
 
-    float scaleFactor = fontSize/(float)font.baseSize;     // Character rectangle scaling factor
+    float scaleFactor = fontSize/(float)font.baseSize;     // Character rayRectangle scaling factor
 
     // Word/character wrapping mechanism variables
     enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
@@ -231,14 +231,14 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
                     textOffsetX = 0;
                 }
 
-                // When text overflows rectangle height limit, just stop drawing
+                // When text overflows rayRectangle height limit, just stop drawing
                 if ((textOffsetY + font.baseSize*scaleFactor) > rec.height) break;
 
                 // Draw selection background
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (float)font.baseSize*scaleFactor }, selectBackTint);
+                    DrawrayRectangleRec((rayRectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (float)font.baseSize*scaleFactor }, selectBackTint);
                     isGlyphSelected = true;
                 }
 

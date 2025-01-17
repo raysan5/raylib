@@ -374,16 +374,16 @@ SHAPES = \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
+    shapes/shapes_draw_rayRectangle_rounded \
     shapes/shapes_draw_ring \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
-    shapes/shapes_easings_rectangle_array \
+    shapes/shapes_easings_rayRectangle_array \
     shapes/shapes_following_eyes \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
-    shapes/shapes_rectangle_scaling \
+    shapes/shapes_rayRectangle_scaling \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -424,7 +424,7 @@ TEXT = \
     text/text_format_text \
     text/text_input_box \
     text/text_raylib_fonts \
-    text/text_rectangle_bounds \
+    text/text_rayRectangle_bounds \
     text/text_unicode \
     text/text_writing_anim
 
@@ -630,7 +630,7 @@ shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
 shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
+shapes/shapes_draw_rayRectangle_rounded: shapes/shapes_draw_rayRectangle_rounded.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
     
 shapes/shapes_draw_ring: shapes/shapes_draw_ring.c
@@ -642,7 +642,7 @@ shapes/shapes_easings_ball_anim: shapes/shapes_easings_ball_anim.c
 shapes/shapes_easings_box_anim: shapes/shapes_easings_box_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_easings_rectangle_array: shapes/shapes_easings_rectangle_array.c
+shapes/shapes_easings_rayRectangle_array: shapes/shapes_easings_rayRectangle_array.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
@@ -657,7 +657,7 @@ shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
+shapes/shapes_rayRectangle_scaling: shapes/shapes_rayRectangle_scaling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
@@ -821,7 +821,7 @@ text/text_raylib_fonts: text/text_raylib_fonts.c
     --preload-file text/resources/fonts/alpha_beta.png@resources/fonts/alpha_beta.png \
     --preload-file text/resources/fonts/jupiter_crash.png@resources/fonts/jupiter_crash.png
 
-text/text_rectangle_bounds: text/text_rectangle_bounds.c
+text/text_rayRectangle_bounds: text/text_rayRectangle_bounds.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_unicode: text/text_unicode.c

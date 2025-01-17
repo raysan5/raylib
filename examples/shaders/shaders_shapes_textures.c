@@ -76,9 +76,9 @@ int main(void)
 
                 DrawText("USING CUSTOM SHADER", 190, 40, 10, RED);
 
-                DrawRectangle(250 - 60, 90, 120, 60, RED);
-                DrawRectangleGradientH(250 - 90, 170, 180, 130, MAROON, GOLD);
-                DrawRectangleLines(250 - 40, 320, 80, 60, ORANGE);
+                DrawrayRectangle(250 - 60, 90, 120, 60, RED);
+                DrawrayRectangleGradientH(250 - 90, 170, 180, 130, MAROON, GOLD);
+                DrawrayRectangleLines(250 - 40, 320, 80, 60, ORANGE);
 
             // Activate our default shader for next drawings
             EndShaderMode();
@@ -114,7 +114,7 @@ int main(void)
     UnloadShader(shader);       // Unload shader
     UnloadTexture(fudesumi);    // Unload texture
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -102,7 +102,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 static void DrawGrid(int slices, float spacing);
 static void DrawCube(Vector3 position, float width, float height, float length, Color color);
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
-static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+static void DrawrayRectangleV(Vector2 position, Vector2 size, Color color);
 
 // NOTE: We use raymath to get this functionality but it could be implemented in this module
 //static Matrix MatrixIdentity(void);
@@ -233,7 +233,7 @@ int main(void)
             rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
             rlLoadIdentity();                                       // Reset internal modelview matrix
 #endif
-            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
+            DrawrayRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
 
             // Draw internal render batch buffers (2D data)
             rlDrawRenderBatchActive();
@@ -274,8 +274,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     }
 }
 
-// Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
-static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
+// Draw rayRectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
+static void DrawrayRectangleV(Vector2 position, Vector2 size, Color color)
 {
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);

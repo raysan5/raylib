@@ -37,9 +37,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1EDD4BCF-345C-4065-8CBD-7285224293C3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shapes_easings_rectangle_array</RootNamespace>
+    <RootNamespace>shapes_easings_rayRectangle_array</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shapes_easings_rectangle_array</ProjectName>
+    <ProjectName>shapes_easings_rayRectangle_array</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shapes\shapes_easings_rectangle_array.c" />
+    <ClCompile Include="..\..\..\examples\shapes\shapes_easings_rayRectangle_array.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

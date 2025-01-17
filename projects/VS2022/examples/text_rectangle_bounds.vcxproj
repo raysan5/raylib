@@ -37,9 +37,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{25BCB876-B60A-499B-9046-E9801CFD7780}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>text_rectangle_bounds</RootNamespace>
+    <RootNamespace>text_rayRectangle_bounds</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>text_rectangle_bounds</ProjectName>
+    <ProjectName>text_rayRectangle_bounds</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\text\text_rectangle_bounds.c" />
+    <ClCompile Include="..\..\..\examples\text\text_rayRectangle_bounds.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

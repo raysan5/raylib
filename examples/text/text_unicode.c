@@ -135,8 +135,8 @@ struct {
 //--------------------------------------------------------------------------------------
 static void RandomizeEmoji(void);    // Fills the emoji array with random emojis
 
-static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
+static void DrawTextBoxed(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rayRectangle limits
+static void DrawTextBoxedSelectable(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rayRectangle limits with support for text selection
 
 //--------------------------------------------------------------------------------------
 // Global variables
@@ -210,7 +210,7 @@ int main(void)
             for (int i = 0; i < SIZEOF(emoji); ++i)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
-                Rectangle emojiRect = { position.x, position.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
+                rayRectangle emojiRect = { position.x, position.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
 
                 if (!CheckCollisionPointRec(mouse, emojiRect))
                 {
@@ -246,7 +246,7 @@ int main(void)
                 if (sz.x > 300) { sz.y *= sz.x/300; sz.x = 300; }
                 else if (sz.x < 160) sz.x = 160;
 
-                Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y };
+                rayRectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y };
                 msgRect.y -= msgRect.height;
 
                 // Coordinates for the chat bubble triangle
@@ -270,11 +270,11 @@ int main(void)
                 if (msgRect.x + msgRect.width > screenWidth) msgRect.x -= (msgRect.x + msgRect.width) - screenWidth + 10;
 
                 // Draw chat bubble
-                DrawRectangleRec(msgRect, emoji[selected].color);
+                DrawrayRectangleRec(msgRect, emoji[selected].color);
                 DrawTriangle(a, b, c, emoji[selected].color);
 
                 // Draw the main text message
-                Rectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
+                rayRectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
                 DrawTextBoxed(*font, messages[message].text, textRect, (float)font->baseSize, 1.0f, true, WHITE);
 
                 // Draw the info text below the main message
@@ -301,7 +301,7 @@ int main(void)
     UnloadFont(fontAsian);      // Unload font resource
     UnloadFont(fontEmoji);      // Unload font resource
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
@@ -330,21 +330,21 @@ static void RandomizeEmoji(void)
 // Module functions definition
 //--------------------------------------------------------------------------------------
 
-// Draw text using font inside rectangle limits
-static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
+// Draw text using font inside rayRectangle limits
+static void DrawTextBoxed(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
 {
     DrawTextBoxedSelectable(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
 }
 
-// Draw text using font inside rectangle limits with support for text selection
-static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
+// Draw text using font inside rayRectangle limits with support for text selection
+static void DrawTextBoxedSelectable(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
     int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
     float textOffsetY = 0.0f;       // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
 
-    float scaleFactor = fontSize/(float)font.baseSize;     // Character rectangle scaling factor
+    float scaleFactor = fontSize/(float)font.baseSize;     // Character rayRectangle scaling factor
 
     // Word/character wrapping mechanism variables
     enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
@@ -430,14 +430,14 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
                     textOffsetX = 0;
                 }
 
-                // When text overflows rectangle height limit, just stop drawing
+                // When text overflows rayRectangle height limit, just stop drawing
                 if ((textOffsetY + font.baseSize*scaleFactor) > rec.height) break;
 
                 // Draw selection background
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (float)font.baseSize*scaleFactor }, selectBackTint);
+                    DrawrayRectangleRec((rayRectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (float)font.baseSize*scaleFactor }, selectBackTint);
                     isGlyphSelected = true;
                 }
 

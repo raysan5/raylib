@@ -27,8 +27,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera");
 
-    Rectangle player = { 400, 280, 40, 40 };
-    Rectangle buildings[MAX_BUILDINGS] = { 0 };
+    rayRectangle player = { 400, 280, 40, 40 };
+    rayRectangle buildings[MAX_BUILDINGS] = { 0 };
     Color buildColors[MAX_BUILDINGS] = { 0 };
 
     int spacing = 0;
@@ -96,11 +96,11 @@ int main(void)
 
             BeginMode2D(camera);
 
-                DrawRectangle(-6000, 320, 13000, 8000, DARKGRAY);
+                DrawrayRectangle(-6000, 320, 13000, 8000, DARKGRAY);
 
-                for (int i = 0; i < MAX_BUILDINGS; i++) DrawRectangleRec(buildings[i], buildColors[i]);
+                for (int i = 0; i < MAX_BUILDINGS; i++) DrawrayRectangleRec(buildings[i], buildColors[i]);
 
-                DrawRectangleRec(player, RED);
+                DrawrayRectangleRec(player, RED);
 
                 DrawLine((int)camera.target.x, -screenHeight*10, (int)camera.target.x, screenHeight*10, GREEN);
                 DrawLine(-screenWidth*10, (int)camera.target.y, screenWidth*10, (int)camera.target.y, GREEN);
@@ -109,13 +109,13 @@ int main(void)
 
             DrawText("SCREEN AREA", 640, 10, 20, RED);
 
-            DrawRectangle(0, 0, screenWidth, 5, RED);
-            DrawRectangle(0, 5, 5, screenHeight - 10, RED);
-            DrawRectangle(screenWidth - 5, 5, 5, screenHeight - 10, RED);
-            DrawRectangle(0, screenHeight - 5, screenWidth, 5, RED);
+            DrawrayRectangle(0, 0, screenWidth, 5, RED);
+            DrawrayRectangle(0, 5, 5, screenHeight - 10, RED);
+            DrawrayRectangle(screenWidth - 5, 5, 5, screenHeight - 10, RED);
+            DrawrayRectangle(0, screenHeight - 5, screenWidth, 5, RED);
 
-            DrawRectangle( 10, 10, 250, 113, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines( 10, 10, 250, 113, BLUE);
+            DrawrayRectangle( 10, 10, 250, 113, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines( 10, 10, 250, 113, BLUE);
 
             DrawText("Free 2d camera controls:", 20, 20, 10, BLACK);
             DrawText("- Right/Left to move Offset", 40, 40, 10, DARKGRAY);
@@ -129,7 +129,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

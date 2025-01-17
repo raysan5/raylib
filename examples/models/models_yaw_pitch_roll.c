@@ -99,8 +99,8 @@ int main(void)
             EndMode3D();
 
             // Draw controls info
-            DrawRectangle(30, 370, 260, 70, Fade(GREEN, 0.5f));
-            DrawRectangleLines(30, 370, 260, 70, Fade(DARKGREEN, 0.5f));
+            DrawrayRectangle(30, 370, 260, 70, Fade(GREEN, 0.5f));
+            DrawrayRectangleLines(30, 370, 260, 70, Fade(DARKGREEN, 0.5f));
             DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, 380, 10, DARKGRAY);
             DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, 400, 10, DARKGRAY);
             DrawText("Yaw controlled with: KEY_A / KEY_S", 40, 420, 10, DARKGRAY);
@@ -115,7 +115,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModel(model);     // Unload model data
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

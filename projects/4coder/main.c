@@ -33,6 +33,6 @@ int main() {
         EndDrawing();
     }
     
-    CloseWindow();
+    rayCloseWindow();
     return 0;
 }

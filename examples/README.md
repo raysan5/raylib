@@ -67,16 +67,16 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | 33 | [shapes_colors_palette](shapes/shapes_colors_palette.c) | <img src="shapes/shapes_colors_palette.png" alt="shapes_colors_palette" width="80"> | ⭐️⭐️☆☆ | 1.0 | 2.5 | [Ray](https://github.com/raysan5) |
 | 34 | [shapes_logo_raylib](shapes/shapes_logo_raylib.c) | <img src="shapes/shapes_logo_raylib.png" alt="shapes_logo_raylib" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
 | 35 | [shapes_logo_raylib_anim](shapes/shapes_logo_raylib_anim.c) | <img src="shapes/shapes_logo_raylib_anim.png" alt="shapes_logo_raylib_anim" width="80"> | ⭐️⭐️☆☆ | 2.5 | **4.0** | [Ray](https://github.com/raysan5) |
-| 36 | [shapes_rectangle_scaling](shapes/shapes_rectangle_scaling.c) | <img src="shapes/shapes_rectangle_scaling.png" alt="shapes_rectangle_scaling" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
+| 36 | [shapes_rayRectangle_scaling](shapes/shapes_rayRectangle_scaling.c) | <img src="shapes/shapes_rayRectangle_scaling.png" alt="shapes_rayRectangle_scaling" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | 37 | [shapes_lines_bezier](shapes/shapes_lines_bezier.c) | <img src="shapes/shapes_lines_bezier.png" alt="shapes_lines_bezier" width="80"> | ⭐️☆☆☆ | 1.7 | 1.7 | [Ray](https://github.com/raysan5) |
 | 38 | [shapes_collision_area](shapes/shapes_collision_area.c) | <img src="shapes/shapes_collision_area.png" alt="shapes_collision_area" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
 | 39 | [shapes_following_eyes](shapes/shapes_following_eyes.c) | <img src="shapes/shapes_following_eyes.png" alt="shapes_following_eyes" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
 | 40 | [shapes_easings_ball_anim](shapes/shapes_easings_ball_anim.c) | <img src="shapes/shapes_easings_ball_anim.png" alt="shapes_easings_ball_anim" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
 | 41 | [shapes_easings_box_anim](shapes/shapes_easings_box_anim.c) | <img src="shapes/shapes_easings_box_anim.png" alt="shapes_easings_box_anim" width="80"> | ⭐️⭐️☆☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
-| 42 | [shapes_easings_rectangle_array](shapes/shapes_easings_rectangle_array.c) | <img src="shapes/shapes_easings_rectangle_array.png" alt="shapes_easings_rectangle_array" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
+| 42 | [shapes_easings_rayRectangle_array](shapes/shapes_easings_rayRectangle_array.c) | <img src="shapes/shapes_easings_rayRectangle_array.png" alt="shapes_easings_rayRectangle_array" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Ray](https://github.com/raysan5) |
 | 43 | [shapes_draw_ring](shapes/shapes_draw_ring.c) | <img src="shapes/shapes_draw_ring.png" alt="shapes_draw_ring" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | 44 | [shapes_draw_circle_sector](shapes/shapes_draw_circle_sector.c) | <img src="shapes/shapes_draw_circle_sector.png" alt="shapes_draw_circle_sector" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
-| 45 | [shapes_draw_rectangle_rounded](shapes/shapes_draw_rectangle_rounded.c) | <img src="shapes/shapes_draw_rectangle_rounded.png" alt="shapes_draw_rectangle_rounded" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
+| 45 | [shapes_draw_rayRectangle_rounded](shapes/shapes_draw_rayRectangle_rounded.c) | <img src="shapes/shapes_draw_rayRectangle_rounded.png" alt="shapes_draw_rayRectangle_rounded" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | 46 | [shapes_top_down_lights](shapes/shapes_top_down_lights.c) | <img src="shapes/shapes_top_down_lights.png" alt="shapes_top_down_lights" width="80"> | ⭐️⭐️⭐️⭐️ | **4.2** | **4.2** | [Jeffery Myers](https://github.com/JeffM2501) |
 
 ### category: textures
@@ -122,7 +122,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | 74 | [text_format_text](text/text_format_text.c) | <img src="text/text_format_text.png" alt="text_format_text" width="80"> | ⭐️☆☆☆ | 1.1 | 3.0 | [Ray](https://github.com/raysan5) |
 | 75 | [text_input_box](text/text_input_box.c) | <img src="text/text_input_box.png" alt="text_input_box" width="80"> | ⭐️⭐️☆☆ | 1.7 | 3.5 | [Ray](https://github.com/raysan5) |
 | 76 | [text_writing_anim](text/text_writing_anim.c) | <img src="text/text_writing_anim.png" alt="text_writing_anim" width="80"> | ⭐️⭐️☆☆ | 1.4 | 1.4 | [Ray](https://github.com/raysan5) |
-| 77 | [text_rectangle_bounds](text/text_rectangle_bounds.c) | <img src="text/text_rectangle_bounds.png" alt="text_rectangle_bounds" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
+| 77 | [text_rayRectangle_bounds](text/text_rayRectangle_bounds.c) | <img src="text/text_rayRectangle_bounds.png" alt="text_rayRectangle_bounds" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
 | 78 | [text_unicode](text/text_unicode.c) | <img src="text/text_unicode.png" alt="text_unicode" width="80"> | ⭐️⭐️⭐️⭐️ | 2.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
 | 79 | [text_draw_3d](text/text_draw_3d.c) | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="80"> | ⭐️⭐️⭐️⭐️ | 3.5 | **4.0** | [Vlad Adrian](https://github.com/demizdor) |
 | 80 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐️⭐️⭐️☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |

@@ -5,9 +5,9 @@
 *   NOTE: Sprite fonts should be generated following this conventions:
 *
 *     - Characters must be ordered starting with character 32 (Space)
-*     - Every character must be contained within the same Rectangle height
+*     - Every character must be contained within the same rayRectangle height
 *     - Every character and every line must be separated by the same distance (margin/padding)
-*     - Rectangles must be defined by a MAGENTA color background
+*     - rayRectangles must be defined by a MAGENTA color background
 *
 *   Following those constraints, a font can be provided just by an image,
 *   this is quite handy to avoid additional font descriptor files (like BMFonts use).
@@ -84,7 +84,7 @@ int main(void)
     UnloadFont(font2);      // Font unloading
     UnloadFont(font3);      // Font unloading
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - rectangle scaling by mouse
+*   raylib [shapes] example - rayRectangle scaling by mouse
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
@@ -27,9 +27,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle scaling mouse");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rayRectangle scaling mouse");
 
-    Rectangle rec = { 100, 100, 200, 80 };
+    rayRectangle rec = { 100, 100, 200, 80 };
 
     Vector2 mousePosition = { 0 };
 
@@ -46,7 +46,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         mousePosition = GetMousePosition();
 
-        if (CheckCollisionPointRec(mousePosition, (Rectangle){ rec.x + rec.width - MOUSE_SCALE_MARK_SIZE, rec.y + rec.height - MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE }))
+        if (CheckCollisionPointRec(mousePosition, (rayRectangle){ rec.x + rec.width - MOUSE_SCALE_MARK_SIZE, rec.y + rec.height - MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE }))
         {
             mouseScaleReady = true;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) mouseScaleMode = true;
@@ -78,13 +78,13 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("Scale rectangle dragging from bottom-right corner!", 10, 10, 20, GRAY);
+            DrawText("Scale rayRectangle dragging from bottom-right corner!", 10, 10, 20, GRAY);
 
-            DrawRectangleRec(rec, Fade(GREEN, 0.5f));
+            DrawrayRectangleRec(rec, Fade(GREEN, 0.5f));
 
             if (mouseScaleReady)
             {
-                DrawRectangleLinesEx(rec, 1, RED);
+                DrawrayRectangleLinesEx(rec, 1, RED);
                 DrawTriangle((Vector2){ rec.x + rec.width - MOUSE_SCALE_MARK_SIZE, rec.y + rec.height },
                              (Vector2){ rec.x + rec.width, rec.y + rec.height },
                              (Vector2){ rec.x + rec.width, rec.y + rec.height - MOUSE_SCALE_MARK_SIZE }, RED);
@@ -96,7 +96,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

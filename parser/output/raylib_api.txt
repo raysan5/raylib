@@ -81,8 +81,8 @@ Define 016: RL_COLOR_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 017: RL_RECTANGLE_TYPE
-  Name: RL_RECTANGLE_TYPE
+Define 017: RL_rayRectangle_TYPE
+  Name: RL_rayRectangle_TYPE
   Type: GUARD
   Value: 
   Description: 
@@ -328,13 +328,13 @@ Struct 05: Color (4 fields)
   Field[2]: unsigned char g // Color green value
   Field[3]: unsigned char b // Color blue value
   Field[4]: unsigned char a // Color alpha value
-Struct 06: Rectangle (4 fields)
-  Name: Rectangle
-  Description: Rectangle, 4 components
-  Field[1]: float x // Rectangle top-left corner position x
-  Field[2]: float y // Rectangle top-left corner position y
-  Field[3]: float width // Rectangle width
-  Field[4]: float height // Rectangle height
+Struct 06: rayRectangle (4 fields)
+  Name: rayRectangle
+  Description: rayRectangle, 4 components
+  Field[1]: float x // rayRectangle top-left corner position x
+  Field[2]: float y // rayRectangle top-left corner position y
+  Field[3]: float width // rayRectangle width
+  Field[4]: float height // rayRectangle height
 Struct 07: Image (5 fields)
   Name: Image
   Description: Image, pixel data stored in CPU memory (RAM)
@@ -360,7 +360,7 @@ Struct 09: RenderTexture (3 fields)
 Struct 10: NPatchInfo (6 fields)
   Name: NPatchInfo
   Description: NPatchInfo, n-patch layout info
-  Field[1]: Rectangle source // Texture source rectangle
+  Field[1]: rayRectangle source // Texture source rayRectangle
   Field[2]: int left // Left border offset
   Field[3]: int top // Top border offset
   Field[4]: int right // Right border offset
@@ -381,7 +381,7 @@ Struct 12: Font (6 fields)
   Field[2]: int glyphCount // Number of glyph characters
   Field[3]: int glyphPadding // Padding around the glyph characters
   Field[4]: Texture2D texture // Texture atlas containing the glyphs
-  Field[5]: Rectangle * recs // Rectangles in texture for the glyphs
+  Field[5]: rayRectangle * recs // rayRectangles in texture for the glyphs
   Field[6]: GlyphInfo * glyphs // Glyphs info data
 Struct 13: Camera3D (5 fields)
   Name: Camera3D
@@ -982,8 +982,8 @@ Function 002: WindowShouldClose() (0 input parameters)
   Return type: bool
   Description: Check if KEY_ESCAPE pressed or Close icon pressed
   No input parameters
-Function 003: CloseWindow() (0 input parameters)
-  Name: CloseWindow
+Function 003: rayCloseWindow() (0 input parameters)
+  Name: rayCloseWindow
   Return type: void
   Description: Close window and unload OpenGL context
   No input parameters
@@ -1232,8 +1232,8 @@ Function 051: WaitTime() (1 input parameters)
   Return type: void
   Description: Wait for some time (halt program execution)
   Param[1]: seconds (type: double)
-Function 052: ShowCursor() (0 input parameters)
-  Name: ShowCursor
+Function 052: rayShowCursor() (0 input parameters)
+  Name: rayShowCursor
   Return type: void
   Description: Shows cursor
   No input parameters
@@ -1987,9 +1987,9 @@ Function 190: UpdateCameraPro() (4 input parameters)
 Function 191: SetShapesTexture() (2 input parameters)
   Name: SetShapesTexture
   Return type: void
-  Description: Set texture and rectangle to be used on shapes drawing
+  Description: Set texture and rayRectangle to be used on shapes drawing
   Param[1]: texture (type: Texture2D)
-  Param[2]: source (type: Rectangle)
+  Param[2]: source (type: rayRectangle)
 Function 192: DrawPixel() (3 input parameters)
   Name: DrawPixel
   Return type: void
@@ -2169,94 +2169,94 @@ Function 212: DrawRingLines() (7 input parameters)
   Param[5]: endAngle (type: float)
   Param[6]: segments (type: int)
   Param[7]: color (type: Color)
-Function 213: DrawRectangle() (5 input parameters)
-  Name: DrawRectangle
+Function 213: DrawrayRectangle() (5 input parameters)
+  Name: DrawrayRectangle
   Return type: void
-  Description: Draw a color-filled rectangle
+  Description: Draw a color-filled rayRectangle
   Param[1]: posX (type: int)
   Param[2]: posY (type: int)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
   Param[5]: color (type: Color)
-Function 214: DrawRectangleV() (3 input parameters)
-  Name: DrawRectangleV
+Function 214: DrawrayRectangleV() (3 input parameters)
+  Name: DrawrayRectangleV
   Return type: void
-  Description: Draw a color-filled rectangle (Vector version)
+  Description: Draw a color-filled rayRectangle (Vector version)
   Param[1]: position (type: Vector2)
   Param[2]: size (type: Vector2)
   Param[3]: color (type: Color)
-Function 215: DrawRectangleRec() (2 input parameters)
-  Name: DrawRectangleRec
+Function 215: DrawrayRectangleRec() (2 input parameters)
+  Name: DrawrayRectangleRec
   Return type: void
-  Description: Draw a color-filled rectangle
-  Param[1]: rec (type: Rectangle)
+  Description: Draw a color-filled rayRectangle
+  Param[1]: rec (type: rayRectangle)
   Param[2]: color (type: Color)
-Function 216: DrawRectanglePro() (4 input parameters)
-  Name: DrawRectanglePro
+Function 216: DrawrayRectanglePro() (4 input parameters)
+  Name: DrawrayRectanglePro
   Return type: void
-  Description: Draw a color-filled rectangle with pro parameters
-  Param[1]: rec (type: Rectangle)
+  Description: Draw a color-filled rayRectangle with pro parameters
+  Param[1]: rec (type: rayRectangle)
   Param[2]: origin (type: Vector2)
   Param[3]: rotation (type: float)
   Param[4]: color (type: Color)
-Function 217: DrawRectangleGradientV() (6 input parameters)
-  Name: DrawRectangleGradientV
+Function 217: DrawrayRectangleGradientV() (6 input parameters)
+  Name: DrawrayRectangleGradientV
   Return type: void
-  Description: Draw a vertical-gradient-filled rectangle
+  Description: Draw a vertical-gradient-filled rayRectangle
   Param[1]: posX (type: int)
   Param[2]: posY (type: int)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
   Param[5]: color1 (type: Color)
   Param[6]: color2 (type: Color)
-Function 218: DrawRectangleGradientH() (6 input parameters)
-  Name: DrawRectangleGradientH
+Function 218: DrawrayRectangleGradientH() (6 input parameters)
+  Name: DrawrayRectangleGradientH
   Return type: void
-  Description: Draw a horizontal-gradient-filled rectangle
+  Description: Draw a horizontal-gradient-filled rayRectangle
   Param[1]: posX (type: int)
   Param[2]: posY (type: int)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
   Param[5]: color1 (type: Color)
   Param[6]: color2 (type: Color)
-Function 219: DrawRectangleGradientEx() (5 input parameters)
-  Name: DrawRectangleGradientEx
+Function 219: DrawrayRectangleGradientEx() (5 input parameters)
+  Name: DrawrayRectangleGradientEx
   Return type: void
-  Description: Draw a gradient-filled rectangle with custom vertex colors
-  Param[1]: rec (type: Rectangle)
+  Description: Draw a gradient-filled rayRectangle with custom vertex colors
+  Param[1]: rec (type: rayRectangle)
   Param[2]: col1 (type: Color)
   Param[3]: col2 (type: Color)
   Param[4]: col3 (type: Color)
   Param[5]: col4 (type: Color)
-Function 220: DrawRectangleLines() (5 input parameters)
-  Name: DrawRectangleLines
+Function 220: DrawrayRectangleLines() (5 input parameters)
+  Name: DrawrayRectangleLines
   Return type: void
-  Description: Draw rectangle outline
+  Description: Draw rayRectangle outline
   Param[1]: posX (type: int)
   Param[2]: posY (type: int)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
   Param[5]: color (type: Color)
-Function 221: DrawRectangleLinesEx() (3 input parameters)
-  Name: DrawRectangleLinesEx
+Function 221: DrawrayRectangleLinesEx() (3 input parameters)
+  Name: DrawrayRectangleLinesEx
   Return type: void
-  Description: Draw rectangle outline with extended parameters
-  Param[1]: rec (type: Rectangle)
+  Description: Draw rayRectangle outline with extended parameters
+  Param[1]: rec (type: rayRectangle)
   Param[2]: lineThick (type: float)
   Param[3]: color (type: Color)
-Function 222: DrawRectangleRounded() (4 input parameters)
-  Name: DrawRectangleRounded
+Function 222: DrawrayRectangleRounded() (4 input parameters)
+  Name: DrawrayRectangleRounded
   Return type: void
-  Description: Draw rectangle with rounded edges
-  Param[1]: rec (type: Rectangle)
+  Description: Draw rayRectangle with rounded edges
+  Param[1]: rec (type: rayRectangle)
   Param[2]: roundness (type: float)
   Param[3]: segments (type: int)
   Param[4]: color (type: Color)
-Function 223: DrawRectangleRoundedLines() (5 input parameters)
-  Name: DrawRectangleRoundedLines
+Function 223: DrawrayRectangleRoundedLines() (5 input parameters)
+  Name: DrawrayRectangleRoundedLines
   Return type: void
-  Description: Draw rectangle with rounded edges outline
-  Param[1]: rec (type: Rectangle)
+  Description: Draw rayRectangle with rounded edges outline
+  Param[1]: rec (type: rayRectangle)
   Param[2]: roundness (type: float)
   Param[3]: segments (type: int)
   Param[4]: lineThick (type: float)
@@ -2322,9 +2322,9 @@ Function 230: DrawPolyLinesEx() (6 input parameters)
 Function 231: CheckCollisionRecs() (2 input parameters)
   Name: CheckCollisionRecs
   Return type: bool
-  Description: Check collision between two rectangles
-  Param[1]: rec1 (type: Rectangle)
-  Param[2]: rec2 (type: Rectangle)
+  Description: Check collision between two rayRectangles
+  Param[1]: rec1 (type: rayRectangle)
+  Param[2]: rec2 (type: rayRectangle)
 Function 232: CheckCollisionCircles() (4 input parameters)
   Name: CheckCollisionCircles
   Return type: bool
@@ -2336,16 +2336,16 @@ Function 232: CheckCollisionCircles() (4 input parameters)
 Function 233: CheckCollisionCircleRec() (3 input parameters)
   Name: CheckCollisionCircleRec
   Return type: bool
-  Description: Check collision between circle and rectangle
+  Description: Check collision between circle and rayRectangle
   Param[1]: center (type: Vector2)
   Param[2]: radius (type: float)
-  Param[3]: rec (type: Rectangle)
+  Param[3]: rec (type: rayRectangle)
 Function 234: CheckCollisionPointRec() (2 input parameters)
   Name: CheckCollisionPointRec
   Return type: bool
-  Description: Check if point is inside rectangle
+  Description: Check if point is inside rayRectangle
   Param[1]: point (type: Vector2)
-  Param[2]: rec (type: Rectangle)
+  Param[2]: rec (type: rayRectangle)
 Function 235: CheckCollisionPointCircle() (3 input parameters)
   Name: CheckCollisionPointCircle
   Return type: bool
@@ -2387,10 +2387,10 @@ Function 239: CheckCollisionPointLine() (4 input parameters)
   Param[4]: threshold (type: int)
 Function 240: GetCollisionRec() (2 input parameters)
   Name: GetCollisionRec
-  Return type: Rectangle
-  Description: Get collision rectangle for two rectangles collision
-  Param[1]: rec1 (type: Rectangle)
-  Param[2]: rec2 (type: Rectangle)
+  Return type: rayRectangle
+  Description: Get collision rayRectangle for two rayRectangles collision
+  Param[1]: rec1 (type: rayRectangle)
+  Param[2]: rec2 (type: rayRectangle)
 Function 241: LoadImage() (1 input parameters)
   Name: LoadImage
   Return type: Image
@@ -2548,7 +2548,7 @@ Function 263: ImageFromImage() (2 input parameters)
   Return type: Image
   Description: Create an image from another image piece
   Param[1]: image (type: Image)
-  Param[2]: rec (type: Rectangle)
+  Param[2]: rec (type: rayRectangle)
 Function 264: ImageText() (3 input parameters)
   Name: ImageText
   Return type: Image
@@ -2580,9 +2580,9 @@ Function 267: ImageToPOT() (2 input parameters)
 Function 268: ImageCrop() (2 input parameters)
   Name: ImageCrop
   Return type: void
-  Description: Crop an image to a defined rectangle
+  Description: Crop an image to a defined rayRectangle
   Param[1]: image (type: Image *)
-  Param[2]: crop (type: Rectangle)
+  Param[2]: crop (type: rayRectangle)
 Function 269: ImageAlphaCrop() (2 input parameters)
   Name: ImageAlphaCrop
   Return type: void
@@ -2736,8 +2736,8 @@ Function 293: UnloadImagePalette() (1 input parameters)
   Param[1]: colors (type: Color *)
 Function 294: GetImageAlphaBorder() (2 input parameters)
   Name: GetImageAlphaBorder
-  Return type: Rectangle
-  Description: Get image alpha border rectangle
+  Return type: rayRectangle
+  Description: Get image alpha border rayRectangle
   Param[1]: image (type: Image)
   Param[2]: threshold (type: float)
 Function 295: GetImageColor() (3 input parameters)
@@ -2820,37 +2820,37 @@ Function 304: ImageDrawCircleLinesV() (4 input parameters)
   Param[2]: center (type: Vector2)
   Param[3]: radius (type: int)
   Param[4]: color (type: Color)
-Function 305: ImageDrawRectangle() (6 input parameters)
-  Name: ImageDrawRectangle
+Function 305: ImageDrawrayRectangle() (6 input parameters)
+  Name: ImageDrawrayRectangle
   Return type: void
-  Description: Draw rectangle within an image
+  Description: Draw rayRectangle within an image
   Param[1]: dst (type: Image *)
   Param[2]: posX (type: int)
   Param[3]: posY (type: int)
   Param[4]: width (type: int)
   Param[5]: height (type: int)
   Param[6]: color (type: Color)
-Function 306: ImageDrawRectangleV() (4 input parameters)
-  Name: ImageDrawRectangleV
+Function 306: ImageDrawrayRectangleV() (4 input parameters)
+  Name: ImageDrawrayRectangleV
   Return type: void
-  Description: Draw rectangle within an image (Vector version)
+  Description: Draw rayRectangle within an image (Vector version)
   Param[1]: dst (type: Image *)
   Param[2]: position (type: Vector2)
   Param[3]: size (type: Vector2)
   Param[4]: color (type: Color)
-Function 307: ImageDrawRectangleRec() (3 input parameters)
-  Name: ImageDrawRectangleRec
+Function 307: ImageDrawrayRectangleRec() (3 input parameters)
+  Name: ImageDrawrayRectangleRec
   Return type: void
-  Description: Draw rectangle within an image
+  Description: Draw rayRectangle within an image
   Param[1]: dst (type: Image *)
-  Param[2]: rec (type: Rectangle)
+  Param[2]: rec (type: rayRectangle)
   Param[3]: color (type: Color)
-Function 308: ImageDrawRectangleLines() (4 input parameters)
-  Name: ImageDrawRectangleLines
+Function 308: ImageDrawrayRectangleLines() (4 input parameters)
+  Name: ImageDrawrayRectangleLines
   Return type: void
-  Description: Draw rectangle lines within an image
+  Description: Draw rayRectangle lines within an image
   Param[1]: dst (type: Image *)
-  Param[2]: rec (type: Rectangle)
+  Param[2]: rec (type: rayRectangle)
   Param[3]: thick (type: int)
   Param[4]: color (type: Color)
 Function 309: ImageDraw() (5 input parameters)
@@ -2859,8 +2859,8 @@ Function 309: ImageDraw() (5 input parameters)
   Description: Draw a source image within a destination image (tint applied to source)
   Param[1]: dst (type: Image *)
   Param[2]: src (type: Image)
-  Param[3]: srcRec (type: Rectangle)
-  Param[4]: dstRec (type: Rectangle)
+  Param[3]: srcRec (type: rayRectangle)
+  Param[4]: dstRec (type: rayRectangle)
   Param[5]: tint (type: Color)
 Function 310: ImageDrawText() (6 input parameters)
   Name: ImageDrawText
@@ -2934,9 +2934,9 @@ Function 320: UpdateTexture() (2 input parameters)
 Function 321: UpdateTextureRec() (3 input parameters)
   Name: UpdateTextureRec
   Return type: void
-  Description: Update GPU texture rectangle with new data
+  Description: Update GPU texture rayRectangle with new data
   Param[1]: texture (type: Texture2D)
-  Param[2]: rec (type: Rectangle)
+  Param[2]: rec (type: rayRectangle)
   Param[3]: pixels (type: const void *)
 Function 322: GenTextureMipmaps() (1 input parameters)
   Name: GenTextureMipmaps
@@ -2982,18 +2982,18 @@ Function 327: DrawTextureEx() (5 input parameters)
 Function 328: DrawTextureRec() (4 input parameters)
   Name: DrawTextureRec
   Return type: void
-  Description: Draw a part of a texture defined by a rectangle
+  Description: Draw a part of a texture defined by a rayRectangle
   Param[1]: texture (type: Texture2D)
-  Param[2]: source (type: Rectangle)
+  Param[2]: source (type: rayRectangle)
   Param[3]: position (type: Vector2)
   Param[4]: tint (type: Color)
 Function 329: DrawTexturePro() (6 input parameters)
   Name: DrawTexturePro
   Return type: void
-  Description: Draw a part of a texture defined by a rectangle with 'pro' parameters
+  Description: Draw a part of a texture defined by a rayRectangle with 'pro' parameters
   Param[1]: texture (type: Texture2D)
-  Param[2]: source (type: Rectangle)
-  Param[3]: dest (type: Rectangle)
+  Param[2]: source (type: rayRectangle)
+  Param[3]: dest (type: rayRectangle)
   Param[4]: origin (type: Vector2)
   Param[5]: rotation (type: float)
   Param[6]: tint (type: Color)
@@ -3003,7 +3003,7 @@ Function 330: DrawTextureNPatch() (6 input parameters)
   Description: Draws a texture (or part of it) that stretches or shrinks nicely
   Param[1]: texture (type: Texture2D)
   Param[2]: nPatchInfo (type: NPatchInfo)
-  Param[3]: dest (type: Rectangle)
+  Param[3]: dest (type: rayRectangle)
   Param[4]: origin (type: Vector2)
   Param[5]: rotation (type: float)
   Param[6]: tint (type: Color)
@@ -3151,7 +3151,7 @@ Function 353: GenImageFontAtlas() (6 input parameters)
   Return type: Image
   Description: Generate image font atlas using chars info
   Param[1]: glyphs (type: const GlyphInfo *)
-  Param[2]: glyphRecs (type: Rectangle **)
+  Param[2]: glyphRecs (type: rayRectangle **)
   Param[3]: glyphCount (type: int)
   Param[4]: fontSize (type: int)
   Param[5]: padding (type: int)
@@ -3263,8 +3263,8 @@ Function 367: GetGlyphInfo() (2 input parameters)
   Param[2]: codepoint (type: int)
 Function 368: GetGlyphAtlasRec() (2 input parameters)
   Name: GetGlyphAtlasRec
-  Return type: Rectangle
-  Description: Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
+  Return type: rayRectangle
+  Description: Get glyph rayRectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
   Param[1]: font (type: Font)
   Param[2]: codepoint (type: int)
 Function 369: LoadUTF8() (2 input parameters)
@@ -3664,7 +3664,7 @@ Function 425: DrawBillboardRec() (6 input parameters)
   Description: Draw a billboard texture defined by source
   Param[1]: camera (type: Camera)
   Param[2]: texture (type: Texture2D)
-  Param[3]: source (type: Rectangle)
+  Param[3]: source (type: rayRectangle)
   Param[4]: position (type: Vector3)
   Param[5]: size (type: Vector2)
   Param[6]: tint (type: Color)
@@ -3674,7 +3674,7 @@ Function 426: DrawBillboardPro() (9 input parameters)
   Description: Draw a billboard texture defined by source and rotation
   Param[1]: camera (type: Camera)
   Param[2]: texture (type: Texture2D)
-  Param[3]: source (type: Rectangle)
+  Param[3]: source (type: rayRectangle)
   Param[4]: position (type: Vector3)
   Param[5]: up (type: Vector3)
   Param[6]: size (type: Vector2)

@@ -468,16 +468,16 @@ SHAPES = \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
+    shapes/shapes_draw_rayRectangle_rounded \
     shapes/shapes_draw_ring \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
-    shapes/shapes_easings_rectangle_array \
+    shapes/shapes_easings_rayRectangle_array \
     shapes/shapes_following_eyes \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
-    shapes/shapes_rectangle_scaling \
+    shapes/shapes_rayRectangle_scaling \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -518,7 +518,7 @@ TEXT = \
     text/text_format_text \
     text/text_input_box \
     text/text_raylib_fonts \
-    text/text_rectangle_bounds \
+    text/text_rayRectangle_bounds \
     text/text_unicode \
     text/text_writing_anim
 

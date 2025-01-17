@@ -74,7 +74,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     for (int i = 0; i < NUM_TEXTURES; i++) UnloadTexture(textures[i]);
 
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -131,13 +131,13 @@ int main(void)
             }
 
             // Draw time bar
-            DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY);
-            DrawRectangle(20, screenHeight - 20 - 12, (int)timePlayed, 12, MAROON);
-            DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, GRAY);
+            DrawrayRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY);
+            DrawrayRectangle(20, screenHeight - 20 - 12, (int)timePlayed, 12, MAROON);
+            DrawrayRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, GRAY);
 
             // Draw help instructions
-            DrawRectangle(20, 20, 425, 145, WHITE);
-            DrawRectangleLines(20, 20, 425, 145, GRAY);
+            DrawrayRectangle(20, 20, 425, 145, WHITE);
+            DrawrayRectangleLines(20, 20, 425, 145, GRAY);
             DrawText("PRESS SPACE TO RESTART MUSIC", 40, 40, 20, BLACK);
             DrawText("PRESS P TO PAUSE/RESUME", 40, 70, 20, BLACK);
             DrawText("PRESS UP/DOWN TO CHANGE SPEED", 40, 100, 20, BLACK);
@@ -153,7 +153,7 @@ int main(void)
 
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

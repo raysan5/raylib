@@ -140,7 +140,7 @@ int main(void)
     UnloadModel(cube);      // Unload the model
     UnloadShader(shader);   // Unload shader
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

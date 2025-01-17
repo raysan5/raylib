@@ -1,4 +1,4 @@
-// stb_rect_pack.h - v1.01 - public domain - rectangle packing
+// stb_rect_pack.h - v1.01 - public domain - rayRectangle packing
 // Sean Barrett 2014
 //
 // Useful for e.g. packing rectangular textures into an atlas.
@@ -23,7 +23,7 @@
 //
 // This library currently uses the Skyline Bottom-Left algorithm.
 //
-// Please note: better rectangle packers are welcome! Please
+// Please note: better rayRectangle packers are welcome! Please
 // implement them to the same API, but with a different init
 // function.
 //
@@ -42,7 +42,7 @@
 // Version history:
 //
 //     1.01  (2021-07-11)  always use large rect mode, expose STBRP__MAXVAL in public section
-//     1.00  (2019-02-25)  avoid small space waste; gracefully fail too-wide rectangles
+//     1.00  (2019-02-25)  avoid small space waste; gracefully fail too-wide rayRectangles
 //     0.99  (2019-02-07)  warning fixes
 //     0.11  (2017-03-03)  return packing success/fail result
 //     0.10  (2016-10-25)  remove cast-away-const to avoid warnings
@@ -88,28 +88,28 @@ typedef int            stbrp_coord;
 // Mostly for internal use, but this is the maximum supported coordinate value.
 
 STBRP_DEF int stbrp_pack_rects (stbrp_context *context, stbrp_rect *rects, int num_rects);
-// Assign packed locations to rectangles. The rectangles are of type
+// Assign packed locations to rayRectangles. The rayRectangles are of type
 // 'stbrp_rect' defined below, stored in the array 'rects', and there
 // are 'num_rects' many of them.
 //
-// Rectangles which are successfully packed have the 'was_packed' flag
+// rayRectangles which are successfully packed have the 'was_packed' flag
 // set to a non-zero value and 'x' and 'y' store the minimum location
 // on each axis (i.e. bottom-left in cartesian coordinates, top-left
-// if you imagine y increasing downwards). Rectangles which do not fit
+// if you imagine y increasing downwards). rayRectangles which do not fit
 // have the 'was_packed' flag set to 0.
 //
 // You should not try to access the 'rects' array from another thread
 // while this function is running, as the function temporarily reorders
 // the array while it executes.
 //
-// To pack into another rectangle, you need to call stbrp_init_target
-// again. To continue packing into the same rectangle, you can call
+// To pack into another rayRectangle, you need to call stbrp_init_target
+// again. To continue packing into the same rayRectangle, you can call
 // this function again. Calling this multiple times with multiple rect
 // arrays will probably produce worse packing results than calling it
-// a single time with the full rectangle array, but the option is
+// a single time with the full rayRectangle array, but the option is
 // available.
 //
-// The function returns 1 if all of the rectangles were successfully
+// The function returns 1 if all of the rayRectangles were successfully
 // packed and 0 otherwise.
 
 struct stbrp_rect
@@ -128,8 +128,8 @@ struct stbrp_rect
 
 
 STBRP_DEF void stbrp_init_target (stbrp_context *context, int width, int height, stbrp_node *nodes, int num_nodes);
-// Initialize a rectangle packer to:
-//    pack a rectangle that is 'width' by 'height' in dimensions
+// Initialize a rayRectangle packer to:
+//    pack a rayRectangle that is 'width' by 'height' in dimensions
 //    using temporary storage provided by the array 'nodes', which is 'num_nodes' long
 //
 // You must call this function every time you start packing into a new target.
@@ -146,7 +146,7 @@ STBRP_DEF void stbrp_init_target (stbrp_context *context, int width, int height,
 // of small integers to guarantee the algorithm doesn't run out of temporary storage.
 //
 // If you do #2, then the non-quantized algorithm will be used, but the algorithm
-// may run out of temporary storage and be unable to pack some rectangles.
+// may run out of temporary storage and be unable to pack some rayRectangles.
 
 STBRP_DEF void stbrp_setup_allow_out_of_mem (stbrp_context *context, int allow_out_of_mem);
 // Optionally call this function after init but before doing any packing to
@@ -243,7 +243,7 @@ STBRP_DEF void stbrp_setup_allow_out_of_mem(stbrp_context *context, int allow_ou
    if (allow_out_of_mem)
       // if it's ok to run out of memory, then don't bother aligning them;
       // this gives better packing, but may fail due to OOM (even though
-      // the rectangles easily fit). @TODO a smarter approach would be to only
+      // the rayRectangles easily fit). @TODO a smarter approach would be to only
       // quantize once we've hit OOM, then we could get rid of this parameter.
       context->align = 1;
    else {
@@ -442,7 +442,7 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context *c, int widt
    return fr;
 }
 
-static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context *context, int width, int height)
+static stbrp__findresult stbrp__skyline_pack_rayRectangle(stbrp_context *context, int width, int height)
 {
    // find best position according to heuristic
    stbrp__findresult res = stbrp__skyline_find_best_pos(context, width, height);
@@ -555,7 +555,7 @@ STBRP_DEF int stbrp_pack_rects(stbrp_context *context, stbrp_rect *rects, int nu
       if (rects[i].w == 0 || rects[i].h == 0) {
          rects[i].x = rects[i].y = 0;  // empty rect needs no space
       } else {
-         stbrp__findresult fr = stbrp__skyline_pack_rectangle(context, rects[i].w, rects[i].h);
+         stbrp__findresult fr = stbrp__skyline_pack_rayRectangle(context, rects[i].w, rects[i].h);
          if (fr.prev_link) {
             rects[i].x = (stbrp_coord) fr.x;
             rects[i].y = (stbrp_coord) fr.y;

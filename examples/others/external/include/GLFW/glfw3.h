@@ -2713,7 +2713,7 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height, const char* title, G
  *  @sa @ref window_creation
  *  @sa @ref glfwCreateWindow
  *
- *  @since Added in version 3.0.  Replaces `glfwCloseWindow`.
+ *  @since Added in version 3.0.  Replaces `glfwrayCloseWindow`.
  *
  *  @ingroup window
  */

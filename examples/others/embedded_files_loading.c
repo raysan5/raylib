@@ -101,7 +101,7 @@ int main(void)
 
     CloseAudioDevice();     // Close audio device
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

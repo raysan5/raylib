@@ -97,8 +97,8 @@ int main(void)
 
             for (int i = 0; i < MAX_FRAME_DELAY; i++)
             {
-                if (i < frameDelay) DrawRectangle(190 + 21*i, 300, 20, 20, RED);
-                DrawRectangleLines(190 + 21*i, 300, 20, 20, MAROON);
+                if (i < frameDelay) DrawrayRectangle(190 + 21*i, 300, 20, 20, RED);
+                DrawrayRectangleLines(190 + 21*i, 300, 20, 20, MAROON);
             }
 
             DrawTexture(texScarfyAnim, GetScreenWidth()/2 - texScarfyAnim.width/2, 140, WHITE);
@@ -114,7 +114,7 @@ int main(void)
     UnloadTexture(texScarfyAnim);   // Unload texture
     UnloadImage(imScarfyAnim);      // Unload image (contains all frames)
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

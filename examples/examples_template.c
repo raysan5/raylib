@@ -115,7 +115,7 @@ int main(void)
 
     // TODO: Unload all loaded resources at this point
 
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

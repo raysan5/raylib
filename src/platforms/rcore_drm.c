@@ -83,7 +83,7 @@ typedef struct {
 
     int fd;                             // File descriptor to the device it is assigned to
     int eventNum;                       // Number of 'event<N>' device
-    Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
+    rayRectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
     bool isMouse;                       // True if device supports relative X Y movements
     bool isTouch;                       // True if device supports absolute X Y movements and has BTN_TOUCH
@@ -124,7 +124,7 @@ typedef struct {
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
     bool cursorRelative;                // Relative cursor mode
     int mouseFd;                        // File descriptor for the evdev mouse/touch/gestures
-    Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
+    rayRectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
 
     // Gamepad data
@@ -421,7 +421,7 @@ const char *GetClipboardText(void)
 }
 
 // Show mouse cursor
-void ShowCursor(void)
+void rayShowCursor(void)
 {
     CORE.Input.Mouse.cursorHidden = false;
 }

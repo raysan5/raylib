@@ -85,9 +85,9 @@ int main(void)
     // NOTE: Screen size should match HMD aspect ratio
     RenderTexture2D target = LoadRenderTexture(device.hResolution, device.vResolution);
 
-    // The target's height is flipped (in the source Rectangle), due to OpenGL reasons
-    Rectangle sourceRec = { 0.0f, 0.0f, (float)target.texture.width, -(float)target.texture.height };
-    Rectangle destRec = { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() };
+    // The target's height is flipped (in the source rayRectangle), due to OpenGL reasons
+    rayRectangle sourceRec = { 0.0f, 0.0f, (float)target.texture.width, -(float)target.texture.height };
+    rayRectangle destRec = { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() };
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -144,7 +144,7 @@ int main(void)
     UnloadRenderTexture(target);    // Unload stereo render fbo
     UnloadShader(distortion);       // Unload distortion shader
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

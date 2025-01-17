@@ -102,7 +102,7 @@ int main(void)
                 DrawTexture(texBunny, (int)bunnies[i].position.x, (int)bunnies[i].position.y, bunnies[i].color);
             }
 
-            DrawRectangle(0, 0, screenWidth, 40, BLACK);
+            DrawrayRectangle(0, 0, screenWidth, 40, BLACK);
             DrawText(TextFormat("bunnies: %i", bunniesCount), 120, 10, 20, GREEN);
             DrawText(TextFormat("batched draw calls: %i", 1 + bunniesCount/MAX_BATCH_ELEMENTS), 320, 10, 20, MAROON);
 
@@ -118,7 +118,7 @@ int main(void)
 
     UnloadTexture(texBunny);    // Unload bunny texture
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

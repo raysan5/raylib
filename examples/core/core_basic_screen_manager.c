@@ -112,7 +112,7 @@ int main(void)
                 case TITLE:
                 {
                     // TODO: Draw TITLE screen here!
-                    DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
+                    DrawrayRectangle(0, 0, screenWidth, screenHeight, GREEN);
                     DrawText("TITLE SCREEN", 20, 20, 40, DARKGREEN);
                     DrawText("PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", 120, 220, 20, DARKGREEN);
 
@@ -120,7 +120,7 @@ int main(void)
                 case GAMEPLAY:
                 {
                     // TODO: Draw GAMEPLAY screen here!
-                    DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
+                    DrawrayRectangle(0, 0, screenWidth, screenHeight, PURPLE);
                     DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
                     DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, MAROON);
 
@@ -128,7 +128,7 @@ int main(void)
                 case ENDING:
                 {
                     // TODO: Draw ENDING screen here!
-                    DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
+                    DrawrayRectangle(0, 0, screenWidth, screenHeight, BLUE);
                     DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
                     DrawText("PRESS ENTER or TAP to RETURN to TITLE SCREEN", 120, 220, 20, DARKBLUE);
 
@@ -145,7 +145,7 @@ int main(void)
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
 
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

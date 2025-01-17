@@ -109,9 +109,9 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // We only draw a white full-screen rectangle, frame is generated in shader
+            // We only draw a white full-screen rayRectangle, frame is generated in shader
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawrayRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
             DrawText(TextFormat("PRESS [A] to TOGGLE SHADER AUTOLOADING: %s",
@@ -128,7 +128,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);           // Unload shader
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

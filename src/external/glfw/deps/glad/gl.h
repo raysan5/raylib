@@ -800,7 +800,7 @@ typedef void (*GLADpostcallback)(void *ret, const char *name, GLADapiproc apipro
 #define GL_MAX_PIXEL_MAP_TABLE 0x0D34
 #define GL_MAX_PROGRAM_TEXEL_OFFSET 0x8905
 #define GL_MAX_PROJECTION_STACK_DEPTH 0x0D38
-#define GL_MAX_RECTANGLE_TEXTURE_SIZE 0x84F8
+#define GL_MAX_rayRectangle_TEXTURE_SIZE 0x84F8
 #define GL_MAX_RENDERBUFFER_SIZE 0x84E8
 #define GL_MAX_SAMPLES 0x8D57
 #define GL_MAX_SAMPLE_MASK_WORDS 0x8E59
@@ -968,7 +968,7 @@ typedef void (*GLADpostcallback)(void *ret, const char *name, GLADapiproc apipro
 #define GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY 0x9103
 #define GL_PROXY_TEXTURE_3D 0x8070
 #define GL_PROXY_TEXTURE_CUBE_MAP 0x851B
-#define GL_PROXY_TEXTURE_RECTANGLE 0x84F7
+#define GL_PROXY_TEXTURE_rayRectangle 0x84F7
 #define GL_Q 0x2003
 #define GL_QUADRATIC_ATTENUATION 0x1209
 #define GL_QUADS 0x0007
@@ -1283,7 +1283,7 @@ typedef void (*GLADpostcallback)(void *ret, const char *name, GLADapiproc apipro
 #define GL_TEXTURE_BINDING_3D 0x806A
 #define GL_TEXTURE_BINDING_BUFFER 0x8C2C
 #define GL_TEXTURE_BINDING_CUBE_MAP 0x8514
-#define GL_TEXTURE_BINDING_RECTANGLE 0x84F6
+#define GL_TEXTURE_BINDING_rayRectangle 0x84F6
 #define GL_TEXTURE_BIT 0x00040000
 #define GL_TEXTURE_BLUE_SIZE 0x805E
 #define GL_TEXTURE_BLUE_TYPE 0x8C12
@@ -1340,7 +1340,7 @@ typedef void (*GLADpostcallback)(void *ret, const char *name, GLADapiproc apipro
 #define GL_TEXTURE_MIN_FILTER 0x2801
 #define GL_TEXTURE_MIN_LOD 0x813A
 #define GL_TEXTURE_PRIORITY 0x8066
-#define GL_TEXTURE_RECTANGLE 0x84F5
+#define GL_TEXTURE_rayRectangle 0x84F5
 #define GL_TEXTURE_RED_SIZE 0x805C
 #define GL_TEXTURE_RED_TYPE 0x8C10
 #define GL_TEXTURE_RESIDENT 0x8067

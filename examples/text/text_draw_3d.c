@@ -441,7 +441,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadFont(font);
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
@@ -458,14 +458,14 @@ static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, floa
     int index = GetGlyphIndex(font, codepoint);
     float scale = fontSize/(float)font.baseSize;
 
-    // Character destination rectangle on screen
+    // Character destination rayRectangle on screen
     // NOTE: We consider charsPadding on drawing
     position.x += (float)(font.glyphs[index].offsetX - font.glyphPadding)/(float)font.baseSize*scale;
     position.z += (float)(font.glyphs[index].offsetY - font.glyphPadding)/(float)font.baseSize*scale;
 
-    // Character source rectangle from font texture atlas
+    // Character source rayRectangle from font texture atlas
     // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
-    Rectangle srcRec = { font.recs[index].x - (float)font.glyphPadding, font.recs[index].y - (float)font.glyphPadding,
+    rayRectangle srcRec = { font.recs[index].x - (float)font.glyphPadding, font.recs[index].y - (float)font.glyphPadding,
                          font.recs[index].width + 2.0f*font.glyphPadding, font.recs[index].height + 2.0f*font.glyphPadding };
 
     float width = (float)(font.recs[index].width + 2.0f*font.glyphPadding)/(float)font.baseSize*scale;

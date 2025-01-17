@@ -70,7 +70,7 @@ int main(void)
             EndMode3D();
 
             DrawTexture(texture, screenWidth - texture.width - 20, 20, WHITE);
-            DrawRectangleLines(screenWidth - texture.width - 20, 20, texture.width, texture.height, GREEN);
+            DrawrayRectangleLines(screenWidth - texture.width - 20, 20, texture.width, texture.height, GREEN);
 
             DrawFPS(10, 10);
 
@@ -83,7 +83,7 @@ int main(void)
     UnloadTexture(texture);     // Unload texture
     UnloadModel(model);         // Unload model
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

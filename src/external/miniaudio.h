@@ -2715,7 +2715,7 @@ The different dithering modes include the following, in order of efficiency:
     | Type      | Enum Token               |
     +-----------+--------------------------+
     | None      | ma_dither_mode_none      |
-    | Rectangle | ma_dither_mode_rectangle |
+    | rayRectangle | ma_dither_mode_rayRectangle |
     | Triangle  | ma_dither_mode_triangle  |
     +-----------+--------------------------+
 
@@ -2794,7 +2794,7 @@ channels and silence extra channels. For example, converting from 4 to 2 channel
 channels will be dropped, whereas converting from 2 to 4 channels will put silence into the 3rd and
 4th channels.
 
-The `ma_channel_mix_mode_rectangle` mode uses spacial locality based on a rectangle to compute a
+The `ma_channel_mix_mode_rayRectangle` mode uses spacial locality based on a rayRectangle to compute a
 simple distribution between input and output. Imagine sitting in the middle of a room, with
 speakers on the walls representing channel positions. The `MA_CHANNEL_FRONT_LEFT` position can be
 thought of as being in the corner of the front and left walls.
@@ -4239,7 +4239,7 @@ typedef enum
 typedef enum
 {
     ma_dither_mode_none = 0,
-    ma_dither_mode_rectangle,
+    ma_dither_mode_rayRectangle,
     ma_dither_mode_triangle
 } ma_dither_mode;
 
@@ -13979,7 +13979,7 @@ static MA_INLINE ma_int32 ma_rand_range_s32(ma_int32 lo, ma_int32 hi)
 }
 
 
-static MA_INLINE float ma_dither_f32_rectangle(float ditherMin, float ditherMax)
+static MA_INLINE float ma_dither_f32_rayRectangle(float ditherMin, float ditherMax)
 {
     return ma_rand_range_f32(ditherMin, ditherMax);
 }
@@ -13993,8 +13993,8 @@ static MA_INLINE float ma_dither_f32_triangle(float ditherMin, float ditherMax)
 
 static MA_INLINE float ma_dither_f32(ma_dither_mode ditherMode, float ditherMin, float ditherMax)
 {
-    if (ditherMode == ma_dither_mode_rectangle) {
-        return ma_dither_f32_rectangle(ditherMin, ditherMax);
+    if (ditherMode == ma_dither_mode_rayRectangle) {
+        return ma_dither_f32_rayRectangle(ditherMin, ditherMax);
     }
     if (ditherMode == ma_dither_mode_triangle) {
         return ma_dither_f32_triangle(ditherMin, ditherMax);
@@ -14005,7 +14005,7 @@ static MA_INLINE float ma_dither_f32(ma_dither_mode ditherMode, float ditherMin,
 
 static MA_INLINE ma_int32 ma_dither_s32(ma_dither_mode ditherMode, ma_int32 ditherMin, ma_int32 ditherMax)
 {
-    if (ditherMode == ma_dither_mode_rectangle) {
+    if (ditherMode == ma_dither_mode_rayRectangle) {
         ma_int32 a = ma_rand_range_s32(ditherMin, ditherMax);
         return a;
     }
@@ -44588,18 +44588,18 @@ static MA_INLINE void ma_pcm_f32_to_s16__sse2(void* dst, const void* src, ma_uin
         if (ditherMode == ma_dither_mode_none) {
             d0 = _mm_set1_ps(0);
             d1 = _mm_set1_ps(0);
-        } else if (ditherMode == ma_dither_mode_rectangle) {
+        } else if (ditherMode == ma_dither_mode_rayRectangle) {
             d0 = _mm_set_ps(
-                ma_dither_f32_rectangle(ditherMin, ditherMax),
-                ma_dither_f32_rectangle(ditherMin, ditherMax),
-                ma_dither_f32_rectangle(ditherMin, ditherMax),
-                ma_dither_f32_rectangle(ditherMin, ditherMax)
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax),
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax),
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax),
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax)
             );
             d1 = _mm_set_ps(
-                ma_dither_f32_rectangle(ditherMin, ditherMax),
-                ma_dither_f32_rectangle(ditherMin, ditherMax),
-                ma_dither_f32_rectangle(ditherMin, ditherMax),
-                ma_dither_f32_rectangle(ditherMin, ditherMax)
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax),
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax),
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax),
+                ma_dither_f32_rayRectangle(ditherMin, ditherMax)
             );
         } else {
             d0 = _mm_set_ps(
@@ -44690,20 +44690,20 @@ static MA_INLINE void ma_pcm_f32_to_s16__neon(void* dst, const void* src, ma_uin
         if (ditherMode == ma_dither_mode_none) {
             d0 = vmovq_n_f32(0);
             d1 = vmovq_n_f32(0);
-        } else if (ditherMode == ma_dither_mode_rectangle) {
+        } else if (ditherMode == ma_dither_mode_rayRectangle) {
             float d0v[4];
             float d1v[4];
 
-            d0v[0] = ma_dither_f32_rectangle(ditherMin, ditherMax);
-            d0v[1] = ma_dither_f32_rectangle(ditherMin, ditherMax);
-            d0v[2] = ma_dither_f32_rectangle(ditherMin, ditherMax);
-            d0v[3] = ma_dither_f32_rectangle(ditherMin, ditherMax);
+            d0v[0] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
+            d0v[1] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
+            d0v[2] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
+            d0v[3] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
             d0 = vld1q_f32(d0v);
 
-            d1v[0] = ma_dither_f32_rectangle(ditherMin, ditherMax);
-            d1v[1] = ma_dither_f32_rectangle(ditherMin, ditherMax);
-            d1v[2] = ma_dither_f32_rectangle(ditherMin, ditherMax);
-            d1v[3] = ma_dither_f32_rectangle(ditherMin, ditherMax);
+            d1v[0] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
+            d1v[1] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
+            d1v[2] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
+            d1v[3] = ma_dither_f32_rayRectangle(ditherMin, ditherMax);
             d1 = vld1q_f32(d1v);
         } else {
             float d0v[4];

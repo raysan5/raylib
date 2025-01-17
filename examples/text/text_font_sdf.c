@@ -139,7 +139,7 @@ int main(void)
 
     UnloadShader(shader);       // Unload SDF shader
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -32,7 +32,7 @@ int main(void)
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     Vector2 position = { 350.0f, 280.0f };
-    Rectangle frameRec = { 0.0f, 0.0f, (float)scarfy.width/6, (float)scarfy.height };
+    rayRectangle frameRec = { 0.0f, 0.0f, (float)scarfy.width/6, (float)scarfy.height };
     int currentFrame = 0;
 
     int framesCounter = 0;
@@ -73,8 +73,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawTexture(scarfy, 15, 40, WHITE);
-            DrawRectangleLines(15, 40, scarfy.width, scarfy.height, LIME);
-            DrawRectangleLines(15 + (int)frameRec.x, 40 + (int)frameRec.y, (int)frameRec.width, (int)frameRec.height, RED);
+            DrawrayRectangleLines(15, 40, scarfy.width, scarfy.height, LIME);
+            DrawrayRectangleLines(15 + (int)frameRec.x, 40 + (int)frameRec.y, (int)frameRec.width, (int)frameRec.height, RED);
 
             DrawText("FRAME SPEED: ", 165, 210, 10, DARKGRAY);
             DrawText(TextFormat("%02i FPS", framesSpeed), 575, 210, 10, DARKGRAY);
@@ -82,8 +82,8 @@ int main(void)
 
             for (int i = 0; i < MAX_FRAME_SPEED; i++)
             {
-                if (i < framesSpeed) DrawRectangle(250 + 21*i, 205, 20, 20, RED);
-                DrawRectangleLines(250 + 21*i, 205, 20, 20, MAROON);
+                if (i < framesSpeed) DrawrayRectangle(250 + 21*i, 205, 20, 20, RED);
+                DrawrayRectangleLines(250 + 21*i, 205, 20, 20, MAROON);
             }
 
             DrawTextureRec(scarfy, frameRec, position, WHITE);  // Draw part of the texture
@@ -98,7 +98,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadTexture(scarfy);       // Texture unloading
 
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

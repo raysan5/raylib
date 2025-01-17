@@ -2425,7 +2425,7 @@ static void nsvg__parseRect(NSVGparser* p, const char** attr)
 			nsvg__lineTo(p, x+w, y+h);
 			nsvg__lineTo(p, x, y+h);
 		} else {
-			// Rounded rectangle
+			// Rounded rayRectangle
 			nsvg__moveTo(p, x+rx, y);
 			nsvg__lineTo(p, x+w-rx, y);
 			nsvg__cubicBezTo(p, x+w-rx*(1-NSVG_KAPPA90), y, x+w, y+ry*(1-NSVG_KAPPA90), x+w, y+ry);

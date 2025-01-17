@@ -37,9 +37,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{48871156-181A-475A-BD8D-200086A09675}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shapes_draw_rectangle_rounded</RootNamespace>
+    <RootNamespace>shapes_draw_rayRectangle_rounded</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shapes_draw_rectangle_rounded</ProjectName>
+    <ProjectName>shapes_draw_rayRectangle_rounded</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shapes\shapes_draw_rectangle_rounded.c" />
+    <ClCompile Include="..\..\..\examples\shapes\shapes_draw_rayRectangle_rounded.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

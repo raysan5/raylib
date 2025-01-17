@@ -29,7 +29,7 @@ typedef struct Player {
 } Player;
 
 typedef struct EnvElement {
-    Rectangle rect;
+    rayRectangle rect;
     int blocking;
     Color color;
 } EnvElement;
@@ -282,17 +282,17 @@ int main(void)
                 // Draw environment elements
                 for (int i = 0; i < MAX_ENVIRONMENT_ELEMENTS; i++)
                 {
-                    DrawRectangleRec(envElements[i].rect, envElements[i].color);
+                    DrawrayRectangleRec(envElements[i].rect, envElements[i].color);
                 }
 
-                // Draw player rectangle
-                DrawRectangleRec((Rectangle){ player.position.x - 20, player.position.y - 40, 40, 40 }, RED);
+                // Draw player rayRectangle
+                DrawrayRectangleRec((rayRectangle){ player.position.x - 20, player.position.y - 40, 40, 40 }, RED);
 
             EndMode2D();
             
             // Draw game controls
-            DrawRectangle(10, 10, 290, 145, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(10, 10, 290, 145, Fade(BLUE, 0.8f));
+            DrawrayRectangle(10, 10, 290, 145, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines(10, 10, 290, 145, Fade(BLUE, 0.8f));
 
             DrawText("Controls:", 20, 20, 10, BLACK);
             DrawText("- RIGHT | LEFT: Player movement", 30, 40, 10, DARKGRAY);
@@ -305,16 +305,16 @@ int main(void)
             // Draw automation events recording indicator
             if (eventRecording)
             {
-                DrawRectangle(10, 160, 290, 30, Fade(RED, 0.3f));
-                DrawRectangleLines(10, 160, 290, 30, Fade(MAROON, 0.8f));
+                DrawrayRectangle(10, 160, 290, 30, Fade(RED, 0.3f));
+                DrawrayRectangleLines(10, 160, 290, 30, Fade(MAROON, 0.8f));
                 DrawCircle(30, 175, 10, MAROON);
 
                 if (((frameCounter/15)%2) == 1) DrawText(TextFormat("RECORDING EVENTS... [%i]", aelist.count), 50, 170, 10, MAROON);
             }
             else if (eventPlaying)
             {
-                DrawRectangle(10, 160, 290, 30, Fade(LIME, 0.3f));
-                DrawRectangleLines(10, 160, 290, 30, Fade(DARKGREEN, 0.8f));
+                DrawrayRectangle(10, 160, 290, 30, Fade(LIME, 0.3f));
+                DrawrayRectangleLines(10, 160, 290, 30, Fade(DARKGREEN, 0.8f));
                 DrawTriangle((Vector2){ 20, 155 + 10 }, (Vector2){ 20, 155 + 30 }, (Vector2){ 40, 155 + 20 }, DARKGREEN);
 
                 if (((frameCounter/15)%2) == 1) DrawText(TextFormat("PLAYING RECORDED EVENTS... [%i]", currentPlayFrame), 50, 170, 10, DARKGREEN);
@@ -327,7 +327,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

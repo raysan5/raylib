@@ -94,7 +94,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawRectangle(0, 0, GetScreenWidth(), 70, BLACK);
+            DrawrayRectangle(0, 0, GetScreenWidth(), 70, BLACK);
             DrawText(TextFormat("Total codepoints contained in provided text: %i", codepointCount), 10, 10, 20, GREEN);
             DrawText(TextFormat("Total codepoints required for font atlas (duplicates excluded): %i", codepointsNoDupsCount), 10, 40, 20, GREEN);
 
@@ -102,7 +102,7 @@ int main(void)
             {
                 // Draw generated font texture atlas containing provided codepoints
                 DrawTexture(font.texture, 150, 100, BLACK);
-                DrawRectangleLines(150, 100, font.texture.width, font.texture.height, BLACK);
+                DrawrayRectangleLines(150, 100, font.texture.width, font.texture.height, BLACK);
             }
             else
             {
@@ -120,7 +120,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadFont(font);     // Unload font
 
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

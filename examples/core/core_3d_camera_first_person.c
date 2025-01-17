@@ -169,8 +169,8 @@ int main(void)
             EndMode3D();
 
             // Draw info boxes
-            DrawRectangle(5, 5, 330, 100, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(5, 5, 330, 100, BLUE);
+            DrawrayRectangle(5, 5, 330, 100, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines(5, 5, 330, 100, BLUE);
 
             DrawText("Camera controls:", 15, 15, 10, BLACK);
             DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
@@ -179,8 +179,8 @@ int main(void)
             DrawText("- Zoom keys: num-plus, num-minus or mouse scroll", 15, 75, 10, BLACK);
             DrawText("- Camera projection key: P", 15, 90, 10, BLACK);
 
-            DrawRectangle(600, 5, 195, 100, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(600, 5, 195, 100, BLUE);
+            DrawrayRectangle(600, 5, 195, 100, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines(600, 5, 195, 100, BLUE);
 
             DrawText("Camera status:", 610, 15, 10, BLACK);
             DrawText(TextFormat("- Mode: %s", (cameraMode == CAMERA_FREE) ? "FREE" :
@@ -199,7 +199,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

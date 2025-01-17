@@ -37,12 +37,12 @@ int main(void)
     Texture2D explosion = LoadTexture("resources/explosion.png");
 
     // Init variables for animation
-    float frameWidth = (float)(explosion.width/NUM_FRAMES_PER_LINE);   // Sprite one frame rectangle width
-    float frameHeight = (float)(explosion.height/NUM_LINES);           // Sprite one frame rectangle height
+    float frameWidth = (float)(explosion.width/NUM_FRAMES_PER_LINE);   // Sprite one frame rayRectangle width
+    float frameHeight = (float)(explosion.height/NUM_LINES);           // Sprite one frame rayRectangle height
     int currentFrame = 0;
     int currentLine = 0;
 
-    Rectangle frameRec = { 0, 0, frameWidth, frameHeight };
+    rayRectangle frameRec = { 0, 0, frameWidth, frameHeight };
     Vector2 position = { 0.0f, 0.0f };
 
     bool active = false;
@@ -104,7 +104,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // Draw explosion required frame rectangle
+            // Draw explosion required frame rayRectangle
             if (active) DrawTextureRec(explosion, frameRec, position, WHITE);
 
         EndDrawing();
@@ -118,7 +118,7 @@ int main(void)
 
     CloseAudioDevice();
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

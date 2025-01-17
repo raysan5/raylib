@@ -53,7 +53,7 @@ int main(void)
             DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
 
             //Red border to illustrate how the SVG is centered within the specified dimensions
-            DrawRectangleLines((screenWidth / 2 - texture.width / 2) - 1, (screenHeight / 2 - texture.height / 2) - 1, texture.width + 2, texture.height + 2, RED);
+            DrawrayRectangleLines((screenWidth / 2 - texture.width / 2) - 1, (screenHeight / 2 - texture.height / 2) - 1, texture.width + 2, texture.height + 2, RED);
 
             DrawText("this IS a texture loaded from an SVG file!", 300, 410, 10, GRAY);
 
@@ -65,7 +65,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);       // Texture unloading
 
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

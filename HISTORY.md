@@ -216,7 +216,7 @@ After almost one years since latest raylib installment, here it is **raylib 2.5*
 
  - Brand **new text management API**, with the addition of multiple functions to deal with string data, including functionality like replace, insert, join, split, append, to uppercase, to lower... Note that most of those functions are intended for text management on rendering, using pre-loaded internal buffers, avoiding new memory allocation that user should free manually.
 
- - Multiple **new shapes and textures drawing functions** to support rings (`DrawRing()`, `DrawRingLines()`), circle sectors (`DrawCircleSector()`, `DrawCircleSectorLines()`), rounded rectangles (`DrawRectangleRounded()`, `DrawRectangleRoundedLines()`) and also n-patch textures (`DrawTextureNPatch()`), detailed examples have been added to illustrate all this new functionality.
+ - Multiple **new shapes and textures drawing functions** to support rings (`DrawRing()`, `DrawRingLines()`), circle sectors (`DrawCircleSector()`, `DrawCircleSectorLines()`), rounded rayRectangles (`DrawrayRectangleRounded()`, `DrawrayRectangleRoundedLines()`) and also n-patch textures (`DrawTextureNPatch()`), detailed examples have been added to illustrate all this new functionality.
 
  - Experimental **cubemap support**, to automatically load multiple cubemap layouts (`LoadTextureCubemap()`). It required some internal `rlgl` redesign to allow cubemap textures.
 

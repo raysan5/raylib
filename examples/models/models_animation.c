@@ -104,7 +104,7 @@ int main(void)
     UnloadModelAnimations(anims, animsCount);   // Unload model animations data
     UnloadModel(model);                         // Unload model
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

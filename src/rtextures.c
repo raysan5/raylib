@@ -949,7 +949,7 @@ Image GenImageGradientSquare(int width, int height, float density, Color inner, 
             float distX = fabsf(x - centerX);
             float distY = fabsf(y - centerY);
 
-            // Normalize the distances by the dimensions of the gradient rectangle
+            // Normalize the distances by the dimensions of the gradient rayRectangle
             float normalizedDistX = distX / centerX;
             float normalizedDistY = distY / centerY;
 
@@ -1200,7 +1200,7 @@ Image ImageCopy(Image image)
 }
 
 // Create an image from another image piece
-Image ImageFromImage(Image image, Rectangle rec)
+Image ImageFromImage(Image image, rayRectangle rec)
 {
     Image result = { 0 };
 
@@ -1220,21 +1220,21 @@ Image ImageFromImage(Image image, Rectangle rec)
     return result;
 }
 
-// Crop an image to area defined by a rectangle
-// NOTE: Security checks are performed in case rectangle goes out of bounds
-void ImageCrop(Image *image, Rectangle crop)
+// Crop an image to area defined by a rayRectangle
+// NOTE: Security checks are performed in case rayRectangle goes out of bounds
+void ImageCrop(Image *image, rayRectangle crop)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    // Security checks to validate crop rectangle
+    // Security checks to validate crop rayRectangle
     if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
     if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
     if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
     if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
     if ((crop.x > image->width) || (crop.y > image->height))
     {
-        TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
+        TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rayRectangle out of bounds");
         return;
     }
 
@@ -1490,7 +1490,7 @@ Image ImageText(const char *text, int fontSize, Color color)
     int spacing = fontSize/defaultFontSize;
     imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);   // WARNING: Module required: rtext
 #else
-    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
+    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rayRectangle
     TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
 #endif
     return imText;
@@ -1532,8 +1532,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
-                ImageDraw(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height }, rec, tint);
+                rayRectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
+                ImageDraw(&imText, font.glyphs[index].image, (rayRectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height }, rec, tint);
             }
 
             if (font.glyphs[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
@@ -1555,7 +1555,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
 #else
-    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
+    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rayRectangle
     TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
 #endif
     return imText;
@@ -1668,7 +1668,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else if ((newWidth != image->width) || (newHeight != image->height))
     {
-        Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
+        rayRectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
         Vector2 dstPos = { (float)offsetX, (float)offsetY };
 
         if (offsetX < 0)
@@ -1734,9 +1734,9 @@ void ImageAlphaCrop(Image *image, float threshold)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Rectangle crop = GetImageAlphaBorder(*image, threshold);
+    rayRectangle crop = GetImageAlphaBorder(*image, threshold);
 
-    // Crop if rectangle is valid
+    // Crop if rayRectangle is valid
     if (((int)crop.width != 0) && ((int)crop.height != 0)) ImageCrop(image, crop);
 }
 
@@ -2881,11 +2881,11 @@ void UnloadImagePalette(Color *colors)
     RL_FREE(colors);
 }
 
-// Get image alpha border rectangle
+// Get image alpha border rayRectangle
 // NOTE: Threshold is defined as a percentage: 0.0f -> 1.0f
-Rectangle GetImageAlphaBorder(Image image, float threshold)
+rayRectangle GetImageAlphaBorder(Image image, float threshold)
 {
-    Rectangle crop = { 0 };
+    rayRectangle crop = { 0 };
 
     Color *pixels = LoadImageColors(image);
 
@@ -2913,7 +2913,7 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
         // Check for empty blank image
         if ((xMin != 65536) && (xMax != 65536))
         {
-            crop = (Rectangle){ (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
+            crop = (rayRectangle){ (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
         }
 
         UnloadImageColors(pixels);
@@ -3324,10 +3324,10 @@ void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color col
 
     while (y >= x)
     {
-        ImageDrawRectangle(dst, centerX - x, centerY + y, x*2, 1, color);
-        ImageDrawRectangle(dst, centerX - x, centerY - y, x*2, 1, color);
-        ImageDrawRectangle(dst, centerX - y, centerY + x, y*2, 1, color);
-        ImageDrawRectangle(dst, centerX - y, centerY - x, y*2, 1, color);
+        ImageDrawrayRectangle(dst, centerX - x, centerY + y, x*2, 1, color);
+        ImageDrawrayRectangle(dst, centerX - x, centerY - y, x*2, 1, color);
+        ImageDrawrayRectangle(dst, centerX - y, centerY + x, y*2, 1, color);
+        ImageDrawrayRectangle(dst, centerX - y, centerY - x, y*2, 1, color);
         x++;
 
         if (decesionParameter > 0)
@@ -3379,20 +3379,20 @@ void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
     ImageDrawCircleLines(dst, (int)center.x, (int)center.y, radius, color);
 }
 
-// Draw rectangle within an image
-void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
+// Draw rayRectangle within an image
+void ImageDrawrayRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
+    ImageDrawrayRectangleRec(dst, (rayRectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
 }
 
-// Draw rectangle within an image (Vector version)
-void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
+// Draw rayRectangle within an image (Vector version)
+void ImageDrawrayRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
 {
-    ImageDrawRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
+    ImageDrawrayRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
 }
 
-// Draw rectangle within an image
-void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
+// Draw rayRectangle within an image
+void ImageDrawrayRectangleRec(Image *dst, rayRectangle rec, Color color)
 {
     // Security check to avoid program crash
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
@@ -3436,18 +3436,18 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     }
 }
 
-// Draw rectangle lines within an image
-void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
+// Draw rayRectangle lines within an image
+void ImageDrawrayRectangleLines(Image *dst, rayRectangle rec, int thick, Color color)
 {
-    ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
-    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
-    ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
-    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
+    ImageDrawrayRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
+    ImageDrawrayRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawrayRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawrayRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
 }
 
 // Draw an image (source) within an image (destination)
 // NOTE: Color tint is applied to source image
-void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
+void ImageDraw(Image *dst, Image src, rayRectangle srcRec, rayRectangle dstRec, Color tint)
 {
     // Security check to avoid program crash
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
@@ -3461,25 +3461,25 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         Image *srcPtr = &src;       // Pointer to source image
         bool useSrcMod = false;     // Track source copy required
 
-        // Source rectangle out-of-bounds security checks
+        // Source rayRectangle out-of-bounds security checks
         if (srcRec.x < 0) { srcRec.width += srcRec.x; srcRec.x = 0; }
         if (srcRec.y < 0) { srcRec.height += srcRec.y; srcRec.y = 0; }
         if ((srcRec.x + srcRec.width) > src.width) srcRec.width = src.width - srcRec.x;
         if ((srcRec.y + srcRec.height) > src.height) srcRec.height = src.height - srcRec.y;
 
-        // Check if source rectangle needs to be resized to destination rectangle
+        // Check if source rayRectangle needs to be resized to destination rayRectangle
         // In that case, we make a copy of source, and we apply all required transform
         if (((int)srcRec.width != (int)dstRec.width) || ((int)srcRec.height != (int)dstRec.height))
         {
             srcMod = ImageFromImage(src, srcRec);   // Create image from another image
-            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);   // Resize to destination rectangle
-            srcRec = (Rectangle){ 0, 0, (float)srcMod.width, (float)srcMod.height };
+            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);   // Resize to destination rayRectangle
+            srcRec = (rayRectangle){ 0, 0, (float)srcMod.width, (float)srcMod.height };
 
             srcPtr = &srcMod;
             useSrcMod = true;
         }
 
-        // Destination rectangle out-of-bounds security checks
+        // Destination rayRectangle out-of-bounds security checks
         if (dstRec.x < 0)
         {
             srcRec.x -= dstRec.x;
@@ -3580,8 +3580,8 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, tint);
 
-    Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
-    Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
+    rayRectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
+    rayRectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
 
     ImageDraw(dst, imText, srcRec, dstRec, WHITE);
 
@@ -3662,8 +3662,8 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         int size = cubemap.width;
 
         Image faces = { 0 };                // Vertical column image
-        Rectangle faceRecs[6] = { 0 };      // Face source rectangles
-        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
+        rayRectangle faceRecs[6] = { 0 };      // Face source rayRectangles
+        for (int i = 0; i < 6; i++) faceRecs[i] = (rayRectangle){ 0, 0, (float)size, (float)size };
 
         if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL)
         {
@@ -3702,7 +3702,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
             // NOTE: Image formatting does not work with compressed textures
 
-            for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
+            for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (rayRectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
         }
 
         // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
@@ -3812,9 +3812,9 @@ void UpdateTexture(Texture2D texture, const void *pixels)
     rlUpdateTexture(texture.id, 0, 0, texture.width, texture.height, texture.format, pixels);
 }
 
-// Update GPU texture rectangle with new data
+// Update GPU texture rayRectangle with new data
 // NOTE: pixels data must match texture.format
-void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels)
+void UpdateTextureRec(Texture2D texture, rayRectangle rec, const void *pixels)
 {
     rlUpdateTexture(texture.id, (int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, texture.format, pixels);
 }
@@ -3944,25 +3944,25 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 // Draw a texture with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
-    Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
-    Rectangle dest = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
+    rayRectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+    rayRectangle dest = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, source, dest, origin, rotation, tint);
 }
 
-// Draw a part of a texture (defined by a rectangle)
-void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint)
+// Draw a part of a texture (defined by a rayRectangle)
+void DrawTextureRec(Texture2D texture, rayRectangle source, Vector2 position, Color tint)
 {
-    Rectangle dest = { position.x, position.y, fabsf(source.width), fabsf(source.height) };
+    rayRectangle dest = { position.x, position.y, fabsf(source.width), fabsf(source.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, source, dest, origin, 0.0f, tint);
 }
 
-// Draw a part of a texture (defined by a rectangle) with 'pro' parameters
-// NOTE: origin is relative to destination rectangle size
-void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint)
+// Draw a part of a texture (defined by a rayRectangle) with 'pro' parameters
+// NOTE: origin is relative to destination rayRectangle size
+void DrawTexturePro(Texture2D texture, rayRectangle source, rayRectangle dest, Vector2 origin, float rotation, Color tint)
 {
     // Check if texture is valid
     if (texture.id > 0)
@@ -4084,7 +4084,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 }
 
 // Draws a texture (or part of it) that stretches or shrinks nicely using n-patch info
-void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint)
+void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, rayRectangle dest, Vector2 origin, float rotation, Color tint)
 {
     if (texture.id > 0)
     {

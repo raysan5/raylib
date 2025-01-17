@@ -1,7 +1,7 @@
 # format=pipe 
 InitWindow|void|(int width, int height, const char *title);|
 WindowShouldClose|bool|(void);|
-CloseWindow|void|(void);|
+rayCloseWindow|void|(void);|
 IsWindowReady|bool|(void);|
 IsWindowMinimized|bool|(void);|
 IsWindowResized|bool|(void);|
@@ -26,7 +26,7 @@ GetMonitorPhysicalHeight|int|(int monitor);|
 GetMonitorName|const char *|(int monitor);|
 GetClipboardText|const char *|(void);|
 SetClipboardText|void|(const char *text);|
-ShowCursor|void|(void);|
+rayShowCursor|void|(void);|
 HideCursor|void|(void);|
 IsCursorHidden|bool|(void);|
 EnableCursor|void|(void);|
@@ -136,28 +136,28 @@ DrawCircleV|void|(Vector2 center, float radius, Color color);|
 DrawCircleLines|void|(int centerX, int centerY, float radius, Color color);|
 DrawRing|void|(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color);|
 DrawRingLines|void|(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color);|
-DrawRectangle|void|(int posX, int posY, int width, int height, Color color);|
-DrawRectangleV|void|(Vector2 position, Vector2 size, Color color);|
-DrawRectangleRec|void|(Rectangle rec, Color color);|
-DrawRectanglePro|void|(Rectangle rec, Vector2 origin, float rotation, Color color);|
-DrawRectangleGradientV|void|(int posX, int posY, int width, int height, Color color1, Color color2);|
-DrawRectangleGradientH|void|(int posX, int posY, int width, int height, Color color1, Color color2);|
-DrawRectangleGradientEx|void|(Rectangle rec, Color col1, Color col2, Color col3, Color col4);|
-DrawRectangleLines|void|(int posX, int posY, int width, int height, Color color);|
-DrawRectangleLinesEx|void|(Rectangle rec, int lineThick, Color color);|
-DrawRectangleRounded|void|(Rectangle rec, float roundness, int segments, Color color);|
-DrawRectangleRoundedLines|void|(Rectangle rec, float roundness, int segments, int lineThick, Color color);|
+DrawrayRectangle|void|(int posX, int posY, int width, int height, Color color);|
+DrawrayRectangleV|void|(Vector2 position, Vector2 size, Color color);|
+DrawrayRectangleRec|void|(rayRectangle rec, Color color);|
+DrawrayRectanglePro|void|(rayRectangle rec, Vector2 origin, float rotation, Color color);|
+DrawrayRectangleGradientV|void|(int posX, int posY, int width, int height, Color color1, Color color2);|
+DrawrayRectangleGradientH|void|(int posX, int posY, int width, int height, Color color1, Color color2);|
+DrawrayRectangleGradientEx|void|(rayRectangle rec, Color col1, Color col2, Color col3, Color col4);|
+DrawrayRectangleLines|void|(int posX, int posY, int width, int height, Color color);|
+DrawrayRectangleLinesEx|void|(rayRectangle rec, int lineThick, Color color);|
+DrawrayRectangleRounded|void|(rayRectangle rec, float roundness, int segments, Color color);|
+DrawrayRectangleRoundedLines|void|(rayRectangle rec, float roundness, int segments, int lineThick, Color color);|
 DrawTriangle|void|(Vector2 v1, Vector2 v2, Vector2 v3, Color color);|
 DrawTriangleLines|void|(Vector2 v1, Vector2 v2, Vector2 v3, Color color);|
 DrawPoly|void|(Vector2 center, int sides, float radius, float rotation, Color color);|
 DrawPolyEx|void|(Vector2 *points, int numPoints, Color color);|
 DrawPolyExLines|void|(Vector2 *points, int numPoints, Color color);|
-SetShapesTexture|void|(Texture2D texture, Rectangle source);|
-CheckCollisionRecs|bool|(Rectangle rec1, Rectangle rec2);|
+SetShapesTexture|void|(Texture2D texture, rayRectangle source);|
+CheckCollisionRecs|bool|(rayRectangle rec1, rayRectangle rec2);|
 CheckCollisionCircles|bool|(Vector2 center1, float radius1, Vector2 center2, float radius2);|
-CheckCollisionCircleRec|bool|(Vector2 center, float radius, Rectangle rec);|
-GetCollisionRec|Rectangle|(Rectangle rec1, Rectangle rec2);|
-CheckCollisionPointRec|bool|(Vector2 point, Rectangle rec);|
+CheckCollisionCircleRec|bool|(Vector2 center, float radius, rayRectangle rec);|
+GetCollisionRec|rayRectangle|(rayRectangle rec1, rayRectangle rec2);|
+CheckCollisionPointRec|bool|(Vector2 point, rayRectangle rec);|
 CheckCollisionPointCircle|bool|(Vector2 point, Vector2 center, float radius);|
 CheckCollisionPointTriangle|bool|(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);|
 LoadImage|Image|(const char *fileName);|
@@ -186,7 +186,7 @@ ImageAlphaMask|void|(Image *image, Image alphaMask);|
 ImageAlphaClear|void|(Image *image, Color color, float threshold);
 ImageAlphaCrop|void|(Image *image, float threshold);|
 ImageAlphaPremultiply|void|(Image *image);|
-ImageCrop|void|(Image *image, Rectangle crop);|
+ImageCrop|void|(Image *image, rayRectangle crop);|
 ImageResize|void|(Image *image, int newWidth, int newHeight);|
 ImageResizeNN|void|(Image *image, int newWidth,int newHeight);|void|
 ImageResizeCanvas|void|(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color color);|
@@ -195,9 +195,9 @@ ImageDither|void|(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);|
 ImageExtractPalette|Color *|(Image image, int maxPaletteSize, int *extractCount);|
 ImageText|Image|(const char *text, int fontSize, Color color);|
 ImageTextEx|Image|(Font font, const char *text, float fontSize, float spacing, Color tint);|
-ImageDraw|void|(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);|
-ImageDrawRectangle|void|(Image *dst, Rectangle rec, Color color);|
-ImageDrawRectangleLines|void|(Image *dst, Rectangle rec, int thick, Color color);|
+ImageDraw|void|(Image *dst, Image src, rayRectangle srcRec, rayRectangle dstRec);|
+ImageDrawrayRectangle|void|(Image *dst, rayRectangle rec, Color color);|
+ImageDrawrayRectangleLines|void|(Image *dst, rayRectangle rec, int thick, Color color);|
 ImageDrawText|void|(Image *dst, Vector2 position, const char *text, int fontSize, Color color);|
 ImageDrawTextEx|void|(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color);|
 ImageFlipVertical|void|(Image *image);|
@@ -225,10 +225,10 @@ SetTextureWrap|void|(Texture2D texture, int wrapMode);|
 DrawTexture|void|(Texture2D texture, int posX, int posY, Color tint);|
 DrawTextureV|void|(Texture2D texture, Vector2 position, Color tint);|
 DrawTextureEx|void|(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);|
-DrawTextureRec|void|(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);|
-DrawTextureQuad|void|(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint);|
-DrawTexturePro|void|(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint);|
-DrawTextureNPatch|void|(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint);|
+DrawTextureRec|void|(Texture2D texture, rayRectangle sourceRec, Vector2 position, Color tint);|
+DrawTextureQuad|void|(Texture2D texture, Vector2 tiling, Vector2 offset, rayRectangle quad, Color tint);|
+DrawTexturePro|void|(Texture2D texture, rayRectangle sourceRec, rayRectangle destRec, Vector2 origin, float rotation, Color tint);|
+DrawTextureNPatch|void|(Texture2D texture, NPatchInfo nPatchInfo, rayRectangle destRec, Vector2 origin, float rotation, Color tint);|
 GetFontDefault|Font|(void);|
 LoadFont|Font|(const char *fileName);|
 LoadFontEx|Font|(const char *fileName, int fontSize, int *fontChars, int charsCount);|
@@ -239,8 +239,8 @@ UnloadFont|void|(Font font);|
 DrawFPS|void|(int posX, int posY);|
 DrawText|void|(const char *text, int posX, int posY, int fontSize, Color color);|
 DrawTextEx|void|(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);|
-DrawTextRec|void|(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);|
-DrawTextRecEx|void|(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectText, Color selectBack);|
+DrawTextRec|void|(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);|
+DrawTextRecEx|void|(Font font, const char *text, rayRectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectText, Color selectBack);|
 MeasureText|int|(const char *text, int fontSize);|
 MeasureTextEx|Vector2|(Font font, const char *text, float fontSize, float spacing);|
 GetGlyphIndex|int|(Font font, int character);|
@@ -308,7 +308,7 @@ DrawModelWires|void|(Model model, Vector3 position, float scale, Color tint);|
 DrawModelWiresEx|void|(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);|
 DrawBoundingBox|void|(BoundingBox box, Color color);|
 DrawBillboard|void|(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);|
-DrawBillboardRec|void|(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint);|
+DrawBillboardRec|void|(Camera camera, Texture2D texture, rayRectangle sourceRec, Vector3 center, float size, Color tint);|
 CheckCollisionSpheres|bool|(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);|
 CheckCollisionBoxes|bool|(BoundingBox box1, BoundingBox box2);|
 CheckCollisionBoxSphere|bool|(BoundingBox box, Vector3 centerSphere, float radiusSphere);|
@@ -400,7 +400,7 @@ Vector4|struct||
 Quaternion|struct||
 Matrix|struct||
 Color|struct||
-Rectangle|struct||
+rayRectangle|struct||
 Image|struct||
 Texture|struct||
 RenderTexture|struct||

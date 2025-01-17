@@ -37,9 +37,9 @@ int main(void)
         "DARKBROWN", "GRAY", "RED", "GOLD", "LIME", "BLUE", "VIOLET", "BROWN",
         "LIGHTGRAY", "PINK", "YELLOW", "GREEN", "SKYBLUE", "PURPLE", "BEIGE" };
 
-    Rectangle colorsRecs[MAX_COLORS_COUNT] = { 0 };     // Rectangles array
+    rayRectangle colorsRecs[MAX_COLORS_COUNT] = { 0 };     // rayRectangles array
 
-    // Fills colorsRecs data (for every rectangle)
+    // Fills colorsRecs data (for every rayRectangle)
     for (int i = 0; i < MAX_COLORS_COUNT; i++)
     {
         colorsRecs[i].x = 20.0f + 100.0f *(i%7) + 10.0f *(i%7);
@@ -78,14 +78,14 @@ int main(void)
             DrawText("raylib colors palette", 28, 42, 20, BLACK);
             DrawText("press SPACE to see all colors", GetScreenWidth() - 180, GetScreenHeight() - 40, 10, GRAY);
 
-            for (int i = 0; i < MAX_COLORS_COUNT; i++)    // Draw all rectangles
+            for (int i = 0; i < MAX_COLORS_COUNT; i++)    // Draw all rayRectangles
             {
-                DrawRectangleRec(colorsRecs[i], Fade(colors[i], colorState[i]? 0.6f : 1.0f));
+                DrawrayRectangleRec(colorsRecs[i], Fade(colors[i], colorState[i]? 0.6f : 1.0f));
 
                 if (IsKeyDown(KEY_SPACE) || colorState[i])
                 {
-                    DrawRectangle((int)colorsRecs[i].x, (int)(colorsRecs[i].y + colorsRecs[i].height - 26), (int)colorsRecs[i].width, 20, BLACK);
-                    DrawRectangleLinesEx(colorsRecs[i], 6, Fade(BLACK, 0.3f));
+                    DrawrayRectangle((int)colorsRecs[i].x, (int)(colorsRecs[i].y + colorsRecs[i].height - 26), (int)colorsRecs[i].width, 20, BLACK);
+                    DrawrayRectangleLinesEx(colorsRecs[i], 6, Fade(BLACK, 0.3f));
                     DrawText(colorNames[i], (int)(colorsRecs[i].x + colorsRecs[i].width - MeasureText(colorNames[i], 10) - 12),
                         (int)(colorsRecs[i].y + colorsRecs[i].height - 20), 10, colors[i]);
                 }
@@ -97,7 +97,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

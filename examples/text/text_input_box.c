@@ -30,7 +30,7 @@ int main(void)
     char name[MAX_INPUT_CHARS + 1] = "\0";      // NOTE: One extra space required for null terminator char '\0'
     int letterCount = 0;
 
-    Rectangle textBox = { screenWidth/2.0f - 100, 180, 225, 50 };
+    rayRectangle textBox = { screenWidth/2.0f - 100, 180, 225, 50 };
     bool mouseOnText = false;
 
     int framesCounter = 0;
@@ -89,9 +89,9 @@ int main(void)
 
             DrawText("PLACE MOUSE OVER INPUT BOX!", 240, 140, 20, GRAY);
 
-            DrawRectangleRec(textBox, LIGHTGRAY);
-            if (mouseOnText) DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, RED);
-            else DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
+            DrawrayRectangleRec(textBox, LIGHTGRAY);
+            if (mouseOnText) DrawrayRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, RED);
+            else DrawrayRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
 
             DrawText(name, (int)textBox.x + 5, (int)textBox.y + 8, 40, MAROON);
 
@@ -113,7 +113,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

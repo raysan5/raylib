@@ -1669,13 +1669,13 @@ static void processEvent(XEvent *event)
                 reply.xclient.message_type = _glfw.x11.XdndStatus;
                 reply.xclient.format = 32;
                 reply.xclient.data.l[0] = window->x11.handle;
-                reply.xclient.data.l[2] = 0; // Specify an empty rectangle
+                reply.xclient.data.l[2] = 0; // Specify an empty rayRectangle
                 reply.xclient.data.l[3] = 0;
 
                 if (_glfw.x11.xdnd.format)
                 {
                     // Reply that we are ready to copy the dragged data
-                    reply.xclient.data.l[1] = 1; // Accept with no rectangle
+                    reply.xclient.data.l[1] = 1; // Accept with no rayRectangle
                     if (_glfw.x11.xdnd.version >= 2)
                         reply.xclient.data.l[4] = _glfw.x11.XdndActionCopy;
                 }

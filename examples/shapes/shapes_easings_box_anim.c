@@ -28,7 +28,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings box anim");
 
     // Box variables to be animated with easings
-    Rectangle rec = { GetScreenWidth()/2.0f, -100, 100, 100 };
+    rayRectangle rec = { GetScreenWidth()/2.0f, -100, 100, 100 };
     float rotation = 0.0f;
     float alpha = 1.0f;
 
@@ -71,7 +71,7 @@ int main(void)
                     state = 2;
                 }
             } break;
-            case 2:     // Rotate horizontal bar rectangle
+            case 2:     // Rotate horizontal bar rayRectangle
             {
                 framesCounter++;
                 rotation = EaseQuadOut((float)framesCounter, 0.0f, 270.0f, 240);
@@ -110,7 +110,7 @@ int main(void)
         // Reset animation at any moment
         if (IsKeyPressed(KEY_SPACE))
         {
-            rec = (Rectangle){ GetScreenWidth()/2.0f, -100, 100, 100 };
+            rec = (rayRectangle){ GetScreenWidth()/2.0f, -100, 100, 100 };
             rotation = 0.0f;
             alpha = 1.0f;
             state = 0;
@@ -124,7 +124,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawRectanglePro(rec, (Vector2){ rec.width/2, rec.height/2 }, rotation, Fade(BLACK, alpha));
+            DrawrayRectanglePro(rec, (Vector2){ rec.width/2, rec.height/2 }, rotation, Fade(BLACK, alpha));
 
             DrawText("PRESS [SPACE] TO RESET BOX ANIMATION!", 10, GetScreenHeight() - 25, 20, LIGHTGRAY);
 
@@ -134,7 +134,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

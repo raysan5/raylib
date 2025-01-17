@@ -186,7 +186,7 @@
 // If not defined, still some functions are supported: TextLength(), TextFormat()
 #define SUPPORT_TEXT_MANIPULATION       1
 
-// On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
+// On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rayRectangle
 // at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
 // drawing text and shapes with a single draw call [SetShapesTexture()].
 #define SUPPORT_FONT_ATLAS_WHITE_REC    1

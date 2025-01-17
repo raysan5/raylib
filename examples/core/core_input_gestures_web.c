@@ -82,8 +82,8 @@ Color GetGestureColor(int i)
 int logMode = 1; // Log mode values: 0 shows repeated events; 1 hides repeated events; 2 shows repeated events but hide hold events; 3 hides repeated events and hide hold events
 
 Color gestureColor = { 0, 0, 0, 255 };
-Rectangle logButton1 = { 53, 7, 48, 26 };
-Rectangle logButton2 = { 108, 7, 36, 26 };
+rayRectangle logButton1 = { 53, 7, 48, 26 };
+rayRectangle logButton2 = { 108, 7, 36, 26 };
 Vector2 gestureLogPosition = { 10, 10 };
 
 // Protractor variables definitions
@@ -218,10 +218,10 @@ void Update(void)
         //--------------------------------------------------------------------------------------
         DrawText("Last gesture", lastGesturePosition.x + 33, lastGesturePosition.y - 47, 20, BLACK);
         DrawText("Swipe         Tap       Pinch  Touch", lastGesturePosition.x + 17, lastGesturePosition.y - 18, 10, BLACK);
-        DrawRectangle(lastGesturePosition.x + 20, lastGesturePosition.y, 20, 20, lastGesture == GESTURE_SWIPE_UP ? RED : LIGHTGRAY);
-        DrawRectangle(lastGesturePosition.x, lastGesturePosition.y + 20, 20, 20, lastGesture == GESTURE_SWIPE_LEFT ? RED : LIGHTGRAY);
-        DrawRectangle(lastGesturePosition.x + 40, lastGesturePosition.y + 20, 20, 20, lastGesture == GESTURE_SWIPE_RIGHT ? RED : LIGHTGRAY);
-        DrawRectangle(lastGesturePosition.x + 20, lastGesturePosition.y + 40, 20, 20, lastGesture == GESTURE_SWIPE_DOWN ? RED : LIGHTGRAY);
+        DrawrayRectangle(lastGesturePosition.x + 20, lastGesturePosition.y, 20, 20, lastGesture == GESTURE_SWIPE_UP ? RED : LIGHTGRAY);
+        DrawrayRectangle(lastGesturePosition.x, lastGesturePosition.y + 20, 20, 20, lastGesture == GESTURE_SWIPE_LEFT ? RED : LIGHTGRAY);
+        DrawrayRectangle(lastGesturePosition.x + 40, lastGesturePosition.y + 20, 20, 20, lastGesture == GESTURE_SWIPE_RIGHT ? RED : LIGHTGRAY);
+        DrawrayRectangle(lastGesturePosition.x + 20, lastGesturePosition.y + 40, 20, 20, lastGesture == GESTURE_SWIPE_DOWN ? RED : LIGHTGRAY);
         DrawCircle(lastGesturePosition.x + 80, lastGesturePosition.y + 16, 10, lastGesture == GESTURE_TAP ? BLUE : LIGHTGRAY);
         DrawRing( (Vector2){lastGesturePosition.x + 103, lastGesturePosition.y + 16}, 6.0f, 11.0f, 0.0f, 360.0f, 0, lastGesture == GESTURE_DRAG ? LIME : LIGHTGRAY);
         DrawCircle(lastGesturePosition.x + 80, lastGesturePosition.y + 43, 10, lastGesture == GESTURE_DOUBLETAP ? SKYBLUE : LIGHTGRAY);
@@ -246,10 +246,10 @@ void Update(void)
             case 1:  logButton1Color=MAROON; logButton2Color=GRAY;   break;
             default: logButton1Color=GRAY;   logButton2Color=GRAY;   break;
         }
-        DrawRectangleRec(logButton1, logButton1Color);
+        DrawrayRectangleRec(logButton1, logButton1Color);
         DrawText("Hide", logButton1.x + 7, logButton1.y + 3, 10, WHITE);
         DrawText("Repeat", logButton1.x + 7, logButton1.y + 13, 10, WHITE);
-        DrawRectangleRec(logButton2, logButton2Color);
+        DrawrayRectangleRec(logButton2, logButton2Color);
         DrawText("Hide", logButton1.x + 62, logButton1.y + 3, 10, WHITE);
         DrawText("Hold", logButton1.x + 62, logButton1.y + 13, 10, WHITE);
 
@@ -323,7 +323,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow(); // Close window and OpenGL context
+    rayCloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

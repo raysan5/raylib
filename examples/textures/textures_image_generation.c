@@ -84,8 +84,8 @@ int main(void)
 
             DrawTexture(textures[currentTexture], 0, 0, WHITE);
 
-            DrawRectangle(30, 400, 325, 30, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
+            DrawrayRectangle(30, 400, 325, 30, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, WHITE);
 
             switch(currentTexture)
@@ -112,7 +112,7 @@ int main(void)
     // Unload textures data (GPU VRAM)
     for (int i = 0; i < NUM_TEXTURES; i++) UnloadTexture(textures[i]);
 
-    CloseWindow();                // Close window and OpenGL context
+    rayCloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

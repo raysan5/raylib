@@ -27,7 +27,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - scissor test");
 
-    Rectangle scissorArea = { 0, 0, 300, 300 };
+    rayRectangle scissorArea = { 0, 0, 300, 300 };
     bool scissorMode = true;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -53,14 +53,14 @@ int main(void)
 
             if (scissorMode) BeginScissorMode((int)scissorArea.x, (int)scissorArea.y, (int)scissorArea.width, (int)scissorArea.height);
 
-            // Draw full screen rectangle and some text
+            // Draw full screen rayRectangle and some text
             // NOTE: Only part defined by scissor area will be rendered
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RED);
+            DrawrayRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RED);
             DrawText("Move the mouse around to reveal this text!", 190, 200, 20, LIGHTGRAY);
 
             if (scissorMode) EndScissorMode();
 
-            DrawRectangleLinesEx(scissorArea, 1, BLACK);
+            DrawrayRectangleLinesEx(scissorArea, 1, BLACK);
             DrawText("Press S to toggle scissor test", 10, 10, 20, BLACK);
 
         EndDrawing();
@@ -69,7 +69,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

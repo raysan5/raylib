@@ -94,12 +94,12 @@ int main(void)
 
             DrawText(TextFormat("EXPONENT = %.2f", exponent), 215, 180, 20, LIGHTGRAY);
 
-            DrawRectangle(199, 199, 402, 34, LIGHTGRAY);
+            DrawrayRectangle(199, 199, 402, 34, LIGHTGRAY);
             for (int i = 0; i < 400; i++)
             {
                 DrawLine(201 + i, 232 - averageVolume[i] * 32, 201 + i, 232, MAROON);
             }
-            DrawRectangleLines(199, 199, 402, 34, GRAY);
+            DrawrayRectangleLines(199, 199, 402, 34, GRAY);
 
             DrawText("PRESS SPACE TO PLAY OTHER SOUND", 200, 250, 20, LIGHTGRAY);
             DrawText("USE LEFT AND RIGHT ARROWS TO ALTER DISTORTION", 140, 280, 20, LIGHTGRAY);
@@ -116,7 +116,7 @@ int main(void)
 
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

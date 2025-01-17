@@ -65,8 +65,8 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangle( 10, 10, 320, 93, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines( 10, 10, 320, 93, BLUE);
+            DrawrayRectangle( 10, 10, 320, 93, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines( 10, 10, 320, 93, BLUE);
 
             DrawText("Free camera default controls:", 20, 20, 10, BLACK);
             DrawText("- Mouse Wheel to Zoom in-out", 40, 40, 10, DARKGRAY);
@@ -79,7 +79,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

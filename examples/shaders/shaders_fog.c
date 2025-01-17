@@ -148,7 +148,7 @@ int main(void)
     UnloadTexture(texture);     // Unload the texture
     UnloadShader(shader);       // Unload shader
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

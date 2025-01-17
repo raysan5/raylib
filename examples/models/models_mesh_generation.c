@@ -108,8 +108,8 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
+            DrawrayRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
+            DrawrayRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
 
             switch(currentModel)
@@ -137,7 +137,7 @@ int main(void)
     // Unload models data (GPU VRAM)
     for (int i = 0; i < NUM_MODELS; i++) UnloadModel(models[i]);
 
-    CloseWindow();          // Close window and OpenGL context
+    rayCloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -31,7 +31,7 @@ vec2 VectorRotateTime(vec2 v, float speed)
     return v;
 }
 
-float Rectangle(in vec2 st, in float size, in float fill)
+float rayRectangle(in vec2 st, in float size, in float fill)
 {
   float roundSize = 0.5 - size/2.0;
   float left = step(roundSize, st.x);
@@ -53,7 +53,7 @@ void main()
 
     fpos = VectorRotateTime(fpos, 0.2);
 
-    float alpha = Rectangle(fpos, 0.216, 1.0);
+    float alpha = rayRectangle(fpos, 0.216, 1.0);
     vec3 color = vec3(0.3, 0.3, 0.3);
 
     gl_FragColor = vec4(color, alpha);

@@ -144,7 +144,7 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadTexture(texRoad);
     
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

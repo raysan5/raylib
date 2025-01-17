@@ -67,11 +67,11 @@ int main(void)
         BeginTextureMode(target);       // Enable drawing to texture
             ClearBackground(BLACK);     // Clear the render texture
 
-            // Draw a rectangle in shader mode to be used as shader canvas
-            // NOTE: Rectangle uses font white character texture coordinates,
+            // Draw a rayRectangle in shader mode to be used as shader canvas
+            // NOTE: rayRectangle uses font white character texture coordinates,
             // so shader can not be applied here directly because input vertexTexCoord
             // do not represent full screen coordinates (space where want to apply shader)
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
+            DrawrayRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
         EndTextureMode();               // End drawing to texture (now we have a blank texture available for the shader)
 
         BeginDrawing();
@@ -79,7 +79,7 @@ int main(void)
 
             BeginShaderMode(shader);
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
+                DrawTextureRec(target.texture, (rayRectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
             EndShaderMode();
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ int main(void)
     UnloadShader(shader);               // Unload shader
     UnloadRenderTexture(target);        // Unload render texture
 
-    CloseWindow();                      // Close window and OpenGL context
+    rayCloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

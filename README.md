@@ -71,7 +71,7 @@ int main(void)
         EndDrawing();
     }
 
-    CloseWindow();
+    rayCloseWindow();
 
     return 0;
 }

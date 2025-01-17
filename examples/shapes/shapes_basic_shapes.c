@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Draw basic shapes 2d (rectangle, circle, line...)
+*   raylib [shapes] example - Draw basic shapes 2d (rayRectangle, circle, line...)
 *
 *   Example originally created with raylib 1.0, last time updated with raylib 4.2
 *
@@ -51,10 +51,10 @@ int main(void)
             DrawCircleGradient(screenWidth/5, 220, 60, GREEN, SKYBLUE);
             DrawCircleLines(screenWidth/5, 340, 80, DARKBLUE);
 
-            // Rectangle shapes and lines
-            DrawRectangle(screenWidth/4*2 - 60, 100, 120, 60, RED);
-            DrawRectangleGradientH(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
-            DrawRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, ORANGE);  // NOTE: Uses QUADS internally, not lines
+            // rayRectangle shapes and lines
+            DrawrayRectangle(screenWidth/4*2 - 60, 100, 120, 60, RED);
+            DrawrayRectangleGradientH(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
+            DrawrayRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, ORANGE);  // NOTE: Uses QUADS internally, not lines
 
             // Triangle shapes and lines
             DrawTriangle((Vector2){ screenWidth/4.0f *3.0f, 80.0f },
@@ -79,7 +79,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

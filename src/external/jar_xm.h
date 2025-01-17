@@ -2398,17 +2398,17 @@ void jar_xm_debug(jar_xm_context_t *ctx) {
     for (int i=0; i < ctx->module.length; i++) {
         if (i == ctx->jump_dest) {
             if (ctx->position_jump) {
-                DrawRectangle(i * size * 2, y - size, size * 2, size, GOLD);
+                DrawrayRectangle(i * size * 2, y - size, size * 2, size, GOLD);
             } else {
-                DrawRectangle(i * size * 2, y - size, size * 2, size, BROWN);
+                DrawrayRectangle(i * size * 2, y - size, size * 2, size, BROWN);
             };
         };
         if (i == ctx->current_table_index) {
 //            DrawText(TextFormat("%02X", ctx->current_tick), i * size * 2, y - size, size, WHITE);
-            DrawRectangle(i * size * 2, y, size * 2, size, RED);
+            DrawrayRectangle(i * size * 2, y, size * 2, size, RED);
             DrawText(TextFormat("%02X", ctx->current_row), i * size * 2, y - size, size, YELLOW);
         } else {
-            DrawRectangle(i * size * 2, y, size * 2, size, ORANGE);
+            DrawrayRectangle(i * size * 2, y, size * 2, size, ORANGE);
         };
         DrawText(TextFormat("%02X", ctx->module.pattern_table[i]), i * size * 2, y, size, WHITE);
     };
@@ -2420,7 +2420,7 @@ void jar_xm_debug(jar_xm_context_t *ctx) {
 
     x += 2 * size;
     for(uint8_t i = 0; i < ctx->module.num_channels; i++) {
-        DrawRectangle(x, y, 8 * size, size, PURPLE);
+        DrawrayRectangle(x, y, 8 * size, size, PURPLE);
         DrawText("N", x, y, size, YELLOW);
         DrawText("I", x + size * 2, y, size, YELLOW);
         DrawText("V", x + size * 4, y, size, YELLOW);
@@ -2432,14 +2432,14 @@ void jar_xm_debug(jar_xm_context_t *ctx) {
         y += size;
         x = 0;
         if (j >=0 && j < (cur->num_rows)) {
-            DrawRectangle(x, y, size * 2, size, BROWN);
+            DrawrayRectangle(x, y, size * 2, size, BROWN);
             DrawText(TextFormat("%02X",j), x, y, size, WHITE);
             x += 2 * size;
             for(uint8_t i = 0; i < ctx->module.num_channels; i++) {
                 if (j==(ctx->current_row)) {
-                    DrawRectangle(x, y, 8 * size, size, DARKGREEN);
+                    DrawrayRectangle(x, y, 8 * size, size, DARKGREEN);
                 } else {
-                    DrawRectangle(x, y, 8 * size, size, DARKGRAY);
+                    DrawrayRectangle(x, y, 8 * size, size, DARKGRAY);
                 };
                 jar_xm_pattern_slot_t *s = cur->slots + j * ctx->module.num_channels + i;
            //     jar_xm_channel_context_t *ch = ctx->channels + i;

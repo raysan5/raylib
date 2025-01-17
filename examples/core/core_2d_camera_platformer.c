@@ -27,7 +27,7 @@ typedef struct Player {
 } Player;
 
 typedef struct EnvItem {
-    Rectangle rect;
+    rayRectangle rect;
     int blocking;
     Color color;
 } EnvItem;
@@ -131,10 +131,10 @@ int main(void)
 
             BeginMode2D(camera);
 
-                for (int i = 0; i < envItemsLength; i++) DrawRectangleRec(envItems[i].rect, envItems[i].color);
+                for (int i = 0; i < envItemsLength; i++) DrawrayRectangleRec(envItems[i].rect, envItems[i].color);
 
-                Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
-                DrawRectangleRec(playerRect, RED);
+                rayRectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
+                DrawrayRectangleRec(playerRect, RED);
 
             EndMode2D();
 
@@ -152,7 +152,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

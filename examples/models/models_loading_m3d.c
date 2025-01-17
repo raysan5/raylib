@@ -167,7 +167,7 @@ int main(void)
 
     UnloadModel(model);         // Unload model
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

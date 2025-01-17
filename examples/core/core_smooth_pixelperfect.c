@@ -43,13 +43,13 @@ int main(void)
 
     RenderTexture2D target = LoadRenderTexture(virtualScreenWidth, virtualScreenHeight); // This is where we'll draw all our objects.
 
-    Rectangle rec01 = { 70.0f, 35.0f, 20.0f, 20.0f };
-    Rectangle rec02 = { 90.0f, 55.0f, 30.0f, 10.0f };
-    Rectangle rec03 = { 80.0f, 65.0f, 15.0f, 25.0f };
+    rayRectangle rec01 = { 70.0f, 35.0f, 20.0f, 20.0f };
+    rayRectangle rec02 = { 90.0f, 55.0f, 30.0f, 10.0f };
+    rayRectangle rec03 = { 80.0f, 65.0f, 15.0f, 25.0f };
 
-    // The target's height is flipped (in the source Rectangle), due to OpenGL reasons
-    Rectangle sourceRec = { 0.0f, 0.0f, (float)target.texture.width, -(float)target.texture.height };
-    Rectangle destRec = { -virtualRatio, -virtualRatio, screenWidth + (virtualRatio*2), screenHeight + (virtualRatio*2) };
+    // The target's height is flipped (in the source rayRectangle), due to OpenGL reasons
+    rayRectangle sourceRec = { 0.0f, 0.0f, (float)target.texture.width, -(float)target.texture.height };
+    rayRectangle destRec = { -virtualRatio, -virtualRatio, screenWidth + (virtualRatio*2), screenHeight + (virtualRatio*2) };
 
     Vector2 origin = { 0.0f, 0.0f };
 
@@ -66,7 +66,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        rotation += 60.0f*GetFrameTime();   // Rotate the rectangles, 60 degrees per second
+        rotation += 60.0f*GetFrameTime();   // Rotate the rayRectangles, 60 degrees per second
 
         // Make the camera move to demonstrate the effect
         cameraX = (sinf(GetTime())*50.0f) - 10.0f;
@@ -91,9 +91,9 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode2D(worldSpaceCamera);
-                DrawRectanglePro(rec01, origin, rotation, BLACK);
-                DrawRectanglePro(rec02, origin, -rotation, RED);
-                DrawRectanglePro(rec03, origin, rotation + 45.0f, BLUE);
+                DrawrayRectanglePro(rec01, origin, rotation, BLACK);
+                DrawrayRectanglePro(rec02, origin, -rotation, RED);
+                DrawrayRectanglePro(rec03, origin, rotation + 45.0f, BLUE);
             EndMode2D();
         EndTextureMode();
 
@@ -115,7 +115,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(target);    // Unload render texture
 
-    CloseWindow();                  // Close window and OpenGL context
+    rayCloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

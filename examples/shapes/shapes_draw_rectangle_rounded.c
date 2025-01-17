@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw rectangle rounded (with gui options)
+*   raylib [shapes] example - draw rayRectangle rounded (with gui options)
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw rectangle rounded");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw rayRectangle rounded");
 
     float roundness = 0.2f;
     float width = 200.0f;
@@ -48,7 +48,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        Rectangle rec = { ((float)GetScreenWidth() - width - 250)/2, (GetScreenHeight() - height)/2.0f, (float)width, (float)height };
+        rayRectangle rec = { ((float)GetScreenWidth() - width - 250)/2, (GetScreenHeight() - height)/2.0f, (float)width, (float)height };
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -58,23 +58,23 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawLine(560, 0, 560, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
-            DrawRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
+            DrawrayRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
-            if (drawRect) DrawRectangleRec(rec, Fade(GOLD, 0.6f));
-            if (drawRoundedRect) DrawRectangleRounded(rec, roundness, (int)segments, Fade(MAROON, 0.2f));
-            if (drawRoundedLines) DrawRectangleRoundedLines(rec, roundness, (int)segments, lineThick, Fade(MAROON, 0.4f));
+            if (drawRect) DrawrayRectangleRec(rec, Fade(GOLD, 0.6f));
+            if (drawRoundedRect) DrawrayRectangleRounded(rec, roundness, (int)segments, Fade(MAROON, 0.2f));
+            if (drawRoundedLines) DrawrayRectangleRoundedLines(rec, roundness, (int)segments, lineThick, Fade(MAROON, 0.4f));
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            GuiSliderBar((Rectangle){ 640, 40, 105, 20 }, "Width", NULL, &width, 0, (float)GetScreenWidth() - 300);
-            GuiSliderBar((Rectangle){ 640, 70, 105, 20 }, "Height", NULL, &height, 0, (float)GetScreenHeight() - 50);
-            GuiSliderBar((Rectangle){ 640, 140, 105, 20 }, "Roundness", NULL, &roundness, 0.0f, 1.0f);
-            GuiSliderBar((Rectangle){ 640, 170, 105, 20 }, "Thickness", NULL, &lineThick, 0, 20);
-            GuiSliderBar((Rectangle){ 640, 240, 105, 20}, "Segments", NULL, &segments, 0, 60);
+            GuiSliderBar((rayRectangle){ 640, 40, 105, 20 }, "Width", NULL, &width, 0, (float)GetScreenWidth() - 300);
+            GuiSliderBar((rayRectangle){ 640, 70, 105, 20 }, "Height", NULL, &height, 0, (float)GetScreenHeight() - 50);
+            GuiSliderBar((rayRectangle){ 640, 140, 105, 20 }, "Roundness", NULL, &roundness, 0.0f, 1.0f);
+            GuiSliderBar((rayRectangle){ 640, 170, 105, 20 }, "Thickness", NULL, &lineThick, 0, 20);
+            GuiSliderBar((rayRectangle){ 640, 240, 105, 20}, "Segments", NULL, &segments, 0, 60);
 
-            GuiCheckBox((Rectangle){ 640, 320, 20, 20 }, "DrawRoundedRect", &drawRoundedRect);
-            GuiCheckBox((Rectangle){ 640, 350, 20, 20 }, "DrawRoundedLines", &drawRoundedLines);
-            GuiCheckBox((Rectangle){ 640, 380, 20, 20}, "DrawRect", &drawRect);
+            GuiCheckBox((rayRectangle){ 640, 320, 20, 20 }, "DrawRoundedRect", &drawRoundedRect);
+            GuiCheckBox((rayRectangle){ 640, 350, 20, 20 }, "DrawRoundedLines", &drawRoundedLines);
+            GuiCheckBox((rayRectangle){ 640, 380, 20, 20}, "DrawRect", &drawRect);
             //------------------------------------------------------------------------------
 
             DrawText(TextFormat("MODE: %s", (segments >= 4)? "MANUAL" : "AUTO"), 640, 280, 10, (segments >= 4)? MAROON : DARKGRAY);
@@ -87,7 +87,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

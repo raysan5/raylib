@@ -124,9 +124,9 @@ int main(void)
 
                 for (int i = 0; i < COLORS_PER_PALETTE; i++)
                 {
-                    // Draw horizontal screen-wide rectangles with increasing "palette index"
+                    // Draw horizontal screen-wide rayRectangles with increasing "palette index"
                     // The used palette index is encoded in the RGB components of the pixel
-                    DrawRectangle(0, lineHeight*i, GetScreenWidth(), lineHeight, (Color){ i, i, i, 255 });
+                    DrawrayRectangle(0, lineHeight*i, GetScreenWidth(), lineHeight, (Color){ i, i, i, 255 });
                 }
 
             EndShaderMode();
@@ -145,7 +145,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);       // Unload shader
 
-    CloseWindow();              // Close window and OpenGL context
+    rayCloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

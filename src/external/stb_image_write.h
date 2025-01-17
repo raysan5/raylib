@@ -77,10 +77,10 @@ USAGE:
    Each function returns 0 on failure and non-0 on success.
 
    The functions create an image file defined by the parameters. The image
-   is a rectangle of pixels stored from left-to-right, top-to-bottom.
+   is a rayRectangle of pixels stored from left-to-right, top-to-bottom.
    Each pixel contains 'comp' channels of data stored interleaved with 8-bits
    per channel, in the following order: 1=Y, 2=YA, 3=RGB, 4=RGBA. (Y is
-   monochrome color.) The rectangle is 'w' pixels wide and 'h' pixels tall.
+   monochrome color.) The rayRectangle is 'w' pixels wide and 'h' pixels tall.
    The *data pointer points to the first byte of the top-left-most pixel.
    For PNG, "stride_in_bytes" is the distance in bytes from the first byte of
    a row of pixels to the first byte of the next row of pixels.
@@ -89,8 +89,8 @@ USAGE:
    The BMP format expands Y to RGB in the file format and does not
    output alpha.
 
-   PNG supports writing rectangles of data even when the bytes storing rows of
-   data are not consecutive in memory (e.g. sub-rectangles of a larger image),
+   PNG supports writing rayRectangles of data even when the bytes storing rows of
+   data are not consecutive in memory (e.g. sub-rayRectangles of a larger image),
    by supplying the stride between the beginning of adjacent rows. The other
    formats do not. (Thus you cannot write a native-format BMP through the BMP
    writer, both because it is in BGR order and because it may have padding

@@ -38,7 +38,7 @@ Detailed changes:
 [rcore] REVIEWED: BeginScissorMode(), identify rendering to texture (#3510) by @gulrak
 [rcore] REVIEWED: Window flags order (#3114) by @lesleyrs
 [rcore] REVIEWED: Full movement for right analog stick (#3095) by @PixelPhobicGames
-[rcore] REVIEWED: Fix Android app freeze after calling CloseWindow() (#3067) by @Bigfoot71
+[rcore] REVIEWED: Fix Android app freeze after calling rayCloseWindow() (#3067) by @Bigfoot71
 [rcore] REVIEWED: Lazy loading of default font used on image drawing (no InitWindow) by @raysan5
 [rcore] REVIEWED: Minor tweaks to raylib events automation system @raysan5
 [rcore] REVIEWED: GetCurrentMonitor() bugfix (#3058) by @hamyyy
@@ -79,18 +79,18 @@ Detailed changes:
 [rtextures] REMOVED: GenImageGradientH() and GenImageGradientV() by @danemadsen
 [rtextures] REVIEWED: LoadImageSvg() by @raysan5
 [rtextures] REVIEWED: Uninitialized thread-locals in stbi (#3282) (#3283) by @jbarthelmes
-[rtextures] REVIEWED: ImageDrawRectangleRec(), validate drawing inside bounds by @JeffM2501
+[rtextures] REVIEWED: ImageDrawrayRectangleRec(), validate drawing inside bounds by @JeffM2501
 [rtextures] REVIEWED: LoadTextureCubemap() for manual layouts (#3204) by @Not-Nik
-[rtextures] REVIEWED: Optimization of ImageDrawRectangleRec() (#3185) by @smalltimewizard
+[rtextures] REVIEWED: Optimization of ImageDrawrayRectangleRec() (#3185) by @smalltimewizard
 [rtextures] REVIEWED: ImageRotate() formatting by @raysan5
 [rtextures] REVIEWED: GenImagePerlinNoise(), clamp values (#3071) by @raysan5
 [rtextures] REVIEWED: Packing logic error in GenImageFontAtlas() (#2979) by @hanaxar
 [rtextures] REVIEWED: Calculate exact image size in GenImageFontAtlas() (#2963) by @hanaxar
-[rtextures] REVIEWED: ImageDrawRectangleRec() (#3027) by @raysan5
+[rtextures] REVIEWED: ImageDrawrayRectangleRec() (#3027) by @raysan5
 [rtextures] REVIEWED: ImageDraw() source clipping when drawing beyond top left (#3306) by @RobLoach
 [rtextures] REVIEWED: UnloadRenderTexture(), additional checks
 [rtextures] REVIEWED: Fixed compressed DDS texture loading issues (#3483) by @JaanDev
-[rtext] ADDED: Font altas white rectangle and flag SUPPORT_FONT_ATLAS_WHITE_REC by @raysan5
+[rtext] ADDED: Font altas white rayRectangle and flag SUPPORT_FONT_ATLAS_WHITE_REC by @raysan5
 [rtext] ADDED: SetTextLineSpacing() to define line breaks text drawing spacing by @raysan5
 [rtext] RENAMED: LoadFont*() parameter names for consistency and coherence by @raysan5
 [rtext] REVIEWED: GetCodepointCount(), ignore unused return value of GetCodepointNext by @ashn-dot-dev
@@ -375,7 +375,7 @@ Detailed changes:
 [examples] REVIEWED: core_input_gamepad.c (#2903) by @planetis-m
 [examples] REVIEWED: core_custom_frame_control
 [examples] REVIEWED: core_drop_files (#2943)
-[examples] REVIEWED: text_rectangle_bounds (#2746) by @SzieberthAdam
+[examples] REVIEWED: text_rayRectangle_bounds (#2746) by @SzieberthAdam
 [examples] REVIEWED: textures_image_processing, added gaussian blurring (#2775) by @nobytesgiven
 [examples] REVIEWED: models_billboard, highlighting rotation and draw order (#2779) by @nobytesgiven
 [examples] REVIEWED: core_loading_thread, join thread on completion (#2845) by @planetis-m
@@ -509,9 +509,9 @@ Detailed changes:
 [raymath] REVIEWED: QuaternionFromMatrix(), QuaternionEquals() (#2591) by @kirigirihitomi
 [raymath] REVIEWED: MatrixRotate*() (#2595, #2599) by @GoodNike
 [shapes] REVIEWED: CheckCollision*() consistency
-[shapes] REVIEWED: DrawRectanglePro(), support TRIANGLES drawing
+[shapes] REVIEWED: DrawrayRectanglePro(), support TRIANGLES drawing
 [textures] ADDED: Support for QOI image format
-[textures] REVIEWED: ImageColorTint(), GetImageColor(), ImageDrawRectangleRec(), optimized functions (#2429) by @AnilBK
+[textures] REVIEWED: ImageColorTint(), GetImageColor(), ImageDrawrayRectangleRec(), optimized functions (#2429) by @AnilBK
 [textures] REVIEWED: LoadTextureFromImage(), allow texture loading with no data transfer
 [textures] REVIEWED: ImageDraw(), comment to note that f32bit is not supported (#2222)
 [textures] REVIEWED: DrawTextureNPatch(), avoid batch overflow (#2401) by @JeffM2501
@@ -567,7 +567,7 @@ Detailed changes:
 [examples] ADDED: audio_stream_effects
 [examples] REMOVED: core_quat_conversion, not working properly
 [examples] REMOVED: raudio_standalone, moved to raudio repo
-[examples] RENAMED: textures_rectangle -> textures_sprite_anim
+[examples] RENAMED: textures_rayRectangle -> textures_sprite_anim
 [examples] REVIEWED: core_input_gamepad, improve joystick visualisation (#2390) by @kristianlm
 [examples] REVIEWED: textures_draw_tiled
 [examples] REVIEWED: shaders_mesh_instancing, free allocated matrices (#2425) by @AnilBK
@@ -694,11 +694,11 @@ Detailed changes:
 [textures] REVIEWED: LoadImageAnim() #2005
 [text] ADDED: Security check in case of not valid font
 [text] ADDED: `GetGlyphInfo()` to get glyph info for a specific codepoint
-[text] ADDED: `GetGlyphAtlasRec()` to get glyph rectangle within the generated font atlas
+[text] ADDED: `GetGlyphAtlasRec()` to get glyph rayRectangle within the generated font atlas
 [text] ADDED: DrawTextPro() with text rotation support, WARNING: DrawTextPro() requires including `rlgl.h`, before it was only dependant on `textures` module.
 [text] ADDED: UnloadCodepoints() to safely free loaded codepoints
 [text] REMOVED: DrawTextRec() and DrawTextRecEx(), moved to example, those functions could be very specific depending on user needs so it's better to give the user the full source in case of special requirements instead of allowing a function with +10 input parameters.
-[text] RENAMED: struct `CharInfo` to `GlyphInfo`, actually that's the correct naming for the data contained. It contains the character glyph metrics and the glyph image; in the past it also contained rectangle within the font atlas but that data has been moved to `Font` struct directly, so, `GlyphInfo` is a more correct name.
+[text] RENAMED: struct `CharInfo` to `GlyphInfo`, actually that's the correct naming for the data contained. It contains the character glyph metrics and the glyph image; in the past it also contained rayRectangle within the font atlas but that data has been moved to `Font` struct directly, so, `GlyphInfo` is a more correct name.
 [text] RENAMED: `CodepointToUtf8()` to `CodepointToUTF8()`, capitalization of UTF-8 is the correct form, it would also require de hyphen but it can be omitted in this case.
 [text] RENAMED: `TextToUtf8()` to `TextCodepointsToUTF8` for consistency and more detail on the functionality.
 [text] RENAMED: GetCodepoints() to LoadCodepoints(), now codepoint array data is loaded dynamically instead of reusing a limited static buffer.
@@ -746,7 +746,7 @@ Detailed changes:
 [examples] REVIEWED: shapes_basic_shapes
 [examples] REVIEWED: shapes_logo_raylib_anim
 [examples] REVIEWED: textures_to_image
-[examples] REVIEWED: text_rectangle_bounds
+[examples] REVIEWED: text_rayRectangle_bounds
 [examples] REVIEWED: text_unicode
 [examples] REVIEWED: text_draw_3d
 [examples] REVIEWED: models_loading
@@ -835,8 +835,8 @@ Detailed changes:
 [textures] ADDED: DrawTexturePoly() and example (#1677) by @chriscamacho
 [textures] ADDED: UnloadImageColors() for allocs consistency
 [textures] RENAMED: GetImageData() to LoadImageColors()
-[textures] REVIEWED: ImageClearBackground() and ImageDrawRectangleRec() (#1487) by @JeffM2501
-[textures] REVIEWED: DrawTexturePro() and DrawRectanglePro() transformations (#1632) by @ChrisDill
+[textures] REVIEWED: ImageClearBackground() and ImageDrawrayRectangleRec() (#1487) by @JeffM2501
+[textures] REVIEWED: DrawTexturePro() and DrawrayRectanglePro() transformations (#1632) by @ChrisDill
 [text] REDESIGNED: DrawFPS()
 [models] ADDED: UploadMesh() (#1529)
 [models] ADDED: UpdateMeshBuffer()
@@ -1136,7 +1136,7 @@ Detailed changes:
 [shapes] ADDED: DrawPolyLines() - Draw a polygon outline of n sides
 [shapes] REVIEWED: DrawPoly() shape rendering, by @AlexHCC
 [textures] ADDED: LoadAnimatedGIF() - Load animated GIF file
-[textures] ADDED: GetImageAlphaBorder() - Get image alpha border rectangle
+[textures] ADDED: GetImageAlphaBorder() - Get image alpha border rayRectangle
 [textures] ADDED: ImageFromImage() - Create an image from another image piece
 [textures] ADDED: ImageClearBackground(), by @iamsouravgupta
 [textures] ADDED: ImageDrawPixel(), by @iamsouravgupta
@@ -1145,17 +1145,17 @@ Detailed changes:
 [textures] ADDED: ImageDrawPixelV(), by @RobLoach
 [textures] ADDED: ImageDrawCircleV(), by @RobLoach
 [textures] ADDED: ImageDrawLineV(), by @RobLoach
-[textures] ADDED: ImageDrawRectangleV(), by @RobLoach
-[textures] ADDED: ImageDrawRectangleRec(), by @RobLoach
+[textures] ADDED: ImageDrawrayRectangleV(), by @RobLoach
+[textures] ADDED: ImageDrawrayRectangleRec(), by @RobLoach
 [textures] REVIEWED: ImageDrawPixel(), by @RobLoach
 [textures] REVIEWED: ImageDrawLine(), by @RobLoach
 [textures] REVIEWED: ImageDrawCircle(), by @RobLoach
-[textures] REVIEWED: ImageDrawRectangle(), by @RobLoach
+[textures] REVIEWED: ImageDrawrayRectangle(), by @RobLoach
 [textures] REVIEWED: ImageDraw(), now it supports color tint parameter
 [textures] REVIEWED: ImageResizeCanvas()
 [textures] REVIEWED: ImageCrop() with security checks
 [textures] REVIEWED: ImageAlphaMask()
-[textures] REVIEWED: ImageDrawRectangleLines()
+[textures] REVIEWED: ImageDrawrayRectangleLines()
 [textures] REVIEWED: GetImageData()
 [text] ADDED: TextCopy() - Copy one string to another, returns bytes copied
 [text] ADDED: GetCodepoints() - Get all codepoints in a string
@@ -1169,7 +1169,7 @@ Detailed changes:
 [text] REVIEWED: TextToInteger()
 [text] REVIEWED: GetNextCodepoint(), renamed parameters for clarity
 [text] REVIEWED: GenImageFontAtlas(), improved atlas size computing
-[text] REDESIGNED: struct Font, character rectangles have been moved out from CharInfo to Font
+[text] REDESIGNED: struct Font, character rayRectangles have been moved out from CharInfo to Font
 [text] REDESIGNED: struct CharInfo, now includes directly an Image of the glyph
 [text] REDESIGNED: GenImageFontAtlas(), additional recs parameter added
 [text] REDESIGNED: ImageTextEx(), to avoid font retrieval from GPU
@@ -1229,7 +1229,7 @@ KEY CHANGES:
  - [core] HighDPI monitors support with automatic content scaling
  - [rlgl] Complete module redesign to use one single internal buffer
  - [rlgl] VR system redesign to allow custom device parameters and distortion shader
- - [shapes] New drawing shapes available: CircleSector, Ring and RectangleRounded
+ - [shapes] New drawing shapes available: CircleSector, Ring and rayRectangleRounded
  - [text] New text management API (multiple functions)
  - [text] Full Unicode support (utf8 text)
  - [textures] Cubemap textures support
@@ -1271,15 +1271,15 @@ Detailed changes:
 [shapes] ADDED: DrawCircleSectorLines() - Draw circle sector outline
 [shapes] ADDED: DrawRing() - Draw ring
 [shapes] ADDED: DrawRingLines() - Draw ring outline
-[shapes] ADDED: DrawRectangleRounded() - Draw rectangle with rounded edges
-[shapes] ADDED: DrawRectangleRoundedLines() - Draw rectangle with rounded edges outline
+[shapes] ADDED: DrawrayRectangleRounded() - Draw rayRectangle with rounded edges
+[shapes] ADDED: DrawrayRectangleRoundedLines() - Draw rayRectangle with rounded edges outline
 [shapes] ADDED: SetShapesTexture() - Define default texture used to draw shapes
 [textures] REVIEWED: ExportImage() - Reorder function parameters
-[textures] REVIEWED: ImageDrawRectangle() - Remove unneeded parameter
+[textures] REVIEWED: ImageDrawrayRectangle() - Remove unneeded parameter
 [textures] ADDED: ExportImageAsCode() - Export image as code file defining an array of bytes
 [textures] ADDED: LoadTextureCubemap() - Load cubemap from image, multiple image cubemap layouts supported
 [textures] ADDED: ImageExtractPalette() - Extract color palette from image to maximum size (memory should be freed)
-[textures] ADDED: ImageDrawRectangleLines() - Draw rectangle lines within an image
+[textures] ADDED: ImageDrawrayRectangleLines() - Draw rayRectangle lines within an image
 [textures] ADDED: DrawTextureQuad() - Draw texture quad with tiling and offset parameters
 [textures] ADDED: DrawTextureNPatch() - Draws a texture (or part of it) that stretches or shrinks nicely
 [models] REVIEWED: LoadMesh() -> LoadMeshes() - Support multiple meshes loading
@@ -1309,8 +1309,8 @@ Detailed changes:
 [text] RENAMED: FormatText() -> TextFormat()
 [text] RENAMED: SubText() -> TextSubtext()
 [text] ADDED: LoadFontFromImage() - Load font from Image (XNA style)
-[text] ADDED: DrawTextRec() - Draw text using font inside rectangle limits
-[text] ADDED: DrawTextRecEx() - Draw text using font inside rectangle limits with support for text selection
+[text] ADDED: DrawTextRec() - Draw text using font inside rayRectangle limits
+[text] ADDED: DrawTextRecEx() - Draw text using font inside rayRectangle limits with support for text selection
 [text] ADDED: TextIsEqual() - Check if two text string are equal
 [text] ADDED: TextLength() - Get text length, checks for '\0' ending
 [text] ADDED: TextReplace() - Replace text string (memory should be freed!)
@@ -1336,25 +1336,25 @@ Detailed changes:
 [examples] REVIEWED: core_input_gamepad - Adapted to new gamepad system
 [examples] REVIEWED: core_vr_simulator - HMD device parameters and distortion shader should be provided
 [examples] ADDED: core_window_scale_letterbox - Windows resizing and letterbox content
-[examples] ADDED: shapes_rectangle_scaling_mouse - Scale a rectangle with mouse
+[examples] ADDED: shapes_rayRectangle_scaling_mouse - Scale a rayRectangle with mouse
 [examples] ADDED: shapes_draw_circle_sector - Circle sector drawing
 [examples] ADDED: shapes_draw_ring - Ring drawing
-[examples] ADDED: shapes_draw_rectangle_rounded - Rounded rectangle drawing
+[examples] ADDED: shapes_draw_rayRectangle_rounded - Rounded rayRectangle drawing
 [examples] ADDED: shapes_bouncing_ball - Ball bouncing in the screen
 [examples] ADDED: shapes_collision_area - Collision detection and drawing
 [examples] ADDED: shapes_following_eyes - Some maths on eyes and mouse
 [examples] ADDED: shapes_easings_ball_anim - Ball animation
 [examples] ADDED: shapes_easings_box_anim - Box animation
-[examples] ADDED: shapes_easings_rectangle_array - Rectangles animation
+[examples] ADDED: shapes_easings_rayRectangle_array - rayRectangles animation
 [examples] REVIEWED: shapes_colors_palette - Reviewed color selection and text displaying
 [examples] ADDED: textures_background_scrolling - Scrolling and parallaz background effect
 [examples] ADDED: textures_image_npatch - Drawing N-Patch based boxes
 [examples] ADDED: textures_sprite_button - Sprite button with sound
 [examples] ADDED: textures_sprite_explosion - Sprite explosion with sound
 [examples] ADDED: textures_bunnymark - Benchmarking test
-[examples] ADDED: text_draw_inside_rectangle - Drawing text inside a delimited rectangle box
+[examples] ADDED: text_draw_inside_rayRectangle - Drawing text inside a delimited rayRectangle box
 [examples] ADDED: text_unicode - Multiple languages text drawing
-[examples] ADDED: text_rectangle_bound - Fit text inside a rectangle
+[examples] ADDED: text_rayRectangle_bound - Fit text inside a rayRectangle
 [examples] REVIEWED: text_bmfont_ttf - Simplified example
 [examples] ADDED: models_animation - Animated models loading and animation playing
 [examples] ADDED: models_obj_viewer - Draw and drop models viewer
@@ -1410,7 +1410,7 @@ Detailed changes:
 [core] RENAMED: struct Camera to Camera3D
 [core] RENAMED: struct SpriteFont to Font -> plus all required functions!
 [core] RENAMED: enum TextureFormat to PixelFormat
-[core] REVIEWED: Rectangle params int to float
+[core] REVIEWED: rayRectangle params int to float
 [core] REVIEWED: timing system for macOS
 [core] REMOVED: ColorToFloat()
 [core] ADDED: GetCurrentTime() on macOS
@@ -1427,15 +1427,15 @@ Detailed changes:
 [core] REVIEWED: Fade()
 [core] REVIEWED: InitWindow() to avoid void pointer (safety)
 [core] Support camera 3d orthographic projection mode
-[shapes] ADDED: DrawRectangleLinesEx()
+[shapes] ADDED: DrawrayRectangleLinesEx()
 [textures] Improved pixel formats support (32bit channels)
 [textures] Improved textures support for OpenGL 2.1
-[textures] REMOVED: DrawRectangleT() --> Added support to DrawRectangle()
+[textures] REMOVED: DrawrayRectangleT() --> Added support to DrawrayRectangle()
 [textures] ADDED: GetPixelDataSize(); pixel data size in bytes (image or texture)
 [textures] ADDED: ImageAlphaClear() --> Clear alpha channel to desired color
 [textures] ADDED: ImageAlphaCrop() --> Crop image depending on alpha value
 [textures] ADDED: ImageAlphaPremultiply() --> Premultiply alpha channel
-[textures] ADDED: ImageDrawRectangle()
+[textures] ADDED: ImageDrawrayRectangle()
 [textures] ADDED: ImageMipmaps()
 [textures] ADDED: GenImageColor()
 [textures] ADDED: GetPixelDataSize()
@@ -1531,11 +1531,11 @@ detailed changes:
 [rlgl] REVIEWED: InitVrSimulator(), to accept device parameters as input
 [core] ADDED: SetWindowTitle(), Set title for window (only PLATFORM_DESKTOP)
 [core] ADDED: GetExtension(), Get file extension
-[shapes] REMOVED: DrawRectangleGradient(), replaced by DrawRectangleGradientV() and DrawRectangleGradientH()
-[shapes] ADDED: DrawRectangleGradientV(), Draw a vertical-gradient-filled rectangle
-[shapes] ADDED: DrawRectangleGradientH(), Draw a horizontal-gradient-filled rectangle
-[shapes] ADDED: DrawRectangleGradientEx(), Draw a gradient-filled rectangle with custom vertex colors
-[shapes] ADDED: DrawRectangleT(), Draw rectangle using text character
+[shapes] REMOVED: DrawrayRectangleGradient(), replaced by DrawrayRectangleGradientV() and DrawrayRectangleGradientH()
+[shapes] ADDED: DrawrayRectangleGradientV(), Draw a vertical-gradient-filled rayRectangle
+[shapes] ADDED: DrawrayRectangleGradientH(), Draw a horizontal-gradient-filled rayRectangle
+[shapes] ADDED: DrawrayRectangleGradientEx(), Draw a gradient-filled rayRectangle with custom vertex colors
+[shapes] ADDED: DrawrayRectangleT(), Draw rayRectangle using text character
 [textures] ADDED: SaveImageAs(), Save image as PNG file
 [textures] ADDED: GenImageGradientV(), Generate image: vertical gradient
 [textures] ADDED: GenImageGradientH(), Generate image: horizontal gradient
@@ -1628,7 +1628,7 @@ other changes:
 [rlgl] Removed VR device support and replaced by VR simulator
 [shapes] Added function: DrawLineEx(), draw line with QUADS, supports custom line thick
 [shapes] Added function: DrawLineBezier(), draw a line using cubic-bezier curves in-out
-[shapes] Added function: DrawRectanglePro(), draw a color-filled rectangle with pro parameters
+[shapes] Added function: DrawrayRectanglePro(), draw a color-filled rayRectangle with pro parameters
 [textures] Removed function: LoadImageFromRES(), redesigning custom RRES fileformat
 [textures] Removed function: LoadTextureFromRES(), redesigning custom RRES fileformat
 [textures] Removed function: LoadTextureEx(), use instead Image -> LoadImagePro(), LoadImageEx()
@@ -1800,7 +1800,7 @@ other changes:
 [models] Removed function: DrawQuad()
 [models] Removed function: SetModelTexture()
 [models] Redesigned DrawPlane() to use RL_TRIANGLES
-[models] Redesigned DrawRectangleV() to use RL_TRIANGLES
+[models] Redesigned DrawrayRectangleV() to use RL_TRIANGLES
 [models] Redesign to accomodate new materials system: LoadMaterial()
 [models] Added material functions: LoadDefaultMaterial(), LoadStandardMaterial()
 [models] Added MTL material loading support: LoadMTL()
@@ -1884,7 +1884,7 @@ other changes:
 [rlgl] Added check for OpenGL supported extensions
 [rlgl] Added function SetBlenMode() to select some predefined blending modes
 [core] Added support for drop&drag of external files into running program
-[core] Added functions ShowCursor(), HideCursor(), IsCursorHidden()
+[core] Added functions rayShowCursor(), HideCursor(), IsCursorHidden()
 [core] Renamed function SetFlags() to SetConfigFlags()
 [shapes] Simplified some functions to improve performance
 [textures] Review of Image struct to support multiple data formats
@@ -1898,7 +1898,7 @@ other changes:
 [textures] Added function ImageConvertFormat()
 [textures] Added function GenTextureMipmaps()
 [text] Added support for Latin-1 Extended characters for default font
-[text] Redesigned SpriteFont struct, replaced Character struct by Rectangle
+[text] Redesigned SpriteFont struct, replaced Character struct by rayRectangle
 [text] Removed function GetFontBaseSize(), use directly spriteFont.size
 [models] Review of struct: Model (added shaders support)
 [models] Added 3d collision functions (sphere vs sphere vs box vs box)
@@ -1964,7 +1964,7 @@ NOTE:
 [rlgl] Fallback to VBOs only usage if VAOs not supported on ES2
 [rlgl] rlglLoadModel() stores vbo ids on new Model struct
 [textures] Added support for PKM files (ETC1, ETC2 compression support)
-[shapes] DrawRectangleV() - Modified, depending on OGL version uses TRIANGLES or QUADS
+[shapes] DrawrayRectangleV() - Modified, depending on OGL version uses TRIANGLES or QUADS
 [text] LoadSpriteFont() - Modified to use LoadImage()
 [models] Minor changes on models loading to accomodate to new Model struct
 [audio] PauseMusicStream(), ResumeMusicStream() - Added
@@ -1984,7 +1984,7 @@ Release:     raylib 1.1.1 (22 July 2014)
 [rlgl] Removed double buffer system (no performance improvement)
 [rlgl] rlglDraw() - Reorganized buffers drawing order
 [rlgl] Corrected bug on screen resizing
-[shapes] DrawRectangle() - Use QUADS instead of TRIANGLES
+[shapes] DrawrayRectangle() - Use QUADS instead of TRIANGLES
 [models] DrawSphereWires() - Corrected some issues
 [models] LoadOBJ() - Redesigned to support multiple meshes
 [models] LoadCubesMap() - Loading a map as cubes (by pixel color)
@@ -2082,7 +2082,7 @@ Release:     raylib 1.0.3 (19 December 2013)
 [core] GetRandomValue() - Added, returns a random value within a range (int)
 [core] SetExitKey() - Added, sets a key to exit program (default is ESC)
 [core] Custom cursor not drawn when mouse out of screen
-[shapes] CheckCollisionPointRec() - Added, check collision between point and rectangle
+[shapes] CheckCollisionPointRec() - Added, check collision between point and rayRectangle
 [shapes] CheckCollisionPointCircle() - Added, check collision between point and circle
 [shapes] CheckCollisionPointTriangle() - Added, check collision between point and triangle
 [shapes] DrawPoly() - Added, draw regular polygons of n sides, rotation can be defined!
@@ -2091,10 +2091,10 @@ Release:     raylib 1.0.3 (19 December 2013)
 Release:     raylib 1.0.2 (1 December 2013)
 -----------------------------------------------
 [text] GetDefaultFont() - Added, get default SpriteFont to be used on DrawTextEx()
-[shapes] CheckCollisionRecs() - Added, check collision between rectangles
+[shapes] CheckCollisionRecs() - Added, check collision between rayRectangles
 [shapes] CheckCollisionCircles() - Added, check collision between circles
-[shapes] CheckCollisionCircleRec() - Added, check collision circle-rectangle
-[shapes] GetCollisionRec() - Added, get collision rectangle
+[shapes] CheckCollisionCircleRec() - Added, check collision circle-rayRectangle
+[shapes] GetCollisionRec() - Added, get collision rayRectangle
 [textures] CreateTexture2D() - Added, create Texture2D from Image data
 [audio] Fixed WAV loading function, now audio works!
 

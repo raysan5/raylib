@@ -5070,7 +5070,7 @@ typedef VkResult (GLAD_API_PTR *PFN_vkGetPhysicalDeviceImageFormatProperties)(Vk
 typedef VkResult (GLAD_API_PTR *PFN_vkGetPhysicalDeviceImageFormatProperties2)(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 * pImageFormatInfo, VkImageFormatProperties2 * pImageFormatProperties);
 typedef void (GLAD_API_PTR *PFN_vkGetPhysicalDeviceMemoryProperties)(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties * pMemoryProperties);
 typedef void (GLAD_API_PTR *PFN_vkGetPhysicalDeviceMemoryProperties2)(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties2 * pMemoryProperties);
-typedef VkResult (GLAD_API_PTR *PFN_vkGetPhysicalDevicePresentRectanglesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t * pRectCount, VkRect2D * pRects);
+typedef VkResult (GLAD_API_PTR *PFN_vkGetPhysicalDevicePresentrayRectanglesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t * pRectCount, VkRect2D * pRects);
 typedef void (GLAD_API_PTR *PFN_vkGetPhysicalDeviceProperties)(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties * pProperties);
 typedef void (GLAD_API_PTR *PFN_vkGetPhysicalDeviceProperties2)(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties2 * pProperties);
 typedef void (GLAD_API_PTR *PFN_vkGetPhysicalDeviceQueueFamilyProperties)(VkPhysicalDevice physicalDevice, uint32_t * pQueueFamilyPropertyCount, VkQueueFamilyProperties * pQueueFamilyProperties);
@@ -5494,8 +5494,8 @@ GLAD_API_CALL PFN_vkGetPhysicalDeviceMemoryProperties glad_vkGetPhysicalDeviceMe
 #define vkGetPhysicalDeviceMemoryProperties glad_vkGetPhysicalDeviceMemoryProperties
 GLAD_API_CALL PFN_vkGetPhysicalDeviceMemoryProperties2 glad_vkGetPhysicalDeviceMemoryProperties2;
 #define vkGetPhysicalDeviceMemoryProperties2 glad_vkGetPhysicalDeviceMemoryProperties2
-GLAD_API_CALL PFN_vkGetPhysicalDevicePresentRectanglesKHR glad_vkGetPhysicalDevicePresentRectanglesKHR;
-#define vkGetPhysicalDevicePresentRectanglesKHR glad_vkGetPhysicalDevicePresentRectanglesKHR
+GLAD_API_CALL PFN_vkGetPhysicalDevicePresentrayRectanglesKHR glad_vkGetPhysicalDevicePresentrayRectanglesKHR;
+#define vkGetPhysicalDevicePresentrayRectanglesKHR glad_vkGetPhysicalDevicePresentrayRectanglesKHR
 GLAD_API_CALL PFN_vkGetPhysicalDeviceProperties glad_vkGetPhysicalDeviceProperties;
 #define vkGetPhysicalDeviceProperties glad_vkGetPhysicalDeviceProperties
 GLAD_API_CALL PFN_vkGetPhysicalDeviceProperties2 glad_vkGetPhysicalDeviceProperties2;
@@ -5816,7 +5816,7 @@ PFN_vkGetPhysicalDeviceImageFormatProperties glad_vkGetPhysicalDeviceImageFormat
 PFN_vkGetPhysicalDeviceImageFormatProperties2 glad_vkGetPhysicalDeviceImageFormatProperties2 = NULL;
 PFN_vkGetPhysicalDeviceMemoryProperties glad_vkGetPhysicalDeviceMemoryProperties = NULL;
 PFN_vkGetPhysicalDeviceMemoryProperties2 glad_vkGetPhysicalDeviceMemoryProperties2 = NULL;
-PFN_vkGetPhysicalDevicePresentRectanglesKHR glad_vkGetPhysicalDevicePresentRectanglesKHR = NULL;
+PFN_vkGetPhysicalDevicePresentrayRectanglesKHR glad_vkGetPhysicalDevicePresentrayRectanglesKHR = NULL;
 PFN_vkGetPhysicalDeviceProperties glad_vkGetPhysicalDeviceProperties = NULL;
 PFN_vkGetPhysicalDeviceProperties2 glad_vkGetPhysicalDeviceProperties2 = NULL;
 PFN_vkGetPhysicalDeviceQueueFamilyProperties glad_vkGetPhysicalDeviceQueueFamilyProperties = NULL;
@@ -6108,7 +6108,7 @@ static void glad_vk_load_VK_KHR_swapchain( GLADuserptrloadfunc load, void* userp
     glad_vkDestroySwapchainKHR = (PFN_vkDestroySwapchainKHR) load(userptr, "vkDestroySwapchainKHR");
     glad_vkGetDeviceGroupPresentCapabilitiesKHR = (PFN_vkGetDeviceGroupPresentCapabilitiesKHR) load(userptr, "vkGetDeviceGroupPresentCapabilitiesKHR");
     glad_vkGetDeviceGroupSurfacePresentModesKHR = (PFN_vkGetDeviceGroupSurfacePresentModesKHR) load(userptr, "vkGetDeviceGroupSurfacePresentModesKHR");
-    glad_vkGetPhysicalDevicePresentRectanglesKHR = (PFN_vkGetPhysicalDevicePresentRectanglesKHR) load(userptr, "vkGetPhysicalDevicePresentRectanglesKHR");
+    glad_vkGetPhysicalDevicePresentrayRectanglesKHR = (PFN_vkGetPhysicalDevicePresentrayRectanglesKHR) load(userptr, "vkGetPhysicalDevicePresentrayRectanglesKHR");
     glad_vkGetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR) load(userptr, "vkGetSwapchainImagesKHR");
     glad_vkQueuePresentKHR = (PFN_vkQueuePresentKHR) load(userptr, "vkQueuePresentKHR");
 }

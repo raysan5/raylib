@@ -61,7 +61,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawLine(500, 0, 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
-            DrawRectangle(500, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
+            DrawrayRectangle(500, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
             if (drawRing) DrawRing(center, innerRadius, outerRadius, startAngle, endAngle, (int)segments, Fade(MAROON, 0.3f));
             if (drawRingLines) DrawRingLines(center, innerRadius, outerRadius, startAngle, endAngle, (int)segments, Fade(BLACK, 0.4f));
@@ -69,17 +69,17 @@ int main(void)
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            GuiSliderBar((Rectangle){ 600, 40, 120, 20 }, "StartAngle", NULL, &startAngle, -450, 450);
-            GuiSliderBar((Rectangle){ 600, 70, 120, 20 }, "EndAngle", NULL, &endAngle, -450, 450);
+            GuiSliderBar((rayRectangle){ 600, 40, 120, 20 }, "StartAngle", NULL, &startAngle, -450, 450);
+            GuiSliderBar((rayRectangle){ 600, 70, 120, 20 }, "EndAngle", NULL, &endAngle, -450, 450);
 
-            GuiSliderBar((Rectangle){ 600, 140, 120, 20 }, "InnerRadius", NULL, &innerRadius, 0, 100);
-            GuiSliderBar((Rectangle){ 600, 170, 120, 20 }, "OuterRadius", NULL, &outerRadius, 0, 200);
+            GuiSliderBar((rayRectangle){ 600, 140, 120, 20 }, "InnerRadius", NULL, &innerRadius, 0, 100);
+            GuiSliderBar((rayRectangle){ 600, 170, 120, 20 }, "OuterRadius", NULL, &outerRadius, 0, 200);
 
-            GuiSliderBar((Rectangle){ 600, 240, 120, 20 }, "Segments", NULL, &segments, 0, 100);
+            GuiSliderBar((rayRectangle){ 600, 240, 120, 20 }, "Segments", NULL, &segments, 0, 100);
 
-            GuiCheckBox((Rectangle){ 600, 320, 20, 20 }, "Draw Ring", &drawRing);
-            GuiCheckBox((Rectangle){ 600, 350, 20, 20 }, "Draw RingLines", &drawRingLines);
-            GuiCheckBox((Rectangle){ 600, 380, 20, 20 }, "Draw CircleLines", &drawCircleLines);
+            GuiCheckBox((rayRectangle){ 600, 320, 20, 20 }, "Draw Ring", &drawRing);
+            GuiCheckBox((rayRectangle){ 600, 350, 20, 20 }, "Draw RingLines", &drawRingLines);
+            GuiCheckBox((rayRectangle){ 600, 380, 20, 20 }, "Draw CircleLines", &drawCircleLines);
             //------------------------------------------------------------------------------
 
             int minSegments = (int)ceilf((endAngle - startAngle)/90);
@@ -93,7 +93,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    rayCloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
