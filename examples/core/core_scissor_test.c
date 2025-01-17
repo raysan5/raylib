@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Scissor test
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 3.0
 *
 *   Example contributed by Chris Dill (@MysteriousSpace) and reviewed by Ramon Santamaria (@raysan5)

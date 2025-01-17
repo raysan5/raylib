@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - texture tiling
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example demonstrates how to tile a texture on a 3D model using raylib.
 *
 *   Example contributed by Luis Almeida (@luis605) and reviewed by Ramon Santamaria (@raysan5)

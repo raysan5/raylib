@@ -2,6 +2,8 @@
 *
 *   raylib [shapes] example - rectangle scaling by mouse
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)

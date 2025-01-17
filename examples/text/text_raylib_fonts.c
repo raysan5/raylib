@@ -2,6 +2,8 @@
 *
 *   raylib [text] example - raylib fonts loading
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: raylib is distributed with some free to use fonts (even for commercial pourposes!)
 *         To view details and credits for those fonts, check raylib license file
 *

@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - loading gltf with animations
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   LIMITATIONS:
 *     - Only supports 1 armature per file, and skips loading it if there are multiple armatures
 *     - Only supports linear interpolation (default method in Blender when checked

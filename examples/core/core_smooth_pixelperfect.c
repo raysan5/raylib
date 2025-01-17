@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Smooth Pixel-perfect camera
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 3.7, last time updated with raylib 4.0
 *   
 *   Example contributed by Giancamillo Alessandroni (@NotManyIdeasDev) and

@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - rlgl module usage with push/pop matrix transformations
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: This example uses [rlgl] module functionality (pseudo-OpenGL 1.1 style coding)
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0

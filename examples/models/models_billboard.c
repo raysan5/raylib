@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - Drawing billboards
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 1.3, last time updated with raylib 3.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

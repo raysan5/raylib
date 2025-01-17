@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Draw Textured Polygon
+*   raylib [textures] example - Draw Textured Polygon
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 3.7, last time updated with raylib 3.7
 *

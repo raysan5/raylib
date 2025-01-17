@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Initialize 3d camera free
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 1.3, last time updated with raylib 1.3
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

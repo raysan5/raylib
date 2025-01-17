@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - Mouse painting
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 3.0, last time updated with raylib 3.0
 *
 *   Example contributed by Chris Dill (@MysteriousSpace) and reviewed by Ramon Santamaria (@raysan5)
