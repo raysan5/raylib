@@ -165,7 +165,7 @@ int main(void)
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.albedoSpecTexture, RL_ATTACHMENT_COLOR_CHANNEL2, RL_ATTACHMENT_TEXTURE2D, 0);
 
     // Finally we attach the depth buffer.
-    gBuffer.depthRenderbuffer = custom_rlLoadRenderbufferDepth(screenWidth, screenHeight);
+    gBuffer.depthRenderbuffer = custom_LoadRenderbufferDepth(screenWidth, screenHeight);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.depthRenderbuffer, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
 
     // Make sure our framebuffer is complete.
