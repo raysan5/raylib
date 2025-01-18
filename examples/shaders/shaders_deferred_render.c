@@ -294,12 +294,12 @@ int main(void)
                         rlEnableColorBlend();
                     EndMode3D();
 
-#ifdef PLATFORM_DESKTOP
+//#ifdef PLATFORM_DESKTOP
                     // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer.
                     rlBindFramebuffer(RL_READ_FRAMEBUFFER, gBuffer.framebuffer);
                     rlBindFramebuffer(RL_DRAW_FRAMEBUFFER, 0);
                     rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
-#endif
+//#endif
                     rlDisableFramebuffer();
 
                     // Since our shader is now done and disabled, we can draw spheres
