@@ -6,7 +6,7 @@
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 5.6
+*   Example originally created with raylib 4.5, last time updated for raylib 5.6
 *
 *   Example contributed by Justin Andreas Lacoste (@27justin) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -16,7 +16,7 @@
 *   Copyright (c) 2023 Justin Andreas Lacoste (@27justin)
 *
 ********************************************************************************************/
-// the following #define of GLSL_VERSION used only for file access
+// the following #define of GLSL_VERSION is used only for file access
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
     #define GRAPHICS_API_OPENGL_33
@@ -64,12 +64,27 @@ typedef enum {
    DEFERRED_SHADING
 } DeferredMode;
 
-unsigned int custom_rlLoadTexture(int w,int h, unsigned int format)
+// Load depth texture/renderbuffer (to be attached to fbo)
+unsigned int custom_LoadRenderbufferDepth(int width, int height)
+{
+    unsigned int id = 0;
+    // GL_DEPTH24_STENCIL8 is the default for GLFW OpenGL context and raylib uses it, you might need to change this for 
+    // different raylib's backends like SDL, RGFW, ...
+    // Possible formats: GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F and GL_DEPTH32F_STENCIL8 (the list might vary depending on the platform the code is run on)
+    unsigned int glInternalFormat = GL_DEPTH24_STENCIL8;
+    glGenRenderbuffers(1, &id);
+    glBindRenderbuffer(GL_RENDERBUFFER, id);
+    glRenderbufferStorage(GL_RENDERBUFFER, glInternalFormat, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    return id;
+}
+
+unsigned int custom_LoadTexture(int w,int h, unsigned int opengl_format)
 {
 unsigned int texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, opengl_format, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
 return texture;
@@ -119,24 +134,22 @@ int main(void)
     rlEnableFramebuffer(gBuffer.framebuffer);
 
     // NOTE: Vertex positions are stored in a texture for simplicity. A better approach would use a depth texture
-    // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position, 
+    // (instead of a depth renderbuffer) to reconstruct world positions in the final render shader via clip-space position, 
     // depth, and the inverse view/projection matrices.
 
-    // 32-bit precision used for desktop as well as for OpenGL ES 3. 
+    // 32-bit precision used on desktop as well as for OpenGL ES 3. 
     #ifdef PLATFORM_WEB
-    gBuffer.positionTexture = custom_rlLoadTexture(screenWidth,screenHeight,GL_RGBA32F);
+    gBuffer.positionTexture = custom_LoadTexture(screenWidth,screenHeight,GL_RGBA32F);
     #else
-    // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
-    // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`.
+    // But as mentioned above, the positions could be reconstructed instead of stored. 
     gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
     #endif
 
-    // Similarly, 32-bit precision is used for normals also for desktop as well as OpenGL ES 3.
+    // Similarly, 32-bit precision is used for normals on desktop as well as OpenGL ES 3.
     #ifdef PLATFORM_WEB
-    gBuffer.normalTexture = custom_rlLoadTexture(screenWidth,screenHeight,GL_RGBA32F);
+    gBuffer.normalTexture = custom_LoadTexture(screenWidth,screenHeight,GL_RGBA32F);
     #else
-    // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations.
-    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
     #endif
 
     // Albedo (diffuse color) and specular strength can be combined into one texture.
@@ -152,7 +165,7 @@ int main(void)
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.albedoSpecTexture, RL_ATTACHMENT_COLOR_CHANNEL2, RL_ATTACHMENT_TEXTURE2D, 0);
 
     // Finally we attach the depth buffer.
-    gBuffer.depthRenderbuffer = rlLoadTextureDepth(screenWidth, screenHeight, true);
+    gBuffer.depthRenderbuffer = custom_rlLoadRenderbufferDepth(screenWidth, screenHeight);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.depthRenderbuffer, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
 
     // Make sure our framebuffer is complete.
@@ -168,12 +181,12 @@ int main(void)
     // We do this by setting the uniform's values to the texture units that
     // we later bind our g-buffer textures to.
     rlEnableShader(deferredShader.id);
-        int texUnitPosition = 0;
-        int texUnitNormal = 1;
-        int texUnitAlbedoSpec = 2;
-        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gPosition"), &texUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
-        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gNormal"), &texUnitNormal, RL_SHADER_UNIFORM_SAMPLER2D);
-        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), &texUnitAlbedoSpec, RL_SHADER_UNIFORM_SAMPLER2D);
+    int texUnitPosition = 0;
+    int texUnitNormal = 1;
+    int texUnitAlbedoSpec = 2;
+    SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gPosition"), &texUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
+    SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gNormal"), &texUnitNormal, RL_SHADER_UNIFORM_SAMPLER2D);
+    SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), &texUnitAlbedoSpec, RL_SHADER_UNIFORM_SAMPLER2D);
     rlDisableShader();
 
     // Assign out lighting shader to model
@@ -294,14 +307,13 @@ int main(void)
                         rlEnableColorBlend();
                     EndMode3D();
 
-//#ifdef PLATFORM_DESKTOP
                     // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer.
+                    // This step is only needed if you plan to continue drawing in the deffer-rendered scene
                     rlBindFramebuffer(RL_READ_FRAMEBUFFER, gBuffer.framebuffer);
                     rlBindFramebuffer(RL_DRAW_FRAMEBUFFER, 0);
                     rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
-//#endif
-                    rlDisableFramebuffer();
 
+                    rlDisableFramebuffer();
                     // Since our shader is now done and disabled, we can draw spheres
                     // that represent light positions in default forward rendering
                     BeginMode3D(camera);
@@ -312,8 +324,7 @@ int main(void)
                                 else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
                             }
                         rlDisableShader();
-                    EndMode3D();
-                    
+                    EndMode3D();                   
                     DrawText("FINAL RESULT", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 case DEFERRED_POSITION:
