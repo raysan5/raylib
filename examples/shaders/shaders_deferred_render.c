@@ -6,7 +6,7 @@
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 4.5, last time updated with raylib 5.6
 *
 *   Example contributed by Justin Andreas Lacoste (@27justin) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -16,6 +16,23 @@
 *   Copyright (c) 2023 Justin Andreas Lacoste (@27justin)
 *
 ********************************************************************************************/
+// the following #define of GLSL_VERSION used only for file access
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+    #define GRAPHICS_API_OPENGL_33
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+    #define GRAPHICS_API_OPENGL_ES3
+#endif
+
+
+#include <stdlib.h>         // Required for: NULL
+
+#ifdef PLATFORM_WEB
+    #include <GLES3/gl3.h>
+#else
+    #include <external/glad.h>
+#endif
 
 #include "raylib.h"
 
@@ -25,13 +42,6 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
-#if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
-#else   // PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
-#endif
-
-#include <stdlib.h>         // Required for: NULL
 
 #define MAX_CUBES   30
 
@@ -53,6 +63,17 @@ typedef enum {
    DEFERRED_ALBEDO,
    DEFERRED_SHADING
 } DeferredMode;
+
+unsigned int custom_rlLoadTexture(int w,int h, unsigned int format)
+{
+unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+return texture;
+}
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -101,14 +122,22 @@ int main(void)
     // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position, 
     // depth, and the inverse view/projection matrices.
 
-    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios. 
+    // 32-bit precision used for desktop as well as for OpenGL ES 3. 
+    #ifdef PLATFORM_WEB
+    gBuffer.positionTexture = custom_rlLoadTexture(screenWidth,screenHeight,GL_RGBA32F);
+    #else
     // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
     // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`.
-    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
+    #endif
 
-    // Similarly, 16-bit precision is used for normals ensures OpenGL ES 3 compatibility.
+    // Similarly, 32-bit precision is used for normals also for desktop as well as OpenGL ES 3.
+    #ifdef PLATFORM_WEB
+    gBuffer.normalTexture = custom_rlLoadTexture(screenWidth,screenHeight,GL_RGBA32F);
+    #else
     // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations.
     gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    #endif
 
     // Albedo (diffuse color) and specular strength can be combined into one texture.
     // The color in RGB, and the specular strength in the alpha channel.
@@ -132,6 +161,7 @@ int main(void)
     if (!rlFramebufferComplete(gBuffer.framebuffer))
     {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
+        exit(1);
     }
 
     // Now we initialize the sampler2D uniform's in the deferred shader.
@@ -264,10 +294,12 @@ int main(void)
                         rlEnableColorBlend();
                     EndMode3D();
 
+#ifdef PLATFORM_DESKTOP
                     // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer.
                     rlBindFramebuffer(RL_READ_FRAMEBUFFER, gBuffer.framebuffer);
                     rlBindFramebuffer(RL_DRAW_FRAMEBUFFER, 0);
                     rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
+#endif
                     rlDisableFramebuffer();
 
                     // Since our shader is now done and disabled, we can draw spheres
