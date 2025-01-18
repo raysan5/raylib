@@ -1431,7 +1431,7 @@ Function 082: SetShaderValueMatrix() (3 input parameters)
 Function 083: SetShaderValueTexture() (3 input parameters)
   Name: SetShaderValueTexture
   Return type: void
-  Description: Set shader uniform value for texture (sampler2d)
+  Description: Set shader uniform value and bind the texture (sampler2d)
   Param[1]: shader (type: Shader)
   Param[2]: locIndex (type: int)
   Param[3]: texture (type: Texture2D)
