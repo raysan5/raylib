@@ -2,6 +2,8 @@
 *
 *   raylib [text] example - Font loading
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: raylib can load fonts from multiple input file formats:
 *
 *     - TTF/OTF > Sprite font atlas is generated on loading, user can configure

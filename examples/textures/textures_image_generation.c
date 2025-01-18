@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - Procedural images generation
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 1.8, last time updated with raylib 1.8
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
@@ -88,7 +90,7 @@ int main(void)
             DrawRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, WHITE);
 
-            switch(currentTexture)
+            switch (currentTexture)
             {
                 case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RAYWHITE); break;
                 case 1: DrawText("HORIZONTAL GRADIENT", 540, 10, 20, RAYWHITE); break;

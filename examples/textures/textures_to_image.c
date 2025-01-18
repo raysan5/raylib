@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - Retrieve image data from texture: LoadImageFromTexture()
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
 *   Example originally created with raylib 1.3, last time updated with raylib 4.0

@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Input multitouch
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 2.1, last time updated with raylib 2.5
 *
 *   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)
@@ -42,7 +44,7 @@ int main(void)
         // Get the touch point count ( how many fingers are touching the screen )
         int tCount = GetTouchPointCount();
         // Clamp touch points available ( set the maximum touch points allowed )
-        if(tCount > MAX_TOUCH_POINTS) tCount = MAX_TOUCH_POINTS;
+        if (tCount > MAX_TOUCH_POINTS) tCount = MAX_TOUCH_POINTS;
         // Get touch points positions
         for (int i = 0; i < tCount; ++i) touchPositions[i] = GetTouchPosition(i);
         //----------------------------------------------------------------------------------

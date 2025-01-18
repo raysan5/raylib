@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{703BE7BA-5B99-4F70-806D-3A259F6A991E}</ProjectGuid>
+    <ProjectGuid>{FAFEE2F9-24B0-4AF1-B512-433E9590033F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shapes_rectangle_advanced</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

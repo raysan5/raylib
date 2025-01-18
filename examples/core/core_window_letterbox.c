@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - window scale letterbox (and virtual mouse)
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
 *   Example contributed by Anata (@anatagawa) and reviewed by Ramon Santamaria (@raysan5)

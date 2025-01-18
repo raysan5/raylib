@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Texture drawing
+*   raylib [shaders] example - Texture drawing
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   NOTE: This example illustrates how to draw into a blank texture using a shader
 *

@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Generate random values
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 1.1, last time updated with raylib 1.1
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

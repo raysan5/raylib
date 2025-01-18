@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Depth buffer writing
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
 *   Example contributed by Buğra Alptekin Sarı (@BugraAlptekinSari) and reviewed by Ramon Santamaria (@raysan5)

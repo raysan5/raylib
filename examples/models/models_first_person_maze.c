@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - first person maze
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 3.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

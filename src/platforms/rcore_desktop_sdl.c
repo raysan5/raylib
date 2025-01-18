@@ -23,13 +23,13 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - SDL 2 (main library): Windowing and inputs management
+*       - SDL 2 or SDL 3 (main library): Windowing and inputs management
 *       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -48,6 +48,10 @@
 *
 **********************************************************************************************/
 
+
+#ifndef SDL_ENABLE_OLD_NAMES
+    #define SDL_ENABLE_OLD_NAMES    // Just in case we're on SDL3, we need some in-between compatibily
+#endif
 #include "SDL.h"                // SDL base library (window/rendered, input, timing... functionality)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -62,6 +66,12 @@
 //----------------------------------------------------------------------------------
 #ifndef MAX_CLIPBOARD_BUFFER_LENGTH
     #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
+#endif
+
+#if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
+    #ifndef PLATFORM_DESKTOP_SDL3
+        #define PLATFORM_DESKTOP_SDL3
+    #endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -227,6 +237,184 @@ static const int CursorsLUT[] = {
     //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
+
+// SDL3 Migration Layer made to avoid `ifdefs` inside functions when we can.
+#if defined(PLATFORM_DESKTOP_SDL3)
+
+// SDL3 Migration:
+//     SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
+//     and you can call SDL_GetWindowFullscreenMode()
+//     to see whether an exclusive fullscreen mode will be used
+//     or the borderless fullscreen desktop mode will be used
+#define SDL_WINDOW_FULLSCREEN_DESKTOP SDL_WINDOW_FULLSCREEN
+
+#define SDL_IGNORE  false
+#define SDL_DISABLE false
+#define SDL_ENABLE  true
+
+// SDL3 Migration: SDL_INIT_TIMER - no longer needed before calling SDL_AddTimer()
+#define SDL_INIT_TIMER 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
+
+// SDL3 Migration: The SDL_WINDOW_SHOWN flag has been removed. Windows are shown by default and can be created hidden by using the SDL_WINDOW_HIDDEN flag.
+#define SDL_WINDOW_SHOWN 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
+
+// SDL3 Migration: Renamed
+// IMPORTANT: Might need to call SDL_CleanupEvent somewhere see :https://github.com/libsdl-org/SDL/issues/3540#issuecomment-1793449852
+#define SDL_DROPFILE  SDL_EVENT_DROP_FILE
+
+// SDL2 implementation for SDL3 function
+const char *SDL_GameControllerNameForIndex(int joystickIndex)
+{
+    // NOTE: SDL3 uses the IDs itself (SDL_JoystickID) instead of SDL2 joystick_index
+    const char *name = NULL;
+    int numJoysticks = 0;
+    SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks);
+
+    if (joysticks)
+    {
+        if (joystickIndex < numJoysticks)
+        {
+            SDL_JoystickID instance_id = joysticks[joystickIndex];
+            name = SDL_GetGamepadNameForID(instance_id);
+        }
+
+        SDL_free(joysticks);
+    }
+
+    return name;
+}
+
+int SDL_GetNumVideoDisplays(void)
+{
+    int monitorCount = 0;
+    SDL_DisplayID *displays = SDL_GetDisplays(&monitorCount);
+
+    // Safe because If `mem` is NULL, SDL_free does nothing
+    SDL_free(displays);
+
+    return monitorCount;
+}
+
+// SLD3 Migration: To emulate SDL2 this function should return `SDL_DISABLE` or `SDL_ENABLE`
+// representing the *processing state* of the event before this function makes any changes to it
+Uint8 SDL_EventState(Uint32 type, int state)
+{
+    Uint8 stateBefore = SDL_EventEnabled(type);
+
+    switch (state)
+    {
+        case SDL_DISABLE: SDL_SetEventEnabled(type, false); break;
+        case SDL_ENABLE: SDL_SetEventEnabled(type, true); break;
+        default: TRACELOG(LOG_WARNING, "Event sate: unknow type");
+    }
+
+    return stateBefore;
+}
+
+void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode* mode)
+{
+    const SDL_DisplayMode* currMode = SDL_GetCurrentDisplayMode(displayID);
+
+    if (currMode == NULL) TRACELOG(LOG_WARNING, "No current display mode");
+    else *mode = *currMode;
+}
+
+// SDL3 Migration: Renamed
+#define SDL_GetCurrentDisplayMode SDL_GetCurrentDisplayMode_Adapter
+
+SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask)
+{
+    return SDL_CreateSurface(width, height, SDL_GetPixelFormatForMasks(depth, Rmask, Gmask, Bmask, Amask));
+}
+
+// SDL3 Migration:
+//     SDL_GetDisplayDPI() -
+//     not reliable across platforms, approximately replaced by multiplying
+//     SDL_GetWindowDisplayScale() times 160 on iPhone and Android, and 96 on other platforms.
+// returns 0 on success or a negative error code on failure
+int SDL_GetDisplayDPI(int displayIndex, float *ddpi, float *hdpi, float *vdpi)
+{
+    float dpi = SDL_GetWindowDisplayScale(platform.window)*96.0;
+
+    if (ddpi != NULL) *ddpi = dpi;
+    if (hdpi != NULL) *hdpi = dpi;
+    if (vdpi != NULL) *vdpi = dpi;
+
+    return 0;
+}
+
+SDL_Surface *SDL_CreateRGBSurfaceWithFormat(Uint32 flags, int width, int height, int depth, Uint32 format)
+{
+    return SDL_CreateSurface(width, height, format);
+}
+
+SDL_Surface *SDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int depth, int pitch, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask)
+{
+    return SDL_CreateSurfaceFrom(width, height, SDL_GetPixelFormatForMasks(depth, Rmask, Gmask, Bmask, Amask), pixels, pitch);
+}
+
+SDL_Surface *SDL_CreateRGBSurfaceWithFormatFrom(void *pixels, int width, int height, int depth, int pitch, Uint32 format)
+{
+    return SDL_CreateSurfaceFrom(width, height, format, pixels, pitch);
+}
+
+int SDL_NumJoysticks(void)
+{
+    int numJoysticks;
+    SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks);
+    SDL_free(joysticks);
+    return numJoysticks;
+}
+
+// SDL_SetRelativeMouseMode
+// returns 0 on success or a negative error code on failure
+// If relative mode is not supported, this returns -1.
+int SDL_SetRelativeMouseMode_Adapter(SDL_bool enabled)
+{
+    // SDL_SetWindowRelativeMouseMode(SDL_Window *window, bool enabled)
+    // \returns true on success or false on failure; call SDL_GetError() for more
+    if (SDL_SetWindowRelativeMouseMode(platform.window, enabled))
+    {
+        return 0; // success
+    }
+    else
+    {
+        return -1; // failure
+    }
+}
+
+#define SDL_SetRelativeMouseMode SDL_SetRelativeMouseMode_Adapter
+
+bool SDL_GetRelativeMouseMode_Adapter(void)
+{
+    return SDL_GetWindowRelativeMouseMode(platform.window);
+}
+
+#define SDL_GetRelativeMouseMode SDL_GetRelativeMouseMode_Adapter
+
+int SDL_GetNumTouchFingers(SDL_TouchID touchID)
+{
+    // SDL_Finger **SDL_GetTouchFingers(SDL_TouchID touchID, int *count)
+    int count = 0;
+    SDL_Finger **fingers = SDL_GetTouchFingers(touchID, &count);
+    SDL_free(fingers);
+    return count;
+}
+
+#else // We're on SDL2
+
+// Since SDL2 doesn't have this function we leave a stub
+// SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
+void *SDL_GetClipboardData(const char *mime_type, size_t *size)
+{
+    TRACELOG(LOG_WARNING, "Getting clipboard data that is not text is only available in SDL3");
+
+    // We could possibly implement it ourselves in this case for some easier platforms
+    return NULL;
+}
+
+#endif // PLATFORM_DESKTOP_SDL3
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -256,7 +444,12 @@ void ToggleFullscreen(void)
 {
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
+
+#if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
         {
@@ -279,7 +472,12 @@ void ToggleBorderlessWindowed(void)
 {
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
+
+#if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
         {
@@ -299,20 +497,21 @@ void ToggleBorderlessWindowed(void)
 void MaximizeWindow(void)
 {
     SDL_MaximizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
     SDL_MinimizeWindow(platform.window);
-    CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
 }
 
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    SDL_ShowWindow(platform.window);
+    SDL_RestoreWindow(platform.window);
+    // CORE.Window.flags will be removed on PollInputEvents()
 }
 
 // Set window configuration state using flags
@@ -328,7 +527,12 @@ void SetWindowState(unsigned int flags)
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
+
+    #if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+        if ((monitor > 0) && (monitor <= monitorCount))
+    #else
         if ((monitor >= 0) && (monitor < monitorCount))
+    #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
             CORE.Window.fullscreen = true;
@@ -367,7 +571,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+        CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
@@ -387,7 +591,12 @@ void SetWindowState(unsigned int flags)
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
+
+    #if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+        if ((monitor > 0) && (monitor <= monitorCount))
+    #else
         if ((monitor >= 0) && (monitor < monitorCount))
+    #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         }
@@ -449,7 +658,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+        CORE.Window.flags &= ~FLAG_WINDOW_ALWAYS_RUN;
     }
     if (flags & FLAG_WINDOW_TRANSPARENT)
     {
@@ -606,7 +815,12 @@ void SetWindowMonitor(int monitor)
         const int screenWidth = CORE.Window.screen.width;
         const int screenHeight = CORE.Window.screen.height;
         SDL_Rect usableBounds;
+
+    #if defined(PLATFORM_DESKTOP_SDL3) // Different style for success checking
+        if (SDL_GetDisplayUsableBounds(monitor, &usableBounds))
+    #else
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
+    #endif
         {
             if (wasFullscreen == 1) ToggleFullscreen(); // Leave fullscreen.
 
@@ -704,6 +918,7 @@ int GetCurrentMonitor(void)
 {
     int currentMonitor = 0;
 
+    // Be aware that this returns an ID in SDL3 and a Index in SDL2
     currentMonitor = SDL_GetWindowDisplayIndex(platform.window);
 
     return currentMonitor;
@@ -716,7 +931,12 @@ Vector2 GetMonitorPosition(int monitor)
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_Rect displayBounds;
+
+    #if defined(PLATFORM_DESKTOP_SDL3)
+        if (SDL_GetDisplayUsableBounds(monitor, &displayBounds))
+    #else
         if (SDL_GetDisplayUsableBounds(monitor, &displayBounds) == 0)
+    #endif
         {
             return (Vector2){ (float)displayBounds.x, (float)displayBounds.y };
         }
@@ -844,10 +1064,16 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
 
+#ifndef PLATFORM_DESKTOP_SDL3
     // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
     //       see https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
     // TODO: Implement the window scale factor calculation manually.
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
+#else
+    scale.x = SDL_GetWindowDisplayScale(platform.window);
+    scale.y = scale.x;
+    TRACELOG(LOG_INFO, "WindowScaleDPI is %f", scale.x);
+#endif
 
     return scale;
 }
@@ -877,19 +1103,70 @@ const char *GetClipboardText(void)
     return buffer;
 }
 
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = { 0 };
+
+#if defined(SUPPORT_CLIPBOARD_IMAGE)
+    // Let's hope compiler put these arrays in static memory
+    const char *imageFormats[] = {
+        "image/bmp",
+        "image/png",
+        "image/jpg",
+        "image/tiff",
+    };
+    const char *imageExtensions[] = {
+        ".bmp",
+        ".png",
+        ".jpg",
+        ".tiff",
+    };
+
+    size_t dataSize = 0;
+    void  *fileData = NULL;
+
+    for (int i = 0; i < SDL_arraysize(imageFormats); ++i)
+    {
+        // NOTE: This pointer should be free with SDL_free() at some point
+        fileData = SDL_GetClipboardData(imageFormats[i], &dataSize);
+
+        if (fileData)
+        {
+            image = LoadImageFromMemory(imageExtensions[i], fileData, dataSize);
+            if (IsImageValid(image))
+            {
+                TRACELOG(LOG_INFO, "Clipboard image: Got image from clipboard as a `%s` successfully", imageExtensions[i]);
+                return image;
+            }
+        }
+    }
+
+    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data. Error: %s", SDL_GetError());
+#endif
+
+    return image;
+}
+
 // Show mouse cursor
 void ShowCursor(void)
 {
+#if defined(PLATFORM_DESKTOP_SDL3)
+    SDL_ShowCursor();
+#else
     SDL_ShowCursor(SDL_ENABLE);
-
+#endif
     CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
+#if defined(PLATFORM_DESKTOP_SDL3)
+    SDL_HideCursor();
+#else
     SDL_ShowCursor(SDL_DISABLE);
-
+#endif
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -897,7 +1174,13 @@ void HideCursor(void)
 void EnableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_FALSE);
+
+#if defined(PLATFORM_DESKTOP_SDL3)
+    // SDL_ShowCursor() has been split into three functions: SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
+    SDL_ShowCursor();
+#else
     SDL_ShowCursor(SDL_ENABLE);
+#endif
 
     platform.cursorRelative = false;
     CORE.Input.Mouse.cursorHidden = false;
@@ -993,6 +1276,24 @@ const char *GetKeyName(int key)
 
 static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
 {
+#if defined(PLATFORM_DESKTOP_SDL3) // SDL3
+    int count = 0;
+    SDL_Finger **fingers = SDL_GetTouchFingers(event.touchID, &count);
+    CORE.Input.Touch.pointCount = count;
+
+    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+    {
+        SDL_Finger *finger = fingers[i];
+        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentTouchState[i] = 1;
+    }
+
+    SDL_free(fingers);
+
+#else // SDL2
+
     CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
 
     for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
@@ -1003,6 +1304,7 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
         CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
     }
+#endif
 
     for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
 }
@@ -1076,6 +1378,12 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
+    if ((CORE.Window.eventWaiting) || (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) == 0)))
+    {
+        SDL_WaitEvent(NULL);
+        CORE.Time.previous = GetTime();
+    }
+
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)
     {
@@ -1094,16 +1402,28 @@ void PollInputEvents(void)
                     CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+
+                #if defined(PLATFORM_DESKTOP_SDL3)
+                    // const char *data;   /**< The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events */
+                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed.
+                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
+                #else
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
                     SDL_free(event.drop.file);
+                #endif
 
                     CORE.Window.dropFileCount++;
                 }
                 else if (CORE.Window.dropFileCount < 1024)
                 {
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+
+                #if defined(PLATFORM_DESKTOP_SDL3)
+                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
+                #else
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
                     SDL_free(event.drop.file);
+                #endif
 
                     CORE.Window.dropFileCount++;
                 }
@@ -1112,10 +1432,18 @@ void PollInputEvents(void)
             } break;
 
             // Window events are also polled (Minimized, maximized, close...)
+
+            #ifndef PLATFORM_DESKTOP_SDL3
+            // SDL3 states:
+            //     The SDL_WINDOWEVENT_* events have been moved to top level events,
+            //     and SDL_WINDOWEVENT has been removed.
+            //     In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
+            //     and then checking for window events. You can compare the event >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST if you need to see whether it's a window event.
             case SDL_WINDOWEVENT:
             {
                 switch (event.window.event)
                 {
+            #endif
                     case SDL_WINDOWEVENT_RESIZED:
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                     {
@@ -1127,7 +1455,24 @@ void PollInputEvents(void)
                         CORE.Window.currentFbo.width = width;
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;
+
+                        #ifndef PLATFORM_DESKTOP_SDL3
+                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
+                        if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0)
+                        {
+                            int borderTop = 0;
+                            int borderLeft = 0;
+                            int borderBottom = 0;
+                            int borderRight = 0;
+                            SDL_GetWindowBordersSize(platform.window, &borderTop, &borderLeft, &borderBottom, &borderRight);
+                            SDL_Rect usableBounds;
+                            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(platform.window), &usableBounds);
+
+                            if ((width + borderLeft + borderRight != usableBounds.w) && (height + borderTop + borderBottom != usableBounds.h)) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+                        }
+                        #endif
                     } break;
+
                     case SDL_WINDOWEVENT_ENTER:
                     {
                         CORE.Input.Mouse.cursorOnScreen = true;
@@ -1136,21 +1481,63 @@ void PollInputEvents(void)
                     {
                         CORE.Input.Mouse.cursorOnScreen = false;
                     } break;
-                    case SDL_WINDOWEVENT_HIDDEN:
+
                     case SDL_WINDOWEVENT_MINIMIZED:
-                    case SDL_WINDOWEVENT_FOCUS_LOST:
-                    case SDL_WINDOWEVENT_SHOWN:
-                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+                    } break;
                     case SDL_WINDOWEVENT_MAXIMIZED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+                    } break;
                     case SDL_WINDOWEVENT_RESTORED:
+                    {
+                        if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MINIMIZED) == 0)
+                        {
+                            if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+                        }
+
+                        #ifdef PLATFORM_DESKTOP_SDL3
+                        if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MAXIMIZED) == 0)
+                        {
+                            if ((CORE.Window.flags & SDL_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~SDL_WINDOW_MAXIMIZED;
+                        }
+                        #endif
+                    } break;
+
+                    case SDL_WINDOWEVENT_HIDDEN:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) == 0) CORE.Window.flags |= FLAG_WINDOW_HIDDEN;
+                    } break;
+                    case SDL_WINDOWEVENT_SHOWN:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;
+                    } break;
+
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
+                    } break;
+                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                    {
+                        if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+                    } break;
+
+            #ifndef PLATFORM_DESKTOP_SDL3
                     default: break;
                 }
             } break;
+            #endif
 
             // Keyboard events
             case SDL_KEYDOWN:
             {
+            #if defined(PLATFORM_DESKTOP_SDL3)
+                // SDL3 Migration: The following structures have been removed: * SDL_Keysym
+                KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
+            #else
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
+            #endif
 
                 if (key != KEY_NULL)
                 {
@@ -1175,7 +1562,12 @@ void PollInputEvents(void)
 
             case SDL_KEYUP:
             {
+
+            #if defined(PLATFORM_DESKTOP_SDL3)
+                KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
+            #else
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
+            #endif
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
             } break;
 
@@ -1527,7 +1919,11 @@ int InitPlatform(void)
     }
 
     // Init window
+#if defined(PLATFORM_DESKTOP_SDL3)
+    platform.window = SDL_CreateWindow(CORE.Window.title, CORE.Window.screen.width, CORE.Window.screen.height, flags);
+#else
     platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
+#endif
 
     // Init OpenGL context
     platform.glContext = SDL_GL_CreateContext(platform.window);
@@ -1611,7 +2007,11 @@ int InitPlatform(void)
     CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
+#if defined(PLATFORM_DESKTOP_SDL3)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL3): Initialized successfully");
+#else
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL2): Initialized successfully");
+#endif
 
     return 0;
 }
@@ -1628,7 +2028,7 @@ void ClosePlatform(void)
 // Scancode to keycode mapping
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {
-    if (sdlScancode >= 0 && sdlScancode < SCANCODE_MAPPED_NUM)
+    if ((sdlScancode >= 0) && (sdlScancode < SCANCODE_MAPPED_NUM))
     {
         return mapScancodeToKey[sdlScancode];
     }

@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Simple shader mask
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 3.7
 *
 *   Example contributed by Chris Camacho (@chriscamacho) and reviewed by Ramon Santamaria (@raysan5)

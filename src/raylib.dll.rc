@@ -9,11 +9,11 @@ BEGIN
     //BLOCK "080904E4"  // English UK
     BLOCK "040904E4"    // English US
     BEGIN
-      //VALUE "CompanyName", "raylib technologies"
+      VALUE "CompanyName", "raylib technologies"
       VALUE "FileDescription", "raylib dynamic library (www.raylib.com)"
       VALUE "FileVersion", "5.5.0"
       VALUE "InternalName", "raylib.dll"
-      VALUE "LegalCopyright", "(c) 2024 Ramon Santamaria (@raysan5)"
+      VALUE "LegalCopyright", "(c) 2025 Ramon Santamaria (@raysan5)"
       VALUE "OriginalFilename", "raylib.dll"
       VALUE "ProductName", "raylib"
       VALUE "ProductVersion", "5.5.0"

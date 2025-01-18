@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 /// Minimum supported version of Zig
-const min_ver = "0.12.0";
+const min_ver = "0.13.0";
 
 comptime {
     const order = std.SemanticVersion.order;
@@ -11,44 +11,36 @@ comptime {
         @compileError("Raylib requires zig version " ++ min_ver);
 }
 
-// NOTE(freakmangd): I don't like using a global here, but it prevents having to
-// get the flags a second time when adding raygui
-var raylib_flags_arr: std.ArrayListUnmanaged([]const u8) = .{};
-
-// This has been tested with zig version 0.12.0
-pub fn addRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    const raylib_dep = b.dependencyFromBuildZig(@This(), .{
-        .target = target,
-        .optimize = optimize,
-        .raudio = options.raudio,
-        .rmodels = options.rmodels,
-        .rshapes = options.rshapes,
-        .rtext = options.rtext,
-        .rtextures = options.rtextures,
-        .platform = options.platform,
-        .shared = options.shared,
-        .linux_display_backend = options.linux_display_backend,
-        .opengl_version = options.opengl_version,
-        .config = options.config,
-    });
-    const raylib = raylib_dep.artifact("raylib");
-
-    if (options.raygui) {
-        const raygui_dep = b.dependency(options.raygui_dependency_name, .{});
-        addRaygui(b, raylib, raygui_dep);
+fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
+    switch (platform) {
+        .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", ""),
+        .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
+        .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", ""),
+        else => {},
     }
-
-    return raylib;
 }
 
-fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
-    raylib.defineCMacro("PLATFORM_DESKTOP", null);
+fn createEmsdkStep(b: *std.Build, emsdk: *std.Build.Dependency) *std.Build.Step.Run {
+    if (builtin.os.tag == .windows) {
+        return b.addSystemCommand(&.{emsdk.path("emsdk.bat").getPath(b)});
+    } else {
+        return b.addSystemCommand(&.{emsdk.path("emsdk").getPath(b)});
+    }
+}
 
-    switch (platform) {
-        .glfw => raylib.defineCMacro("PLATFORM_DESKTOP_GLFW", null),
-        .rgfw => raylib.defineCMacro("PLATFORM_DESKTOP_RGFW", null),
-        .sdl => raylib.defineCMacro("PLATFORM_DESKTOP_SDL", null),
-        else => {},
+fn emSdkSetupStep(b: *std.Build, emsdk: *std.Build.Dependency) !?*std.Build.Step.Run {
+    const dot_emsc_path = emsdk.path(".emscripten").getPath(b);
+    const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
+
+    if (!dot_emsc_exists) {
+        const emsdk_install = createEmsdkStep(b, emsdk);
+        emsdk_install.addArgs(&.{ "install", "latest" });
+        const emsdk_activate = createEmsdkStep(b, emsdk);
+        emsdk_activate.addArgs(&.{ "activate", "latest" });
+        emsdk_activate.step.dependOn(&emsdk_install.step);
+        return emsdk_activate;
+    } else {
+        return null;
     }
 }
 
@@ -64,6 +56,7 @@ const config_h_flags = outer: {
     var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
     while (lines.next()) |line| {
         if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
+        if (std.mem.containsAtLeast(u8, line, 1, "MODULE")) continue;
         if (std.mem.startsWith(u8, line, "//")) continue;
         if (std.mem.startsWith(u8, line, "#if")) continue;
 
@@ -83,22 +76,26 @@ const config_h_flags = outer: {
 };
 
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    raylib_flags_arr.clearRetainingCapacity();
+    var raylib_flags_arr = std.ArrayList([]const u8).init(b.allocator);
+    defer raylib_flags_arr.deinit();
 
-    const shared_flags = &[_][]const u8{
-        "-fPIC",
-        "-DBUILD_LIBTYPE_SHARED",
-    };
-    try raylib_flags_arr.appendSlice(b.allocator, &[_][]const u8{
+    try raylib_flags_arr.appendSlice(&[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
     });
-    if (options.config.len > 0) {
-        // Sets a flag indiciating the use of a custom `config.h`
-        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
 
+    if (options.shared) {
+        try raylib_flags_arr.appendSlice(&[_][]const u8{
+            "-fPIC",
+            "-DBUILD_LIBTYPE_SHARED",
+        });
+    }
+
+    // Sets a flag indiciating the use of a custom `config.h`
+    try raylib_flags_arr.append("-DEXTERNAL_CONFIG_FLAGS");
+    if (options.config.len > 0) {
         // Splits a space-separated list of config flags into multiple flags
         //
         // Note: This means certain flags like `-x c++` won't be processed properly.
@@ -107,7 +104,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
         // Apply config flags supplied by the user
         while (config_iter.next()) |config_flag|
-            try raylib_flags_arr.append(b.allocator, config_flag);
+            try raylib_flags_arr.append(config_flag);
 
         // Apply all relevant configs from `src/config.h` *except* the user-specified ones
         //
@@ -125,12 +122,11 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
 
             // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(b.allocator, flag);
+            try raylib_flags_arr.append(flag);
         }
-    }
-
-    if (options.shared) {
-        try raylib_flags_arr.appendSlice(b.allocator, shared_flags);
+    } else {
+        // Set default config if no custome config got set
+        try raylib_flags_arr.appendSlice(&config_h_flags);
     }
 
     const raylib = if (options.shared)
@@ -155,26 +151,32 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     var c_source_files = try std.ArrayList([]const u8).initCapacity(b.allocator, 2);
     c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c", "src/utils.c" });
 
-    if (options.raudio) {
-        try c_source_files.append("src/raudio.c");
-    }
-    if (options.rmodels) {
-        try c_source_files.append("src/rmodels.c");
-    }
     if (options.rshapes) {
         try c_source_files.append("src/rshapes.c");
-    }
-    if (options.rtext) {
-        try c_source_files.append("src/rtext.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RSHAPES");
     }
     if (options.rtextures) {
         try c_source_files.append("src/rtextures.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RTEXTURES");
+    }
+    if (options.rtext) {
+        try c_source_files.append("src/rtext.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RTEXT");
+    }
+    if (options.rmodels) {
+        try c_source_files.append("src/rmodels.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RMODELS");
+    }
+    if (options.raudio) {
+        try c_source_files.append("src/raudio.c");
+        try raylib_flags_arr.append("-DSUPPORT_MODULE_RAUDIO");
     }
 
     if (options.opengl_version != .auto) {
-        raylib.defineCMacro(options.opengl_version.toCMacroStr(), null);
+        raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "");
     }
 
+    raylib.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
             try c_source_files.append("src/rglfw.c");
@@ -189,7 +191,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 try c_source_files.append("src/rglfw.c");
 
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-                    raylib.defineCMacro("_GLFW_X11", null);
+                    raylib.root_module.addCMacro("_GLFW_X11", "");
                     raylib.linkSystemLibrary("GLX");
                     raylib.linkSystemLibrary("X11");
                     raylib.linkSystemLibrary("Xcursor");
@@ -209,7 +211,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         , .{});
                         @panic("`wayland-scanner` not found");
                     };
-                    raylib.defineCMacro("_GLFW_WAYLAND", null);
+                    raylib.root_module.addCMacro("_GLFW_WAYLAND", "");
                     raylib.linkSystemLibrary("EGL");
                     raylib.linkSystemLibrary("wayland-client");
                     raylib.linkSystemLibrary("xkbcommon");
@@ -223,20 +225,21 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
                     waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
                 }
+
                 setDesktopPlatform(raylib, options.platform);
             } else {
                 if (options.opengl_version == .auto) {
                     raylib.linkSystemLibrary("GLESv2");
-                    raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
                 }
 
                 raylib.linkSystemLibrary("EGL");
                 raylib.linkSystemLibrary("gbm");
                 raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
 
-                raylib.defineCMacro("PLATFORM_DRM", null);
-                raylib.defineCMacro("EGL_NO_X11", null);
-                raylib.defineCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
+                raylib.root_module.addCMacro("PLATFORM_DRM", "");
+                raylib.root_module.addCMacro("EGL_NO_X11", "");
+                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
@@ -255,8 +258,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .macos => {
+            // Include xcode_frameworks for cross compilation
+            if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
+                raylib.addSystemFrameworkPath(dep.path("Frameworks"));
+                raylib.addSystemIncludePath(dep.path("include"));
+                raylib.addLibraryPath(dep.path("lib"));
+            }
+
             // On macos rglfw.c include Objective-C files.
-            try raylib_flags_arr.append(b.allocator, "-ObjC");
+            try raylib_flags_arr.append("-ObjC");
             raylib.root_module.addCSourceFile(.{
                 .file = b.path("src/rglfw.c"),
                 .flags = raylib_flags_arr.items,
@@ -271,20 +281,19 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
-            raylib.defineCMacro("PLATFORM_WEB", null);
+            // Include emscripten for cross compilation
+            if (b.lazyDependency("emsdk", .{})) |dep| {
+                if (try emSdkSetupStep(b, dep)) |emSdkStep| {
+                    raylib.step.dependOn(&emSdkStep.step);
+                }
+
+                raylib.addIncludePath(dep.path("upstream/emscripten/cache/sysroot/include"));
+            }
+
+            raylib.root_module.addCMacro("PLATFORM_WEB", "");
             if (options.opengl_version == .auto) {
-                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
             }
-
-            if (b.sysroot == null) {
-                @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
-            }
-
-            const cache_include = b.pathJoin(&.{ b.sysroot.?, "cache", "sysroot", "include" });
-
-            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
-            dir.close();
-            raylib.addIncludePath(.{ .cwd_relative = cache_include });
         },
         else => {
             @panic("Unsupported OS");
@@ -299,20 +308,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
-/// This function does not need to be called if you passed .raygui = true to addRaylib
 pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency) void {
-    if (raylib_flags_arr.items.len == 0) {
-        @panic(
-            \\argument 2 `raylib` in `addRaygui` must come from b.dependency("raylib", ...).artifact("raylib")
-        );
-    }
-
+    const raylib_dep = b.dependencyFromBuildZig(@This(), .{});
     var gen_step = b.addWriteFiles();
     raylib.step.dependOn(&gen_step.step);
 
     const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-    raylib.addCSourceFile(.{ .file = raygui_c_path, .flags = raylib_flags_arr.items });
+    raylib.addCSourceFile(.{ .file = raygui_c_path });
     raylib.addIncludePath(raygui_dep.path("src"));
+    raylib.addIncludePath(raylib_dep.path("src"));
 
     raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
 }
@@ -323,7 +327,6 @@ pub const Options = struct {
     rshapes: bool = true,
     rtext: bool = true,
     rtextures: bool = true,
-    raygui: bool = false,
     platform: PlatformBackend = .glfw,
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
@@ -331,15 +334,12 @@ pub const Options = struct {
     /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: []const u8 = &.{},
 
-    raygui_dependency_name: []const u8 = "raygui",
-
     const defaults = Options{};
 
-    fn getOptions(b: *std.Build) Options {
+    pub fn getOptions(b: *std.Build) Options {
         return .{
             .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
             .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
-            .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
             .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
             .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
             .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
@@ -401,6 +401,7 @@ pub fn build(b: *std.Build) !void {
     const lib = try compileRaylib(b, target, optimize, Options.getOptions(b));
 
     lib.installHeader(b.path("src/raylib.h"), "raylib.h");
+    lib.installHeader(b.path("src/rcamera.h"), "rcamera.h");
     lib.installHeader(b.path("src/raymath.h"), "raymath.h");
     lib.installHeader(b.path("src/rlgl.h"), "rlgl.h");
 

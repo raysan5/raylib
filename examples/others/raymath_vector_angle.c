@@ -51,7 +51,7 @@ int main(void)
 
         if (IsKeyPressed(KEY_SPACE)) angleMode = !angleMode;
         
-        if(angleMode == 0 && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) v1 = GetMousePosition();
+        if ((angleMode == 0) && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) v1 = GetMousePosition();
 
         if (angleMode == 0)
         {
