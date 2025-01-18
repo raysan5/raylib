@@ -192,6 +192,15 @@ int main(void)
     // Assign out lighting shader to model
     model.materials[0].shader = gbufferShader;
     cube.materials[0].shader = gbufferShader;
+    
+    // add some specular noise to the material
+    Image tmp_img2=GenImagePerlinNoise(256,256,0,0,8.0);
+    Texture texture_specular=LoadTextureFromImage(tmp_img2);
+    UnloadImage(tmp_img2);
+
+    cube.materials[0].maps[MATERIAL_MAP_METALNESS].texture=texture_specular;
+
+    model.materials[0].maps[MATERIAL_MAP_METALNESS].texture=texture_specular;
 
     // Create lights
     //--------------------------------------------------------------------------------------
@@ -204,6 +213,7 @@ int main(void)
     const float CUBE_SCALE = 0.25;
     Vector3 cubePositions[MAX_CUBES] = { 0 };
     float cubeRotations[MAX_CUBES] = { 0 };
+    Color cubeColors[MAX_CUBES] = { 0 };
     
     for (int i = 0; i < MAX_CUBES; i++)
     {
@@ -214,6 +224,9 @@ int main(void)
         };
         
         cubeRotations[i] = (float)(rand()%360);
+
+        cubeColors[i] = (Color){GetRandomValue(0,128),GetRandomValue(0,128),GetRandomValue(0,128),255};
+        
     }
 
     DeferredMode mode = DEFERRED_SHADING;
@@ -272,7 +285,7 @@ int main(void)
                     for (int i = 0; i < MAX_CUBES; i++)
                     {
                         Vector3 position = cubePositions[i];
-                        DrawModelEx(cube, position, (Vector3) { 1, 1, 1 }, cubeRotations[i], (Vector3) { CUBE_SCALE, CUBE_SCALE, CUBE_SCALE }, WHITE);
+                        DrawModelEx(cube, position, (Vector3) { 1, 1, 1 }, cubeRotations[i], (Vector3) { CUBE_SCALE, CUBE_SCALE, CUBE_SCALE }, cubeColors[i]);
                     }
 
                 rlDisableShader();
@@ -355,7 +368,7 @@ int main(void)
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
                     
-                    DrawText("ALBEDO TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
+                    DrawText("ALBEDO*SPECULAR TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 default: break;
             }
@@ -373,6 +386,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModel(model);     // Unload the models
     UnloadModel(cube);
+
+    UnloadTexture(texture_specular);
 
     UnloadShader(deferredShader); // Unload shaders
     UnloadShader(gbufferShader);
