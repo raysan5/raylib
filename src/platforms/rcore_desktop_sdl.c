@@ -1670,8 +1670,8 @@ void PollInputEvents(void)
                         CORE.Input.Gamepad.axisCount[jid] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
                         CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                         CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-                        strncpy(CORE.Input.Gamepad.name[jid], SDL_GameControllerNameForIndex(jid), 63);
-                        CORE.Input.Gamepad.name[jid][63] = '\0';
+                        strncpy(CORE.Input.Gamepad.name[jid], SDL_GameControllerNameForIndex(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
+                        CORE.Input.Gamepad.name[jid][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
                     }
                     else
                     {
@@ -1688,7 +1688,7 @@ void PollInputEvents(void)
                     SDL_GameControllerClose(platform.gamepad[jid]);
                     platform.gamepad[jid] = SDL_GameControllerOpen(0);
                     CORE.Input.Gamepad.ready[jid] = false;
-                    memset(CORE.Input.Gamepad.name[jid], 0, 64);
+                    memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
                 }
             } break;
             case SDL_CONTROLLERBUTTONDOWN:
@@ -1977,8 +1977,8 @@ int InitPlatform(void)
             CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
             CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
             CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-            strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), 63);
-            CORE.Input.Gamepad.name[i][63] = '\0';
+            strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+            CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
         }
         else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
     }
