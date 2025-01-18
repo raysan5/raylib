@@ -58,14 +58,14 @@
 *
 *   raylib [core] example - Basic window
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
 *   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 <user_name> (@<user_github>)
+*   Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
 *
 ********************************************************************************************/
 

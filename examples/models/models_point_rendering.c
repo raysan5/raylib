@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 Reese Gallagher (@satchelfrost)
+*   Copyright (c) 2024-2025 Reese Gallagher (@satchelfrost)
 *
 ********************************************************************************************/
 

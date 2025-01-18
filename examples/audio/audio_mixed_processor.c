@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 hkc (@hatkidchan)
+*   Copyright (c) 2023-2025 hkc (@hatkidchan)
 *
 ********************************************************************************************/
 #include "raylib.h"

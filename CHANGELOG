@@ -1671,7 +1671,7 @@ Detailed changes:
 [examples] ADDED: models_waving_cubes, by @codecat
 [examples] ADDED: models_solar_system, by @aldrinmartoq
 [examples] ADDED: shaders_fog, by @chriscamacho
-[examples] ADDED: shaders_texture_waves, by @Anata
+[examples] ADDED: shaders_texture_waves, by @anatagawa
 [examples] ADDED: shaders_basic_lighting, by @chriscamacho
 [examples] ADDED: shaders_simple_mask, by @chriscamacho
 [examples] ADDED: audio_multichannel_sound, by @chriscamacho
