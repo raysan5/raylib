@@ -1,16 +1,13 @@
-#version 100
+#version 300 es
 
-// Input vertex attributes
-attribute vec3 vertexPosition;
-attribute vec2 vertexTexCoord;
+precision highp float;
 
-// Output vertex attributes (to fragment shader)
-varying vec2 fragTexCoord;
+layout (location = 0) in vec3 vertexPosition;
+layout (location = 1) in vec2 vertexTexCoord;
 
-void main()
-{
-    fragTexCoord = vertexTexCoord;
+out vec2 texCoord;
 
-    // Calculate final vertex position
-    gl_Position = vec4(vertexPosition, 1.0);    
+void main() {
+    gl_Position = vec4(vertexPosition, 1.0);
+    texCoord = vertexTexCoord;
 }
