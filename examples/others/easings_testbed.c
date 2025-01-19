@@ -4,6 +4,8 @@
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example contributed by Juan Miguel López (@flashback-fx) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

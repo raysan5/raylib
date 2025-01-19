@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Basic PBR
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.1-dev
 *
 *   Example contributed by Afan OLOVCIC (@_DevDad) and reviewed by Ramon Santamaria (@raysan5)

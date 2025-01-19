@@ -2,6 +2,8 @@
 *
 *   raylib [shapes] example - Vector Angle
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 1.0, last time updated with raylib 4.6
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

@@ -4,6 +4,8 @@
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 5.1-dev, last time updated with raylib 5.1-dev
 *
 *   Example contributed by Bruno Cabral (@brccabral) and reviewed by Ramon Santamaria (@raysan5)

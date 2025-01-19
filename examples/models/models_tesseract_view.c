@@ -4,6 +4,8 @@
 *
 *   NOTE: This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
 *
 *   Example contributed by Timothy van der Valk (@arceryz) and reviewed by Ramon Santamaria (@raysan5)
