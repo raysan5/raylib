@@ -2,6 +2,8 @@
 *
 *   raylib [textures] example - Image loading and texture creation
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
 *   Example contributed by Karim Salem (@kimo-s) and reviewed by Ramon Santamaria (@raysan5)

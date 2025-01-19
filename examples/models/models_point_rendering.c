@@ -2,6 +2,8 @@
 *
 *   raylib example - point rendering
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example contributed by Reese Gallagher (@satchelfrost) and reviewed by Ramon Santamaria (@raysan5)

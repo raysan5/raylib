@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Basic window (adapted for HTML5 platform)
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: This example is prepared to compile for PLATFORM_WEB, and PLATFORM_DESKTOP
 *   As you will notice, code structure is slightly diferent to the other examples...
 *   To compile it for PLATFORM_WEB just uncomment #define PLATFORM_WEB at beginning
