@@ -124,10 +124,6 @@
 #endif
 
 // Image fileformats not supported by default
-#if defined(__TINYC__)
-    #define STBI_NO_SIMD
-#endif
-
 #if (defined(SUPPORT_FILEFORMAT_BMP) || \
      defined(SUPPORT_FILEFORMAT_PNG) || \
      defined(SUPPORT_FILEFORMAT_TGA) || \
@@ -148,6 +144,10 @@
     #define STBI_REALLOC RL_REALLOC
 
     #define STBI_NO_THREAD_LOCALS
+
+    #if defined(__TINYC__)
+        #define STBI_NO_SIMD
+    #endif
 
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"         // Required for: stbi_load_from_file()
@@ -218,6 +218,9 @@
     #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
+#if defined(__TINYC__)
+    #define STBIR_NO_SIMD
+#endif
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "external/stb_image_resize2.h"     // Required for: stbir_resize_uint8_linear() [ImageResize()]
 
