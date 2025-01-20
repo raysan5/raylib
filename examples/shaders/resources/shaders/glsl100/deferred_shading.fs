@@ -22,14 +22,14 @@ const int NR_LIGHTS = 4;
 uniform Light lights[NR_LIGHTS];
 uniform vec3 viewPosition;
 
-const float QUADRATIC = 0.032;
-const float LINEAR = 0.09;
+const float QUADRATIC = 0.35;
+const float LINEAR = 0.15;
 
 void main() {
     vec3 fragPosition = texture(gPosition, texCoord).rgb;
     vec3 normal = texture(gNormal, texCoord).rgb;
     vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
-    float specular = pow(texture(gAlbedoSpec, texCoord).a,8.0);
+    float specular = texture(gAlbedoSpec, texCoord).a;
 
     vec3 ambient = albedo * vec3(0.03f);
     vec3 viewDirection = normalize(viewPosition - fragPosition);
@@ -41,14 +41,14 @@ void main() {
         vec3 diffuse = max(dot(normal, lightDirection), 0.0) * albedo * lights[i].color.xyz;
 
         vec3 halfwayDirection = normalize(lightDirection + viewDirection);
-        float spec = pow(max(dot(normal, halfwayDirection), 0.0), 16.0);
-        vec3 specular = specular * spec * lights[i].color.xyz;
+        float spec = pow(max(dot(normal, halfwayDirection), 0.0), 32.0);
+        vec3 specular = vec3(0.1,0.1,0.1) + specular * spec * lights[i].color.xyz;
 
         // Attenuation
         float distance = length(lights[i].position - fragPosition);
         float attenuation = 1.0 / (1.0 + LINEAR * distance + QUADRATIC * distance * distance);
         diffuse *= attenuation;
-        specular *= attenuation;
+        specular *= attenuation*attenuation;
         ambient += diffuse + specular;
     }
 
