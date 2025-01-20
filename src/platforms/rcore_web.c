@@ -155,14 +155,20 @@ static const char *GetCanvasId(void);
 
 // Check if application should close
 // This will always return false on a web-build as web builds have no control over this functionality
-// Sleep is handled in EndDrawing for sync code
+// Sleep is handled in EndDrawing() for synchronous code
 bool WindowShouldClose(void)
 {
-    // Emterpreter-Async required to run sync code
-    // https://github.com/emscripten-core/emscripten/wiki/Emterpreter#emterpreter-async-run-synchronous-code
-    // This function should not called on a web-ready raylib build because you instead want to encapsulate
-    // frame code in an UpdateDrawFrame() function, to allow the browser to manage execution asynchronously
-    // using emscripten_set_main_loop
+    // Emscripten Asyncify is required to run synchronous code in asynchronous JS
+    // REF: https://emscripten.org/docs/porting/asyncify.html
+
+    // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
+    // and encapsulating one frame execution on a UpdateDrawFrame() function, 
+    // allowing the browser to manage execution asynchronously
+
+    // Optionally we can manage the time we give-control-back-to-browser if required,
+    // but it seems below line could generate stuttering on some browsers
+    //emscripten_sleep(16);
+    
     return false;
 }
 
