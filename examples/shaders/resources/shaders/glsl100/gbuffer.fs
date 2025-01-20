@@ -14,7 +14,6 @@ in vec4 fragColor;
 uniform vec4 colDiffuse;
 
 uniform sampler2D texture0;
-uniform sampler2D texture1;
 
 void main() {
     // store the fragment position vector in the first gbuffer texture
@@ -24,5 +23,5 @@ void main() {
     // and the diffuse per-fragment color
     gAlbedoSpec.rgb = texture(texture0, fragTexCoord).rgb * colDiffuse.rgb;
     // store specular intensity in gAlbedoSpec's alpha component
-    gAlbedoSpec.a = pow(texture(texture1, fragTexCoord).r*1.6,16.0);
+    gAlbedoSpec.a = texture(texture0, fragTexCoord).a;
 }
