@@ -43,7 +43,7 @@
 #include "rlights.h"
 
 
-#define MAX_CUBES   30
+#define MAX_SPHERES   10
 
 // GBuffer data
 typedef struct GBuffer {
@@ -111,7 +111,7 @@ int main(void)
 
     // Load plane model from a generated mesh
     Model model = LoadModelFromMesh(GenMeshPlane(10.0f, 10.0f, 3, 3));
-    Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 2.0f, 2.0f));
+    Model sphere = LoadModelFromMesh(GenMeshSphere(1.0f, 10.0f, 10.0f));
 
     // Load geometry buffer (G-buffer) shader and deferred shader
     Shader gbufferShader = LoadShader(TextFormat("resources/shaders/glsl%i/gbuffer.vs", GLSL_VERSION),
@@ -191,16 +191,22 @@ int main(void)
 
     // Assign out lighting shader to model
     model.materials[0].shader = gbufferShader;
-    cube.materials[0].shader = gbufferShader;
+    sphere.materials[0].shader = gbufferShader;
     
-    // add some specular noise to the material
-    Image tmp_img2=GenImagePerlinNoise(256,256,0,0,8.0);
-    Texture texture_specular=LoadTextureFromImage(tmp_img2);
+    // add some specular detail to the model material
+    Image tmp_img2=GenImageChecked(256,256,32,32,BLACK,LIGHTGRAY);
+    unsigned char* pixel=tmp_img2.data;
+    for (int i=0;i<256*256;i++)
+        if (pixel[i*4]<128)
+            pixel[i*4+3]=255;
+        else
+            pixel[i*4+3]=50;
+
+    Texture texture_albedo_specular=LoadTextureFromImage(tmp_img2);
     UnloadImage(tmp_img2);
+    model.materials[0].maps[MATERIAL_MAP_ALBEDO].texture=texture_albedo_specular;
 
-    cube.materials[0].maps[MATERIAL_MAP_METALNESS].texture=texture_specular;
 
-    model.materials[0].maps[MATERIAL_MAP_METALNESS].texture=texture_specular;
 
     // Create lights
     //--------------------------------------------------------------------------------------
@@ -210,24 +216,26 @@ int main(void)
     lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, 2 }, Vector3Zero(), GREEN, deferredShader);
     lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 2, 1, -2 }, Vector3Zero(), BLUE, deferredShader);
 
-    const float CUBE_SCALE = 0.25;
-    Vector3 cubePositions[MAX_CUBES] = { 0 };
-    float cubeRotations[MAX_CUBES] = { 0 };
-    Color cubeColors[MAX_CUBES] = { 0 };
+    const float SPHERE_SCALE = 0.5;
+    Vector3 spherePositions[MAX_SPHERES] = { 0 };
+    float sphereRotations[MAX_SPHERES] = { 0 };
+    Color sphereColors[MAX_SPHERES] = { 0 };
     
-    for (int i = 0; i < MAX_CUBES; i++)
+    for (int i = 0; i < MAX_SPHERES; i++)
     {
-        cubePositions[i] = (Vector3){
+        spherePositions[i] = (Vector3){
             .x = (float)(rand()%10) - 5,
             .y = (float)(rand()%5),
             .z = (float)(rand()%10) - 5,
         };
         
-        cubeRotations[i] = (float)(rand()%360);
+        sphereRotations[i] = (float)(rand()%360);
 
-        cubeColors[i] = (Color){GetRandomValue(0,128),GetRandomValue(0,128),GetRandomValue(0,128),255};
+        sphereColors[i] = (Color){GetRandomValue(0,128),GetRandomValue(0,128),GetRandomValue(0,128),255};
         
     }
+
+    float time=0;
 
     DeferredMode mode = DEFERRED_SHADING;
 
@@ -241,6 +249,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        time-=GetFrameTime()/1.5;
+
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
@@ -280,12 +290,12 @@ int main(void)
                     // When drawing a model here, make sure that the material's shaders
                     // are set to the gbuffer shader!
                     DrawModel(model, Vector3Zero(), 1.0f, WHITE);
-                    DrawModel(cube, (Vector3) { 0.0, 1.0f, 0.0 }, 1.0f, WHITE);
+                    DrawModel(sphere, (Vector3) { 0.0, 1.0f, 0.0 }, 1.0f, WHITE);
 
-                    for (int i = 0; i < MAX_CUBES; i++)
+                    for (int i = 0; i < MAX_SPHERES; i++)
                     {
-                        Vector3 position = cubePositions[i];
-                        DrawModelEx(cube, position, (Vector3) { 1, 1, 1 }, cubeRotations[i], (Vector3) { CUBE_SCALE, CUBE_SCALE, CUBE_SCALE }, cubeColors[i]);
+                        Vector3 position = spherePositions[i];
+                        DrawModelEx(sphere, position, (Vector3) { 1, 1, 1 }, sphereRotations[i], (Vector3) { SPHERE_SCALE, SPHERE_SCALE, SPHERE_SCALE }, sphereColors[i]);
                     }
 
                 rlDisableShader();
@@ -333,6 +343,9 @@ int main(void)
                         rlEnableShader(rlGetShaderIdDefault());
                             for (int i = 0; i < MAX_LIGHTS; i++)
                             {
+                                lights[i].position.x=cos((i+3*i*time)*i*1.57*0.002+time)*5;
+                                lights[i].position.z=sin((i+3*i*time)*i*1.57*0.001+time)*5;
+                                lights[i].position.y=Clamp(sin(i*0.77+time*0.1*i)*3,0,3)+0.5;
                                 if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
                                 else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
                             }
@@ -368,7 +381,7 @@ int main(void)
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
                     
-                    DrawText("ALBEDO*SPECULAR TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
+                    DrawText("ALBEDO TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 default: break;
             }
@@ -385,9 +398,9 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(model);     // Unload the models
-    UnloadModel(cube);
+    UnloadModel(sphere);
 
-    UnloadTexture(texture_specular);
+    UnloadTexture(texture_albedo_specular);
 
     UnloadShader(deferredShader); // Unload shaders
     UnloadShader(gbufferShader);
