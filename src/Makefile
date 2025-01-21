@@ -665,6 +665,9 @@ raylib: $(OBJS)
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Compile raylib libray for web
     #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
+    ifeq ($(RAYLIB_LIBTYPE),SHARED)
+		@echo "Error: $(TARGET_PLATFORM) does not support SHARED libraries. Try RAYLIB_LIBTYPE=STATIC instead." && exit 1
+    endif
 	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(OBJS)
 	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).web.a)!"
 else
@@ -823,7 +826,7 @@ ifeq ($(ROOT),root)
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
     endif
 else
-	@echo "Error: Root permissions needed for installation. Try sudo make install"
+	@echo "Error: Root permissions needed for installation. Try sudo make install" && exit 1
 endif
 
 # Remove raylib dev files installed on the system
@@ -850,7 +853,7 @@ ifeq ($(ROOT),root)
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
     endif
 else
-	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
+	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall" && exit 1
 endif
 
 .PHONY: clean_shell_cmd clean_shell_sh
