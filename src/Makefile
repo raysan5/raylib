@@ -384,7 +384,7 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     # --source-map-base          # allow debugging in browser with source map
     # --shell-file shell.html    # define a custom shell .html and output extension
     ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
-        CFLAGS += -sASSERTIONS=1 --profiling
+        CFLAGS += --profiling
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
@@ -532,6 +532,11 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
     LDFLAGS += -L$(SDL_LIBRARY_PATH)
+endif
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        LDFLAGS += -sASSERTIONS=1
+    endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
