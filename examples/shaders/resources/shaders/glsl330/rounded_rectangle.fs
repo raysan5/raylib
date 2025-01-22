@@ -15,51 +15,29 @@ out vec4 finalColor;
 
 uniform vec4 rectangle; // Rectangle dimensions (x, y, width, height)
 uniform vec4 radius; // Corner radius (top-left, top-right, bottom-left, bottom-right)
+uniform vec4 color;
 
-// TODO: Remove anti-aliasing?
+// Shadow parameters
+uniform float shadowRadius;
+uniform vec2 shadowOffset;
+uniform float shadowScale;
+uniform vec4 shadowColor;
 
-// Anti-alias using easing function for smmoth edges
-uniform float aaPower;
-uniform float aaDistance;
-
-// Ease in-out
-float ease(float x, float p)
-{
-    if (x < 0.5)
-    {
-        return 1.0/pow(0.5, p - 1.0)*pow(x, p);
-    }
-    else
-    {
-        return 1.0 - 1.0/pow(0.5, p - 1.0)*pow(1.0 - x, p);
-    }
-}
-
-// Smoothstep with easing
-float easestep(float edge0, float edge1, float x, float p)
-{
-    float t = clamp( (x - edge0)/(edge1 - edge0), 0.0, 1.0 );
-    return ease(t, p);
-}
-
-// Anti-alias on edge for x
-float antiAlias(float edge, float x)
-{
-    return easestep(edge + aaDistance*0.5, edge - aaDistance*0.5, x, aaPower);
-}
+// Border parameters
+uniform float borderThickness;
+uniform vec4 borderColor;
 
 // Create a rounded rectangle using signed distance field
 // Thanks to Iñigo Quilez (https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
 // And thanks to inobelar (https://www.shadertoy.com/view/fsdyzB) for shader
 // MIT License
-float roundedRectangleSDF(
+float RoundedRectangleSDF(
     vec2 fragCoord,
-    vec4 rectangle,
+    vec2 center,
+    vec2 halfSize,
     vec4 radius
 )
 {
-    vec2 halfSize = rectangle.zw*0.5;
-    vec2 center = rectangle.xy + halfSize;
     vec2 fragFromCenter = fragCoord - center;
 
     // Determine which corner radius to use
@@ -76,15 +54,29 @@ void main()
     // Texel color fetching from texture sampler
     vec4 texelColor = texture(texture0, fragTexCoord);
 
-    // Get fragment coordinate in pixels
+    // Requires fragment coordinate in pixels
     vec2 fragCoord = gl_FragCoord.xy;
 
     // Calculate signed distance field for rounded rectangle
-    float sdf = roundedRectangleSDF(fragCoord, rectangle, radius);
+    vec2 halfSize = rectangle.zw*0.5;
+    vec2 center = rectangle.xy + halfSize;
+    float recSDF = RoundedRectangleSDF(fragCoord, center, halfSize, radius);
 
-    // Calculate anti-aliased factor
-    float aa = 1.0 - antiAlias(0.0, -sdf);
+    // Calculate signed distance field for rectangle shadow
+    vec2 shadowHalfSize = halfSize*shadowScale;
+    vec2 shadowCenter = center + shadowOffset;
+    float shadowSDF = RoundedRectangleSDF(fragCoord, shadowCenter, shadowHalfSize, radius);
 
-    finalColor = texelColor*colDiffuse*fragColor
-                 *vec4(1.0, 1.0, 1.0, aa);
+    // Caculate alpha factors
+    float recFactor = smoothstep(1.0, 0.0, recSDF);
+    float shadowFactor = smoothstep(shadowRadius, 0.0, shadowSDF);
+    float borderFactor = smoothstep(0.0, 1.0, recSDF + borderThickness)*recFactor;
+
+    // Multiply each color by its respective alpha factor
+    vec4 recColor = vec4(color.rgb, color.a*recFactor);
+    vec4 shadowCol = vec4(shadowColor.rgb, shadowColor.a*shadowFactor);
+    vec4 borderCol = vec4(borderColor.rgb, borderColor.a*borderFactor);
+
+    // Combine the colors in the order (shadow, rectangle, border)
+    finalColor = mix(mix(shadowCol, recColor, recColor.a), borderCol, borderCol.a);
 }

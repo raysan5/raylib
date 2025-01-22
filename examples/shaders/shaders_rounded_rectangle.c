@@ -24,6 +24,44 @@
 #endif
 
 //------------------------------------------------------------------------------------
+// Declare custom Structs
+//------------------------------------------------------------------------------------
+
+// Rounded rectangle data
+typedef struct {
+    Vector4 cornerRadius; // Individual corner radius (top-left, top-right, bottom-left, bottom-right)
+
+    // Shadow variables
+    float shadowRadius;
+    Vector2 shadowOffset;
+    float shadowScale;
+
+    // Border variables
+    float borderThickness; // Inner-border thickness
+
+    // Shader locations
+    int rectangleLoc;
+    int radiusLoc;
+    int colorLoc;
+    int shadowRadiusLoc;
+    int shadowOffsetLoc;
+    int shadowScaleLoc;
+    int shadowColorLoc;
+    int borderThicknessLoc;
+    int borderColorLoc;
+} RoundedRectangle;
+
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
+
+// Create a rounded rectangle and set uniform locations
+static RoundedRectangle CreateRoundedRectangle(Vector4 cornerRadius, float shadowRadius, Vector2 shadowOffset, float shadowScale, float borderThickness, Shader shader);
+
+// Update rounded rectangle uniforms
+static void UpdateRoundedRectangle(RoundedRectangle rec, Shader shader);
+
+//------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(void)
@@ -33,76 +71,28 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
+    const Color rectangleColor = BLUE;
+    const Color shadowColor = DARKBLUE;
+    const Color borderColor = SKYBLUE;
+
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Rounded Rectangle");
 
-    // Shader loading
-    //--------------------------------------------------------------------------------------
-    // Load the rectangle shader which will draw the rectangle with rounded corners
-    Shader rectangleShader = LoadShader(TextFormat("resources/shaders/glsl%i/base.vs", GLSL_VERSION),
-                                        TextFormat("resources/shaders/glsl%i/rounded_rectangle.fs", GLSL_VERSION));
+    // Load the shader
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/rounded_rectangle.fs", GLSL_VERSION));
 
-    // Organized into an array for easy access
-    int rectangleShaderLocs[4] = {
-        GetShaderLocation(rectangleShader, "rectangle"),  // vec4, rectangle bounds (x, y, width, height, NOTE: Y axis is flipped)
-        GetShaderLocation(rectangleShader, "radius"),     // vec4, radius corners (top-left, top-right, bottom-left, bottom-right)
-        GetShaderLocation(rectangleShader, "aaPower"),    // float, anti-aliasing power
-        GetShaderLocation(rectangleShader, "aaDistance")  // float, anti-aliasing distance
-    };
+    // Create a rounded rectangle
+    RoundedRectangle roundedRectangle = CreateRoundedRectangle(
+        (Vector4){ 5.0f, 10.0f, 15.0f, 20.0f },     // Corner radius
+        20.0f,                                      // Shadow radius
+        (Vector2){ 0.0f, -5.0f },                   // Shadow offset
+        0.95f,                                      // Shadow scale
+        5.0f,                                       // Border thickness
+        shader                                      // Shader
+    );
 
-    // Load the rectangle shadow shader which will draw the rectangle's shadow
-    Shader rectangleShadowShader = LoadShader(TextFormat("resources/shaders/glsl%i/base.vs", GLSL_VERSION),
-                                              TextFormat("resources/shaders/glsl%i/rounded_rectangle_shadow.fs", GLSL_VERSION));
-
-    int rectangleShadowShaderLocs[8] = {
-        GetShaderLocation(rectangleShadowShader, "rectangle"),      // vec4, rectangle bounds (x, y, width, height)
-        GetShaderLocation(rectangleShadowShader, "radius"),         // vec4, radius corners (top-left, top-right, bottom-left, bottom-right)
-        GetShaderLocation(rectangleShadowShader, "shadowRadius"),   // float, shadow radius
-        GetShaderLocation(rectangleShadowShader, "shadowPower"),    // float, shadow power
-        GetShaderLocation(rectangleShadowShader, "shadowOffset"),   // vec2, shadow offset (NOTE: Y axis is flipped)
-        GetShaderLocation(rectangleShadowShader, "shadowScale"),    // float, shadow scale
-        GetShaderLocation(rectangleShadowShader, "aaPower"),        // float, anti-aliasing power
-        GetShaderLocation(rectangleShadowShader, "aaDistance")      // float, anti-aliasing distance
-    };
-
-    // Load the rectangle border shader which will draw the rectangle's border
-    Shader rectangleBorderShader = LoadShader(TextFormat("resources/shaders/glsl%i/base.vs", GLSL_VERSION),
-                                              TextFormat("resources/shaders/glsl%i/rounded_rectangle_border.fs", GLSL_VERSION));
-
-    int rectangleBorderShaderLocs[5] = {
-        GetShaderLocation(rectangleBorderShader, "rectangle"),          // vec4, rectangle bounds (x, y, width, height)
-        GetShaderLocation(rectangleBorderShader, "radius"),             // vec4, radius corners (top-left, top-right, bottom-left, bottom-right)
-        GetShaderLocation(rectangleBorderShader, "borderThickness"),    // float, border thickness
-        GetShaderLocation(rectangleBorderShader, "aaPower"),            // float, anti-aliasing power
-        GetShaderLocation(rectangleBorderShader, "aaDistance")          // float, anti-aliasing distance
-    };
-    //--------------------------------------------------------------------------------------
-
-    // Set parameters
-    //--------------------------------------------------------------------------------------
-    // Set 4 radius values for the rounded corners in pixels (top-left, top-right, bottom-left, bottom-right)
-    SetShaderValue(rectangleShader, rectangleShaderLocs[1], (float[]){ 5.0f, 10.0f, 15.0f, 20.0f }, SHADER_UNIFORM_VEC4);
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[1], (float[]){ 5.0f, 10.0f, 15.0f, 20.0f }, SHADER_UNIFORM_VEC4);
-    SetShaderValue(rectangleBorderShader, rectangleBorderShaderLocs[1], (float[]){ 5.0f, 10.0f, 15.0f, 20.0f }, SHADER_UNIFORM_VEC4);
-
-    // Set shadow parameters (in pixels)
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[2], (float[]){ 20.0f }, SHADER_UNIFORM_FLOAT);      // Shadow radius
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[3], (float[]){ 1.5f }, SHADER_UNIFORM_FLOAT);       // Shadow power
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[4], (float[]){ 0.0f, -5.0f }, SHADER_UNIFORM_VEC2); // Shadow offset
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[5], (float[]){ 0.95f }, SHADER_UNIFORM_FLOAT);      // Shadow scale
-
-    // Set border parameters (in pixels)
-    SetShaderValue(rectangleBorderShader, rectangleBorderShaderLocs[2], (float[]){ 5.0f }, SHADER_UNIFORM_FLOAT);       // Border thickness
-
-    // Set anti-aliasing (power and distance) parameters for all shaders
-    SetShaderValue(rectangleShader, rectangleShaderLocs[2], (float[]){ 1.5f }, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(rectangleShader, rectangleShaderLocs[3], (float[]){ 1.0f }, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[6], (float[]){ 1.5f }, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[7], (float[]){ 1.0f }, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(rectangleBorderShader, rectangleBorderShaderLocs[3], (float[]){ 1.5f }, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(rectangleBorderShader, rectangleBorderShaderLocs[4], (float[]){ 1.0f }, SHADER_UNIFORM_FLOAT);
-
-    //--------------------------------------------------------------------------------------
+    // Update shader uniforms
+    UpdateRoundedRectangle(roundedRectangle, shader);
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -116,78 +106,82 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // NOTE: Draw rectangle's shadow first using shader
-            DrawRectangleLines(30, 50, 150, 100, DARKGRAY);
-            DrawText("Rectangle shadow shader", 30, 35, 10, DARKGRAY);
-
+            // Draw rectangle box with rounded corners using shader
             Rectangle rec = { 50, 70, 110, 60 };
+            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle", rec.x - 20, rec.y - 35, 10, DARKGRAY);
 
             // Flip Y axis to match shader coordinate system
-            rec.y = GetScreenHeight() - rec.y - rec.height;
+            rec.y = screenHeight - rec.y - rec.height;
+            SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
-            SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[0], (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
+            // Only rectangle color
+            SetShaderValue(shader, roundedRectangle.colorLoc, (float[]) { rectangleColor.r/255.0f, rectangleColor.g/255.0f, rectangleColor.b/255.0f, rectangleColor.a/255.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.shadowColorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
 
-            BeginShaderMode(rectangleShadowShader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), DARKBLUE);
+            BeginShaderMode(shader);
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-            // Draw rectangle box with rounded corners using shader
-            DrawRectangleLines(30, 180, 150, 100, DARKGRAY);
-            DrawText("Rounded rectangle shader", 30, 165, 10, DARKGRAY);
 
+
+            // Draw rectangle shadow using shader
             rec = (Rectangle){ 50, 200, 110, 60 };
-            rec.y = GetScreenHeight() - rec.y - rec.height;
+            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle shadow", rec.x - 20, rec.y - 35, 10, DARKGRAY);
 
-            SetShaderValue(rectangleShader, rectangleShaderLocs[0], (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
+            rec.y = screenHeight - rec.y - rec.height;
+            SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
-            BeginShaderMode(rectangleShader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
+            // Only shadow color
+            SetShaderValue(shader, roundedRectangle.colorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.shadowColorLoc, (float[]) { shadowColor.r/255.0f, shadowColor.g/255.0f, shadowColor.b/255.0f, shadowColor.a/255.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
+
+            BeginShaderMode(shader);
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
+
+
 
             // Draw rectangle's border using shader
-            DrawRectangleLines(30, 310, 150, 100, DARKGRAY);
-            DrawText("Rectangle border shader", 30, 295, 10, DARKGRAY);
-
             rec = (Rectangle){ 50, 330, 110, 60 };
-            rec.y = GetScreenHeight() - rec.y - rec.height;
+            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle border", rec.x - 20, rec.y - 35, 10, DARKGRAY);
 
-            SetShaderValue(rectangleBorderShader, rectangleBorderShaderLocs[0], (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
+            rec.y = screenHeight - rec.y - rec.height;
+            SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
-            BeginShaderMode(rectangleBorderShader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), SKYBLUE);
+            // Only border color
+            SetShaderValue(shader, roundedRectangle.colorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.shadowColorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { borderColor.r/255.0f, borderColor.g/255.0f, borderColor.b/255.0f, borderColor.a/255.0f }, SHADER_UNIFORM_VEC4);
+
+            BeginShaderMode(shader);
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-            // Draw one more rectangle with all three combined
-            //--------------------------------------------------------------------------------------------------
-            DrawRectangleLines(210, 50, 560, 360, DARKGRAY);
-            DrawText("Rectangle all three combined", 210, 35, 10, DARKGRAY);
 
+
+            // Draw one more rectangle with all three colors
             rec = (Rectangle){ 240, 80, 500, 300 };
-            rec.y = GetScreenHeight() - rec.y - rec.height;
+            DrawRectangleLines(rec.x - 30, rec.y - 30, rec.width + 60, rec.height + 60, DARKGRAY);
+            DrawText("Rectangle with all three combined", rec.x - 30, rec.y - 45, 10, DARKGRAY);
 
-            // Draw shadow
-            SetShaderValue(rectangleShadowShader, rectangleShadowShaderLocs[0], (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
+            rec.y = screenHeight - rec.y - rec.height;
+            SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
-            BeginShaderMode(rectangleShadowShader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), DARKBLUE);
+            // All three colors
+            SetShaderValue(shader, roundedRectangle.colorLoc, (float[]) { rectangleColor.r/255.0f, rectangleColor.g/255.0f, rectangleColor.b/255.0f, rectangleColor.a/255.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.shadowColorLoc, (float[]) { shadowColor.r/255.0f, shadowColor.g/255.0f, shadowColor.b/255.0f, shadowColor.a/255.0f }, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { borderColor.r/255.0f, borderColor.g/255.0f, borderColor.b/255.0f, borderColor.a/255.0f }, SHADER_UNIFORM_VEC4);
+
+            BeginShaderMode(shader);
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-            // Draw rectangle
-            SetShaderValue(rectangleShader, rectangleShaderLocs[0], (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
-
-            BeginShaderMode(rectangleShader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
-            EndShaderMode();
-
-            // Draw border
-            SetShaderValue(rectangleBorderShader, rectangleBorderShaderLocs[0], (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
-
-            BeginShaderMode(rectangleBorderShader);
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), SKYBLUE);
-            EndShaderMode();
-            //--------------------------------------------------------------------------------------------------
-
-            DrawText("(c) Rounded rectangle SDF by Iñigo Quilez. MIT License.", GetScreenWidth() - 300, GetScreenHeight() - 20, 10, BLACK);
+            DrawText("(c) Rounded rectangle SDF by Iñigo Quilez. MIT License.", screenWidth - 300, screenHeight - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -195,14 +189,50 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-    // Unload shader
-    UnloadShader(rectangleShader);
-    UnloadShader(rectangleShadowShader);
-    UnloadShader(rectangleBorderShader);
+    UnloadShader(shader); // Unload shader
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+//------------------------------------------------------------------------------------
+// Module Functions Definitions
+//------------------------------------------------------------------------------------
+
+// Create a rounded rectangle and set uniform locations
+RoundedRectangle CreateRoundedRectangle(Vector4 cornerRadius, float shadowRadius, Vector2 shadowOffset, float shadowScale, float borderThickness, Shader shader)
+{
+    RoundedRectangle rec;
+    rec.cornerRadius = cornerRadius;
+    rec.shadowRadius = shadowRadius;
+    rec.shadowOffset = shadowOffset;
+    rec.shadowScale = shadowScale;
+    rec.borderThickness = borderThickness;
+
+    // Get shader uniform locations
+    rec.rectangleLoc = GetShaderLocation(shader, "rectangle");
+    rec.radiusLoc = GetShaderLocation(shader, "radius");
+    rec.colorLoc = GetShaderLocation(shader, "color");
+    rec.shadowRadiusLoc = GetShaderLocation(shader, "shadowRadius");
+    rec.shadowOffsetLoc = GetShaderLocation(shader, "shadowOffset");
+    rec.shadowScaleLoc = GetShaderLocation(shader, "shadowScale");
+    rec.shadowColorLoc = GetShaderLocation(shader, "shadowColor");
+    rec.borderThicknessLoc = GetShaderLocation(shader, "borderThickness");
+    rec.borderColorLoc = GetShaderLocation(shader, "borderColor");
+
+    UpdateRoundedRectangle(rec, shader);
+
+    return rec;
+}
+
+// Update rounded rectangle uniforms
+void UpdateRoundedRectangle(RoundedRectangle rec, Shader shader)
+{
+    SetShaderValue(shader, rec.radiusLoc, (float[]){ rec.cornerRadius.x, rec.cornerRadius.y, rec.cornerRadius.z, rec.cornerRadius.w }, SHADER_UNIFORM_VEC4);
+    SetShaderValue(shader, rec.shadowRadiusLoc, &rec.shadowRadius, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, rec.shadowOffsetLoc, (float[]){ rec.shadowOffset.x, rec.shadowOffset.y }, SHADER_UNIFORM_VEC2);
+    SetShaderValue(shader, rec.shadowScaleLoc, &rec.shadowScale, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, rec.borderThicknessLoc, &rec.borderThickness, SHADER_UNIFORM_FLOAT);
 }
