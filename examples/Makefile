@@ -646,7 +646,8 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_write_depth \
-    shaders/shaders_vertex_displacement
+    shaders/shaders_vertex_displacement \
+    shaders/shaders_rounded_rectangle.c
 
 AUDIO = \
     audio/audio_mixed_processor \
