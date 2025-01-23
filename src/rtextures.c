@@ -4229,7 +4229,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         if (cubemap.id != 0)
         {
             cubemap.format = faces.format;
-            cubemap.mipmaps = 1;
+            cubemap.mipmaps = faces.mipmaps;
         }
         else TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
 
