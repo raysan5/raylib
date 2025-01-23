@@ -31,12 +31,7 @@ uniform vec4 borderColor;
 // Thanks to Iñigo Quilez (https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
 // And thanks to inobelar (https://www.shadertoy.com/view/fsdyzB) for shader
 // MIT License
-float RoundedRectangleSDF(
-    vec2 fragCoord,
-    vec2 center,
-    vec2 halfSize,
-    vec4 radius
-)
+float RoundedRectangleSDF(vec2 fragCoord, vec2 center, vec2 halfSize, vec4 radius)
 {
     vec2 fragFromCenter = fragCoord - center;
 

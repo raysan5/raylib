@@ -199,7 +199,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | 138 | [shaders_write_depth](shaders/shaders_write_depth.c) | <img src="shaders/shaders_write_depth.png" alt="shaders_write_depth" width="80"> | ⭐️⭐️☆☆ | 4.2 | 4.2 | [Buğra Alptekin Sarı](https://github.com/BugraAlptekinSari) |
 | 139 | [shaders_basic_pbr](shaders/shaders_basic_pbr.c) | <img src="shaders/shaders_basic_pbr.png" alt="shaders_basic_pbr" width="80"> | ⭐️⭐️⭐️⭐️ | 5.0 | 5.1-dev | [Afan OLOVCIC](https://github.com/_DevDad) |
 | 140 | [shaders_lightmap](shaders/shaders_lightmap.c) | <img src="shaders/shaders_lightmap.png" alt="shaders_lightmap" width="80"> | ⭐️⭐️⭐️☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
-| 141 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width=80> | ⭐️⭐️☆☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
+| 141 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width=80> | ⭐️⭐️⭐️☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 
 ### category: audio
 

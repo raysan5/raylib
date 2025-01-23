@@ -637,6 +637,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
+    shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
@@ -646,8 +647,7 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_write_depth \
-    shaders/shaders_vertex_displacement \
-    shaders/shaders_rounded_rectangle.c
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \
