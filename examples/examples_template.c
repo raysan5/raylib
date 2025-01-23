@@ -56,7 +56,9 @@
 
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window
+*   raylib [<module>] example - <name>
+*
+*   Example complexity rating: [★☆??] ?/4
 *
 *   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
@@ -81,7 +83,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
 
     // TODO: Load resources / Initialize variables at this point
 
