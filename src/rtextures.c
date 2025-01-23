@@ -4208,8 +4208,11 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
             Image mipmapped = ImageCopy(image);
         #if defined(SUPPORT_IMAGE_MANIPULATION)
-            ImageMipmaps(&mipmapped);
-            ImageMipmaps(&faces);
+            if (image.mipmaps > 1)
+            {
+                ImageMipmaps(&mipmapped);
+                ImageMipmaps(&faces);
+            }
         #endif
 
             // NOTE: Image formatting does not work with compressed textures
