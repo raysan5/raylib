@@ -82,6 +82,7 @@ typedef struct {
     SDL_GLContext glContext;
 
     SDL_GameController *gamepad[MAX_GAMEPADS];
+    SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids
     SDL_Cursor *cursor;
     bool cursorRelative;
 } PlatformData;
@@ -1658,11 +1659,12 @@ void PollInputEvents(void)
             // Check gamepad events
             case SDL_JOYDEVICEADDED:
             {
-                int jid = event.jdevice.which;
+                int jid = event.jdevice.which; // Joystick device index
 
                 if (!CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
                 {
                     platform.gamepad[jid] = SDL_GameControllerOpen(jid);
+                    platform.gamepadId[jid] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
 
                     if (platform.gamepad[jid])
                     {
@@ -1681,14 +1683,17 @@ void PollInputEvents(void)
             } break;
             case SDL_JOYDEVICEREMOVED:
             {
-                int jid = event.jdevice.which;
+                int jid = event.jdevice.which; // Joystick instance id
 
-                if (jid == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid])))
+                for (int i = 0; i < MAX_GAMEPADS; i++)
                 {
-                    SDL_GameControllerClose(platform.gamepad[jid]);
-                    platform.gamepad[jid] = SDL_GameControllerOpen(0);
-                    CORE.Input.Gamepad.ready[jid] = false;
-                    memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+                    if (platform.gamepadId[i] == jid)
+                    {
+                        SDL_GameControllerClose(platform.gamepad[i]);
+                        CORE.Input.Gamepad.ready[i] = false;
+                        memset(CORE.Input.Gamepad.name[i], 0, MAX_GAMEPAD_NAME_LENGTH);
+                        platform.gamepadId[i] = -1;
+                    }
                 }
             } break;
             case SDL_CONTROLLERBUTTONDOWN:
@@ -1967,9 +1972,15 @@ int InitPlatform(void)
     // Initialize input events system
     //----------------------------------------------------------------------------
     // Initialize gamepads
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        platform.gamepadId[i] = -1; // Set all gamepad initial instance ids as invalid to not conflict with instance id zero
+    }
+
     for (int i = 0; (i < SDL_NumJoysticks()) && (i < MAX_GAMEPADS); i++)
     {
         platform.gamepad[i] = SDL_GameControllerOpen(i);
+        platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
 
         if (platform.gamepad[i])
         {
