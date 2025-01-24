@@ -1693,6 +1693,7 @@ void PollInputEvents(void)
                         CORE.Input.Gamepad.ready[i] = false;
                         memset(CORE.Input.Gamepad.name[i], 0, MAX_GAMEPAD_NAME_LENGTH);
                         platform.gamepadId[i] = -1;
+                        break;
                     }
                 }
             } break;
@@ -1726,8 +1727,15 @@ void PollInputEvents(void)
 
                 if (button >= 0)
                 {
-                    CORE.Input.Gamepad.currentButtonState[event.jbutton.which][button] = 1;
-                    CORE.Input.Gamepad.lastButtonPressed = button;
+                    for (int i = 0; i < MAX_GAMEPADS; i++)
+                    {
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                        {
+                            CORE.Input.Gamepad.currentButtonState[i][button] = 1;
+                            CORE.Input.Gamepad.lastButtonPressed = button;
+                            break;
+                        }
+                    }
                 }
             } break;
             case SDL_CONTROLLERBUTTONUP:
@@ -1760,8 +1768,15 @@ void PollInputEvents(void)
 
                 if (button >= 0)
                 {
-                    CORE.Input.Gamepad.currentButtonState[event.jbutton.which][button] = 0;
-                    if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                    for (int i = 0; i < MAX_GAMEPADS; i++)
+                    {
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                        {
+                            CORE.Input.Gamepad.currentButtonState[i][button] = 0;
+                            if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                            break;
+                        }
+                    }
                 }
             } break;
             case SDL_CONTROLLERAXISMOTION:
@@ -1781,18 +1796,25 @@ void PollInputEvents(void)
 
                 if (axis >= 0)
                 {
-                    // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
-                    float value = event.jaxis.value/(float)32767;
-                    CORE.Input.Gamepad.axisState[event.jaxis.which][axis] = value;
-
-                    // Register button state for triggers in addition to their axes
-                    if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
+                    for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-                        int pressed = (value > 0.1f);
-                        CORE.Input.Gamepad.currentButtonState[event.jaxis.which][button] = pressed;
-                        if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
-                        else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                        if (platform.gamepadId[i] == event.jaxis.which)
+                        {
+                            // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
+                            float value = event.jaxis.value/(float)32767;
+                            CORE.Input.Gamepad.axisState[i][axis] = value;
+
+                            // Register button state for triggers in addition to their axes
+                            if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
+                            {
+                                int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                                int pressed = (value > 0.1f);
+                                CORE.Input.Gamepad.currentButtonState[i][button] = pressed;
+                                if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+                                else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                            }
+                            break;
+                        }
                     }
                 }
             } break;
