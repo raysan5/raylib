@@ -2227,26 +2227,34 @@ static Font LoadBMFont(const char *fileName)
     {
         imFonts[i] = LoadImage(TextFormat("%s/%s", GetDirectoryPath(fileName), imFileName[i]));
 
-        if (imFonts[i].format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
-        {
-            // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
-            Image imFontAlpha = {
-                .data = RL_CALLOC(imFonts[i].width*imFonts[i].height, 2),
-                .width = imFonts[i].width,
-                .height = imFonts[i].height,
-                .mipmaps = 1,
-                .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
-            };
-
-            for (int p = 0, pi = 0; p < (imFonts[i].width*imFonts[i].height*2); p += 2, pi++)
-            {
-                ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
-                ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi];
-            }
-
-            UnloadImage(imFonts[i]);
-            imFonts[i] = imFontAlpha;
-        }
+        PixelFormat format = imFonts[i].format;
+		if (format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8)
+			continue;
+		
+		// Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
+		Image imFontAlpha = {
+			.data = RL_CALLOC(imFonts[i].width*imFonts[i].height, 2),
+			.width = imFonts[i].width,
+			.height = imFonts[i].height,
+			.mipmaps = 1,
+			.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
+		};
+		
+		int stride = 1;
+		if (format == PIXELFORMAT_UNCOMPRESSED_R8G8B8){
+			stride = 3;
+		}else if (format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8){
+			stride = 4;
+		}
+		
+		for (int p = 0, pi = 0; p < (imFonts[i].width*imFonts[i].height*2); p += 2, pi++)
+		{
+			((unsigned char *)(imFontAlpha.data))[p] = 0xff;
+			((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi * stride];
+		}
+		
+		UnloadImage(imFonts[i]);
+        imFonts[i] = imFontAlpha;
     }
 
     Image fullFont = imFonts[0];
