@@ -5390,13 +5390,19 @@ static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
 
+    union
+    {
+        float fm;
+        unsigned int ui;
+    } uni;
+
     const unsigned int e = (x & 0x7C00) >> 10; // Exponent
     const unsigned int m = (x & 0x03FF) << 13; // Mantissa
-    const float fm = (float)m;
-    const unsigned int v = (*(unsigned int *)&fm) >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
-    const unsigned int r = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
+    uni.fm = (float)m;
+    const unsigned int v = uni.ui >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
+    uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
 
-    result = *(float *)&r;
+    result = uni.fm;
 
     return result;
 }
@@ -5406,7 +5412,14 @@ static unsigned short FloatToHalf(float x)
 {
     unsigned short result = 0;
 
-    const unsigned int b = (*(unsigned int *) & x) + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
+    union
+    {
+        float fm;
+        unsigned int ui;
+    } uni;
+    uni.fm = x;
+
+    const unsigned int b = uni.ui + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
     const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
     const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
 
