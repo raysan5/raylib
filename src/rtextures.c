@@ -5396,7 +5396,6 @@ static float HalfToFloat(unsigned short x)
     float result = 0.0f;
 
     union floatUnsignedUnion uni;
-    uni.fm = 0.0f;
 
     const unsigned int e = (x & 0x7C00) >> 10; // Exponent
     const unsigned int m = (x & 0x03FF) << 13; // Mantissa
