@@ -634,6 +634,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
+    shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \

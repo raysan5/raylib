@@ -82,6 +82,7 @@ typedef struct {
     SDL_GLContext glContext;
 
     SDL_GameController *gamepad[MAX_GAMEPADS];
+    SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids
     SDL_Cursor *cursor;
     bool cursorRelative;
 } PlatformData;
@@ -1658,11 +1659,12 @@ void PollInputEvents(void)
             // Check gamepad events
             case SDL_JOYDEVICEADDED:
             {
-                int jid = event.jdevice.which;
+                int jid = event.jdevice.which; // Joystick device index
 
                 if (!CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
                 {
                     platform.gamepad[jid] = SDL_GameControllerOpen(jid);
+                    platform.gamepadId[jid] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
 
                     if (platform.gamepad[jid])
                     {
@@ -1681,14 +1683,18 @@ void PollInputEvents(void)
             } break;
             case SDL_JOYDEVICEREMOVED:
             {
-                int jid = event.jdevice.which;
+                int jid = event.jdevice.which; // Joystick instance id
 
-                if (jid == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid])))
+                for (int i = 0; i < MAX_GAMEPADS; i++)
                 {
-                    SDL_GameControllerClose(platform.gamepad[jid]);
-                    platform.gamepad[jid] = SDL_GameControllerOpen(0);
-                    CORE.Input.Gamepad.ready[jid] = false;
-                    memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+                    if (platform.gamepadId[i] == jid)
+                    {
+                        SDL_GameControllerClose(platform.gamepad[i]);
+                        CORE.Input.Gamepad.ready[i] = false;
+                        memset(CORE.Input.Gamepad.name[i], 0, MAX_GAMEPAD_NAME_LENGTH);
+                        platform.gamepadId[i] = -1;
+                        break;
+                    }
                 }
             } break;
             case SDL_CONTROLLERBUTTONDOWN:
@@ -1721,8 +1727,15 @@ void PollInputEvents(void)
 
                 if (button >= 0)
                 {
-                    CORE.Input.Gamepad.currentButtonState[event.jbutton.which][button] = 1;
-                    CORE.Input.Gamepad.lastButtonPressed = button;
+                    for (int i = 0; i < MAX_GAMEPADS; i++)
+                    {
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                        {
+                            CORE.Input.Gamepad.currentButtonState[i][button] = 1;
+                            CORE.Input.Gamepad.lastButtonPressed = button;
+                            break;
+                        }
+                    }
                 }
             } break;
             case SDL_CONTROLLERBUTTONUP:
@@ -1755,8 +1768,15 @@ void PollInputEvents(void)
 
                 if (button >= 0)
                 {
-                    CORE.Input.Gamepad.currentButtonState[event.jbutton.which][button] = 0;
-                    if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                    for (int i = 0; i < MAX_GAMEPADS; i++)
+                    {
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                        {
+                            CORE.Input.Gamepad.currentButtonState[i][button] = 0;
+                            if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                            break;
+                        }
+                    }
                 }
             } break;
             case SDL_CONTROLLERAXISMOTION:
@@ -1776,18 +1796,25 @@ void PollInputEvents(void)
 
                 if (axis >= 0)
                 {
-                    // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
-                    float value = event.jaxis.value/(float)32767;
-                    CORE.Input.Gamepad.axisState[event.jaxis.which][axis] = value;
-
-                    // Register button state for triggers in addition to their axes
-                    if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
+                    for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-                        int pressed = (value > 0.1f);
-                        CORE.Input.Gamepad.currentButtonState[event.jaxis.which][button] = pressed;
-                        if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
-                        else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                        if (platform.gamepadId[i] == event.jaxis.which)
+                        {
+                            // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
+                            float value = event.jaxis.value/(float)32767;
+                            CORE.Input.Gamepad.axisState[i][axis] = value;
+
+                            // Register button state for triggers in addition to their axes
+                            if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
+                            {
+                                int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                                int pressed = (value > 0.1f);
+                                CORE.Input.Gamepad.currentButtonState[i][button] = pressed;
+                                if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+                                else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                            }
+                            break;
+                        }
                     }
                 }
             } break;
@@ -1967,9 +1994,15 @@ int InitPlatform(void)
     // Initialize input events system
     //----------------------------------------------------------------------------
     // Initialize gamepads
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        platform.gamepadId[i] = -1; // Set all gamepad initial instance ids as invalid to not conflict with instance id zero
+    }
+
     for (int i = 0; (i < SDL_NumJoysticks()) && (i < MAX_GAMEPADS); i++)
     {
         platform.gamepad[i] = SDL_GameControllerOpen(i);
+        platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
 
         if (platform.gamepad[i])
         {

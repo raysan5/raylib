@@ -199,6 +199,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | 138 | [shaders_write_depth](shaders/shaders_write_depth.c) | <img src="shaders/shaders_write_depth.png" alt="shaders_write_depth" width="80"> | ⭐️⭐️☆☆ | 4.2 | 4.2 | [Buğra Alptekin Sarı](https://github.com/BugraAlptekinSari) |
 | 139 | [shaders_basic_pbr](shaders/shaders_basic_pbr.c) | <img src="shaders/shaders_basic_pbr.png" alt="shaders_basic_pbr" width="80"> | ⭐️⭐️⭐️⭐️ | 5.0 | 5.1-dev | [Afan OLOVCIC](https://github.com/_DevDad) |
 | 140 | [shaders_lightmap](shaders/shaders_lightmap.c) | <img src="shaders/shaders_lightmap.png" alt="shaders_lightmap" width="80"> | ⭐️⭐️⭐️☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
+| 141 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width=80> | ⭐️⭐️⭐️☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 
 ### category: audio
 
@@ -206,13 +207,13 @@ Examples using raylib audio functionality, including sound/music loading and pla
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
-| 141 | [audio_module_playing](audio/audio_module_playing.c) | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="80"> | ⭐️☆☆☆ | 1.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 142 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | 4.2 | [Ray](https://github.com/raysan5) |
-| 143 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | 4.2 | [Ray](https://github.com/raysan5) |
-| 144 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
-| 145 | [audio_mixed_processor](audio/audio_mixed_processor.c) | <img src="audio/audio_mixed_processor.png" alt="audio_mixed_processor" width="80"> | ⭐️⭐️⭐️⭐️ | 4.2 | 4.2 | [hkc](https://github.com/hatkidchan) |
-| 146 | [audio_stream_effects](audio/audio_stream_effects.c) | <img src="audio/audio_stream_effects.png" alt="audio_stream_effects" width="80"> | ⭐️⭐️⭐️⭐️ | 4.2 | 5.0 | [Ray](https://github.com/raysan5) |
-| 147 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐️⭐️☆☆ | 4.6 | 4.6 | [Jeffery Myers](https://github.com/JeffM2501) |
+| 142 | [audio_module_playing](audio/audio_module_playing.c) | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="80"> | ⭐️☆☆☆ | 1.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 143 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | 4.2 | [Ray](https://github.com/raysan5) |
+| 144 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | 4.2 | [Ray](https://github.com/raysan5) |
+| 145 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
+| 146 | [audio_mixed_processor](audio/audio_mixed_processor.c) | <img src="audio/audio_mixed_processor.png" alt="audio_mixed_processor" width="80"> | ⭐️⭐️⭐️⭐️ | 4.2 | 4.2 | [hkc](https://github.com/hatkidchan) |
+| 147 | [audio_stream_effects](audio/audio_stream_effects.c) | <img src="audio/audio_stream_effects.png" alt="audio_stream_effects" width="80"> | ⭐️⭐️⭐️⭐️ | 4.2 | 5.0 | [Ray](https://github.com/raysan5) |
+| 148 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐️⭐️☆☆ | 4.6 | 4.6 | [Jeffery Myers](https://github.com/JeffM2501) |
 
 ### category: others
 
@@ -220,12 +221,12 @@ Examples showing raylib misc functionality that does not fit in other categories
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
-| 148 | [rlgl_standalone](others/rlgl_standalone.c) | <img src="others/rlgl_standalone.png" alt="rlgl_standalone" width="80"> | ⭐️⭐️⭐️⭐️ | 1.6 | 4.0 | [Ray](https://github.com/raysan5) |
-| 149 | [rlgl_compute_shader](others/rlgl_compute_shader.c) | <img src="others/rlgl_compute_shader.png" alt="rlgl_compute_shader" width="80"> | ⭐️⭐️⭐️⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
-| 150 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
-| 151 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐️⭐️⭐️⭐️ | 3.8 | 4.0 | [Stephan Soller](https://github.com/arkanis) |
-| 152 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐️⭐️☆☆ | 3.0 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
-| 153 | [raymath_vector_angle](others/raymath_vector_angle.c) | <img src="others/raymath_vector_angle.png" alt="raymath_vector_angle" width="80"> | ⭐️⭐️☆☆ | 1.0 | 4.6 | [Ray](https://github.com/raysan5) |
+| 149 | [rlgl_standalone](others/rlgl_standalone.c) | <img src="others/rlgl_standalone.png" alt="rlgl_standalone" width="80"> | ⭐️⭐️⭐️⭐️ | 1.6 | 4.0 | [Ray](https://github.com/raysan5) |
+| 150 | [rlgl_compute_shader](others/rlgl_compute_shader.c) | <img src="others/rlgl_compute_shader.png" alt="rlgl_compute_shader" width="80"> | ⭐️⭐️⭐️⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
+| 151 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐️⭐️⭐️☆ | 2.5 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
+| 152 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐️⭐️⭐️⭐️ | 3.8 | 4.0 | [Stephan Soller](https://github.com/arkanis) |
+| 153 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐️⭐️☆☆ | 3.0 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
+| 154 | [raymath_vector_angle](others/raymath_vector_angle.c) | <img src="others/raymath_vector_angle.png" alt="raymath_vector_angle" width="80"> | ⭐️⭐️☆☆ | 1.0 | 4.6 | [Ray](https://github.com/raysan5) |
 
 As always contributions are welcome, feel free to send new examples! Here is an [examples template](examples_template.c) to start with!
 
