@@ -2228,8 +2228,10 @@ static Font LoadBMFont(const char *fileName)
         imFonts[i] = LoadImage(TextFormat("%s/%s", GetDirectoryPath(fileName), imFileName[i]));
 
         PixelFormat format = imFonts[i].format;
-        if (format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8)
+        if (format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8){
+            TRACELOG(LOG_WARNING, "FONT: [%s] Page number %i used an unsupported pixel format", i, fileName);
             continue;
+        }
         
         // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
         Image imFontAlpha = {
