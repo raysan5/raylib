@@ -5384,18 +5384,17 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-union floatUnsignedUnion {
-    float fm;
-    unsigned int ui;
-};
-
 // Convert half-float (stored as unsigned short) to float
 // REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
 static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
 
-    union floatUnsignedUnion uni;
+    union
+    {
+        float fm;
+        unsigned int ui;
+    } uni;
 
     const unsigned int e = (x & 0x7C00) >> 10; // Exponent
     const unsigned int m = (x & 0x03FF) << 13; // Mantissa
@@ -5413,7 +5412,11 @@ static unsigned short FloatToHalf(float x)
 {
     unsigned short result = 0;
 
-    union floatUnsignedUnion uni;
+    union
+    {
+        float fm;
+        unsigned int ui;
+    } uni;
     uni.fm = x;
 
     const unsigned int b = uni.ui + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
