@@ -2229,7 +2229,7 @@ static Font LoadBMFont(const char *fileName)
 
         PixelFormat format = imFonts[i].format;
         if (format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8){
-            TRACELOG(LOG_WARNING, "FONT: [%s] Page number %i used an unsupported pixel format", i, fileName);
+            TRACELOG(LOG_WARNING, "FONT: [%s] Page number %i used an unsupported pixel format", fileName, i);
             continue;
         }
         
