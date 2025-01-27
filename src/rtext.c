@@ -2258,12 +2258,12 @@ static Font LoadBMFont(const char *fileName)
         
         for (int p = 0, pi = 0; p < (imFonts[i].width * imFonts[i].height * 2); p += 2, pi++)
         {
-            ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
-            ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi * stride];
+            ((unsigned char *)(imFont.data))[p] = 0xff;
+            ((unsigned char *)(imFont.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi * stride];
         }
         
         UnloadImage(imFonts[i]);
-        imFonts[i] = imFontAlpha;
+        imFonts[i] = imFont;
     }
 
     Image fullFont = imFonts[0];
