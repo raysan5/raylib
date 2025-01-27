@@ -68,6 +68,10 @@
     #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
 #endif
 
+#ifndef MAX_JOYSTICKGUID_BUFFER_LENGTH
+    #define MAX_JOYSTICKGUID_BUFFER_LENGTH 64 // Size of the joystick GUID buffer used on GetGamepadGUID(), must be at least 33 bytes
+#endif
+
 #if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
     #ifndef PLATFORM_DESKTOP_SDL3
         #define PLATFORM_DESKTOP_SDL3
@@ -1239,8 +1243,13 @@ int SetGamepadMappings(const char *mappings)
 // Get gamepad GUID
 const char *GetGamepadGUID(int gamepad)
 {
-    TRACELOG(LOG_WARNING, "GetGamepadGUID() not implemented on target platform");
-    return "";
+    static char buffer[MAX_JOYSTICKGUID_BUFFER_LENGTH] = { 0 };
+
+    SDL_JoystickGUID joystickGUID = SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(platform.gamepad[0]));
+
+    SDL_JoystickGetGUIDString(joystickGUID, buffer, MAX_JOYSTICKGUID_BUFFER_LENGTH -1);
+
+    return buffer;
 }
 
 // Set gamepad vibration
