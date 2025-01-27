@@ -2227,15 +2227,18 @@ static Font LoadBMFont(const char *fileName)
     {
         imFonts[i] = LoadImage(TextFormat("%s/%s", GetDirectoryPath(fileName), imFileName[i]));
 
-        PixelFormat format = imFonts[i].format;
-        if (format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 && format != PIXELFORMAT_UNCOMPRESSED_R8G8B8){
+        int pageFormat = imFonts[i].format;
+        
+        if (pageFormat != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE && pageFormat != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 && pageFormat != PIXELFORMAT_UNCOMPRESSED_R8G8B8)
+        {
             TRACELOG(LOG_WARNING, "FONT: [%s] Page number %i used an unsupported pixel format", fileName, i);
             continue;
         }
         
         // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
-        Image imFontAlpha = {
-            .data = RL_CALLOC(imFonts[i].width*imFonts[i].height, 2),
+        
+        Image imFont = {
+            .data = RL_CALLOC(imFonts[i].width * imFonts[i].height, 2),
             .width = imFonts[i].width,
             .height = imFonts[i].height,
             .mipmaps = 1,
@@ -2243,13 +2246,17 @@ static Font LoadBMFont(const char *fileName)
         };
         
         int stride = 1;
-        if (format == PIXELFORMAT_UNCOMPRESSED_R8G8B8){
+        
+        if (pageFormat == PIXELFORMAT_UNCOMPRESSED_R8G8B8)
+        {
             stride = 3;
-        }else if (format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8){
+        }
+        else if (pageFormat == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+        {
             stride = 4;
         }
         
-        for (int p = 0, pi = 0; p < (imFonts[i].width*imFonts[i].height*2); p += 2, pi++)
+        for (int p = 0, pi = 0; p < (imFonts[i].width * imFonts[i].height * 2); p += 2, pi++)
         {
             ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
             ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi * stride];
