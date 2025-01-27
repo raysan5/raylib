@@ -789,6 +789,13 @@ int SetGamepadMappings(const char *mappings)
     return 0;
 }
 
+// Get gamepad GUID
+const char *GetGamepadGUID(int gamepad)
+{
+    TRACELOG(LOG_WARNING, "GetGamepadGUID() not implemented on target platform");
+    return "";
+}
+
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {

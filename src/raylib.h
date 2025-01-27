@@ -1195,6 +1195,7 @@ RLAPI int GetGamepadButtonPressed(void);                      // Get the last ga
 RLAPI int GetGamepadAxisCount(int gamepad);                   // Get gamepad axis count for a gamepad
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Get axis movement value for a gamepad axis
 RLAPI int SetGamepadMappings(const char *mappings);           // Set internal gamepad mappings (SDL_GameControllerDB)
+RLAPI const char *GetGamepadGUID(int gamepad);                // Get gamepad GUID
 RLAPI void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration); // Set gamepad vibration for both motors (duration in seconds)
 
 // Input-related functions: mouse

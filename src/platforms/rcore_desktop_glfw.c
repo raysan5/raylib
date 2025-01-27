@@ -1084,6 +1084,12 @@ int SetGamepadMappings(const char *mappings)
     return glfwUpdateGamepadMappings(mappings);
 }
 
+// Get gamepad GUID
+const char *GetGamepadGUID(int gamepad)
+{
+    return glfwGetJoystickGUID(gamepad);
+}
+
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {

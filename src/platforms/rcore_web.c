@@ -162,13 +162,13 @@ bool WindowShouldClose(void)
     // REF: https://emscripten.org/docs/porting/asyncify.html
 
     // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
-    // and encapsulating one frame execution on a UpdateDrawFrame() function, 
+    // and encapsulating one frame execution on a UpdateDrawFrame() function,
     // allowing the browser to manage execution asynchronously
 
     // Optionally we can manage the time we give-control-back-to-browser if required,
     // but it seems below line could generate stuttering on some browsers
     emscripten_sleep(12);
-    
+
     return false;
 }
 
@@ -912,6 +912,13 @@ int SetGamepadMappings(const char *mappings)
     TRACELOG(LOG_INFO, "SetGamepadMappings not implemented in rcore_web.c");
 
     return 0;
+}
+
+// Get gamepad GUID
+const char *GetGamepadGUID(int gamepad)
+{
+    TRACELOG(LOG_WARNING, "GetGamepadGUID() not implemented on target platform");
+    return "";
 }
 
 // Set gamepad vibration
