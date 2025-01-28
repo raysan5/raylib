@@ -742,7 +742,7 @@ rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS) -U_GNU_SOURCE
 
 # Compile shapes module
 rshapes.o : rshapes.c raylib.h rlgl.h
