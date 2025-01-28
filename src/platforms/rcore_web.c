@@ -167,7 +167,7 @@ bool WindowShouldClose(void)
 
     // Optionally we can manage the time we give-control-back-to-browser if required,
     // but it seems below line could generate stuttering on some browsers
-    //emscripten_sleep(16);
+    emscripten_sleep(12);
     
     return false;
 }
