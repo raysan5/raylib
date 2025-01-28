@@ -1245,7 +1245,7 @@ const char *GetGamepadGUID(int gamepad)
 {
     static char buffer[MAX_JOYSTICKGUID_BUFFER_LENGTH] = { 0 };
 
-    SDL_JoystickGUID joystickGUID = SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(platform.gamepad[0]));
+    SDL_JoystickGUID joystickGUID = SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(platform.gamepad[gamepad]));
 
     SDL_JoystickGetGUIDString(joystickGUID, buffer, MAX_JOYSTICKGUID_BUFFER_LENGTH -1);
 
