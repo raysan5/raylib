@@ -185,8 +185,8 @@ void ToggleFullscreen(void)
         else if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterFullscreen = true;
         else
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
             if (canvasStyleWidth > canvasWidth) enterFullscreen = false;
             else enterFullscreen = true;
         }
@@ -293,7 +293,7 @@ void ToggleBorderlessWindowed(void)
         else if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterBorderless = true;
         else
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
             const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
             if (screenWidth == canvasWidth) enterBorderless = false;
             else enterBorderless = true;
@@ -379,8 +379,8 @@ void SetWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
             if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed();
         }
         else ToggleBorderlessWindowed();
@@ -393,7 +393,7 @@ void SetWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
             const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
             if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || screenWidth == canvasWidth ) ToggleFullscreen();
         }
@@ -512,7 +512,7 @@ void ClearWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
             const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
             if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || (screenWidth == canvasWidth)) EM_ASM(document.exitFullscreen(););
         }
@@ -526,8 +526,8 @@ void ClearWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
             if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || (canvasStyleWidth > canvasWidth)) EM_ASM(document.exitFullscreen(););
         }
 
@@ -685,7 +685,7 @@ void SetWindowOpacity(float opacity)
 {
     if (opacity >= 1.0f) opacity = 1.0f;
     else if (opacity <= 0.0f) opacity = 0.0f;
-    EM_ASM({ document.getElementById('canvas').style.opacity = $0; }, opacity);
+    EM_ASM({ Module.canvas.style.opacity = $0; }, opacity);
 }
 
 // Set window focused
@@ -962,7 +962,7 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { document.getElementById('canvas').style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
 
         CORE.Input.Mouse.cursor = cursor;
     }
