@@ -162,13 +162,13 @@ bool WindowShouldClose(void)
     // REF: https://emscripten.org/docs/porting/asyncify.html
 
     // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
-    // and encapsulating one frame execution on a UpdateDrawFrame() function, 
+    // and encapsulating one frame execution on a UpdateDrawFrame() function,
     // allowing the browser to manage execution asynchronously
 
     // Optionally we can manage the time we give-control-back-to-browser if required,
     // but it seems below line could generate stuttering on some browsers
     emscripten_sleep(12);
-    
+
     return false;
 }
 
@@ -1683,19 +1683,9 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
     else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
 
-    emscripten_set_canvas_element_size(GetCanvasId(), width, height);
-
-    SetupViewport(width, height); // Reset viewport and projection matrix for new size
-
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.resizedLastFrame = true;
-
     if (IsWindowFullscreen()) return 1;
 
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    glfwSetWindowSize(platform.handle, width, height);
 
     // NOTE: Postprocessing texture is not scaled to new size
 
