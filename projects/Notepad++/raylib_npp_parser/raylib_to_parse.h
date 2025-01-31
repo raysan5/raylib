@@ -737,6 +737,11 @@ RLAPI void SetAudioStreamCallback(AudioStream stream, AudioCallback callback); /
 RLAPI void AttachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Attach audio stream processor to stream, receives the samples as 'float'
 RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Detach audio stream processor from stream
 
+RLAPI void AttachAudioStreamProcessorWithUserData(void* user_data, AudioStream stream, AudioCallbackWithUserData processor); // Attach audio stream processor to stream, receives the samples as 'float'
+RLAPI void DetachAudioStreamProcessorWithUserData(AudioStream stream, AudioCallbackWithUserData processor); // Detach audio stream processor from stream
+
 RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
 
+RLAPI void AttachAudioMixedProcessorWithUserData(void* user_data, AudioCallbackWithUserData processor); // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
+RLAPI void DetachAudioMixedProcessorWithUserData(AudioCallbackWithUserData processor); // Detach audio stream processor from the entire audio pipeline
