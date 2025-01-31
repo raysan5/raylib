@@ -2236,7 +2236,7 @@ void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
- processor->process_with_user_data = NULL;
+    processor->process_with_user_data = NULL;
     processor->user_data = NULL;
 
     rAudioProcessor *last = stream.buffer->processor;
@@ -2341,7 +2341,7 @@ void AttachAudioMixedProcessor(AudioCallback process)
 
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
-        processor->process_with_user_data = NULL;
+    processor->process_with_user_data = NULL;
     processor->user_data = NULL;
 
     rAudioProcessor *last = AUDIO.mixedProcessor;
