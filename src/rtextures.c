@@ -5512,6 +5512,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].z = 0.0f;
                     pixels[i].w = 1.0f;
 
+                    k += 1;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
@@ -5537,6 +5538,8 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].y = 0.0f;
                     pixels[i].z = 0.0f;
                     pixels[i].w = 1.0f;
+
+                    k += 1;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
                 {
