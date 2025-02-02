@@ -5347,10 +5347,11 @@ static Model LoadGLTF(const char *fileName)
                     Image imMetallicRoughness = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath);
                     if (imMetallicRoughness.data != NULL)
                     {
-                        Image imMetallic, imRoughness;
+                        Image imMetallic = { 0 };
+                        Image imRoughness = { 0 };
 
-                        imMetallic.data = RL_MALLOC(imMetallicRoughness.width * imMetallicRoughness.height);
-                        imRoughness.data = RL_MALLOC(imMetallicRoughness.width * imMetallicRoughness.height);
+                        imMetallic.data = RL_MALLOC(imMetallicRoughness.width*imMetallicRoughness.height);
+                        imRoughness.data = RL_MALLOC(imMetallicRoughness.width*imMetallicRoughness.height);
 
                         imMetallic.width = imRoughness.width = imMetallicRoughness.width;
                         imMetallic.height = imRoughness.height = imMetallicRoughness.height;
@@ -5358,17 +5359,17 @@ static Model LoadGLTF(const char *fileName)
                         imMetallic.format = imRoughness.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
                         imMetallic.mipmaps = imRoughness.mipmaps = 1;
 
-                        for (int x = 0; x < imRoughness.width; x++) {
-                            for (int y = 0; y < imRoughness.height; y++) {
+                        for (int x = 0; x < imRoughness.width; x++)
+                        {
+                            for (int y = 0; y < imRoughness.height; y++)
+                            {
                                 Color color = GetImageColor(imMetallicRoughness, x, y);
 
-                                Color roughness = (Color) {color.g};
-                                Color metallic = (Color) {color.b};
-
-                                ((unsigned char *)imRoughness.data)[y*imRoughness.width + x] = color.g;
-                                ((unsigned char *)imMetallic.data)[y*imMetallic.width + x] = color.b;
+                                ((unsigned char *)imRoughness.data)[y*imRoughness.width + x] = color.g; // Roughness color channel
+                                ((unsigned char *)imMetallic.data)[y*imMetallic.width + x] = color.b; // Metallic color channel
                             }
                         }
+                        
                         model.materials[j].maps[MATERIAL_MAP_ROUGHNESS].texture = LoadTextureFromImage(imRoughness);
                         model.materials[j].maps[MATERIAL_MAP_METALNESS].texture = LoadTextureFromImage(imMetallic);
 
