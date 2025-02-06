@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
 *   raylib [core] example - Using bones as socket for calculating the positioning of something
+*
+*   Example complexity rating: [★★★★] 4/4
 * 
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 iP (@ipzaur)
+*   Copyright (c) 2024-2025 iP (@ipzaur)
 *
 ********************************************************************************************/
 

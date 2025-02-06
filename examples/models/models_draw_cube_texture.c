@@ -2,12 +2,14 @@
 *
 *   raylib [models] example - Draw textured cube
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

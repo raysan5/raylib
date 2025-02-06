@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - deferred rendering
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
@@ -11,7 +13,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Justin Andreas Lacoste (@27justin)
+*   Copyright (c) 2023-2025 Justin Andreas Lacoste (@27justin)
 *
 ********************************************************************************************/
 
@@ -76,11 +78,11 @@ int main(void)
     Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 2.0f, 2.0f));
 
     // Load geometry buffer (G-buffer) shader and deferred shader
-    Shader gbufferShader = LoadShader("resources/shaders/glsl330/gbuffer.vs",
-                               "resources/shaders/glsl330/gbuffer.fs");
+    Shader gbufferShader = LoadShader(TextFormat("resources/shaders/glsl%i/gbuffer.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/gbuffer.fs", GLSL_VERSION));
 
-    Shader deferredShader = LoadShader("resources/shaders/glsl330/deferred_shading.vs",
-                               "resources/shaders/glsl330/deferred_shading.fs");
+    Shader deferredShader = LoadShader(TextFormat("resources/shaders/glsl%i/deferred_shading.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/deferred_shading.fs", GLSL_VERSION));
     deferredShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(deferredShader, "viewPosition");
 
     // Initialize the G-buffer
@@ -130,7 +132,6 @@ int main(void)
     if (!rlFramebufferComplete(gBuffer.framebuffer))
     {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
-        exit(1);
     }
 
     // Now we initialize the sampler2D uniform's in the deferred shader.

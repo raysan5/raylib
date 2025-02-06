@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Generates a random sequence
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example contributed by Dalton Overmyer (@REDl3east) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Dalton Overmyer (@REDl3east)
+*   Copyright (c) 2023-2025 Dalton Overmyer (@REDl3east)
 *
 ********************************************************************************************/
 

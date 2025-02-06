@@ -56,16 +56,18 @@
 
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window
+*   raylib [<module>] example - <name>
 *
-*   Example originally created with raylib 4.5, last time updated with raylib 4.5
+*   Example complexity rating: [★☆??] ?/4
+*
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
 *   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 <user_name> (@<user_github>)
+*   Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
 *
 ********************************************************************************************/
 
@@ -81,7 +83,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
 
     // TODO: Load resources / Initialize variables at this point
 

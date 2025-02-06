@@ -142,6 +142,8 @@ static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPoin
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 
+static const char *GetCanvasId(void);
+
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
@@ -152,14 +154,21 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 //----------------------------------------------------------------------------------
 
 // Check if application should close
+// This will always return false on a web-build as web builds have no control over this functionality
+// Sleep is handled in EndDrawing() for synchronous code
 bool WindowShouldClose(void)
 {
-    // Emterpreter-Async required to run sync code
-    // https://github.com/emscripten-core/emscripten/wiki/Emterpreter#emterpreter-async-run-synchronous-code
-    // By default, this function is never called on a web-ready raylib example because we encapsulate
-    // frame code in a UpdateDrawFrame() function, to allow browser manage execution asynchronously
-    // but now emscripten allows sync code to be executed in an interpreted way, using emterpreter!
-    emscripten_sleep(16);
+    // Emscripten Asyncify is required to run synchronous code in asynchronous JS
+    // REF: https://emscripten.org/docs/porting/asyncify.html
+
+    // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
+    // and encapsulating one frame execution on a UpdateDrawFrame() function, 
+    // allowing the browser to manage execution asynchronously
+
+    // Optionally we can manage the time we give-control-back-to-browser if required,
+    // but it seems below line could generate stuttering on some browsers
+    emscripten_sleep(12);
+    
     return false;
 }
 
@@ -176,8 +185,8 @@ void ToggleFullscreen(void)
         else if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterFullscreen = true;
         else
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
             if (canvasStyleWidth > canvasWidth) enterFullscreen = false;
             else enterFullscreen = true;
         }
@@ -284,7 +293,7 @@ void ToggleBorderlessWindowed(void)
         else if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterBorderless = true;
         else
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
             const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
             if (screenWidth == canvasWidth) enterBorderless = false;
             else enterBorderless = true;
@@ -370,8 +379,8 @@ void SetWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
             if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed();
         }
         else ToggleBorderlessWindowed();
@@ -384,7 +393,7 @@ void SetWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
             const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
             if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || screenWidth == canvasWidth ) ToggleFullscreen();
         }
@@ -503,7 +512,7 @@ void ClearWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
             const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
             if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || (screenWidth == canvasWidth)) EM_ASM(document.exitFullscreen(););
         }
@@ -517,8 +526,8 @@ void ClearWindowState(unsigned int flags)
         const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
         if (wasFullscreen)
         {
-            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
             if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || (canvasStyleWidth > canvasWidth)) EM_ASM(document.exitFullscreen(););
         }
 
@@ -676,7 +685,7 @@ void SetWindowOpacity(float opacity)
 {
     if (opacity >= 1.0f) opacity = 1.0f;
     else if (opacity <= 0.0f) opacity = 0.0f;
-    EM_ASM({ document.getElementById('canvas').style.opacity = $0; }, opacity);
+    EM_ASM({ Module.canvas.style.opacity = $0; }, opacity);
 }
 
 // Set window focused
@@ -824,7 +833,7 @@ void ShowCursor(void)
 {
     if (CORE.Input.Mouse.cursorHidden)
     {
-        EM_ASM( { document.getElementById("canvas").style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
+        EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
 
         CORE.Input.Mouse.cursorHidden = false;
     }
@@ -835,7 +844,7 @@ void HideCursor(void)
 {
     if (!CORE.Input.Mouse.cursorHidden)
     {
-        EM_ASM(document.getElementById('canvas').style.cursor = 'none';);
+        EM_ASM(Module.canvas.style.cursor = 'none';);
 
         CORE.Input.Mouse.cursorHidden = true;
     }
@@ -856,7 +865,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     // TODO: figure out how not to hard code the canvas ID here.
-    emscripten_request_pointerlock("#canvas", 1);
+    emscripten_request_pointerlock(GetCanvasId(), 1);
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
@@ -953,7 +962,7 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { document.getElementById('canvas').style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
 
         CORE.Input.Mouse.cursor = cursor;
     }
@@ -1355,25 +1364,25 @@ int InitPlatform(void)
     // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
 
     // Support mouse events
-    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
     emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
 
     // Following the mouse delta when the mouse is locked
-    emscripten_set_mousemove_callback("#canvas", NULL, 1, EmscriptenMouseMoveCallback);
+    emscripten_set_mousemove_callback(GetCanvasId(), NULL, 1, EmscriptenMouseMoveCallback);
 
     // Support touch events
-    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchstart_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
 
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 
     // Support focus events
-    emscripten_set_blur_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
-    emscripten_set_focus_callback("#canvas", platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1674,7 +1683,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
     else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
 
-    emscripten_set_canvas_element_size("#canvas", width, height);
+    emscripten_set_canvas_element_size(GetCanvasId(), width, height);
 
     SetupViewport(width, height); // Reset viewport and projection matrix for new size
 
@@ -1760,7 +1769,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
     // we are looking for actual CSS size: canvas.style.width and canvas.style.height
     // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
-    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size(GetCanvasId(), &canvasWidth, &canvasHeight);
 
     for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
@@ -1833,6 +1842,22 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     }
 
     return 1; // The event was consumed by the callback handler
+}
+
+// obtaining the canvas id provided by the module configuration
+EM_JS(char*, GetCanvasIdJs, (), {
+    var canvasId = "#" + Module.canvas.id;
+    var lengthBytes = lengthBytesUTF8(canvasId) + 1;
+    var stringOnWasmHeap = _malloc(lengthBytes);
+    stringToUTF8(canvasId, stringOnWasmHeap, lengthBytes);
+    return stringOnWasmHeap;
+});
+
+static const char *GetCanvasId(void)
+{
+    static char *canvasId = NULL;
+    if (canvasId == NULL) canvasId = GetCanvasIdJs();
+    return canvasId;
 }
 
 // EOF

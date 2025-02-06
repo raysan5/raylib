@@ -5,6 +5,8 @@
 *   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
 *         shaders used in this example are #version 430 (OpenGL 4.3)
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 4.0, last time updated with raylib 2.5
 *
 *   Example contributed by Teddy Astie (@tsnake41) and reviewed by Ramon Santamaria (@raysan5)
@@ -12,7 +14,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Teddy Astie (@tsnake41)
+*   Copyright (c) 2021-2025 Teddy Astie (@tsnake41)
 *
 ********************************************************************************************/
 

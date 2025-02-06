@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Gamepad input
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   NOTE: This example requires a Gamepad connected to the system
 *         raylib is configured to work with the following gamepads:
 *                - Xbox 360 Controller (Xbox 360, Xbox One)
@@ -13,7 +15,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

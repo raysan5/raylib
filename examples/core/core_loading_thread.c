@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - loading thread
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   NOTE: This example requires linking with pthreads library on MinGW, 
 *   it can be accomplished passing -static parameter to compiler
 *
@@ -9,7 +11,7 @@
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

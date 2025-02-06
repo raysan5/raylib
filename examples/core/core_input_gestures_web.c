@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Input Gestures for Web
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 4.6-dev, last time updated with raylib 4.6-dev
 *
 *   Example contributed by ubkp (@ubkp) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 ubkp (@ubkp)
+*   Copyright (c) 2023-2025 ubkp (@ubkp)
 *
 ********************************************************************************************/
 

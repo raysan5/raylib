@@ -2,6 +2,8 @@
 *
 *   raylib [audio] example - Mixed audio processing
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
 *   Example contributed by hkc (@hatkidchan) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 hkc (@hatkidchan)
+*   Copyright (c) 2023-2025 hkc (@hatkidchan)
 *
 ********************************************************************************************/
 #include "raylib.h"

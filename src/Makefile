@@ -384,7 +384,7 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     # --source-map-base          # allow debugging in browser with source map
     # --shell-file shell.html    # define a custom shell .html and output extension
     ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
-        CFLAGS += -sASSERTIONS=1 --profiling
+        CFLAGS += --profiling
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
@@ -533,6 +533,11 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
     LDFLAGS += -L$(SDL_LIBRARY_PATH)
 endif
+ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        LDFLAGS += -sASSERTIONS=1
+    endif
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
     ifeq ($(USE_RPI_CROSSCOMPILER), TRUE)
@@ -665,6 +670,9 @@ raylib: $(OBJS)
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Compile raylib libray for web
     #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
+    ifeq ($(RAYLIB_LIBTYPE),SHARED)
+		@echo "WARNING: $(TARGET_PLATFORM) does not support SHARED libraries. Generating STATIC library."
+    endif
 	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(OBJS)
 	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).web.a)!"
 else
@@ -734,7 +742,7 @@ rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS) -U_GNU_SOURCE
 
 # Compile shapes module
 rshapes.o : rshapes.c raylib.h rlgl.h
@@ -823,7 +831,7 @@ ifeq ($(ROOT),root)
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
     endif
 else
-	@echo "Error: Root permissions needed for installation. Try sudo make install"
+	@echo "ERROR: Root permissions needed for installation. Try sudo make install" && exit 1
 endif
 
 # Remove raylib dev files installed on the system
@@ -850,7 +858,7 @@ ifeq ($(ROOT),root)
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
     endif
 else
-	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
+	@echo "ERROR: Root permissions needed for uninstallation. Try sudo make uninstall" && exit 1
 endif
 
 .PHONY: clean_shell_cmd clean_shell_sh

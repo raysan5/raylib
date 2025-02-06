@@ -189,9 +189,6 @@ CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
-    ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-        CFLAGS += -sASSERTIONS=1 --profiling
-    endif
 else
     ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
         ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
@@ -517,6 +514,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
+    shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
@@ -1042,10 +1040,10 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
-    --preload-file shaders/resources/shaders/glsl330/gbuffer.vs@resources/shaders/glsl330/gbuffer.vs \
-    --preload-file shaders/resources/shaders/glsl330/gbuffer.fs@resources/shaders/glsl330/gbuffer.fs \
-    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs \
-    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs
+    --preload-file shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
+    --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
+    --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
+    --preload-file shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
 
 shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - loading gltf with animations
 *
+*   Example complexity rating: [★☆☆☆] 1/4
+*
 *   LIMITATIONS:
 *     - Only supports 1 armature per file, and skips loading it if there are multiple armatures
 *     - Only supports linear interpolation (default method in Blender when checked
@@ -14,7 +16,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2020-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

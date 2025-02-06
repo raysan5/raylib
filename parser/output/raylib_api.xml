@@ -906,7 +906,7 @@
             <Param type="int" name="locIndex" desc="" />
             <Param type="Matrix" name="mat" desc="" />
         </Function>
-        <Function name="SetShaderValueTexture" retType="void" paramCount="3" desc="Set shader uniform value for texture (sampler2d)">
+        <Function name="SetShaderValueTexture" retType="void" paramCount="3" desc="Set shader uniform value and bind the texture (sampler2d)">
             <Param type="Shader" name="shader" desc="" />
             <Param type="int" name="locIndex" desc="" />
             <Param type="Texture2D" name="texture" desc="" />

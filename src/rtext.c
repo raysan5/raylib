@@ -1915,7 +1915,7 @@ void UnloadCodepoints(int *codepoints)
 int GetCodepointCount(const char *text)
 {
     unsigned int length = 0;
-    char *ptr = (char *)&text[0];
+    const char *ptr = text;
 
     while (*ptr != '\0')
     {

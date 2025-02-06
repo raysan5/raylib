@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Hybrid Rendering
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
 *   Example contributed by Buğra Alptekin Sarı (@BugraAlptekinSari) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2024 Buğra Alptekin Sarı (@BugraAlptekinSari)
+*   Copyright (c) 2022-2025 Buğra Alptekin Sarı (@BugraAlptekinSari)
 *
 ********************************************************************************************/
 

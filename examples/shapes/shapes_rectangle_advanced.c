@@ -2,12 +2,16 @@
 *
 *   raylib [shapes] example - Rectangle advanced
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 5.5, last time updated with raylib 5.5
+*
+*   Example contributed by Everton Jr. (@evertonse) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024-2025 raylib contributors and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2024-2025 Everton Jr. (@evertonse) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

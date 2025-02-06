@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - 3d cmaera split screen
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 3.7, last time updated with raylib 4.0
 *
 *   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Jeffery Myers (@JeffM2501)
+*   Copyright (c) 2021-2025 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 
