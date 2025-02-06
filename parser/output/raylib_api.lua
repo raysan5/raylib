@@ -8276,7 +8276,7 @@ return {
     },
     {
       name = "AttachAudioStreamProcessor",
-      description = "Attach audio stream processor to stream, receives the samples as 'float'",
+      description = "Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
@@ -8294,7 +8294,7 @@ return {
     },
     {
       name = "AttachAudioMixedProcessor",
-      description = "Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'",
+      description = "Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
       params = {
         {type = "AudioCallback", name = "processor"}
