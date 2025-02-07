@@ -59,6 +59,8 @@ USE_WAYLAND_DISPLAY   ?= FALSE
 BUILD_WEB_ASYNCIFY    ?= TRUE
 BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/shell.html
 BUILD_WEB_HEAP_SIZE   ?= 134217728
+BUILD_WEB_SINGLE_FILE ?= TRUE
+BUILD_WEB_FILE_MODE   ?= --preload-file
 
 # Use WebGL2 backend (OpenGL 3.0)
 # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
@@ -287,6 +289,12 @@ ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
         LDFLAGS += -sASYNCIFY
+    endif
+
+    # Build with single html file output (no webserver needed)
+    ifeq ($(BUILD_WEB_SINGLE_FILE),TRUE)
+        LDFLAGS += -sSINGLE_FILE
+        BUILD_WEB_FILE_MODE = --embed-file
     endif
 
     # NOTE: Flags required for WebGL 2.0 (OpenGL ES 3.0)
@@ -609,8 +617,8 @@ core/core_drop_files: core/core_drop_files.c
 
 core/core_input_gamepad: core/core_input_gamepad.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file core/resources/ps3.png@resources/ps3.png \
-    --preload-file core/resources/xbox.png@resources/xbox.png
+    $(BUILD_WEB_FILE_MODE) core/resources/ps3.png@resources/ps3.png \
+    $(BUILD_WEB_FILE_MODE) core/resources/xbox.png@resources/xbox.png
 
 core/core_input_gestures: core/core_input_gestures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -657,7 +665,7 @@ core/core_storage_values: core/core_storage_values.c
 
 core/core_vr_simulator: core/core_vr_simulator.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file core/resources/distortion100.fs@resources/distortion100.fs
+    $(BUILD_WEB_FILE_MODE) core/resources/distortion100.fs@resources/distortion100.fs
 
 core/core_window_flags: core/core_window_flags.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -731,143 +739,143 @@ shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
 # Compile TEXTURES examples
 textures/textures_background_scrolling: textures/textures_background_scrolling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
-    --preload-file textures/resources/cyberpunk_street_midground.png@resources/cyberpunk_street_midground.png \
-    --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/cyberpunk_street_midground.png@resources/cyberpunk_street_midground.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
 
 textures/textures_blend_modes: textures/textures_blend_modes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
-    --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
 
 textures/textures_bunnymark: textures/textures_bunnymark.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
 
 textures/textures_draw_tiled: textures/textures_draw_tiled.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/patterns.png@resources/patterns.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/patterns.png@resources/patterns.png
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_gif_player: textures/textures_gif_player.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/scarfy_run.gif@resources/scarfy_run.gif
+    $(BUILD_WEB_FILE_MODE) textures/resources/scarfy_run.gif@resources/scarfy_run.gif
 
 textures/textures_image_channel: textures/textures_image_channel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/fudesumi.png@resources/fudesumi.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/fudesumi.png@resources/fudesumi.png
 
 textures/textures_image_drawing: textures/textures_image_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png \
-    --preload-file textures/resources/parrots.png@resources/parrots.png \
-    --preload-file textures/resources/cat.png@resources/cat.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/parrots.png@resources/parrots.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/cat.png@resources/cat.png
 
 textures/textures_image_generation: textures/textures_image_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864
 
 textures/textures_image_kernel: textures/textures_image_kernel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-	--preload-file textures/resources/cat.png@resources/cat.png
+	$(BUILD_WEB_FILE_MODE) textures/resources/cat.png@resources/cat.png
 
 textures/textures_image_loading: textures/textures_image_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/parrots.png@resources/parrots.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/parrots.png@resources/parrots.png
 
 textures/textures_image_rotate: textures/textures_image_rotate.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/raylib_logo.png
 
 textures/textures_image_text: textures/textures_image_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file textures/resources/parrots.png@resources/parrots.png \
-    --preload-file textures/resources/KAISG.ttf@resources/KAISG.ttf
+    $(BUILD_WEB_FILE_MODE) textures/resources/parrots.png@resources/parrots.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/KAISG.ttf@resources/KAISG.ttf
 
 textures/textures_logo_raylib: textures/textures_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_npatch_drawing: textures/textures_npatch_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/ninepatch_button.png@resources/ninepatch_button.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/ninepatch_button.png@resources/ninepatch_button.png
 
 textures/textures_particles_blending: textures/textures_particles_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/spark_flame.png@resources/spark_flame.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/spark_flame.png@resources/spark_flame.png
 
 textures/textures_polygon: textures/textures_polygon.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/cat.png@resources/cat.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/cat.png@resources/cat.png
 
 textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/fudesumi.raw@resources/fudesumi.raw
+    $(BUILD_WEB_FILE_MODE) textures/resources/fudesumi.raw@resources/fudesumi.raw
 
 textures/textures_sprite_anim: textures/textures_sprite_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/scarfy.png@resources/scarfy.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/scarfy.png@resources/scarfy.png
 
 textures/textures_sprite_button: textures/textures_sprite_button.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/button.png@resources/button.png \
-    --preload-file textures/resources/buttonfx.wav@resources/buttonfx.wav
+    $(BUILD_WEB_FILE_MODE) textures/resources/button.png@resources/button.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/buttonfx.wav@resources/buttonfx.wav
 
 textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/explosion.png@resources/explosion.png \
-    --preload-file textures/resources/boom.wav@resources/boom.wav
+    $(BUILD_WEB_FILE_MODE) textures/resources/explosion.png@resources/explosion.png \
+    $(BUILD_WEB_FILE_MODE) textures/resources/boom.wav@resources/boom.wav
 
 textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/scarfy.png@resources/scarfy.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/scarfy.png@resources/scarfy.png
 
 textures/textures_textured_curve: textures/textures_textured_curve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/road.png@resources/road.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/road.png@resources/road.png
 
 textures/textures_to_image: textures/textures_to_image.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
+    $(BUILD_WEB_FILE_MODE) textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 
 # Compile TEXT examples
 text/text_codepoints_loading: text/text_codepoints_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
+    $(BUILD_WEB_FILE_MODE) text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
 
 text/text_draw_3d: text/text_draw_3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
+    $(BUILD_WEB_FILE_MODE) text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
 
 text/text_font_filters: text/text_font_filters.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
+    $(BUILD_WEB_FILE_MODE) text/resources/KAISG.ttf@resources/KAISG.ttf
 
 text/text_font_loading: text/text_font_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
-    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
-    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
+    $(BUILD_WEB_FILE_MODE) text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
+    $(BUILD_WEB_FILE_MODE) text/resources/pixantiqua.png@resources/pixantiqua.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
 
 text/text_font_sdf: text/text_font_sdf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file text/resources/anonymous_pro_bold.ttf@resources/anonymous_pro_bold.ttf \
-    --preload-file text/resources/shaders/glsl100/sdf.fs@resources/shaders/glsl100/sdf.fs
+    $(BUILD_WEB_FILE_MODE) text/resources/anonymous_pro_bold.ttf@resources/anonymous_pro_bold.ttf \
+    $(BUILD_WEB_FILE_MODE) text/resources/shaders/glsl100/sdf.fs@resources/shaders/glsl100/sdf.fs
 
 text/text_font_spritefont: text/text_font_spritefont.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/custom_mecha.png@resources/custom_mecha.png \
-    --preload-file text/resources/custom_alagard.png@resources/custom_alagard.png \
-    --preload-file text/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png
+    $(BUILD_WEB_FILE_MODE) text/resources/custom_mecha.png@resources/custom_mecha.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/custom_alagard.png@resources/custom_alagard.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png
 
 text/text_format_text: text/text_format_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -877,26 +885,26 @@ text/text_input_box: text/text_input_box.c
 
 text/text_raylib_fonts: text/text_raylib_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/fonts/alagard.png@resources/fonts/alagard.png \
-    --preload-file text/resources/fonts/pixelplay.png@resources/fonts/pixelplay.png \
-    --preload-file text/resources/fonts/mecha.png@resources/fonts/mecha.png \
-    --preload-file text/resources/fonts/setback.png@resources/fonts/setback.png \
-    --preload-file text/resources/fonts/romulus.png@resources/fonts/romulus.png \
-    --preload-file text/resources/fonts/pixantiqua.png@resources/fonts/pixantiqua.png \
-    --preload-file text/resources/fonts/alpha_beta.png@resources/fonts/alpha_beta.png \
-    --preload-file text/resources/fonts/jupiter_crash.png@resources/fonts/jupiter_crash.png
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/alagard.png@resources/fonts/alagard.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/pixelplay.png@resources/fonts/pixelplay.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/mecha.png@resources/fonts/mecha.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/setback.png@resources/fonts/setback.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/romulus.png@resources/fonts/romulus.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/pixantiqua.png@resources/fonts/pixantiqua.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/alpha_beta.png@resources/fonts/alpha_beta.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/fonts/jupiter_crash.png@resources/fonts/jupiter_crash.png
 
 text/text_rectangle_bounds: text/text_rectangle_bounds.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_unicode: text/text_unicode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file text/resources/dejavu.fnt@resources/dejavu.fnt \
-    --preload-file text/resources/dejavu.png@resources/dejavu.png \
-    --preload-file text/resources/noto_cjk.fnt@resources/noto_cjk.fnt \
-    --preload-file text/resources/noto_cjk.png@resources/noto_cjk.png \
-    --preload-file text/resources/symbola.fnt@resources/symbola.fnt \
-    --preload-file text/resources/symbola.png@resources/symbola.png
+    $(BUILD_WEB_FILE_MODE) text/resources/dejavu.fnt@resources/dejavu.fnt \
+    $(BUILD_WEB_FILE_MODE) text/resources/dejavu.png@resources/dejavu.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/noto_cjk.fnt@resources/noto_cjk.fnt \
+    $(BUILD_WEB_FILE_MODE) text/resources/noto_cjk.png@resources/noto_cjk.png \
+    $(BUILD_WEB_FILE_MODE) text/resources/symbola.fnt@resources/symbola.fnt \
+    $(BUILD_WEB_FILE_MODE) text/resources/symbola.png@resources/symbola.png
 
 text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -905,77 +913,77 @@ text/text_writing_anim: text/text_writing_anim.c
 # Compile MODELS examples
 models/models_animation: models/models_animation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
-    --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
-    --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
+    $(BUILD_WEB_FILE_MODE) models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
 
 models/models_gpu_skinning: models/models_gpu_skinning.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
-    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
-    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
+    $(BUILD_WEB_FILE_MODE) models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    $(BUILD_WEB_FILE_MODE) models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    $(BUILD_WEB_FILE_MODE) models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
 models/models_billboard: models/models_billboard.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/billboard.png@resources/billboard.png
+    $(BUILD_WEB_FILE_MODE) models/resources/billboard.png@resources/billboard.png
 
 models/models_bone_socket: models/models_bone_socket.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
-    --preload-file models/resources/models/gltf/greenman_hat.glb@resources/models/gltf/greenman_hat.glb \
-    --preload-file models/resources/models/gltf/greenman_sword.glb@resources/models/gltf/greenman_sword.glb \
-    --preload-file models/resources/models/gltf/greenman_shield.glb@resources/models/gltf/greenman_shield.glb
+    $(BUILD_WEB_FILE_MODE) models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/gltf/greenman_hat.glb@resources/models/gltf/greenman_hat.glb \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/gltf/greenman_sword.glb@resources/models/gltf/greenman_sword.glb \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/gltf/greenman_shield.glb@resources/models/gltf/greenman_shield.glb
 
 models/models_box_collisions: models/models_box_collisions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 models/models_cubicmap: models/models_cubicmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+    $(BUILD_WEB_FILE_MODE) models/resources/cubicmap.png@resources/cubicmap.png \
+    $(BUILD_WEB_FILE_MODE) models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_draw_cube_texture: models/models_draw_cube_texture.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+    $(BUILD_WEB_FILE_MODE) models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_first_person_maze: models/models_first_person_maze.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+    $(BUILD_WEB_FILE_MODE) models/resources/cubicmap.png@resources/cubicmap.png \
+    $(BUILD_WEB_FILE_MODE) models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 models/models_heightmap: models/models_heightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/heightmap.png@resources/heightmap.png
+    $(BUILD_WEB_FILE_MODE) models/resources/heightmap.png@resources/heightmap.png
 
 models/models_loading: models/models_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/obj/castle.obj@resources/models/obj/castle.obj \
-    --preload-file models/resources/models/obj/castle_diffuse.png@resources/models/obj/castle_diffuse.png
+    $(BUILD_WEB_FILE_MODE) models/resources/models/obj/castle.obj@resources/models/obj/castle.obj \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/obj/castle_diffuse.png@resources/models/obj/castle_diffuse.png
 
 models/models_loading_gltf: models/models_loading_gltf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
+    $(BUILD_WEB_FILE_MODE) models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
 
 models/models_loading_m3d: models/models_loading_m3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
+    $(BUILD_WEB_FILE_MODE) models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
 
 models/models_loading_vox: models/models_loading_vox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/vox/chr_knight.vox@resources/models/vox/chr_knight.vox \
-    --preload-file models/resources/models/vox/chr_sword.vox@resources/models/vox/chr_sword.vox \
-    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox
+    $(BUILD_WEB_FILE_MODE) models/resources/models/vox/chr_knight.vox@resources/models/vox/chr_knight.vox \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/vox/chr_sword.vox@resources/models/vox/chr_sword.vox \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox
 
 models/models_mesh_generation: models/models_mesh_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 models/models_mesh_picking: models/models_mesh_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/obj/turret.obj@resources/models/obj/turret.obj \
-    --preload-file models/resources/models/obj/turret_diffuse.png@resources/models/obj/turret_diffuse.png
+    $(BUILD_WEB_FILE_MODE) models/resources/models/obj/turret.obj@resources/models/obj/turret.obj \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/obj/turret_diffuse.png@resources/models/obj/turret_diffuse.png
 
 models/models_orthographic_projection: models/models_orthographic_projection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -988,11 +996,12 @@ models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
 
 models/models_skybox: models/models_skybox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 -sFORCE_FILESYSTEM=1 \
-    --preload-file models/resources/dresden_square_2k.hdr@resources/dresden_square_2k.hdr \
-    --preload-file models/resources/shaders/glsl100/skybox.vs@resources/shaders/glsl100/skybox.vs \
-    --preload-file models/resources/shaders/glsl100/skybox.fs@resources/shaders/glsl100/skybox.fs \
-    --preload-file models/resources/shaders/glsl100/cubemap.vs@resources/shaders/glsl100/cubemap.vs \
-    --preload-file models/resources/shaders/glsl100/cubemap.fs@resources/shaders/glsl100/cubemap.fs
+    $(BUILD_WEB_FILE_MODE) models/resources/dresden_square_2k.hdr@resources/dresden_square_2k.hdr \
+    $(BUILD_WEB_FILE_MODE) models/resources/skybox.png@resources/skybox.png \
+    $(BUILD_WEB_FILE_MODE) models/resources/shaders/glsl100/skybox.vs@resources/shaders/glsl100/skybox.vs \
+    $(BUILD_WEB_FILE_MODE) models/resources/shaders/glsl100/skybox.fs@resources/shaders/glsl100/skybox.fs \
+    $(BUILD_WEB_FILE_MODE) models/resources/shaders/glsl100/cubemap.vs@resources/shaders/glsl100/cubemap.vs \
+    $(BUILD_WEB_FILE_MODE) models/resources/shaders/glsl100/cubemap.fs@resources/shaders/glsl100/cubemap.fs
 
 models/models_tesseract_view: models/models_tesseract_view.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1002,193 +1011,193 @@ models/models_waving_cubes: models/models_waving_cubes.c
 
 models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/obj/plane.obj@resources/models/obj/plane.obj \
-    --preload-file models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
+    $(BUILD_WEB_FILE_MODE) models/resources/models/obj/plane.obj@resources/models/obj/plane.obj \
+    $(BUILD_WEB_FILE_MODE) models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
 
 
 # Compile SHADER examples
 shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
-    --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
-    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/texel_checker.png@resources/texel_checker.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
 shaders/shaders_basic_pbr: shaders/shaders_basic_pbr.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/pbr.vs@resources/shaders/glsl100/pbr.vs \
-    --preload-file shaders/resources/shaders/glsl120/pbr.vs@resources/shaders/glsl120/pbr.vs \
-    --preload-file shaders/resources/shaders/glsl330/pbr.vs@resources/shaders/glsl330/pbr.vs \
-    --preload-file shaders/resources/shaders/glsl100/pbr.fs@resources/shaders/glsl100/pbr.fs \
-    --preload-file shaders/resources/shaders/glsl120/pbr.fs@resources/shaders/glsl120/pbr.fs \
-    --preload-file shaders/resources/shaders/glsl330/pbr.fs@resources/shaders/glsl330/pbr.fs \
-    --preload-file shaders/resources/models/old_car_new.glb@resources/models/old_car_new.glb \
-    --preload-file shaders/resources/old_car_d.png@resources/old_car_d.png \
-    --preload-file shaders/resources/old_car_mra.png@resources/old_car_mra.png \
-    --preload-file shaders/resources/old_car_n.png@resources/old_car_n.png \
-    --preload-file shaders/resources/old_car_e.png@resources/old_car_e.png \
-    --preload-file shaders/resources/models/plane.glb@resources/models/plane.glb \
-    --preload-file shaders/resources/road_a.png@resources/road_a.png \
-    --preload-file shaders/resources/road_mra.png@resources/road_mra.png \
-    --preload-file shaders/resources/road_n.png@resources/road_n.png
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/pbr.vs@resources/shaders/glsl100/pbr.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl120/pbr.vs@resources/shaders/glsl120/pbr.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl330/pbr.vs@resources/shaders/glsl330/pbr.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/pbr.fs@resources/shaders/glsl100/pbr.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl120/pbr.fs@resources/shaders/glsl120/pbr.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl330/pbr.fs@resources/shaders/glsl330/pbr.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/old_car_new.glb@resources/models/old_car_new.glb \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/old_car_d.png@resources/old_car_d.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/old_car_mra.png@resources/old_car_mra.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/old_car_n.png@resources/old_car_n.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/old_car_e.png@resources/old_car_e.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/plane.glb@resources/models/plane.glb \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/road_a.png@resources/road_a.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/road_mra.png@resources/road_mra.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/road_n.png@resources/road_n.png
 
 shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file shaders/resources/models/barracks.obj@resources/models/barracks.obj \
-    --preload-file shaders/resources/models/barracks_diffuse.png@resources/models/barracks_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100/swirl.fs@resources/shaders/glsl100/swirl.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/barracks.obj@resources/models/barracks.obj \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/barracks_diffuse.png@resources/models/barracks_diffuse.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/swirl.fs@resources/shaders/glsl100/swirl.fs
 
 shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
-    --preload-file shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
-    --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
-    --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
-    --preload-file shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/fudesumi.png@resources/fudesumi.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
 
 shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/eratosthenes.fs@resources/shaders/glsl100/eratosthenes.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/eratosthenes.fs@resources/shaders/glsl100/eratosthenes.fs
 
 shaders/shaders_fog: shaders/shaders_fog.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
-    --preload-file shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs \
-    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/texel_checker.png@resources/texel_checker.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
 shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sFORCE_FILESYSTEM=1 \
-    --preload-file shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
 
 shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
-    --preload-file shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
 
 shaders/shaders_julia_set: shaders/shaders_julia_set.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/julia_set.fs@resources/shaders/glsl100/julia_set.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/julia_set.fs@resources/shaders/glsl100/julia_set.fs
 
 shaders/shaders_lightmap: shaders/shaders_lightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sFORCE_FILESYSTEM=1 \
-    --preload-file shaders/resources/shaders/glsl100/lightmap.vs@resources/shaders/glsl100/lightmap.vs \
-    --preload-file shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
-    --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
-    --preload-file shaders/resources/spark_flame.png@resources/spark_flame.png
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lightmap.vs@resources/shaders/glsl100/lightmap.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/spark_flame.png@resources/spark_flame.png
 
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/lighting_instancing.vs@resources/shaders/glsl100/lighting_instancing.vs \
-    --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lighting_instancing.vs@resources/shaders/glsl100/lighting_instancing.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs
 
 shaders/shaders_model_shader: shaders/shaders_model_shader.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file shaders/resources/models/watermill.obj@resources/models/watermill.obj \
-    --preload-file shaders/resources/models/watermill_diffuse.png@resources/models/watermill_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/watermill.obj@resources/models/watermill.obj \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/watermill_diffuse.png@resources/models/watermill_diffuse.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
 
 shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
 
 shaders/shaders_palette_switch: shaders/shaders_palette_switch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/palette_switch.fs@resources/shaders/glsl100/palette_switch.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/palette_switch.fs@resources/shaders/glsl100/palette_switch.fs
 
 shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file shaders/resources/models/church.obj@resources/models/church.obj \
-    --preload-file shaders/resources/models/church_diffuse.png@resources/models/church_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100@resources/shaders/glsl100
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/church.obj@resources/models/church.obj \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/church_diffuse.png@resources/models/church_diffuse.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100@resources/shaders/glsl100
 
 shaders/shaders_raymarching: shaders/shaders_raymarching.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
 
 shaders/shaders_shadowmap: shaders/shaders_shadowmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl120/shadowmap.vs@resources/shaders/glsl120/shadowmap.vs \
-    --preload-file shaders/resources/shaders/glsl330/shadowmap.vs@resources/shaders/glsl330/shadowmap.vs \
-    --preload-file shaders/resources/shaders/glsl120/shadowmap.fs@resources/shaders/glsl120/shadowmap.fs \
-    --preload-file shaders/resources/shaders/glsl330/shadowmap.fs@resources/shaders/glsl330/shadowmap.fs \
-    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl120/shadowmap.vs@resources/shaders/glsl120/shadowmap.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl330/shadowmap.vs@resources/shaders/glsl330/shadowmap.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl120/shadowmap.fs@resources/shaders/glsl120/shadowmap.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl330/shadowmap.fs@resources/shaders/glsl330/shadowmap.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/models/robot.glb@resources/models/robot.glb
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
-    --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
-    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/fudesumi.png@resources/fudesumi.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
 
 shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/plasma.png@resources/plasma.png \
-    --preload-file shaders/resources/mask.png@resources/mask.png \
-    --preload-file shaders/resources/shaders/glsl100/mask.fs@resources/shaders/glsl100/mask.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/plasma.png@resources/plasma.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/mask.png@resources/mask.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/mask.fs@resources/shaders/glsl100/mask.fs
 
 shaders/shaders_spotlight: shaders/shaders_spotlight.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/raysan.png@resources/raysan.png \
-    --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/raysan.png@resources/raysan.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
 
 shaders/shaders_texture_drawing: shaders/shaders_texture_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
 
 shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
-    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/fudesumi.png@resources/fudesumi.png
 
 shaders/shaders_texture_tiling: shaders/shaders_texture_tiling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/tiling.fs@resources/shaders/glsl100/tiling.fs \
-    --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/tiling.fs@resources/shaders/glsl100/tiling.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 shaders/shaders_texture_waves: shaders/shaders_texture_waves.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/space.png@resources/space.png \
-    --preload-file shaders/resources/shaders/glsl100/wave.fs@resources/shaders/glsl100/wave.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/space.png@resources/space.png \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/wave.fs@resources/shaders/glsl100/wave.fs
 
 shaders/shaders_write_depth: shaders/shaders_write_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
 
 shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
-    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.vs@resources/shaders/glsl330/vertex_displacement.vs \
-    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs \
-    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl330/vertex_displacement.vs@resources/shaders/glsl330/vertex_displacement.vs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs \
+    $(BUILD_WEB_FILE_MODE) shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
 
 
 # Compile AUDIO examples
 audio/audio_mixed_processor: audio/audio_mixed_processor.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file audio/resources/country.mp3@resources/country.mp3 \
-    --preload-file audio/resources/coin.wav@resources/coin.wav
+    $(BUILD_WEB_FILE_MODE) audio/resources/country.mp3@resources/country.mp3 \
+    $(BUILD_WEB_FILE_MODE) audio/resources/coin.wav@resources/coin.wav
 
 audio/audio_module_playing: audio/audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/mini1111.xm@resources/mini1111.xm
+    $(BUILD_WEB_FILE_MODE) audio/resources/mini1111.xm@resources/mini1111.xm
 
 audio/audio_music_stream: audio/audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file audio/resources/country.mp3@resources/country.mp3
+    $(BUILD_WEB_FILE_MODE) audio/resources/country.mp3@resources/country.mp3
 
 audio/audio_raw_stream: audio/audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864
 
 audio/audio_sound_loading: audio/audio_sound_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/sound.wav@resources/sound.wav \
-    --preload-file audio/resources/target.ogg@resources/target.ogg
+    $(BUILD_WEB_FILE_MODE) audio/resources/sound.wav@resources/sound.wav \
+    $(BUILD_WEB_FILE_MODE) audio/resources/target.ogg@resources/target.ogg
 
 audio/audio_sound_multi: audio/audio_sound_multi.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/sound.wav@resources/sound.wav
+    $(BUILD_WEB_FILE_MODE) audio/resources/sound.wav@resources/sound.wav
 
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 \
-    --preload-file audio/resources/country.mp3@resources/country.mp3
+    $(BUILD_WEB_FILE_MODE) audio/resources/country.mp3@resources/country.mp3
 
 
 # Compile OTHERS examples
