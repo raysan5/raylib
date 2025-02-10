@@ -2243,6 +2243,7 @@ const char *GetApplicationDirectory(void)
 // NOTE: Base path is prepended to the scanned filepaths
 // WARNING: Directory is scanned twice, first time to get files count
 // No recursive scanning is done!
+// WARNING: filtering directories requires module rtext and SUPPORT_TEXT_MANIPULATION
 FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     FilePathList files = { 0 };
@@ -2281,6 +2282,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 
 // Load directory filepaths with extension filtering and recursive directory scan
 // NOTE: On recursive loading we do not pre-scan for file count, we use MAX_FILEPATH_CAPACITY
+// WARNING: filtering directories requires module rtext and SUPPORT_TEXT_MANIPULATION
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
     FilePathList files = { 0 };
@@ -3663,6 +3665,7 @@ void SetupFramebuffer(int width, int height)
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
+// WARNING: filtering directories requires module rtext and SUPPORT_TEXT_MANIPULATION
 static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter)
 {
     static char path[MAX_FILEPATH_LENGTH] = { 0 };
@@ -3694,6 +3697,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                             files->count++;
                         }
                     }
+                    #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
                     else
                     {
                         if (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0)
@@ -3702,6 +3706,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                             files->count++;
                         }
                     }
+                    #endif
                 }
                 else
                 {
@@ -3717,6 +3722,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 }
 
 // Scan all files and directories recursively from a base path
+// WARNING: filtering directories requires module rtext and SUPPORT_TEXT_MANIPULATION
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
 {
     char path[MAX_FILEPATH_LENGTH] = { 0 };
@@ -3762,11 +3768,13 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                 }
                 else
                 {
+                    #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
                     if ((filter != NULL) && (TextFindIndex(filter, DIRECTORY_FILTER_TAG) >= 0))
                     {
                         strcpy(files->paths[files->count], path);
                         files->count++;
                     }
+                    #endif
 
                     if (files->count >= files->capacity)
                     {
