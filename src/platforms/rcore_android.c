@@ -460,17 +460,21 @@ int GetMonitorHeight(int monitor)
 }
 
 // Get selected monitor physical width in millimetres
+// NOTE: It seems to return a slightly underestimated value on some devices
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
-    return 0;
+    int widthPixels = ANativeWindow_getWidth(platform.app->window);
+    float dpi = AConfiguration_getDensity(platform.app->config);
+    return (widthPixels/dpi)*25.4f;
 }
 
 // Get selected monitor physical height in millimetres
+// NOTE: It seems to return a slightly underestimated value on some devices
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
-    return 0;
+    int heightPixels = ANativeWindow_getHeight(platform.app->window);
+    float dpi = AConfiguration_getDensity(platform.app->config);
+    return (heightPixels/dpi)*25.4f;
 }
 
 // Get selected monitor refresh rate
@@ -497,8 +501,9 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-    return (Vector2){ 1.0f, 1.0f };
+    int density = AConfiguration_getDensity(platform.app->config);
+    float scale = (float)density/160;
+    return (Vector2){ scale, scale };
 }
 
 // Set clipboard text content
