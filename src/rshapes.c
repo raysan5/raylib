@@ -2356,7 +2356,7 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
     return collision;
 }
 
-// Check if circle collides with a line created betweeen two points [p1] and [p2]
+// Check if circle collides with a line created between two points [p1] and [p2]
 RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2)
 {
     float dx = p1.x - p2.x;
