@@ -2406,7 +2406,7 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 }
 
 // Get smallest rectangle entirely overlapping both rectangles
-Rectangle GetRectangleOverlap(Rectangle a, Rectangle b) {
+Rectangle GetOverlappingRectangle(Rectangle a, Rectangle b) {
 	
 	Rectangle overlap;
 	Rectangle left, right, top, bottom;
