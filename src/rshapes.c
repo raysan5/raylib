@@ -2405,6 +2405,36 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     return overlap;
 }
 
+// Get smallest rectangle entirely overlapping both rectangles
+Rectangle GetRectangleOverlap(Rectangle a, Rectangle b) {
+	
+	Rectangle overlap;
+	Rectangle left, right, top, bottom;
+	
+	if (a.x == b.x) {
+		left   = (a.width == fmin(a.width, b.width)) ? a : b;
+		right  = (a.width == fmax(a.width, b.width)) ? a : b;
+	} else {
+		left   = (a.x < b.x) ? a : b;
+		right  = (a.x > b.x) ? a : b;
+	}
+	
+	if (a.y == b.y) {
+		top    = (a.height == fmin(a.height, b.height)) ? a : b;
+		bottom = (a.height == fmax(a.height, b.height)) ? a : b;
+	} else {
+		top    = (a.y < b.y) ? a : b;
+		bottom = (a.y > b.y) ? a : b;
+	}
+	
+	overlap.x      = fmin(a.x, b.x);
+	overlap.y      = fmin(a.y, b.y);
+	overlap.width  = fmax(left.width + (right.x -  (left.x + left.width) + right.width),   left.width);
+	overlap.height = fmax(top.height + (bottom.y - (top.y  + top.height) + bottom.height), top.height);
+	
+	return overlap;
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------

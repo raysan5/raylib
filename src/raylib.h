@@ -1318,6 +1318,7 @@ RLAPI bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int th
 RLAPI bool CheckCollisionPointPoly(Vector2 point, const Vector2 *points, int pointCount);                // Check if point is within a polygon described by array of vertices
 RLAPI bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint); // Check the collision between two lines defined by two points each, returns collision point by reference
 RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                         // Get collision rectangle for two rectangles collision
+RLAPI Rectangle GetRectangleOverlap(Rectangle a, Rectangle b);                                           // Get smallest rectangle entirely overlapping both rectangles
 
 //------------------------------------------------------------------------------------
 // Texture Loading and Drawing Functions (Module: textures)
