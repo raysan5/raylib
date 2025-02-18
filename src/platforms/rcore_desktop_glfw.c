@@ -86,6 +86,8 @@
     #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
 #endif
 
+#include <stddef.h>  // Required for: size_t
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -126,6 +128,11 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);     
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);       // GLFW3 Scrolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void JoystickCallback(int jid, int event);                                           // GLFW3 Joystick Connected/Disconnected Callback
+
+// Wrappers used by glfwInitAllocator
+static void* AllocateWrapper(size_t size, void* user);                                     // GLFW3 GLFWallocatefun, wrapps around RL_MALLOC macro
+static void* ReallocateWrapper(void* block, size_t size, void* user);                      // GLFW3 GLFWreallocatefun, wrapps around RL_MALLOC macro
+static void DeallocateWrapper(void* block, void* user);                                    // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -1287,21 +1294,38 @@ static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
   if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 }
 
+// Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
+// We need to provide these because GLFWallocator expects function pointers with specific signatures.
+// Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch.
+// https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
+static void* AllocateWrapper(size_t size, void* user)
+{
+    (void)user;
+    return RL_MALLOC(size);
+}
+static void* ReallocateWrapper(void* block, size_t size, void* user)
+{
+    (void)user;
+    return RL_REALLOC(block, size);
+}
+static void DeallocateWrapper(void* block, void* user)
+{
+    (void)user;
+    RL_FREE(block);
+}
+
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
     glfwSetErrorCallback(ErrorCallback);
-/*
-    // TODO: Setup GLFW custom allocators to match raylib ones
-    const GLFWallocator allocator = {
-        .allocate = MemAlloc,
-        .deallocate = MemFree,
-        .reallocate = MemRealloc,
-        .user = NULL
-    };
 
+    const GLFWallocator allocator = {
+        .allocate = AllocateWrapper,
+        .deallocate = DeallocateWrapper,
+        .reallocate = ReallocateWrapper,
+        .user = NULL, // RL_*ALLOC macros are not capable of handling user-provided data
+    };
     glfwInitAllocator(&allocator);
-*/
 
 #if defined(__APPLE__)
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
