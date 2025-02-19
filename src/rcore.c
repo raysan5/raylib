@@ -165,9 +165,10 @@
     #ifndef MAX_PATH
         #define MAX_PATH 1025
     #endif
-__declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
-__declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
-__declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
+struct HINSTANCE__;
+__declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(struct HINSTANCE__ *hModule, char *lpFilename, unsigned long nSize);
+__declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(struct HINSTANCE__ *hModule, wchar_t *lpFilename, unsigned long nSize);
+__declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
 __declspec(dllimport) unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
 __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
 #elif defined(__linux__)
@@ -511,7 +512,7 @@ static void RecordAutomationEvent(void); // Record frame events (to internal eve
 
 #if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
-void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
+__declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
 
 #if !defined(SUPPORT_MODULE_RTEXT)
