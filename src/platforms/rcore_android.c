@@ -853,8 +853,7 @@ static int InitGraphicsDevice(void)
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
     }
 
-    const EGLint framebufferAttribs[] =
-    {
+    const EGLint framebufferAttribs[] = {
         EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
@@ -862,13 +861,12 @@ static int InitGraphicsDevice(void)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLE_BUFFERS, sampleBuffer, // Activate MSAA
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
         EGL_NONE
     };
 
-    const EGLint contextAttribs[] =
-    {
+    const EGLint contextAttribs[] = {
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
