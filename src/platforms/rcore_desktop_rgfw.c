@@ -282,7 +282,8 @@ void ToggleFullscreen(void)
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
         
-        if (platform.mon.mode.area.w) {
+        if (platform.mon.mode.area.w) 
+        {
             RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
 
             RGFW_monitor_scale(monitor, platform.mon.mode.area);
@@ -305,7 +306,8 @@ void ToggleBorderlessWindowed(void)
     if (platform.window == NULL)
         return;
     
-    if (CORE.Window.fullscreen) {
+    if (CORE.Window.fullscreen) 
+    {
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
 
@@ -1227,21 +1229,35 @@ int InitPlatform(void)
         flags |= RGFW_windowFullscreen;
     }
 
+    if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
+    { 
+        CORE.Window.fullscreen = true;
+        flags |= RGFW_windowedFullscreen;
+    }
+
     if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_windowNoBorder;
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_windowNoResize;
     if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_windowTransparent;
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_windowFullscreen;
+    if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) flags |= RGFW_windowHide;
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) flags |= RGFW_windowMaximize;
+
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
     // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_21) { 
+    if (rlGetVersion() == RL_OPENGL_21) 
+    { 
         RGFW_setGLHint(RGFW_glMajor, 2);
         RGFW_setGLHint(RGFW_glMinor, 1);
-    } else if (rlGetVersion() == RL_OPENGL_33) { 
+    } 
+    else if (rlGetVersion() == RL_OPENGL_33) 
+    { 
         RGFW_setGLHint(RGFW_glCore, 3);
         RGFW_setGLHint(RGFW_glMinor, 3);
-    } else if (rlGetVersion() == RL_OPENGL_43) { 
+    } 
+    else if (rlGetVersion() == RL_OPENGL_43) 
+    { 
         RGFW_setGLHint(RGFW_glCore, 3);
         RGFW_setGLHint(RGFW_glMinor, 3);
     }
