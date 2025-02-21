@@ -27,12 +27,12 @@ void main()
 {
     // Compute binormal from vertex normal and tangent
     vec3 vertexBinormal = cross(vertexNormal, vertexTangent);
-    
+
     // Compute fragment normal based on normal transformations
     mat3 normalMatrix = transpose(inverse(mat3(matModel)));
-    
+
     // Compute fragment position based on model transformations
-    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0f));
+    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0));
 
     fragTexCoord = vertexTexCoord*2.0;
     fragNormal = normalize(normalMatrix*vertexNormal);

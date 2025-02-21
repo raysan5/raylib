@@ -42,7 +42,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -124,10 +124,6 @@
 #endif
 
 // Image fileformats not supported by default
-#if defined(__TINYC__)
-    #define STBI_NO_SIMD
-#endif
-
 #if (defined(SUPPORT_FILEFORMAT_BMP) || \
      defined(SUPPORT_FILEFORMAT_PNG) || \
      defined(SUPPORT_FILEFORMAT_TGA) || \
@@ -148,6 +144,10 @@
     #define STBI_REALLOC RL_REALLOC
 
     #define STBI_NO_THREAD_LOCALS
+
+    #if defined(__TINYC__)
+        #define STBI_NO_SIMD
+    #endif
 
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"         // Required for: stbi_load_from_file()
@@ -218,6 +218,9 @@
     #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
+#if defined(__TINYC__)
+    #define STBIR_NO_SIMD
+#endif
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "external/stb_image_resize2.h"     // Required for: stbir_resize_uint8_linear() [ImageResize()]
 
@@ -761,7 +764,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2024 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -829,25 +832,22 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
 
     // Calculate how far the top-left pixel is along the gradient direction from the center of said gradient
     float startingPos = 0.5f - (cosDir*width/2) - (sinDir*height/2);
-    // With directions that lie in the first or third quadrant (i.e. from top-left to 
+    // With directions that lie in the first or third quadrant (i.e. from top-left to
     // bottom-right or vice-versa), pixel (0, 0) is the farthest point on the gradient
     // (i.e. the pixel which should become one of the gradient's ends color); while for
     // directions that lie in the second or fourth quadrant, that point is pixel (width, 0).
-    float maxPosValue = 
-            ((signbit(sinDir) != 0) == (signbit(cosDir) != 0))
-            ? fabsf(startingPos)
-            : fabsf(startingPos+width*cosDir);
+    float maxPosValue = ((signbit(sinDir) != 0) == (signbit(cosDir) != 0))? fabsf(startingPos) : fabsf(startingPos + width*cosDir);
     for (int i = 0; i < width; i++)
     {
         for (int j = 0; j < height; j++)
         {
             // Calculate the relative position of the pixel along the gradient direction
-            float pos = (startingPos + (i*cosDir + j*sinDir)) / maxPosValue;
+            float pos = (startingPos + (i*cosDir + j*sinDir))/maxPosValue;
 
             float factor = pos;
             factor = (factor > 1.0f)? 1.0f : factor;  // Clamp to [-1,1]
             factor = (factor < -1.0f)? -1.0f : factor;  // Clamp to [-1,1]
-            factor = factor / 2 + 0.5f;
+            factor = factor/2.0f + 0.5f;
 
             // Generate the color for this pixel
             pixels[j*width + i].r = (int)((float)end.r*factor + (float)start.r*(1.0f - factor));
@@ -1007,7 +1007,8 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
-    float aspectRatio = (float)width / (float)height;
+    float aspectRatio = (float)width/(float)height;
+
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
@@ -3567,7 +3568,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     ImageDrawLine(dst, x1, y1, x2, y2, color);
 
     // Determine if the line is more horizontal or vertical
-    if (dx != 0 && abs(dy/dx) < 1)
+    if ((dx != 0) && (abs(dy/dx) < 1))
     {
         // Line is more horizontal
         // Calculate half the width of the line
@@ -4206,8 +4207,13 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             ImageFormat(&faces, image.format);
 
             Image mipmapped = ImageCopy(image);
-            ImageMipmaps(&mipmapped);
-            ImageMipmaps(&faces);
+        #if defined(SUPPORT_IMAGE_MANIPULATION)
+            if (image.mipmaps > 1)
+            {
+                ImageMipmaps(&mipmapped);
+                ImageMipmaps(&faces);
+            }
+        #endif
 
             // NOTE: Image formatting does not work with compressed textures
 
@@ -4223,7 +4229,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         if (cubemap.id != 0)
         {
             cubemap.format = faces.format;
-            cubemap.mipmaps = 1;
+            cubemap.mipmaps = faces.mipmaps;
         }
         else TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
 
@@ -5384,13 +5390,19 @@ static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
 
+    union
+    {
+        float fm;
+        unsigned int ui;
+    } uni;
+
     const unsigned int e = (x & 0x7C00) >> 10; // Exponent
     const unsigned int m = (x & 0x03FF) << 13; // Mantissa
-    const float fm = (float)m;
-    const unsigned int v = (*(unsigned int*)&fm) >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
-    const unsigned int r = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
+    uni.fm = (float)m;
+    const unsigned int v = uni.ui >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
+    uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
 
-    result = *(float *)&r;
+    result = uni.fm;
 
     return result;
 }
@@ -5400,7 +5412,14 @@ static unsigned short FloatToHalf(float x)
 {
     unsigned short result = 0;
 
-    const unsigned int b = (*(unsigned int*) & x) + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
+    union
+    {
+        float fm;
+        unsigned int ui;
+    } uni;
+    uni.fm = x;
+
+    const unsigned int b = uni.ui + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
     const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
     const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
 
@@ -5493,6 +5512,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].z = 0.0f;
                     pixels[i].w = 1.0f;
 
+                    k += 1;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
@@ -5518,6 +5538,8 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].y = 0.0f;
                     pixels[i].z = 0.0f;
                     pixels[i].w = 1.0f;
+
+                    k += 1;
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
                 {

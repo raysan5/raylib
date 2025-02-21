@@ -2,12 +2,16 @@
 *
 *   raylib [audio] example - Playing sound multiple times
 *
-*   Example originally created with raylib 4.6
+*   Example complexity rating: [★★☆☆] 2/4
+*
+*   Example originally created with raylib 4.6, last time updated with raylib 4.6
+*
+*   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Jeffery Myers (@JeffM2501)
+*   Copyright (c) 2023-2025 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 

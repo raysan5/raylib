@@ -2,12 +2,14 @@
 *
 *   raylib [shapes] example - Vector Angle
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 1.0, last time updated with raylib 4.6
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2023-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
  
@@ -51,7 +53,7 @@ int main(void)
 
         if (IsKeyPressed(KEY_SPACE)) angleMode = !angleMode;
         
-        if(angleMode == 0 && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) v1 = GetMousePosition();
+        if ((angleMode == 0) && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) v1 = GetMousePosition();
 
         if (angleMode == 0)
         {

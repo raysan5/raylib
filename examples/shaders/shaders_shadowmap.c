@@ -2,12 +2,16 @@
 *
 *   raylib [shaders] example - Shadowmap
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
-*   Example contributed by @TheManTheMythTheGameDev and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by TheManTheMythTheGameDev (@TheManTheMythTheGameDev) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2023-2025 TheManTheMythTheGameDev (@TheManTheMythTheGameDev)
 *
 ********************************************************************************************/
 

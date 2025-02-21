@@ -2,6 +2,8 @@
 *
 *   raylib example - point rendering
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example contributed by Reese Gallagher (@satchelfrost) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 Reese Gallagher (@satchelfrost)
+*   Copyright (c) 2024-2025 Reese Gallagher (@satchelfrost)
 *
 ********************************************************************************************/
 
@@ -22,7 +24,7 @@
 #define MIN_POINTS 1000         // 1 thousand
 
 // Generate mesh using points
-Mesh GenMeshPoints(int numPoints);
+static Mesh GenMeshPoints(int numPoints);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -56,7 +58,7 @@ int main()
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while(!WindowShouldClose())
+    while (!WindowShouldClose())
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -147,7 +149,7 @@ int main()
 }
 
 // Generate a spherical point cloud
-Mesh GenMeshPoints(int numPoints)
+static Mesh GenMeshPoints(int numPoints)
 {
     Mesh mesh = { 
         .triangleCount = 1,
@@ -159,13 +161,13 @@ Mesh GenMeshPoints(int numPoints)
     // https://en.wikipedia.org/wiki/Spherical_coordinate_system
     for (int i = 0; i < numPoints; i++)
     {
-        float theta = PI*rand()/RAND_MAX;
-        float phi = 2.0f*PI*rand()/RAND_MAX;
-        float r = 10.0f*rand()/RAND_MAX;
+        float theta = ((float)PI*rand())/RAND_MAX;
+        float phi = (2.0f*PI*rand())/RAND_MAX;
+        float r = (10.0f*rand())/RAND_MAX;
         
-        mesh.vertices[i*3 + 0] = r*sin(theta)*cos(phi);
-        mesh.vertices[i*3 + 1] = r*sin(theta)*sin(phi);
-        mesh.vertices[i*3 + 2] = r*cos(theta);
+        mesh.vertices[i*3 + 0] = r*sinf(theta)*cosf(phi);
+        mesh.vertices[i*3 + 1] = r*sinf(theta)*sinf(phi);
+        mesh.vertices[i*3 + 2] = r*cosf(theta);
         
         Color color = ColorFromHSV(r*360.0f, 1.0f, 1.0f);
         

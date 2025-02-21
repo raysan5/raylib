@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - 2d camera split screen
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Addapted from the core_3d_camera_split_screen example: 
 *       https://github.com/raysan5/raylib/blob/master/examples/core/core_3d_camera_split_screen.c
 *
@@ -12,7 +14,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Gabriel dos Santos Sanches (@gabrielssanches)
+*   Copyright (c) 2023-2025 Gabriel dos Santos Sanches (@gabrielssanches)
 *
 ********************************************************************************************/
 

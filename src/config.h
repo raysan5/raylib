@@ -6,7 +6,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2024 Ahmad Fatoum & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 Ahmad Fatoum & Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -151,6 +151,8 @@
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX 9
+
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience

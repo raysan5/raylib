@@ -13,7 +13,7 @@ BEGIN
       VALUE "FileDescription", "raylib application (www.raylib.com)"
       VALUE "FileVersion", "5.5.0"
       VALUE "InternalName", "raylib"
-      VALUE "LegalCopyright", "(c) 2024 Ramon Santamaria (@raysan5)"
+      VALUE "LegalCopyright", "(c) 2025 Ramon Santamaria (@raysan5)"
       VALUE "OriginalFilename", "raylib"
       VALUE "ProductName", "raylib app"
       VALUE "ProductVersion", "5.5.0"

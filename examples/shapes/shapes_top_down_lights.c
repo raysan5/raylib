@@ -2,14 +2,16 @@
 *
 *   raylib [shapes] example - top down lights
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
-*   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2024 Jeffery Myers (@JeffM2501)
+*   Copyright (c) 2022-2025 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 

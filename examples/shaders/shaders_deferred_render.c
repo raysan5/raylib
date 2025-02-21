@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - deferred rendering
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
@@ -11,7 +13,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Justin Andreas Lacoste (@27justin)
+*   Copyright (c) 2023-2025 Justin Andreas Lacoste (@27justin)
 *
 ********************************************************************************************/
 
@@ -76,11 +78,11 @@ int main(void)
     Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 2.0f, 2.0f));
 
     // Load geometry buffer (G-buffer) shader and deferred shader
-    Shader gbufferShader = LoadShader("resources/shaders/glsl330/gbuffer.vs",
-                               "resources/shaders/glsl330/gbuffer.fs");
+    Shader gbufferShader = LoadShader(TextFormat("resources/shaders/glsl%i/gbuffer.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/gbuffer.fs", GLSL_VERSION));
 
-    Shader deferredShader = LoadShader("resources/shaders/glsl330/deferred_shading.vs",
-                               "resources/shaders/glsl330/deferred_shading.fs");
+    Shader deferredShader = LoadShader(TextFormat("resources/shaders/glsl%i/deferred_shading.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/deferred_shading.fs", GLSL_VERSION));
     deferredShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(deferredShader, "viewPosition");
 
     // Initialize the G-buffer
@@ -95,11 +97,19 @@ int main(void)
     
     rlEnableFramebuffer(gBuffer.framebuffer);
 
-    // Since we are storing position and normal data in these textures, 
-    // we need to use a floating point format.
-    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
+    // NOTE: Vertex positions are stored in a texture for simplicity. A better approach would use a depth texture
+    // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position, 
+    // depth, and the inverse view/projection matrices.
 
-    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
+    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios. 
+    // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
+    // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`.
+    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+
+    // Similarly, 16-bit precision is used for normals ensures OpenGL ES 3 compatibility.
+    // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations.
+    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+
     // Albedo (diffuse color) and specular strength can be combined into one texture.
     // The color in RGB, and the specular strength in the alpha channel.
     gBuffer.albedoSpecTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
@@ -122,18 +132,18 @@ int main(void)
     if (!rlFramebufferComplete(gBuffer.framebuffer))
     {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
-        exit(1);
     }
 
     // Now we initialize the sampler2D uniform's in the deferred shader.
-    // We do this by setting the uniform's value to the color channel slot we earlier
-    // bound our textures to.
+    // We do this by setting the uniform's values to the texture units that
+    // we later bind our g-buffer textures to.
     rlEnableShader(deferredShader.id);
-
-        rlSetUniformSampler(rlGetLocationUniform(deferredShader.id, "gPosition"), 0);
-        rlSetUniformSampler(rlGetLocationUniform(deferredShader.id, "gNormal"), 1);
-        rlSetUniformSampler(rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), 2);
-
+        int texUnitPosition = 0;
+        int texUnitNormal = 1;
+        int texUnitAlbedoSpec = 2;
+        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gPosition"), &texUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
+        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gNormal"), &texUnitNormal, RL_SHADER_UNIFORM_SAMPLER2D);
+        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), &texUnitAlbedoSpec, RL_SHADER_UNIFORM_SAMPLER2D);
     rlDisableShader();
 
     // Assign out lighting shader to model
@@ -200,11 +210,10 @@ int main(void)
         // Draw
         // ---------------------------------------------------------------------------------
         BeginDrawing();
-        
-            ClearBackground(RAYWHITE);
-        
+
             // Draw to the geometry buffer by first activating it
             rlEnableFramebuffer(gBuffer.framebuffer);
+            rlClearColor(0, 0, 0, 0);
             rlClearScreenBuffers();  // Clear color and depth buffer
             
             rlDisableColorBlend();
@@ -238,14 +247,14 @@ int main(void)
                     BeginMode3D(camera);
                         rlDisableColorBlend();
                         rlEnableShader(deferredShader.id);
-                            // Activate our g-buffer textures
-                            // These will now be bound to the sampler2D uniforms `gPosition`, `gNormal`,
+                            // Bind our g-buffer textures
+                            // We are binding them to locations that we earlier set in sampler2D uniforms `gPosition`, `gNormal`,
                             // and `gAlbedoSpec`
-                            rlActiveTextureSlot(0);
+                            rlActiveTextureSlot(texUnitPosition);
                             rlEnableTexture(gBuffer.positionTexture);
-                            rlActiveTextureSlot(1);
+                            rlActiveTextureSlot(texUnitNormal);
                             rlEnableTexture(gBuffer.normalTexture);
-                            rlActiveTextureSlot(2);
+                            rlActiveTextureSlot(texUnitAlbedoSpec);
                             rlEnableTexture(gBuffer.albedoSpecTexture);
 
                             // Finally, we draw a fullscreen quad to our default framebuffer
@@ -261,11 +270,11 @@ int main(void)
                     rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
                     rlDisableFramebuffer();
 
-                    // Since our shader is now done and disabled, we can draw our lights in default
-                    // forward rendering
+                    // Since our shader is now done and disabled, we can draw spheres
+                    // that represent light positions in default forward rendering
                     BeginMode3D(camera);
                         rlEnableShader(rlGetShaderIdDefault());
-                            for(int i = 0; i < MAX_LIGHTS; i++)
+                            for (int i = 0; i < MAX_LIGHTS; i++)
                             {
                                 if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
                                 else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));

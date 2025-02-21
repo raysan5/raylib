@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
 *   raylib [core] example - Doing skinning on the gpu using a vertex shader
+*
+*   Example complexity rating: [★★★☆] 3/4
 * 
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 Daniel Holden (@orangeduck)
+*   Copyright (c) 2024-2025 Daniel Holden (@orangeduck)
 * 
 *   Note: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
 *

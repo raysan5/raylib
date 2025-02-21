@@ -2,6 +2,8 @@
 *
 *   raylib [text] example - Draw 3d
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   NOTE: Draw a 2D text in 3D space, each letter is drawn in a quad (or 2 quads if backface is set)
 *   where the texture coodinates of each quad map to the texture coordinates of the glyphs
 *   inside the font texture.
@@ -22,7 +24,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Vlad Adrian (@demizdor)
+*   Copyright (c) 2021-2025 Vlad Adrian (@demizdor)
 *
 ********************************************************************************************/
 
@@ -286,7 +288,7 @@ int main(void)
                 DrawGrid(10, 2.0f);
 
                 // Use a shader to handle the depth buffer issue with transparent textures
-                // NOTE: more info at https://bedroomcoders.co.uk/raylib-billboards-advanced-use/
+                // NOTE: more info at https://bedroomcoders.co.uk/posts/198
                 BeginShaderMode(alphaDiscard);
 
                     // Draw the 3D text above the red cube

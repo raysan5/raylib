@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Sieve of Eratosthenes
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   NOTE: Sieve of Eratosthenes, the earliest known (ancient Greek) prime number sieve.
 *
 *       "Sift the twos and sift the threes,
@@ -16,12 +18,12 @@
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
-*   Example contributed by ProfJski and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by ProfJski (@ProfJski) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2024 ProfJski and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2025 ProfJski (@ProfJski) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

@@ -2,6 +2,8 @@
 *
 *   raylib [shaders] example - Basic PBR
 *
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.1-dev
 *
 *   Example contributed by Afan OLOVCIC (@_DevDad) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023-2024 Afan OLOVCIC (@_DevDad)
+*   Copyright (c) 2023-2025 Afan OLOVCIC (@_DevDad)
 *
 *   Model: "Old Rusty Car" (https://skfb.ly/LxRy) by Renafox, 
 *   licensed under Creative Commons Attribution-NonCommercial 

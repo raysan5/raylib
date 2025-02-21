@@ -3634,7 +3634,7 @@
         </KeyWord>
 
         <KeyWord name="AttachAudioStreamProcessor" func="yes">
-            <Overload retVal="void" descr="Attach audio stream processor to stream, receives the samples as 'float'">
+            <Overload retVal="void" descr="Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)">
                 <Param name="AudioStream stream" />
                 <Param name="AudioCallback processor" />
             </Overload>
@@ -3647,7 +3647,7 @@
         </KeyWord>
 
         <KeyWord name="AttachAudioMixedProcessor" func="yes">
-            <Overload retVal="void" descr="Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'">
+            <Overload retVal="void" descr="Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)">
                 <Param name="AudioCallback processor" />
             </Overload>
         </KeyWord>

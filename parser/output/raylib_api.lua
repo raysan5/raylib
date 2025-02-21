@@ -2543,6 +2543,11 @@ return {
           name = "SHADER_LOC_BONE_MATRICES",
           value = 28,
           description = "Shader location: array of matrices uniform: boneMatrices"
+        },
+        {
+          name = "SHADER_LOC_VERTEX_INSTANCE_TX",
+          value = 29,
+          description = "Shader location: vertex attribute: instanceTransform"
         }
       }
     },
@@ -2591,8 +2596,28 @@ return {
           description = "Shader uniform type: ivec4 (4 int)"
         },
         {
-          name = "SHADER_UNIFORM_SAMPLER2D",
+          name = "SHADER_UNIFORM_UINT",
           value = 8,
+          description = "Shader uniform type: unsigned int"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC2",
+          value = 9,
+          description = "Shader uniform type: uivec2 (2 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC3",
+          value = 10,
+          description = "Shader uniform type: uivec3 (3 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_UIVEC4",
+          value = 11,
+          description = "Shader uniform type: uivec4 (4 unsigned int)"
+        },
+        {
+          name = "SHADER_UNIFORM_SAMPLER2D",
+          value = 12,
           description = "Shader uniform type: sampler2d"
         }
       }
@@ -3649,7 +3674,7 @@ return {
     },
     {
       name = "SetShaderValueTexture",
-      description = "Set shader uniform value for texture (sampler2d)",
+      description = "Set shader uniform value and bind the texture (sampler2d)",
       returnType = "void",
       params = {
         {type = "Shader", name = "shader"},
@@ -4325,6 +4350,14 @@ return {
       name = "GetCharPressed",
       description = "Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty",
       returnType = "int"
+    },
+    {
+      name = "GetKeyName",
+      description = "Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)",
+      returnType = "const char *",
+      params = {
+        {type = "int", name = "key"}
+      }
     },
     {
       name = "SetExitKey",
@@ -6858,9 +6891,9 @@ return {
     {
       name = "TextJoin",
       description = "Join text strings with delimiter",
-      returnType = "const char *",
+      returnType = "char *",
       params = {
-        {type = "const char **", name = "textList"},
+        {type = "char **", name = "textList"},
         {type = "int", name = "count"},
         {type = "const char *", name = "delimiter"}
       }
@@ -6868,7 +6901,7 @@ return {
     {
       name = "TextSplit",
       description = "Split text into multiple strings",
-      returnType = "const char **",
+      returnType = "char **",
       params = {
         {type = "const char *", name = "text"},
         {type = "char", name = "delimiter"},
@@ -6897,7 +6930,7 @@ return {
     {
       name = "TextToUpper",
       description = "Get upper case version of provided string",
-      returnType = "const char *",
+      returnType = "char *",
       params = {
         {type = "const char *", name = "text"}
       }
@@ -6905,7 +6938,7 @@ return {
     {
       name = "TextToLower",
       description = "Get lower case version of provided string",
-      returnType = "const char *",
+      returnType = "char *",
       params = {
         {type = "const char *", name = "text"}
       }
@@ -6913,7 +6946,7 @@ return {
     {
       name = "TextToPascal",
       description = "Get Pascal case notation version of provided string",
-      returnType = "const char *",
+      returnType = "char *",
       params = {
         {type = "const char *", name = "text"}
       }
@@ -6921,7 +6954,7 @@ return {
     {
       name = "TextToSnake",
       description = "Get Snake case notation version of provided string",
-      returnType = "const char *",
+      returnType = "char *",
       params = {
         {type = "const char *", name = "text"}
       }
@@ -6929,14 +6962,14 @@ return {
     {
       name = "TextToCamel",
       description = "Get Camel case notation version of provided string",
-      returnType = "const char *",
+      returnType = "char *",
       params = {
         {type = "const char *", name = "text"}
       }
     },
     {
       name = "TextToInteger",
-      description = "Get integer value from text (negative values not supported)",
+      description = "Get integer value from text",
       returnType = "int",
       params = {
         {type = "const char *", name = "text"}
@@ -6944,7 +6977,7 @@ return {
     },
     {
       name = "TextToFloat",
-      description = "Get float value from text (negative values not supported)",
+      description = "Get float value from text",
       returnType = "float",
       params = {
         {type = "const char *", name = "text"}
@@ -8243,7 +8276,7 @@ return {
     },
     {
       name = "AttachAudioStreamProcessor",
-      description = "Attach audio stream processor to stream, receives the samples as 'float'",
+      description = "Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
@@ -8261,7 +8294,7 @@ return {
     },
     {
       name = "AttachAudioMixedProcessor",
-      description = "Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'",
+      description = "Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
       params = {
         {type = "AudioCallback", name = "processor"}

@@ -507,7 +507,7 @@
             <Value name="MATERIAL_MAP_PREFILTER" integer="9" desc="Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)" />
             <Value name="MATERIAL_MAP_BRDF" integer="10" desc="Brdf material" />
         </Enum>
-        <Enum name="ShaderLocationIndex" valueCount="29" desc="Shader location index">
+        <Enum name="ShaderLocationIndex" valueCount="30" desc="Shader location index">
             <Value name="SHADER_LOC_VERTEX_POSITION" integer="0" desc="Shader location: vertex attribute: position" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD01" integer="1" desc="Shader location: vertex attribute: texcoord01" />
             <Value name="SHADER_LOC_VERTEX_TEXCOORD02" integer="2" desc="Shader location: vertex attribute: texcoord02" />
@@ -537,8 +537,9 @@
             <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: boneIds" />
             <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: boneWeights" />
             <Value name="SHADER_LOC_BONE_MATRICES" integer="28" desc="Shader location: array of matrices uniform: boneMatrices" />
+            <Value name="SHADER_LOC_VERTEX_INSTANCE_TX" integer="29" desc="Shader location: vertex attribute: instanceTransform" />
         </Enum>
-        <Enum name="ShaderUniformDataType" valueCount="9" desc="Shader uniform data type">
+        <Enum name="ShaderUniformDataType" valueCount="13" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
             <Value name="SHADER_UNIFORM_VEC2" integer="1" desc="Shader uniform type: vec2 (2 float)" />
             <Value name="SHADER_UNIFORM_VEC3" integer="2" desc="Shader uniform type: vec3 (3 float)" />
@@ -547,7 +548,11 @@
             <Value name="SHADER_UNIFORM_IVEC2" integer="5" desc="Shader uniform type: ivec2 (2 int)" />
             <Value name="SHADER_UNIFORM_IVEC3" integer="6" desc="Shader uniform type: ivec3 (3 int)" />
             <Value name="SHADER_UNIFORM_IVEC4" integer="7" desc="Shader uniform type: ivec4 (4 int)" />
-            <Value name="SHADER_UNIFORM_SAMPLER2D" integer="8" desc="Shader uniform type: sampler2d" />
+            <Value name="SHADER_UNIFORM_UINT" integer="8" desc="Shader uniform type: unsigned int" />
+            <Value name="SHADER_UNIFORM_UIVEC2" integer="9" desc="Shader uniform type: uivec2 (2 unsigned int)" />
+            <Value name="SHADER_UNIFORM_UIVEC3" integer="10" desc="Shader uniform type: uivec3 (3 unsigned int)" />
+            <Value name="SHADER_UNIFORM_UIVEC4" integer="11" desc="Shader uniform type: uivec4 (4 unsigned int)" />
+            <Value name="SHADER_UNIFORM_SAMPLER2D" integer="12" desc="Shader uniform type: sampler2d" />
         </Enum>
         <Enum name="ShaderAttributeDataType" valueCount="4" desc="Shader attribute data types">
             <Value name="SHADER_ATTRIB_FLOAT" integer="0" desc="Shader attribute type: float" />
@@ -674,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="581">
+    <Functions count="582">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -901,7 +906,7 @@
             <Param type="int" name="locIndex" desc="" />
             <Param type="Matrix" name="mat" desc="" />
         </Function>
-        <Function name="SetShaderValueTexture" retType="void" paramCount="3" desc="Set shader uniform value for texture (sampler2d)">
+        <Function name="SetShaderValueTexture" retType="void" paramCount="3" desc="Set shader uniform value and bind the texture (sampler2d)">
             <Param type="Shader" name="shader" desc="" />
             <Param type="int" name="locIndex" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
@@ -1180,6 +1185,9 @@
         <Function name="GetKeyPressed" retType="int" paramCount="0" desc="Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty">
         </Function>
         <Function name="GetCharPressed" retType="int" paramCount="0" desc="Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty">
+        </Function>
+        <Function name="GetKeyName" retType="const char *" paramCount="1" desc="Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)">
+            <Param type="int" name="key" desc="" />
         </Function>
         <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
             <Param type="int" name="key" desc="" />
@@ -2445,12 +2453,12 @@
             <Param type="const char *" name="insert" desc="" />
             <Param type="int" name="position" desc="" />
         </Function>
-        <Function name="TextJoin" retType="const char *" paramCount="3" desc="Join text strings with delimiter">
-            <Param type="const char **" name="textList" desc="" />
+        <Function name="TextJoin" retType="char *" paramCount="3" desc="Join text strings with delimiter">
+            <Param type="char **" name="textList" desc="" />
             <Param type="int" name="count" desc="" />
             <Param type="const char *" name="delimiter" desc="" />
         </Function>
-        <Function name="TextSplit" retType="const char **" paramCount="3" desc="Split text into multiple strings">
+        <Function name="TextSplit" retType="char **" paramCount="3" desc="Split text into multiple strings">
             <Param type="const char *" name="text" desc="" />
             <Param type="char" name="delimiter" desc="" />
             <Param type="int *" name="count" desc="" />
@@ -2464,25 +2472,25 @@
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="find" desc="" />
         </Function>
-        <Function name="TextToUpper" retType="const char *" paramCount="1" desc="Get upper case version of provided string">
+        <Function name="TextToUpper" retType="char *" paramCount="1" desc="Get upper case version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToLower" retType="const char *" paramCount="1" desc="Get lower case version of provided string">
+        <Function name="TextToLower" retType="char *" paramCount="1" desc="Get lower case version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToPascal" retType="const char *" paramCount="1" desc="Get Pascal case notation version of provided string">
+        <Function name="TextToPascal" retType="char *" paramCount="1" desc="Get Pascal case notation version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToSnake" retType="const char *" paramCount="1" desc="Get Snake case notation version of provided string">
+        <Function name="TextToSnake" retType="char *" paramCount="1" desc="Get Snake case notation version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToCamel" retType="const char *" paramCount="1" desc="Get Camel case notation version of provided string">
+        <Function name="TextToCamel" retType="char *" paramCount="1" desc="Get Camel case notation version of provided string">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text (negative values not supported)">
+        <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToFloat" retType="float" paramCount="1" desc="Get float value from text (negative values not supported)">
+        <Function name="TextToFloat" retType="float" paramCount="1" desc="Get float value from text">
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="DrawLine3D" retType="void" paramCount="3" desc="Draw a line in 3D world space">
@@ -3096,7 +3104,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="callback" desc="" />
         </Function>
-        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream, receives the samples as 'float'">
+        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
@@ -3104,7 +3112,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
-        <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'">
+        <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)">
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
         <Function name="DetachAudioMixedProcessor" retType="void" paramCount="1" desc="Detach audio stream processor from the entire audio pipeline">

@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib example - procedural mesh generation
+*   raylib [models] example - procedural mesh generation
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -112,7 +114,7 @@ int main(void)
             DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
 
-            switch(currentModel)
+            switch (currentModel)
             {
                 case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
                 case 1: DrawText("CUBE", 680, 10, 20, DARKBLUE); break;
