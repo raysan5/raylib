@@ -989,6 +989,7 @@ models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
 models/models_skybox: models/models_skybox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864 -sFORCE_FILESYSTEM=1 \
     --preload-file models/resources/dresden_square_2k.hdr@resources/dresden_square_2k.hdr \
+    --preload-file models/resources/skybox.png@resources/skybox.png \
     --preload-file models/resources/shaders/glsl100/skybox.vs@resources/shaders/glsl100/skybox.vs \
     --preload-file models/resources/shaders/glsl100/skybox.fs@resources/shaders/glsl100/skybox.fs \
     --preload-file models/resources/shaders/glsl100/cubemap.vs@resources/shaders/glsl100/cubemap.vs \
