@@ -28,27 +28,35 @@ jobs:
       max-parallel: 1
       matrix:
         compiler: [mingw-w64, msvc16]
-        bits: [32, 64]
+        ziptarget: [ win32, win64, winarm64 ]
         include:
         - compiler: mingw-w64
-          bits: 32
           ARCH: "i686"
           WINDRES_ARCH: pe-i386
+          ziptarget: "win32"
         - compiler: mingw-w64
-          bits: 64
           ARCH: "x86_64"
           WINDRES_ARCH: pe-x86-64
+          ziptarget: "win64"
         - compiler: msvc16
-          bits: 32
           ARCH: "x86"
           VSARCHPATH: "Win32" 
+          ziptarget: "win32"
         - compiler: msvc16
-          bits: 64
           ARCH: "x64" 
           VSARCHPATH: "x64"
+          ziptarget: "win64"
+        - compiler: msvc16
+          ARCH: "ARM64"
+          VSARCHPATH: "ARM64"
+          ziptarget: "winarm64"
+        exclude:
+          - compiler: mingw-w64
+            ziptarget: winarm64 # We don't build arm64 with mingw-w64 yet
+
 
     env:
-      RELEASE_NAME: raylib-dev_win${{ matrix.bits }}_${{ matrix.compiler }}
+      RELEASE_NAME: raylib-dev_${{ matrix.ziptarget }}_${{ matrix.compiler }}
       GNUTARGET: default
 
     steps:
@@ -57,7 +65,7 @@ jobs:
     
     - name: Setup Release Version
       run: |
-        echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_win${{ matrix.bits }}_${{ matrix.compiler }}" >> $GITHUB_ENV
+        echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_${{ matrix.ziptarget }}_${{ matrix.compiler }}" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
 
@@ -90,7 +98,7 @@ jobs:
       shell: cmd
       if: |
         matrix.compiler == 'mingw-w64' &&
-        matrix.bits == 32
+        matrix.arch == 'i686'
         
     - name: Build Library (MinGW-w64 64bit)
       run: |
@@ -105,7 +113,7 @@ jobs:
       shell: cmd
       if: |
         matrix.compiler == 'mingw-w64' &&
-        matrix.bits == 64
+        matrix.arch == 'x86_64'
 
     - name: Build Library (MSVC16)
       run: |
