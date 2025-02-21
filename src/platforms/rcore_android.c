@@ -460,17 +460,21 @@ int GetMonitorHeight(int monitor)
 }
 
 // Get selected monitor physical width in millimetres
+// NOTE: It seems to return a slightly underestimated value on some devices
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
-    return 0;
+    int widthPixels = ANativeWindow_getWidth(platform.app->window);
+    float dpi = AConfiguration_getDensity(platform.app->config);
+    return (widthPixels/dpi)*25.4f;
 }
 
 // Get selected monitor physical height in millimetres
+// NOTE: It seems to return a slightly underestimated value on some devices
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
-    return 0;
+    int heightPixels = ANativeWindow_getHeight(platform.app->window);
+    float dpi = AConfiguration_getDensity(platform.app->config);
+    return (heightPixels/dpi)*25.4f;
 }
 
 // Get selected monitor refresh rate
@@ -497,8 +501,9 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-    return (Vector2){ 1.0f, 1.0f };
+    int density = AConfiguration_getDensity(platform.app->config);
+    float scale = (float)density/160;
+    return (Vector2){ scale, scale };
 }
 
 // Set clipboard text content
@@ -848,22 +853,20 @@ static int InitGraphicsDevice(void)
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
     }
 
-    const EGLint framebufferAttribs[] =
-    {
-        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
+    const EGLint framebufferAttribs[] = {
+        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT, // Type of context support
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLE_BUFFERS, sampleBuffer, // Activate MSAA
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
         EGL_NONE
     };
 
-    const EGLint contextAttribs[] =
-    {
+    const EGLint contextAttribs[] = {
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
