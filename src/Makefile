@@ -121,6 +121,15 @@ SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
 SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/lib
 SDL_LIBRARIES         ?= -lSDL2 -lSDL2main
 
+# AVIF support: It requires libavif to be provided externally
+# WARNING: Library is not included in raylib, it MUST be configured by users
+LIBAVIF_ENABLE          ?= TRUE
+LIBAVIF_ROOT_PATH       ?= $(RAYLIB_SRC_PATH)/external/libavif
+LIBAVIF_INCLUDE_PATH    ?= $(LIBAVIF_ROOT_PATH)/include
+LIBAVIF_SRC_PATH        ?= $(LIBAVIF_ROOT_PATH)/src
+LIBAVIF_LIBRARY_PATH    ?= $(LIBAVIF_ROOT_PATH)/lib
+LIBAVIF_LIBRARIES       ?= -lavif
+
 # Determine if the file has root access (only required to install raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
 ROOT = $(shell whoami)
@@ -508,6 +517,11 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
+# AVIF
+ifeq ($(LIBAVIF_ENABLE),TRUE)
+    INCLUDE_PATHS += -I$(LIBAVIF_INCLUDE_PATH)
+endif
+
 # Define library paths containing required libs: LDFLAGS
 # NOTE: This is only required for dynamic library generation
 #------------------------------------------------------------------------------------------------
@@ -553,6 +567,11 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     LDFLAGS += -Lsrc
     # Avoid unresolved symbol pointing to external main()
     LDFLAGS += -Wl,-undefined,dynamic_lookup
+endif
+
+# AVIF
+ifeq ($(LIBAVIF_ENABLE),TRUE)
+    LDFLAGS += -L$(LIBAVIF_LIBRARY_PATH)
 endif
 
 # Define libraries required on linking: LDLIBS
@@ -630,6 +649,11 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
+endif
+
+# AVIF
+ifeq ($(LIBAVIF_ENABLE),TRUE)
+    LDLIBS += $(LIBAVIF_LIBRARIES)
 endif
 
 # Define source code object files required
@@ -784,6 +808,15 @@ endif
 # Compile android_native_app_glue module
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+
+# AVIF
+libavif.o : $(LIBAVIF_SRC_PATH)/avif.c
+ifeq ($(LIBAVIF_ENABLE),TRUE)
+    cmake -S $(LIBAVIF_ROOT_PATH) -B $(LIBAVIF_LIBRARY_PATH)
+    make -C $(LIBAVIF_LIBRARY_PATH)
+else
+    @echo "AVIF support is disabled, skipping AVIF library build."
+endif
 
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra

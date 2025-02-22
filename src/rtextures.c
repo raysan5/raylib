@@ -21,6 +21,7 @@
 *       #define SUPPORT_FILEFORMAT_KTX
 *       #define SUPPORT_FILEFORMAT_PVR
 *       #define SUPPORT_FILEFORMAT_ASTC
+*       #define SUPPORT_FILEFORMAT_AVIF
 *           Select desired fileformats to be supported for image data loading. Some of those formats are
 *           supported by default, to remove support, just comment unrequired #define in this module
 *
@@ -208,6 +209,11 @@
 #if defined(SUPPORT_IMAGE_GENERATION)
     #define STB_PERLIN_IMPLEMENTATION
     #include "external/stb_perlin.h"        // Required for: stb_perlin_fbm_noise3
+#endif
+
+// AVIF
+#if defined(SUPPORT_FILEFORMAT_AVIF)
+    #include "external/libavif/include/avif/avif.h"
 #endif
 
 #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
@@ -545,6 +551,99 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     else if ((strcmp(fileType, ".astc") == 0) || (strcmp(fileType, ".ASTC") == 0))
     {
         image.data = rl_load_astc_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_AVIF)
+    else if ((strcmp(fileType, ".avif") == 0) || (strcmp(fileType, ".AVIF") == 0))
+    {
+        avifRGBImage rgb;
+        avifDecoder* decoder = avifDecoderCreate();
+        if (!decoder)
+        {
+            TRACELOG(LOG_WARNING, "IMAGE: Failed to create AVIF decoder");
+            return image;
+        }
+
+        avifResult result = avifDecoderSetIOMemory(decoder, fileData, dataSize);
+        if (result != AVIF_RESULT_OK)
+        {
+            TRACELOG(LOG_WARNING, "IMAGE: Cannot set IO on avifDecoder");
+            avifRGBImageFreePixels(&rgb);
+            avifDecoderDestroy(decoder);
+            return image;
+        }
+
+        result = avifDecoderParse(decoder);
+        if (result != AVIF_RESULT_OK)
+        {
+            TRACELOG(LOG_WARNING, "IMAGE: Failed to parse AVIF data");
+            avifRGBImageFreePixels(&rgb);
+            avifDecoderDestroy(decoder);
+            return image;
+        }
+
+        if (avifDecoderNextImage(decoder) == AVIF_RESULT_OK)
+        {
+            avifRGBImageSetDefaults(&rgb, decoder->image);
+
+            result = avifRGBImageAllocatePixels(&rgb);
+            if (result != AVIF_RESULT_OK)
+            {
+                TRACELOG(LOG_WARNING, "IMAGE: Allocation of RGB samples failed");
+                avifRGBImageFreePixels(&rgb);
+                avifDecoderDestroy(decoder);
+                return image;
+            }
+
+            result = avifImageYUVToRGB(decoder->image, &rgb);
+            if (result != AVIF_RESULT_OK)
+            {
+                TRACELOG(LOG_WARNING, "IMAGE: Conversion from YUV failed");
+                avifRGBImageFreePixels(&rgb);
+                avifDecoderDestroy(decoder);
+                return image;
+            }
+
+            image.mipmaps = 1;
+            image.width = rgb.width;
+            image.height = rgb.height;
+
+            size_t pixelCount = rgb.width * rgb.height * 4;
+            if (rgb.depth > 8)
+            {
+                image.data = RL_MALLOC(pixelCount * sizeof(uint16_t));
+                if (!image.data)
+                {
+                    TRACELOG(LOG_WARNING, "IMAGE: Failed to allocate memory for 16-bit image data");
+                    avifRGBImageFreePixels(&rgb);
+                    avifDecoderDestroy(decoder);
+                    return image;
+                }
+
+                uint16_t *firstPixel = (uint16_t *)rgb.pixels;
+                memcpy(image.data, firstPixel, pixelCount * sizeof(uint16_t));
+                image.format = PIXELFORMAT_UNCOMPRESSED_R16G16B16A16;
+            } 
+            else
+            {
+                image.data = RL_MALLOC(pixelCount * sizeof(uint8_t));
+                if (!image.data)
+                {
+                    TRACELOG(LOG_WARNING, "IMAGE: Failed to allocate memory for 8-bit image data");
+                    avifRGBImageFreePixels(&rgb);
+                    avifDecoderDestroy(decoder);
+                    return image;
+                }
+
+                uint8_t *firstPixel = rgb.pixels;
+                memcpy(image.data, firstPixel, pixelCount * sizeof(uint8_t));
+                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            }
+
+            avifRGBImageFreePixels(&rgb);
+            avifDecoderDestroy(decoder);
+        } 
+        else TRACELOG(LOG_WARNING, "IMAGE: Failed to decode AVIF data");
     }
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
