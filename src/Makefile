@@ -123,7 +123,7 @@ SDL_LIBRARIES         ?= -lSDL2 -lSDL2main
 
 # AVIF support: It requires libavif to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
-LIBAVIF_ENABLE          ?= TRUE
+LIBAVIF_ENABLE          ?= FALSE
 LIBAVIF_ROOT_PATH       ?= $(RAYLIB_SRC_PATH)/external/libavif
 LIBAVIF_INCLUDE_PATH    ?= $(LIBAVIF_ROOT_PATH)/include
 LIBAVIF_SRC_PATH        ?= $(LIBAVIF_ROOT_PATH)/src
