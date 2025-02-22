@@ -812,10 +812,10 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # AVIF
 libavif.o : $(LIBAVIF_SRC_PATH)/avif.c
 ifeq ($(LIBAVIF_ENABLE),TRUE)
-    cmake -S $(LIBAVIF_ROOT_PATH) -B $(LIBAVIF_LIBRARY_PATH)
-    make -C $(LIBAVIF_LIBRARY_PATH)
+	cmake -S $(LIBAVIF_ROOT_PATH) -B $(LIBAVIF_LIBRARY_PATH)
+	make -C $(LIBAVIF_LIBRARY_PATH)
 else
-    @echo "AVIF support is disabled, skipping AVIF library build."
+	@echo "AVIF support is disabled, skipping AVIF library build."
 endif
 
 # Install generated and needed files to desired directories.
