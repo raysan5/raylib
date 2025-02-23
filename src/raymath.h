@@ -1487,11 +1487,11 @@ RMAPI float MatrixDeterminant(Matrix mat)
     // previous operation can be simplified to 40 multiplications, decreasing matrix 
     // size from 4x4 to 2x2 using minors
 
-	// Cache the matrix values (speed optimization)
-	float m0 = mat.m0, m1 = mat.m1, m2 = mat.m2, m3 = mat.m3;
-	float m4 = mat.m4, m5 = mat.m5, m6 = mat.m6, m7 = mat.m7;
-	float m8 = mat.m8, m9 = mat.m9, m10 = mat.m10, m11 = mat.m11;
-	float m12 = mat.m12, m13 = mat.m13, m14 = mat.m14, m15 = mat.m15;
+    // Cache the matrix values (speed optimization)
+    float m0 = mat.m0, m1 = mat.m1, m2 = mat.m2, m3 = mat.m3;
+    float m4 = mat.m4, m5 = mat.m5, m6 = mat.m6, m7 = mat.m7;
+    float m8 = mat.m8, m9 = mat.m9, m10 = mat.m10, m11 = mat.m11;
+    float m12 = mat.m12, m13 = mat.m13, m14 = mat.m14, m15 = mat.m15;
 
     result = (m0*((m5*(m10*m15 - m11*m14) - m9*(m6*m15 - m7*m14) + m13*(m6*m11 - m7*m10))) -
         m4*((m1*(m10*m15 - m11*m14) - m9*(m2*m15 - m3*m14) + m13*(m2*m11 - m3*m10))) +
