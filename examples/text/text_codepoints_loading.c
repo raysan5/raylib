@@ -38,7 +38,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - codepoints loading");
 
-    // Get codepoints from text
+    // Convert each utf-8 character into its
+    // corresponding codepoint in the font file.
     int codepointCount = 0;
     int *codepoints = LoadCodepoints(text, &codepointCount);
 
