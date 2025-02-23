@@ -134,6 +134,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
+static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
 
 // Emscripten input callback events
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
@@ -1383,6 +1384,10 @@ int InitPlatform(void)
     // Support focus events
     emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
+
+    // Support visibility events
+    emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
+
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1756,6 +1761,13 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
         default: consumed = 0; break;
     }
     return consumed;
+}
+
+static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData)
+{
+    if (visibilityChangeEvent->hidden) CORE.Window.flags |= FLAG_WINDOW_HIDDEN; // The window was hidden
+    else CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN; // The window was restored
+    return 1; // The event was consumed by the callback handler
 }
 
 // Register touch input events
