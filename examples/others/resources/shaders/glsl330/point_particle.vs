@@ -7,7 +7,7 @@ in vec3 vertexPosition;
 uniform mat4 mvp;
 uniform float currentTime;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {

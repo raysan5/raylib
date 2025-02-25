@@ -11,7 +11,7 @@ uniform vec4 colDiffuse;
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 uniform vec2 leftLensCenter = vec2(0.288, 0.5);
 uniform vec2 rightLensCenter = vec2(0.712, 0.5);
 uniform vec2 leftScreenCenter = vec2(0.25, 0.5);
