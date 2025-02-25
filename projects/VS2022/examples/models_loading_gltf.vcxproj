@@ -559,6 +559,9 @@
     <ResourceCompile Include="..\..\..\examples\examples.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="..\..\..\src\raylib.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
       <Project>{e89d61ac-55de-4482-afd4-df7242ebc859}</Project>
     </ProjectReference>
