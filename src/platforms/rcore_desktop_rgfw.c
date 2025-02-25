@@ -275,7 +275,7 @@ void ToggleFullscreen(void)
         CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
         RGFW_monitor_scaleToWindow(platform.mon, platform.window);
-        RGFW_window_fullscreen(platform.window);
+        RGFW_window_setFullscreen(platform.window, 1);
     }
     else
     {
@@ -285,8 +285,8 @@ void ToggleFullscreen(void)
         if (platform.mon.mode.area.w) 
         {
             RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
-
-            RGFW_monitor_scale(monitor, platform.mon.mode.area);
+            RGFW_monitor_requestMode(monitor, platform.mon.mode, RGFW_monitorScale);
+            
             platform.mon.mode.area.w = 0;
         }
 
@@ -411,7 +411,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
-        RGFW_setGLSamples(4);
+        RGFW_setGLHint(RGFW_glSamples, 4);
     }
     if (flags & FLAG_INTERLACED_HINT)
     {
@@ -492,7 +492,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
-        RGFW_setGLSamples(0);
+        RGFW_setGLHint(RGFW_glSamples, 0);
     }
     if (flags & FLAG_INTERLACED_HINT)
     {
@@ -500,37 +500,27 @@ void ClearWindowState(unsigned int flags)
     }
 }
 
-// Set icon for window
-void SetWindowIcon(Image image)
+int RGFW_formatToChannels(int format)
 {
-    i32 channels = 4;
-
-    switch (image.format)
-    {
+    switch (format) {
         case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         case PIXELFORMAT_UNCOMPRESSED_R16:           // 16 bpp (1 channel - half float)
         case PIXELFORMAT_UNCOMPRESSED_R32:           // 32 bpp (1 channel - float)
-        {
-            channels = 1;
-        } break;
+            return 1;
         case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:    // 8*2 bpp (2 channels)
         case PIXELFORMAT_UNCOMPRESSED_R5G6B5:        // 16 bpp
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8:        // 24 bpp
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:      // 16 bpp (1 bit alpha)
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:      // 16 bpp (4 bit alpha)
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:      // 32 bpp
-        {
-            channels = 2;
-        } break;
+            return 2;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:     // 32*3 bpp (3 channels - float)
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:     // 16*3 bpp (3 channels - half float)
         case PIXELFORMAT_COMPRESSED_DXT1_RGB:        // 4 bpp (no alpha)
         case PIXELFORMAT_COMPRESSED_ETC1_RGB:        // 4 bpp
         case PIXELFORMAT_COMPRESSED_ETC2_RGB:        // 4 bpp
         case PIXELFORMAT_COMPRESSED_PVRT_RGB:        // 4 bpp
-        {
-            channels = 3;
-        } break;
+            return 3;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:  // 32*4 bpp (4 channels - float)
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:  // 16*4 bpp (4 channels - half float)
         case PIXELFORMAT_COMPRESSED_DXT1_RGBA:       // 4 bpp (1 bit alpha)
@@ -540,19 +530,39 @@ void SetWindowIcon(Image image)
         case PIXELFORMAT_COMPRESSED_PVRT_RGBA:       // 4 bpp
         case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:   // 8 bpp
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:   // 2 bpp
-        {
-            channels = 4;
-        } break;
-        default: break;
+            return 4;
+        default: return 4;
     }
+}
 
-    RGFW_window_setIcon(platform.window, image.data, RGFW_AREA(image.width, image.height), channels);
+// Set icon for window
+void SetWindowIcon(Image image)
+{
+    RGFW_window_setIcon(platform.window, image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
 }
 
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcons() unsupported on target platform");
+    if ((images == NULL) || (count <= 0))
+    {
+        RGFW_window_setIcon(platform.window, NULL, RGFW_AREA(0, 0), 0);
+    } {
+        Image* bigIcon = NULL; 
+        Image* smallIcon = NULL;
+
+        for (size_t i = 0; i < count; i++) {
+            if (bigIcon == NULL || (images[i].width > bigIcon->width && images[i].height > bigIcon->height))
+                bigIcon = &images[i];
+            if (smallIcon == NULL || (images[i].width < smallIcon->width && images[i].height > smallIcon->height))
+                smallIcon = &images[i];
+        }
+        
+        if (smallIcon != NULL)
+            RGFW_window_setIconEx(platform.window, smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
+        if (bigIcon != NULL)
+            RGFW_window_setIconEx(platform.window, bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
+    }
 }
 
 // Set title for window
@@ -602,7 +612,7 @@ void SetWindowSize(int width, int height)
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    RGFW_window_setOpacity(win, opacity);
+    RGFW_window_setOpacity(platform.window, opacity);
 }
 
 // Set window focused
@@ -700,7 +710,7 @@ int GetMonitorRefreshRate(int monitor)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
 
-    return (int)mons[monitor].refreshRate;
+    return (int)mons[monitor].mode.refreshRate;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
@@ -971,18 +981,6 @@ void PollInputEvents(void)
 
     while (RGFW_window_checkEvent(platform.window))
     {
-        if ((platform.window->event.type >= RGFW_gamepadButtonPressed) && (platform.window->event.type <= RGFW_gamepadAxisMove))
-        {
-            if (!CORE.Input.Gamepad.ready[platform.window->event.gamepad])
-            {
-                CORE.Input.Gamepad.ready[platform.window->event.gamepad] = true;
-                CORE.Input.Gamepad.axisCount[platform.window->event.gamepad] = platform.window->event.axisesCount;
-                CORE.Input.Gamepad.name[platform.window->event.gamepad][0] = '\0';
-                CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
-                CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-            }
-        }
-
         RGFW_event *event = &platform.window->event;
         // All input events can be processed after polling
         
@@ -1128,6 +1126,17 @@ void PollInputEvents(void)
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
             } break;
+            case RGFW_gamepadConnected:
+                CORE.Input.Gamepad.ready[platform.window->event.gamepad] = true;
+                CORE.Input.Gamepad.axisCount[platform.window->event.gamepad] = platform.window->event.axisesCount;
+                CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+                CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+
+                strcpy(CORE.Input.Gamepad.name[platform.window->event.gamepad], RGFW_getGamepadName(platform.window, platform.window->event.gamepad));
+                break;
+            case RGFW_gamepadDisconnected:
+                CORE.Input.Gamepad.ready[platform.window->event.gamepad] = false;
+                break;
             case RGFW_gamepadButtonPressed:
             {
 				int button = RGFW_gpConvTable[event->button];
