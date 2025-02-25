@@ -6604,6 +6604,13 @@ RGFW_event* RGFW_window_checkEvent(RGFW_window* win) {
 			break;
 		#endif
 
+		#if(_WIN32_WINNT >= 0x0600)
+		case WM_DWMCOMPOSITIONCHANGED:
+		case WM_DWMCOLORIZATIONCOLORCHANGED:
+			RGFW_win32_makeWindowTransparent(win);
+			break;
+		#endif
+
 		case WM_MOUSELEAVE:
 			win->event.type = RGFW_mouseLeave;
 			win->_flags |= RGFW_MOUSE_LEFT;
@@ -6643,6 +6650,7 @@ RGFW_event* RGFW_window_checkEvent(RGFW_window* win) {
 			RGFW_keyCallback(win, win->event.key, win->event.keyChar, win->event.keyMod, 0);
 			break;
 		}
+		case WM_SYSKEYDOWN: case WM_KEYDOWN: {
 		case WM_SYSKEYDOWN: case WM_KEYDOWN: {
 			i32 scancode = (HIWORD(msg.lParam) & (KF_EXTENDED | 0xff));
 			if (scancode == 0)
@@ -6904,6 +6912,7 @@ RGFW_monitor win32CreateMonitor(HMONITOR src) {
 	monitor.scaleX = dpiX / 96.0f;
 	monitor.scaleY = dpiY / 96.0f;
 	monitor.pixelRatio = dpiX >= 192.0f ? 2 : 1;
+	monitor.pixelRatio = dpiX >= 192.0f ? 2 : 1;
 
 	monitor.physW = GetDeviceCaps(hdc, HORZSIZE) / 25.4;
 	monitor.physH = GetDeviceCaps(hdc, VERTSIZE) / 25.4;
@@ -6967,6 +6976,53 @@ RGFW_monitor* RGFW_getMonitors(void) {
 RGFW_monitor RGFW_window_getMonitor(RGFW_window* win) {
 	HMONITOR src = MonitorFromWindow(win->src.window, MONITOR_DEFAULTTOPRIMARY);
 	return win32CreateMonitor(src);
+}
+
+RGFW_bool RGFW_monitor_requestMode(RGFW_monitor mon, RGFW_monitorMode mode, RGFW_modeRequest request) {
+	HMONITOR src = MonitorFromPoint((POINT) { mon.x, mon.y }, MONITOR_DEFAULTTOPRIMARY);
+
+	MONITORINFOEX  monitorInfo;
+	monitorInfo.cbSize = sizeof(MONITORINFOEX);
+	GetMonitorInfoA(src, (LPMONITORINFO)&monitorInfo);
+
+    DISPLAY_DEVICE dd;
+    dd.cb = sizeof(dd);
+
+    // Enumerate display devices
+    for (DWORD deviceNum = 0; EnumDisplayDevicesA(NULL, deviceNum, &dd, 0); deviceNum++) {
+        if (!(dd.StateFlags & DISPLAY_DEVICE_ACTIVE))
+			continue;
+		
+		DEVMODE dm;
+		ZeroMemory(&dm, sizeof(dm));
+		dm.dmSize = sizeof(dm);
+
+		if (EnumDisplaySettingsA(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
+			if (request & RGFW_monitorScale) {
+				dm.dmFields |= DM_PELSWIDTH | DM_PELSHEIGHT;
+				dm.dmPelsWidth = mode.area.w;
+				dm.dmPelsHeight = mode.area.h;
+			}
+
+			if (request & RGFW_monitorRefresh) {
+				dm.dmFields |= DM_DISPLAYFREQUENCY;
+				dm.dmDisplayFrequency = mode.refreshRate;
+			}
+
+			if (request & RGFW_monitorRGB) {
+				dm.dmFields |= DM_BITSPERPEL;
+				dm.dmBitsPerPel = mode.red + mode.green + mode.blue;
+			}
+
+			if (ChangeDisplaySettingsEx(dd.DeviceName, &dm, NULL, CDS_TEST, NULL) == DISP_CHANGE_SUCCESSFUL) {
+				if (ChangeDisplaySettingsEx(dd.DeviceName, &dm, NULL, CDS_UPDATEREGISTRY, NULL) == DISP_CHANGE_SUCCESSFUL)
+					return RGFW_TRUE;
+				return RGFW_FALSE;
+			} else return RGFW_FALSE;
+		}
+	}
+
+	return RGFW_FALSE;
 }
 
 RGFW_bool RGFW_monitor_requestMode(RGFW_monitor mon, RGFW_monitorMode mode, RGFW_modeRequest request) {
