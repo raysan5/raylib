@@ -989,8 +989,10 @@ void PollInputEvents(void)
             case RGFW_quit: 
                 if (CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN)
                     event->type = 0;
-                else
+                else {
                     CORE.Window.shouldClose = true; 
+                    return;
+                }
                 break;
             case RGFW_DND:      // Dropped file
             {
