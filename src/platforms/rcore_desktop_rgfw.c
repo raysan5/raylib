@@ -541,6 +541,8 @@ int RGFW_formatToChannels(int format)
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:   // 2 bpp
             return 4;
         default: return 4;
+            return 4;
+        default: return 4;
     }
 }
 
