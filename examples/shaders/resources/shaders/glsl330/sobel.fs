@@ -11,7 +11,7 @@ uniform vec4 colDiffuse;
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 uniform vec2 resolution = vec2(800, 450);
 
 void main()

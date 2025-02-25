@@ -8,7 +8,7 @@ varying vec4 fragColor;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 float offset = 0.0;
 float frequency = 450.0/3.0;

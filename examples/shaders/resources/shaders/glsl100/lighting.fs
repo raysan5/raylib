@@ -12,7 +12,7 @@ varying vec3 fragNormal;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 #define     MAX_LIGHTS              4
 #define     LIGHT_DIRECTIONAL       0
