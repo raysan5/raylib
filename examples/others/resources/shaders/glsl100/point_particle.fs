@@ -5,7 +5,7 @@ precision mediump float;
 // Input uniform values
 uniform vec4 color;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {
