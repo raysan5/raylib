@@ -96,7 +96,6 @@ SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
 SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/lib
 SDL_LIBRARIES         ?= -lSDL2 -lSDL2main
 
-
 # Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
@@ -549,7 +548,6 @@ SHAPES = \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
-
 TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_blend_modes \
@@ -665,7 +663,6 @@ OTHERS = \
 ifeq ($(TARGET_PLATFORM), PLATFORM_DESKTOP_GFLW)
     OTHERS += others/rlgl_standalone
 endif
-
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
