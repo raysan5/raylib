@@ -57,7 +57,7 @@ int main(void)
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
 
-    model.materials[0].shader = shader;                     // Set shader effect to 3d model
+    model.materials[0].shader = shader;                 // Set shader effect to 3d model
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture; // Bind texture to model
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
