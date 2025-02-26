@@ -67,7 +67,7 @@ int main(void)
             DrawText("PRESS SPACE to PAUSE BALL MOVEMENT", 10, GetScreenHeight() - 25, 20, LIGHTGRAY);
 
             // On pause, we draw a blinking message
-            if (pause && ((framesCounter/30)%2)) DrawText("PAUSED", 350, 200, 30, GRAY);
+            if (pause && ((framesCounter/30)%2)) DrawText("PAUSED", (GetScreenWidth() - 100)/2, (GetScreenHeight()- 50)/2, 30, GRAY);
 
             DrawFPS(10, 10);
 

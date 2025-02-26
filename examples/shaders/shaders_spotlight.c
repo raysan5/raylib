@@ -85,7 +85,7 @@ int main(void)
     for (int n = 0; n < MAX_STARS; n++) ResetStar(&stars[n]);
 
     // Progress all the stars on, so they don't all start in the centre
-    for (int m = 0; m < screenWidth/2.0; m++)
+    for (int m = 0; m < GetScreenWidth()/2.0; m++)
     {
         for (int n = 0; n < MAX_STARS; n++) UpdateStar(&stars[n]);
     }
@@ -124,8 +124,8 @@ int main(void)
     // and initialize the shader locations
     for (int i = 0; i < MAX_SPOTS; i++)
     {
-        spots[i].position.x = (float)GetRandomValue(64, screenWidth - 64);
-        spots[i].position.y = (float)GetRandomValue(64, screenHeight - 64);
+        spots[i].position.x = (float)GetRandomValue(64, GetScreenWidth() - 64);
+        spots[i].position.y = (float)GetRandomValue(64, GetScreenHeight() - 64);
         spots[i].speed = (Vector2){ 0, 0 };
 
         while ((fabs(spots[i].speed.x) + fabs(spots[i].speed.y)) < 2)
@@ -152,6 +152,9 @@ int main(void)
         //----------------------------------------------------------------------------------
         frameCounter++;
 
+        sw = (float)GetScreenWidth();
+        SetShaderValue(shdrSpot, wLoc, &sw, SHADER_UNIFORM_FLOAT);
+
         // Move the stars, resetting them if the go offscreen
         for (int n = 0; n < MAX_STARS; n++) UpdateStar(&stars[n]);
 
@@ -162,7 +165,7 @@ int main(void)
             {
                 Vector2 mp = GetMousePosition();
                 spots[i].position.x = mp.x;
-                spots[i].position.y = screenHeight - mp.y;
+                spots[i].position.y = GetScreenHeight() - mp.y;
             }
             else
             {
@@ -170,9 +173,9 @@ int main(void)
                 spots[i].position.y += spots[i].speed.y;
 
                 if (spots[i].position.x < 64) spots[i].speed.x = -spots[i].speed.x;
-                if (spots[i].position.x > (screenWidth - 64)) spots[i].speed.x = -spots[i].speed.x;
+                if (spots[i].position.x > (GetScreenWidth() - 64)) spots[i].speed.x = -spots[i].speed.x;
                 if (spots[i].position.y < 64) spots[i].speed.y = -spots[i].speed.y;
-                if (spots[i].position.y > (screenHeight - 64)) spots[i].speed.y = -spots[i].speed.y;
+                if (spots[i].position.y > (GetScreenHeight() - 64)) spots[i].speed.y = -spots[i].speed.y;
             }
 
             SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position.x, SHADER_UNIFORM_VEC2);
@@ -194,8 +197,8 @@ int main(void)
             for (int i = 0; i < 16; i++)
             {
                 DrawTexture(texRay,
-                    (int)((screenWidth/2.0f) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2f) - 32),
-                    (int)((screenHeight/2.0f) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2f)), WHITE);
+                    (int)((GetScreenWidth()/2.0f) + cos((frameCounter + i*8)/51.45f)*(GetScreenWidth()/2.2f) - 32),
+                    (int)((GetScreenHeight()/2.0f) + sin((frameCounter + i*8)/17.87f)*(GetScreenHeight()/4.2f)), WHITE);
             }
 
             // Draw spot lights
@@ -204,14 +207,14 @@ int main(void)
                 // a render texture of the full screen used to do screen
                 // scaling (slight adjustment to shader would be required
                 // to actually pay attention to the colour!)
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
             DrawFPS(10, 10);
 
             DrawText("Move the mouse!", 10, 30, 20, GREEN);
-            DrawText("Pitch Black", (int)(screenWidth*0.2f), screenHeight/2, 20, GREEN);
-            DrawText("Dark", (int)(screenWidth*.66f), screenHeight/2, 20, GREEN);
+            DrawText("Pitch Black", (int)(GetScreenWidth()*0.2f), GetScreenHeight()/2, 20, GREEN);
+            DrawText("Dark", (int)(GetScreenWidth()*.66f), GetScreenHeight()/2, 20, GREEN);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
