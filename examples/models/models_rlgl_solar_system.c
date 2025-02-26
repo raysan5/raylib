@@ -112,7 +112,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("EARTH ORBITING AROUND THE SUN!", 400, 10, 20, MAROON);
+            DrawText("EARTH ORBITING AROUND THE SUN!", GetScreenWidth() - 400, 10, 20, MAROON);
             DrawFPS(10, 10);
 
         EndDrawing();

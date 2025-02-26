@@ -226,9 +226,9 @@ int main(void)
                     DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
-            DrawText("Right click mouse to toggle camera controls", 10, 430, 10, GRAY);
+            DrawText("Right click mouse to toggle camera controls", 10, GetScreenHeight() - 20, 10, GRAY);
 
-            DrawText("(c) Turret 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Turret 3D model by Alberto Cano", GetScreenWidth() - 200, GetScreenHeight() - 20, 10, GRAY);
 
             DrawFPS(10, 10);
 

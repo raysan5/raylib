@@ -44,11 +44,11 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawRectangle(screenWidth/2 - 128, screenHeight/2 - 128, 256, 256, BLACK);
-            DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, RAYWHITE);
-            DrawText("raylib", screenWidth/2 - 44, screenHeight/2 + 48, 50, BLACK);
+            DrawRectangle(GetScreenWidth()/2 - 128, GetScreenHeight()/2 - 128, 256, 256, BLACK);
+            DrawRectangle(GetScreenWidth()/2 - 112, GetScreenHeight()/2 - 112, 224, 224, RAYWHITE);
+            DrawText("raylib", GetScreenWidth()/2 - 44, GetScreenHeight()/2 + 48, 50, BLACK);
 
-            DrawText("this is NOT a texture!", 350, 370, 10, GRAY);
+            DrawText("this is NOT a texture!", GetScreenWidth()/2 - 50, GetScreenHeight()/2 + 145, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

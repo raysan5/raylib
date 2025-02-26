@@ -112,7 +112,7 @@ int main(void)
             DrawText("Rounded rectangle", rec.x - 20, rec.y - 35, 10, DARKGRAY);
 
             // Flip Y axis to match shader coordinate system
-            rec.y = screenHeight - rec.y - rec.height;
+            rec.y = GetScreenHeight() - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
             // Only rectangle color
@@ -121,7 +121,7 @@ int main(void)
             SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
 
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
 
@@ -131,7 +131,7 @@ int main(void)
             DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
             DrawText("Rounded rectangle shadow", rec.x - 20, rec.y - 35, 10, DARKGRAY);
 
-            rec.y = screenHeight - rec.y - rec.height;
+            rec.y = GetScreenHeight() - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
             // Only shadow color
@@ -140,7 +140,7 @@ int main(void)
             SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { 0.0f, 0.0f, 0.0f, 0.0f }, SHADER_UNIFORM_VEC4);
 
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
 
@@ -150,7 +150,7 @@ int main(void)
             DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
             DrawText("Rounded rectangle border", rec.x - 20, rec.y - 35, 10, DARKGRAY);
 
-            rec.y = screenHeight - rec.y - rec.height;
+            rec.y = GetScreenHeight() - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
             // Only border color
@@ -159,17 +159,17 @@ int main(void)
             SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { borderColor.r/255.0f, borderColor.g/255.0f, borderColor.b/255.0f, borderColor.a/255.0f }, SHADER_UNIFORM_VEC4);
 
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
 
 
             // Draw one more rectangle with all three colors
-            rec = (Rectangle){ 240, 80, 500, 300 };
+            rec = (Rectangle){ 240, 80, GetScreenWidth() - 300, GetScreenHeight() - 150 };
             DrawRectangleLines(rec.x - 30, rec.y - 30, rec.width + 60, rec.height + 60, DARKGRAY);
             DrawText("Rectangle with all three combined", rec.x - 30, rec.y - 45, 10, DARKGRAY);
 
-            rec.y = screenHeight - rec.y - rec.height;
+            rec.y = GetScreenHeight() - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
 
             // All three colors
@@ -178,10 +178,10 @@ int main(void)
             SetShaderValue(shader, roundedRectangle.borderColorLoc, (float[]) { borderColor.r/255.0f, borderColor.g/255.0f, borderColor.b/255.0f, borderColor.a/255.0f }, SHADER_UNIFORM_VEC4);
 
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
-            DrawText("(c) Rounded rectangle SDF by Iñigo Quilez. MIT License.", screenWidth - 300, screenHeight - 20, 10, BLACK);
+            DrawText("(c) Rounded rectangle SDF by Iñigo Quilez. MIT License.", GetScreenWidth() - 300, GetScreenHeight() - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

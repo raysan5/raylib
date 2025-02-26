@@ -46,6 +46,11 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        scleraLeftPosition.x = GetScreenWidth()/2.0f - 100.0f;
+		scleraLeftPosition.y = GetScreenHeight()/2.0f;
+        scleraRightPosition.x = GetScreenWidth()/2.0f + 100.0f;
+		scleraRightPosition.y = GetScreenHeight()/2.0f;
+
         // Update
         //----------------------------------------------------------------------------------
         irisLeftPosition = GetMousePosition();

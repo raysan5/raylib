@@ -415,23 +415,23 @@ int main(void)
             quads += TextLength(text)*2*layers;
             char *tmp = (char *)TextFormat("%2i layer(s) | %s camera | %4i quads (%4i verts)", layers, spin? "ORBITAL" : "FREE", quads, quads*4);
             int width = MeasureText(tmp, 10);
-            DrawText(tmp, screenWidth - 20 - width, 10, 10, DARKGREEN);
+            DrawText(tmp, GetScreenWidth() - 20 - width, 10, 10, DARKGREEN);
 
             tmp = "[Home]/[End] to add/remove 3D text layers";
             width = MeasureText(tmp, 10);
-            DrawText(tmp, screenWidth - 20 - width, 25, 10, DARKGRAY);
+            DrawText(tmp, GetScreenWidth() - 20 - width, 25, 10, DARKGRAY);
 
             tmp = "[Insert]/[Delete] to increase/decrease distance between layers";
             width = MeasureText(tmp, 10);
-            DrawText(tmp, screenWidth - 20 - width, 40, 10, DARKGRAY);
+            DrawText(tmp, GetScreenWidth() - 20 - width, 40, 10, DARKGRAY);
 
             tmp = "click the [CUBE] for a random color";
             width = MeasureText(tmp, 10);
-            DrawText(tmp, screenWidth - 20 - width, 55, 10, DARKGRAY);
+            DrawText(tmp, GetScreenWidth() - 20 - width, 55, 10, DARKGRAY);
 
             tmp = "[Tab] to toggle multicolor mode";
             width = MeasureText(tmp, 10);
-            DrawText(tmp, screenWidth - 20 - width, 70, 10, DARKGRAY);
+            DrawText(tmp, GetScreenWidth() - 20 - width, 70, 10, DARKGRAY);
             //-------------------------------------------------------------------------
 
             DrawFPS(10, 10);

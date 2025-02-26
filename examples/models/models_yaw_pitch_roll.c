@@ -101,13 +101,13 @@ int main(void)
             EndMode3D();
 
             // Draw controls info
-            DrawRectangle(30, 370, 260, 70, Fade(GREEN, 0.5f));
-            DrawRectangleLines(30, 370, 260, 70, Fade(DARKGREEN, 0.5f));
-            DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, 380, 10, DARKGRAY);
-            DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, 400, 10, DARKGRAY);
-            DrawText("Yaw controlled with: KEY_A / KEY_S", 40, 420, 10, DARKGRAY);
+            DrawRectangle(30, GetScreenHeight() - 80, 260, 70, Fade(GREEN, 0.5f));
+            DrawRectangleLines(30, GetScreenHeight() - 80, 260, 70, Fade(DARKGREEN, 0.5f));
+            DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, GetScreenHeight() - 70, 10, DARKGRAY);
+            DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, GetScreenHeight() - 50, 10, DARKGRAY);
+            DrawText("Yaw controlled with: KEY_A / KEY_S", 40, GetScreenHeight() - 30, 10, DARKGRAY);
 
-            DrawText("(c) WWI Plane Model created by GiaHanLam", screenWidth - 240, screenHeight - 20, 10, DARKGRAY);
+            DrawText("(c) WWI Plane Model created by GiaHanLam", GetScreenWidth() - 240, GetScreenHeight() - 20, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

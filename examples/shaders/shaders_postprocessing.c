@@ -133,6 +133,8 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
+        UnloadRenderTexture(target);
+        target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
         BeginTextureMode(target);       // Enable drawing to texture
             ClearBackground(RAYWHITE);  // Clear texture background
 
@@ -148,17 +150,17 @@ int main(void)
             // Render generated texture using selected postprocessing shader
             BeginShaderMode(shaders[currentShader]);
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), (float)-GetScreenHeight() }, (Vector2){0, 0}, WHITE);
             EndShaderMode();
 
             // Draw 2d shapes and text over drawn texture
             DrawRectangle(0, 9, 580, 30, Fade(LIGHTGRAY, 0.7f));
 
-            DrawText("(c) Church 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Church 3D model by Alberto Cano", GetScreenWidth() - 200, GetScreenHeight() - 20, 10, GRAY);
             DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, BLACK);
             DrawText(postproShaderText[currentShader], 330, 15, 20, RED);
             DrawText("< >", 540, 10, 30, DARKBLUE);
-            DrawFPS(700, 15);
+            DrawFPS(GetScreenWidth() - 100, 15);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

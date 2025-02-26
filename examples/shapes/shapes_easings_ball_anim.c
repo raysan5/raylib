@@ -48,7 +48,7 @@ int main(void)
         if (state == 0)             // Move ball position X with easing
         {
             framesCounter++;
-            ballPositionX = (int)EaseElasticOut((float)framesCounter, -100, screenWidth/2.0f + 100, 120);
+            ballPositionX = (int)EaseElasticOut((float)framesCounter, -100, GetScreenWidth()/2.0f + 100, 120);
 
             if (framesCounter >= 120)
             {
@@ -99,10 +99,10 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            if (state >= 2) DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
+            if (state >= 2) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GREEN);
             DrawCircle(ballPositionX, 200, (float)ballRadius, Fade(RED, 1.0f - ballAlpha));
 
-            if (state == 3) DrawText("PRESS [ENTER] TO PLAY AGAIN!", 240, 200, 20, BLACK);
+            if (state == 3) DrawText("PRESS [ENTER] TO PLAY AGAIN!", GetScreenWidth()/2 - 140, (GetScreenHeight()/2 - 10), 20, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

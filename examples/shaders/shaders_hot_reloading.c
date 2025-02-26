@@ -51,9 +51,6 @@ int main(void)
     int mouseLoc = GetShaderLocation(shader, "mouse");
     int timeLoc = GetShaderLocation(shader, "time");
 
-    float resolution[2] = { (float)screenWidth, (float)screenHeight };
-    SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
-
     float totalTime = 0.0f;
     bool shaderAutoReloading = false;
 
@@ -65,6 +62,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        float resolution[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+        SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
+
         totalTime += GetFrameTime();
         Vector2 mouse = GetMousePosition();
         float mousePos[2] = { mouse.x, mouse.y };
@@ -113,14 +113,14 @@ int main(void)
 
             // We only draw a white full-screen rectangle, frame is generated in shader
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
             DrawText(TextFormat("PRESS [A] to TOGGLE SHADER AUTOLOADING: %s",
                      shaderAutoReloading? "AUTO" : "MANUAL"), 10, 10, 10, shaderAutoReloading? RED : BLACK);
             if (!shaderAutoReloading) DrawText("MOUSE CLICK to SHADER RE-LOADING", 10, 30, 10, BLACK);
 
-            DrawText(TextFormat("Shader last modification: %s", asctime(localtime(&fragShaderFileModTime))), 10, 430, 10, BLACK);
+            DrawText(TextFormat("Shader last modification: %s", asctime(localtime(&fragShaderFileModTime))), 10, GetScreenHeight() - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
