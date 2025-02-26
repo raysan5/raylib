@@ -1,6 +1,6 @@
 # - Try to find raylib
 # Options:
-#   raylib_USE_STATIC_LIBS - OFF by default
+#   raylib_USE_STATIC_LIBS - ON by default
 #   raylib_VERBOSE         - OFF by default
 # Once done, this defines a raylib target that can be passed to
 # target_link_libraries as well as following variables:
@@ -10,6 +10,9 @@
 #   raylib_LIBRARIES - The libraries needed to use raylib
 #   raylib_LDFLAGS - The linker flags needed with raylib
 #   raylib_DEFINITIONS - Compiler switches required for using raylib
+
+option(raylib_USE_STATIC_LIBS "Use static libs" ON)
+option(raylib_VERBOSE "Use static libs" OFF)
 
 if (NOT TARGET raylib)
     set(XPREFIX PC_RAYLIB)
@@ -34,7 +37,6 @@ if (NOT TARGET raylib)
     else ()
         set(RAYLIB_NAMES raylib)
     endif ()
-    message("RAYLIB_NAMES ${RAYLIB_NAMES}")
 
     find_library(raylib_LIBRARY
         NAMES ${RAYLIB_NAMES}
@@ -42,8 +44,6 @@ if (NOT TARGET raylib)
     )
 
     set(raylib_LIBRARIES    ${raylib_LIBRARY})
-    set(raylib_LIBRARY_DIRS ${${XPREFIX}_LIBRARY_DIRS})
-    set(raylib_LIBRARY_DIR  ${raylib_LIBRARY_DIRS})
     set(raylib_INCLUDE_DIRS ${raylib_INCLUDE_DIR})
     set(raylib_LDFLAGS      ${${XPREFIX}_LDFLAGS})
 
