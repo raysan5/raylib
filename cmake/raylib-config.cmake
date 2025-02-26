@@ -28,11 +28,13 @@ if (NOT TARGET raylib)
         HINTS ${${XPREFIX}_INCLUDE_DIRS} ${raylib_DIR}/../../../include/
     )
 
-    set(RAYLIB_NAMES raylib)
 
     if (raylib_USE_STATIC_LIBS)
-        set(RAYLIB_NAMES libraylib.a raylib.lib ${RAYLIB_NAMES})
-    endif()
+        set(RAYLIB_NAMES libraylib.a raylib.lib)
+    else ()
+        set(RAYLIB_NAMES raylib)
+    endif ()
+    message("RAYLIB_NAMES ${RAYLIB_NAMES}")
 
     find_library(raylib_LIBRARY
         NAMES ${RAYLIB_NAMES}
