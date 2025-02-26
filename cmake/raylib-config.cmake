@@ -25,7 +25,7 @@ if (NOT TARGET raylib)
 
     find_path(raylib_INCLUDE_DIR
         NAMES raylib.h
-        HINTS ${${XPREFIX}_INCLUDE_DIRS}
+        HINTS ${${XPREFIX}_INCLUDE_DIRS} ${raylib_DIR}/../../../include/
     )
 
     set(RAYLIB_NAMES raylib)
@@ -36,7 +36,7 @@ if (NOT TARGET raylib)
 
     find_library(raylib_LIBRARY
         NAMES ${RAYLIB_NAMES}
-        HINTS ${${XPREFIX}_LIBRARY_DIRS}
+        HINTS ${${XPREFIX}_LIBRARY_DIRS} ${raylib_DIR}/../../
     )
 
     set(raylib_LIBRARIES    ${raylib_LIBRARY})
