@@ -1521,6 +1521,12 @@ int InitPlatform(void)
         SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
         platform.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", monitor, NULL);
+        if (!platform.handle)
+        {
+            glfwTerminate();
+            TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
+            return -1;
+        }
 
         // NOTE: Full-screen change, not working properly...
         //glfwSetWindowMonitor(platform.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
@@ -1535,6 +1541,12 @@ int InitPlatform(void)
         int creationHeight = CORE.Window.screen.height != 0 ? CORE.Window.screen.height : 1;
 
         platform.handle = glfwCreateWindow(creationWidth, creationHeight, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
+        if (!platform.handle)
+        {
+            glfwTerminate();
+            TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
+            return -1;
+        }
 
         // After the window was created, determine the monitor that the window manager assigned.
         // Derive display sizes, and, if possible, window size in case it was zero at beginning.
@@ -1558,18 +1570,8 @@ int InitPlatform(void)
             return -1;
         }
 
-        if (platform.handle)
-        {
-            CORE.Window.render.width = CORE.Window.screen.width;
-            CORE.Window.render.height = CORE.Window.screen.height;
-        }
-    }
-
-    if (!platform.handle)
-    {
-        glfwTerminate();
-        TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
-        return -1;
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
     }
 
     glfwMakeContextCurrent(platform.handle);
