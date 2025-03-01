@@ -681,7 +681,10 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize platform
     //--------------------------------------------------------------
-    if(InitPlatform() != 0) {
+    int result = InitPlatform();
+
+    if (result != 0)
+    {
         TRACELOG(LOG_ERROR, "SYSTEM: Failed to initialize Platform");
         return;
     }
