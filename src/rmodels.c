@@ -5289,19 +5289,18 @@ static Model LoadGLTF(const char *fileName)
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
         int primitivesCount = 0;
+
         // NOTE: We will load every primitive in the glTF as a separate raylib Mesh.
         // Determine total number of meshes needed from the node hierarchy.
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
             cgltf_node *node = &(data->nodes[i]);
             cgltf_mesh *mesh = node->mesh;
-            if (!mesh)
-                continue;
+            if (!mesh) continue;
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
-                if (mesh->primitives[p].type == cgltf_primitive_type_triangles)
-                    primitivesCount++;
+                if (mesh->primitives[p].type == cgltf_primitive_type_triangles) primitivesCount++;
             }
         }
         TRACELOG(LOG_DEBUG, "    > Primitives (triangles only) count based on hierarchy : %i", primitivesCount);
