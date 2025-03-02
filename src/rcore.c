@@ -681,7 +681,13 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize platform
     //--------------------------------------------------------------
-    InitPlatform();
+    int result = InitPlatform();
+
+    if (result != 0)
+    {
+        TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize Platform");
+        return;
+    }
     //--------------------------------------------------------------
 
     // Initialize rlgl default data (buffers and shaders)
