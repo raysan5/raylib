@@ -2107,6 +2107,89 @@ void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4
     DrawTriangleStrip(points, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
 }
 
+// Draw spline segment with variable thickness: Linear, 2 points
+void DrawSplineSegmentLinearVar(Vector2 p1, Vector2 p2, const float* thicks, int thickCount, Color color)
+{
+    if (thickCount >= 4)
+    {
+        const float step = 1.0f/SPLINE_SEGMENT_DIVISIONS;
+
+        Vector2 previous[2] = { 0 };
+        Vector2 current[2] = { 0 };
+        float t = 0.0f;
+
+        // Linear velocity does not change across the curve
+        Vector2 tangent = { 0 };
+
+        tangent.x = p2.x - p1.x;
+        tangent.y = p2.y - p1.y;
+
+        float speedSqr = tangent.x*tangent.x + tangent.y*tangent.y;
+
+        if (speedSqr > 0)
+        {
+            float speedInv = 1.0f/sqrtf(speedSqr);
+            tangent.x *= speedInv;
+            tangent.y *= speedInv;
+
+            rlBegin(RL_TRIANGLES);
+                rlColor4ub(color.r, color.g, color.b, color.a);
+
+                for (int i = 0; i <= SPLINE_SEGMENT_DIVISIONS; i++)
+                {
+                    t = step*(float)i;
+
+                    Vector2 point = { 0 };
+
+                    point.x = p1.x*(1.0f - t) + p2.x*t;
+                    point.y = p1.y*(1.0f - t) + p2.y*t;
+
+                    // TODO: Doesn't seem to be working properly for more than 3 distinct values
+                    float thick;
+                    {
+                        float tMajor = t*(float)thickCount;
+                        int tIndex = (int)tMajor;
+                        float tMinor = tMajor - (float)tIndex;
+                        tIndex *= 3;
+                        if (tIndex >= thickCount - 3)
+                        {
+                            tIndex = thickCount - 4;
+                            tMinor = 1.0f;
+                        }
+                        float a = powf(1.0f - t, 3);
+                        float b = 3.0f*powf(1.0f - t, 2)*t;
+                        float c = 3.0f*(1.0f - t)*t*t;
+                        float d = t*t*t;
+
+                        thick = a*thicks[tIndex] + b*thicks[tIndex + 1] + c*thicks[tIndex + 2] + d*thicks[tIndex + 3];
+                    }
+
+                    current[0].x = point.x + thick*tangent.y;
+                    current[0].y = point.y - thick*tangent.x;
+
+                    current[1].x = point.x - thick*tangent.y;
+                    current[1].y = point.y + thick*tangent.x;
+
+                    if (i > 0)
+                    {
+                        rlVertex2f(current[0].x, current[0].y);
+                        rlVertex2f(previous[0].x, previous[0].y);
+                        rlVertex2f(previous[1].x, previous[1].y);
+
+                        rlVertex2f(current[1].x, current[1].y);
+                        rlVertex2f(current[0].x, current[0].y);
+                        rlVertex2f(previous[1].x, previous[1].y);
+                    }
+
+                    previous[0] = current[0];
+                    previous[1] = current[1];
+                }
+
+            rlEnd();
+        }
+    }
+}
+
 // Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points
 void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, const float* thicks, int thickCount, Color color)
 {
@@ -2138,8 +2221,8 @@ void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2
                 float speedSqr = (tangent.x*tangent.x + tangent.y*tangent.y);
                 if (speedSqr == 0) continue;
                 float speedInv = 1.0f/sqrtf(speedSqr);
-                tangent.x = tangent.x*speedInv;
-                tangent.y = tangent.y*speedInv;
+                tangent.x *= speedInv;
+                tangent.y *= speedInv;
 
                 Vector2 point = { 0 };
                 {
@@ -2178,7 +2261,7 @@ void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2
                 current[1].x = point.x - thick*tangent.y;
                 current[1].y = point.y + thick*tangent.x;
 
-                if (i > 0)
+                if (i > 0) // TODO: `previous` may be unassigned in i=1 if i=0 had a `speedSqr` of 0
                 {
                     rlVertex2f(current[0].x, current[0].y);
                     rlVertex2f(previous[0].x, previous[0].y);
