@@ -1621,7 +1621,7 @@
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawSplineSegmentBezierCubicVar" retType="void" paramCount="7" desc="Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness">
+        <Function name="DrawSplineSegmentBezierCubicVar" retType="void" paramCount="7" desc="Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points">
             <Param type="Vector2" name="p1" desc="" />
             <Param type="Vector2" name="c2" desc="" />
             <Param type="Vector2" name="c3" desc="" />

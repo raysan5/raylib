@@ -2531,7 +2531,7 @@ Function 259: DrawSplineSegmentBezierCubic() (6 input parameters)
 Function 260: DrawSplineSegmentBezierCubicVar() (7 input parameters)
   Name: DrawSplineSegmentBezierCubicVar
   Return type: void
-  Description: Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness
+  Description: Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points
   Param[1]: p1 (type: Vector2)
   Param[2]: c2 (type: Vector2)
   Param[3]: c3 (type: Vector2)

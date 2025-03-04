@@ -5212,7 +5212,7 @@ return {
     },
     {
       name = "DrawSplineSegmentBezierCubicVar",
-      description = "Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness",
+      description = "Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points",
       returnType = "void",
       params = {
         {type = "Vector2", name = "p1"},
