@@ -35,10 +35,10 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
 features
 --------
-  - **NO external dependencies**, all required libraries are [bundled into raylib](https://github.com/raysan5/raylib/tree/master/src/external)
+  - **NO external dependencies**, all required libraries are [included into raylib](https://github.com/raysan5/raylib/tree/master/src/external)
   - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
   - Written in plain C code (C99) using PascalCase/camelCase notation
-  - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3, 4.3, ES 2.0, ES 3.0**)
+  - Hardware accelerated with OpenGL: **1.1, 2.1, 3.3, 4.3, ES 2.0, ES 3.0**
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
   - Multiple **Fonts** formats supported (TTF, OTF, FNT, BDF, sprite fonts)
   - Multiple texture formats supported, including **compressed formats** (DXT, ETC, ASTC)
