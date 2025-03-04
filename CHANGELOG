@@ -179,6 +179,19 @@ WIP: Last update with commit from 02-Nov-2024
 [rshapes] REVIEWED: `CheckCollisionCircleRec()` (#3584) by @ubkp
 [rshapes] REVIEWED: Add more detail to function comment (#4344) by @Jeffery Myers
 [rshapes] REVIEWED: Functions that draw point arrays take them as const (#4051) by @Jeffery Myers
+[rshapes] ADDED: `DrawSplineSegmentBezierCubicVar()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineVelocityLinear()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineVelocityBezierQuad()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineVelocityBezierCubic()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineAccelerationBezierQuad()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineAccelerationBezierCubic()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineJoltBezierCubic()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineBoundsBezierLinear()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineBoundsBezierQuad()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineBoundsBezierCubic()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineCurvatureBezierCubic()` (#TBD) by @AmityWilder
+[rshapes] ADDED: `GetSplineNearestTLinear()` (#TBD) by @AmityWilder
+[rshapes] ADDED: Example of `DrawSplineSegmentBezierCubicVar` in splines drawing example (#TBD) by @AmityWilder
 [rtextures] ADDED: `ColorIsEqual()` by @Ray
 [rtextures] ADDED: `ColorLerp()`, to mix 2 colors together (#4310) by @SusgUY446
 [rtextures] ADDED: `LoadImageAnimFromMemory()` (#3681) by @IoIxD

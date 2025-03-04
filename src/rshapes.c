@@ -2107,63 +2107,93 @@ void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4
     DrawTriangleStrip(points, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
 }
 
-// Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness
+// Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points
 void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, const float* thicks, int thickCount, Color color)
 {
-    if (thickCount >= 1)
+    if (thickCount >= 4)
     {
-        const float step = 1.0f/SPLINE_SEGMENT_DIVISIONS;
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-        Vector2 previous = p1;
-        Vector2 current = { 0 };
-        float t = 0.0f;
+            const float step = 1.0f/SPLINE_SEGMENT_DIVISIONS;
 
-        Vector2 points[2*SPLINE_SEGMENT_DIVISIONS + 2] = { 0 };
+            Vector2 previous[2] = { 0 };
+            Vector2 current[2] = { 0 };
+            float t = 0.0f;
 
-        for (int i = 1; i <= SPLINE_SEGMENT_DIVISIONS; i++)
-        {
-            t = step*(float)i;
-
-            float thick;
-            if (thickCount > 1) {
-                float tMajor = t*(float)thickCount;
-                int tIndex = (int)tMajor;
-                if (tIndex >= thickCount) tIndex = thickCount - 1;
-                float tMinor = tMajor - (float)tIndex;
-                thick = thicks[tIndex];
-            } else {
-                thick = thicks[0]; // constant thickness
-            }
-
-            float a = powf(1.0f - t, 3);
-            float b = 3.0f*powf(1.0f - t, 2)*t;
-            float c = 3.0f*(1.0f - t)*powf(t, 2);
-            float d = powf(t, 3);
-
-            current.y = a*p1.y + b*c2.y + c*c3.y + d*p4.y;
-            current.x = a*p1.x + b*c2.x + c*c3.x + d*p4.x;
-
-            float dy = current.y - previous.y;
-            float dx = current.x - previous.x;
-            float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
-
-            if (i == 1)
+            for (int i = 0; i <= SPLINE_SEGMENT_DIVISIONS; i++)
             {
-                points[0].x = previous.x + dy*size;
-                points[0].y = previous.y - dx*size;
-                points[1].x = previous.x - dy*size;
-                points[1].y = previous.y + dx*size;
+                t = step*(float)i;
+
+                Vector2 tangent = { 0 };
+                {
+                    float a = 3.0f*powf(1.0f - t, 2);
+                    float b = 6.0f*(1.0f - t)*t;
+                    float c = 3.0f*t*t;
+
+                    tangent.x = a*(c2.x - p1.x) + b*(c3.x - c2.x) + c*(p4.x - c3.x);
+                    tangent.y = a*(c2.y - p1.y) + b*(c3.y - c2.y) + c*(p4.y - c3.y);
+                }
+
+                float speedSqr = (tangent.x*tangent.x + tangent.y*tangent.y);
+                if (speedSqr == 0) continue;
+                float speedInv = 1.0f/sqrtf(speedSqr);
+                tangent.x = tangent.x*speedInv;
+                tangent.y = tangent.y*speedInv;
+
+                Vector2 point = { 0 };
+                {
+                    float a = powf(1.0f - t, 3);
+                    float b = 3.0f*powf(1.0f - t, 2)*t;
+                    float c = 3.0f*(1.0f - t)*powf(t, 2);
+                    float d = powf(t, 3);
+
+                    point.y = a*p1.y + b*c2.y + c*c3.y + d*p4.y;
+                    point.x = a*p1.x + b*c2.x + c*c3.x + d*p4.x;
+                }
+
+                // TODO: Doesn't seem to be working properly for more than 3 distinct values
+                float thick;
+                {
+                    float tMajor = t*(float)thickCount;
+                    int tIndex = (int)tMajor;
+                    float tMinor = tMajor - (float)tIndex;
+                    tIndex *= 3;
+                    if (tIndex >= thickCount - 3)
+                    {
+                        tIndex = thickCount - 4;
+                        tMinor = 1.0f;
+                    }
+                    float a = powf(1.0f - t, 3);
+                    float b = 3.0f*powf(1.0f - t, 2)*t;
+                    float c = 3.0f*(1.0f - t)*t*t;
+                    float d = t*t*t;
+
+                    thick = a*thicks[tIndex] + b*thicks[tIndex + 1] + c*thicks[tIndex + 2] + d*thicks[tIndex + 3];
+                }
+
+                current[0].x = point.x + thick*tangent.y;
+                current[0].y = point.y - thick*tangent.x;
+
+                current[1].x = point.x - thick*tangent.y;
+                current[1].y = point.y + thick*tangent.x;
+
+                if (i > 0)
+                {
+                    rlVertex2f(current[0].x, current[0].y);
+                    rlVertex2f(previous[0].x, previous[0].y);
+                    rlVertex2f(previous[1].x, previous[1].y);
+
+                    rlVertex2f(current[1].x, current[1].y);
+                    rlVertex2f(current[0].x, current[0].y);
+                    rlVertex2f(previous[1].x, previous[1].y);
+                }
+
+                previous[0] = current[0];
+                previous[1] = current[1];
             }
 
-            points[2*i + 1].x = current.x - dy*size;
-            points[2*i + 1].y = current.y + dx*size;
-            points[2*i].x = current.x + dy*size;
-            points[2*i].y = current.y - dx*size;
-
-            previous = current;
-        }
-
-        DrawTriangleStrip(points, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
+        rlEnd();
     }
 }
 
@@ -2576,7 +2606,7 @@ float GetSplineCurvatureBezierCubic(Vector2 startPos, Vector2 startControlPos, V
     acceleration.x = a*(endControlPos.x - 2.0f*startControlPos.x + startPos.x) + b*(endPos.x - 2.0f*endControlPos.x + startControlPos.x);
     acceleration.y = a*(endControlPos.y - 2.0f*startControlPos.y + startPos.y) + b*(endPos.y - 2.0f*endControlPos.y + startControlPos.y);
 
-    float curvature = (velocity.x*acceleration.y - velocity.y*acceleration.x)/powf(sqrtf(velocity.x*velocity.x + velocity.y*velocity.y), 3);
+    curvature = (velocity.x*acceleration.y - velocity.y*acceleration.x)/powf(sqrtf(velocity.x*velocity.x + velocity.y*velocity.y), 3);
 
     return curvature;
 }
