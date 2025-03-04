@@ -80,8 +80,7 @@ int main(void)
 
     // Spline config variables
     float splineThickness = 8.0f;
-    int splineTypeActive = SPLINE_LINEAR_VAR; // 0-Linear, 1-BSpline, 2-CatmullRom, 3-Bezier, 4-LinearVar, 5-BezierVar
-                                              // TODO: Change the default back to SPLINE_LINEAR when finished testing
+    int splineTypeActive = SPLINE_LINEAR; // 0-Linear, 1-BSpline, 2-CatmullRom, 3-Bezier, 4-LinearVar, 5-BezierVar
     bool splineTypeEditMode = false; 
     bool splineHelpersActive = true;
     
@@ -226,8 +225,8 @@ int main(void)
                 float thicks[] = {
                     0.0f,
                     splineThickness,
+                    -splineThickness,
                     splineThickness,
-                    0.0f,
                 };
 
                 // Draw spline: variable-width linear

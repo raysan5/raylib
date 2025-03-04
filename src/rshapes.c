@@ -2144,10 +2144,9 @@ void DrawSplineSegmentLinearVar(Vector2 p1, Vector2 p2, const float* thicks, int
                     point.x = p1.x*(1.0f - t) + p2.x*t;
                     point.y = p1.y*(1.0f - t) + p2.y*t;
 
-                    // TODO: Doesn't seem to be working properly for more than 3 distinct values
                     float thick;
                     {
-                        float tMajor = t*(float)thickCount;
+                        float tMajor = t*(float)thickCount/3.0f;
                         int tIndex = (int)tMajor;
                         float tMinor = tMajor - (float)tIndex;
                         tIndex *= 3;
@@ -2235,10 +2234,9 @@ void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2
                     point.x = a*p1.x + b*c2.x + c*c3.x + d*p4.x;
                 }
 
-                // TODO: Doesn't seem to be working properly for more than 3 distinct values
                 float thick;
                 {
-                    float tMajor = t*(float)thickCount;
+                    float tMajor = t*(float)thickCount/3.0f;
                     int tIndex = (int)tMajor;
                     float tMinor = tMajor - (float)tIndex;
                     tIndex *= 3;
