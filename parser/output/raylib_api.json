@@ -6519,6 +6519,33 @@
       ]
     },
     {
+      "name": "DrawSplineSegmentLinearVar",
+      "description": "Draw spline segment with variable thickness: Linear Bezier, 2 points",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "p1"
+        },
+        {
+          "type": "Vector2",
+          "name": "p2"
+        },
+        {
+          "type": "const float*",
+          "name": "thicks"
+        },
+        {
+          "type": "int",
+          "name": "thickCount"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
       "name": "DrawSplineSegmentBezierCubicVar",
       "description": "Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points",
       "returnType": "void",

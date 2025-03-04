@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="594">
+    <Functions count="595">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1619,6 +1619,13 @@
             <Param type="Vector2" name="c3" desc="" />
             <Param type="Vector2" name="p4" desc="" />
             <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineSegmentLinearVar" retType="void" paramCount="5" desc="Draw spline segment with variable thickness: Linear Bezier, 2 points">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="const float*" name="thicks" desc="" />
+            <Param type="int" name="thickCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineSegmentBezierCubicVar" retType="void" paramCount="7" desc="Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points">
