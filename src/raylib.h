@@ -1298,6 +1298,7 @@ RLAPI void DrawSplineSegmentBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4
 RLAPI void DrawSplineSegmentCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float thick, Color color); // Draw spline segment: Catmull-Rom, 4 points
 RLAPI void DrawSplineSegmentBezierQuadratic(Vector2 p1, Vector2 c2, Vector2 p3, float thick, Color color); // Draw spline segment: Quadratic Bezier, 2 points, 1 control point
 RLAPI void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float thick, Color color); // Draw spline segment: Cubic Bezier, 2 points, 2 control points
+RLAPI void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, const float* thicks, int thickCount, Color color); // Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness
 
 // Spline segment point evaluation functions, for a given t [0.0f .. 1.0f]
 RLAPI Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t);                           // Get (evaluate) spline point: Linear
@@ -1305,6 +1306,22 @@ RLAPI Vector2 GetSplinePointBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4
 RLAPI Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);         // Get (evaluate) spline point: Catmull-Rom
 RLAPI Vector2 GetSplinePointBezierQuad(Vector2 p1, Vector2 c2, Vector2 p3, float t);                     // Get (evaluate) spline point: Quadratic Bezier
 RLAPI Vector2 GetSplinePointBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float t);        // Get (evaluate) spline point: Cubic Bezier
+
+// Spline segment slope evaluation functions, for a given t [0.0f .. 1.0f]
+RLAPI Vector2 GetSplineVelocityLinear(Vector2 startPos, Vector2 endPos);                                 // Get (evaluate) spline velocity: Linear
+RLAPI Vector2 GetSplineVelocityBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t); // Get (evaluate) spline velocity: Quadratic Bezier
+RLAPI Vector2 GetSplineVelocityBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t); // Get (evaluate) spline velocity: Cubic Bezier
+RLAPI Vector2 GetSplineAccelerationBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos);     // Get (evaluate) spline acceleration: Quadratic Bezier
+RLAPI Vector2 GetSplineAccelerationBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t); // Get (evaluate) spline acceleration: Cubic Bezier
+RLAPI Vector2 GetSplineJoltBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos); // Get (evaluate) spline jolt: Cubic Bezier
+
+// Spline segment bounds evaluation functions
+RLAPI Rectangle GetSplineBoundsBezierLinear(Vector2 startPos, Vector2 endPos);                           // Get (evaluate) spline bounds rectangle: Linear
+RLAPI Rectangle GetSplineBoundsBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos);         // Get (evaluate) spline bounds rectangle: Quadratic Bezier
+RLAPI Rectangle GetSplineBoundsBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos); // Get (evaluate) spline bounds rectangle: Cubic Bezier
+
+RLAPI float GetSplineCurvatureBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t); // Get (evaluate) spline curvature: Cubic Bezier
+RLAPI float GetSplineNearestTLinear(Vector2 startPos, Vector2 endPos, Vector2 point);                    // Get (evaluate) nearest t value to point: Linear
 
 // Basic shapes collision detection functions
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
