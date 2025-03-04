@@ -5211,6 +5211,20 @@ return {
       }
     },
     {
+      name = "DrawSplineSegmentBezierCubicVar",
+      description = "Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "c2"},
+        {type = "Vector2", name = "c3"},
+        {type = "Vector2", name = "p4"},
+        {type = "const float*", name = "thicks"},
+        {type = "int", name = "thickCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "GetSplinePointLinear",
       description = "Get (evaluate) spline point: Linear",
       returnType = "Vector2",
@@ -5265,6 +5279,123 @@ return {
         {type = "Vector2", name = "c3"},
         {type = "Vector2", name = "p4"},
         {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplineVelocityLinear",
+      description = "Get (evaluate) spline velocity: Linear",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "endPos"}
+      }
+    },
+    {
+      name = "GetSplineVelocityBezierQuad",
+      description = "Get (evaluate) spline velocity: Quadratic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "controlPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplineVelocityBezierCubic",
+      description = "Get (evaluate) spline velocity: Cubic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "startControlPos"},
+        {type = "Vector2", name = "endControlPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplineAccelerationBezierQuad",
+      description = "Get (evaluate) spline acceleration: Quadratic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "controlPos"},
+        {type = "Vector2", name = "endPos"}
+      }
+    },
+    {
+      name = "GetSplineAccelerationBezierCubic",
+      description = "Get (evaluate) spline acceleration: Cubic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "startControlPos"},
+        {type = "Vector2", name = "endControlPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplineJoltBezierCubic",
+      description = "Get (evaluate) spline jolt: Cubic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "startControlPos"},
+        {type = "Vector2", name = "endControlPos"},
+        {type = "Vector2", name = "endPos"}
+      }
+    },
+    {
+      name = "GetSplineBoundsBezierLinear",
+      description = "Get (evaluate) spline bounds rectangle: Linear",
+      returnType = "Rectangle",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "endPos"}
+      }
+    },
+    {
+      name = "GetSplineBoundsBezierQuad",
+      description = "Get (evaluate) spline bounds rectangle: Quadratic Bezier",
+      returnType = "Rectangle",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "controlPos"},
+        {type = "Vector2", name = "endPos"}
+      }
+    },
+    {
+      name = "GetSplineBoundsBezierCubic",
+      description = "Get (evaluate) spline bounds rectangle: Cubic Bezier",
+      returnType = "Rectangle",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "startControlPos"},
+        {type = "Vector2", name = "endControlPos"},
+        {type = "Vector2", name = "endPos"}
+      }
+    },
+    {
+      name = "GetSplineCurvatureBezierCubic",
+      description = "Get (evaluate) spline curvature: Cubic Bezier",
+      returnType = "float",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "startControlPos"},
+        {type = "Vector2", name = "endControlPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplineNearestTLinear",
+      description = "Get (evaluate) nearest t value to point: Linear",
+      returnType = "float",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "Vector2", name = "point"}
       }
     },
     {

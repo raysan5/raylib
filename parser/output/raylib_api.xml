@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="582">
+    <Functions count="594">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1621,6 +1621,15 @@
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawSplineSegmentBezierCubicVar" retType="void" paramCount="7" desc="Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points, 1 or more thickness">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="c2" desc="" />
+            <Param type="Vector2" name="c3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="const float*" name="thicks" desc="" />
+            <Param type="int" name="thickCount" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="GetSplinePointLinear" retType="Vector2" paramCount="3" desc="Get (evaluate) spline point: Linear">
             <Param type="Vector2" name="startPos" desc="" />
             <Param type="Vector2" name="endPos" desc="" />
@@ -1652,6 +1661,68 @@
             <Param type="Vector2" name="c3" desc="" />
             <Param type="Vector2" name="p4" desc="" />
             <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplineVelocityLinear" retType="Vector2" paramCount="2" desc="Get (evaluate) spline velocity: Linear">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+        </Function>
+        <Function name="GetSplineVelocityBezierQuad" retType="Vector2" paramCount="4" desc="Get (evaluate) spline velocity: Quadratic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="controlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplineVelocityBezierCubic" retType="Vector2" paramCount="5" desc="Get (evaluate) spline velocity: Cubic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="startControlPos" desc="" />
+            <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplineAccelerationBezierQuad" retType="Vector2" paramCount="3" desc="Get (evaluate) spline acceleration: Quadratic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="controlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+        </Function>
+        <Function name="GetSplineAccelerationBezierCubic" retType="Vector2" paramCount="5" desc="Get (evaluate) spline acceleration: Cubic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="startControlPos" desc="" />
+            <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplineJoltBezierCubic" retType="Vector2" paramCount="4" desc="Get (evaluate) spline jolt: Cubic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="startControlPos" desc="" />
+            <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+        </Function>
+        <Function name="GetSplineBoundsBezierLinear" retType="Rectangle" paramCount="2" desc="Get (evaluate) spline bounds rectangle: Linear">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+        </Function>
+        <Function name="GetSplineBoundsBezierQuad" retType="Rectangle" paramCount="3" desc="Get (evaluate) spline bounds rectangle: Quadratic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="controlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+        </Function>
+        <Function name="GetSplineBoundsBezierCubic" retType="Rectangle" paramCount="4" desc="Get (evaluate) spline bounds rectangle: Cubic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="startControlPos" desc="" />
+            <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+        </Function>
+        <Function name="GetSplineCurvatureBezierCubic" retType="float" paramCount="5" desc="Get (evaluate) spline curvature: Cubic Bezier">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="startControlPos" desc="" />
+            <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplineNearestTLinear" retType="float" paramCount="3" desc="Get (evaluate) nearest t value to point: Linear">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="Vector2" name="point" desc="" />
         </Function>
         <Function name="CheckCollisionRecs" retType="bool" paramCount="2" desc="Check collision between two rectangles">
             <Param type="Rectangle" name="rec1" desc="" />
