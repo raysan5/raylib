@@ -1202,6 +1202,143 @@ void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, 
     rlPopMatrix();
 }
 
+// Draw styled text
+void DrawTextStyled(const char *text, int posX, int posY, int fontSize, const Color *colors, int colorCount)
+{
+    if (GetFontDefault().texture.id != 0)
+    {
+        Vector2 position = { (float)posX, (float)posY };
+
+        int defaultFontSize = 10;
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
+
+        DrawTextStyledEx(GetFontDefault(), text, position, (float)fontSize, (float)spacing, colors, colorCount);
+    }
+}
+
+// Draw styled text using Font
+void DrawTextStyledEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, const Color *colors, int colorCount)
+{
+    if (font.texture.id == 0) font = GetFontDefault();
+
+    int size = TextLength(text);
+
+    Color defaultForeground = colorCount > 0 ? colors[0] : BLACK;
+    Color defaultBackground = { 0, 0, 0, 0 };
+
+    Color foreground = defaultForeground;
+    Color background = defaultBackground;
+
+    float textOffsetY = 0.0f;
+    float textOffsetX = 0.0f;
+
+    float scaleFactor = fontSize/font.baseSize;
+
+    for (int i = 0; i < size;)
+    {
+        int codepointByteCount = 0;
+        int codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+
+        if (codepoint == '\n')
+        {
+            textOffsetY += (fontSize + textLineSpacing);
+            textOffsetX = 0.0f;
+        }
+        else
+        {
+            if (codepoint == '\3') {
+                char colorBuffer[16] = { 0 };
+                int colorBufferIndex = 0;
+
+                i += codepointByteCount;
+
+                codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+
+                while (codepoint >= '0' && codepoint <= '9' && i < size && colorBufferIndex < sizeof(colorBuffer) - 1) {
+                    colorBuffer[colorBufferIndex++] = codepoint;
+
+                    i += codepointByteCount;
+
+                    codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+                }
+
+                int colorIndex = atoi(&colorBuffer);
+
+                foreground = colorIndex < colorCount ? colors[colorIndex] : defaultForeground;
+
+                if (codepoint == ',' && i + codepointByteCount < size) {
+                    int nextCodepointByteCount = 0;
+                    int nextI = i + codepointByteCount;
+                    int nextCodepoint = GetCodepointNext(&text[nextI], &nextCodepointByteCount);
+
+                    if (nextCodepoint >= '0' && nextCodepoint <= '9') {
+                        memset(colorBuffer, 0, sizeof(colorBuffer));
+
+                        colorBufferIndex = 0;
+
+                        i += codepointByteCount;
+
+                        codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+
+                        while (codepoint >= '0' && codepoint <= '9' && i < size && colorBufferIndex < sizeof(colorBuffer) - 1) {
+                            colorBuffer[colorBufferIndex++] = codepoint;
+
+                            i += codepointByteCount;
+
+                            codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+                        }
+
+                        colorIndex = atoi(&colorBuffer);
+
+                        background = colorIndex < colorCount ? colors[colorIndex] : defaultBackground;
+                    }
+                }
+            }
+            else if (codepoint == '\15') {
+                foreground = defaultForeground;
+                background = defaultBackground;
+
+                i += codepointByteCount;
+
+                codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+            }
+            else if (codepoint == '\22') {
+                Color temp = foreground;
+
+                foreground = background;
+                background = temp;
+
+                i += codepointByteCount;
+
+                codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+            }
+
+            if (i >= size) break;
+
+            int index = GetGlyphIndex(font, codepoint);
+            float increaseX = 0.0f;
+
+            if (font.glyphs[index].advanceX == 0) increaseX = ((float)font.recs[index].width*scaleFactor + spacing);
+            else increaseX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
+
+            if (background.a > 0)
+            {
+                DrawRectangle(position.x + textOffsetX, position.y + textOffsetY, increaseX, fontSize + textLineSpacing, background);
+            }
+
+            if ((codepoint != ' ') && (codepoint != '\t'))
+            {
+                DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, foreground);
+            }
+
+            textOffsetX += increaseX;
+        }
+
+        i += codepointByteCount;
+    }
+}
+
 // Draw one character (codepoint)
 void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint)
 {
