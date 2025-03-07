@@ -276,7 +276,7 @@ void ToggleFullscreen(void)
         CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
         RGFW_monitor_scaleToWindow(platform.mon, platform.window);
-       // RGFW_window_setFullscreen(platform.window, 1);
+        RGFW_window_setFullscreen(platform.window, 1);
     }
     else
     {
