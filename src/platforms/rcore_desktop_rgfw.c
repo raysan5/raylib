@@ -121,6 +121,7 @@ void CloseWindow(void);
 typedef struct {
     RGFW_window *window;                // Native display device (physical screen connection)
     RGFW_monitor mon;
+    double base;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -256,7 +257,7 @@ bool InitGraphicsDevice(void);   // Initialize graphics device
 // Check if application should close
 bool WindowShouldClose(void)
 {
-    if (CORE.Window.shouldClose == false && platform.window != NULL)
+    if (CORE.Window.shouldClose == false)
         CORE.Window.shouldClose = RGFW_window_shouldClose(platform.window);
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
@@ -265,8 +266,6 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 { 
-    if (platform.window == NULL) return;
-
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
@@ -278,7 +277,7 @@ void ToggleFullscreen(void)
         CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
         RGFW_monitor_scaleToWindow(platform.mon, platform.window);
-        RGFW_window_setFullscreen(platform.window, 1);
+       // RGFW_window_setFullscreen(platform.window, 1);
     }
     else
     {
@@ -308,8 +307,6 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (platform.window == NULL) return;
-    
     if (CORE.Window.fullscreen) 
     {
         CORE.Window.previousPosition = CORE.Window.position;
@@ -332,23 +329,18 @@ void ToggleBorderlessWindowed(void)
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
-    if (platform.window == NULL) return;
     RGFW_window_maximize(platform.window);
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
-    if (platform.window == NULL) return;
-
     RGFW_window_minimize(platform.window);
 }
 
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
-{
-    if (platform.window == NULL) return;
-    
+{   
     if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
         RGFW_window_focus(platform.window);
 
@@ -360,7 +352,7 @@ void SetWindowState(unsigned int flags)
 {
     CORE.Window.flags |= flags;
 
-    if (flags & FLAG_VSYNC_HINT && platform.window != NULL)
+    if (flags & FLAG_VSYNC_HINT)
     {
         RGFW_window_swapInterval(platform.window, 1);
     }
@@ -369,24 +361,24 @@ void SetWindowState(unsigned int flags)
         if (!CORE.Window.fullscreen)
             ToggleFullscreen();
     }
-    if (flags & FLAG_WINDOW_RESIZABLE && platform.window != NULL)
+    if (flags & FLAG_WINDOW_RESIZABLE)
     {
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(0, 0));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(0, 0));
     }
-    if (flags & FLAG_WINDOW_UNDECORATED && platform.window != NULL)
+    if (flags & FLAG_WINDOW_UNDECORATED)
     {
         RGFW_window_setBorder(platform.window, 0);
     }
-    if (flags & FLAG_WINDOW_HIDDEN && platform.window != NULL)
+    if (flags & FLAG_WINDOW_HIDDEN)
     {
         RGFW_window_hide(platform.window);
     }
-    if (flags & FLAG_WINDOW_MINIMIZED && platform.window != NULL)
+    if (flags & FLAG_WINDOW_MINIMIZED)
     {
         RGFW_window_minimize(platform.window);
     }
-    if (flags & FLAG_WINDOW_MAXIMIZED && platform.window != NULL)
+    if (flags & FLAG_WINDOW_MAXIMIZED)
     {
         RGFW_window_maximize(platform.window);
     }
@@ -410,7 +402,7 @@ void SetWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
-    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH && platform.window != NULL)
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
     {
         RGFW_window_setMousePassthrough(platform.window, 1);
     }
@@ -433,7 +425,7 @@ void ClearWindowState(unsigned int flags)
 {
     CORE.Window.flags &= ~flags;
 
-    if (flags & FLAG_VSYNC_HINT && platform.window != NULL)
+    if (flags & FLAG_VSYNC_HINT)
     {
         RGFW_window_swapInterval(platform.window, 0);
     }
@@ -442,29 +434,29 @@ void ClearWindowState(unsigned int flags)
         if (CORE.Window.fullscreen)
             ToggleFullscreen();
     }
-    if (flags & FLAG_WINDOW_RESIZABLE && platform.window != NULL)
+    if (flags & FLAG_WINDOW_RESIZABLE)
     {
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
     }
-    if (flags & FLAG_WINDOW_UNDECORATED && platform.window != NULL)
+    if (flags & FLAG_WINDOW_UNDECORATED)
     {
         RGFW_window_setBorder(platform.window, 1);
     }
-    if (flags & FLAG_WINDOW_HIDDEN && platform.window != NULL)
+    if (flags & FLAG_WINDOW_HIDDEN)
     {
         if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
             RGFW_window_focus(platform.window);
         RGFW_window_show(platform.window);
     }
-    if (flags & FLAG_WINDOW_MINIMIZED && platform.window != NULL)
+    if (flags & FLAG_WINDOW_MINIMIZED)
     {
         if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
             RGFW_window_focus(platform.window);
 
         RGFW_window_restore(platform.window);
     }
-    if (flags & FLAG_WINDOW_MAXIMIZED && platform.window != NULL)
+    if (flags & FLAG_WINDOW_MAXIMIZED)
     {
         if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
             RGFW_window_focus(platform.window);
@@ -474,7 +466,7 @@ void ClearWindowState(unsigned int flags)
     {
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
     }
-    if (flags & FLAG_WINDOW_TOPMOST && platform.window != NULL)
+    if (flags & FLAG_WINDOW_TOPMOST)
     {
         RGFW_window_setFloating(platform.window, RGFW_FALSE);
     }
@@ -490,7 +482,7 @@ void ClearWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
-    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH && platform.window != NULL)
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
     {
         RGFW_window_setMousePassthrough(platform.window, 0);
     }
@@ -541,22 +533,18 @@ int RGFW_formatToChannels(int format)
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:   // 2 bpp
             return 4;
         default: return 4;
-            return 4;
-        default: return 4;
     }
 }
 
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    if (platform.window == NULL) return;
     RGFW_window_setIcon(platform.window, image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
 }
 
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    if (platform.window == NULL) return;
     
     if ((images == NULL) || (count <= 0))
     {
@@ -582,7 +570,6 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    if (platform.window == NULL) return;
 
     RGFW_window_setName(platform.window, (char *)title);
     CORE.Window.title = title;
@@ -591,21 +578,18 @@ void SetWindowTitle(const char *title)
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    if (platform.window == NULL) return;
     RGFW_window_move(platform.window, RGFW_POINT(x, y));
 }
 
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    if (platform.window == NULL) return;
     RGFW_window_moveToMonitor(platform.window, RGFW_getMonitors()[monitor]);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    if (platform.window == NULL) return;
     RGFW_window_setMinSize(platform.window, RGFW_AREA(width, height));
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
@@ -614,7 +598,6 @@ void SetWindowMinSize(int width, int height)
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    if (platform.window == NULL) return;
     RGFW_window_setMaxSize(platform.window, RGFW_AREA(width, height));
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
@@ -623,7 +606,6 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    if (platform.window == NULL) return;
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 
@@ -633,14 +615,12 @@ void SetWindowSize(int width, int height)
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    if (platform.window == NULL) return;
     RGFW_window_setOpacity(platform.window, opacity);
 }
 
 // Set window focused
 void SetWindowFocused(void)
 {
-    if (platform.window == NULL) return;
     RGFW_window_focus(platform.window);
 }
 
@@ -648,7 +628,7 @@ void SetWindowFocused(void)
 void *GetWindowHandle(void)
 {
     if (platform.window == NULL) return NULL;
-#ifdef RGFW_WEBASM
+#ifdef RGFW_WASM
     return (void *)platform.window->src.ctx;
 #else
     return (void *)platform.window->src.window;
@@ -814,7 +794,6 @@ Image GetClipboardImage(void)
 // Show mouse cursor
 void ShowCursor(void)
 {
-    if (platform.window == NULL) return;
     RGFW_window_showMouse(platform.window, true);
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -822,7 +801,6 @@ void ShowCursor(void)
 // Hides mouse cursor
 void HideCursor(void)
 {
-    if (platform.window == NULL) return;
     RGFW_window_showMouse(platform.window, false);
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -830,7 +808,6 @@ void HideCursor(void)
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    if (platform.window == NULL) return;
     RGFW_disableCursor = false;
     RGFW_window_mouseUnhold(platform.window);
 
@@ -843,7 +820,6 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    if (platform.window == NULL) return;
     RGFW_disableCursor = true;
     RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
     HideCursor();
@@ -852,7 +828,7 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    if (platform.window == NULL) return;
+    //SwapBuffers(platform.window->src.hdc);
     RGFW_window_swapBuffers(platform.window);
 }
 
@@ -864,9 +840,10 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = 0.0;
-    unsigned long long int nanoSeconds = RGFW_getTimeNS();
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
+   // unsigned long long int nanoSeconds = RGFW_getTimeNS();
+    //ztime = (double)(nanoSeconds)*1e-9;  // Elapsed time since InitTimer()
 
+    time = (double) (RGFW_getTimerValue() - platform.base) / RGFW_getTimerFreq();
     return time;
 }
 
@@ -905,7 +882,6 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
-    if (platform.window == NULL) return;
     RGFW_window_moveMouse(platform.window, RGFW_POINT(x, y));
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
@@ -914,7 +890,6 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    if (platform.window == NULL) return;
     RGFW_window_setMouseStandard(platform.window, cursor);
 }
 
@@ -950,7 +925,6 @@ int RGFW_gpConvTable[18] = {
 // Register all input events
 void PollInputEvents(void)
 {
-    if (platform.window == NULL) return;
 #if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
@@ -1016,6 +990,12 @@ void PollInputEvents(void)
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
 
+    if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
+    {
+        RGFW_window_eventWait(platform.window, 0); // Wait for input events: keyboard/mouse/window events (callbacks) -> Update keys state
+        CORE.Time.previous = GetTime();
+    }
+
     while (RGFW_window_checkEvent(platform.window))
     {
         RGFW_event *event = &platform.window->event;
@@ -1023,14 +1003,12 @@ void PollInputEvents(void)
         
 		switch (event->type)
         {
+            case RGFW_mouseEnter: CORE.Input.Mouse.cursorOnScreen = true; break;
+            case RGFW_mouseLeave: CORE.Input.Mouse.cursorOnScreen = false; break;
             case RGFW_quit: 
-                if (CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN)
-                    event->type = 0;
-                else {
-                    CORE.Window.shouldClose = true; 
-                    return;
-                }
-                break;
+                event->type = 0;
+                CORE.Window.shouldClose = true; 
+                return;
             case RGFW_DND:      // Dropped file
             {
                 for (int i = 0; i < event->droppedFilesCount; i++)
@@ -1068,6 +1046,18 @@ void PollInputEvents(void)
                 CORE.Window.currentFbo.height = platform.window->r.h;
                 CORE.Window.resizedLastFrame = true;
             } break;
+            case RGFW_windowMaximized:
+                CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
+                break;
+            case RGFW_windowMinimized:
+                CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
+                break;
+            case RGFW_windowRestored:
+                if (RGFW_window_isMaximized(platform.window)) 
+                    CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
+                if (RGFW_window_isMinimized(platform.window))  
+                    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+                break;
             case RGFW_windowMoved:
             {
                 CORE.Window.position.x = platform.window->r.x;
@@ -1292,7 +1282,6 @@ int InitPlatform(void)
 
 
     // NOTE: Some OpenGL context attributes must be set before window creation
-
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21) 
     { 
@@ -1301,12 +1290,12 @@ int InitPlatform(void)
     } 
     else if (rlGetVersion() == RL_OPENGL_33) 
     { 
-        RGFW_setGLHint(RGFW_glCore, 3);
+        RGFW_setGLHint(RGFW_glMajor, 3);
         RGFW_setGLHint(RGFW_glMinor, 3);
     } 
     else if (rlGetVersion() == RL_OPENGL_43) 
     { 
-        RGFW_setGLHint(RGFW_glCore, 3);
+        RGFW_setGLHint(RGFW_glMajor, 4);
         RGFW_setGLHint(RGFW_glMinor, 3);
     }
 
@@ -1369,6 +1358,7 @@ int InitPlatform(void)
 
     // Initialize timing system
     //----------------------------------------------------------------------------
+    platform.base = RGFW_getTimerValue();  // Elapsed time since InitTimer()
     InitTimer();
     //----------------------------------------------------------------------------
 
@@ -1377,21 +1367,31 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-#ifdef RGFW_X11
-    for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
-    {
-        RGFW_registerGamepad(platform.window, i);
-    }
+#if defined(RGFW_WAYLAND)
+    if (RGFW_useWaylandBool)
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
+    else 
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (fallback)): Initialized successfully");
+#elif defined(RGFW_X11)
+    #if defined(__APPLE__)
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (MacOS)): Initialized successfully");
+    #else
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11): Initialized successfully");
+    #endif
+#elif defined (RGFW_WINDOWS)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Win32): Initialized successfully");
+#elif defined(RGFW_WASM)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - WASMs): Initialized successfully");
+#elif defined(RGFW_MACOS)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - MacOS): Initialized successfully");
 #endif
 
-    TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
     return 0;
 }
 
 // Close platform
 void ClosePlatform(void)
 {
-    if (platform.window == NULL) return;
     RGFW_window_close(platform.window);
 }
 
