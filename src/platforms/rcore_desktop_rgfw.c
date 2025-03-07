@@ -121,7 +121,6 @@ void CloseWindow(void);
 typedef struct {
     RGFW_window *window;                // Native display device (physical screen connection)
     RGFW_monitor mon;
-    double base;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -385,6 +384,8 @@ void SetWindowState(unsigned int flags)
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
         CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+        platform.window->_flags &= ~RGFW_windowFocusOnShow;
+        RGFW_window_setFlags(platform.window, platform.window->_flags);
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
@@ -464,6 +465,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
+        RGFW_window_setFlags(platform.window, platform.window->_flags | RGFW_windowFocusOnShow);
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
     }
     if (flags & FLAG_WINDOW_TOPMOST)
@@ -828,7 +830,6 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    //SwapBuffers(platform.window->src.hdc);
     RGFW_window_swapBuffers(platform.window);
 }
 
@@ -839,12 +840,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = 0.0;
-   // unsigned long long int nanoSeconds = RGFW_getTimeNS();
-    //ztime = (double)(nanoSeconds)*1e-9;  // Elapsed time since InitTimer()
-
-    time = (double) (RGFW_getTimerValue() - platform.base) / RGFW_getTimerFreq();
-    return time;
+    return RGFW_getTime();
 }
 
 // Open URL with default system browser (if available)
@@ -1301,6 +1297,8 @@ int InitPlatform(void)
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLHint(RGFW_glSamples, 4);
 
+    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) flags |= RGFW_windowFocusOnShow | RGFW_windowFocus;
+
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
 
@@ -1358,7 +1356,6 @@ int InitPlatform(void)
 
     // Initialize timing system
     //----------------------------------------------------------------------------
-    platform.base = RGFW_getTimerValue();  // Elapsed time since InitTimer()
     InitTimer();
     //----------------------------------------------------------------------------
 
