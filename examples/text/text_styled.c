@@ -49,13 +49,13 @@ int main(void)
 
             DrawTextStyled("This changes the \0032foreground color", 200, 80, 20, colors, colorCount);
 
-            DrawTextStyled("This changes the \0030,2background color", 200, 120, 20, colors, colorCount);
+            DrawTextStyled("This changes the \0042background color", 200, 120, 20, colors, colorCount);
 
-            DrawTextStyled("This changes the \0031,2foreground and background colors", 200, 160, 20, colors, colorCount);
+            DrawTextStyled("This changes the \0031\0042foreground and background colors", 200, 160, 20, colors, colorCount);
 
-            DrawTextStyled("\0031,2This \015restores the colors to the default ones", 200, 200, 20, colors, colorCount);
+            DrawTextStyled("\0031\0042This \015restores the colors to the default ones", 200, 200, 20, colors, colorCount);
 
-            DrawTextStyled("\0031,2This \022inverts\022 the colors", 200, 240, 20, colors, colorCount);
+            DrawTextStyled("\0031\0042This \022inverts\022 the colors", 200, 240, 20, colors, colorCount);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

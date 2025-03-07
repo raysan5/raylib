@@ -1247,7 +1247,9 @@ void DrawTextStyledEx(Font font, const char *text, Vector2 position, float fontS
         }
         else
         {
-            if (codepoint == '\3') {
+            if (codepoint == '\003' || codepoint == '\004')
+            {
+                bool isForeground = codepoint == '\003';
                 char colorBuffer[16] = { 0 };
                 int colorBufferIndex = 0;
 
@@ -1255,7 +1257,8 @@ void DrawTextStyledEx(Font font, const char *text, Vector2 position, float fontS
 
                 codepoint = GetCodepointNext(&text[i], &codepointByteCount);
 
-                while (codepoint >= '0' && codepoint <= '9' && i < size && colorBufferIndex < sizeof(colorBuffer) - 1) {
+                while (codepoint >= '0' && codepoint <= '9' && i < size && colorBufferIndex < sizeof(colorBuffer) - 1)
+                {
                     colorBuffer[colorBufferIndex++] = codepoint;
 
                     i += codepointByteCount;
@@ -1263,47 +1266,34 @@ void DrawTextStyledEx(Font font, const char *text, Vector2 position, float fontS
                     codepoint = GetCodepointNext(&text[i], &codepointByteCount);
                 }
 
-                int colorIndex = atoi(&colorBuffer);
+                if (colorBufferIndex > 0)
+                {
+                    int colorIndex = atoi(&colorBuffer);
 
-                foreground = colorIndex < colorCount ? colors[colorIndex] : defaultForeground;
-
-                if (codepoint == ',' && i + codepointByteCount < size) {
-                    int nextCodepointByteCount = 0;
-                    int nextI = i + codepointByteCount;
-                    int nextCodepoint = GetCodepointNext(&text[nextI], &nextCodepointByteCount);
-
-                    if (nextCodepoint >= '0' && nextCodepoint <= '9') {
-                        memset(colorBuffer, 0, sizeof(colorBuffer));
-
-                        colorBufferIndex = 0;
-
-                        i += codepointByteCount;
-
-                        codepoint = GetCodepointNext(&text[i], &codepointByteCount);
-
-                        while (codepoint >= '0' && codepoint <= '9' && i < size && colorBufferIndex < sizeof(colorBuffer) - 1) {
-                            colorBuffer[colorBufferIndex++] = codepoint;
-
-                            i += codepointByteCount;
-
-                            codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+                    if (colorIndex >= 0)
+                    {
+                        if (isForeground)
+                        {
+                            foreground = colorIndex < colorCount ? colors[colorIndex] : defaultForeground;
                         }
-
-                        colorIndex = atoi(&colorBuffer);
-
-                        background = colorIndex < colorCount ? colors[colorIndex] : defaultBackground;
+                        else
+                        {
+                            background = colorIndex < colorCount ? colors[colorIndex] : defaultBackground;
+                        }
                     }
                 }
+
+                continue;
             }
-            else if (codepoint == '\15') {
+            else if (codepoint == '\015') {
                 foreground = defaultForeground;
                 background = defaultBackground;
 
                 i += codepointByteCount;
 
-                codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+                continue;
             }
-            else if (codepoint == '\22') {
+            else if (codepoint == '\022') {
                 Color temp = foreground;
 
                 foreground = background;
@@ -1311,10 +1301,8 @@ void DrawTextStyledEx(Font font, const char *text, Vector2 position, float fontS
 
                 i += codepointByteCount;
 
-                codepoint = GetCodepointNext(&text[i], &codepointByteCount);
+                continue;
             }
-
-            if (i >= size) break;
 
             int index = GetGlyphIndex(font, codepoint);
             float increaseX = 0.0f;
@@ -1451,6 +1439,100 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
         if (letter != '\n')
         {
+            if (font.glyphs[index].advanceX > 0) textWidth += font.glyphs[index].advanceX;
+            else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
+        }
+        else
+        {
+            if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+            byteCounter = 0;
+            textWidth = 0;
+
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textHeight += (fontSize + textLineSpacing);
+        }
+
+        if (tempByteCounter < byteCounter) tempByteCounter = byteCounter;
+    }
+
+    if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+
+    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing);
+    textSize.y = textHeight;
+
+    return textSize;
+}
+
+// Measure styled string width for default font
+int MeasureTextStyled(const char *text, int fontSize)
+{
+    Vector2 textSize = { 0.0f, 0.0f };
+
+    // Check if default font has been loaded
+    if (GetFontDefault().texture.id != 0)
+    {
+        int defaultFontSize = 10;   // Default Font chars height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
+
+        textSize = MeasureTextStyledEx(GetFontDefault(), text, (float)fontSize, (float)spacing);
+    }
+
+    return (int)textSize.x;
+}
+
+// Measure styled string size for Font
+Vector2 MeasureTextStyledEx(Font font, const char *text, float fontSize, float spacing)
+{
+    Vector2 textSize = { 0 };
+
+    if ((isGpuReady && (font.texture.id == 0)) ||
+        (text == NULL) || (text[0] == '\0')) return textSize; // Security check
+
+    int size = TextLength(text);    // Get size in bytes of text
+    int tempByteCounter = 0;        // Used to count longer text line num chars
+    int byteCounter = 0;
+
+    float textWidth = 0.0f;
+    float tempTextWidth = 0.0f;     // Used to count longer text line width
+
+    float textHeight = fontSize;
+    float scaleFactor = fontSize/(float)font.baseSize;
+
+    int letter = 0;                 // Current character
+    int index = 0;                  // Index position in sprite font
+
+    for (int i = 0; i < size;)
+    {
+        int codepointByteCount = 0;
+        letter = GetCodepointNext(&text[i], &codepointByteCount);
+
+        i += codepointByteCount;
+
+        if (letter == '\015' || letter == '\022')
+        {
+            continue;
+        }
+        else if (letter == '\003' || letter == '\004')
+        {
+            letter = GetCodepointNext(&text[i], &codepointByteCount);
+
+            while (letter >= '0' && letter <= '9' && i < size)
+            {
+                i += codepointByteCount;
+
+                letter = GetCodepointNext(&text[i], &codepointByteCount);
+            }
+
+            continue;
+        }
+
+        byteCounter++;
+
+        if (letter != '\n')
+        {
+            index = GetGlyphIndex(font, letter);
+
             if (font.glyphs[index].advanceX > 0) textWidth += font.glyphs[index].advanceX;
             else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
         }
