@@ -67,14 +67,20 @@ static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback fun
 static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
 static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
 
+static void* traceLogUser = NULL;                   // TraceLog callback user-data pointer
+static void* loadFileDataUser = NULL;               // LoadFileData callback user-data pointer
+static void* saveFileDataUser = NULL;               // SaveFileText callback user-data pointer
+static void* loadFileTextUser = NULL;               // LoadFileText callback user-data pointer
+static void* saveFileTextUser = NULL;               // SaveFileText callback user-data pointer
+
 //----------------------------------------------------------------------------------
 // Functions to set internal callbacks
 //----------------------------------------------------------------------------------
-void SetTraceLogCallback(TraceLogCallback callback) { traceLog = callback; }              // Set custom trace log
-void SetLoadFileDataCallback(LoadFileDataCallback callback) { loadFileData = callback; }  // Set custom file data loader
-void SetSaveFileDataCallback(SaveFileDataCallback callback) { saveFileData = callback; }  // Set custom file data saver
-void SetLoadFileTextCallback(LoadFileTextCallback callback) { loadFileText = callback; }  // Set custom file text loader
-void SetSaveFileTextCallback(SaveFileTextCallback callback) { saveFileText = callback; }  // Set custom file text saver
+void SetTraceLogCallback(void* userData, TraceLogCallback callback) { traceLogUser = userData; traceLog = callback; }                  // Set custom trace log
+void SetLoadFileDataCallback(void* userData, LoadFileDataCallback callback) { loadFileDataUser = userData; loadFileData = callback; }  // Set custom file data loader
+void SetSaveFileDataCallback(void* userData, SaveFileDataCallback callback) { saveFileDataUser = userData; saveFileData = callback; }  // Set custom file data saver
+void SetLoadFileTextCallback(void* userData, LoadFileTextCallback callback) { loadFileTextUser = userData; loadFileText = callback; }  // Set custom file text loader
+void SetSaveFileTextCallback(void* userData, SaveFileTextCallback callback) { saveFileTextUser = userData; saveFileText = callback; }  // Set custom file text saver
 
 #if defined(PLATFORM_ANDROID)
 static AAssetManager *assetManager = NULL;          // Android assets manager pointer
@@ -113,7 +119,7 @@ void TraceLog(int logType, const char *text, ...)
 
     if (traceLog)
     {
-        traceLog(logType, text, args);
+        traceLog(traceLogUser, logType, text, args);
         va_end(args);
         return;
     }
@@ -188,7 +194,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
     {
         if (loadFileData)
         {
-            data = loadFileData(fileName, dataSize);
+            data = loadFileData(loadFileDataUser, fileName, dataSize);
             return data;
         }
 #if defined(SUPPORT_STANDARD_FILEIO)
@@ -259,7 +265,7 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
     {
         if (saveFileData)
         {
-            return saveFileData(fileName, data, dataSize);
+            return saveFileData(saveFileDataUser, fileName, data, dataSize);
         }
 #if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "wb");
@@ -350,7 +356,7 @@ char *LoadFileText(const char *fileName)
     {
         if (loadFileText)
         {
-            text = loadFileText(fileName);
+            text = loadFileText(loadFileTextUser, fileName);
             return text;
         }
 #if defined(SUPPORT_STANDARD_FILEIO)
@@ -413,7 +419,7 @@ bool SaveFileText(const char *fileName, char *text)
     {
         if (saveFileText)
         {
-            return saveFileText(fileName, text);
+            return saveFileText(saveFileTextUser, fileName, text);
         }
 #if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "wt");
