@@ -736,7 +736,7 @@ int GetMonitorCount(void)
     return monitorCount;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     int index = 0;

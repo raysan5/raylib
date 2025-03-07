@@ -651,7 +651,7 @@ int GetMonitorCount(void)
     return count;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     RGFW_monitor *mons = RGFW_getMonitors();
