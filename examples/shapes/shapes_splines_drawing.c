@@ -158,6 +158,9 @@ int main(void)
         else if (IsKeyPressed(KEY_TWO)) splineTypeActive = 1;
         else if (IsKeyPressed(KEY_THREE)) splineTypeActive = 2;
         else if (IsKeyPressed(KEY_FOUR)) splineTypeActive = 3;
+
+        // Clear selection when changing to a spline without control points
+        if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_THREE)) selectedControlPoint = NULL;
         //----------------------------------------------------------------------------------
 
         // Draw
