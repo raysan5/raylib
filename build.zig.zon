@@ -1,17 +1,19 @@
 .{
-    .name = "raylib",
+    .name = .raylib,
     .version = "5.5.0",
-    .minimum_zig_version = "0.13.0",
+    .minimum_zig_version = "0.14.0",
+
+    .fingerprint = 0x13035e5cb8bc1ac2, // Changing this has security and trust implications.
 
     .dependencies = .{
         .xcode_frameworks = .{
             .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
-            .hash = "122098b9174895f9708bc824b0f9e550c401892c40a900006459acf2cbf78acd99bb",
+            .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
             .lazy = true,
         },
         .emsdk = .{
             .url = "git+https://github.com/emscripten-core/emsdk#3.1.50",
-            .hash = "1220e8fe9509f0843e5e22326300ca415c27afbfbba3992f3c3184d71613540b5564",
+            .hash = "N-V-__8AALRTBQDo_pUJ8IQ-XiIyYwDKQVwnr7-7o5kvPDGE",
             .lazy = true,
         },
     },
