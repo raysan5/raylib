@@ -1322,7 +1322,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
     if (fsFileName != NULL) fShaderStr = LoadFileText(fsFileName);
 
     if ((vShaderStr == NULL) && (fShaderStr == NULL)) TraceLog(LOG_WARNING, "SHADER: Shader files provided are not valid, using default shader");
-    
+
     shader = LoadShaderFromMemory(vShaderStr, fShaderStr);
 
     UnloadFileText(vShaderStr);
