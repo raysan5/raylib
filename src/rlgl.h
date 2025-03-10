@@ -3694,8 +3694,8 @@ unsigned char *rlReadScreenPixels(int width, int height)
     {
         for (int x = 0; x < (width*4); x += 4)
         {
-            size_t s = ((height - 1) - y)*width*4 + x;
-            size_t e = y*width*4 + x;
+            unsigned int s = ((height - 1) - y)*width*4 + x;
+            unsigned int e = y*width*4 + x;
 
             unsigned char r = imgData[s];
             unsigned char g = imgData[s+1];
