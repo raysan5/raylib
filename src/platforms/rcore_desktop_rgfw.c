@@ -264,11 +264,12 @@ bool WindowShouldClose(void)
 
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
-{   
+{ 
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
         CORE.Window.previousPosition = CORE.Window.position;
+        CORE.Window.previousScreen = CORE.Window.screen;
 
         platform.mon = RGFW_window_getMonitor(platform.window);
         CORE.Window.fullscreen = true;
@@ -292,7 +293,9 @@ void ToggleFullscreen(void)
 
         // we update the window position right away
         CORE.Window.position = CORE.Window.previousPosition;
+        RGFW_window_setFullscreen(platform.window, 0);
         RGFW_window_move(platform.window, RGFW_POINT(CORE.Window.position.x, CORE.Window.position.y));
+        RGFW_window_resize(platform.window, RGFW_AREA(CORE.Window.previousScreen.width, CORE.Window.previousScreen.height));
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -303,9 +306,6 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (platform.window == NULL)
-        return;
-    
     if (CORE.Window.fullscreen) 
     {
         CORE.Window.previousPosition = CORE.Window.position;
@@ -339,7 +339,7 @@ void MinimizeWindow(void)
 
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
-{
+{   
     if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
         RGFW_window_focus(platform.window);
 
@@ -384,6 +384,8 @@ void SetWindowState(unsigned int flags)
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
         CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+        platform.window->_flags &= ~RGFW_windowFocusOnShow;
+        RGFW_window_setFlags(platform.window, platform.window->_flags);
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
@@ -463,6 +465,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
+        RGFW_window_setFlags(platform.window, platform.window->_flags | RGFW_windowFocusOnShow);
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
     }
     if (flags & FLAG_WINDOW_TOPMOST)
@@ -544,6 +547,7 @@ void SetWindowIcon(Image image)
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
+    
     if ((images == NULL) || (count <= 0))
     {
         RGFW_window_setIcon(platform.window, NULL, RGFW_AREA(0, 0), 0);
@@ -568,6 +572,7 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
+
     RGFW_window_setName(platform.window, (char *)title);
     CORE.Window.title = title;
 }
@@ -624,7 +629,8 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#ifdef RGFW_WEBASM
+    if (platform.window == NULL) return NULL;
+#ifdef RGFW_WASM
     return (void *)platform.window->src.ctx;
 #else
     return (void *)platform.window->src.window;
@@ -653,9 +659,11 @@ int GetMonitorCount(void)
 
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
-{
+{    
     RGFW_monitor *mons = RGFW_getMonitors();
-    RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
+    RGFW_monitor mon;
+    if (platform.window) mon = RGFW_window_getMonitor(platform.window);
+    else                 mon = RGFW_getPrimaryMonitor();
 
     for (int i = 0; i < 6; i++)
     {
@@ -724,13 +732,16 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
+    if (platform.window == NULL) return (Vector2){ 0.0f, 0.0f };
     return (Vector2){ (float)platform.window->r.x, (float)platform.window->r.y };
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
+    RGFW_monitor monitor; 
+    if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
+    else                 monitor = RGFW_getPrimaryMonitor();
 
     return (Vector2){monitor.scaleX, monitor.scaleX};
 }
@@ -829,11 +840,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = 0.0;
-    unsigned long long int nanoSeconds = RGFW_getTimeNS();
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-
-    return time;
+    return RGFW_getTime();
 }
 
 // Open URL with default system browser (if available)
@@ -979,6 +986,12 @@ void PollInputEvents(void)
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
 
+    if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
+    {
+        RGFW_window_eventWait(platform.window, 0); // Wait for input events: keyboard/mouse/window events (callbacks) -> Update keys state
+        CORE.Time.previous = GetTime();
+    }
+
     while (RGFW_window_checkEvent(platform.window))
     {
         RGFW_event *event = &platform.window->event;
@@ -986,12 +999,12 @@ void PollInputEvents(void)
         
 		switch (event->type)
         {
+            case RGFW_mouseEnter: CORE.Input.Mouse.cursorOnScreen = true; break;
+            case RGFW_mouseLeave: CORE.Input.Mouse.cursorOnScreen = false; break;
             case RGFW_quit: 
-                if (CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN)
-                    event->type = 0;
-                else
-                    CORE.Window.shouldClose = true; 
-                break;
+                event->type = 0;
+                CORE.Window.shouldClose = true; 
+                return;
             case RGFW_DND:      // Dropped file
             {
                 for (int i = 0; i < event->droppedFilesCount; i++)
@@ -1029,6 +1042,18 @@ void PollInputEvents(void)
                 CORE.Window.currentFbo.height = platform.window->r.h;
                 CORE.Window.resizedLastFrame = true;
             } break;
+            case RGFW_windowMaximized:
+                CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
+                break;
+            case RGFW_windowMinimized:
+                CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
+                break;
+            case RGFW_windowRestored:
+                if (RGFW_window_isMaximized(platform.window)) 
+                    CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
+                if (RGFW_window_isMinimized(platform.window))  
+                    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+                break;
             case RGFW_windowMoved:
             {
                 CORE.Window.position.x = platform.window->r.x;
@@ -1253,7 +1278,6 @@ int InitPlatform(void)
 
 
     // NOTE: Some OpenGL context attributes must be set before window creation
-
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21) 
     { 
@@ -1262,16 +1286,18 @@ int InitPlatform(void)
     } 
     else if (rlGetVersion() == RL_OPENGL_33) 
     { 
-        RGFW_setGLHint(RGFW_glCore, 3);
+        RGFW_setGLHint(RGFW_glMajor, 3);
         RGFW_setGLHint(RGFW_glMinor, 3);
     } 
     else if (rlGetVersion() == RL_OPENGL_43) 
     { 
-        RGFW_setGLHint(RGFW_glCore, 3);
+        RGFW_setGLHint(RGFW_glMajor, 4);
         RGFW_setGLHint(RGFW_glMinor, 3);
     }
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLHint(RGFW_glSamples, 4);
+
+    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) flags |= RGFW_windowFocusOnShow | RGFW_windowFocus;
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
@@ -1338,14 +1364,25 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-#ifdef RGFW_X11
-    for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
-    {
-        RGFW_registerGamepad(platform.window, i);
-    }
+#if defined(RGFW_WAYLAND)
+    if (RGFW_useWaylandBool)
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
+    else 
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (fallback)): Initialized successfully");
+#elif defined(RGFW_X11)
+    #if defined(__APPLE__)
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (MacOS)): Initialized successfully");
+    #else
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11): Initialized successfully");
+    #endif
+#elif defined (RGFW_WINDOWS)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Win32): Initialized successfully");
+#elif defined(RGFW_WASM)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - WASMs): Initialized successfully");
+#elif defined(RGFW_MACOS)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - MacOS): Initialized successfully");
 #endif
 
-    TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
     return 0;
 }
 
