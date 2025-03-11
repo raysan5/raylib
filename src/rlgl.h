@@ -4045,6 +4045,8 @@ void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool norma
 void rlSetVertexAttributeI(unsigned int index, int compSize, int type, int stride, int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: Data type could be: GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT, GL_INT, GL_UNSIGNED_INT
+
 
     size_t offsetNative = offset;
     glVertexAttribIPointer(index, compSize, type, stride, (void *)offsetNative);
