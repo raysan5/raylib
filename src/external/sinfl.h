@@ -174,7 +174,7 @@ sinfl_bsr(unsigned n) {
 #ifdef _MSC_VER
   unsigned long uln = 0;
   _BitScanReverse(&uln, n);
-  return int(uln);
+  return (int)(uln);
 #else // defined(__GNUC__) || defined(__clang__) || defined(__TINYC__)
   return 31 - __builtin_clz(n);
 #endif
