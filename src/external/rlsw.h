@@ -296,6 +296,12 @@ void swBindTexture(uint32_t id);
 #define SW_STATE_DEPTH_TEST     (1 << 1)
 #define SW_STATE_CULL_FACE      (1 << 2)
 
+#define SW_CLIP_INSIDE  (0x00) // 0000
+#define SW_CLIP_LEFT    (0x01) // 0001
+#define SW_CLIP_RIGHT   (0x02) // 0010
+#define SW_CLIP_BOTTOM  (0x04) // 0100
+#define SW_CLIP_TOP     (0x08) // 1000
+
 /* === Internal Structs === */
 
 typedef float sw_matrix_t[4*4];
@@ -478,6 +484,9 @@ static inline sw_vertex_t sw_lerp_vertex(const sw_vertex_t* a, const sw_vertex_t
     }
     return result;
 }
+
+
+/* === Pixel Format Conversion Part === */
 
 static inline uint32_t sw_cvt_hf_ui(uint16_t h)
 {
@@ -708,7 +717,10 @@ static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offse
     }
 }
 
-static inline void sw_map_repeat(int* out, float in, int max)
+
+/* === Texture Sampling Part === */
+
+static inline void sw_texture_map_repeat(int* out, float in, int max)
 {
     // Upscale to nearest texture coordinates
     // NOTE: We use '(int)(x+0.5)' although this is incorrect
@@ -719,48 +731,48 @@ static inline void sw_map_repeat(int* out, float in, int max)
     *out = abs((int)((in - (int)in) * (max - 1) + 0.5f));
 }
 
-static inline void sw_map_clamp_to_edge(int* out, float in, int max)
+static inline void sw_texture_map_clamp_to_edge(int* out, float in, int max)
 {
     *out = (int)(sw_saturate(in) * (max - 1) + 0.5f);
 }
 
-static inline void sw_map_mirrored_repeat(int* out, float in, int max)
+static inline void sw_texture_map_mirrored_repeat(int* out, float in, int max)
 {
     in = fmodf(fabsf(in), 2);
     if (in > 1.0f) in = 1.0f - (in - 1.0f);
     *out = (int)(in * (max - 1) + 0.5f);
 }
 
-static inline void sw_map(int* out, float in, int max, SWwrap mode)
+static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
 {
     switch (mode) {
     case SW_REPEAT:
-        sw_map_repeat(out, in, max);
+        sw_texture_map_repeat(out, in, max);
         break;
     case SW_CLAMP_TO_EDGE:
-        sw_map_clamp_to_edge(out, in, max);
+        sw_texture_map_clamp_to_edge(out, in, max);
         break;
     case SW_MIRRORED_REPEAT:
-        sw_map_mirrored_repeat(out, in, max);
+        sw_texture_map_mirrored_repeat(out, in, max);
         break;
     }
 }
 
-static inline void sw_sample_texture_nearest(float* color, const sw_texture_t* tex, float u, float v)
+static inline void sw_texture_sample_nearest(float* color, const sw_texture_t* tex, float u, float v)
 {
     int x, y;
-    sw_map(&x, u, tex->width, tex->sWrap);
-    sw_map(&y, v, tex->height, tex->tWrap);
+    sw_texture_map(&x, u, tex->width, tex->sWrap);
+    sw_texture_map(&y, v, tex->height, tex->tWrap);
     sw_get_pixel(color, tex->pixels, y * tex->width + x, tex->format);
 }
 
-static inline void sw_sample_texture_bilinear(float* color, const sw_texture_t* tex, float u, float v)
+static inline void sw_texture_sample_linear(float* color, const sw_texture_t* tex, float u, float v)
 {
     int x0, y0, x1, y1;
-    sw_map(&x0, u, tex->width, tex->sWrap);
-    sw_map(&y0, v, tex->height, tex->tWrap);
-    sw_map(&x1, u + tex->tx, tex->width, tex->sWrap);
-    sw_map(&y1, v + tex->ty, tex->height, tex->tWrap);
+    sw_texture_map(&x0, u, tex->width, tex->sWrap);
+    sw_texture_map(&y0, v, tex->height, tex->tWrap);
+    sw_texture_map(&x1, u + tex->tx, tex->width, tex->sWrap);
+    sw_texture_map(&y1, v + tex->ty, tex->height, tex->tWrap);
 
     float fx = u * (tex->width - 1) - x0;
     float fy = v * (tex->height - 1) - y0;
@@ -779,7 +791,7 @@ static inline void sw_sample_texture_bilinear(float* color, const sw_texture_t* 
     }
 }
 
-static inline void sw_sample_texture(float* color, const sw_texture_t* tex, float u, float v,
+static inline void sw_texture_sample(float* color, const sw_texture_t* tex, float u, float v,
                                      float xDu, float yDu, float xDv, float yDv)
 {
     // TODO: It seems there are some incorrect detections depending on the context
@@ -796,21 +808,33 @@ static inline void sw_sample_texture(float* color, const sw_texture_t* tex, floa
     if (L > 1.0f) {
         // Minification
         if (tex->minFilter == SW_NEAREST) {
-            sw_sample_texture_nearest(color, tex, u, v);
+            sw_texture_sample_nearest(color, tex, u, v);
         } else if (tex->minFilter == SW_LINEAR) {
-            sw_sample_texture_bilinear(color, tex, u, v);
+            sw_texture_sample_linear(color, tex, u, v);
         }
     } else {
         // Magnification
         if (tex->magFilter == SW_NEAREST) {
-            sw_sample_texture_nearest(color, tex, u, v);
+            sw_texture_sample_nearest(color, tex, u, v);
         } else if (tex->magFilter == SW_LINEAR) {
-            sw_sample_texture_bilinear(color, tex, u, v);
+            sw_texture_sample_linear(color, tex, u, v);
         }
     }
 }
 
-static inline bool sw_clip_polygon_w(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+
+/* === Projection Helper Functions === */
+
+static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
+{
+    screen[0] = RLSW.vpPos[0] + (ndc[0] + 1.0f) * 0.5f * RLSW.vpDim[0];
+    screen[1] = RLSW.vpPos[1] + (ndc[1] + 1.0f) * 0.5f * RLSW.vpDim[1];
+}
+
+
+/* === Triangle Rendering Part === */
+
+static inline bool sw_triangle_clip_w(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
     sw_vertex_t input[SW_MAX_CLIPPED_POLYGON_VERTICES];
     for (int i = 0; i < SW_MAX_CLIPPED_POLYGON_VERTICES; i++) {
@@ -839,7 +863,7 @@ static inline bool sw_clip_polygon_w(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_
     return *vertexCounter > 0;
 }
 
-static inline bool sw_clip_polygon_xyz(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+static inline bool sw_triangle_clip_xyz(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
     for (int iAxis = 0; iAxis < 3; iAxis++)
     {
@@ -905,15 +929,14 @@ static inline bool sw_clip_polygon_xyz(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGO
     return *vertexCounter > 0;
 }
 
-void sw_project_and_clip_triangle(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
     for (int i = 0; i < *vertexCounter; i++) {
         sw_vertex_t *v = polygon + i;
-        for (int j = 0; j < 4; j++) v->homogeneous[j] = v->position[j];
-        sw_vec4_transform(v->homogeneous, v->homogeneous, RLSW.matMVP);
+        sw_vec4_transform(v->homogeneous, v->position, RLSW.matMVP);
     }
 
-    if (sw_clip_polygon_w(polygon, vertexCounter) && sw_clip_polygon_xyz(polygon, vertexCounter)) {
+    if (sw_triangle_clip_w(polygon, vertexCounter) && sw_triangle_clip_xyz(polygon, vertexCounter)) {
         for (int i = 0; i < *vertexCounter; i++) {
             sw_vertex_t *v = polygon + i;
 
@@ -937,14 +960,13 @@ void sw_project_and_clip_triangle(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VER
             v->color[3] *= v->homogeneous[3];
 
             // Transform to screen space
-            v->screen[0] = RLSW.vpPos[0] + (v->homogeneous[0] + 1.0f) * 0.5f * RLSW.vpDim[0];
-            v->screen[1] = RLSW.vpPos[1] + (v->homogeneous[1] + 1.0f) * 0.5f * RLSW.vpDim[1];
+            sw_project_ndc_to_screen(v->screen, v->homogeneous);
         }
     }
 }
 
-#define DEFINE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST)        \
-void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,                   \
+#define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST)        \
+static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,     \
                const sw_vertex_t* end, float yDu, float yDv)                        \
 {                                                                                   \
     /* Calculate the horizontal width and avoid division by zero */                 \
@@ -1013,7 +1035,7 @@ void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,               
         {                                                                           \
             /* Sample the texture */                                                \
             float texColor[4];                                                      \
-            sw_sample_texture(texColor, tex, u * w, v * w, xDu, yDu, xDv, yDv);     \
+            sw_texture_sample(texColor, tex, u * w, v * w, xDu, yDu, xDv, yDv);     \
                                                                                     \
             /* Interpolate the color and modulate by the texture color */           \
             for (int i = 0; i < 4; i++) {                                           \
@@ -1043,9 +1065,9 @@ void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,               
     }                                                                               \
 }
 
-#define DEFINE_RASTER_TRIANGLE(FUNC_NAME, FUNC_SCANLINE, ENABLE_TEXTURE)            \
-void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2, \
-               const sw_texture_t* tex)                                             \
+#define DEFINE_TRIANGLE_RASTER(FUNC_NAME, FUNC_SCANLINE, ENABLE_TEXTURE)            \
+static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2, \
+                             const sw_texture_t* tex)                               \
 {                                                                                   \
     /* Swap vertices by increasing y */                                             \
     if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t* tmp = v0; v0 = v1; v1 = tmp; }  \
@@ -1134,17 +1156,17 @@ void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* 
     }                                                                               \
 }
 
-DEFINE_RASTER_SCANLINE(sw_raster_scanline, false, false)
-DEFINE_RASTER_SCANLINE(sw_raster_scanline_tex, true, false)
-DEFINE_RASTER_SCANLINE(sw_raster_scanline_depth, false, true)
-DEFINE_RASTER_SCANLINE(sw_raster_scanline_tex_depth, true, true)
+DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline, false, false)
+DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_tex, true, false)
+DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_depth, false, true)
+DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_tex_depth, true, true)
 
-DEFINE_RASTER_TRIANGLE(sw_raster_triangle, sw_raster_scanline, false)
-DEFINE_RASTER_TRIANGLE(sw_raster_triangle_tex, sw_raster_scanline_tex, true)
-DEFINE_RASTER_TRIANGLE(sw_raster_triangle_depth, sw_raster_scanline_depth, false)
-DEFINE_RASTER_TRIANGLE(sw_raster_triangle_tex_depth, sw_raster_scanline_tex_depth, true)
+DEFINE_TRIANGLE_RASTER(sw_triangle_raster, sw_triangle_raster_scanline, false)
+DEFINE_TRIANGLE_RASTER(sw_triangle_raster_tex, sw_triangle_raster_scanline_tex, true)
+DEFINE_TRIANGLE_RASTER(sw_triangle_raster_depth, sw_triangle_raster_scanline_depth, false)
+DEFINE_TRIANGLE_RASTER(sw_triangle_raster_tex_depth, sw_triangle_raster_scanline_tex_depth, true)
 
-void sw_render_triangle(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2)
+static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2)
 {
     int vertexCounter = 3;
 
@@ -1153,45 +1175,313 @@ void sw_render_triangle(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_v
     polygon[1] = *v1;
     polygon[2] = *v2;
 
-    sw_project_and_clip_triangle(polygon, &vertexCounter);
+    sw_triangle_project_and_clip(polygon, &vertexCounter);
 
     if (vertexCounter < 3) {
         return;
     }
 
     if ((RLSW.stateFlags & SW_STATE_TEXTURE_2D) && (RLSW.stateFlags & SW_STATE_DEPTH_TEST)) {
-        for (int_fast8_t i = 0; i < vertexCounter - 2; i++) {
-            sw_raster_triangle_tex_depth(
+        for (int i = 0; i < vertexCounter - 2; i++) {
+            sw_triangle_raster_tex_depth(
                 &polygon[0], &polygon[i + 1], &polygon[i + 2],
                 &RLSW.loadedTextures[RLSW.currentTexture]
             );
         }
     }
     else if (RLSW.stateFlags & SW_STATE_TEXTURE_2D) {
-        for (int_fast8_t i = 0; i < vertexCounter - 2; i++) {
-            sw_raster_triangle_tex(
+        for (int i = 0; i < vertexCounter - 2; i++) {
+            sw_triangle_raster_tex(
                 &polygon[0], &polygon[i + 1], &polygon[i + 2],
                 &RLSW.loadedTextures[RLSW.currentTexture]
             );
         }
     }
     else if (RLSW.stateFlags & SW_STATE_DEPTH_TEST) {
-        for (int_fast8_t i = 0; i < vertexCounter - 2; i++) {
-            sw_raster_triangle_depth(
+        for (int i = 0; i < vertexCounter - 2; i++) {
+            sw_triangle_raster_depth(
                 &polygon[0], &polygon[i + 1], &polygon[i + 2],
                 &RLSW.loadedTextures[RLSW.currentTexture]
             );
         }
     }
     else {
-        for (int_fast8_t i = 0; i < vertexCounter - 2; i++) {
-            sw_raster_triangle(
+        for (int i = 0; i < vertexCounter - 2; i++) {
+            sw_triangle_raster(
                 &polygon[0], &polygon[i + 1], &polygon[i + 2],
                 &RLSW.loadedTextures[RLSW.currentTexture]
             );
         }
     }
 }
+
+
+/* === Line Rendering Part === */
+
+uint8_t sw_line_clip_encode_2d(const float screen[2], int xMin, int yMin, int xMax, int yMax)
+{
+    uint8_t code = SW_CLIP_INSIDE;
+    if (screen[0] < xMin) code |= SW_CLIP_LEFT;
+    if (screen[0] > xMax) code |= SW_CLIP_RIGHT;
+    if (screen[1] < yMin) code |= SW_CLIP_TOP;
+    if (screen[1] > yMax) code |= SW_CLIP_BOTTOM;
+    return code;
+}
+
+bool sw_line_clip_2d(sw_vertex_t* v1, sw_vertex_t* v2)
+{
+    int xMin = RLSW.vpMin[0];
+    int yMin = RLSW.vpMin[1];
+    int xMax = RLSW.vpMax[0];
+    int yMax = RLSW.vpMax[1];
+
+    bool accept = false;
+    uint8_t code0, code1;
+    float m = 0;
+
+    if (v1->screen[0] != v2->screen[0]) {
+        m = (v2->screen[1] - v1->screen[1]) / (v2->screen[0] - v1->screen[0]);
+    }
+
+    for (;;) {
+        code0 = sw_line_clip_encode_2d(v1->screen, xMin, yMin, xMax, yMax);
+        code1 = sw_line_clip_encode_2d(v2->screen, xMin, yMin, xMax, yMax);
+
+        // Accepted if both endpoints lie within rectangle
+        if ((code0 | code1) == 0) {
+            accept = true;
+            break;
+        }
+
+        // Rejected if both endpoints are outside rectangle, in same region
+        if (code0 & code1) break;
+
+        if (code0 == SW_CLIP_INSIDE) {
+            uint8_t ctmp = code0; code0 = code1; code1 = ctmp;
+            sw_vertex_t vtmp = *v1; *v1 = *v2; *v2 = vtmp;
+        }
+
+        if (code0 & SW_CLIP_LEFT) {
+            v1->screen[1] += (RLSW.vpMin[0] - v1->screen[0])*m;
+            v1->screen[0] = (float)RLSW.vpMin[0];
+        }
+        else if (code0 & SW_CLIP_RIGHT) {
+            v1->screen[1] += (RLSW.vpMax[0] - v1->screen[0])*m;
+            v1->screen[0] = (float)RLSW.vpMax[0];
+        }
+        else if (code0 & SW_CLIP_BOTTOM) {
+            if (m) v1->screen[0] += (RLSW.vpMin[1] - v1->screen[1]) / m;
+            v1->screen[1] = (float)RLSW.vpMin[1];
+        }
+        else if (code0 & SW_CLIP_TOP) {
+            if (m) v1->screen[0] += (RLSW.vpMax[1] - v1->screen[1]) / m;
+            v1->screen[1] = (float)RLSW.vpMax[1];
+        }
+    }
+
+    return accept;
+}
+
+bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
+{
+    if (fabsf(p) < SW_CLIP_EPSILON) {
+        // Check if the line is entirely outside the window
+        if (q < -SW_CLIP_EPSILON) return 0; // Completely outside
+        return 1;                           // Completely inside or on the edges
+    }
+
+    const float r = q / p;
+
+    if (p < 0) {
+        if (r > *t2) return 0;
+        if (r > *t1) *t1 = r;
+    } else {
+        if (r < *t1) return 0;
+        if (r < *t2) *t2 = r;
+    }
+
+    return 1;
+}
+
+bool sw_line_clip_3d(sw_vertex_t* v1, sw_vertex_t* v2)
+{
+    // TODO: Lerp all vertices here, not just homogeneous coordinates
+
+    float t1 = 0, t2 = 1;
+
+    float delta[4];
+    for (int i = 0; i < 4; i++) {
+        delta[i] = v2->homogeneous[i] - v1->homogeneous[i];
+    }
+
+    if (!sw_line_clip_coord_3d(v1->homogeneous[3] - v1->homogeneous[0], -delta[3] + delta[0], &t1, &t2)) return false;
+    if (!sw_line_clip_coord_3d(v1->homogeneous[3] + v1->homogeneous[0], -delta[3] - delta[0], &t1, &t2)) return false;
+
+    if (!sw_line_clip_coord_3d(v1->homogeneous[3] - v1->homogeneous[1], -delta[3] + delta[1], &t1, &t2)) return false;
+    if (!sw_line_clip_coord_3d(v1->homogeneous[3] + v1->homogeneous[1], -delta[3] - delta[1], &t1, &t2)) return false;
+
+    if (!sw_line_clip_coord_3d(v1->homogeneous[3] - v1->homogeneous[2], -delta[3] + delta[2], &t1, &t2)) return false;
+    if (!sw_line_clip_coord_3d(v1->homogeneous[3] + v1->homogeneous[2], -delta[3] - delta[2], &t1, &t2)) return false;
+
+    if (t2 < 1) {
+        for (int i = 0; i < 4; i++) {
+            v2->homogeneous[i] = v1->homogeneous[i] + t2 * delta[i];
+        }
+    }
+
+    if (t1 > 0) {
+        for (int i = 0; i < 4; i++) {
+            v1->homogeneous[i] = v1->homogeneous[i] + t1 * delta[i];
+        }
+    }
+
+    return true;
+}
+
+bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
+{
+    sw_vec4_transform(v0->homogeneous, v0->position, RLSW.matMVP);
+    sw_vec4_transform(v1->homogeneous, v1->position, RLSW.matMVP);
+
+    if (v0->homogeneous[3] == 1.0f && v1->homogeneous[3] == 1.0f) {
+        sw_project_ndc_to_screen(v0->screen, v0->homogeneous);
+        sw_project_ndc_to_screen(v1->screen, v1->homogeneous);
+        if (!sw_line_clip_2d(v0, v1)) {
+            return false;
+        }
+    }
+    else {
+        if (!sw_line_clip_3d(v0, v1)) {
+            return false;
+        }
+        // Convert XYZ coordinates to NDC
+        v0->homogeneous[3] = 1.0f / v0->homogeneous[3];
+        v1->homogeneous[3] = 1.0f / v1->homogeneous[3];
+        for (int i = 0; i < 3; i++) {
+            v0->homogeneous[i] *= v0->homogeneous[3];
+            v1->homogeneous[i] *= v1->homogeneous[3];
+        }
+        // Convert NDC coordinates to screen space
+        sw_project_ndc_to_screen(v0->screen, v0->homogeneous);
+        sw_project_ndc_to_screen(v1->screen, v1->homogeneous);
+    }
+
+    return true;
+}
+
+#define DEFINE_LINE_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST)                \
+void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1)            \
+{                                                                       \
+    int x1 = (int)v0->screen[0];                                        \
+    int y1 = (int)v0->screen[1];                                        \
+    int x2 = (int)v1->screen[0];                                        \
+    int y2 = (int)v1->screen[1];                                        \
+                                                                        \
+    float z1 = v0->homogeneous[2];                                      \
+    float z2 = v1->homogeneous[2];                                      \
+                                                                        \
+    int shortLen = y2 - y1;                                             \
+    int longLen = x2 - x1;                                              \
+    bool yLonger = 0;                                                   \
+                                                                        \
+    if (abs(shortLen) > abs(longLen)) {                                 \
+        int tmp = shortLen;                                             \
+        shortLen = longLen;                                             \
+        longLen = tmp;                                                  \
+        yLonger = 1;                                                    \
+    }                                                                   \
+                                                                        \
+    float invEndVal = 1.0f / longLen;                                   \
+    int endVal = longLen;                                               \
+    int sgnInc = 1;                                                     \
+                                                                        \
+    if (longLen < 0) {                                                  \
+        longLen = -longLen;                                             \
+        sgnInc = -1;                                                    \
+    }                                                                   \
+                                                                        \
+    int decInc = (longLen == 0) ? 0                                     \
+        : (shortLen << 16) / longLen;                                   \
+                                                                        \
+    const int fb_width = RLSW.framebuffer.width;                        \
+    const float z_diff = z2 - z1;                                       \
+                                                                        \
+    uint8_t* color_buffer = RLSW.framebuffer.color;                     \
+    uint16_t* depth_buffer = RLSW.framebuffer.depth;                    \
+                                                                        \
+    int j = 0;                                                          \
+    if (yLonger) {                                                      \
+        for (int i = 0; i != endVal; i += sgnInc, j += decInc) {        \
+            float t = (float)i * invEndVal;                             \
+                                                                        \
+            int x = x1 + (j >> 16);                                     \
+            int y = y1 + i;                                             \
+            float z = z1 + t * z_diff;                                  \
+            int pixel_index = y * fb_width + x;                         \
+                                                                        \
+            uint16_t* dptr = &depth_buffer[pixel_index];                \
+            if (ENABLE_DEPTH_TEST) {                                    \
+                float depth = (float)(*dptr) / UINT16_MAX;              \
+                if (z > depth) continue;                                \
+            }                                                           \
+                                                                        \
+            *dptr = (uint16_t)(z * UINT16_MAX);                         \
+                                                                        \
+            int color_index = 4 * pixel_index;                          \
+            uint8_t* cptr = &color_buffer[color_index];                 \
+                                                                        \
+            for (int j = 0; j < 4; j++) {                               \
+                float finalColor = sw_lerp(v0->color[j], v1->color[j], t); \
+                cptr[j] = (uint8_t)(finalColor * 255);                  \
+            }                                                           \
+        }                                                               \
+    }                                                                   \
+    else {                                                              \
+        for (int i = 0; i != endVal; i += sgnInc, j += decInc) {        \
+            float t = (float)i * invEndVal;                             \
+                                                                        \
+            int x = x1 + i;                                             \
+            int y = y1 + (j >> 16);                                     \
+            float z = z1 + t * z_diff;                                  \
+            int pixel_index = y * fb_width + x;                         \
+                                                                        \
+            uint16_t* dptr = &depth_buffer[pixel_index];                \
+            if (ENABLE_DEPTH_TEST) {                                    \
+                float depth = (float)(*dptr) / UINT16_MAX;              \
+                if (z > depth) continue;                                \
+            }                                                           \
+                                                                        \
+            *dptr = (uint16_t)(z * UINT16_MAX);                         \
+                                                                        \
+            int color_index = 4 * pixel_index;                          \
+            uint8_t* cptr = &color_buffer[color_index];                 \
+                                                                        \
+            for (int j = 0; j < 4; j++) {                               \
+                float finalColor = sw_lerp(v0->color[j], v1->color[j], t); \
+                cptr[j] = (uint8_t)(finalColor * 255);                  \
+            }                                                           \
+        }                                                               \
+    }                                                                   \
+}
+
+DEFINE_LINE_RASTER(sw_line_raster, false)
+DEFINE_LINE_RASTER(sw_line_raster_depth, true)
+
+static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
+{
+    if (!sw_line_project_and_clip(v0, v1)) {
+        return;
+    }
+
+    if (RLSW.stateFlags & SW_STATE_DEPTH_TEST) {
+        sw_line_raster_depth(v0, v1);
+    }
+    else {
+        sw_line_raster(v0, v1);
+    }
+}
+
+/* === Some Validity Check Helper === */
 
 static inline bool sw_is_texture_id_valid(uint32_t id)
 {
@@ -1213,6 +1503,7 @@ static inline bool sw_is_texture_wrap_valid(int wrap)
 {
     return (wrap == SW_REPEAT || wrap == SW_CLAMP_TO_EDGE || SW_MIRRORED_REPEAT);
 }
+
 
 /* === Public Implementation === */
 
@@ -1694,22 +1985,25 @@ void swVertex4fv(const float* v)
         case SW_POINTS:
             break;
         case SW_LINES:
-            neededVertices = 2;
+            sw_line_render(
+                &RLSW.vertexBuffer[0],
+                &RLSW.vertexBuffer[1]
+            );
             break;
         case SW_TRIANGLES:
-            sw_render_triangle(
+            sw_triangle_render(
                 &RLSW.vertexBuffer[0],
                 &RLSW.vertexBuffer[1],
                 &RLSW.vertexBuffer[2]
             );
             break;
         case SW_QUADS:
-            sw_render_triangle(
+            sw_triangle_render(
                 &RLSW.vertexBuffer[0],
                 &RLSW.vertexBuffer[1],
                 &RLSW.vertexBuffer[2]
             );
-            sw_render_triangle(
+            sw_triangle_render(
                 &RLSW.vertexBuffer[2],
                 &RLSW.vertexBuffer[3],
                 &RLSW.vertexBuffer[0]
