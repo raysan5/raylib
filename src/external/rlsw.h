@@ -444,6 +444,27 @@ static inline void sw_vec4_transform(float dst[4], const float v[4], const sw_ma
     }
 }
 
+static inline float sw_saturate(float x)
+{
+    // After several comparisons, this saturation method
+    // seems to be the most optimized by GCC and Clang,
+    // and it does not produce any conditional branching.
+
+    // However, it is possible that a clamp could be
+    // more efficient on certain platforms.
+    // Comparisons will need to be made.
+
+    // SEE: https://godbolt.org/z/5qYznK5zj
+
+    // Saturation from below: max(0, x)
+    float y = 0.5f * (x + fabsf(x));
+
+    // Saturation from above: min(1, y)
+    return y - 0.5f * ((y - 1.0f) + fabsf(y - 1.0f));
+
+    // return (x < 0.0f) ? 0.0f : ((x > 1.0f) ? 1.0f : x);
+}
+
 static inline float sw_lerp(float a, float b, float t)
 {
     return a + t * (b - a);
@@ -700,8 +721,7 @@ static inline void sw_map_repeat(int* out, float in, int max)
 
 static inline void sw_map_clamp_to_edge(int* out, float in, int max)
 {
-    in = (in > 1.0f) ? 1.0f : ((in < 0.0f) ? 0.0f : in);
-    *out = (int)(in * (max - 1) + 0.5f);
+    *out = (int)(sw_saturate(in) * (max - 1) + 0.5f);
 }
 
 static inline void sw_map_mirrored_repeat(int* out, float in, int max)
@@ -991,12 +1011,9 @@ void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,               
                                                                                     \
             /* Interpolate the color and modulate by the texture color */           \
             for (int i = 0; i < 4; i++) {                                           \
-                float lerp = start->color[i] + t * dcol[i];                         \
-                float finalColor = texColor[i] * lerp;                              \
-                /* Inline clamp to keep the value between 0 and 1 */                \
-                /* NOTE: The need for clamp the colors could be a sign of problem during interpolation (?) */ \
-                finalColor = (finalColor < 0.0f) ? 0.0f : (finalColor > 1.0f ? 1.0f : finalColor); \
-                dst[i] = (uint8_t)(finalColor * 255.0f);                            \
+                float finalColor = texColor[i];                                     \
+                finalColor *= start->color[i] + t * dcol[i];                        \
+                dst[i] = (uint8_t)(sw_saturate(finalColor) * 255.0f);               \
             }                                                                       \
         }                                                                           \
         else                                                                        \
@@ -1004,10 +1021,7 @@ void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,               
             /* Interpolate the color */                                             \
             for (int i = 0; i < 4; i++) {                                           \
                 float finalColor = start->color[i] + t * dcol[i];                   \
-                /* Inline clamp to keep the value between 0 and 1 */                \
-                /* NOTE: The need for clamp the colors could be a sign of problem during interpolation (?) */ \
-                finalColor = (finalColor < 0.0f) ? 0.0f : (finalColor > 1.0f ? 1.0f : finalColor); \
-                dst[i] = (uint8_t)(finalColor * 255.0f);                            \
+                dst[i] = (uint8_t)(sw_saturate(finalColor) * 255.0f);               \
             }                                                                       \
         }                                                                           \
                                                                                     \
