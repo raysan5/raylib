@@ -232,6 +232,13 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx);
 #include <limits.h>
 #include <string.h>
 
+#ifdef DEBUG
+    // Undefine DEBUG to avoid external redefinition warnings/conflicts
+    // This is probably a common definition for
+    // many external build systems' debug configurations
+    #undef DEBUG
+#endif
+
 #if JAR_XM_DEBUG            //JAR_XM_DEBUG defined as 0
 #include <stdio.h>
 #define DEBUG(fmt, ...) do {                                        \
