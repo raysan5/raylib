@@ -930,6 +930,12 @@ void sw_project_and_clip_triangle(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VER
             v->texcoord[0] *= v->homogeneous[3];
             v->texcoord[1] *= v->homogeneous[3];
 
+            // Division of colors (perspective correct)
+            v->color[0] *= v->homogeneous[3];
+            v->color[1] *= v->homogeneous[3];
+            v->color[2] *= v->homogeneous[3];
+            v->color[3] *= v->homogeneous[3];
+
             // Transform to screen space
             v->screen[0] = RLSW.vpPos[0] + (v->homogeneous[0] + 1.0f) * 0.5f * RLSW.vpDim[0];
             v->screen[1] = RLSW.vpPos[1] + (v->homogeneous[1] + 1.0f) * 0.5f * RLSW.vpDim[1];
@@ -1012,7 +1018,7 @@ void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,               
             /* Interpolate the color and modulate by the texture color */           \
             for (int i = 0; i < 4; i++) {                                           \
                 float finalColor = texColor[i];                                     \
-                finalColor *= start->color[i] + t * dcol[i];                        \
+                finalColor *= (start->color[i] + t * dcol[i]) * w;                  \
                 dst[i] = (uint8_t)(sw_saturate(finalColor) * 255.0f);               \
             }                                                                       \
         }                                                                           \
@@ -1020,7 +1026,7 @@ void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,               
         {                                                                           \
             /* Interpolate the color */                                             \
             for (int i = 0; i < 4; i++) {                                           \
-                float finalColor = start->color[i] + t * dcol[i];                   \
+                float finalColor = (start->color[i] + t * dcol[i]) * w;             \
                 dst[i] = (uint8_t)(sw_saturate(finalColor) * 255.0f);               \
             }                                                                       \
         }                                                                           \
