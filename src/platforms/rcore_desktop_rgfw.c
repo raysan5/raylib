@@ -1033,8 +1033,19 @@ void PollInputEvents(void)
             case RGFW_windowResized:
             {
                 SetupViewport(platform.window->r.w, platform.window->r.h);
-                CORE.Window.screen.width = platform.window->r.w;
-                CORE.Window.screen.height =  platform.window->r.h;
+
+				// if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+				if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+				{
+					CORE.Window.screen.width = (int)(platform.window->r.w / GetWindowScaleDPI().x);
+					CORE.Window.screen.height = (int)(platform.window->r.h / GetWindowScaleDPI().y);
+				}
+				else
+				{
+					CORE.Window.screen.width = platform.window->r.w;
+					CORE.Window.screen.height = platform.window->r.h;
+				}
+
                 CORE.Window.currentFbo.width = platform.window->r.w;
                 CORE.Window.currentFbo.height = platform.window->r.h;
                 CORE.Window.resizedLastFrame = true;
