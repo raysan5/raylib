@@ -3688,12 +3688,12 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                 (strcmp(dp->d_name, "..") != 0))
             {
             #if defined(_WIN32)
-                int realPathLength = snprintf(path, sizeof(path) - 1, "%s\\%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
             #else
-                int realPathLength = snprintf(path, sizeof(path) - 1, "%s/%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
             #endif
 
-                if (realPathLength < 0 || realPathLength >= sizeof(path))
+                if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
                 {
                     TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
                 }
@@ -3746,12 +3746,12 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
             {
                 // Construct new path from our base path
             #if defined(_WIN32)
-                int realPathLength = snprintf(path, sizeof(path) - 1, "%s\\%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
             #else
-                int realPathLength = snprintf(path, sizeof(path) - 1, "%s/%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
             #endif
 
-                if (realPathLength < 0 || realPathLength >= sizeof(path))
+                if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
                 {
                     TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
                 }
