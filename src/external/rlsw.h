@@ -145,7 +145,7 @@ typedef enum {
     SW_LINES = GL_LINES,
     SW_TRIANGLES = GL_TRIANGLES,
     SW_QUADS = GL_QUADS,
-} SWfill;
+} SWdraw;
 
 typedef enum {
     SW_FRONT = GL_FRONT,
@@ -232,7 +232,9 @@ void swViewport(int x, int y, int width, int height);
 void swClearColor(float r, float g, float b, float a);
 void swClear(void);
 
-void swBegin(SWfill mode);
+void swCullFace(SWface face);
+
+void swBegin(SWdraw mode);
 void swEnd(void);
 
 void swVertex2i(int x, int y);
@@ -270,7 +272,7 @@ void swNormal3f(float x, float y, float z);
 void swNormal3fv(const float* v);
 
 void swBindArray(SWarray type, void *buffer);
-void swDrawArrays(SWfill mode, int offset, int count);
+void swDrawArrays(SWdraw mode, int offset, int count);
 
 uint32_t swLoadTexture(const void *data, int width, int height, int format, int mipmapCount);
 void swUnloadTexture(uint32_t id);
@@ -370,7 +372,7 @@ typedef struct {
     sw_vertex_t vertexBuffer[4];                                // Buffer used for storing primitive vertices, used for processing and rendering
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
-    SWfill fillMode;                                            // Current polygon filling mode (e.g., lines, triangles)
+    SWdraw drawMode;                                            // Current polygon filling mode (e.g., lines, triangles)
     float pointSize;                                            // Rasterized point size
     float lineWidth;                                            // Rasterized line width
 
@@ -936,6 +938,18 @@ static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPP
         sw_vec4_transform(v->homogeneous, v->position, RLSW.matMVP);
     }
 
+    if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
+        float x0 = polygon[0].homogeneous[0], y0 = polygon[0].homogeneous[1];
+        float x1 = polygon[1].homogeneous[0], y1 = polygon[1].homogeneous[1];
+        float x2 = polygon[2].homogeneous[0], y2 = polygon[2].homogeneous[1];
+
+        float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+        if ((RLSW.cullFace == SW_BACK && sgnArea >= 0) || (RLSW.cullFace == SW_FRONT  && sgnArea <= 0)) {
+            *vertexCounter = 0;
+            return;
+        }
+    }
+
     if (sw_triangle_clip_w(polygon, vertexCounter) && sw_triangle_clip_xyz(polygon, vertexCounter)) {
         for (int i = 0; i < *vertexCounter; i++) {
             sw_vertex_t *v = polygon + i;
@@ -965,7 +979,7 @@ static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPP
     }
 }
 
-#define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST)        \
+#define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST) \
 static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,     \
                const sw_vertex_t* end, float yDu, float yDv)                        \
 {                                                                                   \
@@ -1504,6 +1518,11 @@ static inline bool sw_is_texture_wrap_valid(int wrap)
     return (wrap == SW_REPEAT || wrap == SW_CLAMP_TO_EDGE || SW_MIRRORED_REPEAT);
 }
 
+static inline bool sw_is_face_valid(int face)
+{
+    return (face == SW_FRONT || face == SW_BACK);
+}
+
 
 /* === Public Implementation === */
 
@@ -1545,6 +1564,8 @@ void swInit(int w, int h)
     RLSW.vertexBuffer[0].normal[0] = 0.0f;
     RLSW.vertexBuffer[0].normal[1] = 0.0f;
     RLSW.vertexBuffer[0].normal[2] = 1.0f;
+
+    RLSW.cullFace = SW_BACK;
 
     static const float defTex[3*2*2] =
     {
@@ -1889,14 +1910,23 @@ void swClear(void)
     }
 }
 
-void swBegin(SWfill mode)
+void swCullFace(SWface face)
+{
+    if (!sw_is_face_valid(face)) {
+        RLSW.errCode = SW_INVALID_ENUM;
+        return;
+    }
+    RLSW.cullFace = face;
+}
+
+void swBegin(SWdraw mode)
 {
     if (mode < SW_POINTS || mode > SW_QUADS) {
         RLSW.errCode = SW_INVALID_ENUM;
         return;
     }
     RLSW.vertexCounter = 0;
-    RLSW.fillMode = mode;
+    RLSW.drawMode = mode;
 }
 
 void swEnd(void)
@@ -1960,7 +1990,7 @@ void swVertex4fv(const float* v)
     RLSW.vertexCounter++;
 
     int neededVertices = 0;
-    switch (RLSW.fillMode) {
+    switch (RLSW.drawMode) {
     case SW_POINTS:
         neededVertices = 1;
         break;
@@ -1981,7 +2011,7 @@ void swVertex4fv(const float* v)
         sw_matrix_mul(RLSW.matMVP, RLSW.matModel, RLSW.matView);
         sw_matrix_mul(RLSW.matMVP, RLSW.matMVP, RLSW.matProjection);
 
-        switch (RLSW.fillMode) {
+        switch (RLSW.drawMode) {
         case SW_POINTS:
             break;
         case SW_LINES:
@@ -2259,7 +2289,7 @@ void swBindArray(SWarray type, void *buffer)
     }
 }
 
-void swDrawArrays(SWfill mode, int offset, int count)
+void swDrawArrays(SWdraw mode, int offset, int count)
 {
     if (RLSW.array.positions == 0) {
         RLSW.errCode = SW_INVALID_OPERATION;
