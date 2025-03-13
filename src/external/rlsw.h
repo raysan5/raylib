@@ -324,6 +324,7 @@ void swBindTexture(uint32_t id);
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
+#include <stddef.h>
 #include <math.h>
 
 /* === Defines and Macros === */
@@ -519,10 +520,10 @@ static inline float sw_lerp(float a, float b, float t)
     return a + t * (b - a);
 }
 
-static inline sw_vertex_t sw_lerp_vertex(const sw_vertex_t* a, const sw_vertex_t* b, float t)
+static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_vertex_t* b, float t)
 {
     sw_vertex_t result;
-    for (int i = 0; i < sizeof(sw_vertex_t) / sizeof(float); i++) {
+    for (int i = 0; i < offsetof(sw_vertex_t, screen) / sizeof(float); i++) {
         ((float*)&result)[i] = sw_lerp(((float*)a)[i], ((float*)b)[i], t);
     }
     return result;
@@ -1031,7 +1032,7 @@ static inline bool sw_triangle_clip_w(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON
     for (int i = 0; i < inputCounter; i++) {
         char currDot = (input[i].homogeneous[3] < SW_CLIP_EPSILON) ? -1 : 1;
         if (prevDot*currDot < 0) {
-            polygon[(*vertexCounter)++] = sw_lerp_vertex(prevVt, &input[i], 
+            polygon[(*vertexCounter)++] = sw_lerp_vertex_PNTCH(prevVt, &input[i], 
                 (SW_CLIP_EPSILON - prevVt->homogeneous[3]) / (input[i].homogeneous[3] - prevVt->homogeneous[3]));
         }
         if (currDot > 0) {
@@ -1070,7 +1071,7 @@ static inline bool sw_triangle_clip_xyz(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYG
         for (int i = 0; i < inputCounter; i++) {
             char currDot = (input[i].homogeneous[iAxis] <= input[i].homogeneous[3]) ? 1 : -1;
             if (prevDot * currDot <= 0) {
-                polygon[(*vertexCounter)++] = sw_lerp_vertex(prevVt, &input[i], (prevVt->homogeneous[3] - prevVt->homogeneous[iAxis]) /
+                polygon[(*vertexCounter)++] = sw_lerp_vertex_PNTCH(prevVt, &input[i], (prevVt->homogeneous[3] - prevVt->homogeneous[iAxis]) /
                     ((prevVt->homogeneous[3] - prevVt->homogeneous[iAxis]) - (input[i].homogeneous[3] - input[i].homogeneous[iAxis])));
             }
             if (currDot > 0) {
@@ -1096,7 +1097,7 @@ static inline bool sw_triangle_clip_xyz(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYG
         for (int i = 0; i < inputCounter; i++) {
             char currDot = (-input[i].homogeneous[iAxis] <= input[i].homogeneous[3]) ? 1 : -1;
             if (prevDot*currDot <= 0) {
-                polygon[(*vertexCounter)++] = sw_lerp_vertex(prevVt, &input[i], (prevVt->homogeneous[3] + prevVt->homogeneous[iAxis]) /
+                polygon[(*vertexCounter)++] = sw_lerp_vertex_PNTCH(prevVt, &input[i], (prevVt->homogeneous[3] + prevVt->homogeneous[iAxis]) /
                     ((prevVt->homogeneous[3] + prevVt->homogeneous[iAxis]) - (input[i].homogeneous[3] + input[i].homogeneous[iAxis])));
             }
             if (currDot > 0) {
@@ -1162,17 +1163,13 @@ static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPP
 static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,     \
                              const sw_vertex_t* end, float yDu, float yDv)          \
 {                                                                                   \
-    /* Calculate the horizontal width and avoid division by zero */                 \
-    float dx = end->screen[0] - start->screen[0];                                   \
-    if (fabsf(dx) < 1e-4f) return;                                                  \
-                                                                                    \
     /* Convert and center the screen coordinates */                                 \
     int xStart = (int)(start->screen[0] + 0.5f);                                    \
     int xEnd   = (int)(end->screen[0] + 0.5f);                                      \
     int y      = (int)(start->screen[1] + 0.5f);                                    \
                                                                                     \
     /* Calculate the initial interpolation parameter and its increment */           \
-    float dt = 1.0f / dx;                                                           \
+    float dt = 1.0f / (end->screen[0] - start->screen[0]);                          \
     float t  = (xStart - start->screen[0]) * dt;                                    \
                                                                                     \
     float xDu, xDv;                                                                 \
@@ -1295,20 +1292,20 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
     float x1 = v1->screen[0], y1 = v1->screen[1];                                   \
     float x2 = v2->screen[0], y2 = v2->screen[1];                                   \
                                                                                     \
-    /* Reject degenerate triangles */                                               \
-    float height = y2 - y0;                                                         \
-    if (height < 1e-4f) return;                                                     \
+    /* Compute height differences */                                                \
+    float h20 = y2 - y0;                                                            \
+    float h10 = y1 - y0;                                                            \
+    float h21 = y2 - y1;                                                            \
                                                                                     \
-    /* Precompute the inverse of the triangle height and */                         \
-    /* edge lengths with checks to avoid division by zero. */                       \
-    float inv_height = 1.0f / height;                                               \
-    float inv_y1y0 = (y1 - y0 > 1e-4f) ? 1.0f / (y1 - y0) : 0.0f;                   \
-    float inv_y2y1 = (y2 - y1 > 1e-4f) ? 1.0f / (y2 - y1) : 0.0f;                   \
+    /* Precompute the inverse values without additional checks */                   \
+    float invH20 = (h20 > 1e-6f) ? 1.0f / h20 : 0.0f;                               \
+    float invH10 = (h10 > 1e-6f) ? 1.0f / h10 : 0.0f;                               \
+    float invH21 = (h21 > 1e-6f) ? 1.0f / h21 : 0.0f;                               \
                                                                                     \
     /* Pre-calculation of slopes (dx/dy) */                                         \
-    float dx02 = (x2 - x0) * inv_height;                                            \
-    float dx01 = (x1 - x0) * inv_y1y0;                                              \
-    float dx12 = (x2 - x1) * inv_y2y1;                                              \
+    float dx02 = (x2 - x0) * invH20;                                                \
+    float dx01 = (x1 - x0) * invH10;                                                \
+    float dx12 = (x2 - x1) * invH21;                                                \
                                                                                     \
     /* Y bounds (vertical clipping) */                                              \
     int yTop = (int)(y0 + 0.5f);                                                    \
@@ -1318,8 +1315,8 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
     /* Global calculation of vertical texture gradients for the triangle */         \
     float yDu, yDv;                                                                 \
     if (ENABLE_TEXTURE) {                                                           \
-        yDu = (v2->texcoord[0] - v0->texcoord[0]) * inv_height;                     \
-        yDv = (v2->texcoord[1] - v0->texcoord[1]) * inv_height;                     \
+        yDu = (v2->texcoord[0] - v0->texcoord[0]) * invH20;                         \
+        yDv = (v2->texcoord[1] - v0->texcoord[1]) * invH20;                         \
     }                                                                               \
                                                                                     \
     /* Initializing scanline variables */                                           \
@@ -1328,22 +1325,35 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
                                                                                     \
     /* Scanline for the upper part of the triangle */                               \
     for (int y = yTop; y < yMiddle; y++) {                                          \
+                                                                                    \
+        /* Discard the lines that are degenerate */                                 \
+        if (fabsf(xRight - xLeft) <= 1e-6f) {                                       \
+            goto discardTL;                                                         \
+        }                                                                           \
+                                                                                    \
+        /* Calculation of interpolation factors */                                  \
         float dy = (float)y - y0;                                                   \
-        float t1 = dy * inv_height;                                                 \
-        float t2 = dy * inv_y1y0;                                                   \
+        float t1 = dy * invH20;                                                     \
+        float t2 = dy * invH10;                                                     \
                                                                                     \
         /* Vertex interpolation */                                                  \
-        start = sw_lerp_vertex(v0, v2, t1);                                         \
-        end   = sw_lerp_vertex(v0, v1, t2);                                         \
+        start = sw_lerp_vertex_PNTCH(v0, v2, t1);                                   \
+        end   = sw_lerp_vertex_PNTCH(v0, v1, t2);                                   \
         start.screen[0] = xLeft;                                                    \
         start.screen[1] = (float)y;                                                 \
         end.screen[0] = xRight;                                                     \
         end.screen[1] = (float)y;                                                   \
                                                                                     \
-        if (xLeft > xRight) { sw_vertex_t tmp = start; start = end; end = tmp; }    \
+        if (xLeft > xRight) {                                                       \
+            sw_vertex_t tmp = start;                                                \
+            start = end;                                                            \
+            end = tmp;                                                              \
+        }                                                                           \
+                                                                                    \
         FUNC_SCANLINE(tex, &start, &end, yDu, yDv);                                 \
                                                                                     \
         /* Incremental update */                                                    \
+        discardTL:                                                                  \
         xLeft  += dx02;                                                             \
         xRight += dx01;                                                             \
     }                                                                               \
@@ -1351,22 +1361,35 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
     /* Scanline for the lower part of the triangle */                               \
     xRight = x1; /* Restart the right side from the second vertex */                \
     for (int y = yMiddle; y < yBottom; y++) {                                       \
+                                                                                    \
+        /* Discard the lines that are degenerate */                                 \
+        if (fabsf(xRight - xLeft) <= 1e-6f) {                                       \
+            goto discardBL;                                                         \
+        }                                                                           \
+                                                                                    \
+        /* Calculation of interpolation factors */                                  \
         float dy = (float)y - y0;                                                   \
-        float t1 = dy * inv_height;                                                 \
-        float t2 = (float)(y - y1) * inv_y2y1;                                      \
+        float t1 = dy * invH20;                                                     \
+        float t2 = (float)(y - y1) * invH21;                                        \
                                                                                     \
         /* Vertex interpolation */                                                  \
-        start = sw_lerp_vertex(v0, v2, t1);                                         \
-        end   = sw_lerp_vertex(v1, v2, t2);                                         \
+        start = sw_lerp_vertex_PNTCH(v0, v2, t1);                                   \
+        end   = sw_lerp_vertex_PNTCH(v1, v2, t2);                                   \
         start.screen[0] = xLeft;                                                    \
         start.screen[1] = (float)y;                                                 \
         end.screen[0] = xRight;                                                     \
         end.screen[1] = (float)y;                                                   \
                                                                                     \
-        if (xLeft > xRight) { sw_vertex_t tmp = start; start = end; end = tmp; }    \
+        if (xLeft > xRight) {                                                       \
+            sw_vertex_t tmp = start;                                                \
+            start = end;                                                            \
+            end = tmp;                                                              \
+        }                                                                           \
+                                                                                    \
         FUNC_SCANLINE(tex, &start, &end, yDu, yDv);                                 \
                                                                                     \
         /* Incremental update */                                                    \
+        discardBL:                                                                  \
         xLeft  += dx02;                                                             \
         xRight += dx12;                                                             \
     }                                                                               \
