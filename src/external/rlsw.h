@@ -430,6 +430,7 @@ typedef struct {
 
     SWmatrix currentMatrixMode;                                 // Current matrix mode (e.g., sw_MODELVIEW, sw_PROJECTION)
     bool modelMatrixUsed;                                       // Flag indicating if the model matrix is used
+    bool needToUpdateMVP;
 
     SWfactor srcFactor;
     SWfactor dstFactor;
@@ -1467,7 +1468,7 @@ static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* 
 
 /* === Line Rendering Part === */
 
-uint8_t sw_line_clip_encode_2d(const float screen[2], int xMin, int yMin, int xMax, int yMax)
+static inline uint8_t sw_line_clip_encode_2d(const float screen[2], int xMin, int yMin, int xMax, int yMax)
 {
     uint8_t code = SW_CLIP_INSIDE;
     if (screen[0] < xMin) code |= SW_CLIP_LEFT;
@@ -1477,7 +1478,7 @@ uint8_t sw_line_clip_encode_2d(const float screen[2], int xMin, int yMin, int xM
     return code;
 }
 
-bool sw_line_clip_2d(sw_vertex_t* v1, sw_vertex_t* v2)
+static inline bool sw_line_clip_2d(sw_vertex_t* v1, sw_vertex_t* v2)
 {
     int xMin = RLSW.vpMin[0];
     int yMin = RLSW.vpMin[1];
@@ -1531,7 +1532,7 @@ bool sw_line_clip_2d(sw_vertex_t* v1, sw_vertex_t* v2)
     return accept;
 }
 
-bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
+static inline bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
 {
     if (fabsf(p) < SW_CLIP_EPSILON) {
         // Check if the line is entirely outside the window
@@ -1552,7 +1553,7 @@ bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
     return 1;
 }
 
-bool sw_line_clip_3d(sw_vertex_t* v1, sw_vertex_t* v2)
+static inline bool sw_line_clip_3d(sw_vertex_t* v1, sw_vertex_t* v2)
 {
     // TODO: Lerp all vertices here, not just homogeneous coordinates
 
@@ -1587,7 +1588,7 @@ bool sw_line_clip_3d(sw_vertex_t* v1, sw_vertex_t* v2)
     return true;
 }
 
-bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
+static inline bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
 {
     sw_vec4_transform(v0->homogeneous, v0->position, RLSW.matMVP);
     sw_vec4_transform(v1->homogeneous, v1->position, RLSW.matMVP);
@@ -1619,7 +1620,7 @@ bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
 }
 
 #define DEFINE_LINE_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
-void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1)            \
+static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
 {                                                                       \
     int x1 = (int)v0->screen[0];                                        \
     int y1 = (int)v0->screen[1];                                        \
@@ -2089,6 +2090,8 @@ void swPopMatrix(void)
 void swLoadIdentity(void)
 {
     sw_matrix_id(*RLSW.currentMatrix);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swTranslatef(float x, float y, float z)
@@ -2101,6 +2104,8 @@ void swTranslatef(float x, float y, float z)
     mat[14] = z;
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swRotatef(float angle, float x, float y, float z)
@@ -2143,6 +2148,8 @@ void swRotatef(float angle, float x, float y, float z)
     mat[15] = 1.0f;
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swScalef(float x, float y, float z)
@@ -2155,11 +2162,15 @@ void swScalef(float x, float y, float z)
     mat[12] = 0, mat[13] = 0, mat[14] = 0, mat[15] = 1;
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swMultMatrixf(const float* mat)
 {
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swFrustum(double left, double right, double bottom, double top, double znear, double zfar)
@@ -2191,6 +2202,8 @@ void swFrustum(double left, double right, double bottom, double top, double znea
     mat[15] = 0.0f;
 
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swOrtho(double left, double right, double bottom, double top, double znear, double zfar)
@@ -2222,6 +2235,8 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
     mat[15] = 1.0f;
 
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
+
+    RLSW.needToUpdateMVP = true;
 }
 
 void swViewport(int x, int y, int width, int height)
@@ -2394,9 +2409,11 @@ void swVertex4fv(const float* v)
 
     if (RLSW.vertexCounter == neededVertices) {
 
-        // TODO: Optimize MVP calculation
-        sw_matrix_mul(RLSW.matMVP, RLSW.matModel, RLSW.matView);
-        sw_matrix_mul(RLSW.matMVP, RLSW.matMVP, RLSW.matProjection);
+        if (RLSW.needToUpdateMVP) {
+            RLSW.needToUpdateMVP = false;
+            sw_matrix_mul(RLSW.matMVP, RLSW.matModel, RLSW.matView);
+            sw_matrix_mul(RLSW.matMVP, RLSW.matMVP, RLSW.matProjection);
+        }
 
         switch (RLSW.drawMode) {
         case SW_POINTS:
