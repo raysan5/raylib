@@ -134,6 +134,19 @@
 #define GL_STACK_UNDERFLOW          0x0504
 #define GL_OUT_OF_MEMORY            0x0505
 
+#define GL_ALPHA                    0x1906
+#define GL_LUMINANCE                0x1909
+#define GL_LUMINANCE_ALPHA          0x190A
+#define GL_RGB                      0x1907
+#define GL_RGBA                     0x1908
+
+#define GL_BYTE                     0x1400
+#define GL_UNSIGNED_BYTE            0x1401
+#define GL_SHORT                    0x1402
+#define GL_UNSIGNED_SHORT           0x1403
+#define GL_INT                      0x1404
+#define GL_UNSIGNED_INT             0x1405
+#define GL_FLOAT                    0x1406
 
 /* === RLSW Enums === */
 
@@ -189,31 +202,21 @@ typedef enum {
 } SWfactor;
 
 typedef enum {
-    SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-    SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
-    SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
-    SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
-    SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
-    SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
-    SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-    SW_PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
-    SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
-    SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
-    SW_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
-    SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
-    SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
-    SW_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-    SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-    SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA,           // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_ETC1_RGB,            // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_ETC2_RGB,            // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
-} SWpixelformat;
+    SW_LUMINANCE = GL_LUMINANCE,
+    SW_LUMINANCE_ALPHA = GL_LUMINANCE_ALPHA,
+    SW_RGB = GL_RGB,
+    SW_RGBA = GL_RGBA,
+} SWformat;
+
+typedef enum {
+    SW_UNSIGNED_BYTE = GL_UNSIGNED_BYTE,
+    SW_BYTE = GL_BYTE,
+    SW_UNSIGNED_SHORT = GL_UNSIGNED_SHORT,
+    SW_SHORT = GL_SHORT,
+    SW_UNSIGNED_INT = GL_UNSIGNED_INT,
+    SW_INT = GL_INT,
+    SW_FLOAT = GL_FLOAT
+} SWtype;
 
 typedef enum {
     SW_NEAREST = GL_NEAREST,
@@ -312,10 +315,11 @@ void swNormal3fv(const float* v);
 void swBindArray(SWarray type, void *buffer);
 void swDrawArrays(SWdraw mode, int offset, int count);
 
-uint32_t swLoadTexture(const void *data, int width, int height, int format, int mipmapCount);
-void swUnloadTexture(uint32_t id);
+void swGenTextures(int count, uint32_t* textures);
+void swDeleteTextures(int count, uint32_t* textures);
 
-void swTextureParameters(uint32_t id, int param, int value);
+void swTexImage2D(int width, int height, SWformat format, SWtype type, const void* data);
+void swTexParameteri(int param, int value);
 void swBindTexture(uint32_t id);
 
 #endif // RLSW_H
@@ -347,6 +351,33 @@ void swBindTexture(uint32_t id);
 #define SW_CLIP_TOP     (0x08) // 1000
 
 /* === Internal Structs === */
+
+typedef enum {
+    SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+    SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
+    SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
+    SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
+    SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+    SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+    SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+    SW_PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
+    SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
+    SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
+    SW_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
+    SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
+    SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
+    SW_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+    SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+    SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
+    SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA,           // 8 bpp
+    SW_PIXELFORMAT_COMPRESSED_ETC1_RGB,            // 4 bpp
+    SW_PIXELFORMAT_COMPRESSED_ETC2_RGB,            // 4 bpp
+    SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+    SW_PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
+    SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
+    SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+    SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+} sw_pixelformat_e;
 
 typedef float sw_matrix_t[4*4];
 typedef uint16_t sw_half_t;
@@ -531,7 +562,54 @@ static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_ve
 }
 
 
-/* === Pixel Format Conversion Part === */
+/* === Pixel Format Part === */
+
+int sw_get_pixel_format(SWformat format, SWtype type)
+{
+    int channels = 0;
+    int bitsPerChannel = 8; // Default: 8 bits per channel
+    
+    // Determine the number of channels (format)
+    switch (format) {
+        case SW_LUMINANCE:        channels = 1; break;
+        case SW_LUMINANCE_ALPHA:  channels = 2; break;
+        case SW_RGB:              channels = 3; break;
+        case SW_RGBA:             channels = 4; break;
+        default: return -1; // Unknown format
+    }
+
+    // Determine the depth of each channel (type)
+    switch (type) {
+        case SW_UNSIGNED_BYTE:    bitsPerChannel = 8;  break;
+        case SW_BYTE:             bitsPerChannel = 8;  break;
+        case SW_UNSIGNED_SHORT:   bitsPerChannel = 16; break;
+        case SW_SHORT:            bitsPerChannel = 16; break;
+        case SW_UNSIGNED_INT:     bitsPerChannel = 32; break;
+        case SW_INT:              bitsPerChannel = 32; break;
+        case SW_FLOAT:            bitsPerChannel = 32; break;
+        default: return -1; // Unknown type
+    }
+
+    // Map the format and type to the correct internal format
+    if (bitsPerChannel == 8) {
+        if (channels == 1) return SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+        if (channels == 2) return SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+        if (channels == 3) return SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8;
+        if (channels == 4) return SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    }
+    else if (bitsPerChannel == 16) {
+        if (channels == 1) return SW_PIXELFORMAT_UNCOMPRESSED_R16;
+        if (channels == 3) return SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16;
+        if (channels == 4) return SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16;
+    }
+    else if (bitsPerChannel == 32) {
+        if (channels == 1) return SW_PIXELFORMAT_UNCOMPRESSED_R32;
+        if (channels == 3) return SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+        if (channels == 4) return SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32;
+    }
+
+    return -1; // Unsupported format
+}
 
 static inline uint32_t sw_cvt_hf_ui(uint16_t h)
 {
@@ -690,7 +768,7 @@ static inline void sw_get_pixel_rgba_32323232(float* color, const void* pixels, 
     color[3] = pixel[3];
 }
 
-static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offset, SWpixelformat format)
+static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offset, sw_pixelformat_e format)
 {
     switch (format) {
 
@@ -1773,7 +1851,7 @@ static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
 
 /* === Some Validity Check Helper === */
 
-static inline bool sw_is_texture_id_valid(uint32_t id)
+static inline bool sw_is_texture_valid(uint32_t id)
 {
     bool valid = true;
 
@@ -2718,53 +2796,76 @@ void swDrawArrays(SWdraw mode, int offset, int count)
     swEnd();
 }
 
-uint32_t swLoadTexture(const void *data, int width, int height, int format, int mipmapCount)
+void swGenTextures(int count, uint32_t* textures)
 {
-    if (RLSW.loadedTextureCount >= SW_MAX_TEXTURES) {
-        RLSW.errCode = SW_STACK_OVERFLOW; //< Out of memory, not really stack overflow
-        return 0;
+    if (count == 0 || textures == NULL) {
+        return;
     }
 
-    sw_texture_t texture = { 0 };
-    texture.pixels = data;
-    texture.width = width;
-    texture.height = height;
-    texture.format = format;
-    texture.minFilter = SW_NEAREST;
-    texture.magFilter = SW_NEAREST;
-    texture.sWrap = SW_REPEAT;
-    texture.tWrap = SW_REPEAT;
-    texture.tx = 1.0f / width;
-    texture.ty = 1.0f / height;
-    (void)mipmapCount;
-
-    uint32_t id = 0;
-    if (RLSW.freeTextureIdCount > 0) {
-        id = RLSW.freeTextureIds[--RLSW.freeTextureIdCount];
-    } 
-    else {
-        id = RLSW.loadedTextureCount++;
+    for (int i = 0; i < count; i++) {
+        if (RLSW.loadedTextureCount >= SW_MAX_TEXTURES) {
+            RLSW.errCode = SW_STACK_OVERFLOW; //< Out of memory, not really stack overflow
+            return;
+        }
+        uint32_t id = 0;
+        if (RLSW.freeTextureIdCount > 0) {
+            id = RLSW.freeTextureIds[--RLSW.freeTextureIdCount];
+        } 
+        else {
+            id = RLSW.loadedTextureCount++;
+        }
+        RLSW.loadedTextures[id] = RLSW.loadedTextures[0];
+        textures[i] = id;
     }
-
-    RLSW.loadedTextures[id] = texture;
-
-    return id;
 }
 
-void swUnloadTexture(uint32_t id)
+void swDeleteTextures(int count, uint32_t* textures)
 {
-    if (!sw_is_texture_id_valid(id)) {
+    if (count == 0 || textures == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < count; i++) {
+        if (!sw_is_texture_valid(textures[i])) {
+            RLSW.errCode = SW_INVALID_VALUE;
+            continue;
+        }
+        RLSW.loadedTextures[textures[i]].pixels = 0;
+        RLSW.freeTextureIds[RLSW.freeTextureIdCount++] = textures[i];
+    }
+}
+
+void swTexImage2D(int width, int height, SWformat format, SWtype type, const void* data)
+{
+    uint32_t id = RLSW.currentTexture;
+
+    if (!sw_is_texture_valid(id)) {
         RLSW.errCode = SW_INVALID_VALUE;
         return;
     }
 
-    RLSW.loadedTextures[id].pixels = 0;
-    RLSW.freeTextureIds[RLSW.freeTextureIdCount++] = id;
+    int pixelFormat = sw_get_pixel_format(format, type);
+
+    if (pixelFormat < 0) {
+        RLSW.errCode = SW_INVALID_ENUM;
+        return;
+    }
+
+    sw_texture_t* texture = &RLSW.loadedTextures[id];
+
+    texture->pixels = data;
+    texture->width = width;
+    texture->height = height;
+    texture->format = pixelFormat;
+    texture->tx = 1.0f / width;
+    texture->ty = 1.0f / height;
 }
 
-void swTextureParameters(uint32_t id, int param, int value)
+void swTexParameteri(int param, int value)
 {
-    if (!sw_is_texture_id_valid(id)) {
+    uint32_t id = RLSW.currentTexture;
+
+    if (!sw_is_texture_valid(id)) {
         RLSW.errCode = SW_INVALID_VALUE;
         return;
     }
