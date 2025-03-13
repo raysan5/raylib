@@ -253,8 +253,8 @@ void swTranslatef(float x, float y, float z);
 void swRotatef(float angle, float x, float y, float z);
 void swScalef(float x, float y, float z);
 void swMultMatrixf(const float* mat);
-void swFrustum(float left, float right, float bottom, float top, float znear, float zfar);
-void swOrtho(float left, float right, float bottom, float top, float znear, float zfar);
+void swFrustum(double left, double right, double bottom, double top, double znear, double zfar);
+void swOrtho(double left, double right, double bottom, double top, double znear, double zfar);
 
 void swViewport(int x, int y, int width, int height);
 
@@ -1115,7 +1115,7 @@ static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPP
         float x2 = polygon[2].homogeneous[0], y2 = polygon[2].homogeneous[1];
 
         float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
-        if ((RLSW.cullFace == SW_BACK && sgnArea >= 0) || (RLSW.cullFace == SW_FRONT  && sgnArea <= 0)) {
+        if ((RLSW.cullFace == SW_FRONT && sgnArea >= 0) || (RLSW.cullFace == SW_BACK  && sgnArea <= 0)) {
             *vertexCounter = 0;
             return;
         }
@@ -2076,33 +2076,40 @@ void swRotatef(float angle, float x, float y, float z)
 {
     angle *= SW_DEG2RAD;
 
-    sw_matrix_t mat;
-    sw_matrix_id(mat);
-
     float lengthSq = x*x + y*y + z*z;
 
     if (lengthSq != 1.0f && lengthSq != 0.0f) {
-        float invLenght = 1.0f / lengthSq;
-        x *= invLenght;
-        y *= invLenght;
-        z *= invLenght;
+        float invLength = 1.0f/sqrtf(lengthSq);
+        x *= invLength;
+        y *= invLength;
+        z *= invLength;
     }
 
     float sinres = sinf(angle);
     float cosres = cosf(angle);
     float t = 1.0f - cosres;
 
-    mat[0]  = x*x*t + cosres;
-    mat[1]  = y*x*t + z*sinres;
-    mat[2]  = z*x*t - y*sinres;
+    sw_matrix_t mat;
 
-    mat[4]  = x*y*t - z*sinres;
-    mat[5]  = y*y*t + cosres;
-    mat[6]  = z*y*t + x*sinres;
+    mat[0] = x*x*t + cosres;
+    mat[1] = y*x*t + z*sinres;
+    mat[2] = z*x*t - y*sinres;
+    mat[3] = 0.0f;
 
-    mat[8]  = x*z*t + y*sinres;
-    mat[9]  = y*z*t - x*sinres;
+    mat[4] = x*y*t - z*sinres;
+    mat[5] = y*y*t + cosres;
+    mat[6] = z*y*t + x*sinres;
+    mat[7] = 0.0f;
+
+    mat[8] = x*z*t + y*sinres;
+    mat[9] = y*z*t - x*sinres;
     mat[10] = z*z*t + cosres;
+    mat[11] = 0.0f;
+
+    mat[12] = 0.0f;
+    mat[13] = 0.0f;
+    mat[14] = 0.0f;
+    mat[15] = 1.0f;
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
 }
@@ -2124,44 +2131,63 @@ void swMultMatrixf(const float* mat)
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
 }
 
-void swFrustum(float left, float right, float bottom, float top, float znear, float zfar)
+void swFrustum(double left, double right, double bottom, double top, double znear, double zfar)
 {
-    sw_matrix_t mat = { 0 };
+    sw_matrix_t mat;
 
-    float rl = right - left;
-    float tb = top - bottom;
-    float fn = zfar - znear;
+    double rl = right - left;
+    double tb = top - bottom;
+    double fn = zfar - znear;
 
-    mat[0] = (znear * 2.0f) / rl;
-    mat[5] = (znear * 2.0f) / tb;
+    mat[0] = (znear*2.0)/rl;
+    mat[1] = 0.0f;
+    mat[2] = 0.0f;
+    mat[3] = 0.0f;
 
-    mat[8] = (right + left) / rl;
-    mat[9] = (top + bottom) / tb;
-    mat[10] = -(zfar + znear) / fn;
+    mat[4] = 0.0f;
+    mat[5] = (znear*2.0)/tb;
+    mat[6] = 0.0f;
+    mat[7] = 0.0f;
+
+    mat[8] = (right + left)/rl;
+    mat[9] = (top + bottom)/tb;
+    mat[10] = -(zfar + znear)/fn;
     mat[11] = -1.0f;
 
-    mat[14] = -(zfar * znear * 2.0f) / fn;
+    mat[12] = 0.0f;
+    mat[13] = 0.0f;
+    mat[14] = -(zfar*znear*2.0)/fn;
+    mat[15] = 0.0f;
 
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
 }
 
-void swOrtho(float left, float right, float bottom, float top, float znear, float zfar)
+void swOrtho(double left, double right, double bottom, double top, double znear, double zfar)
 {
-    sw_matrix_t mat = { 0 };
+    sw_matrix_t mat;
 
-    float rl = (right - left);
-    float tb = (top - bottom);
-    float fn = (zfar - znear);
+    double rl = right - left;
+    double tb = top - bottom;
+    double fn = zfar - znear;
 
-    mat[0] = 2.0f / rl;
-    mat[5] = 2.0f / tb;
+    mat[0] = 2.0f/rl;
+    mat[1] = 0.0f;
+    mat[2] = 0.0f;
+    mat[3] = 0.0f;
 
-    mat[10] = -2.0f / fn;
+    mat[4] = 0.0f;
+    mat[5] = 2.0f/tb;
+    mat[6] = 0.0f;
+    mat[7] = 0.0f;
+
+    mat[8] = 0.0f;
+    mat[9] = 0.0f;
+    mat[10] = -2.0f/fn;
     mat[11] = 0.0f;
-    mat[12] = -(left + right) / rl;
-    mat[13] = -(top + bottom) / tb;
 
-    mat[14] = -(zfar + znear) / fn;
+    mat[12] = -(left + right)/rl;
+    mat[13] = -(top + bottom)/tb;
+    mat[14] = -(zfar + znear)/fn;
     mat[15] = 1.0f;
 
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
