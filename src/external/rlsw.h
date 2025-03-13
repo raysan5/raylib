@@ -1010,7 +1010,7 @@ static inline void sw_blend_colors(float dst[4], float src[4])
 static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 {
     screen[0] = RLSW.vpPos[0] + (ndc[0] + 1.0f) * 0.5f * RLSW.vpDim[0];
-    screen[1] = RLSW.vpPos[1] + (ndc[1] + 1.0f) * 0.5f * RLSW.vpDim[1];
+    screen[1] = RLSW.vpPos[1] + (1.0f - ndc[1]) * 0.5f * RLSW.vpDim[1];
 }
 
 
