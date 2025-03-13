@@ -337,6 +337,12 @@ void swBindTexture(uint32_t id);
 #define SW_DEG2RAD (SW_PI/180.0f)
 #define SW_RAD2DEG (180.0f/SW_PI)
 
+#define SW_FLOAT_TO_UNORM8(x) ((uint8_t)((x) * UINT8_MAX))
+#define SW_FLOAT_TO_UNORM16(x) ((uint16_t)((x) * UINT16_MAX))
+
+#define SW_UNORM8_TO_FLOAT(x) ((float)(x) * (1.0f / UINT8_MAX))
+#define SW_UNORM16_TO_FLOAT(x) ((float)(x) * (1.0f / UINT16_MAX))
+
 #define SW_STATE_CHECK(flags) ((RLSW.stateFlags & (flags)) == (flags))
 
 #define SW_STATE_TEXTURE_2D     (1 << 0)
@@ -639,7 +645,7 @@ static inline float sw_cvt_hf(sw_half_t y)
 
 static inline void sw_get_pixel_grayscale(float* color, const void* pixels, uint32_t offset)
 {
-    float gray = (float)((uint8_t*)pixels)[offset] / 255;
+    float gray = SW_UNORM8_TO_FLOAT(((uint8_t*)pixels)[offset]);
 
     color[0] = gray;
     color[1] = gray;
@@ -669,13 +675,10 @@ static inline void sw_get_pixel_red_32(float* color, const void* pixels, uint32_
 
 static inline void sw_get_pixel_grayscale_alpha(float* color, const void* pixels, uint32_t offset)
 {
-    float gray = (float)((uint8_t*)pixels)[2 * offset] / 255;
-    float alpha = (float)((uint8_t*)pixels)[2 * offset + 1] / 255;
+    const uint8_t* pixelData = (const uint8_t*)pixels + 2 * offset;
 
-    color[0] = gray;
-    color[1] = gray;
-    color[2] = gray;
-    color[3] = alpha;
+    color[0] = color[1] = color[2] = SW_UNORM8_TO_FLOAT(pixelData[0]);
+    color[3] = SW_UNORM8_TO_FLOAT(pixelData[1]);
 }
 
 static inline void sw_get_pixel_rgb_565(float* color, const void* pixels, uint32_t offset)
@@ -690,11 +693,11 @@ static inline void sw_get_pixel_rgb_565(float* color, const void* pixels, uint32
 
 static inline void sw_get_pixel_rgb_888(float* color, const void* pixels, uint32_t offset)
 {
-    const uint8_t* pixel = (uint8_t*)pixels + 3 * offset;
+    const uint8_t* pixel = (const uint8_t*)pixels + 3 * offset;
 
-    color[0] = (float)pixel[0] / 255;
-    color[1] = (float)pixel[1] / 255;
-    color[2] = (float)pixel[2] / 255;
+    color[0] = SW_UNORM8_TO_FLOAT(pixel[0]);
+    color[1] = SW_UNORM8_TO_FLOAT(pixel[1]);
+    color[2] = SW_UNORM8_TO_FLOAT(pixel[2]);
     color[3] = 1.0f;
 }
 
@@ -742,10 +745,10 @@ static inline void sw_get_pixel_rgba_8888(float* color, const void* pixels, uint
 {
     const uint8_t *pixel = (uint8_t*)pixels + 4 * offset;
 
-    color[0] = (float)pixel[0] / 255;
-    color[1] = (float)pixel[1] / 255;
-    color[2] = (float)pixel[2] / 255;
-    color[3] = (float)pixel[3] / 255;
+    color[0] = SW_UNORM8_TO_FLOAT(pixel[0]);
+    color[1] = SW_UNORM8_TO_FLOAT(pixel[1]);
+    color[2] = SW_UNORM8_TO_FLOAT(pixel[2]);
+    color[3] = SW_UNORM8_TO_FLOAT(pixel[3]);
 }
 
 static inline void sw_get_pixel_rgba_16161616(float* color, const void* pixels, uint32_t offset)
@@ -1292,12 +1295,12 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
         if (ENABLE_DEPTH_TEST) {                                                    \
             /* Depth testing with direct access to the depth buffer */              \
             /* TODO: Implement different depth funcs? */                            \
-            float depth = (float)(*dptr) / UINT16_MAX;                              \
+            float depth = SW_UNORM16_TO_FLOAT(*dptr);                               \
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
         /* Update the depth buffer */                                               \
-        *dptr = (uint16_t)(z * UINT16_MAX);                                         \
+        *dptr = SW_FLOAT_TO_UNORM16(z);                                             \
                                                                                     \
         if (ENABLE_COLOR_BLEND)                                                     \
         {                                                                           \
@@ -1748,11 +1751,11 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                                                                         \
             uint16_t* dptr = &depthBuffer[pixel_index];                 \
             if (ENABLE_DEPTH_TEST) {                                    \
-                float depth = (float)(*dptr) / UINT16_MAX;              \
+                float depth = SW_UNORM16_TO_FLOAT(*dptr);               \
                 if (z > depth) continue;                                \
             }                                                           \
                                                                         \
-            *dptr = (uint16_t)(z * UINT16_MAX);                         \
+            *dptr = SW_FLOAT_TO_UNORM16(z);                             \
                                                                         \
             int color_index = 4 * pixel_index;                          \
             uint8_t* cptr = &colorBuffer[color_index];                  \
@@ -1790,11 +1793,11 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                                                                         \
             uint16_t* dptr = &depthBuffer[pixel_index];                 \
             if (ENABLE_DEPTH_TEST) {                                    \
-                float depth = (float)(*dptr) / UINT16_MAX;              \
+                float depth = SW_UNORM16_TO_FLOAT(*dptr);               \
                 if (z > depth) continue;                                \
             }                                                           \
                                                                         \
-            *dptr = (uint16_t)(z * UINT16_MAX);                         \
+            *dptr = SW_FLOAT_TO_UNORM16(z);                             \
                                                                         \
             int color_index = 4 * pixel_index;                          \
             uint8_t* cptr = &colorBuffer[color_index];                  \
