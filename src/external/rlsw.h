@@ -71,6 +71,9 @@
 #define GL_CULL_FACE                0x0B44
 #define GL_BLEND                    0x0BE2
 
+#define GL_COLOR_BUFFER_BIT         0x00004000
+#define GL_DEPTH_BUFFER_BIT         0x00000100
+
 #define GL_MODELVIEW                0x1700
 #define GL_PROJECTION               0x1701
 #define GL_TEXTURE                  0x1702
@@ -140,6 +143,11 @@ typedef enum {
     SW_CULL_FACE = GL_CULL_FACE,
     SW_BLEND = GL_BLEND
 } SWstate;
+
+typedef enum {
+    SW_COLOR_BUFFER_BIT = GL_COLOR_BUFFER_BIT,
+    SW_DEPTH_BUFFER_BIT = GL_DEPTH_BUFFER_BIT
+} SWbuffer;
 
 typedef enum {
     SW_PROJECTION = GL_PROJECTION,
@@ -259,7 +267,7 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
 void swViewport(int x, int y, int width, int height);
 
 void swClearColor(float r, float g, float b, float a);
-void swClear(void);
+void swClear(uint32_t bitmask);
 
 void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
 void swCullFace(SWface face);
@@ -2227,13 +2235,31 @@ void swClearColor(float r, float g, float b, float a)
     RLSW.clearColor[3] = a * 255;
 }
 
-void swClear(void)
+void swClear(uint32_t bitmask)
 {
     int size = RLSW.framebuffer.width * RLSW.framebuffer.height;
 
-    for (int i = 0; i < size; i++) {
-        ((uint32_t*)RLSW.framebuffer.color)[i] = *((uint32_t*)RLSW.clearColor);
-        RLSW.framebuffer.depth[i] = RLSW.clearDepth;
+    uint32_t* cptr = (uint32_t*)RLSW.framebuffer.color;
+    uint16_t* dptr = RLSW.framebuffer.depth;
+
+    uint32_t c = *((uint32_t*)RLSW.clearColor);
+    uint16_t d = RLSW.clearDepth;
+
+    if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) {
+        for (int i = 0; i < size; i++) {
+            cptr[i] = c;
+            dptr[i] = d;
+        }
+    }
+    else if (bitmask & (SW_COLOR_BUFFER_BIT)) {
+        for (int i = 0; i < size; i++) {
+            cptr[i] = c;
+        }
+    }
+    else if (bitmask & SW_DEPTH_BUFFER_BIT) {
+        for (int i = 0; i < size; i++) {
+            dptr[i] = d;
+        }
     }
 }
 
