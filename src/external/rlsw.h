@@ -922,27 +922,26 @@ static inline void sw_texture_sample(float* color, const sw_texture_t* tex, floa
     //       at the wrong moment during rasterization. It would be worth reviewing
     //       this, although the scanline method complicates things.
 
+    // Previous method: There is no need to compute the square root
+    // because using the squared value, the comparison remains `L2 > 1.0f * 1.0f`
+    //float du = sqrtf(xDu * xDu + yDu * yDu);
+    //float dv = sqrtf(xDv * xDv + yDv * yDv);
+    //float L = (du > dv) ? du : dv;
+
     // Calculate the derivatives for each axis
-    float du = sqrtf(xDu * xDu + yDu * yDu);
-    float dv = sqrtf(xDv * xDv + yDv * yDv);
-    float L = (du > dv) ? du : dv;
+    float du2 = xDu * xDu + yDu * yDu;
+    float dv2 = xDv * xDv + yDv * yDv;
+    float L2 = (du2 > dv2) ? du2 : dv2;
     
-    // Select the filter based on the size of the footprint
-    if (L > 1.0f) {
-        // Minification
-        if (tex->minFilter == SW_NEAREST) {
-            sw_texture_sample_nearest(color, tex, u, v);
-        } else if (tex->minFilter == SW_LINEAR) {
-            sw_texture_sample_linear(color, tex, u, v);
-        }
-    } else {
-        // Magnification
-        if (tex->magFilter == SW_NEAREST) {
-            sw_texture_sample_nearest(color, tex, u, v);
-        } else if (tex->magFilter == SW_LINEAR) {
-            sw_texture_sample_linear(color, tex, u, v);
-        }
+    bool useMinFilter = (L2 > 1.0f);
+    int filter = useMinFilter ? tex->minFilter : tex->magFilter;
+    
+    if (filter == SW_NEAREST) {
+        sw_texture_sample_nearest(color, tex, u, v);
     }
+    else /* SW_LINEAR */ {
+        sw_texture_sample_linear(color, tex, u, v);
+    }    
 }
 
 
@@ -1949,6 +1948,7 @@ void swInit(int w, int h)
 
     RLSW.currentMatrixMode = SW_MODELVIEW;
     RLSW.currentMatrix = &RLSW.matView;
+    RLSW.needToUpdateMVP = true;
 
     sw_matrix_id(RLSW.matProjection);
     sw_matrix_id(RLSW.matTexture);
