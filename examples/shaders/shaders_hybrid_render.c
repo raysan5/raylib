@@ -69,12 +69,6 @@ int main(void)
     marchLocs.camDir = GetShaderLocation(shdrRaymarch, "camDir");
     marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
-    // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
-    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
-    SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
-
-    // Use Customized function to create writable depth texture buffer
-    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
 
     // Define the camera to look into our 3d world
     Camera camera = {
@@ -87,6 +81,7 @@ int main(void)
     
     // Camera FOV is pre-calculated in the camera Distance.
     float camDist = 1.0f/(tanf(camera.fovy*0.5f*DEG2RAD));
+    RenderTexture2D target;
     
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -96,6 +91,14 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        // Use Customized function to create writable depth texture buffer
+        // Transfer screenCenter position to shader. Which is used to calculate ray direction.
+		UnloadRenderTexture(target);
+	    target = LoadRenderTextureDepthTex(GetScreenWidth(), GetScreenHeight());
+        Vector2 screenCenter = {.x = GetScreenWidth()/2.0f, .y = GetScreenHeight()/2.0f};
+        SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
+
+
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Update Camera Postion in the ray march shader.
@@ -115,7 +118,7 @@ int main(void)
             // Raymarch Scene
             rlEnableDepthTest(); //Manually enable Depth Test to handle multiple rendering methods.
             BeginShaderMode(shdrRaymarch);
-                DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
+                DrawRectangleRec((Rectangle){0,0, (float)GetScreenWidth(), (float)GetScreenHeight()},WHITE);
             EndShaderMode();
             
             // Rasterize Scene
@@ -134,7 +137,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
         
-            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
+            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)GetScreenWidth(), (float)-GetScreenHeight() }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------

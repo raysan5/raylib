@@ -176,7 +176,7 @@ int main(void)
         
         EndMode3D();
 
-        DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 320, screenHeight - 20, 10, GRAY);
+        DrawText("Shadows in raylib using the shadowmapping algorithm!", GetScreenWidth() - 320, GetScreenHeight() - 20, 10, GRAY);
         DrawText("Use the arrow keys to rotate the light!", 10, 10, 30, RED);
 
         EndDrawing();

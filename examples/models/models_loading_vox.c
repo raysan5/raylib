@@ -182,11 +182,11 @@ int main(void)
 		EndMode3D();
 
 		// Display info
-		DrawRectangle(10, 400, 340, 60, Fade(SKYBLUE, 0.5f));
-		DrawRectangleLines(10, 400, 340, 60, Fade(DARKBLUE, 0.5f));
-		DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, 410, 10, BLUE);
-		DrawText("MOUSE MIDDLE BUTTON to ZOOM OR ROTATE CAMERA", 40, 420, 10, BLUE);
-		DrawText("UP-DOWN-LEFT-RIGHT KEYS to MOVE CAMERA", 40, 430, 10, BLUE);
+		DrawRectangle(10, GetScreenHeight() - 50, 340, 60, Fade(SKYBLUE, 0.5f));
+		DrawRectangleLines(10, GetScreenHeight() - 50, 340, 60, Fade(DARKBLUE, 0.5f));
+		DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, GetScreenHeight() - 50 + 10, 10, BLUE);
+		DrawText("MOUSE MIDDLE BUTTON to ZOOM OR ROTATE CAMERA", 40, GetScreenHeight() - 50 + 20, 10, BLUE);
+		DrawText("UP-DOWN-LEFT-RIGHT KEYS to MOVE CAMERA", 40, GetScreenHeight() - 50 + 30, 10, BLUE);
 		DrawText(TextFormat("File: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
 
 		EndDrawing();
