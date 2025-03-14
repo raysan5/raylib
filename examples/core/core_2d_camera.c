@@ -44,7 +44,11 @@ int main(void)
 
         spacing += (int)buildings[i].width;
 
-        buildColors[i] = (Color){ GetRandomValue(200, 240), GetRandomValue(200, 240), GetRandomValue(200, 250), 255 };
+        buildColors[i] = (Color){
+            (unsigned char)GetRandomValue(200, 240),
+            (unsigned char)GetRandomValue(200, 240),
+            (unsigned char)GetRandomValue(200, 250),
+            255};
     }
 
     Camera2D camera = { 0 };
