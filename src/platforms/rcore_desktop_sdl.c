@@ -1451,17 +1451,17 @@ void PollInputEvents(void)
                         const int width = event.window.data1;
                         const int height = event.window.data2;
                         SetupViewport(width, height);
-						// if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
-						if (IsWindowState(FLAG_WINDOW_HIGHDPI))
-						{
-							CORE.Window.screen.width = (int)(width / GetWindowScaleDPI().x);
-							CORE.Window.screen.height = (int)(height / GetWindowScaleDPI().y);
-						}
-						else
-						{
-							CORE.Window.screen.width = width;
-							CORE.Window.screen.height = height;
-						}
+                        // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+                        if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+                        {
+                            CORE.Window.screen.width = (int)(width / GetWindowScaleDPI().x);
+                            CORE.Window.screen.height = (int)(height / GetWindowScaleDPI().y);
+                        }
+                        else
+                        {
+                            CORE.Window.screen.width = width;
+                            CORE.Window.screen.height = height;
+                        }
                         CORE.Window.currentFbo.width = width;
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;

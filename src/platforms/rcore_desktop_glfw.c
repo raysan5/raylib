@@ -1753,12 +1753,12 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 
     if (IsWindowFullscreen()) return;
 
-	// if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
-	if (IsWindowState(FLAG_WINDOW_HIGHDPI))
-	{
-		width = (int)(width / GetWindowScaleDPI().x);
-		height = (int)(height / GetWindowScaleDPI().y);
-	}
+    // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+    if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+    {
+        width = (int)(width / GetWindowScaleDPI().x);
+        height = (int)(height / GetWindowScaleDPI().y);
+    }
 
     // Set current screen size
     CORE.Window.screen.width = width;
