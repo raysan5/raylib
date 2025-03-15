@@ -259,10 +259,18 @@ typedef enum {
 void swInit(int w, int h);
 void swClose(void);
 
+void* swGetColorBuffer(int* w, int* h);
+
 void swEnable(SWstate state);
 void swDisable(SWstate state);
 
-void* swGetColorBuffer(int* w, int* h);
+void swViewport(int x, int y, int width, int height);
+
+void swClearColor(float r, float g, float b, float a);
+void swClear(uint32_t bitmask);
+
+void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
+void swCullFace(SWface face);
 
 void swMatrixMode(SWmatrix mode);
 void swPushMatrix(void);
@@ -274,14 +282,6 @@ void swScalef(float x, float y, float z);
 void swMultMatrixf(const float* mat);
 void swFrustum(double left, double right, double bottom, double top, double znear, double zfar);
 void swOrtho(double left, double right, double bottom, double top, double znear, double zfar);
-
-void swViewport(int x, int y, int width, int height);
-
-void swClearColor(float r, float g, float b, float a);
-void swClear(uint32_t bitmask);
-
-void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
-void swCullFace(SWface face);
 
 void swBegin(SWdraw mode);
 void swEnd(void);
@@ -575,7 +575,7 @@ static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_ve
 
 /* === Framebuffer Part === */
 
-static inline void sw_load_framebuffer(void** color, void** depth, int w, int h)
+static inline void sw_framebuffer_load(void** color, void** depth, int w, int h)
 {
     int size = w * h;
 
@@ -585,27 +585,27 @@ static inline void sw_load_framebuffer(void** color, void** depth, int w, int h)
     // TODO: Handle memory allocation failure
 }
 
-static inline void* sw_get_color_address(void* ptr, uint32_t offset)
+static inline void* sw_framebuffer_get_color_addr(void* ptr, uint32_t offset)
 {
     return (uint8_t*)ptr + offset * SW_COLOR_PIXEL_SIZE;
 }
 
-static inline void sw_inc_color_address(void** ptr)
+static inline void sw_framebuffer_inc_color_addr(void** ptr)
 {
     *ptr = (void*)(((uint8_t*)*ptr) + SW_COLOR_PIXEL_SIZE);
 }
 
-static inline void* sw_get_depth_address(void* ptr, uint32_t offset)
+static inline void* sw_framebuffer_get_depth_addr(void* ptr, uint32_t offset)
 {
     return (uint8_t*)ptr + offset * SW_DEPTH_PIXEL_SIZE;
 }
 
-static inline void sw_inc_depth_address(void** ptr)
+static inline void sw_framebuffer_inc_depth_addr(void** ptr)
 {
     *ptr = (void*)(((uint8_t*)*ptr) + SW_DEPTH_PIXEL_SIZE);
 }
 
-static inline void sw_read_color(float dst[4], const void* src)
+static inline void sw_framebuffer_read_color(float dst[4], const void* src)
 {
 #if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
     uint8_t pixel = ((uint8_t*)src)[0];
@@ -627,7 +627,7 @@ static inline void sw_read_color(float dst[4], const void* src)
 #endif
 }
 
-static inline void sw_write_color(void* dst, float color[3])
+static inline void sw_framebuffer_write_color(void* dst, float color[3])
 {
 #if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
@@ -648,7 +648,7 @@ static inline void sw_write_color(void* dst, float color[3])
 #endif
 }
 
-static inline float sw_read_depth(const void* src)
+static inline float sw_framebuffer_read_depth(const void* src)
 {
 #if (SW_DEPTH_BUFFER_BITS == 8)
     return (float)((uint8_t*)src)[0] * (1.0f / UINT8_MAX);
@@ -662,7 +662,7 @@ static inline float sw_read_depth(const void* src)
 #endif
 }
 
-static inline void sw_write_depth(void* dst, float depth)
+static inline void sw_framebuffer_write_depth(void* dst, float depth)
 {
 #if (SW_DEPTH_BUFFER_BITS == 8)
     ((uint8_t*)dst)[0] = (uint8_t)(depth * UINT8_MAX);
@@ -676,7 +676,7 @@ static inline void sw_write_depth(void* dst, float depth)
 #endif
 }
 
-static inline void sw_fill_color(void* ptr, int size, float color[4])
+static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
 {
 #if (SW_COLOR_BUFFER_BITS == 8)
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
@@ -707,7 +707,7 @@ static inline void sw_fill_color(void* ptr, int size, float color[4])
 #endif
 }
 
-static inline void sw_fill_depth(void* ptr, int size, float value)
+static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 {
 #if (SW_DEPTH_BUFFER_BITS == 8)
     uint8_t v  = value * UINT8_MAX;
@@ -732,7 +732,7 @@ static inline void sw_fill_depth(void* ptr, int size, float value)
 #endif
 }
 
-static inline void sw_fill_color_and_depth(void* color_ptr, void* depth_ptr, int size, float color[4], float depth_value)
+static inline void sw_framebuffer_fill(void* color_ptr, void* depth_ptr, int size, float color[4], float depth_value)
 {
 #if (SW_COLOR_BUFFER_BITS == 8)
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
@@ -1499,12 +1499,12 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
     }                                                                               \
                                                                                     \
     /* Pre-calculate the starting pointer for the color framebuffer row */          \
-    void* cptr = sw_get_color_address(                                              \
+    void* cptr = sw_framebuffer_get_color_addr(                                     \
         RLSW.framebuffer.color, y * RLSW.framebuffer.width + xStart                 \
     );                                                                              \
                                                                                     \
     /* Pre-calculate the pointer for the depth buffer row */                        \
-    void* dptr = sw_get_depth_address(                                              \
+    void* dptr = sw_framebuffer_get_depth_addr(                                     \
         RLSW.framebuffer.depth, y * RLSW.framebuffer.width + xStart                 \
     );                                                                              \
                                                                                     \
@@ -1518,17 +1518,17 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
         {                                                                           \
             /* Depth testing with direct access to the depth buffer */              \
             /* TODO: Implement different depth funcs? */                            \
-            float depth =  sw_read_depth(dptr);                                     \
+            float depth =  sw_framebuffer_read_depth(dptr);                         \
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
         /* Update the depth buffer */                                               \
-        sw_write_depth(dptr, z);                                                    \
+        sw_framebuffer_write_depth(dptr, z);                                        \
                                                                                     \
         if (ENABLE_COLOR_BLEND)                                                     \
         {                                                                           \
             float dstColor[4];                                                      \
-            sw_read_color(dstColor, cptr);                                          \
+            sw_framebuffer_read_color(dstColor, cptr);                              \
                                                                                     \
             float srcColor[4];                                                      \
             if (ENABLE_TEXTURE)                                                     \
@@ -1553,7 +1553,7 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
             dstColor[1] = sw_saturate(dstColor[1]);                                 \
             dstColor[2] = sw_saturate(dstColor[2]);                                 \
                                                                                     \
-            sw_write_color(cptr, dstColor);                                         \
+            sw_framebuffer_write_color(cptr, dstColor);                             \
         }                                                                           \
         else                                                                        \
         {                                                                           \
@@ -1564,7 +1564,7 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
                 color[0] = sw_saturate(color[0] * (start->color[0] + t * dcol[0]) * w); \
                 color[1] = sw_saturate(color[1] * (start->color[1] + t * dcol[1]) * w); \
                 color[2] = sw_saturate(color[2] * (start->color[2] + t * dcol[2]) * w); \
-                sw_write_color(cptr, color);                                        \
+                sw_framebuffer_write_color(cptr, color);                            \
             }                                                                       \
             else                                                                    \
             {                                                                       \
@@ -1572,15 +1572,15 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
                 color[0] = sw_saturate((start->color[0] + t * dcol[0]) * w);        \
                 color[1] = sw_saturate((start->color[1] + t * dcol[1]) * w);        \
                 color[2] = sw_saturate((start->color[2] + t * dcol[2]) * w);        \
-                sw_write_color(cptr, color);                                        \
+                sw_framebuffer_write_color(cptr, color);                            \
             }                                                                       \
         }                                                                           \
                                                                                     \
         /* Increment the interpolation parameter, UVs, and pointers */              \
         discard:                                                                    \
         t += dt;                                                                    \
-        sw_inc_color_address(&cptr);                                                \
-        sw_inc_depth_address(&dptr);                                                \
+        sw_framebuffer_inc_color_addr(&cptr);                                       \
+        sw_framebuffer_inc_depth_addr(&dptr);                                       \
         if (ENABLE_TEXTURE) {                                                       \
             u += xDu;                                                               \
             v += xDv;                                                               \
@@ -1978,20 +1978,25 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
             float z = z1 + t * zDiff;                                   \
             int offset = y * fbWidth + x;                               \
                                                                         \
-            void* dptr = sw_get_depth_address(depthBuffer, offset);     \
+            void* dptr = sw_framebuffer_get_depth_addr(                 \
+                depthBuffer, offset                                     \
+            );                                                          \
+                                                                        \
             if (ENABLE_DEPTH_TEST) {                                    \
-                float depth = sw_read_depth(dptr);                      \
+                float depth = sw_framebuffer_read_depth(dptr);          \
                 if (z > depth) continue;                                \
             }                                                           \
                                                                         \
-            sw_write_depth(dptr, z);                                    \
+            sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void* cptr = sw_get_depth_address(colorBuffer, offset);     \
+            void* cptr = sw_framebuffer_get_depth_addr(                 \
+                colorBuffer, offset                                     \
+            );                                                          \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
                 float dstColor[4];                                      \
-                sw_read_color(dstColor, cptr);                          \
+                sw_framebuffer_read_color(dstColor, cptr);              \
                                                                         \
                 float srcColor[4];                                      \
                 srcColor[0] = sw_lerp(v0->color[0], v1->color[0], t);   \
@@ -2000,7 +2005,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                 srcColor[3] = sw_lerp(v0->color[3], v1->color[3], t);   \
                                                                         \
                 sw_blend_colors(dstColor, srcColor);                    \
-                sw_write_color(cptr, dstColor);                         \
+                sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
             else                                                        \
             {                                                           \
@@ -2008,7 +2013,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                 color[0] = sw_lerp(v0->color[0], v1->color[0], t);      \
                 color[1] = sw_lerp(v0->color[1], v1->color[1], t);      \
                 color[2] = sw_lerp(v0->color[2], v1->color[2], t);      \
-                sw_write_color(cptr, color);                            \
+                sw_framebuffer_write_color(cptr, color);                \
             }                                                           \
         }                                                               \
     }                                                                   \
@@ -2021,20 +2026,25 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
             float z = z1 + t * zDiff;                                   \
             int offset = y * fbWidth + x;                               \
                                                                         \
-            void* dptr = sw_get_depth_address(depthBuffer, offset);     \
+            void* dptr = sw_framebuffer_get_depth_addr(                 \
+                depthBuffer, offset                                     \
+            );                                                          \
+                                                                        \
             if (ENABLE_DEPTH_TEST) {                                    \
-                float depth = sw_read_depth(dptr);                      \
+                float depth = sw_framebuffer_read_depth(dptr);          \
                 if (z > depth) continue;                                \
             }                                                           \
                                                                         \
-            sw_write_depth(dptr, z);                                    \
+            sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void* cptr = sw_get_depth_address(colorBuffer, offset);     \
+            void* cptr = sw_framebuffer_get_depth_addr(                 \
+                colorBuffer, offset                                     \
+            );                                                          \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
                 float dstColor[4];                                      \
-                sw_read_color(dstColor, cptr);                          \
+                sw_framebuffer_read_color(dstColor, cptr);              \
                                                                         \
                 float srcColor[4];                                      \
                 srcColor[0] = sw_lerp(v0->color[0], v1->color[0], t);   \
@@ -2043,7 +2053,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                 srcColor[3] = sw_lerp(v0->color[3], v1->color[3], t);   \
                                                                         \
                 sw_blend_colors(dstColor, srcColor);                    \
-                sw_write_color(cptr, dstColor);                         \
+                sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
             else                                                        \
             {                                                           \
@@ -2051,7 +2061,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                 color[0] = sw_lerp(v0->color[0], v1->color[0], t);      \
                 color[1] = sw_lerp(v0->color[1], v1->color[1], t);      \
                 color[2] = sw_lerp(v0->color[2], v1->color[2], t);      \
-                sw_write_color(cptr, color);                            \
+                sw_framebuffer_write_color(cptr, color);                \
             }                                                           \
         }                                                               \
     }                                                                   \
@@ -2165,7 +2175,7 @@ void swInit(int w, int h)
 {
     swViewport(0, 0, w, h);
 
-    sw_load_framebuffer(
+    sw_framebuffer_load(
         &RLSW.framebuffer.color,
         &RLSW.framebuffer.depth,
         w, h
@@ -2240,6 +2250,14 @@ void swClose(void)
     SW_FREE(RLSW.freeTextureIds);
 }
 
+void* swGetColorBuffer(int* w, int* h)
+{
+    if (w) *w = RLSW.framebuffer.width;
+    if (h) *h = RLSW.framebuffer.height;
+
+    return RLSW.framebuffer.color;
+}
+
 void swEnable(SWstate state)
 {
     switch (state) {
@@ -2282,12 +2300,76 @@ void swDisable(SWstate state)
     }
 }
 
-void* swGetColorBuffer(int* w, int* h)
+void swViewport(int x, int y, int width, int height)
 {
-    if (w) *w = RLSW.framebuffer.width;
-    if (h) *h = RLSW.framebuffer.height;
+    if (x <= -width || y <= -height) {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
 
-    return RLSW.framebuffer.color;
+    RLSW.vpPos[0] = x;
+    RLSW.vpPos[1] = y;
+
+    RLSW.vpDim[0] = width - 1;
+    RLSW.vpDim[1] = height - 1;
+
+    RLSW.vpMin[0] = (x < 0) ? 0 : x;
+    RLSW.vpMin[1] = (y < 0) ? 0 : y;
+
+    int fbW = RLSW.framebuffer.width - 1;
+    int fbH = RLSW.framebuffer.height - 1;
+
+    int vpMaxX = x + width;
+    int vpMaxY = y + height;
+
+    RLSW.vpMax[0] = (vpMaxX < fbW) ? vpMaxX : fbW;
+    RLSW.vpMax[1] = (vpMaxY < fbH) ? vpMaxY : fbH;
+}
+
+void swClearColor(float r, float g, float b, float a)
+{
+    RLSW.clearColor[0] = r;
+    RLSW.clearColor[1] = g;
+    RLSW.clearColor[2] = b;
+    RLSW.clearColor[3] = a;
+}
+
+void swClear(uint32_t bitmask)
+{
+    int size = RLSW.framebuffer.width * RLSW.framebuffer.height;
+
+    if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) {
+        sw_framebuffer_fill(
+            RLSW.framebuffer.color, RLSW.framebuffer.depth,
+            size, RLSW.clearColor, RLSW.clearDepth
+        );
+    }
+    else if (bitmask & (SW_COLOR_BUFFER_BIT)) {
+        sw_framebuffer_fill_color(RLSW.framebuffer.color, size, RLSW.clearColor);
+    }
+    else if (bitmask & SW_DEPTH_BUFFER_BIT) {
+        sw_framebuffer_fill_depth(RLSW.framebuffer.depth, size, RLSW.clearDepth);
+    }
+}
+
+void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
+{
+    if (!sw_is_blend_src_factor_valid(sfactor)
+     || !sw_is_blend_dst_factor_valid(dfactor)) {
+        RLSW.errCode = SW_INVALID_ENUM;
+        return;
+    }
+    RLSW.srcFactor = sfactor;
+    RLSW.dstFactor = dfactor;
+}
+
+void swCullFace(SWface face)
+{
+    if (!sw_is_face_valid(face)) {
+        RLSW.errCode = SW_INVALID_ENUM;
+        return;
+    }
+    RLSW.cullFace = face;
 }
 
 void swMatrixMode(SWmatrix mode)
@@ -2552,78 +2634,6 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
 
     RLSW.needToUpdateMVP = true;
-}
-
-void swViewport(int x, int y, int width, int height)
-{
-    if (x <= -width || y <= -height) {
-        RLSW.errCode = SW_INVALID_OPERATION;
-        return;
-    }
-
-    RLSW.vpPos[0] = x;
-    RLSW.vpPos[1] = y;
-
-    RLSW.vpDim[0] = width - 1;
-    RLSW.vpDim[1] = height - 1;
-
-    RLSW.vpMin[0] = (x < 0) ? 0 : x;
-    RLSW.vpMin[1] = (y < 0) ? 0 : y;
-
-    int fbW = RLSW.framebuffer.width - 1;
-    int fbH = RLSW.framebuffer.height - 1;
-
-    int vpMaxX = x + width;
-    int vpMaxY = y + height;
-
-    RLSW.vpMax[0] = (vpMaxX < fbW) ? vpMaxX : fbW;
-    RLSW.vpMax[1] = (vpMaxY < fbH) ? vpMaxY : fbH;
-}
-
-void swClearColor(float r, float g, float b, float a)
-{
-    RLSW.clearColor[0] = r;
-    RLSW.clearColor[1] = g;
-    RLSW.clearColor[2] = b;
-    RLSW.clearColor[3] = a;
-}
-
-void swClear(uint32_t bitmask)
-{
-    int size = RLSW.framebuffer.width * RLSW.framebuffer.height;
-
-    if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) {
-        sw_fill_color_and_depth(
-            RLSW.framebuffer.color, RLSW.framebuffer.depth,
-            size, RLSW.clearColor, RLSW.clearDepth
-        );
-    }
-    else if (bitmask & (SW_COLOR_BUFFER_BIT)) {
-        sw_fill_color(RLSW.framebuffer.color, size, RLSW.clearColor);
-    }
-    else if (bitmask & SW_DEPTH_BUFFER_BIT) {
-        sw_fill_depth(RLSW.framebuffer.depth, size, RLSW.clearDepth);
-    }
-}
-
-void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
-{
-    if (!sw_is_blend_src_factor_valid(sfactor)
-     || !sw_is_blend_dst_factor_valid(dfactor)) {
-        RLSW.errCode = SW_INVALID_ENUM;
-        return;
-    }
-    RLSW.srcFactor = sfactor;
-    RLSW.dstFactor = dfactor;
-}
-
-void swCullFace(SWface face)
-{
-    if (!sw_is_face_valid(face)) {
-        RLSW.errCode = SW_INVALID_ENUM;
-        return;
-    }
-    RLSW.cullFace = face;
 }
 
 void swBegin(SWdraw mode)
