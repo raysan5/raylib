@@ -39,6 +39,14 @@
 #   define SW_FREE(ptr) free(ptr)
 #endif
 
+#ifndef SW_COLOR_BUFFER_BITS
+#   define SW_COLOR_BUFFER_BITS 24
+#endif
+
+#ifndef SW_DEPTH_BUFFER_BITS
+#   define SW_DEPTH_BUFFER_BITS 16
+#endif
+
 #ifndef SW_MAX_PROJECTION_STACK_SIZE
 #   define SW_MAX_PROJECTION_STACK_SIZE 2
 #endif
@@ -337,11 +345,8 @@ void swBindTexture(uint32_t id);
 #define SW_DEG2RAD (SW_PI/180.0f)
 #define SW_RAD2DEG (180.0f/SW_PI)
 
-#define SW_FLOAT_TO_UNORM8(x) ((uint8_t)((x) * UINT8_MAX))
-#define SW_FLOAT_TO_UNORM16(x) ((uint16_t)((x) * UINT16_MAX))
-
-#define SW_UNORM8_TO_FLOAT(x) ((float)(x) * (1.0f / UINT8_MAX))
-#define SW_UNORM16_TO_FLOAT(x) ((float)(x) * (1.0f / UINT16_MAX))
+#define SW_COLOR_PIXEL_SIZE (SW_COLOR_BUFFER_BITS / 8)
+#define SW_DEPTH_PIXEL_SIZE (SW_DEPTH_BUFFER_BITS / 8)
 
 #define SW_STATE_CHECK(flags) ((RLSW.stateFlags & (flags)) == (flags))
 
@@ -419,16 +424,16 @@ typedef struct {
 } sw_texture_t;
 
 typedef struct {
-    uint8_t *color;     // 32-bit RGBA color buffer
-    uint16_t *depth;    // 16-bit fixed fract buffer
+    void *color;
+    void *depth;
     int width, height;
 } sw_framebuffer_t;
 
 typedef struct {
 
     sw_framebuffer_t framebuffer;
-    uint8_t clearColor[4];                                // Color used to clear the screen
-    uint16_t clearDepth;                                  // Depth value used to clear the screen
+    float clearColor[4];                                // Color used to clear the screen
+    float clearDepth;                                   // Depth value used to clear the screen
 
     uint32_t currentTexture;
     sw_matrix_t *currentMatrix;
@@ -568,9 +573,224 @@ static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_ve
 }
 
 
+/* === Framebuffer Part === */
+
+static inline void sw_load_framebuffer(void** color, void** depth, int w, int h)
+{
+    int size = w * h;
+
+    *color = SW_MALLOC(SW_COLOR_PIXEL_SIZE * size);
+    *depth = SW_MALLOC(SW_DEPTH_PIXEL_SIZE * size);
+
+    // TODO: Handle memory allocation failure
+}
+
+static inline void* sw_get_color_address(void* ptr, uint32_t offset)
+{
+    return (uint8_t*)ptr + offset * SW_COLOR_PIXEL_SIZE;
+}
+
+static inline void sw_inc_color_address(void** ptr)
+{
+    *ptr = (void*)(((uint8_t*)*ptr) + SW_COLOR_PIXEL_SIZE);
+}
+
+static inline void* sw_get_depth_address(void* ptr, uint32_t offset)
+{
+    return (uint8_t*)ptr + offset * SW_DEPTH_PIXEL_SIZE;
+}
+
+static inline void sw_inc_depth_address(void** ptr)
+{
+    *ptr = (void*)(((uint8_t*)*ptr) + SW_DEPTH_PIXEL_SIZE);
+}
+
+static inline void sw_read_color(float dst[4], const void* src)
+{
+#if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
+    uint8_t pixel = ((uint8_t*)src)[0];
+    dst[0] = ((pixel >> 5) & 0x07) * (1.0f / 7.0f);
+    dst[1] = ((pixel >> 2) & 0x07) * (1.0f / 7.0f);
+    dst[2] = (pixel & 0x03) * (1.0f / 3.0f);
+    dst[3] = 1.0f;
+#elif (SW_COLOR_BUFFER_BITS == 16) // RGB - 565
+    uint16_t pixel = ((uint16_t*)src)[0];
+    dst[0] = ((pixel >> 11) & 0x1F) * (1.0f / 31.0f);
+    dst[1] = ((pixel >> 5) & 0x3F) * (1.0f / 63.0f);
+    dst[2] = (pixel & 0x1F) * (1.0f / 31.0f);
+    dst[3] = 1.0f;
+#elif (SW_COLOR_BUFFER_BITS == 24) // RGB - 888
+    dst[0] = ((uint8_t*)src)[0] * (1.0f / 255.0f);
+    dst[1] = ((uint8_t*)src)[1] * (1.0f / 255.0f);
+    dst[2] = ((uint8_t*)src)[2] * (1.0f / 255.0f);
+    dst[3] = 1.0f;
+#endif
+}
+
+static inline void sw_write_color(void* dst, float color[3])
+{
+#if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
+    uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
+    uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
+    uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+    ((uint8_t*)dst)[0] = (r << 5) | (g << 2) | b;
+
+#elif (SW_COLOR_BUFFER_BITS == 16) // RGB - 565
+    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
+    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
+    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+    ((uint16_t*)dst)[0] = (r << 11) | (g << 5) | b;
+
+#elif (SW_COLOR_BUFFER_BITS == 24) // RGB - 888
+    ((uint8_t*)dst)[0] = (uint8_t)(color[0] * UINT8_MAX);
+    ((uint8_t*)dst)[1] = (uint8_t)(color[1] * UINT8_MAX);
+    ((uint8_t*)dst)[2] = (uint8_t)(color[2] * UINT8_MAX);
+#endif
+}
+
+static inline float sw_read_depth(const void* src)
+{
+#if (SW_DEPTH_BUFFER_BITS == 8)
+    return (float)((uint8_t*)src)[0] * (1.0f / UINT8_MAX);
+#elif (SW_DEPTH_BUFFER_BITS == 16)
+    return (float)((uint16_t*)src)[0] * (1.0f / UINT16_MAX);
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+    uint32_t depth24 = (((uint8_t*)src)[0] << 16) |
+                       (((uint8_t*)src)[1] << 8) |
+                       ((uint8_t*)src)[2];
+    return depth24 / (float)0xFFFFFF;
+#endif
+}
+
+static inline void sw_write_depth(void* dst, float depth)
+{
+#if (SW_DEPTH_BUFFER_BITS == 8)
+    ((uint8_t*)dst)[0] = (uint8_t)(depth * UINT8_MAX);
+#elif (SW_DEPTH_BUFFER_BITS == 16)
+    ((uint16_t*)dst)[0] = (uint16_t)(depth * UINT16_MAX);
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+    uint32_t depth24 = (uint32_t)(depth * 0xFFFFFF);
+    ((uint8_t*)dst)[0] = (depth24 >> 16) & 0xFF;
+    ((uint8_t*)dst)[1] = (depth24 >> 8) & 0xFF;
+    ((uint8_t*)dst)[2] = depth24 & 0xFF;
+#endif
+}
+
+static inline void sw_fill_color(void* ptr, int size, float color[4])
+{
+#if (SW_COLOR_BUFFER_BITS == 8)
+    uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
+    uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
+    uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+    uint8_t* p = (uint8_t*)ptr;
+    for (int i = 0; i < size; i++) {
+        p[i] = (r << 5) | (g << 2) | b;
+    }
+#elif (SW_COLOR_BUFFER_BITS == 16)
+    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
+    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
+    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+    uint16_t* p = (uint16_t*)ptr;
+    for (int i = 0; i < size; i++) {
+        p[i] = (r << 11) | (g << 5) | b;
+    }
+#elif (SW_COLOR_BUFFER_BITS == 24)
+    uint8_t r = (uint8_t)(color[0] * 255);
+    uint8_t g = (uint8_t)(color[1] * 255);
+    uint8_t b = (uint8_t)(color[2] * 255);
+    uint8_t* p = (uint8_t*)ptr;
+    for (int i = 0; i < size; i++) {
+        *p++ = r;
+        *p++ = g;
+        *p++ = b;
+    }
+#endif
+}
+
+static inline void sw_fill_depth(void* ptr, int size, float value)
+{
+#if (SW_DEPTH_BUFFER_BITS == 8)
+    uint8_t v  = value * UINT8_MAX;
+    uint8_t* p = (uint8_t*)ptr;
+    for (int i = 0; i < size; i++) {
+        p[i] = v;
+    }
+#elif (SW_DEPTH_BUFFER_BITS == 16)
+    uint16_t v  = value * UINT16_MAX;
+    uint16_t* p = (uint16_t*)ptr;
+    for (int i = 0; i < size; i++) {
+        p[i] = v;
+    }
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+    uint32_t v = value * UINT32_MAX;
+    uint8_t* p = (uint8_t*)ptr;
+    for (int i = 0; i < size; i++) {
+        *p++ = (v >> 16) & 0xFF;
+        *p++ = (v >> 8) & 0xFF;
+        *p++ = v & 0xFF;
+    }
+#endif
+}
+
+static inline void sw_fill_color_and_depth(void* color_ptr, void* depth_ptr, int size, float color[4], float depth_value)
+{
+#if (SW_COLOR_BUFFER_BITS == 8)
+    uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
+    uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
+    uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+    uint8_t* color_p = (uint8_t*)color_ptr;
+#elif (SW_COLOR_BUFFER_BITS == 16)
+    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
+    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
+    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+    uint16_t* color_p = (uint16_t*)color_ptr;
+#elif (SW_COLOR_BUFFER_BITS == 24)
+    uint8_t r = (uint8_t)(color[0] * 255);
+    uint8_t g = (uint8_t)(color[1] * 255);
+    uint8_t b = (uint8_t)(color[2] * 255);
+    uint8_t* color_p = (uint8_t*)color_ptr;
+#endif
+
+#if (SW_DEPTH_BUFFER_BITS == 8)
+    uint8_t depth_v  = depth_value * UINT8_MAX;
+    uint8_t* depth_p = (uint8_t*)depth_ptr;
+#elif (SW_DEPTH_BUFFER_BITS == 16)
+    uint16_t depth_v  = depth_value * UINT16_MAX;
+    uint16_t* depth_p = (uint16_t*)depth_ptr;
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+    uint32_t depth_v = depth_value * UINT32_MAX;
+    uint8_t* depth_p = (uint8_t*)depth_ptr;
+#endif
+
+    for (int i = 0; i < size; i++) {
+        // Remplir le buffer de couleurs
+#if (SW_COLOR_BUFFER_BITS == 8)
+        color_p[i] = (r << 5) | (g << 2) | b;
+#elif (SW_COLOR_BUFFER_BITS == 16)
+        color_p[i] = (r << 11) | (g << 5) | b;
+#elif (SW_COLOR_BUFFER_BITS == 24)
+        *color_p++ = r;
+        *color_p++ = g;
+        *color_p++ = b;
+#endif
+
+        // Remplir le buffer de profondeur
+#if (SW_DEPTH_BUFFER_BITS == 8)
+        depth_p[i] = depth_v;
+#elif (SW_DEPTH_BUFFER_BITS == 16)
+        depth_p[i] = depth_v;
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+        *depth_p++ = (depth_v >> 16) & 0xFF;
+        *depth_p++ = (depth_v >> 8) & 0xFF;
+        *depth_p++ = depth_v & 0xFF;
+#endif
+    }
+}
+
+
 /* === Pixel Format Part === */
 
-int sw_get_pixel_format(SWformat format, SWtype type)
+static inline int sw_get_pixel_format(SWformat format, SWtype type)
 {
     int channels = 0;
     int bitsPerChannel = 8; // Default: 8 bits per channel
@@ -645,7 +865,7 @@ static inline float sw_cvt_hf(sw_half_t y)
 
 static inline void sw_get_pixel_grayscale(float* color, const void* pixels, uint32_t offset)
 {
-    float gray = SW_UNORM8_TO_FLOAT(((uint8_t*)pixels)[offset]);
+    float gray = (float)((uint8_t*)pixels)[offset] * (1.0f / 255);
 
     color[0] = gray;
     color[1] = gray;
@@ -677,8 +897,8 @@ static inline void sw_get_pixel_grayscale_alpha(float* color, const void* pixels
 {
     const uint8_t* pixelData = (const uint8_t*)pixels + 2 * offset;
 
-    color[0] = color[1] = color[2] = SW_UNORM8_TO_FLOAT(pixelData[0]);
-    color[3] = SW_UNORM8_TO_FLOAT(pixelData[1]);
+    color[0] = color[1] = color[2] = (float)pixelData[0] * (1.0f / 255);
+    color[3] = (float)pixelData[1] * (1.0f / 255);
 }
 
 static inline void sw_get_pixel_rgb_565(float* color, const void* pixels, uint32_t offset)
@@ -695,9 +915,9 @@ static inline void sw_get_pixel_rgb_888(float* color, const void* pixels, uint32
 {
     const uint8_t* pixel = (const uint8_t*)pixels + 3 * offset;
 
-    color[0] = SW_UNORM8_TO_FLOAT(pixel[0]);
-    color[1] = SW_UNORM8_TO_FLOAT(pixel[1]);
-    color[2] = SW_UNORM8_TO_FLOAT(pixel[2]);
+    color[0] = (float)pixel[0] * (1.0f / 255);
+    color[1] = (float)pixel[1] * (1.0f / 255);
+    color[2] = (float)pixel[2] * (1.0f / 255);
     color[3] = 1.0f;
 }
 
@@ -745,10 +965,10 @@ static inline void sw_get_pixel_rgba_8888(float* color, const void* pixels, uint
 {
     const uint8_t *pixel = (uint8_t*)pixels + 4 * offset;
 
-    color[0] = SW_UNORM8_TO_FLOAT(pixel[0]);
-    color[1] = SW_UNORM8_TO_FLOAT(pixel[1]);
-    color[2] = SW_UNORM8_TO_FLOAT(pixel[2]);
-    color[3] = SW_UNORM8_TO_FLOAT(pixel[3]);
+    color[0] = (float)pixel[0] * (1.0f / 255);
+    color[1] = (float)pixel[1] * (1.0f / 255);
+    color[2] = (float)pixel[2] * (1.0f / 255);
+    color[3] = (float)pixel[3] * (1.0f / 255);
 }
 
 static inline void sw_get_pixel_rgba_16161616(float* color, const void* pixels, uint32_t offset)
@@ -1279,12 +1499,14 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
     }                                                                               \
                                                                                     \
     /* Pre-calculate the starting pointer for the color framebuffer row */          \
-    uint8_t* cptrRow = (uint8_t*)((uint32_t*)RLSW.framebuffer.color + y * RLSW.framebuffer.width); \
-    uint8_t* cptr = cptrRow + xStart * 4;                                           \
+    void* cptr = sw_get_color_address(                                              \
+        RLSW.framebuffer.color, y * RLSW.framebuffer.width + xStart                 \
+    );                                                                              \
                                                                                     \
     /* Pre-calculate the pointer for the depth buffer row */                        \
-    uint16_t* dptrRow = RLSW.framebuffer.depth + y * RLSW.framebuffer.width + xStart; \
-    uint16_t* dptr = dptrRow;                                                       \
+    void* dptr = sw_get_depth_address(                                              \
+        RLSW.framebuffer.depth, y * RLSW.framebuffer.width + xStart                 \
+    );                                                                              \
                                                                                     \
     /* Scanline rasterization loop */                                               \
     for (int x = xStart; x < xEnd; x++) {                                           \
@@ -1292,66 +1514,73 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
         float w = 1.0f / (start->homogeneous[3] + t * dw);                          \
         float z = start->homogeneous[2] + t * dz;                                   \
                                                                                     \
-        if (ENABLE_DEPTH_TEST) {                                                    \
+        if (ENABLE_DEPTH_TEST)                                                      \
+        {                                                                           \
             /* Depth testing with direct access to the depth buffer */              \
             /* TODO: Implement different depth funcs? */                            \
-            float depth = SW_UNORM16_TO_FLOAT(*dptr);                               \
+            float depth =  sw_read_depth(dptr);                                     \
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
         /* Update the depth buffer */                                               \
-        *dptr = SW_FLOAT_TO_UNORM16(z);                                             \
+        sw_write_depth(dptr, z);                                                    \
                                                                                     \
         if (ENABLE_COLOR_BLEND)                                                     \
         {                                                                           \
-            float dstColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };                         \
-            float srcColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };                         \
+            float dstColor[4];                                                      \
+            sw_read_color(dstColor, cptr);                                          \
                                                                                     \
-            if (ENABLE_TEXTURE) {                                                   \
+            float srcColor[4];                                                      \
+            if (ENABLE_TEXTURE)                                                     \
+            {                                                                       \
                 sw_texture_sample(srcColor, tex, u * w, v * w, xDu, yDu, xDv, yDv); \
+                srcColor[0] *= (start->color[0] + t * dcol[0]) * w;                 \
+                srcColor[1] *= (start->color[1] + t * dcol[1]) * w;                 \
+                srcColor[2] *= (start->color[2] + t * dcol[2]) * w;                 \
+                srcColor[3] *= (start->color[3] + t * dcol[3]) * w;                 \
             }                                                                       \
-                                                                                    \
-            for (int i = 0; i < 4; i++) {                                           \
-                dstColor[i] = (float)cptr[i] / 255;                                 \
-                srcColor[i] *= (start->color[i] + t * dcol[i]) * w;                 \
+            else                                                                    \
+            {                                                                       \
+                srcColor[0] = (start->color[0] + t * dcol[0]) * w;                  \
+                srcColor[1] = (start->color[1] + t * dcol[1]) * w;                  \
+                srcColor[2] = (start->color[2] + t * dcol[2]) * w;                  \
+                srcColor[3] = (start->color[3] + t * dcol[3]) * w;                  \
             }                                                                       \
                                                                                     \
             sw_blend_colors(dstColor, srcColor);                                    \
                                                                                     \
-            for (int i = 0; i < 4; i++) {                                           \
-                cptr[i] = (uint8_t)(sw_saturate(dstColor[i]) * 255);                \
-            }                                                                       \
+            dstColor[0] = sw_saturate(dstColor[0]);                                 \
+            dstColor[1] = sw_saturate(dstColor[1]);                                 \
+            dstColor[2] = sw_saturate(dstColor[2]);                                 \
+                                                                                    \
+            sw_write_color(cptr, dstColor);                                         \
         }                                                                           \
         else                                                                        \
         {                                                                           \
             if (ENABLE_TEXTURE)                                                     \
             {                                                                       \
-                /* Sample the texture */                                            \
-                float texColor[4];                                                  \
-                sw_texture_sample(texColor, tex, u * w, v * w, xDu, yDu, xDv, yDv); \
-                                                                                    \
-                /* Interpolate the color and modulate by the texture color */       \
-                for (int i = 0; i < 4; i++) {                                       \
-                    float finalColor = texColor[i];                                 \
-                    finalColor *= (start->color[i] + t * dcol[i]) * w;              \
-                    cptr[i] = (uint8_t)(sw_saturate(finalColor) * 255.0f);          \
-                }                                                                   \
+                float color[4];                                                     \
+                sw_texture_sample(color, tex, u * w, v * w, xDu, yDu, xDv, yDv);    \
+                color[0] = sw_saturate(color[0] * (start->color[0] + t * dcol[0]) * w); \
+                color[1] = sw_saturate(color[1] * (start->color[1] + t * dcol[1]) * w); \
+                color[2] = sw_saturate(color[2] * (start->color[2] + t * dcol[2]) * w); \
+                sw_write_color(cptr, color);                                        \
             }                                                                       \
             else                                                                    \
             {                                                                       \
-                /* Interpolate the color */                                         \
-                for (int i = 0; i < 4; i++) {                                       \
-                    float finalColor = (start->color[i] + t * dcol[i]) * w;         \
-                    cptr[i] = (uint8_t)(sw_saturate(finalColor) * 255.0f);          \
-                }                                                                   \
+                float color[3];                                                     \
+                color[0] = sw_saturate((start->color[0] + t * dcol[0]) * w);        \
+                color[1] = sw_saturate((start->color[1] + t * dcol[1]) * w);        \
+                color[2] = sw_saturate((start->color[2] + t * dcol[2]) * w);        \
+                sw_write_color(cptr, color);                                        \
             }                                                                       \
         }                                                                           \
                                                                                     \
         /* Increment the interpolation parameter, UVs, and pointers */              \
         discard:                                                                    \
         t += dt;                                                                    \
-        cptr += 4;                                                                  \
-        dptr++;                                                                     \
+        sw_inc_color_address(&cptr);                                                \
+        sw_inc_depth_address(&dptr);                                                \
         if (ENABLE_TEXTURE) {                                                       \
             u += xDu;                                                               \
             v += xDv;                                                               \
@@ -1747,38 +1976,39 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
             int x = x1 + (j >> 16);                                     \
             int y = y1 + i;                                             \
             float z = z1 + t * zDiff;                                   \
-            int pixel_index = y * fbWidth + x;                          \
+            int offset = y * fbWidth + x;                               \
                                                                         \
-            uint16_t* dptr = &depthBuffer[pixel_index];                 \
+            void* dptr = sw_get_depth_address(depthBuffer, offset);     \
             if (ENABLE_DEPTH_TEST) {                                    \
-                float depth = SW_UNORM16_TO_FLOAT(*dptr);               \
+                float depth = sw_read_depth(dptr);                      \
                 if (z > depth) continue;                                \
             }                                                           \
                                                                         \
-            *dptr = SW_FLOAT_TO_UNORM16(z);                             \
+            sw_write_depth(dptr, z);                                    \
                                                                         \
-            int color_index = 4 * pixel_index;                          \
-            uint8_t* cptr = &colorBuffer[color_index];                  \
+            void* cptr = sw_get_depth_address(colorBuffer, offset);     \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
                 float dstColor[4];                                      \
+                sw_read_color(dstColor, cptr);                          \
+                                                                        \
                 float srcColor[4];                                      \
-                for (int j = 0; j < 4; j++) {                           \
-                    dstColor[j] = (float)cptr[i] / 255;                 \
-                    srcColor[j] = sw_lerp(v0->color[j], v1->color[j], t); \
-                }                                                       \
+                srcColor[0] = sw_lerp(v0->color[0], v1->color[0], t);   \
+                srcColor[1] = sw_lerp(v0->color[1], v1->color[1], t);   \
+                srcColor[2] = sw_lerp(v0->color[2], v1->color[2], t);   \
+                srcColor[3] = sw_lerp(v0->color[3], v1->color[3], t);   \
+                                                                        \
                 sw_blend_colors(dstColor, srcColor);                    \
-                for (int j = 0; j < 4; j++) {                           \
-                    cptr[j] = (uint8_t)(dstColor[j] * 255);             \
-                }                                                       \
+                sw_write_color(cptr, dstColor);                         \
             }                                                           \
             else                                                        \
             {                                                           \
-                for (int j = 0; j < 4; j++) {                           \
-                    float finalColor = sw_lerp(v0->color[j], v1->color[j], t); \
-                    cptr[j] = (uint8_t)(finalColor * 255);              \
-                }                                                       \
+                float color[3];                                         \
+                color[0] = sw_lerp(v0->color[0], v1->color[0], t);      \
+                color[1] = sw_lerp(v0->color[1], v1->color[1], t);      \
+                color[2] = sw_lerp(v0->color[2], v1->color[2], t);      \
+                sw_write_color(cptr, color);                            \
             }                                                           \
         }                                                               \
     }                                                                   \
@@ -1789,38 +2019,39 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
             int x = x1 + i;                                             \
             int y = y1 + (j >> 16);                                     \
             float z = z1 + t * zDiff;                                   \
-            int pixel_index = y * fbWidth + x;                          \
+            int offset = y * fbWidth + x;                               \
                                                                         \
-            uint16_t* dptr = &depthBuffer[pixel_index];                 \
+            void* dptr = sw_get_depth_address(depthBuffer, offset);     \
             if (ENABLE_DEPTH_TEST) {                                    \
-                float depth = SW_UNORM16_TO_FLOAT(*dptr);               \
+                float depth = sw_read_depth(dptr);                      \
                 if (z > depth) continue;                                \
             }                                                           \
                                                                         \
-            *dptr = SW_FLOAT_TO_UNORM16(z);                             \
+            sw_write_depth(dptr, z);                                    \
                                                                         \
-            int color_index = 4 * pixel_index;                          \
-            uint8_t* cptr = &colorBuffer[color_index];                  \
+            void* cptr = sw_get_depth_address(colorBuffer, offset);     \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
                 float dstColor[4];                                      \
+                sw_read_color(dstColor, cptr);                          \
+                                                                        \
                 float srcColor[4];                                      \
-                for (int j = 0; j < 4; j++) {                           \
-                    dstColor[j] = (float)cptr[i] / 255;                 \
-                    srcColor[j] = sw_lerp(v0->color[j], v1->color[j], t); \
-                }                                                       \
+                srcColor[0] = sw_lerp(v0->color[0], v1->color[0], t);   \
+                srcColor[1] = sw_lerp(v0->color[1], v1->color[1], t);   \
+                srcColor[2] = sw_lerp(v0->color[2], v1->color[2], t);   \
+                srcColor[3] = sw_lerp(v0->color[3], v1->color[3], t);   \
+                                                                        \
                 sw_blend_colors(dstColor, srcColor);                    \
-                for (int j = 0; j < 4; j++) {                           \
-                    cptr[j] = (uint8_t)(dstColor[j] * 255);             \
-                }                                                       \
+                sw_write_color(cptr, dstColor);                         \
             }                                                           \
             else                                                        \
             {                                                           \
-                for (int j = 0; j < 4; j++) {                           \
-                    float finalColor = sw_lerp(v0->color[j], v1->color[j], t); \
-                    cptr[j] = (uint8_t)(finalColor * 255);              \
-                }                                                       \
+                float color[3];                                         \
+                color[0] = sw_lerp(v0->color[0], v1->color[0], t);      \
+                color[1] = sw_lerp(v0->color[1], v1->color[1], t);      \
+                color[2] = sw_lerp(v0->color[2], v1->color[2], t);      \
+                sw_write_color(cptr, color);                            \
             }                                                           \
         }                                                               \
     }                                                                   \
@@ -1934,8 +2165,11 @@ void swInit(int w, int h)
 {
     swViewport(0, 0, w, h);
 
-    RLSW.framebuffer.color = SW_MALLOC(4 * w * h);
-    RLSW.framebuffer.depth = SW_MALLOC(2 * w * h);
+    sw_load_framebuffer(
+        &RLSW.framebuffer.color,
+        &RLSW.framebuffer.depth,
+        w, h
+    );
 
     RLSW.framebuffer.width = w;
     RLSW.framebuffer.height = h;
@@ -1943,11 +2177,11 @@ void swInit(int w, int h)
     RLSW.loadedTextures = SW_MALLOC(SW_MAX_TEXTURES);
     RLSW.freeTextureIds = SW_MALLOC(SW_MAX_TEXTURES);
 
-    RLSW.clearColor[0] = 0;
-    RLSW.clearColor[1] = 0;
-    RLSW.clearColor[2] = 0;
-    RLSW.clearColor[3] = 255;
-    RLSW.clearDepth = UINT16_MAX;
+    RLSW.clearColor[0] = 0.0f;
+    RLSW.clearColor[1] = 0.0f;
+    RLSW.clearColor[2] = 0.0f;
+    RLSW.clearColor[3] = 1.0f;
+    RLSW.clearDepth = 1.0f;
 
     RLSW.currentMatrixMode = SW_MODELVIEW;
     RLSW.currentMatrix = &RLSW.matView;
@@ -2348,37 +2582,27 @@ void swViewport(int x, int y, int width, int height)
 
 void swClearColor(float r, float g, float b, float a)
 {
-    RLSW.clearColor[0] = r * 255;
-    RLSW.clearColor[1] = g * 255;
-    RLSW.clearColor[2] = b * 255;
-    RLSW.clearColor[3] = a * 255;
+    RLSW.clearColor[0] = r;
+    RLSW.clearColor[1] = g;
+    RLSW.clearColor[2] = b;
+    RLSW.clearColor[3] = a;
 }
 
 void swClear(uint32_t bitmask)
 {
     int size = RLSW.framebuffer.width * RLSW.framebuffer.height;
 
-    uint32_t* cptr = (uint32_t*)RLSW.framebuffer.color;
-    uint16_t* dptr = RLSW.framebuffer.depth;
-
-    uint32_t c = *((uint32_t*)RLSW.clearColor);
-    uint16_t d = RLSW.clearDepth;
-
     if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) {
-        for (int i = 0; i < size; i++) {
-            cptr[i] = c;
-            dptr[i] = d;
-        }
+        sw_fill_color_and_depth(
+            RLSW.framebuffer.color, RLSW.framebuffer.depth,
+            size, RLSW.clearColor, RLSW.clearDepth
+        );
     }
     else if (bitmask & (SW_COLOR_BUFFER_BIT)) {
-        for (int i = 0; i < size; i++) {
-            cptr[i] = c;
-        }
+        sw_fill_color(RLSW.framebuffer.color, size, RLSW.clearColor);
     }
     else if (bitmask & SW_DEPTH_BUFFER_BIT) {
-        for (int i = 0; i < size; i++) {
-            dptr[i] = d;
-        }
+        sw_fill_depth(RLSW.framebuffer.depth, size, RLSW.clearDepth);
     }
 }
 
