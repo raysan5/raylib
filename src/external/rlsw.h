@@ -272,6 +272,8 @@ void swClear(uint32_t bitmask);
 void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
 void swCullFace(SWface face);
 
+void swLineWidth(float width);
+
 void swMatrixMode(SWmatrix mode);
 void swPushMatrix(void);
 void swPopMatrix(void);
@@ -1989,7 +1991,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                                                                         \
             sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void* cptr = sw_framebuffer_get_depth_addr(                 \
+            void* cptr = sw_framebuffer_get_color_addr(                 \
                 colorBuffer, offset                                     \
             );                                                          \
                                                                         \
@@ -2037,7 +2039,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
                                                                         \
             sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void* cptr = sw_framebuffer_get_depth_addr(                 \
+            void* cptr = sw_framebuffer_get_color_addr(                 \
                 colorBuffer, offset                                     \
             );                                                          \
                                                                         \
@@ -2067,10 +2069,60 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
     }                                                                   \
 }
 
+#define DEFINE_LINE_THICK_RASTER(FUNC_NAME, RASTER_FUNC)                \
+void FUNC_NAME(const sw_vertex_t* v1, const sw_vertex_t* v2)            \
+{                                                                       \
+    sw_vertex_t tv1, tv2;                                               \
+                                                                        \
+    int x1 = (int)v1->screen[0];                                        \
+    int y1 = (int)v1->screen[1];                                        \
+    int x2 = (int)v2->screen[0];                                        \
+    int y2 = (int)v2->screen[1];                                        \
+                                                                        \
+    int dx = x2 - x1;                                                   \
+    int dy = y2 - y1;                                                   \
+                                                                        \
+    RASTER_FUNC(v1, v2);                                                \
+                                                                        \
+    if (dx != 0 && abs(dy / dx) < 1) {                                  \
+        int wy = (int)((RLSW.lineWidth - 1.0f) * abs(dx) / sqrtf(dx * dx + dy * dy)); \
+        wy >>= 1; /* Division by 2 via bit shift */                     \
+        for (int i = 1; i <= wy; i++) {                                 \
+            tv1 = *v1, tv2 = *v2;                                       \
+            tv1.screen[1] -= i;                                         \
+            tv2.screen[1] -= i;                                         \
+            RASTER_FUNC(&tv1, &tv2);                                    \
+            tv1 = *v1, tv2 = *v2;                                       \
+            tv1.screen[1] += i;                                         \
+            tv2.screen[1] += i;                                         \
+            RASTER_FUNC(&tv1, &tv2);                                    \
+        }                                                               \
+    }                                                                   \
+    else if (dy != 0) {                                                 \
+        int wx = (int)((RLSW.lineWidth - 1.0f) * abs(dy) / sqrtf(dx * dx + dy * dy)); \
+        wx >>= 1; /* Division by 2 via bit shift */                     \
+        for (int i = 1; i <= wx; i++) {                                 \
+            tv1 = *v1, tv2 = *v2;                                       \
+            tv1.screen[0] -= i;                                         \
+            tv2.screen[0] -= i;                                         \
+            RASTER_FUNC(&tv1, &tv2);                                    \
+            tv1 = *v1, tv2 = *v2;                                       \
+            tv1.screen[0] += i;                                         \
+            tv2.screen[0] += i;                                         \
+            RASTER_FUNC(&tv1, &tv2);                                    \
+        }                                                               \
+    }                                                                   \
+}
+
 DEFINE_LINE_RASTER(sw_line_raster, 0, 0)
 DEFINE_LINE_RASTER(sw_line_raster_DEPTH, 1, 0)
 DEFINE_LINE_RASTER(sw_line_raster_BLEND, 0, 1)
 DEFINE_LINE_RASTER(sw_line_raster_DEPTH_BLEND, 1, 1)
+
+DEFINE_LINE_THICK_RASTER(sw_line_thick_raster, sw_line_raster)
+DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH, sw_line_raster_DEPTH)
+DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_BLEND, sw_line_raster_BLEND)
+DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH_BLEND, sw_line_raster_DEPTH_BLEND)
 
 static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
 {
@@ -2078,17 +2130,33 @@ static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
         return;
     }
 
-    if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
-        sw_line_raster_DEPTH_BLEND(v0, v1);
-    }
-    else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
-        sw_line_raster_BLEND(v0, v1);
-    }
-    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
-        sw_line_raster_DEPTH(v0, v1);
+    if (RLSW.lineWidth >= 2.0f) {
+        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+            sw_line_thick_raster_DEPTH_BLEND(v0, v1);
+        }
+        else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+            sw_line_thick_raster_BLEND(v0, v1);
+        }
+        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+            sw_line_thick_raster_DEPTH(v0, v1);
+        }
+        else {
+            sw_line_thick_raster(v0, v1);
+        }
     }
     else {
-        sw_line_raster(v0, v1);
+        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+            sw_line_raster_DEPTH_BLEND(v0, v1);
+        }
+        else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+            sw_line_raster_BLEND(v0, v1);
+        }
+        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+            sw_line_raster_DEPTH(v0, v1);
+        }
+        else {
+            sw_line_raster(v0, v1);
+        }
     }
 }
 
@@ -2173,8 +2241,6 @@ static inline bool sw_is_blend_dst_factor_valid(int blend)
 
 void swInit(int w, int h)
 {
-    swViewport(0, 0, w, h);
-
     sw_framebuffer_load(
         &RLSW.framebuffer.color,
         &RLSW.framebuffer.depth,
@@ -2183,6 +2249,8 @@ void swInit(int w, int h)
 
     RLSW.framebuffer.width = w;
     RLSW.framebuffer.height = h;
+
+    swViewport(0, 0, w, h);
 
     RLSW.loadedTextures = SW_MALLOC(SW_MAX_TEXTURES);
     RLSW.freeTextureIds = SW_MALLOC(SW_MAX_TEXTURES);
@@ -2370,6 +2438,11 @@ void swCullFace(SWface face)
         return;
     }
     RLSW.cullFace = face;
+}
+
+void swLineWidth(float width)
+{
+    RLSW.lineWidth = roundf(width);
 }
 
 void swMatrixMode(SWmatrix mode)
