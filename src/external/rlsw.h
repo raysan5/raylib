@@ -1320,144 +1320,151 @@ static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 
 /* === Triangle Rendering Part === */
 
-static inline bool sw_triangle_clip_w(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
-{
-    sw_vertex_t input[SW_MAX_CLIPPED_POLYGON_VERTICES];
-    for (int i = 0; i < SW_MAX_CLIPPED_POLYGON_VERTICES; i++) {
-        input[i] = polygon[i];
-    }
-
-    int inputCounter = *vertexCounter;
-    *vertexCounter = 0;
-
-    const sw_vertex_t *prevVt = &input[inputCounter-1];
-    char prevDot = (prevVt->homogeneous[3] < SW_CLIP_EPSILON) ? -1 : 1;
-
-    for (int i = 0; i < inputCounter; i++) {
-        char currDot = (input[i].homogeneous[3] < SW_CLIP_EPSILON) ? -1 : 1;
-        if (prevDot*currDot < 0) {
-            polygon[(*vertexCounter)++] = sw_lerp_vertex_PNTCH(prevVt, &input[i], 
-                (SW_CLIP_EPSILON - prevVt->homogeneous[3]) / (input[i].homogeneous[3] - prevVt->homogeneous[3]));
-        }
-        if (currDot > 0) {
-            polygon[(*vertexCounter)++] = input[i];
-        }
-        prevDot = currDot;
-        prevVt = &input[i];
-    }
-
-    return *vertexCounter > 0;
+#define DEFINE_CLIP_FUNC(name, FUNC_IS_INSIDE, FUNC_COMPUTE_T)                          \
+static inline int sw_clip_##name(                                                       \
+    sw_vertex_t output[SW_MAX_CLIPPED_POLYGON_VERTICES],                                \
+    const sw_vertex_t input[SW_MAX_CLIPPED_POLYGON_VERTICES],                           \
+    int n)                                                                              \
+{                                                                                       \
+    const sw_vertex_t *prev = &input[n - 1];                                            \
+    int prevInside = FUNC_IS_INSIDE(prev->homogeneous);                                 \
+    int outputCount = 0;                                                                \
+                                                                                        \
+    for (int i = 0; i < n; i++) {                                                       \
+        const sw_vertex_t *curr = &input[i];                                            \
+        int currInside = FUNC_IS_INSIDE(curr->homogeneous);                             \
+                                                                                        \
+        /* If transition between interior/exterior, calculate intersection point */     \
+        if (prevInside != currInside) {                                                 \
+            float t = FUNC_COMPUTE_T(prev->homogeneous, curr->homogeneous);             \
+            output[outputCount++] = sw_lerp_vertex_PNTCH(prev, curr, t);                \
+        }                                                                               \
+                                                                                        \
+        /* If current vertex inside, add it */                                          \
+        if (currInside) {                                                               \
+            output[outputCount++] = *curr;                                              \
+        }                                                                               \
+                                                                                        \
+        prev = curr;                                                                    \
+        prevInside = currInside;                                                        \
+    }                                                                                   \
+                                                                                        \
+    return outputCount;                                                                 \
 }
 
-static inline bool sw_triangle_clip_xyz(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+#define IS_INSIDE_PLANE_W(h) ((h)[3] >= SW_CLIP_EPSILON)
+#define IS_INSIDE_PLANE_X_POS(h) ((h)[0] <= (h)[3])
+#define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <= (h)[3])
+#define IS_INSIDE_PLANE_Y_POS(h) ((h)[1] <= (h)[3])
+#define IS_INSIDE_PLANE_Y_NEG(h) (-(h)[1] <= (h)[3])
+#define IS_INSIDE_PLANE_Z_POS(h) ((h)[2] <= (h)[3])
+#define IS_INSIDE_PLANE_Z_NEG(h) (-(h)[2] <= (h)[3])
+
+#define COMPUTE_T_PLANE_W(hPrev, hCurr) ((SW_CLIP_EPSILON - (hPrev)[3]) / ((hCurr)[3] - (hPrev)[3]))
+#define COMPUTE_T_PLANE_X_POS(hPrev, hCurr) (((hPrev)[3] - (hPrev)[0]) / (((hPrev)[3] - (hPrev)[0]) - ((hCurr)[3] - (hCurr)[0])))
+#define COMPUTE_T_PLANE_X_NEG(hPrev, hCurr) (((hPrev)[3] + (hPrev)[0]) / (((hPrev)[3] + (hPrev)[0]) - ((hCurr)[3] + (hCurr)[0])))
+#define COMPUTE_T_PLANE_Y_POS(hPrev, hCurr) (((hPrev)[3] - (hPrev)[1]) / (((hPrev)[3] - (hPrev)[1]) - ((hCurr)[3] - (hCurr)[1])))
+#define COMPUTE_T_PLANE_Y_NEG(hPrev, hCurr) (((hPrev)[3] + (hPrev)[1]) / (((hPrev)[3] + (hPrev)[1]) - ((hCurr)[3] + (hCurr)[1])))
+#define COMPUTE_T_PLANE_Z_POS(hPrev, hCurr) (((hPrev)[3] - (hPrev)[2]) / (((hPrev)[3] - (hPrev)[2]) - ((hCurr)[3] - (hCurr)[2])))
+#define COMPUTE_T_PLANE_Z_NEG(hPrev, hCurr) (((hPrev)[3] + (hPrev)[2]) / (((hPrev)[3] + (hPrev)[2]) - ((hCurr)[3] + (hCurr)[2])))
+
+DEFINE_CLIP_FUNC(w, IS_INSIDE_PLANE_W, COMPUTE_T_PLANE_W)
+DEFINE_CLIP_FUNC(x_pos, IS_INSIDE_PLANE_X_POS, COMPUTE_T_PLANE_X_POS)
+DEFINE_CLIP_FUNC(x_neg, IS_INSIDE_PLANE_X_NEG, COMPUTE_T_PLANE_X_NEG)
+DEFINE_CLIP_FUNC(y_pos, IS_INSIDE_PLANE_Y_POS, COMPUTE_T_PLANE_Y_POS)
+DEFINE_CLIP_FUNC(y_neg, IS_INSIDE_PLANE_Y_NEG, COMPUTE_T_PLANE_Y_NEG)
+DEFINE_CLIP_FUNC(z_pos, IS_INSIDE_PLANE_Z_POS, COMPUTE_T_PLANE_Z_POS)
+DEFINE_CLIP_FUNC(z_neg, IS_INSIDE_PLANE_Z_NEG, COMPUTE_T_PLANE_Z_NEG)
+
+static inline bool sw_triangle_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
-    for (int iAxis = 0; iAxis < 3; iAxis++)
-    {
-        if (*vertexCounter == 0) return false;
+    sw_vertex_t tmp[SW_MAX_CLIPPED_POLYGON_VERTICES];
+    int n = *vertexCounter;
 
-        sw_vertex_t input[SW_MAX_CLIPPED_POLYGON_VERTICES];
-        int inputCounter;
-
-        const sw_vertex_t *prevVt;
-        char prevDot;
-
-        // Clip against first plane
-
-        for (int i = 0; i < SW_MAX_CLIPPED_POLYGON_VERTICES; i++) {
-            input[i] = polygon[i];
-        }
-        inputCounter = *vertexCounter;
-        *vertexCounter = 0;
-
-        prevVt = &input[inputCounter-1];
-        prevDot = (prevVt->homogeneous[iAxis] <= prevVt->homogeneous[3]) ? 1 : -1;
-
-        for (int i = 0; i < inputCounter; i++) {
-            char currDot = (input[i].homogeneous[iAxis] <= input[i].homogeneous[3]) ? 1 : -1;
-            if (prevDot * currDot <= 0) {
-                polygon[(*vertexCounter)++] = sw_lerp_vertex_PNTCH(prevVt, &input[i], (prevVt->homogeneous[3] - prevVt->homogeneous[iAxis]) /
-                    ((prevVt->homogeneous[3] - prevVt->homogeneous[iAxis]) - (input[i].homogeneous[3] - input[i].homogeneous[iAxis])));
-            }
-            if (currDot > 0) {
-                polygon[(*vertexCounter)++] = input[i];
-            }
-            prevDot = currDot;
-            prevVt = &input[i];
-        }
-
-        if (*vertexCounter == 0) return false;
-
-        // Clip against opposite plane
-
-        for (int i = 0; i < SW_MAX_CLIPPED_POLYGON_VERTICES; i++) {
-            input[i] = polygon[i];
-        }
-        inputCounter = *vertexCounter;
-        *vertexCounter = 0;
-
-        prevVt = &input[inputCounter-1];
-        prevDot = (-prevVt->homogeneous[iAxis] <= prevVt->homogeneous[3]) ? 1 : -1;
-
-        for (int i = 0; i < inputCounter; i++) {
-            char currDot = (-input[i].homogeneous[iAxis] <= input[i].homogeneous[3]) ? 1 : -1;
-            if (prevDot*currDot <= 0) {
-                polygon[(*vertexCounter)++] = sw_lerp_vertex_PNTCH(prevVt, &input[i], (prevVt->homogeneous[3] + prevVt->homogeneous[iAxis]) /
-                    ((prevVt->homogeneous[3] + prevVt->homogeneous[iAxis]) - (input[i].homogeneous[3] + input[i].homogeneous[iAxis])));
-            }
-            if (currDot > 0) {
-                polygon[(*vertexCounter)++] = input[i];
-            }
-            prevDot = currDot;
-            prevVt = &input[i];
-        }
+    #define CLIP_AGAINST_PLANE(FUNC_CLIP)                       \
+    {                                                           \
+        n = FUNC_CLIP(tmp, polygon, n);                         \
+        if (n == 0) return false;                               \
+        for (int i = 0; i < n; i++) {                           \
+            polygon[i] = tmp[i];                                \
+        }                                                       \
     }
 
-    return *vertexCounter > 0;
+    CLIP_AGAINST_PLANE(sw_clip_w);
+    CLIP_AGAINST_PLANE(sw_clip_x_pos);
+    CLIP_AGAINST_PLANE(sw_clip_x_neg);
+    CLIP_AGAINST_PLANE(sw_clip_y_pos);
+    CLIP_AGAINST_PLANE(sw_clip_y_neg);
+    CLIP_AGAINST_PLANE(sw_clip_z_pos);
+    CLIP_AGAINST_PLANE(sw_clip_z_neg);
+
+    *vertexCounter = n;
+
+    return n > 0;
 }
 
 static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
+    // Step 1: MVP projection for all vertices
     for (int i = 0; i < *vertexCounter; i++) {
-        sw_vertex_t *v = polygon + i;
-        sw_vec4_transform(v->homogeneous, v->position, RLSW.matMVP);
+        sw_vec4_transform(polygon[i].homogeneous, polygon[i].position, RLSW.matMVP);
     }
 
+    // Step 2: Face culling - discard triangles facing away
     if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
-        float x0 = polygon[0].homogeneous[0], y0 = polygon[0].homogeneous[1];
-        float x1 = polygon[1].homogeneous[0], y1 = polygon[1].homogeneous[1];
-        float x2 = polygon[2].homogeneous[0], y2 = polygon[2].homogeneous[1];
 
-        float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
-        if ((RLSW.cullFace == SW_FRONT && sgnArea >= 0) || (RLSW.cullFace == SW_BACK  && sgnArea <= 0)) {
+        // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+        //       However, culling requires NDC coordinates, while clipping must be done 
+        //       in homogeneous space to correctly interpolate newly generated vertices.
+        //       This means we need to compute 1/W twice: 
+        //       - Once before clipping for face culling.
+        //       - Again after clipping for the new vertices.
+
+        const float invW0 = 1.0f / polygon[0].homogeneous[3];
+        const float invW1 = 1.0f / polygon[1].homogeneous[3];
+        const float invW2 = 1.0f / polygon[2].homogeneous[3];
+
+        // Compute the signed 2D area (cross product in Z)
+        const float x0 = polygon[0].homogeneous[0] * invW0, y0 = polygon[0].homogeneous[1] * invW0;
+        const float x1 = polygon[1].homogeneous[0] * invW1, y1 = polygon[1].homogeneous[1] * invW1;
+        const float x2 = polygon[2].homogeneous[0] * invW2, y2 = polygon[2].homogeneous[1] * invW2;
+        const float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+
+        // Discard the triangle if it faces the culled direction
+        if ((RLSW.cullFace == SW_FRONT) ? (sgnArea >= 0) : (sgnArea <= 0)) {
             *vertexCounter = 0;
             return;
         }
     }
+    
+    // Step 3: Clipping and perspective projection
+    if (sw_triangle_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
 
-    if (sw_triangle_clip_w(polygon, vertexCounter) && sw_triangle_clip_xyz(polygon, vertexCounter)) {
+        // Transformation to screen space and normalization
         for (int i = 0; i < *vertexCounter; i++) {
-            sw_vertex_t *v = polygon + i;
+            sw_vertex_t *v = &polygon[i];  // Use &polygon[i] instead of polygon + i
 
             // Calculation of the reciprocal of W for normalization
-            // as well as perspective correct attributes
-            v->homogeneous[3] = 1.0f / v->homogeneous[3];
+            // as well as perspective-correct attributes
+            const float invW = 1.0f / v->homogeneous[3];
+            v->homogeneous[3] = invW;
 
             // Division of XYZ coordinates by weight
-            v->homogeneous[0] *= v->homogeneous[3];
-            v->homogeneous[1] *= v->homogeneous[3];
-            v->homogeneous[2] *= v->homogeneous[3];
+            v->homogeneous[0] *= invW;
+            v->homogeneous[1] *= invW;
+            v->homogeneous[2] *= invW;
 
-            // Division of texture coordinates (perspective correct)
-            v->texcoord[0] *= v->homogeneous[3];
-            v->texcoord[1] *= v->homogeneous[3];
+            // Division of texture coordinates (perspective-correct)
+            v->texcoord[0] *= invW;
+            v->texcoord[1] *= invW;
 
-            // Division of colors (perspective correct)
-            v->color[0] *= v->homogeneous[3];
-            v->color[1] *= v->homogeneous[3];
-            v->color[2] *= v->homogeneous[3];
-            v->color[3] *= v->homogeneous[3];
-
-            // Transform to screen space
+            // Division of colors (perspective-correct)
+            v->color[0] *= invW;
+            v->color[1] *= invW;
+            v->color[2] *= invW;
+            v->color[3] *= invW;
+            
+            // Transformation to screen space
             sw_project_ndc_to_screen(v->screen, v->homogeneous);
         }
     }
