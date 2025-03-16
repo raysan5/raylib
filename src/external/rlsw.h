@@ -272,6 +272,7 @@ void swClear(uint32_t bitmask);
 void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
 void swCullFace(SWface face);
 
+void swPointSize(float size);
 void swLineWidth(float width);
 
 void swMatrixMode(SWmatrix mode);
@@ -456,7 +457,7 @@ typedef struct {
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
     SWdraw drawMode;                                            // Current polygon filling mode (e.g., lines, triangles)
-    float pointSize;                                            // Rasterized point size
+    float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
     sw_matrix_t matProjection;                                  // Projection matrix, user adjustable
@@ -2160,6 +2161,174 @@ static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
     }
 }
 
+
+/* === Point Rendering Part === */
+
+static inline bool sw_point_project_and_clip(sw_vertex_t* v)
+{
+    sw_vec4_transform(v->homogeneous, v->position, RLSW.matMVP);
+
+    if (v->homogeneous[3] != 1.0f) {
+        for (int_fast8_t i = 0; i < 3; i++) {
+            if (v->homogeneous[i] < -v->homogeneous[3] || v->homogeneous[i] > v->homogeneous[3]) {
+                return false;
+            }
+        }
+        v->homogeneous[3] = 1.0f / v->homogeneous[3];
+        v->homogeneous[0] *= v->homogeneous[3];
+        v->homogeneous[1] *= v->homogeneous[3];
+        v->homogeneous[2] *= v->homogeneous[3];
+    }
+
+    sw_project_ndc_to_screen(v->screen, v->homogeneous);
+
+    return v->screen[0] - RLSW.pointRadius >= RLSW.vpMin[0]
+        && v->screen[1] - RLSW.pointRadius >= RLSW.vpMin[1]
+        && v->screen[0] + RLSW.pointRadius <= RLSW.vpMax[0]
+        && v->screen[1] + RLSW.pointRadius <= RLSW.vpMax[1];
+}
+
+#define DEFINE_POINT_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND, CHECK_BOUNDS) \
+static inline void FUNC_NAME(int x, int y, float z, float color[4])         \
+{                                                                           \
+    if (CHECK_BOUNDS)                                                       \
+    {                                                                       \
+        if (x < 0 || x >= RLSW.framebuffer.width) {                         \
+            return;                                                         \
+        }                                                                   \
+        if (y < 0 || y >= RLSW.framebuffer.height) {                        \
+            return;                                                         \
+        }                                                                   \
+    }                                                                       \
+                                                                            \
+    int offset = y * RLSW.framebuffer.width + x;                            \
+                                                                            \
+    void* dptr = sw_framebuffer_get_depth_addr(                             \
+        RLSW.framebuffer.depth, offset                                      \
+    );                                                                      \
+                                                                            \
+    if (ENABLE_DEPTH_TEST)                                                  \
+    {                                                                       \
+        float depth = sw_framebuffer_read_depth(dptr);                      \
+        if (z > depth) return;                                              \
+    }                                                                       \
+                                                                            \
+    sw_framebuffer_write_depth(dptr, z);                                    \
+                                                                            \
+    void* cptr = sw_framebuffer_get_color_addr(                             \
+        RLSW.framebuffer.color, offset                                      \
+    );                                                                      \
+                                                                            \
+    if (ENABLE_COLOR_BLEND)                                                 \
+    {                                                                       \
+        float dstColor[4];                                                  \
+        sw_framebuffer_read_color(dstColor, cptr);                          \
+                                                                            \
+        sw_blend_colors(dstColor, color);                                   \
+        sw_framebuffer_write_color(cptr, dstColor);                         \
+    }                                                                       \
+    else                                                                    \
+    {                                                                       \
+        sw_framebuffer_write_color(cptr, color);                            \
+    }                                                                       \
+}
+
+#define DEFINE_POINT_THICK_RASTER(FUNC_NAME, RASTER_FUNC)                   \
+static inline void FUNC_NAME(sw_vertex_t* v)                                \
+{                                                                           \
+    int cx = v->screen[0];                                                  \
+    int cy = v->screen[1];                                                  \
+    float cz = v->homogeneous[2];                                           \
+    int radius = RLSW.pointRadius;                                          \
+    float* color = v->color;                                                \
+                                                                            \
+    int x = 0;                                                              \
+    int y = radius;                                                         \
+    int d = 3 - 2 * radius;                                                 \
+                                                                            \
+    while (x <= y) {                                                        \
+        for (int i = -x; i <= x; i++) {                                     \
+            RASTER_FUNC(cx + i, cy + y, cz, color);                         \
+            RASTER_FUNC(cx + i, cy - y, cz, color);                         \
+        }                                                                   \
+        for (int i = -y; i <= y; i++) {                                     \
+            RASTER_FUNC(cx + i, cy + x, cz, color);                         \
+            RASTER_FUNC(cx + i, cy - x, cz, color);                         \
+        }                                                                   \
+        if (d > 0) {                                                        \
+            y--;                                                            \
+            d = d + 4 * (x - y) + 10;                                       \
+        } else {                                                            \
+            d = d + 4 * x + 6;                                              \
+        }                                                                   \
+        x++;                                                                \
+    }                                                                       \
+}
+
+DEFINE_POINT_RASTER(sw_point_raster, 0, 0, 0)
+DEFINE_POINT_RASTER(sw_point_raster_DEPTH, 1, 0, 0)
+DEFINE_POINT_RASTER(sw_point_raster_BLEND, 0, 1, 0)
+DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND, 1, 1, 0)
+
+DEFINE_POINT_RASTER(sw_point_raster_CHECK, 0, 0, 1)
+DEFINE_POINT_RASTER(sw_point_raster_DEPTH_CHECK, 1, 0, 1)
+DEFINE_POINT_RASTER(sw_point_raster_BLEND_CHECK, 0, 1, 1)
+DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND_CHECK, 1, 1, 1)
+
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster, sw_point_raster_CHECK)
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH, sw_point_raster_DEPTH_CHECK)
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_BLEND, sw_point_raster_BLEND_CHECK)
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_BLEND, sw_point_raster_DEPTH_BLEND_CHECK)
+
+static inline void sw_point_render(sw_vertex_t* v)
+{
+    if (!sw_point_project_and_clip(v)) {
+        return;
+    }
+
+    if (RLSW.pointRadius >= 1.0f) {
+        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+            sw_point_thick_raster_DEPTH_BLEND(v);
+        }
+        else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+            sw_point_thick_raster_BLEND(v);
+        }
+        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+            sw_point_thick_raster_DEPTH(v);
+        }
+        else {
+            sw_point_thick_raster(v);
+        }
+    }
+    else {
+        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+            sw_point_raster_DEPTH_BLEND(
+                v->screen[0], v->screen[1],
+                v->homogeneous[2], v->color
+            );
+        }
+        else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+            sw_point_raster_BLEND(
+                v->screen[0], v->screen[1],
+                v->homogeneous[2], v->color
+            );
+        }
+        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+            sw_point_raster_DEPTH(
+                v->screen[0], v->screen[1],
+                v->homogeneous[2], v->color
+            );
+        }
+        else {
+            sw_point_raster(
+                v->screen[0], v->screen[1],
+                v->homogeneous[2], v->color
+            );
+        }
+    }
+}
+
+
 /* === Some Validity Check Helper === */
 
 static inline bool sw_is_texture_valid(uint32_t id)
@@ -2438,6 +2607,11 @@ void swCullFace(SWface face)
         return;
     }
     RLSW.cullFace = face;
+}
+
+void swPointSize(float size)
+{
+    RLSW.pointRadius = floorf(size * 0.5f);
 }
 
 void swLineWidth(float width)
@@ -2805,6 +2979,9 @@ void swVertex4fv(const float* v)
 
         switch (RLSW.drawMode) {
         case SW_POINTS:
+            sw_point_render(
+                &RLSW.vertexBuffer[0]
+            );
             break;
         case SW_LINES:
             sw_line_render(
