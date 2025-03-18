@@ -285,6 +285,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
+    if (startAngle == endAngle) return;
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero
 
     // Function expects (endAngle > startAngle)
@@ -376,6 +377,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
 // Draw a piece of a circle outlines
 void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
+    if (startAngle == endAngle) return;
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
 
     // Function expects (endAngle > startAngle)
