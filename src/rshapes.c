@@ -285,7 +285,8 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
-    if (startAngle == endAngle) return;
+    if (FLT_EPSILON < endAngle - startAngle && endAngle - startAngle < FLT_EPSILON) return;
+
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero
 
     // Function expects (endAngle > startAngle)
@@ -377,7 +378,8 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
 // Draw a piece of a circle outlines
 void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
-    if (startAngle == endAngle) return;
+    if (FLT_EPSILON < endAngle - startAngle && endAngle - startAngle < FLT_EPSILON) return;
+
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
 
     // Function expects (endAngle > startAngle)
@@ -498,7 +500,7 @@ void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Co
 // Draw ring
 void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
-    if (startAngle == endAngle) return;
+    if (FLT_EPSILON < endAngle - startAngle && endAngle - startAngle < FLT_EPSILON) return;
 
     // Function expects (outerRadius > innerRadius)
     if (outerRadius < innerRadius)
@@ -589,7 +591,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
 // Draw ring outline
 void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
-    if (startAngle == endAngle) return;
+    if (FLT_EPSILON < endAngle - startAngle && endAngle - startAngle < FLT_EPSILON) return;
 
     // Function expects (outerRadius > innerRadius)
     if (outerRadius < innerRadius)
