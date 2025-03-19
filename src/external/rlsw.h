@@ -28,6 +28,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// TODO: Review the use of viewport dimensions stored with -1  
+//       It seems there are issues with the NDC -> screen projection  
+//       Also, consider testing and reviewing, if necessary, scissor clipping as well as line clipping  
 
 /* === RLSW Definition And Macros === */
 
@@ -78,6 +81,7 @@
 
 /* === OpenGL Definitions === */
 
+#define GL_SCISSOR_TEST				0x0C11
 #define GL_TEXTURE_2D               0x0DE1
 #define GL_DEPTH_TEST               0x0B71
 #define GL_CULL_FACE                0x0B44
@@ -174,6 +178,7 @@
 /* === RLSW Enums === */
 
 typedef enum {
+    SW_SCISSOR_TEST = GL_SCISSOR_TEST,
     SW_TEXTURE_2D = GL_TEXTURE_2D,
     SW_DEPTH_TEST = GL_DEPTH_TEST,
     SW_CULL_FACE = GL_CULL_FACE,
@@ -287,6 +292,7 @@ void swEnable(SWstate state);
 void swDisable(SWstate state);
 
 void swViewport(int x, int y, int width, int height);
+void swScissor(int x, int y, int width, int height);
 
 void swClearColor(float r, float g, float b, float a);
 void swClear(uint32_t bitmask);
@@ -376,10 +382,11 @@ void swBindTexture(uint32_t id);
 
 #define SW_STATE_CHECK(flags) ((RLSW.stateFlags & (flags)) == (flags))
 
-#define SW_STATE_TEXTURE_2D     (1 << 0)
-#define SW_STATE_DEPTH_TEST     (1 << 1)
-#define SW_STATE_CULL_FACE      (1 << 2)
-#define SW_STATE_BLEND          (1 << 3)
+#define SW_STATE_SCISSOR_TEST   (1 << 0)
+#define SW_STATE_TEXTURE_2D     (1 << 1)
+#define SW_STATE_DEPTH_TEST     (1 << 2)
+#define SW_STATE_CULL_FACE      (1 << 3)
+#define SW_STATE_BLEND          (1 << 4)
 
 #define SW_CLIP_INSIDE  (0x00) // 0000
 #define SW_CLIP_LEFT    (0x01) // 0001
@@ -470,6 +477,13 @@ typedef struct {
     int vpDim[2];                                               // Represents the dimensions of the viewport (minus one)
     int vpMin[2];                                               // Represents the minimum renderable point of the viewport (top-left)
     int vpMax[2];                                               // Represents the maximum renderable point of the viewport (bottom-right)
+
+    int scPos[2];                                               // Represents the top-left corner of the scissor rect
+    int scDim[2];                                               // Represents the dimensions of the scissor rect (minus one)
+    int scMin[2];                                               // Represents the minimum renderable point of the scissor rect (top-left)
+    int scMax[2];                                               // Represents the maximum renderable point of the scissor rect (bottom-right)
+    float scHMax[2];
+    float scHMin[2];
 
     struct {
         float* positions;
@@ -745,26 +759,59 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
     uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
     uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
     uint8_t* p = (uint8_t*)ptr;
-    for (int i = 0; i < size; i++) {
-        p[i] = (r << 5) | (g << 2) | b;
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = RLSW.scPos[1]; y < h; y++) {
+            for (int x = RLSW.scPos[0]; x < w; x++) {
+                p[y * RLSW.framebuffer.width + x] = (r << 5) | (g << 2) | b;
+            }
+        }
+    } else {
+        for (int i = 0; i < size; i++) {
+            p[i] = (r << 5) | (g << 2) | b;
+        }
     }
 #elif (SW_COLOR_BUFFER_BITS == 16)
     uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
     uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
     uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
     uint16_t* p = (uint16_t*)ptr;
-    for (int i = 0; i < size; i++) {
-        p[i] = (r << 11) | (g << 5) | b;
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = RLSW.scPos[1]; y < h; y++) {
+            for (int x = RLSW.scPos[0]; x < w; x++) {
+                p[y * RLSW.framebuffer.width + x] = (r << 11) | (g << 5) | b;
+            }
+        }
+    } else {
+        for (int i = 0; i < size; i++) {
+            p[i] = (r << 11) | (g << 5) | b;
+        }
     }
 #elif (SW_COLOR_BUFFER_BITS == 24)
     uint8_t r = (uint8_t)(color[0] * 255);
     uint8_t g = (uint8_t)(color[1] * 255);
     uint8_t b = (uint8_t)(color[2] * 255);
     uint8_t* p = (uint8_t*)ptr;
-    for (int i = 0; i < size; i++) {
-        *p++ = r;
-        *p++ = g;
-        *p++ = b;
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = RLSW.scPos[1]; y < h; y++) {
+            for (int x = RLSW.scPos[0]; x < w; x++) {
+                int offset = (y * RLSW.framebuffer.width + x) * 3;
+                p[offset + 0] = r;
+                p[offset + 1] = g;
+                p[offset + 2] = b;
+            }
+        }
+    } else {
+        for (int i = 0; i < size; i++) {
+            *p++ = r;
+            *p++ = g;
+            *p++ = b;
+        }
     }
 #endif
 }
@@ -774,78 +821,140 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 #if (SW_DEPTH_BUFFER_BITS == 8)
     uint8_t v  = value * UINT8_MAX;
     uint8_t* p = (uint8_t*)ptr;
-    for (int i = 0; i < size; i++) {
-        p[i] = v;
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                p[y * RLSW.framebuffer.width + x] = v;
+            }
+        }
+    }
+    else {
+        for (int i = 0; i < size; i++) {
+            p[i] = v;
+        }
     }
 #elif (SW_DEPTH_BUFFER_BITS == 16)
     uint16_t v  = value * UINT16_MAX;
     uint16_t* p = (uint16_t*)ptr;
-    for (int i = 0; i < size; i++) {
-        p[i] = v;
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                p[y * RLSW.framebuffer.width + x] = v;
+            }
+        }
+    }
+    else {
+        for (int i = 0; i < size; i++) {
+            p[i] = v;
+        }
     }
 #elif (SW_DEPTH_BUFFER_BITS == 24)
     uint32_t v = value * UINT32_MAX;
     uint8_t* p = (uint8_t*)ptr;
-    for (int i = 0; i < size; i++) {
-        *p++ = (v >> 16) & 0xFF;
-        *p++ = (v >> 8) & 0xFF;
-        *p++ = v & 0xFF;
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int offset = y * RLSW.framebuffer.width + x;
+                p[3 * offset + 0] = (v >> 16) & 0xFF;
+                p[3 * offset + 1] = (v >> 8) & 0xFF;
+                p[3 * offset + 2] = v & 0xFF;
+            }
+        }
+    }
+    else {
+        for (int i = 0; i < size; i++) {
+            *p++ = (v >> 16) & 0xFF;
+            *p++ = (v >> 8) & 0xFF;
+            *p++ = v & 0xFF;
+        }
     }
 #endif
 }
 
-static inline void sw_framebuffer_fill(void* color_ptr, void* depth_ptr, int size, float color[4], float depth_value)
+static inline void sw_framebuffer_fill(void* colorPtr, void* depthPtr, int size, float color[4], float depth_value)
 {
 #if (SW_COLOR_BUFFER_BITS == 8)
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
     uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
     uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
-    uint8_t* color_p = (uint8_t*)color_ptr;
+    uint8_t* cptr = (uint8_t*)colorPtr;
 #elif (SW_COLOR_BUFFER_BITS == 16)
     uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
     uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
     uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
-    uint16_t* color_p = (uint16_t*)color_ptr;
+    uint16_t* cptr = (uint16_t*)colorPtr;
 #elif (SW_COLOR_BUFFER_BITS == 24)
     uint8_t r = (uint8_t)(color[0] * 255);
     uint8_t g = (uint8_t)(color[1] * 255);
     uint8_t b = (uint8_t)(color[2] * 255);
-    uint8_t* color_p = (uint8_t*)color_ptr;
+    uint8_t* cptr = (uint8_t*)colorPtr;
 #endif
 
 #if (SW_DEPTH_BUFFER_BITS == 8)
-    uint8_t depth_v  = depth_value * UINT8_MAX;
-    uint8_t* depth_p = (uint8_t*)depth_ptr;
+    uint8_t d  = depth_value * UINT8_MAX;
+    uint8_t* dptr = (uint8_t*)depthPtr;
 #elif (SW_DEPTH_BUFFER_BITS == 16)
-    uint16_t depth_v  = depth_value * UINT16_MAX;
-    uint16_t* depth_p = (uint16_t*)depth_ptr;
+    uint16_t d  = depth_value * UINT16_MAX;
+    uint16_t* dptr = (uint16_t*)depthPtr;
 #elif (SW_DEPTH_BUFFER_BITS == 24)
-    uint32_t depth_v = depth_value * UINT32_MAX;
-    uint8_t* depth_p = (uint8_t*)depth_ptr;
+    uint32_t d = depth_value * UINT32_MAX;
+    uint8_t* dptr = (uint8_t*)depthPtr;
 #endif
+
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int w = RLSW.scPos[0] + RLSW.scDim[0];
+        int h = RLSW.scPos[1] + RLSW.scDim[1];
+        for (int y = RLSW.scPos[1]; y < h; y++) {
+            for (int x = RLSW.scPos[0]; x < w; x++) {
+                int offset = y * RLSW.framebuffer.width + x;
+#           if (SW_COLOR_BUFFER_BITS == 8)
+                cptr[offset] = (r << 5) | (g << 2) | b;
+#           elif (SW_COLOR_BUFFER_BITS == 16)
+                cptr[offset] = (r << 11) | (g << 5) | b;
+#           elif (SW_COLOR_BUFFER_BITS == 24)
+                cptr[3 * offset + 0] = r;
+                cptr[3 * offset + 1] = g;
+                cptr[3 * offset + 2] = b;
+#           endif
+#           if (SW_DEPTH_BUFFER_BITS == 8)
+                dptr[offset] = d;
+#           elif (SW_DEPTH_BUFFER_BITS == 16)
+                dptr[offset] = d;
+#           elif (SW_DEPTH_BUFFER_BITS == 24)
+                dptr[3 * offset + 0] = (d >> 16) & 0xFF;
+                dptr[3 * offset + 1] = (d >> 8) & 0xFF;
+                dptr[3 * offset + 2] = d & 0xFF;
+#           endif
+            }
+        }
+        return;
+    }
 
     for (int i = 0; i < size; i++) {
-        // Remplir le buffer de couleurs
-#if (SW_COLOR_BUFFER_BITS == 8)
-        color_p[i] = (r << 5) | (g << 2) | b;
-#elif (SW_COLOR_BUFFER_BITS == 16)
-        color_p[i] = (r << 11) | (g << 5) | b;
-#elif (SW_COLOR_BUFFER_BITS == 24)
-        *color_p++ = r;
-        *color_p++ = g;
-        *color_p++ = b;
-#endif
-
-        // Remplir le buffer de profondeur
-#if (SW_DEPTH_BUFFER_BITS == 8)
-        depth_p[i] = depth_v;
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-        depth_p[i] = depth_v;
-#elif (SW_DEPTH_BUFFER_BITS == 24)
-        *depth_p++ = (depth_v >> 16) & 0xFF;
-        *depth_p++ = (depth_v >> 8) & 0xFF;
-        *depth_p++ = depth_v & 0xFF;
-#endif
+#   if (SW_COLOR_BUFFER_BITS == 8)
+        cptr[i] = (r << 5) | (g << 2) | b;
+#   elif (SW_COLOR_BUFFER_BITS == 16)
+        cptr[i] = (r << 11) | (g << 5) | b;
+#   elif (SW_COLOR_BUFFER_BITS == 24)
+        *cptr++ = r;
+        *cptr++ = g;
+        *cptr++ = b;
+#   endif
+#   if (SW_DEPTH_BUFFER_BITS == 8)
+        dptr[i] = d;
+#   elif (SW_DEPTH_BUFFER_BITS == 16)
+        dptr[i] = d;
+#   elif (SW_DEPTH_BUFFER_BITS == 24)
+        *dptr++ = (d >> 16) & 0xFF;
+        *dptr++ = (d >> 8) & 0xFF;
+        *dptr++ = d & 0xFF;
+#   endif
     }
 }
 
@@ -1411,6 +1520,8 @@ static inline int sw_clip_##name(                                               
     return outputCount;                                                                 \
 }
 
+// Frustum clip functions
+
 #define IS_INSIDE_PLANE_W(h) ((h)[3] >= SW_CLIP_EPSILON)
 #define IS_INSIDE_PLANE_X_POS(h) ((h)[0] <= (h)[3])
 #define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <= (h)[3])
@@ -1435,6 +1546,25 @@ DEFINE_CLIP_FUNC(y_neg, IS_INSIDE_PLANE_Y_NEG, COMPUTE_T_PLANE_Y_NEG)
 DEFINE_CLIP_FUNC(z_pos, IS_INSIDE_PLANE_Z_POS, COMPUTE_T_PLANE_Z_POS)
 DEFINE_CLIP_FUNC(z_neg, IS_INSIDE_PLANE_Z_NEG, COMPUTE_T_PLANE_Z_NEG)
 
+// Scissor clip functions
+
+#define COMPUTE_T_SCISSOR_X_MIN(hPrev, hCurr) (((RLSW.scHMin[0]) * (hPrev)[3] - (hPrev)[0]) / (((hCurr)[0] - (RLSW.scHMin[0]) * (hCurr)[3]) - ((hPrev)[0] - (RLSW.scHMin[0]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_X_MAX(hPrev, hCurr) (((RLSW.scHMax[0]) * (hPrev)[3] - (hPrev)[0]) / (((hCurr)[0] - (RLSW.scHMax[0]) * (hCurr)[3]) - ((hPrev)[0] - (RLSW.scHMax[0]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_Y_MIN(hPrev, hCurr) (((RLSW.scHMin[1]) * (hPrev)[3] - (hPrev)[1]) / (((hCurr)[1] - (RLSW.scHMin[1]) * (hCurr)[3]) - ((hPrev)[1] - (RLSW.scHMin[1]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_Y_MAX(hPrev, hCurr) (((RLSW.scHMax[1]) * (hPrev)[3] - (hPrev)[1]) / (((hCurr)[1] - (RLSW.scHMax[1]) * (hCurr)[3]) - ((hPrev)[1] - (RLSW.scHMax[1]) * (hPrev)[3])))
+
+#define IS_INSIDE_SCISSOR_X_MIN(h) ((h)[0] >= (RLSW.scHMin[0]) * (h)[3])
+#define IS_INSIDE_SCISSOR_X_MAX(h) ((h)[0] <= (RLSW.scHMax[0]) * (h)[3])
+#define IS_INSIDE_SCISSOR_Y_MIN(h) ((h)[1] >= (RLSW.scHMin[1]) * (h)[3])
+#define IS_INSIDE_SCISSOR_Y_MAX(h) ((h)[1] <= (RLSW.scHMax[1]) * (h)[3])
+
+DEFINE_CLIP_FUNC(scissor_x_min, IS_INSIDE_SCISSOR_X_MIN, COMPUTE_T_SCISSOR_X_MIN)
+DEFINE_CLIP_FUNC(scissor_x_max, IS_INSIDE_SCISSOR_X_MAX, COMPUTE_T_SCISSOR_X_MAX)
+DEFINE_CLIP_FUNC(scissor_y_min, IS_INSIDE_SCISSOR_Y_MIN, COMPUTE_T_SCISSOR_Y_MIN)
+DEFINE_CLIP_FUNC(scissor_y_max, IS_INSIDE_SCISSOR_Y_MAX, COMPUTE_T_SCISSOR_Y_MAX)
+
+// Main clip function
+
 static inline bool sw_triangle_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
     sw_vertex_t tmp[SW_MAX_CLIPPED_POLYGON_VERTICES];
@@ -1456,6 +1586,13 @@ static inline bool sw_triangle_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_V
     CLIP_AGAINST_PLANE(sw_clip_y_neg);
     CLIP_AGAINST_PLANE(sw_clip_z_pos);
     CLIP_AGAINST_PLANE(sw_clip_z_neg);
+
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        CLIP_AGAINST_PLANE(sw_clip_scissor_x_min);
+        CLIP_AGAINST_PLANE(sw_clip_scissor_x_max);
+        CLIP_AGAINST_PLANE(sw_clip_scissor_y_min);
+        CLIP_AGAINST_PLANE(sw_clip_scissor_y_max);
+    }
 
     *vertexCounter = n;
 
@@ -1846,72 +1983,7 @@ static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* 
 
 /* === Line Rendering Part === */
 
-static inline uint8_t sw_line_clip_encode_2d(const float screen[2], int xMin, int yMin, int xMax, int yMax)
-{
-    uint8_t code = SW_CLIP_INSIDE;
-    if (screen[0] < xMin) code |= SW_CLIP_LEFT;
-    if (screen[0] > xMax) code |= SW_CLIP_RIGHT;
-    if (screen[1] < yMin) code |= SW_CLIP_TOP;
-    if (screen[1] > yMax) code |= SW_CLIP_BOTTOM;
-    return code;
-}
-
-// Cohen-Sutherland algorithm, faster but for 2D only
-static inline bool sw_line_clip_2d(sw_vertex_t* v1, sw_vertex_t* v2)
-{
-    int xMin = RLSW.vpMin[0];
-    int yMin = RLSW.vpMin[1];
-    int xMax = RLSW.vpMax[0];
-    int yMax = RLSW.vpMax[1];
-
-    bool accept = false;
-    uint8_t code0, code1;
-    float m = 0;
-
-    if (v1->screen[0] != v2->screen[0]) {
-        m = (v2->screen[1] - v1->screen[1]) / (v2->screen[0] - v1->screen[0]);
-    }
-
-    for (;;) {
-        code0 = sw_line_clip_encode_2d(v1->screen, xMin, yMin, xMax, yMax);
-        code1 = sw_line_clip_encode_2d(v2->screen, xMin, yMin, xMax, yMax);
-
-        // Accepted if both endpoints lie within rectangle
-        if ((code0 | code1) == 0) {
-            accept = true;
-            break;
-        }
-
-        // Rejected if both endpoints are outside rectangle, in same region
-        if (code0 & code1) break;
-
-        if (code0 == SW_CLIP_INSIDE) {
-            uint8_t ctmp = code0; code0 = code1; code1 = ctmp;
-            sw_vertex_t vtmp = *v1; *v1 = *v2; *v2 = vtmp;
-        }
-
-        if (code0 & SW_CLIP_LEFT) {
-            v1->screen[1] += (RLSW.vpMin[0] - v1->screen[0])*m;
-            v1->screen[0] = (float)RLSW.vpMin[0];
-        }
-        else if (code0 & SW_CLIP_RIGHT) {
-            v1->screen[1] += (RLSW.vpMax[0] - v1->screen[0])*m;
-            v1->screen[0] = (float)RLSW.vpMax[0];
-        }
-        else if (code0 & SW_CLIP_BOTTOM) {
-            if (m) v1->screen[0] += (RLSW.vpMin[1] - v1->screen[1]) / m;
-            v1->screen[1] = (float)RLSW.vpMin[1];
-        }
-        else if (code0 & SW_CLIP_TOP) {
-            if (m) v1->screen[0] += (RLSW.vpMax[1] - v1->screen[1]) / m;
-            v1->screen[1] = (float)RLSW.vpMax[1];
-        }
-    }
-
-    return accept;
-}
-
-static inline bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
+static inline bool sw_line_clip_coord(float q, float p, float* t0, float* t1)
 {
     if (fabsf(p) < SW_CLIP_EPSILON) {
         // Check if the line is entirely outside the window
@@ -1922,46 +1994,47 @@ static inline bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
     const float r = q / p;
 
     if (p < 0) {
-        if (r > *t2) return 0;
-        if (r > *t1) *t1 = r;
+        if (r > *t1) return 0;
+        if (r > *t0) *t0 = r;
     } else {
-        if (r < *t1) return 0;
-        if (r < *t2) *t2 = r;
+        if (r < *t0) return 0;
+        if (r < *t1) *t1 = r;
     }
 
     return 1;
 }
 
-// Liang-Barsky algorithm variant, more robust but slightly slower
-static inline bool sw_line_clip_3d(sw_vertex_t* v1, sw_vertex_t* v2)
+static inline bool sw_line_clip(sw_vertex_t* v0, sw_vertex_t* v1)
 {
-    // TODO: Lerp all vertices here, not just homogeneous coordinates
+    // Uses Liang-Barsky algorithm
 
-    float t1 = 0, t2 = 1;
+    float t0 = 0;
+    float t1 = 1;
 
-    float delta[4];
+    float dH[4], dC[4];
     for (int i = 0; i < 4; i++) {
-        delta[i] = v2->homogeneous[i] - v1->homogeneous[i];
+        dH[i] = v1->homogeneous[i] - v0->homogeneous[i];
+        dC[i] = v1->color[i] - v0->color[i];
     }
 
-    if (!sw_line_clip_coord_3d(v1->homogeneous[3] - v1->homogeneous[0], -delta[3] + delta[0], &t1, &t2)) return false;
-    if (!sw_line_clip_coord_3d(v1->homogeneous[3] + v1->homogeneous[0], -delta[3] - delta[0], &t1, &t2)) return false;
+    if (!sw_line_clip_coord(v0->homogeneous[3] - v0->homogeneous[0], -dH[3] + dH[0], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->homogeneous[3] + v0->homogeneous[0], -dH[3] - dH[0], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->homogeneous[3] - v0->homogeneous[1], -dH[3] + dH[1], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->homogeneous[3] + v0->homogeneous[1], -dH[3] - dH[1], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->homogeneous[3] - v0->homogeneous[2], -dH[3] + dH[2], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->homogeneous[3] + v0->homogeneous[2], -dH[3] - dH[2], &t0, &t1)) return false;
 
-    if (!sw_line_clip_coord_3d(v1->homogeneous[3] - v1->homogeneous[1], -delta[3] + delta[1], &t1, &t2)) return false;
-    if (!sw_line_clip_coord_3d(v1->homogeneous[3] + v1->homogeneous[1], -delta[3] - delta[1], &t1, &t2)) return false;
-
-    if (!sw_line_clip_coord_3d(v1->homogeneous[3] - v1->homogeneous[2], -delta[3] + delta[2], &t1, &t2)) return false;
-    if (!sw_line_clip_coord_3d(v1->homogeneous[3] + v1->homogeneous[2], -delta[3] - delta[2], &t1, &t2)) return false;
-
-    if (t2 < 1) {
+    if (t1 < 1) {
         for (int i = 0; i < 4; i++) {
-            v2->homogeneous[i] = v1->homogeneous[i] + t2 * delta[i];
+            v1->homogeneous[i] = v0->homogeneous[i] + t1 * dH[i];
+            v1->color[i] = v0->color[i] + t1 * dC[i];
         }
     }
 
-    if (t1 > 0) {
+    if (t0 > 0) {
         for (int i = 0; i < 4; i++) {
-            v1->homogeneous[i] = v1->homogeneous[i] + t1 * delta[i];
+            v0->homogeneous[i] = v0->homogeneous[i] + t0 * dH[i];
+            v0->color[i] = v0->color[i] + t0 * dC[i];
         }
     }
 
@@ -1973,28 +2046,21 @@ static inline bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
     sw_vec4_transform(v0->homogeneous, v0->position, RLSW.matMVP);
     sw_vec4_transform(v1->homogeneous, v1->position, RLSW.matMVP);
 
-    if (v0->homogeneous[3] == 1.0f && v1->homogeneous[3] == 1.0f) {
-        sw_project_ndc_to_screen(v0->screen, v0->homogeneous);
-        sw_project_ndc_to_screen(v1->screen, v1->homogeneous);
-        if (!sw_line_clip_2d(v0, v1)) {
-            return false;
-        }
+    if (!sw_line_clip(v0, v1)) {
+        return false;
     }
-    else {
-        if (!sw_line_clip_3d(v0, v1)) {
-            return false;
-        }
-        // Convert XYZ coordinates to NDC
-        v0->homogeneous[3] = 1.0f / v0->homogeneous[3];
-        v1->homogeneous[3] = 1.0f / v1->homogeneous[3];
-        for (int i = 0; i < 3; i++) {
-            v0->homogeneous[i] *= v0->homogeneous[3];
-            v1->homogeneous[i] *= v1->homogeneous[3];
-        }
-        // Convert NDC coordinates to screen space
-        sw_project_ndc_to_screen(v0->screen, v0->homogeneous);
-        sw_project_ndc_to_screen(v1->screen, v1->homogeneous);
+
+    // Convert homogeneous coordinates to NDC
+    v0->homogeneous[3] = 1.0f / v0->homogeneous[3];
+    v1->homogeneous[3] = 1.0f / v1->homogeneous[3];
+    for (int i = 0; i < 3; i++) {
+        v0->homogeneous[i] *= v0->homogeneous[3];
+        v1->homogeneous[i] *= v1->homogeneous[3];
     }
+
+    // Convert NDC coordinates to screen space
+    sw_project_ndc_to_screen(v0->screen, v0->homogeneous);
+    sw_project_ndc_to_screen(v1->screen, v1->homogeneous);
 
     return true;
 }
@@ -2578,6 +2644,7 @@ bool swInit(int w, int h)
     }
 
     swViewport(0, 0, w, h);
+    swScissor(0, 0, w, h);
 
     RLSW.loadedTextures = SW_MALLOC(SW_MAX_TEXTURES);
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
@@ -2679,6 +2746,9 @@ bool swResizeFramebuffer(int w, int h)
 void swEnable(SWstate state)
 {
     switch (state) {
+    case SW_SCISSOR_TEST:
+        RLSW.stateFlags |= SW_STATE_SCISSOR_TEST;
+        break;
     case SW_TEXTURE_2D:
         RLSW.stateFlags |= SW_STATE_TEXTURE_2D;
         break;
@@ -2700,6 +2770,9 @@ void swEnable(SWstate state)
 void swDisable(SWstate state)
 {
     switch (state) {
+    case SW_SCISSOR_TEST:
+        RLSW.stateFlags &= ~SW_STATE_SCISSOR_TEST;
+        break;
     case SW_TEXTURE_2D:
         RLSW.stateFlags &= ~SW_STATE_TEXTURE_2D;
         break;
@@ -2742,6 +2815,52 @@ void swViewport(int x, int y, int width, int height)
 
     RLSW.vpMax[0] = (vpMaxX < fbW) ? vpMaxX : fbW;
     RLSW.vpMax[1] = (vpMaxY < fbH) ? vpMaxY : fbH;
+}
+
+void swScissor(int x, int y, int width, int height)
+{
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+
+    if (width < 0) width = 0;
+    if (height < 0) height = 0;
+
+    if (x >= RLSW.framebuffer.width) {
+        x = RLSW.framebuffer.width - 1;
+    }
+    if (y >= RLSW.framebuffer.height) {
+        y = RLSW.framebuffer.height - 1;
+    }
+
+    if (width >= RLSW.framebuffer.width) {
+        width = RLSW.framebuffer.width - 1;
+    }
+    if (height >= RLSW.framebuffer.height) {
+        height = RLSW.framebuffer.height - 1;
+    }
+
+    RLSW.scPos[0] = x;
+    RLSW.scPos[1] = y;
+
+    RLSW.scDim[0] = width - 1;
+    RLSW.scDim[1] = height - 1;
+
+    RLSW.scMin[0] = (x < 0) ? 0 : x;
+    RLSW.scMin[1] = (y < 0) ? 0 : y;
+
+    int fbW = RLSW.framebuffer.width - 1;
+    int fbH = RLSW.framebuffer.height - 1;
+
+    int vpMaxX = x + width;
+    int vpMaxY = y + height;
+
+    RLSW.scMax[0] = (vpMaxX < fbW) ? vpMaxX : fbW;
+    RLSW.scMax[1] = (vpMaxY < fbH) ? vpMaxY : fbH;
+
+    RLSW.scHMin[0] = (2.0f * (float)RLSW.scMin[0] / (float)(RLSW.vpDim[0] + 1)) - 1.0f;
+    RLSW.scHMax[0] = (2.0f * (float)RLSW.scMax[0] / (float)(RLSW.vpDim[0] + 1)) - 1.0f;
+    RLSW.scHMax[1] = 1.0f - (2.0f * (float)RLSW.scMin[1] / (float)(RLSW.vpDim[1] + 1));
+    RLSW.scHMin[1] = 1.0f - (2.0f * (float)RLSW.scMax[1] / (float)(RLSW.vpDim[1] + 1));
 }
 
 void swClearColor(float r, float g, float b, float a)
