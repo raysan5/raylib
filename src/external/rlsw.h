@@ -1856,6 +1856,7 @@ static inline uint8_t sw_line_clip_encode_2d(const float screen[2], int xMin, in
     return code;
 }
 
+// Cohen-Sutherland algorithm, faster but for 2D only
 static inline bool sw_line_clip_2d(sw_vertex_t* v1, sw_vertex_t* v2)
 {
     int xMin = RLSW.vpMin[0];
@@ -1931,6 +1932,7 @@ static inline bool sw_line_clip_coord_3d(float q, float p, float* t1, float* t2)
     return 1;
 }
 
+// Liang-Barsky algorithm variant, more robust but slightly slower
 static inline bool sw_line_clip_3d(sw_vertex_t* v1, sw_vertex_t* v2)
 {
     // TODO: Lerp all vertices here, not just homogeneous coordinates
