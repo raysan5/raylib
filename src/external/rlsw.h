@@ -35,6 +35,10 @@
 #   define SW_MALLOC(sz) malloc(sz)
 #endif
 
+#ifndef SW_REALLOC
+#   define SW_REALLOC(ptr, newSz) realloc(ptr, newSz)
+#endif
+
 #ifndef SW_FREE
 #   define SW_FREE(ptr) free(ptr)
 #endif
@@ -273,10 +277,11 @@ typedef enum {
 
 /* === Public API === */
 
-void swInit(int w, int h);
+bool swInit(int w, int h);
 void swClose(void);
 
 void* swGetColorBuffer(int* w, int* h);
+bool swResizeFramebuffer(int w, int h);
 
 void swEnable(SWstate state);
 void swDisable(SWstate state);
@@ -447,7 +452,9 @@ typedef struct {
 typedef struct {
     void *color;
     void *depth;
-    int width, height;
+    int width;
+    int height;
+    int allocSz;
 } sw_framebuffer_t;
 
 typedef struct {
@@ -510,12 +517,12 @@ typedef struct {
 
     uint32_t stateFlags;
 
-} sw_data_t;
+} sw_context_t;
 
 
 /* === Global Data === */
 
-static sw_data_t RLSW = { 0 };
+static sw_context_t RLSW = { 0 };
 
 
 /* === Helper Functions === */
@@ -597,14 +604,47 @@ static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_ve
 
 /* === Framebuffer Part === */
 
-static inline void sw_framebuffer_load(void** color, void** depth, int w, int h)
+static inline bool sw_framebuffer_load(int w, int h)
 {
     int size = w * h;
 
-    *color = SW_MALLOC(SW_COLOR_PIXEL_SIZE * size);
-    *depth = SW_MALLOC(SW_DEPTH_PIXEL_SIZE * size);
+    RLSW.framebuffer.color = SW_MALLOC(SW_COLOR_PIXEL_SIZE * size);
+    if (RLSW.framebuffer.color == NULL) return false;
 
-    // TODO: Handle memory allocation failure
+    RLSW.framebuffer.depth = SW_MALLOC(SW_DEPTH_PIXEL_SIZE * size);
+    if (RLSW.framebuffer.depth == NULL) return false;
+
+    RLSW.framebuffer.width = w;
+    RLSW.framebuffer.height = h;
+    RLSW.framebuffer.allocSz = w * h;
+
+    return true;
+}
+
+static inline bool sw_framebuffer_resize(int w, int h)
+{
+    int newSize = w * h;
+
+    if (newSize <= RLSW.framebuffer.allocSz) {
+        RLSW.framebuffer.width = w;
+        RLSW.framebuffer.height = h;
+        return true;
+    }
+
+    void* newColor = SW_REALLOC(RLSW.framebuffer.color, newSize);
+    if (newColor == NULL) return false;
+
+    void* newDepth = SW_REALLOC(RLSW.framebuffer.depth, newSize);
+    if (newDepth == NULL) return false;
+
+    RLSW.framebuffer.color = newColor;
+    RLSW.framebuffer.depth = newDepth;
+
+    RLSW.framebuffer.width = w;
+    RLSW.framebuffer.height = h;
+    RLSW.framebuffer.allocSz = newSize;
+
+    return true;
 }
 
 static inline void* sw_framebuffer_get_color_addr(void* ptr, uint32_t offset)
@@ -2529,21 +2569,19 @@ static inline bool sw_is_blend_dst_factor_valid(int blend)
 
 /* === Public Implementation === */
 
-void swInit(int w, int h)
+bool swInit(int w, int h)
 {
-    sw_framebuffer_load(
-        &RLSW.framebuffer.color,
-        &RLSW.framebuffer.depth,
-        w, h
-    );
-
-    RLSW.framebuffer.width = w;
-    RLSW.framebuffer.height = h;
+    if (!sw_framebuffer_load(w, h)) {
+        swClose(); return false;
+    }
 
     swViewport(0, 0, w, h);
 
     RLSW.loadedTextures = SW_MALLOC(SW_MAX_TEXTURES);
+    if (RLSW.loadedTextures == NULL) { swClose(); return false; }
+
     RLSW.freeTextureIds = SW_MALLOC(SW_MAX_TEXTURES);
+    if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
     RLSW.clearColor[0] = 0.0f;
     RLSW.clearColor[1] = 0.0f;
@@ -2598,15 +2636,29 @@ void swInit(int w, int h)
     RLSW.loadedTextures[0].ty = 0.5f;
 
     RLSW.loadedTextureCount = 1;
+
+    return true;
 }
 
 void swClose(void)
 {
-    SW_FREE(RLSW.framebuffer.color);
-    SW_FREE(RLSW.framebuffer.depth);
+    if (RLSW.framebuffer.color != NULL) {
+        SW_FREE(RLSW.framebuffer.color);
+    }
 
-    SW_FREE(RLSW.loadedTextures);
-    SW_FREE(RLSW.freeTextureIds);
+    if (RLSW.framebuffer.depth != NULL) {
+        SW_FREE(RLSW.framebuffer.depth);
+    }
+
+    if (RLSW.loadedTextures != NULL) {
+        SW_FREE(RLSW.loadedTextures);
+    }
+
+    if (RLSW.freeTextureIds != NULL) {
+        SW_FREE(RLSW.freeTextureIds);
+    }
+
+    RLSW = (sw_context_t) { 0 };
 }
 
 void* swGetColorBuffer(int* w, int* h)
@@ -2615,6 +2667,11 @@ void* swGetColorBuffer(int* w, int* h)
     if (h) *h = RLSW.framebuffer.height;
 
     return RLSW.framebuffer.color;
+}
+
+bool swResizeFramebuffer(int w, int h)
+{
+    return sw_framebuffer_resize(w, h);
 }
 
 void swEnable(SWstate state)
