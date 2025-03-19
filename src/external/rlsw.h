@@ -160,6 +160,13 @@
 #define GL_UNSIGNED_INT             0x1405
 #define GL_FLOAT                    0x1406
 
+
+/* === Not Implemented === */
+
+#define glDepthMask(x) ((void)(x))
+#define glColorMask(x) ((void)(x))
+
+
 /* === RLSW Enums === */
 
 typedef enum {
