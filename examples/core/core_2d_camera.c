@@ -83,7 +83,7 @@ int main(void)
 
         // Camera zoom controls
         // Uses log scaling to provide consistent zoom speed
-        camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove()*0.05f));
+        camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove()*0.1f));
 
         if (camera.zoom > 3.0f) camera.zoom = 3.0f;
         else if (camera.zoom < 0.1f) camera.zoom = 0.1f;
