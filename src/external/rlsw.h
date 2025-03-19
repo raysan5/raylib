@@ -103,6 +103,10 @@
 //#define GL_QUAD_STRIP             0x0008
 //#define GL_POLYGON                0x0009
 
+#define GL_POINT                    0x1B00
+#define GL_LINE                     0x1B01
+#define GL_FILL                     0x1B02
+
 //#define GL_CW                     0x0900
 //#define GL_CCW                    0x0901
 
@@ -187,8 +191,14 @@ typedef enum {
     SW_POINTS = GL_POINTS,
     SW_LINES = GL_LINES,
     SW_TRIANGLES = GL_TRIANGLES,
-    SW_QUADS = GL_QUADS,
+    SW_QUADS = GL_QUADS
 } SWdraw;
+
+typedef enum {
+    SW_POINT = GL_POINT,
+    SW_LINE = GL_LINE,
+    SW_FILL = GL_FILL
+} SWpoly;
 
 typedef enum {
     SW_FRONT = GL_FRONT,
@@ -270,6 +280,7 @@ void swClearColor(float r, float g, float b, float a);
 void swClear(uint32_t bitmask);
 
 void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
+void swPolygonMode(SWpoly mode);
 void swCullFace(SWface face);
 
 void swPointSize(float size);
@@ -456,7 +467,8 @@ typedef struct {
     sw_vertex_t vertexBuffer[4];                                // Buffer used for storing primitive vertices, used for processing and rendering
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
-    SWdraw drawMode;                                            // Current polygon filling mode (e.g., lines, triangles)
+    SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
+    SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles) 
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
@@ -2336,6 +2348,66 @@ static inline void sw_point_render(sw_vertex_t* v)
 }
 
 
+/* === Polygon Modes Rendering Part === */
+
+static inline void sw_poly_point_render(void)
+{
+    for (int i = 0; i < RLSW.vertexCounter; i++) {
+        sw_point_render(RLSW.vertexBuffer);
+    }
+}
+
+static inline void sw_poly_line_render(void)
+{
+    const sw_vertex_t* vertices = RLSW.vertexBuffer;
+    int cm1 = RLSW.vertexCounter - 1;
+    sw_vertex_t v0, v1;
+
+    for (int i = 0; i < cm1; i++) {
+        v0 = vertices[i], v1 = vertices[i + 1];
+        sw_line_render(&v0, &v1);
+    }
+
+    v0 = vertices[cm1], v1 = vertices[0];
+    sw_line_render(&v0, &v1);
+}
+
+static inline void sw_poly_fill_render(void)
+{
+    switch (RLSW.drawMode) {
+    case SW_POINTS:
+        sw_point_render(
+            &RLSW.vertexBuffer[0]
+        );
+        break;
+    case SW_LINES:
+        sw_line_render(
+            &RLSW.vertexBuffer[0],
+            &RLSW.vertexBuffer[1]
+        );
+        break;
+    case SW_TRIANGLES:
+        sw_triangle_render(
+            &RLSW.vertexBuffer[0],
+            &RLSW.vertexBuffer[1],
+            &RLSW.vertexBuffer[2]
+        );
+        break;
+    case SW_QUADS:
+        sw_triangle_render(
+            &RLSW.vertexBuffer[0],
+            &RLSW.vertexBuffer[1],
+            &RLSW.vertexBuffer[2]
+        );
+        sw_triangle_render(
+            &RLSW.vertexBuffer[2],
+            &RLSW.vertexBuffer[3],
+            &RLSW.vertexBuffer[0]
+        );
+        break;
+    }
+}
+
 /* === Some Validity Check Helper === */
 
 static inline bool sw_is_texture_valid(uint32_t id)
@@ -2357,6 +2429,41 @@ static inline bool sw_is_texture_filter_valid(int filter)
 static inline bool sw_is_texture_wrap_valid(int wrap)
 {
     return (wrap == SW_REPEAT || wrap == SW_CLAMP_TO_EDGE || SW_MIRRORED_REPEAT);
+}
+
+static inline bool sw_is_draw_mode_valid(int mode)
+{
+    bool result = false;
+
+    switch (mode) {
+    case SW_POINTS:
+    case SW_LINES:
+    case SW_TRIANGLES:
+    case SW_QUADS:
+        result = true;
+      break;
+    default:
+        break;
+    }
+
+    return result;
+}
+
+static inline bool sw_is_poly_mode_valid(int mode)
+{
+    bool result = false;
+
+    switch (mode) {
+    case SW_POINT:
+    case SW_LINE:
+    case SW_FILL:
+        result = true;
+      break;
+    default:
+        break;
+    }
+
+    return result;
 }
 
 static inline bool sw_is_face_valid(int face)
@@ -2461,6 +2568,7 @@ void swInit(int w, int h)
     RLSW.srcFactor = SW_SRC_ALPHA;
     RLSW.dstFactor = SW_ONE_MINUS_SRC_ALPHA;
 
+    RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
     static const float defTex[3*2*2] =
@@ -2605,6 +2713,15 @@ void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
     }
     RLSW.srcFactor = sfactor;
     RLSW.dstFactor = dfactor;
+}
+
+void swPolygonMode(SWpoly mode)
+{
+    if (!sw_is_poly_mode_valid(mode)) {
+        RLSW.errCode = SW_INVALID_ENUM;
+        return;
+    }
+    RLSW.polyMode = mode;
 }
 
 void swCullFace(SWface face)
@@ -2892,7 +3009,7 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
 
 void swBegin(SWdraw mode)
 {
-    if (mode < SW_POINTS || mode > SW_QUADS) {
+    if (!sw_is_draw_mode_valid(mode)) {
         RLSW.errCode = SW_INVALID_ENUM;
         return;
     }
@@ -2907,49 +3024,49 @@ void swEnd(void)
 
 void swVertex2i(int x, int y)
 {
-    float v[4] = { (float)x, (float)y, 0.0f, 1.0f };
+    const float v[4] = { (float)x, (float)y, 0.0f, 1.0f };
     swVertex4fv(v);
 }
 
 void swVertex2f(float x, float y)
 {
-    float v[4] = { x, y, 0.0f, 1.0f };
+    const float v[4] = { x, y, 0.0f, 1.0f };
     swVertex4fv(v);
 }
 
 void swVertex2fv(const float* v)
 {
-    float v4[4] = { v[0], v[1], 0.0f, 1.0f };
+    const float v4[4] = { v[0], v[1], 0.0f, 1.0f };
     swVertex4fv(v4);
 }
 
 void swVertex3i(int x, int y, int z)
 {
-    float v[4] = { (float)x, (float)y, (float)z, 1.0f };
+    const float v[4] = { (float)x, (float)y, (float)z, 1.0f };
     swVertex4fv(v);
 }
 
 void swVertex3f(float x, float y, float z)
 {
-    float v[4] = { x, y, z, 1.0f };
+    const float v[4] = { x, y, z, 1.0f };
     swVertex4fv(v);
 }
 
 void swVertex3fv(const float* v)
 {
-    float v4[4] = { v[0], v[1], v[2], 1.0f };
+    const float v4[4] = { v[0], v[1], v[2], 1.0f };
     swVertex4fv(v4);
 }
 
 void swVertex4i(int x, int y, int z, int w)
 {
-    float v[4] = { (float)x, (float)y, (float)z, (float)w };
+    const float v[4] = { (float)x, (float)y, (float)z, (float)w };
     swVertex4fv(v);
 }
 
 void swVertex4f(float x, float y, float z, float w)
 {
-    float v[4] = { x, y, z, w };
+    const float v[4] = { x, y, z, w };
     swVertex4fv(v);
 }
 
@@ -2984,36 +3101,15 @@ void swVertex4fv(const float* v)
             sw_matrix_mul(RLSW.matMVP, RLSW.matMVP, RLSW.matProjection);
         }
 
-        switch (RLSW.drawMode) {
-        case SW_POINTS:
-            sw_point_render(
-                &RLSW.vertexBuffer[0]
-            );
+        switch (RLSW.polyMode) {
+        case SW_FILL:
+            sw_poly_fill_render();
             break;
-        case SW_LINES:
-            sw_line_render(
-                &RLSW.vertexBuffer[0],
-                &RLSW.vertexBuffer[1]
-            );
+        case SW_LINE:
+            sw_poly_line_render();
             break;
-        case SW_TRIANGLES:
-            sw_triangle_render(
-                &RLSW.vertexBuffer[0],
-                &RLSW.vertexBuffer[1],
-                &RLSW.vertexBuffer[2]
-            );
-            break;
-        case SW_QUADS:
-            sw_triangle_render(
-                &RLSW.vertexBuffer[0],
-                &RLSW.vertexBuffer[1],
-                &RLSW.vertexBuffer[2]
-            );
-            sw_triangle_render(
-                &RLSW.vertexBuffer[2],
-                &RLSW.vertexBuffer[3],
-                &RLSW.vertexBuffer[0]
-            );
+        case SW_POINT:
+            sw_poly_point_render();
             break;
         }
 
