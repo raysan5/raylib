@@ -388,12 +388,6 @@ void swBindTexture(uint32_t id);
 #define SW_STATE_CULL_FACE      (1 << 3)
 #define SW_STATE_BLEND          (1 << 4)
 
-#define SW_CLIP_INSIDE  (0x00) // 0000
-#define SW_CLIP_LEFT    (0x01) // 0001
-#define SW_CLIP_RIGHT   (0x02) // 0010
-#define SW_CLIP_BOTTOM  (0x04) // 0100
-#define SW_CLIP_TOP     (0x08) // 1000
-
 /* === Internal Structs === */
 
 typedef enum {
