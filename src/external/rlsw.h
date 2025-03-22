@@ -81,92 +81,125 @@
 
 /* === OpenGL Definitions === */
 
-#define GL_SCISSOR_TEST             0x0C11
-#define GL_TEXTURE_2D               0x0DE1
-#define GL_DEPTH_TEST               0x0B71
-#define GL_CULL_FACE                0x0B44
-#define GL_BLEND                    0x0BE2
+#define GL_SCISSOR_TEST                     0x0C11
+#define GL_TEXTURE_2D                       0x0DE1
+#define GL_DEPTH_TEST                       0x0B71
+#define GL_CULL_FACE                        0x0B44
+#define GL_BLEND                            0x0BE2
 
-#define GL_COLOR_BUFFER_BIT         0x00004000
-#define GL_DEPTH_BUFFER_BIT         0x00000100
+#define GL_VENDOR                           0x1F00
+#define GL_RENDERER                         0x1F01
+#define GL_VERSION                          0x1F02
+#define GL_EXTENSIONS                       0x1F03
 
-#define GL_MODELVIEW                0x1700
-#define GL_PROJECTION               0x1701
-#define GL_TEXTURE                  0x1702
+//#define GL_ATTRIB_STACK_DEPTH             0x0BB0
+//#define GL_CLIENT_ATTRIB_STACK_DEPTH      0x0BB1
+#define GL_COLOR_CLEAR_VALUE                0x0C22
+//#define GL_COLOR_WRITEMASK                0x0C23
+//#define GL_CURRENT_INDEX                  0x0B01
+#define GL_CURRENT_COLOR                    0x0B00
+#define GL_CURRENT_NORMAL                   0x0B02
+//#define GL_CURRENT_RASTER_COLOR           0x0B04
+//#define GL_CURRENT_RASTER_DISTANCE        0x0B09
+//#define GL_CURRENT_RASTER_INDEX           0x0B05
+//#define GL_CURRENT_RASTER_POSITION        0x0B07
+//#define GL_CURRENT_RASTER_TEXTURE_COORDS  0x0B06
+//#define GL_CURRENT_RASTER_POSITION_VALID  0x0B08
+#define GL_CURRENT_TEXTURE_COORDS           0x0B03
+//#define GL_INDEX_CLEAR_VALUE              0x0C20
+//#define GL_INDEX_MODE                     0x0C30
+//#define GL_INDEX_WRITEMASK                0x0C21
+#define GL_MODELVIEW_MATRIX                 0x0BA6
+#define GL_MODELVIEW_STACK_DEPTH            0x0BA3
+//#define GL_NAME_STACK_DEPTH               0x0D70
+#define GL_PROJECTION_MATRIX                0x0BA7
+#define GL_PROJECTION_STACK_DEPTH           0x0BA4
+//#define GL_RENDER_MODE                    0x0C40
+//#define GL_RGBA_MODE                      0x0C31
+#define GL_TEXTURE_MATRIX                   0x0BA8
+#define GL_TEXTURE_STACK_DEPTH              0x0BA5
+#define GL_VIEWPORT                         0x0BA2
 
-#define GL_VERTEX_ARRAY             0x8074
-#define GL_NORMAL_ARRAY             0x8075
-#define GL_COLOR_ARRAY              0x8076
-//#define GL_INDEX_ARRAY            0x8077
-#define GL_TEXTURE_COORD_ARRAY      0x8078
+#define GL_COLOR_BUFFER_BIT                 0x00004000
+#define GL_DEPTH_BUFFER_BIT                 0x00000100
 
-#define GL_POINTS                   0x0000
-#define GL_LINES                    0x0001
-//#define GL_LINE_LOOP              0x0002
-//#define GL_LINE_STRIP             0x0003
-#define GL_TRIANGLES                0x0004
-//#define GL_TRIANGLE_STRIP         0x0005
-//#define GL_TRIANGLE_FAN           0x0006
-#define GL_QUADS                    0x0007
-//#define GL_QUAD_STRIP             0x0008
-//#define GL_POLYGON                0x0009
+#define GL_MODELVIEW                        0x1700
+#define GL_PROJECTION                       0x1701
+#define GL_TEXTURE                          0x1702
 
-#define GL_POINT                    0x1B00
-#define GL_LINE                     0x1B01
-#define GL_FILL                     0x1B02
+#define GL_VERTEX_ARRAY                     0x8074
+#define GL_NORMAL_ARRAY                     0x8075
+#define GL_COLOR_ARRAY                      0x8076
+//#define GL_INDEX_ARRAY                    0x8077
+#define GL_TEXTURE_COORD_ARRAY              0x8078
 
-//#define GL_CW                     0x0900
-//#define GL_CCW                    0x0901
+#define GL_POINTS                           0x0000
+#define GL_LINES                            0x0001
+//#define GL_LINE_LOOP                      0x0002
+//#define GL_LINE_STRIP                     0x0003
+#define GL_TRIANGLES                        0x0004
+//#define GL_TRIANGLE_STRIP                 0x0005
+//#define GL_TRIANGLE_FAN                   0x0006
+#define GL_QUADS                            0x0007
+//#define GL_QUAD_STRIP                     0x0008
+//#define GL_POLYGON                        0x0009
 
-#define GL_FRONT                    0x0404
-#define GL_BACK                     0x0405
+#define GL_POINT                            0x1B00
+#define GL_LINE                             0x1B01
+#define GL_FILL                             0x1B02
 
-#define GL_ZERO                     0
-#define GL_ONE                      1
-#define GL_SRC_COLOR                0x0300
-#define GL_ONE_MINUS_SRC_COLOR      0x0301
-#define GL_SRC_ALPHA                0x0302
-#define GL_ONE_MINUS_SRC_ALPHA      0x0303
-#define GL_DST_ALPHA                0x0304
-#define GL_ONE_MINUS_DST_ALPHA      0x0305
-#define GL_DST_COLOR                0x0306
-#define GL_ONE_MINUS_DST_COLOR      0x0307
-#define GL_SRC_ALPHA_SATURATE       0x0308
+//#define GL_CW                             0x0900
+//#define GL_CCW                            0x0901
 
-#define GL_NEAREST                  0x2600
-#define GL_LINEAR                   0x2601
+#define GL_FRONT                            0x0404
+#define GL_BACK                             0x0405
 
-#define GL_REPEAT                   0x2901
-#define GL_CLAMP_TO_EDGE            0x812F  //< (OpenGL 1.2)
-#define GL_MIRRORED_REPEAT          0x8370  //< (OpenGL 2.0)
+#define GL_ZERO                             0
+#define GL_ONE                              1
+#define GL_SRC_COLOR                        0x0300
+#define GL_ONE_MINUS_SRC_COLOR              0x0301
+#define GL_SRC_ALPHA                        0x0302
+#define GL_ONE_MINUS_SRC_ALPHA              0x0303
+#define GL_DST_ALPHA                        0x0304
+#define GL_ONE_MINUS_DST_ALPHA              0x0305
+#define GL_DST_COLOR                        0x0306
+#define GL_ONE_MINUS_DST_COLOR              0x0307
+#define GL_SRC_ALPHA_SATURATE               0x0308
 
-#define GL_TEXTURE_MAG_FILTER       0x2800
-#define GL_TEXTURE_MIN_FILTER       0x2801
+#define GL_NEAREST                          0x2600
+#define GL_LINEAR                           0x2601
 
-#define GL_TEXTURE_WRAP_S           0x2802
-#define GL_TEXTURE_WRAP_T           0x2803
+#define GL_REPEAT                           0x2901
+#define GL_CLAMP_TO_EDGE                    0x812F  //< (OpenGL 1.2)
+#define GL_MIRRORED_REPEAT                  0x8370  //< (OpenGL 2.0)
 
-#define GL_NO_ERROR                 0
-#define GL_INVALID_ENUM             0x0500
-#define GL_INVALID_VALUE            0x0501
-#define GL_INVALID_OPERATION        0x0502
-#define GL_STACK_OVERFLOW           0x0503
-#define GL_STACK_UNDERFLOW          0x0504
-#define GL_OUT_OF_MEMORY            0x0505
+#define GL_TEXTURE_MAG_FILTER               0x2800
+#define GL_TEXTURE_MIN_FILTER               0x2801
 
-#define GL_ALPHA                    0x1906
-#define GL_LUMINANCE                0x1909
-#define GL_LUMINANCE_ALPHA          0x190A
-#define GL_RGB                      0x1907
-#define GL_RGBA                     0x1908
+#define GL_TEXTURE_WRAP_S                   0x2802
+#define GL_TEXTURE_WRAP_T                   0x2803
 
-#define GL_BYTE                     0x1400
-#define GL_UNSIGNED_BYTE            0x1401
-#define GL_SHORT                    0x1402
-#define GL_UNSIGNED_SHORT           0x1403
-#define GL_INT                      0x1404
-#define GL_UNSIGNED_INT             0x1405
-#define GL_FLOAT                    0x1406
+#define GL_NO_ERROR                         0
+#define GL_INVALID_ENUM                     0x0500
+#define GL_INVALID_VALUE                    0x0501
+#define GL_INVALID_OPERATION                0x0502
+#define GL_STACK_OVERFLOW                   0x0503
+#define GL_STACK_UNDERFLOW                  0x0504
+#define GL_OUT_OF_MEMORY                    0x0505
+
+#define GL_ALPHA                            0x1906
+#define GL_LUMINANCE                        0x1909
+#define GL_LUMINANCE_ALPHA                  0x190A
+#define GL_RGB                              0x1907
+#define GL_RGBA                             0x1908
+
+#define GL_BYTE                             0x1400
+#define GL_UNSIGNED_BYTE                    0x1401
+#define GL_SHORT                            0x1402
+#define GL_UNSIGNED_SHORT                   0x1403
+#define GL_INT                              0x1404
+#define GL_UNSIGNED_INT                     0x1405
+#define GL_FLOAT                            0x1406
 
 
 /* === Not Implemented === */
@@ -184,6 +217,24 @@ typedef enum {
     SW_CULL_FACE = GL_CULL_FACE,
     SW_BLEND = GL_BLEND
 } SWstate;
+
+typedef enum {
+    SW_VENDOR = GL_VENDOR,
+    SW_RENDERER = GL_RENDERER,
+    SW_VERSION = GL_VERSION,
+    SW_EXTENSIONS = GL_EXTENSIONS,
+    SW_COLOR_CLEAR_VALUE = GL_COLOR_CLEAR_VALUE,
+    SW_CURRENT_COLOR = GL_CURRENT_COLOR,
+    SW_CURRENT_NORMAL = GL_CURRENT_NORMAL,
+    SW_CURRENT_TEXTURE_COORDS = GL_CURRENT_TEXTURE_COORDS,
+    SW_MODELVIEW_MATRIX = GL_MODELVIEW_MATRIX,
+    SW_MODELVIEW_STACK_DEPTH = GL_MODELVIEW_STACK_DEPTH,
+    SW_PROJECTION_MATRIX = GL_PROJECTION_MATRIX,
+    SW_PROJECTION_STACK_DEPTH = GL_PROJECTION_STACK_DEPTH,
+    SW_TEXTURE_MATRIX = GL_TEXTURE_MATRIX,
+    SW_TEXTURE_STACK_DEPTH = GL_TEXTURE_STACK_DEPTH,
+    SW_VIEWPORT = GL_VIEWPORT
+} SWget;
 
 typedef enum {
     SW_COLOR_BUFFER_BIT = GL_COLOR_BUFFER_BIT,
@@ -290,6 +341,9 @@ bool swResizeFramebuffer(int w, int h);
 
 void swEnable(SWstate state);
 void swDisable(SWstate state);
+
+void swGetFloatv(SWget name, float* v);
+const char* glGetString(SWget name);
 
 void swViewport(int x, int y, int width, int height);
 void swScissor(int x, int y, int width, int height);
@@ -2822,6 +2876,94 @@ void swDisable(SWstate state)
         RLSW.errCode = SW_INVALID_ENUM;
         break;
     }
+}
+
+void swGetIntegerv(SWget name, int* v)
+{
+    switch (name) {
+    case SW_MODELVIEW_STACK_DEPTH:
+        *v = SW_MODELVIEW_STACK_DEPTH;
+        break;
+    case SW_PROJECTION_STACK_DEPTH:
+        *v = SW_PROJECTION_STACK_DEPTH;
+        break;
+    case SW_TEXTURE_STACK_DEPTH:
+        *v = SW_TEXTURE_STACK_DEPTH;
+        break;
+    default:
+        RLSW.errCode = SW_INVALID_ENUM;
+        break;
+    }
+}
+
+void swGetFloatv(SWget name, float* v)
+{
+    switch (name) {
+    case SW_COLOR_CLEAR_VALUE:
+        v[0] = RLSW.clearColor[0];
+        v[1] = RLSW.clearColor[1];
+        v[2] = RLSW.clearColor[2];
+        v[3] = RLSW.clearColor[3];
+        break;
+    case SW_CURRENT_COLOR:
+        v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[0];
+        v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[1];
+        v[2] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[2];
+        v[3] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[3];
+        break;
+    case SW_CURRENT_NORMAL:
+        v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].normal[0];
+        v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].normal[1];
+        v[2] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].normal[2];
+        break;
+    case SW_CURRENT_TEXTURE_COORDS:
+        v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[0];
+        v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[1];
+        break;
+    case SW_MODELVIEW_MATRIX:
+        for (int i = 0; i < 16; i++) {
+            v[i] = RLSW.stackModelview[RLSW.stackModelviewCounter - 1][i];
+        }
+        break;
+    case SW_PROJECTION_MATRIX:
+        for (int i = 0; i < 16; i++) {
+            v[i] = RLSW.stackProjection[RLSW.stackProjectionCounter - 1][i];
+        }
+        break;
+    case SW_TEXTURE_MATRIX:
+        for (int i = 0; i < 16; i++) {
+            v[i] = RLSW.stackTexture[RLSW.stackTextureCounter - 1][i];
+        }
+        break;
+    default:
+        RLSW.errCode = SW_INVALID_ENUM;
+        break;
+    }
+}
+
+const char* glGetString(SWget name)
+{
+    const char* result = NULL;
+
+    switch (name) {
+    case SW_VENDOR:
+        result = "RLSW Header";
+        break;
+    case SW_RENDERER:
+        result = "RLSW Software Renderer";
+        break;
+    case SW_VERSION:
+        result = "RLSW 1.0";
+        break;
+    case SW_EXTENSIONS:
+        result = "None";
+        break;
+    default:
+        RLSW.errCode = SW_INVALID_ENUM;
+        break;
+    }
+
+    return result;
 }
 
 void swViewport(int x, int y, int width, int height)
