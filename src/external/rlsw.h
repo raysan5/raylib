@@ -79,7 +79,29 @@
 #endif
 
 
+/* === OpenGL Compatibility Types === */
+
+typedef unsigned int    GLenum;
+typedef unsigned char   GLboolean;
+typedef unsigned int    GLbitfield;
+typedef void            GLvoid;
+typedef signed char     GLbyte;
+typedef short           GLshort;
+typedef int             GLint;
+typedef unsigned char   GLubyte;
+typedef unsigned short  GLushort;
+typedef unsigned int    GLuint;
+typedef int             GLsizei;
+typedef float           GLfloat;
+typedef float           GLclampf;
+typedef double          GLdouble;
+typedef double          GLclampd;
+
+
 /* === OpenGL Definitions === */
+
+#define GL_FALSE                            0
+#define GL_TRUE                             1
 
 #define GL_SCISSOR_TEST                     0x0C11
 #define GL_TEXTURE_2D                       0x0DE1
@@ -148,9 +170,6 @@
 #define GL_LINE                             0x1B01
 #define GL_FILL                             0x1B02
 
-//#define GL_CW                             0x0900
-//#define GL_CCW                            0x0901
-
 #define GL_FRONT                            0x0404
 #define GL_BACK                             0x0405
 
@@ -202,6 +221,26 @@
 #define GL_FLOAT                            0x1406
 
 
+/* === Not Used Definitions === */
+
+#define GL_PERSPECTIVE_CORRECTION_HINT      0x0C50
+#define GL_PACK_ALIGNMENT                   0x0D05
+#define GL_UNPACK_ALIGNMENT                 0x0CF5
+#define GL_LINE_SMOOTH                      0x0B20
+#define GL_SMOOTH                           0x1D01
+#define GL_NICEST                           0x1102
+#define GL_CCW                              0x0901
+#define GL_CW                               0x0900
+#define GL_NEVER                            0x0200
+#define GL_LESS                             0x0201
+#define GL_EQUAL                            0x0202
+#define GL_LEQUAL                           0x0203
+#define GL_GREATER                          0x0204
+#define GL_NOTEQUAL                         0x0205
+#define GL_GEQUAL                           0x0206
+#define GL_ALWAYS                           0x0207
+
+
 /* === OpenGL Binding === */
 
 #define glEnable(state)                             swEnable(state)
@@ -213,7 +252,7 @@
 #define glClearColor(r, g, b, a)                    swClearColor(r, g, b, a)
 #define glClear(bitmask)                            swClear(bitmask)
 #define glBlendFunc(sfactor, dfactor)               swBlendFunc(sfactor, dfactor)
-#define glPolygonMode(mode)                         swPolygonMode(mode)
+#define glPolygonMode(face, mode)                   swPolygonMode(mode)
 #define glCullFace(face)                            swCullFace(face)
 #define glPointSize(size)                           swPointSize(size)
 #define glLineWidth(width)                          swLineWidth(width)
@@ -225,7 +264,7 @@
 #define glRotatef(a, x, y, z)                       swRotatef(a, x, y, z)
 #define glScalef(x, y, z)                           swScalef(x, y, z)
 #define glMultMatrixf(v)                            swMultMatrixf(v)
-#define glFrusutm(l, r, b, t, n, f)                 swFrustum(l, r, b, t, n, f)
+#define glFrustum(l, r, b, t, n, f)                 swFrustum(l, r, b, t, n, f)
 #define glOrtho(l, r, b, t, n, f)                   swOrtho(l, r, b, t, n, f)
 #define glBegin(mode)                               swBegin(mode)
 #define glEnd()                                     swEnd()
@@ -254,23 +293,30 @@
 #define glDisableClientState(t)                     swBindArray(t, 0)
 #define glVertexPointer(sz, t, s, p)                swBindArray(SW_VERTEX_ARRAY, p)
 #define glTexCoordPointer(sz, t, s, p)              swBindArray(SW_TEXTURE_COORD_ARRAY, p)
-#define glNormalPointer(sz, t, s, p)                swBindArray(SW_NORMAL_ARRAY, p)
+#define glNormalPointer(t, s, p)                    swBindArray(SW_NORMAL_ARRAY, p)
 #define glColorPointer(sz, t, s, p)                 swBindArray(SW_COLOR_ARRAY, p)
 #define glDrawArrays(m, o, c)                       swDrawArrays(m, o, c)
 #define glGenTextures(c, v)                         swGenTextures(c, v)
 #define glDeleteTextures(c, v)                      swDeleteTextures(c, v)
 #define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D(w, h, f, t, p)
-#define glTexParameteri(pname, param)               swTexParameteri(param, value)
+#define glTexParameteri(tr, pname, param)           swTexParameteri(pname, param)
 #define glBindTexture(tr, id)                       swBindTexture(id)
 
 
 /* === Not Implemented === */
 
-#define glDepthMask(X) ((void)(X))
-#define glColorMask(X) ((void)(X))
-#define glPixelStorei(X, Y) ((void)(X);(void)(Y))
-#define glHint(X, Y) ((void)(X);(void)(Y))
-#define glShadeModel(X) ((void)(X))
+#define glClearDepth(X)                         ((void)(X))
+#define glDepthMask(X)                          ((void)(X))
+#define glColorMask(X,Y,Z,W)                    ((void)(X),(void)(Y),(void)(Z),(void)(W))
+#define glPixelStorei(X,Y)                      ((void)(X),(void)(Y))
+#define glHint(X,Y)                             ((void)(X),(void)(Y))
+#define glShadeModel(X)                         ((void)(X))
+#define glFrontFace(X)                          ((void)(X))
+#define glDepthFunc(X)                          ((void)(X))
+#define glTexSubImage2D(X,Y,Z,W,A,B,C,D,E)      ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A),(void)(B),(void)(C),(void)(D),(void)(E))
+#define glGetTexImage(X,Y,Z,W,A)                ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A))
+#define glDrawElements(X,Y,Z,W)                 ((void)(X),(void)(Y),(void)(Z),(void)(W))
+
 
 /* === RLSW Enums === */
 
