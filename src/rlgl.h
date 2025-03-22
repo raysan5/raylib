@@ -773,7 +773,7 @@ RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attac
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-RLAPI void* rlGetFramebuffer(int* width, int* height);
+RLAPI void rlCopyFramebuffer(int x, int y, int w, int h, int format, void* pixels);
 RLAPI void rlResizeFramebuffer(int width, int height);
 #endif
 
@@ -3696,17 +3696,16 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 }
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-
-void* rlGetFramebuffer(int* width, int* height)
+void rlCopyFramebuffer(int x, int y, int w, int h, int format, void* pixels)
 {
-    return swGetColorBuffer(&width, &height);
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+    swCopyFramebuffer(x, y, w, h, glFormat, glType, pixels);
 }
-
 void rlResizeFramebuffer(int width, int height)
 {
     swResizeFramebuffer(width, height);
 }
-
 #endif
 
 // Read screen pixel data (color buffer)
