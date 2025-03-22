@@ -3145,12 +3145,16 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
 {
     sw_pixelformat_e pFormat = sw_get_pixel_format(format, type);
 
+    void* src = RLSW.framebuffer.color;
+
+    int srcW = RLSW.framebuffer.width;
+    int srcHm1 = RLSW.framebuffer.height - 1;
+
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             float color[4];
-            int offset = y * RLSW.framebuffer.width + x;
-            sw_framebuffer_read_color(color, sw_framebuffer_get_color_addr(RLSW.framebuffer.color, offset));
-            sw_set_pixel(pixels, offset, pFormat, color);
+            sw_framebuffer_read_color(color, sw_framebuffer_get_color_addr(src, (srcHm1 - y) * srcW + x));
+            sw_set_pixel(pixels, y * srcW + x, pFormat, color);
         }
     }
 }
