@@ -81,7 +81,7 @@
 
 /* === OpenGL Definitions === */
 
-#define GL_SCISSOR_TEST				0x0C11
+#define GL_SCISSOR_TEST             0x0C11
 #define GL_TEXTURE_2D               0x0DE1
 #define GL_DEPTH_TEST               0x0B71
 #define GL_CULL_FACE                0x0B44
@@ -482,8 +482,8 @@ typedef struct {
     int scDim[2];                                               // Represents the dimensions of the scissor rect (minus one)
     int scMin[2];                                               // Represents the minimum renderable point of the scissor rect (top-left)
     int scMax[2];                                               // Represents the maximum renderable point of the scissor rect (bottom-right)
-    float scHMax[2];
-    float scHMin[2];
+    float scHMin[2];                                            // Represents the minimum renderable point of the scissor rect in clip space
+    float scHMax[2];                                            // Represents the maximum renderable point of the scissor rect in clip space
 
     struct {
         float* positions;
@@ -760,10 +760,8 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
     uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
     uint8_t* p = (uint8_t*)ptr;
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = RLSW.scPos[1]; y < h; y++) {
-            for (int x = RLSW.scPos[0]; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 p[y * RLSW.framebuffer.width + x] = (r << 5) | (g << 2) | b;
             }
         }
@@ -778,10 +776,8 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
     uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
     uint16_t* p = (uint16_t*)ptr;
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = RLSW.scPos[1]; y < h; y++) {
-            for (int x = RLSW.scPos[0]; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 p[y * RLSW.framebuffer.width + x] = (r << 11) | (g << 5) | b;
             }
         }
@@ -796,10 +792,8 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
     uint8_t b = (uint8_t)(color[2] * 255);
     uint8_t* p = (uint8_t*)ptr;
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = RLSW.scPos[1]; y < h; y++) {
-            for (int x = RLSW.scPos[0]; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 int offset = (y * RLSW.framebuffer.width + x) * 3;
                 p[offset + 0] = r;
                 p[offset + 1] = g;
@@ -822,10 +816,8 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
     uint8_t v  = value * UINT8_MAX;
     uint8_t* p = (uint8_t*)ptr;
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 p[y * RLSW.framebuffer.width + x] = v;
             }
         }
@@ -839,10 +831,8 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
     uint16_t v  = value * UINT16_MAX;
     uint16_t* p = (uint16_t*)ptr;
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 p[y * RLSW.framebuffer.width + x] = v;
             }
         }
@@ -856,10 +846,8 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
     uint32_t v = value * UINT32_MAX;
     uint8_t* p = (uint8_t*)ptr;
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 int offset = y * RLSW.framebuffer.width + x;
                 p[3 * offset + 0] = (v >> 16) & 0xFF;
                 p[3 * offset + 1] = (v >> 8) & 0xFF;
@@ -908,10 +896,8 @@ static inline void sw_framebuffer_fill(void* colorPtr, void* depthPtr, int size,
 #endif
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        int w = RLSW.scPos[0] + RLSW.scDim[0];
-        int h = RLSW.scPos[1] + RLSW.scDim[1];
-        for (int y = RLSW.scPos[1]; y < h; y++) {
-            for (int x = RLSW.scPos[0]; x < w; x++) {
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
+            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
                 int offset = y * RLSW.framebuffer.width + x;
 #           if (SW_COLOR_BUFFER_BITS == 8)
                 cptr[offset] = (r << 5) | (g << 2) | b;
