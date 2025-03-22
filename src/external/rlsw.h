@@ -1999,17 +1999,15 @@ static inline bool sw_line_clip_coord(float q, float p, float* t0, float* t1)
 
 static inline bool sw_line_clip(sw_vertex_t* v0, sw_vertex_t* v1)
 {
-    // Uses Liang-Barsky algorithm
-
-    float t0 = 0;
-    float t1 = 1;
-
+    float t0 = 0.0f, t1 = 1.0f;
     float dH[4], dC[4];
+
     for (int i = 0; i < 4; i++) {
         dH[i] = v1->homogeneous[i] - v0->homogeneous[i];
         dC[i] = v1->color[i] - v0->color[i];
     }
 
+    // Clipping Liang-Barsky
     if (!sw_line_clip_coord(v0->homogeneous[3] - v0->homogeneous[0], -dH[3] + dH[0], &t0, &t1)) return false;
     if (!sw_line_clip_coord(v0->homogeneous[3] + v0->homogeneous[0], -dH[3] - dH[0], &t0, &t1)) return false;
     if (!sw_line_clip_coord(v0->homogeneous[3] - v0->homogeneous[1], -dH[3] + dH[1], &t0, &t1)) return false;
@@ -2017,17 +2015,25 @@ static inline bool sw_line_clip(sw_vertex_t* v0, sw_vertex_t* v1)
     if (!sw_line_clip_coord(v0->homogeneous[3] - v0->homogeneous[2], -dH[3] + dH[2], &t0, &t1)) return false;
     if (!sw_line_clip_coord(v0->homogeneous[3] + v0->homogeneous[2], -dH[3] - dH[2], &t0, &t1)) return false;
 
-    if (t1 < 1) {
+    // Clipping Scissor
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        if (!sw_line_clip_coord(v0->homogeneous[0] - RLSW.scHMin[0] * v0->homogeneous[3], RLSW.scHMin[0] * dH[3] - dH[0], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(RLSW.scHMax[0] * v0->homogeneous[3] - v0->homogeneous[0], dH[0] - RLSW.scHMax[0] * dH[3], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(v0->homogeneous[1] - RLSW.scHMin[1] * v0->homogeneous[3], RLSW.scHMin[1] * dH[3] - dH[1], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(RLSW.scHMax[1] * v0->homogeneous[3] - v0->homogeneous[1], dH[1] - RLSW.scHMax[1] * dH[3], &t0, &t1)) return false;
+    }
+
+    // Interpolation of new coordinates
+    if (t1 < 1.0f) {
         for (int i = 0; i < 4; i++) {
             v1->homogeneous[i] = v0->homogeneous[i] + t1 * dH[i];
             v1->color[i] = v0->color[i] + t1 * dC[i];
         }
     }
-
-    if (t0 > 0) {
+    if (t0 > 0.0f) {
         for (int i = 0; i < 4; i++) {
-            v0->homogeneous[i] = v0->homogeneous[i] + t0 * dH[i];
-            v0->color[i] = v0->color[i] + t0 * dC[i];
+            v0->homogeneous[i] += t0 * dH[i];
+            v0->color[i] += t0 * dC[i];
         }
     }
 
