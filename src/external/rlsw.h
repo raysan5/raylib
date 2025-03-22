@@ -2067,10 +2067,10 @@ static inline bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
 #define DEFINE_LINE_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
 static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
 {                                                                       \
-    int x1 = (int)v0->screen[0];                                        \
-    int y1 = (int)v0->screen[1];                                        \
-    int x2 = (int)v1->screen[0];                                        \
-    int y2 = (int)v1->screen[1];                                        \
+    int x1 = (int)(v0->screen[0] + 0.5f);                               \
+    int y1 = (int)(v0->screen[1] + 0.5f);                               \
+    int x2 = (int)(v1->screen[0] + 0.5f);                               \
+    int y2 = (int)(v1->screen[1] + 0.5f);                               \
                                                                         \
     float z1 = v0->homogeneous[2];                                      \
     float z2 = v1->homogeneous[2];                                      \
