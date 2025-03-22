@@ -601,6 +601,13 @@ static inline float sw_saturate(float x)
     // return (x < 0.0f) ? 0.0f : ((x > 1.0f) ? 1.0f : x);
 }
 
+static inline int sw_clampi(int v, int min, int max)
+{
+    if (v < min) return min;
+    if (v > max) return max;
+    return v;
+}
+
 static inline float sw_lerp(float a, float b, float t)
 {
     return a + t * (b - a);
@@ -2805,25 +2812,10 @@ void swViewport(int x, int y, int width, int height)
 
 void swScissor(int x, int y, int width, int height)
 {
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-
-    if (width < 0) width = 0;
-    if (height < 0) height = 0;
-
-    if (x >= RLSW.framebuffer.width) {
-        x = RLSW.framebuffer.width - 1;
-    }
-    if (y >= RLSW.framebuffer.height) {
-        y = RLSW.framebuffer.height - 1;
-    }
-
-    if (width >= RLSW.framebuffer.width) {
-        width = RLSW.framebuffer.width - 1;
-    }
-    if (height >= RLSW.framebuffer.height) {
-        height = RLSW.framebuffer.height - 1;
-    }
+    sw_clampi(x, 0, RLSW.framebuffer.width);
+    sw_clampi(y, 0, RLSW.framebuffer.height);
+    sw_clampi(width, 0, RLSW.framebuffer.width);
+    sw_clampi(width, 0, RLSW.framebuffer.height);
 
     RLSW.scPos[0] = x;
     RLSW.scPos[1] = y;
