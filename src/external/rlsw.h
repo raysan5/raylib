@@ -202,10 +202,73 @@
 #define GL_FLOAT                            0x1406
 
 
+/* === OpenGL Binding === */
+
+#define glEnable(state)                             swEnable(state)
+#define glDisable(state)                            swDisable(state)
+#define glGetFloatv(pname, params)                  swGetFloatv(pname, params)
+#define glGetString(pname)                          swGetString(pname)
+#define glViewport(x, y, w, h)                      swViewport(x, y, w, h)
+#define glScissor(x, y, w, h)                       swScissor(x, y, w, h)
+#define glClearColor(r, g, b, a)                    swClearColor(r, g, b, a)
+#define glClear(bitmask)                            swClear(bitmask)
+#define glBlendFunc(sfactor, dfactor)               swBlendFunc(sfactor, dfactor)
+#define glPolygonMode(mode)                         swPolygonMode(mode)
+#define glCullFace(face)                            swCullFace(face)
+#define glPointSize(size)                           swPointSize(size)
+#define glLineWidth(width)                          swLineWidth(width)
+#define glMatrixMode(mode)                          swMatrixMode(mode)
+#define glPushMatrix()                              swPushMatrix()
+#define glPopMatrix()                               swPopMatrix()
+#define glLoadIdentity()                            swLoadIdentity()
+#define glTranslatef(x, y, z)                       swTranslatef(x, y, z)
+#define glRotatef(a, x, y, z)                       swRotatef(a, x, y, z)
+#define glScalef(x, y, z)                           swScalef(x, y, z)
+#define glMultMatrixf(v)                            swMultMatrixf(v)
+#define glFrusutm(l, r, b, t, n, f)                 swFrustum(l, r, b, t, n, f)
+#define glOrtho(l, r, b, t, n, f)                   swOrtho(l, r, b, t, n, f)
+#define glBegin(mode)                               swBegin(mode)
+#define glEnd()                                     swEnd()
+#define glVertex2i(x, y)                            swVertex2i(x, y)
+#define glVertex2f(x, y)                            swVertex2f(x, y)
+#define glVertex2fv(v)                              swVertex2fv(v)
+#define glVertex3i(x, y, z)                         swVertex3i(x, y, z)
+#define glVertex3f(x, y, z)                         swVertex3f(x, y, z)
+#define glvertex3fv(v)                              swVertex3fv(v)
+#define glVertex4i(x, y, z, w)                      swVertex4i(x, y, z, w)
+#define glVertex4f(x, y, z, w)                      swVertex4f(x, y, z, w)
+#define glVertex4fv(v)                              swVertex4fv(v)
+#define glColor3ub(r, g, b)                         swColor3ub(r, g, b)
+#define glColor3ubv(v)                              swColor3ubv(v)
+#define glColor3f(r, g, b)                          swColor3f(r, g, b)
+#define glColor3fv(v)                               swColor3fv(v)
+#define glColor4ub(r, g, b, a)                      swColor4ub(r, g, b, a)
+#define glColor4ubv(v)                              swColor4ubv(v)
+#define glColor4f(r, g, b, a)                       swColor4f(r, g, b, a)
+#define glColor4fv(v)                               swColor4fv(v)
+#define glTexCoord2f(u, v)                          swTexCoord2f(u, v)
+#define glTexCoord2fv(v)                            swTexCoord2fv(v)
+#define glNormal3f(x, y, z)                         swNormal3f(x, y, z)
+#define glNormal3fv(v)                              swNormal3fv(v)
+#define glEnableClientState(t)                      ((void)(t))
+#define glDisableClientState(t)                     swBindArray(t, 0)
+#define glVertexPointer(sz, t, s, p)                swBindArray(SW_VERTEX_ARRAY, p)
+#define glTexCoordPointer(sz, t, s, p)              swBindArray(SW_TEXTURE_COORD_ARRAY, p)
+#define glNormalPointer(sz, t, s, p)                swBindArray(SW_NORMAL_ARRAY, p)
+#define glColorPointer(sz, t, s, p)                 swBindArray(SW_COLOR_ARRAY, p)
+#define glDrawArrays(m, o, c)                       swDrawArrays(m, o, c)
+#define glGenTextures(c, v)                         swGenTextures(c, v)
+#define glDeleteTextures(c, v)                      swDeleteTextures(c, v)
+#define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D(w, h, f, t, p)
+#define glTexParameteri(pname, param)               swTexParameteri(param, value)
+#define glBindTexture(tr, id)                       swBindTexture(id)
+
+
 /* === Not Implemented === */
 
-#define glDepthMask(x) ((void)(x))
-#define glColorMask(x) ((void)(x))
+#define glDepthMask(X) ((void)(X))
+#define glColorMask(X) ((void)(X))
+#define glPixelStorei(X, Y) ((void)(X);(void)(Y))
 
 
 /* === RLSW Enums === */
@@ -382,26 +445,17 @@ void swVertex4i(int x, int y, int z, int w);
 void swVertex4f(float x, float y, float z, float w);
 void swVertex4fv(const float* v);
 
-void swColor1ui(uint32_t color);
 void swColor3ub(uint8_t r, uint8_t g, uint8_t b);
 void swColor3ubv(const uint8_t* v);
-void swColor3us(uint16_t r, uint16_t g, uint16_t b);
-void swColor3usv(const uint16_t* v);
-void swColor3ui(uint32_t r, uint32_t g, uint32_t b);
-void swColor3uiv(const uint32_t* v);
 void swColor3f(float r, float g, float b);
 void swColor3fv(const float* v);
 void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 void swColor4ubv(const uint8_t* v);
-void swColor4us(uint16_t r, uint16_t g, uint16_t b, uint16_t a);
-void swColor4usv(const uint16_t* v);
-void swColor4ui(uint32_t r, uint32_t g, uint32_t b, uint32_t a);
-void swColor4uiv(const uint32_t* v);
 void swColor4f(float r, float g, float b, float a);
 void swColor4fv(const float* v);
 
 void swTexCoord2f(float u, float v);
-void swTexCoordfv(const float* v);
+void swTexCoord2fv(const float* v);
 
 void swNormal3f(float x, float y, float z);
 void swNormal3fv(const float* v);
@@ -3466,22 +3520,6 @@ void swVertex4fv(const float* v)
     }
 }
 
-void swColor1ui(uint32_t color)
-{
-    union {
-        uint32_t v;
-        uint8_t a[4];
-    } c = { .v = color };
-
-    float cv[4];
-    cv[0] = (float)c.a[0] / 255;
-    cv[1] = (float)c.a[1] / 255;
-    cv[2] = (float)c.a[2] / 255;
-    cv[3] = (float)c.a[3] / 255;
-
-    swColor4fv(cv);
-}
-
 void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
 {
     float cv[4];
@@ -3499,50 +3537,6 @@ void swColor3ubv(const uint8_t* v)
     cv[0] = (float)v[0] / 255;
     cv[1] = (float)v[1] / 255;
     cv[2] = (float)v[2] / 255;
-    cv[3] = 1.0f;
-
-    swColor4fv(cv);
-}
-
-void swColor3us(uint16_t r, uint16_t g, uint16_t b)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(r >> 8)) / 255;
-    cv[1] = (float)((uint8_t)(g >> 8)) / 255;
-    cv[2] = (float)((uint8_t)(b >> 8)) / 255;
-    cv[3] = 1.0f;
-
-    swColor4fv(cv);
-}
-
-void swColor3usv(const uint16_t* v)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(v[0] >> 8)) / 255;
-    cv[1] = (float)((uint8_t)(v[1] >> 8)) / 255;
-    cv[2] = (float)((uint8_t)(v[2] >> 8)) / 255;
-    cv[3] = 1.0f;
-
-    swColor4fv(cv);
-}
-
-void swColor3ui(uint32_t r, uint32_t g, uint32_t b)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(r >> 24)) / 255;
-    cv[1] = (float)((uint8_t)(g >> 24)) / 255;
-    cv[2] = (float)((uint8_t)(b >> 24)) / 255;
-    cv[3] = 1.0f;
-
-    swColor4fv(cv);
-}
-
-void swColor3uiv(const uint32_t* v)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(v[0] >> 24)) / 255;
-    cv[1] = (float)((uint8_t)(v[1] >> 24)) / 255;
-    cv[2] = (float)((uint8_t)(v[2] >> 24)) / 255;
     cv[3] = 1.0f;
 
     swColor4fv(cv);
@@ -3592,50 +3586,6 @@ void swColor4ubv(const uint8_t* v)
     swColor4fv(cv);
 }
 
-void swColor4us(uint16_t r, uint16_t g, uint16_t b, uint16_t a)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(r >> 8)) / 255;
-    cv[1] = (float)((uint8_t)(g >> 8)) / 255;
-    cv[2] = (float)((uint8_t)(b >> 8)) / 255;
-    cv[3] = (float)((uint8_t)(a >> 8)) / 255;
-
-    swColor4fv(cv);
-}
-
-void swColor4usv(const uint16_t* v)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(v[0] >> 8)) / 255;
-    cv[1] = (float)((uint8_t)(v[1] >> 8)) / 255;
-    cv[2] = (float)((uint8_t)(v[2] >> 8)) / 255;
-    cv[3] = (float)((uint8_t)(v[3] >> 8)) / 255;
-
-    swColor4fv(cv);
-}
-
-void swColor4ui(uint32_t r, uint32_t g, uint32_t b, uint32_t a)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(r >> 24)) / 255;
-    cv[1] = (float)((uint8_t)(g >> 24)) / 255;
-    cv[2] = (float)((uint8_t)(b >> 24)) / 255;
-    cv[3] = (float)((uint8_t)(a >> 24)) / 255;
-
-    swColor4fv(cv);
-}
-
-void swColor4uiv(const uint32_t* v)
-{
-    float cv[4];
-    cv[0] = (float)((uint8_t)(v[0] >> 24)) / 255;
-    cv[1] = (float)((uint8_t)(v[1] >> 24)) / 255;
-    cv[2] = (float)((uint8_t)(v[2] >> 24)) / 255;
-    cv[3] = (float)((uint8_t)(v[3] >> 24)) / 255;
-
-    swColor4fv(cv);
-}
-
 void swColor4f(float r, float g, float b, float a)
 {
     float cv[4];
@@ -3663,7 +3613,7 @@ void swTexCoord2f(float u, float v)
     RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[1] = t;
 }
 
-void swTexCoordfv(const float* v)
+void swTexCoord2fv(const float* v)
 {
     float s = RLSW.matTexture[0]*v[0] + RLSW.matTexture[4]*v[1] + RLSW.matTexture[12];
     float t = RLSW.matTexture[1]*v[0] + RLSW.matTexture[5]*v[1] + RLSW.matTexture[13];
@@ -3717,7 +3667,7 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
     for (int i = offset; i < count; i++) {
         if (RLSW.array.texcoords) {
-            swTexCoordfv(RLSW.array.texcoords + 2 * i);
+            swTexCoord2fv(RLSW.array.texcoords + 2 * i);
         }
         if (RLSW.array.normals) {
             swNormal3fv(RLSW.array.normals + 3 * i);
