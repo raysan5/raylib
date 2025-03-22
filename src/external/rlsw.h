@@ -269,7 +269,8 @@
 #define glDepthMask(X) ((void)(X))
 #define glColorMask(X) ((void)(X))
 #define glPixelStorei(X, Y) ((void)(X);(void)(Y))
-
+#define glHint(X, Y) ((void)(X);(void)(Y))
+#define glShadeModel(X) ((void)(X))
 
 /* === RLSW Enums === */
 
