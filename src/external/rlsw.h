@@ -2315,23 +2315,37 @@ static inline bool sw_point_project_and_clip(sw_vertex_t* v)
 
     sw_project_ndc_to_screen(v->screen, v->homogeneous);
 
-    return v->screen[0] - RLSW.pointRadius >= RLSW.vpMin[0]
-        && v->screen[1] - RLSW.pointRadius >= RLSW.vpMin[1]
-        && v->screen[0] + RLSW.pointRadius <= RLSW.vpMax[0]
-        && v->screen[1] + RLSW.pointRadius <= RLSW.vpMax[1];
+    const int *min, *max;
+
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        min = RLSW.scMin;
+        max = RLSW.scMax;
+    } else {
+        min = RLSW.vpMin;
+        max = RLSW.vpMax;
+    }
+
+    bool insideX = v->screen[0] - RLSW.pointRadius < max[0]
+                && v->screen[0] + RLSW.pointRadius > min[0];
+
+    bool insideY = v->screen[1] - RLSW.pointRadius < max[1]
+                && v->screen[1] + RLSW.pointRadius > min[1];
+
+    return insideX && insideY; 
 }
 
 #define DEFINE_POINT_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND, CHECK_BOUNDS) \
 static inline void FUNC_NAME(int x, int y, float z, float color[4])         \
 {                                                                           \
-    if (CHECK_BOUNDS)                                                       \
+    if (CHECK_BOUNDS == 1)                                                  \
     {                                                                       \
-        if (x < 0 || x >= RLSW.framebuffer.width) {                         \
-            return;                                                         \
-        }                                                                   \
-        if (y < 0 || y >= RLSW.framebuffer.height) {                        \
-            return;                                                         \
-        }                                                                   \
+        if (x < RLSW.vpMin[0] || x > RLSW.vpMax[0]) return;                 \
+        if (y < RLSW.vpMin[1] || y > RLSW.vpMax[1]) return;                 \
+    }                                                                       \
+    else if (CHECK_BOUNDS == SW_SCISSOR_TEST)                               \
+    {                                                                       \
+        if (x < RLSW.scMin[0] || x > RLSW.scMax[0]) return;                 \
+        if (y < RLSW.scMin[1] || y > RLSW.scMax[1]) return;                 \
     }                                                                       \
                                                                             \
     int offset = y * RLSW.framebuffer.width + x;                            \
@@ -2408,10 +2422,20 @@ DEFINE_POINT_RASTER(sw_point_raster_DEPTH_CHECK, 1, 0, 1)
 DEFINE_POINT_RASTER(sw_point_raster_BLEND_CHECK, 0, 1, 1)
 DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND_CHECK, 1, 1, 1)
 
+DEFINE_POINT_RASTER(sw_point_raster_CHECK_SCISSOR, 0, 0, SW_SCISSOR_TEST)
+DEFINE_POINT_RASTER(sw_point_raster_DEPTH_CHECK_SCISSOR, 1, 0, SW_SCISSOR_TEST)
+DEFINE_POINT_RASTER(sw_point_raster_BLEND_CHECK_SCISSOR, 0, 1, SW_SCISSOR_TEST)
+DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND_CHECK_SCISSOR, 1, 1, SW_SCISSOR_TEST)
+
 DEFINE_POINT_THICK_RASTER(sw_point_thick_raster, sw_point_raster_CHECK)
 DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH, sw_point_raster_DEPTH_CHECK)
 DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_BLEND, sw_point_raster_BLEND_CHECK)
 DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_BLEND, sw_point_raster_DEPTH_BLEND_CHECK)
+
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_SCISSOR, sw_point_raster_CHECK_SCISSOR)
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_SCISSOR, sw_point_raster_DEPTH_CHECK_SCISSOR)
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_BLEND_SCISSOR, sw_point_raster_BLEND_CHECK_SCISSOR)
+DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_BLEND_SCISSOR, sw_point_raster_DEPTH_BLEND_CHECK_SCISSOR)
 
 static inline void sw_point_render(sw_vertex_t* v)
 {
@@ -2420,17 +2444,33 @@ static inline void sw_point_render(sw_vertex_t* v)
     }
 
     if (RLSW.pointRadius >= 1.0f) {
-        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
-            sw_point_thick_raster_DEPTH_BLEND(v);
-        }
-        else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
-            sw_point_thick_raster_BLEND(v);
-        }
-        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
-            sw_point_thick_raster_DEPTH(v);
+        if (SW_STATE_CHECK(SW_STATE_SCISSOR_TEST)) {
+            if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+                sw_point_thick_raster_DEPTH_BLEND_SCISSOR(v);
+            }
+            else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+                sw_point_thick_raster_BLEND_SCISSOR(v);
+            }
+            else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+                sw_point_thick_raster_DEPTH_SCISSOR(v);
+            }
+            else {
+                sw_point_thick_raster_SCISSOR(v);
+            }
         }
         else {
-            sw_point_thick_raster(v);
+            if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+                sw_point_thick_raster_DEPTH_BLEND(v);
+            }
+            else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+                sw_point_thick_raster_BLEND(v);
+            }
+            else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+                sw_point_thick_raster_DEPTH(v);
+            }
+            else {
+                sw_point_thick_raster(v);
+            }
         }
     }
     else {
