@@ -3184,6 +3184,16 @@ bool IsKeyDown(int key)
     return down;
 }
 
+bool IsControlKeyDown()
+{
+    return IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
+}
+
+bool IsAltKeyDown()
+{
+    return IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
+}
+
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
