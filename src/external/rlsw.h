@@ -252,6 +252,7 @@ typedef double          GLclampd;
 #define glDisable(state)                            swDisable(state)
 #define glGetFloatv(pname, params)                  swGetFloatv(pname, params)
 #define glGetString(pname)                          swGetString(pname)
+#define glGetError()                                swGetError()
 #define glViewport(x, y, w, h)                      swViewport(x, y, w, h)
 #define glScissor(x, y, w, h)                       swScissor(x, y, w, h)
 #define glClearColor(r, g, b, a)                    swClearColor(r, g, b, a)
@@ -459,6 +460,7 @@ void swDisable(SWstate state);
 
 void swGetFloatv(SWget name, float* v);
 const char* swGetString(SWget name);
+SWerrcode swGetError(void);
 
 void swViewport(int x, int y, int width, int height);
 void swScissor(int x, int y, int width, int height);
@@ -3343,6 +3345,13 @@ const char* swGetString(SWget name)
     }
 
     return result;
+}
+
+SWerrcode swGetError(void)
+{
+    SWerrcode ret = RLSW.errCode;
+    RLSW.errCode = SW_NO_ERROR;
+    return ret;
 }
 
 void swViewport(int x, int y, int width, int height)
