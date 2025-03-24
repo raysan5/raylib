@@ -458,7 +458,7 @@ void swEnable(SWstate state);
 void swDisable(SWstate state);
 
 void swGetFloatv(SWget name, float* v);
-const char* glGetString(SWget name);
+const char* swGetString(SWget name);
 
 void swViewport(int x, int y, int width, int height);
 void swScissor(int x, int y, int width, int height);
@@ -3320,7 +3320,7 @@ void swGetFloatv(SWget name, float* v)
     }
 }
 
-const char* glGetString(SWget name)
+const char* swGetString(SWget name)
 {
     const char* result = NULL;
 
