@@ -2354,6 +2354,7 @@ bool ChangeDirectory(const char *dir)
     bool result = CHDIR(dir);
 
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dir);
+    else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dir);
 
     return (result == 0);
 }
