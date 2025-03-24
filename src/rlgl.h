@@ -844,6 +844,9 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
         #define RLSW_IMPL
+        #define SW_MALLOC(sz) RL_MALLOC(sz)
+        #define SW_REALLOC(ptr, newSz) RL_REALLOC(ptr, newSz)
+        #define SW_FREE(ptr) RL_FREE(ptr)
         #include <rlsw.h>                   // OpenGL 1.1 software implementation
     #else
         #if defined(__APPLE__)
