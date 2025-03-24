@@ -46,6 +46,10 @@
 #   define SW_FREE(ptr) free(ptr)
 #endif
 
+#ifndef SW_GL_BINDING_COPY_TEXTURE
+#   define SW_GL_BINDING_COPY_TEXTURE true
+#endif
+
 #ifndef SW_COLOR_BUFFER_BITS
 #   define SW_COLOR_BUFFER_BITS 24
 #endif
@@ -299,7 +303,7 @@ typedef double          GLclampd;
 #define glDrawArrays(m, o, c)                       swDrawArrays(m, o, c)
 #define glGenTextures(c, v)                         swGenTextures(c, v)
 #define glDeleteTextures(c, v)                      swDeleteTextures(c, v)
-#define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D(w, h, f, t, p)
+#define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D(w, h, f, t, SW_GL_BINDING_COPY_TEXTURE, p)
 #define glTexParameteri(tr, pname, param)           swTexParameteri(pname, param)
 #define glBindTexture(tr, id)                       swBindTexture(id)
 
@@ -514,7 +518,7 @@ void swDrawArrays(SWdraw mode, int offset, int count);
 void swGenTextures(int count, uint32_t* textures);
 void swDeleteTextures(int count, uint32_t* textures);
 
-void swTexImage2D(int width, int height, SWformat format, SWtype type, const void* data);
+void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy, const void* data);
 void swTexParameteri(int param, int value);
 void swBindTexture(uint32_t id);
 
@@ -590,7 +594,14 @@ typedef struct {
 
 typedef struct {
 
-    const void* pixels;
+    // Dirty hack for copied data  
+    // TODO: Rework copied image handling  
+
+    union {
+        const void* cptr;   //< NOTE: Is used for all data reads
+        void* ptr;          //< WARNING: Should only be used to allocate and free data
+    } pixels;
+
     int width;
     int height;
     int format;
@@ -603,6 +614,8 @@ typedef struct {
 
     float tx;
     float ty;
+
+    bool copy;
 
 } sw_texture_t;
 
@@ -1207,6 +1220,43 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
     return -1; // Unsupported format
 }
 
+int sw_get_pixel_bpp(sw_pixelformat_e format)
+{
+    int bpp = 0;
+
+    switch (format)
+    {
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 16; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 16*3; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 16*4; break;
+        case SW_PIXELFORMAT_COMPRESSED_DXT1_RGB:
+        case SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
+        case SW_PIXELFORMAT_COMPRESSED_ETC1_RGB:
+        case SW_PIXELFORMAT_COMPRESSED_ETC2_RGB:
+        case SW_PIXELFORMAT_COMPRESSED_PVRT_RGB:
+        case SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
+        case SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
+        case SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
+        case SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        default: break;
+    }
+
+    return bpp;
+}
+
+
 static inline void sw_get_pixel_grayscale(float* color, const void* pixels, uint32_t offset)
 {
     float gray = (float)((uint8_t*)pixels)[offset] * (1.0f / 255);
@@ -1640,7 +1690,7 @@ static inline void sw_texture_sample_nearest(float* color, const sw_texture_t* t
     int x, y;
     sw_texture_map(&x, u, tex->width, tex->sWrap);
     sw_texture_map(&y, v, tex->height, tex->tWrap);
-    sw_get_pixel(color, tex->pixels, y * tex->width + x, tex->format);
+    sw_get_pixel(color, tex->pixels.cptr, y * tex->width + x, tex->format);
 }
 
 static inline void sw_texture_sample_linear(float* color, const sw_texture_t* tex, float u, float v)
@@ -1655,10 +1705,10 @@ static inline void sw_texture_sample_linear(float* color, const sw_texture_t* te
     float fy = v * (tex->height - 1) - y0;
 
     float c00[4], c10[4], c01[4], c11[4];
-    sw_get_pixel(c00, tex->pixels, y0 * tex->width + x0, tex->format);
-    sw_get_pixel(c10, tex->pixels, y0 * tex->width + x1, tex->format);
-    sw_get_pixel(c01, tex->pixels, y1 * tex->width + x0, tex->format);
-    sw_get_pixel(c11, tex->pixels, y1 * tex->width + x1, tex->format);
+    sw_get_pixel(c00, tex->pixels.cptr, y0 * tex->width + x0, tex->format);
+    sw_get_pixel(c10, tex->pixels.cptr, y0 * tex->width + x1, tex->format);
+    sw_get_pixel(c01, tex->pixels.cptr, y1 * tex->width + x0, tex->format);
+    sw_get_pixel(c11, tex->pixels.cptr, y1 * tex->width + x1, tex->format);
 
     float c0[4], c1[4];
     for (int i = 0; i < 4; i++) {
@@ -2937,7 +2987,7 @@ static inline bool sw_is_texture_valid(uint32_t id)
 
     if (id == 0) valid = false;
     else if (id >= SW_MAX_TEXTURES) valid = false;
-    else if (RLSW.loadedTextures[id].pixels == 0) valid = false;
+    else if (RLSW.loadedTextures[id].pixels.cptr == 0) valid = false;
 
     return true;
 }
@@ -3099,7 +3149,7 @@ bool swInit(int w, int h)
         1.0f, 1.0f, 1.0f,
     };
 
-    RLSW.loadedTextures[0].pixels = defTex;
+    RLSW.loadedTextures[0].pixels.cptr = defTex;
     RLSW.loadedTextures[0].width = 2;
     RLSW.loadedTextures[0].height = 2;
     RLSW.loadedTextures[0].format = SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32;
@@ -3990,12 +4040,15 @@ void swDeleteTextures(int count, uint32_t* textures)
             RLSW.errCode = SW_INVALID_VALUE;
             continue;
         }
-        RLSW.loadedTextures[textures[i]].pixels = 0;
+        if (RLSW.loadedTextures[textures[i]].copy) {
+            SW_FREE(RLSW.loadedTextures[textures[i]].pixels.ptr);
+        }
+        RLSW.loadedTextures[textures[i]].pixels.cptr = NULL;
         RLSW.freeTextureIds[RLSW.freeTextureIdCount++] = textures[i];
     }
 }
 
-void swTexImage2D(int width, int height, SWformat format, SWtype type, const void* data)
+void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy, const void* data)
 {
     uint32_t id = RLSW.currentTexture;
 
@@ -4013,12 +4066,28 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, const voi
 
     sw_texture_t* texture = &RLSW.loadedTextures[id];
 
-    texture->pixels = data;
+    if (copy) {
+        int bpp = sw_get_pixel_bpp(pixelFormat);
+        int size = bpp * width * height;
+        texture->pixels.ptr = SW_MALLOC(size);
+        if (texture->pixels.ptr == NULL) {
+            RLSW.errCode = SW_STACK_OVERFLOW;   //< Out of memory...
+            return;
+        }
+        for (int i = 0; i < size; i++) {
+            ((uint8_t*)texture->pixels.ptr)[i] = ((uint8_t*)data)[i];
+        }
+    }
+    else {
+        texture->pixels.cptr = data;
+    }
+
     texture->width = width;
     texture->height = height;
     texture->format = pixelFormat;
     texture->tx = 1.0f / width;
     texture->ty = 1.0f / height;
+    texture->copy = copy;
 }
 
 void swTexParameteri(int param, int value)
@@ -4080,7 +4149,7 @@ void swBindTexture(uint32_t id)
         return;
     }
 
-    if (id > 0 && RLSW.loadedTextures[id].pixels == 0) {
+    if (id > 0 && RLSW.loadedTextures[id].pixels.cptr == NULL) {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
     }
