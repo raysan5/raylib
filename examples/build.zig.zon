@@ -1,0 +1,10 @@
+.{
+    .name = .raylib_examples,
+    .version = "0.0.0",
+    .fingerprint = 0x3570d11b06c2907a, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.14.0",
+    .dependencies = .{
+        .raylib = .{ .path = ".." },
+    },
+    .paths = .{"."},
+}

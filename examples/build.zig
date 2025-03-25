@@ -2,13 +2,19 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 // This has been tested to work with zig 0.12.0
-fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
+fn add_module(
+    comptime module: []const u8,
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    raylib: *std.Build.Step.Compile,
+) !*std.Build.Step {
     if (target.result.os.tag == .emscripten) {
         @panic("Emscripten building via Zig unsupported");
     }
 
     const all = b.step(module, "All " ++ module ++ " examples");
-    var dir = try std.fs.cwd().openDir(module, .{ .iterate = true });
+    var dir = try std.fs.cwd().openDir(b.pathFromRoot(module), .{ .iterate = true });
     defer if (comptime builtin.zig_version.minor >= 12) dir.close();
 
     var iter = dir.iterate();
@@ -28,17 +34,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.Build.Reso
         });
         exe.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
         exe.linkLibC();
-        exe.addObjectFile(switch (target.result.os.tag) {
-            .windows => b.path("../zig-out/lib/raylib.lib"),
-            .linux => b.path("../zig-out/lib/libraylib.a"),
-            .macos => b.path("../zig-out/lib/libraylib.a"),
-            .emscripten => b.path("../zig-out/lib/libraylib.a"),
-            else => @panic("Unsupported OS"),
-        });
-
-        exe.addIncludePath(b.path("../src"));
-        exe.addIncludePath(b.path("../src/external"));
-        exe.addIncludePath(b.path("../src/external/glfw/include"));
+        exe.linkLibrary(raylib);
 
         switch (target.result.os.tag) {
             .windows => {
@@ -97,14 +93,20 @@ pub fn build(b: *std.Build) !void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    const raylib_dep = b.dependency("raylib", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const raylib = raylib_dep.artifact("raylib");
+
     const all = b.getInstallStep();
 
-    all.dependOn(try add_module("audio", b, target, optimize));
-    all.dependOn(try add_module("core", b, target, optimize));
-    all.dependOn(try add_module("models", b, target, optimize));
-    all.dependOn(try add_module("others", b, target, optimize));
-    all.dependOn(try add_module("shaders", b, target, optimize));
-    all.dependOn(try add_module("shapes", b, target, optimize));
-    all.dependOn(try add_module("text", b, target, optimize));
-    all.dependOn(try add_module("textures", b, target, optimize));
+    all.dependOn(try add_module("audio", b, target, optimize, raylib));
+    all.dependOn(try add_module("core", b, target, optimize, raylib));
+    all.dependOn(try add_module("models", b, target, optimize, raylib));
+    all.dependOn(try add_module("others", b, target, optimize, raylib));
+    all.dependOn(try add_module("shaders", b, target, optimize, raylib));
+    all.dependOn(try add_module("shapes", b, target, optimize, raylib));
+    all.dependOn(try add_module("text", b, target, optimize, raylib));
+    all.dependOn(try add_module("textures", b, target, optimize, raylib));
 }
