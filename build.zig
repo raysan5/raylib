@@ -16,7 +16,8 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
         .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", ""),
         .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
         .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", ""),
-        else => {},
+        .drm => {},
+        .win32 => raylib.root_module.addCMacro("PLATFORM_DESKTOP_WIN32", ""),
     }
 }
 
@@ -179,11 +180,12 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     raylib.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
+            try raylib_flags_arr.append("-DUNICODE");
             switch (options.platform) {
                 .glfw => try c_source_files.append("src/rglfw.c"),
-                .rgfw, .sdl, .drm => {},
+                .rgfw, .sdl, .drm, .win32 => {},
             }
-
+            raylib.linkSystemLibrary("shcore");
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
@@ -389,6 +391,7 @@ pub const PlatformBackend = enum {
     rgfw,
     sdl,
     drm,
+    win32,
 };
 
 pub fn build(b: *std.Build) !void {
