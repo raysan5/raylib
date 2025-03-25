@@ -3684,7 +3684,7 @@ unsigned char *rlReadScreenPixels(int width, int height)
 
     // Flip image vertically!
     // NOTE: Alpha value has already been applied to RGB in framebuffer, we don't need it!
-    for (int y = height - 1; y >= height / 2; y--)
+    for (int y = height - 1; y >= height/2; y--)
     {
         for (int x = 0; x < (width*4); x += 4)
         {
