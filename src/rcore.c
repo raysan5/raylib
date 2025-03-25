@@ -1884,7 +1884,7 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
