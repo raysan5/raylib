@@ -406,6 +406,16 @@ pub fn build(b: *std.Build) !void {
     lib.installHeader(b.path("src/rlgl.h"), "rlgl.h");
 
     b.installArtifact(lib);
+
+    const examples = b.step("examples", "Build/Install all examples");
+    examples.dependOn(try addExamples("audio", b, target, optimize, lib));
+    examples.dependOn(try addExamples("core", b, target, optimize, lib));
+    examples.dependOn(try addExamples("models", b, target, optimize, lib));
+    examples.dependOn(try addExamples("others", b, target, optimize, lib));
+    examples.dependOn(try addExamples("shaders", b, target, optimize, lib));
+    examples.dependOn(try addExamples("shapes", b, target, optimize, lib));
+    examples.dependOn(try addExamples("text", b, target, optimize, lib));
+    examples.dependOn(try addExamples("textures", b, target, optimize, lib));
 }
 
 fn waylandGenerate(
@@ -429,4 +439,96 @@ fn waylandGenerate(
 
     raylib.step.dependOn(&client_step.step);
     raylib.step.dependOn(&private_step.step);
+}
+
+fn addExamples(
+    comptime module: []const u8,
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    raylib: *std.Build.Step.Compile,
+) !*std.Build.Step {
+    if (target.result.os.tag == .emscripten) {
+        @panic("Emscripten building via Zig unsupported");
+    }
+
+    const all = b.step(module, "All " ++ module ++ " examples");
+    const module_subpath = b.pathJoin(&.{ "examples", module });
+    var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
+    defer if (comptime builtin.zig_version.minor >= 12) dir.close();
+
+    var iter = dir.iterate();
+    while (try iter.next()) |entry| {
+        if (entry.kind != .file) continue;
+        const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
+        const name = entry.name[0..extension_idx];
+        const path = b.pathJoin(&.{ module_subpath, entry.name });
+
+        // zig's mingw headers do not include pthread.h
+        if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
+
+        const exe = b.addExecutable(.{
+            .name = name,
+            .target = target,
+            .optimize = optimize,
+        });
+        exe.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
+        exe.linkLibC();
+
+        // special examples that test using these external dependencies directly
+        // alongside raylib
+        if (std.mem.eql(u8, name, "rlgl_standalone")) {
+            exe.addIncludePath(b.path("src"));
+            exe.addIncludePath(b.path("src/external/glfw/include"));
+        }
+        if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+            exe.addIncludePath(b.path("src/external"));
+        }
+
+        exe.linkLibrary(raylib);
+
+        switch (target.result.os.tag) {
+            .windows => {
+                exe.linkSystemLibrary("winmm");
+                exe.linkSystemLibrary("gdi32");
+                exe.linkSystemLibrary("opengl32");
+
+                exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
+            },
+            .linux => {
+                exe.linkSystemLibrary("GL");
+                exe.linkSystemLibrary("rt");
+                exe.linkSystemLibrary("dl");
+                exe.linkSystemLibrary("m");
+                exe.linkSystemLibrary("X11");
+
+                exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
+            },
+            .macos => {
+                exe.linkFramework("Foundation");
+                exe.linkFramework("Cocoa");
+                exe.linkFramework("OpenGL");
+                exe.linkFramework("CoreAudio");
+                exe.linkFramework("CoreVideo");
+                exe.linkFramework("IOKit");
+
+                exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
+            },
+            else => {
+                @panic("Unsupported OS");
+            },
+        }
+
+        const install_cmd = b.addInstallArtifact(exe, .{});
+
+        const run_cmd = b.addRunArtifact(exe);
+        run_cmd.cwd = b.path(module_subpath);
+        run_cmd.step.dependOn(&install_cmd.step);
+
+        const run_step = b.step(name, name);
+        run_step.dependOn(&run_cmd.step);
+
+        all.dependOn(&install_cmd.step);
+    }
+    return all;
 }
