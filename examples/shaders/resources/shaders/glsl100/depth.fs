@@ -1,26 +1,19 @@
 #version 100
 
-precision mediump float;
+in vec2 fragTexCoord;
+out vec4 finalColor;
+uniform sampler2D depthTexture;
 
-// Input vertex attributes (from vertex shader)
-varying vec2 fragTexCoord;
-varying vec4 fragColor;
-
-// Input uniform values
-uniform sampler2D texture0;     // Depth texture
-uniform vec4 colDiffuse;
-
-// NOTE: Add your custom variables here
-
-void main()
+float linearizeDepth(float depth)
 {
-    float zNear = 0.01; // camera z near
-    float zFar = 10.0;  // camera z far
-    float z = texture2D(texture0, fragTexCoord).x;
+    float n = 0.1;    // near plane
+    float f = 100.0;  // far plane
+    return (2.0 * n) / (f + n - depth * (f - n));
+}
 
-    // Linearize depth value
-    float depth = (2.0*zNear)/(zFar + zNear - z*(zFar - zNear));
-
-    // Calculate final fragment color
-    gl_FragColor = vec4(depth, depth, depth, 1.0);
+void main() {
+    vec2 flippedTexCoord = vec2(fragTexCoord.x, 1.0 - fragTexCoord.y);
+    float depth = texture(depthTexture, flippedTexCoord).r;
+    float linearDepth = linearizeDepth(depth);
+    finalColor = vec4(vec3(linearDepth), 1.0);
 }
