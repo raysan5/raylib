@@ -628,7 +628,6 @@ SHADERS = \
     shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
-    shaders/shaders_view_depth \
     shaders/shaders_multi_sample2d \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
@@ -642,6 +641,7 @@ SHADERS = \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
+    shaders/shaders_view_depth \
     shaders/shaders_write_depth \
     shaders/shaders_vertex_displacement
 
