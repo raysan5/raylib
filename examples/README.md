@@ -59,6 +59,7 @@ Examples using raylib core platform functionality like window creation, inputs, 
 | 33 | [core_basic_window_web](core/core_basic_window_web.c) | <img src="core/core_basic_window_web.png" alt="core_basic_window_web" width="80"> | ⭐️☆☆☆ | 1.3 | 1.3 | [Ray](https://github.com/raysan5) |
 | 34 | [core_input_gestures_web](core/core_input_gestures_web.c) | <img src="core/core_input_gestures_web.png" alt="core_input_gestures_web" width="80"> | ⭐️⭐️☆☆ | 4.6-dev | 4.6-dev | [ubkp](https://github.com/ubkp) |
 | 35 | [core_automation_events](core/core_automation_events.c) | <img src="core/core_automation_events.png" alt="core_automation_events" width="80"> | ⭐️⭐️⭐️☆ | 5.0 | 5.0 | [Ray](https://github.com/raysan5) |
+| 36 | [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐️☆☆☆ | 5.0 | 5.0 | [Jonathan Marler](https://github.com/marler8997) |
 
 ### category: shapes
 
