@@ -179,7 +179,11 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     raylib.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
-            try c_source_files.append("src/rglfw.c");
+            switch (options.platform) {
+                .glfw => try c_source_files.append("src/rglfw.c"),
+                .rgfw, .sdl, .drm => {},
+            }
+
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
@@ -480,6 +484,9 @@ fn addExamples(
         if (std.mem.eql(u8, name, "rlgl_standalone")) {
             exe.addIncludePath(b.path("src"));
             exe.addIncludePath(b.path("src/external/glfw/include"));
+            if (!hasCSource(raylib.root_module, "rglfw.c")) {
+                exe.addCSourceFile(.{ .file = b.path("src/rglfw.c"), .flags = &.{} });
+            }
         }
         if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
             exe.addIncludePath(b.path("src/external"));
@@ -531,4 +538,16 @@ fn addExamples(
         all.dependOn(&install_cmd.step);
     }
     return all;
+}
+
+fn hasCSource(module: *std.Build.Module, name: []const u8) bool {
+    for (module.link_objects.items) |o| switch (o) {
+        .c_source_file => |c| if (switch (c.file) {
+            .src_path => |s| std.ascii.endsWithIgnoreCase(s.sub_path, name),
+            .generated, .cwd_relative, .dependency => false,
+        }) return true,
+        .c_source_files => |s| for (s.files) |c| if (std.ascii.endsWithIgnoreCase(c, name)) return true,
+        else => {},
+    };
+    return false;
 }
