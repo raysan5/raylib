@@ -720,7 +720,7 @@
         </Function>
         <Function name="MinimizeWindow" retType="void" paramCount="0" desc="Set window state: minimized, if resizable">
         </Function>
-        <Function name="RestoreWindow" retType="void" paramCount="0" desc="Set window state: not minimized/maximized">
+        <Function name="RestoreWindow" retType="void" paramCount="0" desc="Restore window from being minimized/maximized">
         </Function>
         <Function name="SetWindowIcon" retType="void" paramCount="1" desc="Set icon for window (single image, RGBA 32bit)">
             <Param type="Image" name="image" desc="" />

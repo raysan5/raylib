@@ -3223,7 +3223,7 @@ return {
     },
     {
       name = "RestoreWindow",
-      description = "Set window state: not minimized/maximized",
+      description = "Restore window from being minimized/maximized",
       returnType = "void"
     },
     {
