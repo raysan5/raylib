@@ -1670,7 +1670,7 @@ void PollInputEvents(void)
             {
                 int jid = event.jdevice.which; // Joystick device index
 
-                if (!CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
+                if (CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
                 {
                     platform.gamepad[jid] = SDL_GameControllerOpen(jid);
                     platform.gamepadId[jid] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
