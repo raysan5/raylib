@@ -200,6 +200,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | 139 | [shaders_basic_pbr](shaders/shaders_basic_pbr.c) | <img src="shaders/shaders_basic_pbr.png" alt="shaders_basic_pbr" width="80"> | ⭐️⭐️⭐️⭐️ | 5.0 | 5.1-dev | [Afan OLOVCIC](https://github.com/_DevDad) |
 | 140 | [shaders_lightmap](shaders/shaders_lightmap.c) | <img src="shaders/shaders_lightmap.png" alt="shaders_lightmap" width="80"> | ⭐️⭐️⭐️☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
 | 141 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width=80> | ⭐️⭐️⭐️☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
+| 142 | [shaders_view_depth](shaders/shaders_view_depth.c) | <img src="shaders/shaders_view_depth.png" alt="shaders_view_depth" width="80"> | ⭐️⭐️⭐️☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
 
 ### category: audio
 
@@ -229,4 +230,3 @@ Examples showing raylib misc functionality that does not fit in other categories
 | 154 | [raymath_vector_angle](others/raymath_vector_angle.c) | <img src="others/raymath_vector_angle.png" alt="raymath_vector_angle" width="80"> | ⭐️⭐️☆☆ | 1.0 | 4.6 | [Ray](https://github.com/raysan5) |
 
 As always contributions are welcome, feel free to send new examples! Here is an [examples template](examples_template.c) to start with!
-
