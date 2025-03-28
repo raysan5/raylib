@@ -1085,7 +1085,7 @@ Function 017: MinimizeWindow() (0 input parameters)
 Function 018: RestoreWindow() (0 input parameters)
   Name: RestoreWindow
   Return type: void
-  Description: Set window state: not minimized/maximized
+  Description: Restore window from being minimized/maximized
   No input parameters
 Function 019: SetWindowIcon() (1 input parameters)
   Name: SetWindowIcon

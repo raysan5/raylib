@@ -339,7 +339,7 @@ void MinimizeWindow(void)
     RGFW_window_minimize(platform.window);
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
