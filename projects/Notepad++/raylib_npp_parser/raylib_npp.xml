@@ -65,7 +65,7 @@
             <Overload retVal="void" descr="Set window state: minimized, if resizable"></Overload>
         </KeyWord>
         <KeyWord name="RestoreWindow" func="yes">
-            <Overload retVal="void" descr="Set window state: not minimized/maximized"></Overload>
+            <Overload retVal="void" descr="Restore window from being minimized/maximized"></Overload>
         </KeyWord>
         <KeyWord name="SetWindowIcon" func="yes">
             <Overload retVal="void" descr="Set icon for window (single image, RGBA 32bit)">

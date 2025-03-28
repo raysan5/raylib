@@ -508,7 +508,7 @@ void MinimizeWindow(void)
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) == 0) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     SDL_RestoreWindow(platform.window);
