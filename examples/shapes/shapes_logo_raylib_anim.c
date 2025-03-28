@@ -48,6 +48,9 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        logoPositionX = GetScreenWidth()/2 - 128;
+        logoPositionY = GetScreenHeight()/2 - 128;
+
         // Update
         //----------------------------------------------------------------------------------
         if (state == 0)                 // State 0: Small box blinking
@@ -151,7 +154,7 @@ int main(void)
             }
             else if (state == 4)
             {
-                DrawText("[R] REPLAY", 340, 200, 20, GRAY);
+                DrawText("[R] REPLAY", GetScreenWidth()/2 - 60, GetScreenHeight()/2 - 25, 20, GRAY);
             }
 
         EndDrawing();
