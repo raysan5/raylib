@@ -41,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_custom_logging", "exam
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_drop_files", "examples\core_drop_files.vcxproj", "{0199E349-0701-40BC-8A7F-06A54FFA3E7C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_high_dpi", "examples\core_high_dpi.vcxproj", "{BCB71111-8505-4B35-8CEF-EC6115DC9D4D}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_gamepad", "examples\core_input_gamepad.vcxproj", "{8F19E3DA-8929-4000-87B5-3CA6929636CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_gestures", "examples\core_input_gestures.vcxproj", "{51A00565-5787-4911-9CC0-28403AA4909D}"
