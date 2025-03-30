@@ -390,6 +390,7 @@ CORE = \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
+    core/core_high_dpi \
     core/core_input_gamepad \
     core/core_input_gestures \
     core/core_input_gestures_web \
