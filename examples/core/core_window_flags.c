@@ -134,6 +134,9 @@ int main(void)
             else SetWindowState(FLAG_VSYNC_HINT);
         }
 
+        if (IsKeyPressed(KEY_B)) ToggleBorderlessWindowed();
+
+
         // Bouncing ball logic
         ballPosition.x += ballSpeed.x;
         ballPosition.y += ballSpeed.y;
@@ -179,14 +182,16 @@ int main(void)
         else DrawText("[A] FLAG_WINDOW_ALWAYS_RUN: off", 10, 240, 10, MAROON);
         if (IsWindowState(FLAG_VSYNC_HINT)) DrawText("[V] FLAG_VSYNC_HINT: on", 10, 260, 10, LIME);
         else DrawText("[V] FLAG_VSYNC_HINT: off", 10, 260, 10, MAROON);
+        if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE)) DrawText("[B] FLAG_BORDERLESS_WINDOWED_MODE: on", 10, 280, 10, LIME);
+        else DrawText("[B] FLAG_BORDERLESS_WINDOWED_MODE: off", 10, 280, 10, MAROON);
 
-        DrawText("Following flags can only be set before window creation:", 10, 300, 10, GRAY);
-        if (IsWindowState(FLAG_WINDOW_HIGHDPI)) DrawText("FLAG_WINDOW_HIGHDPI: on", 10, 320, 10, LIME);
-        else DrawText("FLAG_WINDOW_HIGHDPI: off", 10, 320, 10, MAROON);
-        if (IsWindowState(FLAG_WINDOW_TRANSPARENT)) DrawText("FLAG_WINDOW_TRANSPARENT: on", 10, 340, 10, LIME);
-        else DrawText("FLAG_WINDOW_TRANSPARENT: off", 10, 340, 10, MAROON);
-        if (IsWindowState(FLAG_MSAA_4X_HINT)) DrawText("FLAG_MSAA_4X_HINT: on", 10, 360, 10, LIME);
-        else DrawText("FLAG_MSAA_4X_HINT: off", 10, 360, 10, MAROON);
+        DrawText("Following flags can only be set before window creation:", 10, 320, 10, GRAY);
+        if (IsWindowState(FLAG_WINDOW_HIGHDPI)) DrawText("FLAG_WINDOW_HIGHDPI: on", 10, 340, 10, LIME);
+        else DrawText("FLAG_WINDOW_HIGHDPI: off", 10, 340, 10, MAROON);
+        if (IsWindowState(FLAG_WINDOW_TRANSPARENT)) DrawText("FLAG_WINDOW_TRANSPARENT: on", 10, 360, 10, LIME);
+        else DrawText("FLAG_WINDOW_TRANSPARENT: off", 10, 360, 10, MAROON);
+        if (IsWindowState(FLAG_MSAA_4X_HINT)) DrawText("FLAG_MSAA_4X_HINT: on", 10, 380, 10, LIME);
+        else DrawText("FLAG_MSAA_4X_HINT: off", 10, 380, 10, MAROON);
 
         EndDrawing();
         //-----------------------------------------------------
