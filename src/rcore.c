@@ -553,6 +553,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_desktop_sdl.c"
 #elif (defined(PLATFORM_DESKTOP_RGFW) || defined(PLATFORM_WEB_RGFW))
     #include "platforms/rcore_desktop_rgfw.c"
+#elif defined(PLATFORM_DESKTOP_WIN32)
+    #include "platforms/rcore_desktop_win32.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
@@ -622,6 +624,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
 #elif defined(PLATFORM_DESKTOP_RGFW)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (RGFW)");
+#elif defined(PLATFORM_DESKTOP_WIN32)
+    TRACELOG(LOG_INFO, "Platform backend: DESKTOP (WIN32)");
 #elif defined(PLATFORM_WEB_RGFW)
     TRACELOG(LOG_INFO, "Platform backend: WEB (RGFW) (HTML5)");
 #elif defined(PLATFORM_WEB)
