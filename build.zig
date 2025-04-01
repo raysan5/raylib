@@ -238,17 +238,15 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addSystemIncludePath( .{ .cwd_relative = androidAsmPath});
                 raylib.addSystemIncludePath(.{ .cwd_relative = androidGluePath});
 
-                const libcFile = try std.fs.cwd().createFile("android-libc.txt", .{});
-                const writer = libcFile.writer();
-                const libc = std.zig.LibCInstallation{
+                var libcData = std.ArrayList(u8).init(b.allocator).writer();
+                const writer = libcData.writer();
+                try (std.zig.LibCInstallation{
                     .include_dir = androidIncludePath,
                     .sys_include_dir = androidIncludePath,
                     .crt_dir = androidApiSpecificPath,
-                };
-                try libc.render(writer);
-                libcFile.close();
-
-                raylib.setLibCFile(b.path("android-libc.txt"));
+                }).render(writer);
+                const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice());
+                raylib.setLibCFile(libcFile);
 
                 if (options.opengl_version == .auto) {
                     raylib.root_module.linkSystemLibrary("GLESv2", .{});
