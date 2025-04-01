@@ -238,7 +238,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.addSystemIncludePath( .{ .cwd_relative = androidAsmPath});
                 raylib.addSystemIncludePath(.{ .cwd_relative = androidGluePath});
 
-                var libcData = std.ArrayList(u8).init(b.allocator).writer();
+                var libcData = std.ArrayList(u8).init(b.allocator);
                 const writer = libcData.writer();
                 try (std.zig.LibCInstallation{
                     .include_dir = androidIncludePath,
