@@ -52,7 +52,7 @@ int main(void)
 
     int framesCounter = 0;
 
-    //SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //----------------------------------------------------------
 
     // Main game loop
@@ -97,7 +97,10 @@ int main(void)
         if (IsWindowState(FLAG_WINDOW_MINIMIZED))
         {
             framesCounter++;
-            if (framesCounter >= 240) RestoreWindow(); // Restore window after 3 seconds
+            if (framesCounter >= 240) {
+                RestoreWindow(); // Restore window after 3 seconds
+                framesCounter = 0;
+            }
         }
 
         if (IsKeyPressed(KEY_M))
@@ -131,6 +134,9 @@ int main(void)
             else SetWindowState(FLAG_VSYNC_HINT);
         }
 
+        if (IsKeyPressed(KEY_B)) ToggleBorderlessWindowed();
+
+
         // Bouncing ball logic
         ballPosition.x += ballSpeed.x;
         ballPosition.y += ballSpeed.y;
@@ -163,9 +169,9 @@ int main(void)
         if (IsWindowState(FLAG_WINDOW_UNDECORATED)) DrawText("[D] FLAG_WINDOW_UNDECORATED: on", 10, 120, 10, LIME);
         else DrawText("[D] FLAG_WINDOW_UNDECORATED: off", 10, 120, 10, MAROON);
         if (IsWindowState(FLAG_WINDOW_HIDDEN)) DrawText("[H] FLAG_WINDOW_HIDDEN: on", 10, 140, 10, LIME);
-        else DrawText("[H] FLAG_WINDOW_HIDDEN: off", 10, 140, 10, MAROON);
+        else DrawText("[H] FLAG_WINDOW_HIDDEN: off (hides for 3 seconds)", 10, 140, 10, MAROON);
         if (IsWindowState(FLAG_WINDOW_MINIMIZED)) DrawText("[N] FLAG_WINDOW_MINIMIZED: on", 10, 160, 10, LIME);
-        else DrawText("[N] FLAG_WINDOW_MINIMIZED: off", 10, 160, 10, MAROON);
+        else DrawText("[N] FLAG_WINDOW_MINIMIZED: off (restores after 3 seconds)", 10, 160, 10, MAROON);
         if (IsWindowState(FLAG_WINDOW_MAXIMIZED)) DrawText("[M] FLAG_WINDOW_MAXIMIZED: on", 10, 180, 10, LIME);
         else DrawText("[M] FLAG_WINDOW_MAXIMIZED: off", 10, 180, 10, MAROON);
         if (IsWindowState(FLAG_WINDOW_UNFOCUSED)) DrawText("[G] FLAG_WINDOW_UNFOCUSED: on", 10, 200, 10, LIME);
@@ -176,14 +182,16 @@ int main(void)
         else DrawText("[A] FLAG_WINDOW_ALWAYS_RUN: off", 10, 240, 10, MAROON);
         if (IsWindowState(FLAG_VSYNC_HINT)) DrawText("[V] FLAG_VSYNC_HINT: on", 10, 260, 10, LIME);
         else DrawText("[V] FLAG_VSYNC_HINT: off", 10, 260, 10, MAROON);
+        if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE)) DrawText("[B] FLAG_BORDERLESS_WINDOWED_MODE: on", 10, 280, 10, LIME);
+        else DrawText("[B] FLAG_BORDERLESS_WINDOWED_MODE: off", 10, 280, 10, MAROON);
 
-        DrawText("Following flags can only be set before window creation:", 10, 300, 10, GRAY);
-        if (IsWindowState(FLAG_WINDOW_HIGHDPI)) DrawText("FLAG_WINDOW_HIGHDPI: on", 10, 320, 10, LIME);
-        else DrawText("FLAG_WINDOW_HIGHDPI: off", 10, 320, 10, MAROON);
-        if (IsWindowState(FLAG_WINDOW_TRANSPARENT)) DrawText("FLAG_WINDOW_TRANSPARENT: on", 10, 340, 10, LIME);
-        else DrawText("FLAG_WINDOW_TRANSPARENT: off", 10, 340, 10, MAROON);
-        if (IsWindowState(FLAG_MSAA_4X_HINT)) DrawText("FLAG_MSAA_4X_HINT: on", 10, 360, 10, LIME);
-        else DrawText("FLAG_MSAA_4X_HINT: off", 10, 360, 10, MAROON);
+        DrawText("Following flags can only be set before window creation:", 10, 320, 10, GRAY);
+        if (IsWindowState(FLAG_WINDOW_HIGHDPI)) DrawText("FLAG_WINDOW_HIGHDPI: on", 10, 340, 10, LIME);
+        else DrawText("FLAG_WINDOW_HIGHDPI: off", 10, 340, 10, MAROON);
+        if (IsWindowState(FLAG_WINDOW_TRANSPARENT)) DrawText("FLAG_WINDOW_TRANSPARENT: on", 10, 360, 10, LIME);
+        else DrawText("FLAG_WINDOW_TRANSPARENT: off", 10, 360, 10, MAROON);
+        if (IsWindowState(FLAG_MSAA_4X_HINT)) DrawText("FLAG_MSAA_4X_HINT: on", 10, 380, 10, LIME);
+        else DrawText("FLAG_MSAA_4X_HINT: off", 10, 380, 10, MAROON);
 
         EndDrawing();
         //-----------------------------------------------------
