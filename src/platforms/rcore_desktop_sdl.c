@@ -702,70 +702,84 @@ void SetWindowIcon(Image image)
     switch (image.format)
     {
         case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+        {
             rmask = 0xFF, gmask = 0;
             bmask = 0, amask = 0;
             depth = 8, pitch = image.width;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+        {
             rmask = 0xFF, gmask = 0xFF00;
             bmask = 0, amask = 0;
             depth = 16, pitch = image.width*2;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+        {
             rmask = 0xF800, gmask = 0x07E0;
             bmask = 0x001F, amask = 0;
             depth = 16, pitch = image.width*2;
-            break;
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: // Uses BGR for 24-bit
-            rmask = 0x0000FF, gmask = 0x00FF00;
-            bmask = 0xFF0000, amask = 0;
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: 
+        {
+            // WARNING: SDL2 could be using BGR but SDL3 RGB
+            rmask = 0xFF0000, gmask = 0x00FF00;
+            bmask = 0x0000FF, amask = 0;
             depth = 24, pitch = image.width*3;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+        {
             rmask = 0xF800, gmask = 0x07C0;
             bmask = 0x003E, amask = 0x0001;
             depth = 16, pitch = image.width*2;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
+        {
             rmask = 0xF000, gmask = 0x0F00;
             bmask = 0x00F0, amask = 0x000F;
             depth = 16, pitch = image.width*2;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
+        {
             rmask = 0xFF000000, gmask = 0x00FF0000;
             bmask = 0x0000FF00, amask = 0x000000FF;
             depth = 32, pitch = image.width*4;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R32:
+        {
             rmask = 0xFFFFFFFF, gmask = 0;
             bmask = 0, amask = 0;
             depth = 32, pitch = image.width*4;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+        {
             rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
             bmask = 0xFFFFFFFF, amask = 0;
             depth = 96, pitch = image.width*12;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+        {
             rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
             bmask = 0xFFFFFFFF, amask = 0xFFFFFFFF;
             depth = 128, pitch = image.width*16;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R16:
+        {
             rmask = 0xFFFF, gmask = 0;
             bmask = 0, amask = 0;
             depth = 16, pitch = image.width*2;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+        {
             rmask = 0xFFFF, gmask = 0xFFFF;
             bmask = 0xFFFF, amask = 0;
             depth = 48, pitch = image.width*6;
-            break;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+        {
             rmask = 0xFFFF, gmask = 0xFFFF;
             bmask = 0xFFFF, amask = 0xFFFF;
             depth = 64, pitch = image.width*8;
-            break;
+        } break;
         default: return; // Compressed formats are not supported
     }
 
@@ -1349,7 +1363,10 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Map touch position to mouse position for convenience
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    if (CORE.Input.Touch.pointCount == 0)
+    {
+        CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    }
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
     bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones

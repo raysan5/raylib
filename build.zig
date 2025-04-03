@@ -16,6 +16,7 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
         .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", ""),
         .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
         .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", ""),
+        .android => raylib.root_module.addCMacro("PLATFORM_ANDROID", ""),
         else => {},
     }
 }
@@ -181,7 +182,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .windows => {
             switch (options.platform) {
                 .glfw => try c_source_files.append("src/rglfw.c"),
-                .rgfw, .sdl, .drm => {},
+                .rgfw, .sdl, .drm, .android => {},
             }
 
             raylib.linkSystemLibrary("winmm");
@@ -191,7 +192,69 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .linux => {
-            if (options.platform != .drm) {
+
+            if (options.platform == .drm) {
+                if (options.opengl_version == .auto) {
+                    raylib.linkSystemLibrary("GLESv2");
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+                }
+
+                raylib.linkSystemLibrary("EGL");
+                raylib.linkSystemLibrary("gbm");
+                raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
+
+                raylib.root_module.addCMacro("PLATFORM_DRM", "");
+                raylib.root_module.addCMacro("EGL_NO_X11", "");
+                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
+            } else if (target.result.abi == .android) {
+
+                //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
+                const hostTuple = switch(builtin.target.os.tag) {
+                    .linux =>   "linux-x86_64",
+                    .windows => "windows-x86_64",
+                    .macos =>   "darwin-x86_64",
+                    else => {
+                        @panic("unsupported host OS");
+                    }
+                };
+
+                const androidTriple = try target.result.linuxTriple(b.allocator);
+                const androidNdkPathString: []const u8 = options.android_ndk;
+                if(androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
+                const androidApiLevel: []const u8 = options.android_api_version;
+
+                const androidSysroot = try std.fs.path.join(b.allocator, &.{androidNdkPathString,  "/toolchains/llvm/prebuilt/", hostTuple, "/sysroot"});
+                const androidLibPath = try std.fs.path.join(b.allocator, &.{androidSysroot, "/usr/lib/", androidTriple});
+                const androidApiSpecificPath =  try std.fs.path.join(b.allocator, &.{androidLibPath, androidApiLevel});
+                const androidIncludePath = try std.fs.path.join(b.allocator, &.{androidSysroot, "/usr/include"});
+                const androidArchIncludePath = try std.fs.path.join(b.allocator, &.{androidIncludePath, androidTriple});
+                const androidAsmPath = try std.fs.path.join(b.allocator, &.{androidIncludePath, "/asm-generic"});
+                const androidGluePath = try std.fs.path.join(b.allocator, &.{androidNdkPathString, "/sources/android/native_app_glue/"});
+
+                raylib.addLibraryPath(.{ .cwd_relative =  androidLibPath});
+                raylib.root_module.addLibraryPath(.{ .cwd_relative = androidApiSpecificPath });
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidIncludePath });
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidArchIncludePath});
+                raylib.addSystemIncludePath( .{ .cwd_relative = androidAsmPath});
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidGluePath});
+
+                var libcData = std.ArrayList(u8).init(b.allocator);
+                const writer = libcData.writer();
+                try (std.zig.LibCInstallation{
+                    .include_dir = androidIncludePath,
+                    .sys_include_dir = androidIncludePath,
+                    .crt_dir = androidApiSpecificPath,
+                }).render(writer);
+                const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice());
+                raylib.setLibCFile(libcFile);
+
+                if (options.opengl_version == .auto) {
+                    raylib.root_module.linkSystemLibrary("GLESv2", .{});
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+                }
+
+                setDesktopPlatform(raylib, .android);
+            } else {
                 try c_source_files.append("src/rglfw.c");
 
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
@@ -229,21 +292,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
                     waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
                 }
-
                 setDesktopPlatform(raylib, options.platform);
-            } else {
-                if (options.opengl_version == .auto) {
-                    raylib.linkSystemLibrary("GLESv2");
-                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
-                }
-
-                raylib.linkSystemLibrary("EGL");
-                raylib.linkSystemLibrary("gbm");
-                raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
-
-                raylib.root_module.addCMacro("PLATFORM_DRM", "");
-                raylib.root_module.addCMacro("EGL_NO_X11", "");
-                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
@@ -335,6 +384,8 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+    android_ndk: []const u8 = "",
+    android_api_version: []const u8 = "35",
     /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: []const u8 = &.{},
 
@@ -352,6 +403,8 @@ pub const Options = struct {
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
             .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
+            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse std.process.getEnvVarOwned(b.allocator, "ANDROID_NDK_HOME") catch "",
+            .android_api_version = b.option([]const u8, "android_api_version", "specify target android API level") orelse defaults.android_api_version,
         };
     }
 };
@@ -389,6 +442,7 @@ pub const PlatformBackend = enum {
     rgfw,
     sdl,
     drm,
+    android
 };
 
 pub fn build(b: *std.Build) !void {
