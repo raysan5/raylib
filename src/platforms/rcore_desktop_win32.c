@@ -75,11 +75,6 @@
 #include <GL/gl.h>
 #include <GL/wglext.h>
 
-// undefined the glad_glGetString macro definition
-#undef glGetString
-// this should come from win32's GL/gl.h...not sure why it's not in this context
-const GLubyte* WINAPI glGetString(GLenum);
-
 // --------------------------------------------------------------------------------
 // This part of the file contains pure functions that never access global state.
 // This distinction helps keep the backend maintainable as the inputs and outputs
@@ -490,8 +485,21 @@ static BOOL IsWindows10Version1703OrGreaterWin32(void)
 
 static void* FindProc(const char* name)
 {
-    if (0 == strcmp(name, "glGetString")) return glGetString;
-    return wglGetProcAddress(name);
+    {
+        void* proc = wglGetProcAddress(name);
+        if (proc) return proc;
+    }
+
+    static HMODULE opengl = NULL;
+    if (!opengl) {
+        opengl = LoadLibraryW(L"opengl32");
+    }
+    if (opengl) {
+        void* proc = GetProcAddress(opengl, name);
+        if (proc) return proc;
+    }
+
+    return NULL;
 }
 static void* WglGetProcAddress(const char* name)
 {
