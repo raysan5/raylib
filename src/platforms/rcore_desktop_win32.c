@@ -1435,8 +1435,8 @@ void DisableCursor(void)
 void SwapScreenBuffer(void)
 {
     if (!global_hdc) abort();
-    if (!wglSwapLayerBuffers(global_hdc, WGL_SWAP_MAIN_PLANE)) {
-        LogFail("wglSwapLayerBuffers", GetLastError());
+    if (!SwapBuffers(global_hdc)) {
+        LogFail("SwapBuffers", GetLastError());
         abort();
     }
 }
