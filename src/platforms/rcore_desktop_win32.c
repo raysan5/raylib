@@ -1439,6 +1439,11 @@ void SwapScreenBuffer(void)
         LogFail("SwapBuffers", GetLastError());
         abort();
     }
+
+    if (!ValidateRect(global_hwnd, NULL)) {
+        LogFail("ValidateRect", GetLastError());
+        abort();
+    }
 }
 
 double GetTime(void)
@@ -1551,6 +1556,8 @@ void PollInputEvents(void)
 
     MSG msg;
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_PAINT)
+            return;
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
@@ -1776,12 +1783,6 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
             LogFail("SetWindowPos", GetLastError());
             abort();
         }
-        return 0;
-    }
-    case WM_PAINT: {
-        PAINTSTRUCT ps;
-        BeginPaint(hwnd, &ps);
-        EndPaint(hwnd, &ps);
         return 0;
     }
     case WM_SETCURSOR:
