@@ -175,6 +175,7 @@ static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *mate
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(startPos.x, startPos.y, startPos.z);
@@ -186,6 +187,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // WARNING: OpenGL ES 2.0 does not support point mode drawing
 void DrawPoint3D(Vector3 position, Color color)
 {
+    rlSetTexture(rlGetTextureIdDefault());
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
         rlBegin(RL_LINES);
@@ -199,6 +201,7 @@ void DrawPoint3D(Vector3 position, Color color)
 // Draw a circle in 3D world space
 void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
+    rlSetTexture(rlGetTextureIdDefault());
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
         rlRotatef(rotationAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
@@ -218,6 +221,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
 // Draw a color-filled triangle (vertex in counter-clockwise order!)
 void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 {
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(v1.x, v1.y, v1.z);
@@ -231,6 +235,7 @@ void DrawTriangleStrip3D(const Vector3 *points, int pointCount, Color color)
 {
     if (pointCount < 3) return; // Security check
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -266,6 +271,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
         //rlRotatef(45, 0, 1, 0);
         //rlScalef(1.0f, 1.0f, 1.0f);   // NOTE: Vertices are directly scaled on definition
 
+        rlSetTexture(rlGetTextureIdDefault());
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -345,6 +351,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float y = 0.0f;
     float z = 0.0f;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
@@ -435,6 +442,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
+        rlSetTexture(rlGetTextureIdDefault());
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -472,6 +480,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
+        rlSetTexture(rlGetTextureIdDefault());
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -520,6 +529,7 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
+        rlSetTexture(rlGetTextureIdDefault());
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -561,6 +571,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 
     const float angleStep = 360.0f/sides;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
@@ -627,6 +638,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
 
     float baseAngle = (2.0f*PI)/sides;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -679,6 +691,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
     const float angleStep = 360.0f/sides;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
@@ -718,6 +731,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 
     float baseAngle = (2.0f*PI)/sides;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -769,6 +783,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
     float baseSliceAngle = (2.0f*PI)/slices;
     float baseRingAngle  = PI*0.5f/rings;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -912,6 +927,7 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
     float baseSliceAngle = (2.0f*PI)/slices;
     float baseRingAngle  = PI*0.5f/rings;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -1031,6 +1047,7 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
     // NOTE: Plane is always created on XZ ground
+    rlSetTexture(rlGetTextureIdDefault());
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
@@ -1052,6 +1069,7 @@ void DrawRay(Ray ray, Color color)
 {
     float scale = 10000;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1066,6 +1084,7 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
+    rlSetTexture(rlGetTextureIdDefault());
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
