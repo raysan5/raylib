@@ -1473,7 +1473,10 @@ void rlBegin(int mode)
             if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment))
             {
                 RLGL.State.vertexCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
+
+                int currentTextureId = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId;
                 RLGL.currentBatch->drawCounter++;
+                RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = currentTextureId;
             }
         }
 
@@ -1481,7 +1484,6 @@ void rlBegin(int mode)
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = mode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = RLGL.State.defaultTextureId;
     }
 }
 
@@ -1670,7 +1672,9 @@ void rlSetTexture(unsigned int id)
                 {
                     RLGL.State.vertexCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
 
+                    int currentMode = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode;
                     RLGL.currentBatch->drawCounter++;
+                    RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = currentMode;
                 }
             }
 
