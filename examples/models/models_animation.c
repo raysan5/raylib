@@ -94,7 +94,7 @@ int main(void)
             EndMode3D();
 
             DrawText("PRESS SPACE to PLAY MODEL ANIMATION", 10, 10, 20, MAROON);
-            DrawText("(c) Guy IQM 3D model by @culacant", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Guy IQM 3D model by @culacant", GetScreenWidth() - 200, GetScreenHeight() - 20, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
