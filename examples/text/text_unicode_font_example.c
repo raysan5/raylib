@@ -1,148 +1,92 @@
 #include <stdlib.h>
-#include <string.h>
 #include <raylib.h>
 
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 450
-#define INITIAL_CAPACITY 65536  // 2^16 - sufficient for most Unicode BMP characters
 
+typedef struct {
+    int* data;
+    int count;
+    int capacity;
+} CodepointsArray;
 
-static int AddCodeRange(int* codePoints, int* count, int start, int stop)
-{
-    // Verify we have enough capacity for this range
-    if (*count + (stop - start + 1) > INITIAL_CAPACITY) {
-        return 0;  // Not enough space
+static void AddRange(CodepointsArray* array, int start, int stop) {
+    int rangeSize = stop - start + 1;
+    
+    if (array->count + rangeSize > array->capacity) {
+        array->capacity = array->count + rangeSize + 1024;
+        array->data = (int*)MemRealloc(array->data, array->capacity * sizeof(int));
+        if (!array->data) {
+            TraceLog(LOG_ERROR, "FONTUTIL: Memory allocation failed");
+            exit(1);
+        }
     }
-
-    // Add all code points in the range
-    while (start <= stop) {
-        codePoints[*count] = start;
-        (*count)++;
-        start++;
+    
+    for (int i = start; i <= stop; i++) {
+        array->data[array->count++] = i;
     }
-    return 1;  // Success
 }
 
-Font LoadUnicodeFont(const char* fileName, int fontSize, int textureFilter)
-{
-    // Allocate memory for code points (fixed size - no reallocation needed)
-    int* codePoints = (int*)malloc(INITIAL_CAPACITY * sizeof(int));
-    if (!codePoints) return GetFontDefault();
-    
-    int count = 0;  // Tracks number of added code points
+Font LoadUnicodeFont(const char* fileName, int fontSize, int textureFilter) {
+    CodepointsArray cp = {0};
+    cp.capacity = 2048;
+    cp.data = (int*)MemAlloc(cp.capacity * sizeof(int));
 
-    // --------------------------------------------------
-    // 1. BASIC ASCII CHARACTERS
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 32, 126);  // Basic Latin (letters, digits, punctuation)
-    
-    // --------------------------------------------------
-    // 2. EUROPEAN LANGUAGES (LATIN SCRIPT)
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0xC0, 0x17F);  // Latin-1 Supplement + Latin Extended-A
-    AddCodeRange(codePoints, &count, 0x180, 0x24F); // Latin Extended-B
-    AddCodeRange(codePoints, &count, 0x1E00, 0x1EFF); // Latin Extended Additional
-    AddCodeRange(codePoints, &count, 0x2C60, 0x2C7F); // Latin Extended-C
-    
-    // --------------------------------------------------
-    // 3. GREEK AND COPTIC
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x370, 0x3FF); // Greek and Coptic
-    AddCodeRange(codePoints, &count, 0x1F00, 0x1FFF); // Greek Extended
-    
-    // --------------------------------------------------
-    // 4. CYRILLIC SCRIPTS
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x400, 0x4FF); // Basic Cyrillic
-    AddCodeRange(codePoints, &count, 0x500, 0x52F); // Cyrillic Supplement
-    AddCodeRange(codePoints, &count, 0x2DE0, 0x2DFF); // Cyrillic Extended-A
-    AddCodeRange(codePoints, &count, 0xA640, 0xA69F); // Cyrillic Extended-B
-    
-    // --------------------------------------------------
-    // 5. CJK LANGUAGES (CHINESE, JAPANESE, KOREAN)
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x4E00, 0x9FFF); // CJK Unified Ideographs
-    AddCodeRange(codePoints, &count, 0x3400, 0x4DBF); // CJK Extension A
-    AddCodeRange(codePoints, &count, 0x3000, 0x303F); // CJK Symbols and Punctuation
-    AddCodeRange(codePoints, &count, 0x3040, 0x309F); // Hiragana (Japanese)
-    AddCodeRange(codePoints, &count, 0x30A0, 0x30FF); // Katakana (Japanese)
-    AddCodeRange(codePoints, &count, 0x31F0, 0x31FF); // Katakana Phonetic Extensions
-    AddCodeRange(codePoints, &count, 0xFF00, 0xFFEF); // Halfwidth and Fullwidth Forms
-    AddCodeRange(codePoints, &count, 0xAC00, 0xD7AF); // Hangul Syllables (Korean)
-    AddCodeRange(codePoints, &count, 0x1100, 0x11FF); // Hangul Jamo
-    
-    // --------------------------------------------------
-    // 6. SOUTHEAST ASIAN LANGUAGES
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x0E00, 0x0E7F); // Thai
-    AddCodeRange(codePoints, &count, 0x0E80, 0x0EFF); // Lao
-    AddCodeRange(codePoints, &count, 0x1780, 0x17FF); // Khmer
-    AddCodeRange(codePoints, &count, 0x1000, 0x109F); // Myanmar
-    AddCodeRange(codePoints, &count, 0x1980, 0x19DF); // New Tai Lue
-    
-    // --------------------------------------------------
-    // 7. INDIAN SUBCONTINENT LANGUAGES
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x900, 0x97F);  // Devanagari (Hindi, Sanskrit)
-    AddCodeRange(codePoints, &count, 0x980, 0x9FF);  // Bengali
-    AddCodeRange(codePoints, &count, 0xA00, 0xA7F);  // Gurmukhi (Punjabi)
-    AddCodeRange(codePoints, &count, 0xA80, 0xAFF);  // Gujarati
-    AddCodeRange(codePoints, &count, 0xB00, 0xB7F);  // Oriya
-    AddCodeRange(codePoints, &count, 0xB80, 0xBFF);  // Tamil
-    AddCodeRange(codePoints, &count, 0xC00, 0xC7F);  // Telugu
-    AddCodeRange(codePoints, &count, 0xC80, 0xCFF);  // Kannada
-    AddCodeRange(codePoints, &count, 0xD00, 0xD7F);  // Malayalam
-    AddCodeRange(codePoints, &count, 0xD80, 0xDFF);  // Sinhala
-    
-    // --------------------------------------------------
-    // 8. MIDDLE EASTERN LANGUAGES
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x600, 0x6FF);  // Arabic
-    AddCodeRange(codePoints, &count, 0x750, 0x77F);  // Arabic Supplement
-    AddCodeRange(codePoints, &count, 0x8A0, 0x8FF);  // Arabic Extended-A
-    AddCodeRange(codePoints, &count, 0xFB50, 0xFDFF); // Arabic Presentation Forms-A
-    AddCodeRange(codePoints, &count, 0x5D0, 0x5EA);  // Hebrew
-    AddCodeRange(codePoints, &count, 0x591, 0x5C7);  // Hebrew Extended
-    AddCodeRange(codePoints, &count, 0x7C0, 0x7FF);  // N'Ko
-    AddCodeRange(codePoints, &count, 0x640, 0x6FF);  // Syriac
-    
-    // --------------------------------------------------
-    // 9. AFRICAN LANGUAGES
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x2C80, 0x2CFF); // Coptic
-    AddCodeRange(codePoints, &count, 0x2D30, 0x2D7F); // Tifinagh
-    AddCodeRange(codePoints, &count, 0xA6A0, 0xA6FF); // Bamum
-    AddCodeRange(codePoints, &count, 0xAB00, 0xAB2F); // Ethiopic Extended
-    
-    // --------------------------------------------------
-    // 10. SPECIAL CHARACTERS AND SYMBOLS
-    // --------------------------------------------------
-    AddCodeRange(codePoints, &count, 0x300, 0x36F);  // Combining Diacritical Marks
-    AddCodeRange(codePoints, &count, 0x1DC0, 0x1DFF); // Combining Diacritical Marks Supplement
-    AddCodeRange(codePoints, &count, 0x2000, 0x206F); // General Punctuation
-    AddCodeRange(codePoints, &count, 0x20A0, 0x20CF); // Currency Symbols
-    AddCodeRange(codePoints, &count, 0x2100, 0x214F); // Letterlike Symbols
-    AddCodeRange(codePoints, &count, 0x2190, 0x21FF); // Arrows
-    AddCodeRange(codePoints, &count, 0x2200, 0x22FF); // Mathematical Operators
+    if (!cp.data) {
+        TraceLog(LOG_ERROR, "FONTUTIL: Initial allocation failed");
+        return GetFontDefault();
+    }
 
-    Font result = {0};
+    // Basic ASCII
+    AddRange(&cp, 32, 126);
+
+    // European Languages
+    AddRange(&cp, 0xC0, 0x17F);
+    AddRange(&cp, 0x180, 0x24F);
+    AddRange(&cp, 0x1E00, 0x1EFF);
+    AddRange(&cp, 0x2C60, 0x2C7F);
+
+    // Greek
+    AddRange(&cp, 0x370, 0x3FF);
+    AddRange(&cp, 0x1F00, 0x1FFF);
+
+    // Cyrillic
+    AddRange(&cp, 0x400, 0x4FF);
+    AddRange(&cp, 0x500, 0x52F);
+    AddRange(&cp, 0x2DE0, 0x2DFF);
+    AddRange(&cp, 0xA640, 0xA69F);
+
+    // CJK
+    AddRange(&cp, 0x4E00, 0x9FFF);
+    AddRange(&cp, 0x3400, 0x4DBF);
+    AddRange(&cp, 0x3000, 0x303F);
+    AddRange(&cp, 0x3040, 0x309F);
+    AddRange(&cp, 0x30A0, 0x30FF);
+    AddRange(&cp, 0x31F0, 0x31FF);
+    AddRange(&cp, 0xFF00, 0xFFEF);
+    AddRange(&cp, 0xAC00, 0xD7AF);
+    AddRange(&cp, 0x1100, 0x11FF);
+
+    // Other 
+    AddRange(&cp, 0x900, 0x97F);  // Devanagari
+    AddRange(&cp, 0x600, 0x6FF);  // Arabic
+    AddRange(&cp, 0x5D0, 0x5EA);  // Hebrew
+
+    Font font = {0};
     
-    // Attempt to load the font with collected code points
     if (FileExists(fileName)) {
-        result = LoadFontEx(fileName, fontSize, codePoints, count);
+        font = LoadFontEx(fileName, fontSize, cp.data, cp.count);
     }
     
-    // Fallback to default font if loading fails
-    if (result.texture.id == 0) {
-        result = GetFontDefault();
+    if (font.texture.id == 0) {
+        font = GetFontDefault();
+        TraceLog(LOG_WARNING, "FONTUTIL: Using default font");
     }
     
-    // Apply texture filtering
-    SetTextureFilter(result.texture, textureFilter);
+    SetTextureFilter(font.texture, textureFilter);
+    MemFree(cp.data);
     
-    // Clean up
-    free(codePoints);
-    return result;
+    return font;
 }
 
 /**
