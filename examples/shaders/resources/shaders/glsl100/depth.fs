@@ -10,12 +10,6 @@ uniform bool flipY;
 float nearPlane = 0.1;
 float farPlane = 100.0;
 
-// Function to linearize depth from non-linear depth buffer
-float linearizeDepth(float depth)
-{
-    return (2.0 * nearPlane) / (farPlane + nearPlane - depth * (farPlane - nearPlane));
-}
-
 void main()
 {
     // Handle potential Y-flipping
@@ -27,7 +21,7 @@ void main()
     float depth = texture2D(depthTexture, texCoord).r;
 
     // Linearize depth
-    float linearDepth = linearizeDepth(depth);
+    float linearDepth = (2.0*nearPlane)/(farPlane + nearPlane - depth*(farPlane - nearPlane));
 
     // Output final color
     gl_FragColor = vec4(vec3(linearDepth), 1.0);

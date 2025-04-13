@@ -13,24 +13,17 @@ const float farPlane = 100.0;
 // Output fragment color
 out vec4 finalColor;
 
-// Linearizes the depth buffer value
-float linearizeDepth(float depth)
-{
-    return (2.0 * nearPlane) / (farPlane + nearPlane - depth * (farPlane - nearPlane));
-}
-
 void main()
 {
     // Handle potential Y-flipping
     vec2 texCoord = fragTexCoord;
-    if (flipY)
-        texCoord.y = 1.0 - texCoord.y;
+    if (flipY) texCoord.y = 1.0 - texCoord.y;
 
     // Sample depth
     float depth = texture(depthTexture, texCoord).r;
 
     // Linearize depth value
-    float linearDepth = linearizeDepth(depth);
+    float linearDepth = (2.0*nearPlane)/(farPlane + nearPlane - depth*(farPlane - nearPlane));
 
     // Output final color
     finalColor = vec4(vec3(linearDepth), 1.0);
