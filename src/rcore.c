@@ -1879,8 +1879,8 @@ void TakeScreenshot(const char *fileName)
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    // apply a scale if we are doing HIGHDPI auto-scaling
-    Vector2 scale = { 1,1 };
+    // Apply a scale if we are doing HIGHDPI auto-scaling
+    Vector2 scale = { 1.0f, 1.0f };
     if (IsWindowState(FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
 
     unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
