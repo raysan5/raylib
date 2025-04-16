@@ -2286,28 +2286,28 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
             }
         }
 
-        // Update all bones and boneMatrices of first mesh with bones.
-        for (int boneId = 0; boneId < anim.boneCount; boneId++)
-        {
-            Transform *bindTransform = &model.bindPose[boneId];
-            Matrix bindMatrix = MatrixMultiply(MatrixMultiply(
-                MatrixScale(bindTransform->scale.x, bindTransform->scale.y, bindTransform->scale.z),
-                QuaternionToMatrix(bindTransform->rotation)),
-                MatrixTranslate(bindTransform->translation.x, bindTransform->translation.y, bindTransform->translation.z));
-
-            Transform *targetTransform = &anim.framePoses[frame][boneId];
-            Matrix targetMatrix = MatrixMultiply(MatrixMultiply(
-                MatrixScale(targetTransform->scale.x, targetTransform->scale.y, targetTransform->scale.z),
-                QuaternionToMatrix(targetTransform->rotation)),
-                MatrixTranslate(targetTransform->translation.x, targetTransform->translation.y, targetTransform->translation.z));
-
-            model.meshes[firstMeshWithBones].boneMatrices[boneId] = MatrixMultiply(MatrixInvert(bindMatrix), targetMatrix);
-        }
-
-        // Update remaining meshes with bones
-        // NOTE: Using deep copy because shallow copy results in double free with 'UnloadModel()'
         if (firstMeshWithBones != -1)
         {
+            // Update all bones and boneMatrices of first mesh with bones.
+            for (int boneId = 0; boneId < anim.boneCount; boneId++)
+            {
+                Transform *bindTransform = &model.bindPose[boneId];
+                Matrix bindMatrix = MatrixMultiply(MatrixMultiply(
+                    MatrixScale(bindTransform->scale.x, bindTransform->scale.y, bindTransform->scale.z),
+                    QuaternionToMatrix(bindTransform->rotation)),
+                    MatrixTranslate(bindTransform->translation.x, bindTransform->translation.y, bindTransform->translation.z));
+
+                Transform *targetTransform = &anim.framePoses[frame][boneId];
+                Matrix targetMatrix = MatrixMultiply(MatrixMultiply(
+                    MatrixScale(targetTransform->scale.x, targetTransform->scale.y, targetTransform->scale.z),
+                    QuaternionToMatrix(targetTransform->rotation)),
+                    MatrixTranslate(targetTransform->translation.x, targetTransform->translation.y, targetTransform->translation.z));
+
+                model.meshes[firstMeshWithBones].boneMatrices[boneId] = MatrixMultiply(MatrixInvert(bindMatrix), targetMatrix);
+            }
+
+            // Update remaining meshes with bones
+            // NOTE: Using deep copy because shallow copy results in double free with 'UnloadModel()'
             for (int i = firstMeshWithBones + 1; i < model.meshCount; i++)
             {
                 if (model.meshes[i].boneMatrices)
