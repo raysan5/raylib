@@ -1759,7 +1759,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
         width = (int)(width/GetWindowScaleDPI().x);
         height = (int)(height/GetWindowScaleDPI().y);
     }
-    
+
     // Set render size
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
