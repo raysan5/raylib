@@ -556,9 +556,6 @@
     <ClCompile Include="..\..\..\examples\models\models_loading_gltf.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\..\examples\examples.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="..\..\..\src\raylib.rc" />
   </ItemGroup>
   <ItemGroup>
