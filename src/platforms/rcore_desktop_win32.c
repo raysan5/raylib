@@ -322,8 +322,9 @@ static SIZE GetClientSize(HWND hwnd)
         LogFail("GetClientRect", GetLastError());
         abort();
     }
-    if (rect.left != 0) abort();
-    if (rect.top != 0) abort();
+
+    if (rect.left != 0) abort(); // never happens AFAIK
+    if (rect.top != 0) abort(); // never happens AFAIK
     return (SIZE){ rect.right, rect.bottom };
 }
 
@@ -354,6 +355,7 @@ static SIZE CalcWindowSize(UINT dpi, SIZE clientSize, DWORD style)
         LogFail("AdjustWindowRect", GetLastError());
         abort();
     }
+
     return (SIZE){ rect.right - rect.left, rect.bottom - rect.top };
 }
 
@@ -413,6 +415,7 @@ static bool UpdateWindowSize(
             LogFail("SetWindowPos", GetLastError());
             abort();
         }
+
         return true;
     }
 
@@ -1709,7 +1712,7 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
             if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
             {
                 TRACELOG(LOG_ERROR, "TODO: implement FLAG_MSAA_4X_HINT");
-                abort();
+                assert(0);
             }
 
             PIXELFORMATDESCRIPTOR pixelFormatDesc = {0};
@@ -1941,6 +1944,7 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
                 LogFail("SetWindowPos", GetLastError());
                 abort();
             }
+
         } return 0;
         case WM_SETCURSOR:
             if (LOWORD(lparam) == HTCLIENT)
@@ -1948,6 +1952,7 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
                 SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, IDC_ARROW));
                 return 0;
             }
+
             return DefWindowProc(hwnd, msg, wparam, lparam);
         case WM_INPUT:
             if (globalCursorEnabled)
@@ -1955,6 +1960,7 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
                 TRACELOG(LOG_ERROR, "Unexpected raw mouse input"); // impossible right?
                 abort();
             }
+
             HandleRawInput(lparam);
             return 0;
         case WM_MOUSEMOVE:
@@ -1964,6 +1970,7 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
                 CORE.Input.Mouse.currentPosition.y = (float)GET_Y_LPARAM(lparam);
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
             }
+
             return 0;
         case WM_KEYDOWN: HandleKey(wparam, lparam, 1); return 0;
         case WM_KEYUP: HandleKey(wparam, lparam, 0); return 0;
@@ -2069,33 +2076,14 @@ int InitPlatform(void)
             abort();
         }
     }
-    else if (IsWindows8Point1OrGreater())
+    else
     {
-        TRACELOG(LOG_INFO, "DpiAware: >=Win8.1");
-        HMODULE shcore = LoadLibraryW(L"shcore.dll");
-        if (!shcore) {
-            LogFail("LoadLibary shcore.dll", GetLastError());
-            abort();
-        }
-        HRESULT (*Set)(int) = (HRESULT(*)(int))GetProcAddress(shcore, "SetProcessDpiAwareness");
-        if (!Set) {
-            LogFail("GetProcessAddress SetProcessDpiAwareness", GetLastError());
-            abort();
-        }
-        HRESULT hr = (*Set)(PROCESS_PER_MONITOR_DPI_AWARE);
+        TRACELOG(LOG_INFO, "DpiAware: <Win10Creators");
+        HRESULT hr = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
         if (hr < 0) {
             LogFailHr("SetProcessDpiAwareness", hr);
             abort();
         }
-    }
-    else if (IsWindowsVistaOrGreater())
-    {
-        TRACELOG(LOG_INFO, "DpiAware: >=WinVista");
-        SetProcessDPIAware();
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "DpiAware: <WinVista");
     }
 
     {
