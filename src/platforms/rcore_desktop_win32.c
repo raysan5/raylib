@@ -1068,7 +1068,7 @@ static unsigned SanitizeFlags(SanitizeFlagsKind kind, unsigned flags)
     switch (kind)
     {
         case SANITIZE_FLAGS_FIRST: break;
-        case SANITIZE_FLAGS_NORMAL: break;
+        case SANITIZE_FLAGS_NORMAL:
             if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT)))
             {
                 TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
