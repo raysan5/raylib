@@ -85,28 +85,31 @@
 // Prevent any code in this part of the file from accessing the global CORE state
 #define CORE DONT_USE_CORE_HERE
 
-static size_t AToWLen(const char* a)
+static size_t AToWLen(const char *a)
 {
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, a, -1, NULL, 0);
-    if (size_needed < 0) {
-        TRACELOG(LOG_ERROR, "failed to calculate wide length, result=%d, error=%u", size_needed, GetLastError());
+    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, a, -1, NULL, 0);
+    if (sizeNeeded < 0)
+    {
+        TRACELOG(LOG_ERROR, "failed to calculate wide length, result=%d, error=%u", sizeNeeded, GetLastError());
         abort();
     }
-    return size_needed;
+
+    return sizeNeeded;
 }
-static void AToWCopy(wchar_t* out_w, size_t out_w_len, const char* a)
+static void AToWCopy(wchar_t *outPtr, size_t outLen, const char *a)
 {
-    int size = MultiByteToWideChar(CP_UTF8, 0, a, -1, out_w, out_w_len);
-    if (size != out_w_len) {
-        TRACELOG(LOG_ERROR, "expected to convert %zu utf8 chars to wide but converted %zu", out_w_len, size);
+    int size = MultiByteToWideChar(CP_UTF8, 0, a, -1, outPtr, outLen);
+    if (size != outLen)
+    {
+        TRACELOG(LOG_ERROR, "expected to convert %zu utf8 chars to wide but converted %zu", outLen, size);
         abort();
     }
 }
-#define AToWAlloca(out_wstr, in_a)   do {                     \
-    size_t len = AToWLen(in_a);                               \
-    out_wstr = (WCHAR*)alloca(sizeof(WCHAR) * (len + 1));     \
-    AToWCopy(out_wstr, len, in_a);                            \
-    out_wstr[len] = 0;                                        \
+#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
+    size_t len = AToWLen(inAnsi);                               \
+    outWstr = (WCHAR*)alloca(sizeof(WCHAR)*(len + 1));        \
+    AToWCopy(outWstr, len, inAnsi);                             \
+    outWstr[len] = 0;                                           \
 } while (0)
 
 static void LogFail(const char *what, DWORD error)
@@ -129,18 +132,24 @@ static bool ResizableFromStyle(DWORD style)
 }
 static bool DecoratedFromStyle(DWORD style)
 {
-    if (style & STYLE_FLAGS_UNDECORATED_ON) {
-        if (style & STYLE_FLAGS_UNDECORATED_OFF) {
+    if (style & STYLE_FLAGS_UNDECORATED_ON)
+    {
+        if (style & STYLE_FLAGS_UNDECORATED_OFF)
+        {
             TRACELOG(LOG_ERROR, "style 0x%x has both undecorated on/off flags", style);
             abort();
         }
+
         return false; // not decorated
     }
+
     DWORD masked = (style & STYLE_FLAGS_UNDECORATED_OFF);
-    if (STYLE_FLAGS_UNDECORATED_OFF != masked) {
+    if (STYLE_FLAGS_UNDECORATED_OFF != masked)
+    {
         TRACELOG(LOG_ERROR, "style 0x%x is missing these flags 0x%x", masked, masked ^ STYLE_FLAGS_UNDECORATED_OFF);
         abort();
     }
+
     return true; // decorated
 }
 static bool HiddenFromStyle(DWORD style)
@@ -172,15 +181,16 @@ static DWORD MakeWindowStyle(unsigned flags)
         // so it keeps our flags in sync with the OS.
         WS_CLIPSIBLINGS
         ;
-    style |= (flags & FLAG_WINDOW_HIDDEN) ? 0 : WS_VISIBLE;
-    style |= (flags & FLAG_WINDOW_RESIZABLE) ? STYLE_FLAGS_RESIZABLE : 0;
-    style |= (flags & FLAG_WINDOW_UNDECORATED) ? STYLE_FLAGS_UNDECORATED_ON : STYLE_FLAGS_UNDECORATED_OFF;
+    style |= (flags & FLAG_WINDOW_HIDDEN)? 0 : WS_VISIBLE;
+    style |= (flags & FLAG_WINDOW_RESIZABLE)? STYLE_FLAGS_RESIZABLE : 0;
+    style |= (flags & FLAG_WINDOW_UNDECORATED)? STYLE_FLAGS_UNDECORATED_ON : STYLE_FLAGS_UNDECORATED_OFF;
 
-    switch (MizedFromFlags(flags)) {
-    case MIZED_NONE: break;
-    case MIZED_MIN: style |= WS_MINIMIZE; break;
-    case MIZED_MAX: style |= WS_MAXIMIZE; break;
-    default: abort();
+    switch (MizedFromFlags(flags))
+    {
+        case MIZED_NONE: break;
+        case MIZED_MIN: style |= WS_MINIMIZE; break;
+        case MIZED_MAX: style |= WS_MAXIMIZE; break;
+        default: abort();
     }
 
     // sanity checks, maybe remove later
@@ -194,13 +204,15 @@ static DWORD MakeWindowStyle(unsigned flags)
 
 static bool IsMinimized2(HWND hwnd)
 {
-    bool is_iconic = IsIconic(hwnd);
-    bool style_minimized = !!(WS_MINIMIZE & GetWindowLongPtrW(hwnd, GWL_STYLE));
-    if (is_iconic != style_minimized) {
-        TRACELOG(LOG_ERROR, "IsIconic(%d) != WS_MINIMIZED(%d)", is_iconic, style_minimized);
+    bool isIconic = IsIconic(hwnd);
+    bool styleMinimized = !!(WS_MINIMIZE & GetWindowLongPtrW(hwnd, GWL_STYLE));
+    if (isIconic != styleMinimized)
+    {
+        TRACELOG(LOG_ERROR, "IsIconic(%d) != WS_MINIMIZED(%d)", isIconic, styleMinimized);
         abort();
     }
-    return is_iconic;
+
+    return isIconic;
 }
 
 #define STYLE_MASK_ALL 0xffffffff
@@ -209,98 +221,104 @@ static bool IsMinimized2(HWND hwnd)
 
 // Enforces that the actual window/platform state is in sync with raylib's flags
 static void CheckFlags(
-    const char* context,
+    const char *context,
     HWND hwnd,
     DWORD flags,
-    DWORD expected_style,
-    DWORD style_check_mask
+    DWORD expectedStyle,
+    DWORD styleCheckMask
 ) {
-    //TRACELOG(LOG_INFO, "Verifying Flags 0x%x Style 0x%x Mask 0x%x", flags, expected_style & style_check_mask, style_check_mask);
+    //TRACELOG(LOG_INFO, "Verifying Flags 0x%x Style 0x%x Mask 0x%x", flags, expectedStyle & styleCheckMask, styleCheckMask);
 
     {
-        DWORD style_from_flags = MakeWindowStyle(flags);
-        if ((style_from_flags & style_check_mask) != (expected_style & style_check_mask)) {
+        DWORD styleFromFlags = MakeWindowStyle(flags);
+        if ((styleFromFlags & styleCheckMask) != (expectedStyle & styleCheckMask))
+        {
             TRACELOG(
                 LOG_ERROR,
                 "%s: window flags (0x%x) produced style 0x%x which != expected 0x%x (diff=0x%x, mask=0x%x)",
                 context,
                 flags,
-                style_from_flags & style_check_mask,
-                expected_style & style_check_mask,
-                (style_from_flags & style_check_mask) ^ (expected_style & style_check_mask),
-                style_check_mask
+                styleFromFlags & styleCheckMask,
+                expectedStyle & styleCheckMask,
+                (styleFromFlags & styleCheckMask) ^ (expectedStyle & styleCheckMask),
+                styleCheckMask
             );
             abort();
         }
     }
 
     SetLastError(0);
-    LONG actual_style = GetWindowLongPtrW(hwnd, GWL_STYLE);
-    if ((actual_style & style_check_mask) != (expected_style & style_check_mask)) {
+    LONG actualStyle = GetWindowLongPtrW(hwnd, GWL_STYLE);
+    if ((actualStyle & styleCheckMask) != (expectedStyle & styleCheckMask))
+    {
         TRACELOG(
             LOG_ERROR,
             "%s: expected style 0x%x but got 0x%x (diff=0x%x, mask=0x%x, lasterror=%lu)",
             context,
-            expected_style & style_check_mask,
-            actual_style & style_check_mask,
-            (expected_style & style_check_mask) ^ (actual_style & style_check_mask),
-            style_check_mask,
+            expectedStyle & styleCheckMask,
+            actualStyle & styleCheckMask,
+            (expectedStyle & styleCheckMask) ^ (actualStyle & styleCheckMask),
+            styleCheckMask,
             GetLastError()
         );
         abort();
     }
 
-    if (style_check_mask & WS_MINIMIZE) {
-        bool is_iconic = IsIconic(hwnd);
-        bool style_minimized = !!(WS_MINIMIZE & actual_style);
-        if (is_iconic != style_minimized) {
-            TRACELOG(LOG_ERROR, "IsIconic(%d) != WS_MINIMIZED(%d)", is_iconic, style_minimized);
+    if (styleCheckMask & WS_MINIMIZE)
+    {
+        bool isIconic = IsIconic(hwnd);
+        bool styleMinimized = !!(WS_MINIMIZE & actualStyle);
+        if (isIconic != styleMinimized) {
+            TRACELOG(LOG_ERROR, "IsIconic(%d) != WS_MINIMIZED(%d)", isIconic, styleMinimized);
             abort();
         }
     }
 
-    if (style_check_mask & WS_MAXIMIZE) {
+    if (styleCheckMask & WS_MAXIMIZE)
+    {
         WINDOWPLACEMENT placement;
         placement.length = sizeof(placement);
         if (!GetWindowPlacement(hwnd, &placement)) {
             LogFail("GetWindowPlacement", GetLastError());
             abort();
         }
-        bool placement_maximized = (placement.showCmd == SW_SHOWMAXIMIZED);
-        bool style_maximized = WS_MAXIMIZE & actual_style;
-        if (placement_maximized != style_maximized) {
+        bool placementMaximized = (placement.showCmd == SW_SHOWMAXIMIZED);
+        bool styleMaximized = WS_MAXIMIZE & actualStyle;
+        if (placementMaximized != styleMaximized)
+        {
             TRACELOG(
                 LOG_ERROR,
                 "maximized state desync, placement maximized=%d (showCmd=%lu) style maximized=%d",
-                placement_maximized,
+                placementMaximized,
                 placement.showCmd,
-                style_maximized
+                styleMaximized
             );
             abort();
         }
     }
 }
 
-static float PtFromPx(float dpi_scale, bool highdpi_enabled, int pt)
+static float PtFromPx(float dpiScale, bool highdpiEnabled, int pt)
 {
-    return highdpi_enabled ? (((float)pt) / dpi_scale) : pt;
+    return highdpiEnabled? (((float)pt)/dpiScale) : pt;
 }
-static int PxFromPt(float dpi_scale, bool highdpi_enabled, float pt)
+static int PxFromPt(float dpiScale, bool highdpiEnabled, float pt)
 {
-    return highdpi_enabled ? roundf(pt * dpi_scale) : roundf(pt);
+    return highdpiEnabled? roundf(pt*dpiScale) : roundf(pt);
 }
-static SIZE PxFromPt2(float dpi_scale, bool highdpi_enabled, Vector2 screen_size)
+static SIZE PxFromPt2(float dpiScale, bool highdpiEnabled, Vector2 screenSize)
 {
     return (SIZE){
-        PxFromPt(dpi_scale, highdpi_enabled, screen_size.x),
-        PxFromPt(dpi_scale, highdpi_enabled, screen_size.y),
+        PxFromPt(dpiScale, highdpiEnabled, screenSize.x),
+        PxFromPt(dpiScale, highdpiEnabled, screenSize.y),
     };
 }
 
 static SIZE GetClientSize(HWND hwnd)
 {
     RECT rect;
-    if (0 == GetClientRect(hwnd, &rect)) {
+    if (0 == GetClientRect(hwnd, &rect))
+    {
         LogFail("GetClientRect", GetLastError());
         abort();
     }
@@ -312,24 +330,27 @@ static SIZE GetClientSize(HWND hwnd)
 static UINT GetWindowDpi(HWND hwnd)
 {
     UINT dpi = GetDpiForWindow(hwnd);
-    if (dpi == 0) {
+    if (dpi == 0)
+    {
         LogFail("GetWindowDpi", GetLastError());
         abort();
     }
+
     return dpi;
 }
 
 static float ScaleFromDpi(UINT dpi)
 {
-    return ((float)dpi) / 96.0f;
+    return ((float)dpi)/96.0f;
 }
 
 #define WINDOW_STYLE_EX 0
 
-static SIZE CalcWindowSize(UINT dpi, SIZE client_size, DWORD style)
+static SIZE CalcWindowSize(UINT dpi, SIZE clientSize, DWORD style)
 {
-    RECT rect = { 0, 0, client_size.cx, client_size.cy };
-    if (!AdjustWindowRectExForDpi(&rect, style, 0, WINDOW_STYLE_EX, dpi)) {
+    RECT rect = { 0, 0, clientSize.cx, clientSize.cy };
+    if (!AdjustWindowRectExForDpi(&rect, style, 0, WINDOW_STYLE_EX, dpi))
+    {
         LogFail("AdjustWindowRect", GetLastError());
         abort();
     }
@@ -345,33 +366,42 @@ typedef enum {
 static bool UpdateWindowSize(
     UpdateWindowKind kind,
     HWND hwnd,
-    Vector2 app_screen_size,
+    Vector2 appScreenSize,
     unsigned flags
 ) {
     if (flags & FLAG_WINDOW_MINIMIZED) return false;
-    if (flags & FLAG_WINDOW_MAXIMIZED) {
+
+    if (flags & FLAG_WINDOW_MAXIMIZED)
+    {
         CheckFlags("UpdateWindowSize(maximized)", hwnd, flags, MakeWindowStyle(flags), STYLE_MASK_ALL);
         return false;
     }
-    if (flags & FLAG_BORDERLESS_WINDOWED_MODE) {
+
+    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    {
         HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
         MONITORINFO info;
         info.cbSize = sizeof(info);
-        if (!GetMonitorInfoW(monitor, &info)) {
+        if (!GetMonitorInfoW(monitor, &info))
+        {
             LogFail("GetMonitorInfo", GetLastError());
             abort();
         }
-        RECT window_rect;
-        if (!GetWindowRect(hwnd, &window_rect)) {
+
+        RECT windowRect;
+        if (!GetWindowRect(hwnd, &windowRect))
+        {
             LogFail("GetWindowRect", GetLastError());
             abort();
         }
+
         if (
-            (window_rect.left == info.rcMonitor.left) &&
-            (window_rect.top == info.rcMonitor.top) &&
-            ((window_rect.right - window_rect.left) == (info.rcMonitor.right - info.rcMonitor.left)) &&
-            ((window_rect.bottom - window_rect.top) == (info.rcMonitor.bottom - info.rcMonitor.top))
+            (windowRect.left == info.rcMonitor.left) &&
+            (windowRect.top == info.rcMonitor.top) &&
+            ((windowRect.right - windowRect.left) == (info.rcMonitor.right - info.rcMonitor.left)) &&
+            ((windowRect.bottom - windowRect.top) == (info.rcMonitor.bottom - info.rcMonitor.top))
         ) return false;
+
         if (!SetWindowPos(
             hwnd,
             HWND_TOP,
@@ -387,67 +417,74 @@ static bool UpdateWindowSize(
     }
 
     UINT dpi = GetWindowDpi(hwnd);
-    float dpi_scale = ScaleFromDpi(dpi);
-    bool dpi_scaling = flags & FLAG_WINDOW_HIGHDPI;
-    SIZE desired = PxFromPt2(dpi_scale, dpi_scaling, app_screen_size);
+    float dpiScale = ScaleFromDpi(dpi);
+    bool dpiScaling = flags & FLAG_WINDOW_HIGHDPI;
+    SIZE desired = PxFromPt2(dpiScale, dpiScaling, appScreenSize);
     SIZE actual = GetClientSize(hwnd);
     if (actual.cx == desired.cx || actual.cy == desired.cy)
         return false;
 
     TRACELOG(
         LOG_INFO,
-        "restoring client size from %dx%d to %dx%d (dpi=%lu dpi_scaling=%d app=%fx%f)",
+        "restoring client size from %dx%d to %dx%d (dpi=%lu dpiScaling=%d app=%fx%f)",
         actual.cx, actual.cy,
         desired.cx, desired.cy,
-        dpi, dpi_scaling,
-        app_screen_size.x, app_screen_size.y
+        dpi, dpiScaling,
+        appScreenSize.x, appScreenSize.y
     );
-    SIZE window_size = CalcWindowSize(dpi, desired, MakeWindowStyle(flags));
-    POINT window_pos = (POINT){ 0, 0 };
-    UINT swp_flags = SWP_NOZORDER | SWP_FRAMECHANGED;
-    if (kind == UPDATE_WINDOW_FIRST) {
+    SIZE windowSize = CalcWindowSize(dpi, desired, MakeWindowStyle(flags));
+    POINT windowPos = (POINT){ 0, 0 };
+    UINT swpFlags = SWP_NOZORDER | SWP_FRAMECHANGED;
+    if (kind == UPDATE_WINDOW_FIRST)
+    {
         HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-        if (!monitor) {
+        if (!monitor)
+        {
             LogFail("MonitorFromWindow", GetLastError());
             abort();
         }
+
         MONITORINFO info;
         info.cbSize = sizeof(info);
-        if (!GetMonitorInfoW(monitor, &info)) {
+        if (!GetMonitorInfoW(monitor, &info))
+        {
             LogFail("GetMonitorInfo", GetLastError());
             abort();
         }
-        LONG monitor_width = info.rcMonitor.right - info.rcMonitor.left;
-        LONG monitor_height = info.rcMonitor.bottom - info.rcMonitor.top;
-        window_pos = (POINT){
-            MAX(0, (monitor_width - window_size.cx)/2),
-            MAX(0, (monitor_height - window_size.cy)/2),
+
+        LONG monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
+        LONG monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
+        windowPos = (POINT){
+            MAX(0, (monitorWidth - windowSize.cx)/2),
+            MAX(0, (monitorHeight - windowSize.cy)/2),
         };
     } else {
-        swp_flags |= SWP_NOMOVE;
+        swpFlags |= SWP_NOMOVE;
     }
+
     if (!SetWindowPos(
         hwnd, NULL,
-        window_pos.x, window_pos.y,
-        window_size.cx, window_size.cy,
-        swp_flags
+        windowPos.x, windowPos.y,
+        windowSize.cx, windowSize.cy,
+        swpFlags
     )) {
         LogFail("SetWindowPos", GetLastError());
         abort();
     }
+
     return true;
 }
 
 #define CLASS_NAME L"RaylibWindow"
 
-static void CreateWindowAlloca(const char* title, DWORD style)
+static void CreateWindowAlloca(const char *title, DWORD style)
 {
-    WCHAR* title_wide;
-    AToWAlloca(title_wide, title);
+    WCHAR *titleWide;
+    A_TO_W_ALLOCA(titleWide, title);
     CreateWindowExW(
         WINDOW_STYLE_EX,
         CLASS_NAME,
-        title_wide,
+        titleWide,
         style,
         0, 0,
         0, 0,
@@ -466,10 +503,12 @@ static BOOL IsWindows10Version1703OrGreaterWin32(void)
     ) = (DWORD (*)(
         RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG
     ))GetProcAddress(ntdll, "RtlVerifyVersionInfo");
-    if (!Verify) {
+    if (!Verify)
+    {
         LogFail("GetProcAddress 'RtlVerifyVersionInfo'", GetLastError());
         return 0;
     }
+
     RTL_OSVERSIONINFOEXW osvi = { 0 };
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     osvi.dwMajorVersion = 10;
@@ -482,239 +521,247 @@ static BOOL IsWindows10Version1703OrGreaterWin32(void)
     return 0 == (*Verify)(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, cond);
 }
 
-static void* FindProc(const char* name)
+static void *FindProc(const char *name)
 {
     {
-        void* proc = wglGetProcAddress(name);
+        void *proc = wglGetProcAddress(name);
         if (proc) return proc;
     }
 
     static HMODULE opengl = NULL;
-    if (!opengl) {
+    if (!opengl)
+    {
         opengl = LoadLibraryW(L"opengl32");
     }
-    if (opengl) {
-        void* proc = GetProcAddress(opengl, name);
+    if (opengl)
+    {
+        void *proc = GetProcAddress(opengl, name);
         if (proc) return proc;
     }
 
     return NULL;
 }
-static void* WglGetProcAddress(const char* name)
+static void *WglGetProcAddress(const char *name)
 {
-    void* result = FindProc(name);
-    if (result) {
+    void *result = FindProc(name);
+    if (result)
+    {
         //TRACELOG(LOG_DEBUG, "GetProcAddress '%s' > %p", name, result);
-    } else {
+    }
+    else
+    {
         TRACELOG(LOG_ERROR, "GetProcAddress '%s' > %p failed, error=%u", name, result, GetLastError());
     }
+
     return result;
 }
 
 static KeyboardKey KeyFromWparam(WPARAM wparam)
 {
-    switch (wparam) {
-    /* case VK_LBUTTON: return KEY_; */
-    /* case VK_RBUTTON: return KEY_; */
-    /* case VK_CANCEL: return KEY_; */
-    /* case VK_MBUTTON: return KEY_; */
-    /* case VK_XBUTTON1: return KEY_; */
-    /* case VK_XBUTTON2: return KEY_; */
-    /* case VK_BACK: return KEY_; */
-    /* case VK_TAB: return KEY_; */
-    /* case VK_CLEAR: return KEY_; */
-    case VK_RETURN: return KEY_ENTER;
-    /* case VK_SHIFT: return KEY_; */
-    /* case VK_CONTROL: return KEY_; */
-    /* case VK_MENU: return KEY_; */
-    /* case VK_PAUSE: return KEY_; */
-    /* case VK_CAPITAL: return KEY_; */
-    /* case VK_KANA: return KEY_; */
-    /* case VK_HANGUL: return KEY_; */
-    /* case VK_IME_ON: return KEY_; */
-    /* case VK_JUNJA: return KEY_; */
-    /* case VK_FINAL: return KEY_; */
-    /* case VK_HANJA: return KEY_; */
-    /* case VK_KANJI: return KEY_; */
-    /* case VK_IME_OFF: return KEY_; */
-    case VK_ESCAPE: return KEY_ESCAPE;
-    /* case VK_CONVERT: return KEY_; */
-    /* case VK_NONCONVERT: return KEY_; */
-    /* case VK_ACCEPT: return KEY_; */
-    /* case VK_MODECHANGE: return KEY_; */
-    case VK_SPACE: return KEY_SPACE;
-    /* case VK_PRIOR: return KEY_; */
-    /* case VK_NEXT: return KEY_; */
-    /* case VK_END: return KEY_; */
-    /* case VK_HOME: return KEY_; */
-    case VK_LEFT: return KEY_LEFT;
-    case VK_UP: return KEY_UP;
-    case VK_RIGHT: return KEY_RIGHT;
-    case VK_DOWN: return KEY_DOWN;
-    /* case VK_SELECT: return KEY_; */
-    /* case VK_PRINT: return KEY_; */
-    /* case VK_EXECUTE: return KEY_; */
-    /* case VK_SNAPSHOT: return KEY_; */
-    /* case VK_INSERT: return KEY_; */
-    /* case VK_DELETE: return KEY_; */
-    /* case VK_HELP: return KEY_; */
-    case '0': return KEY_ZERO;
-    case '1': return KEY_ONE;
-    case '2': return KEY_TWO;
-    case '3': return KEY_THREE;
-    case '4': return KEY_FOUR;
-    case '5': return KEY_FIVE;
-    case '6': return KEY_SIX;
-    case '7': return KEY_SEVEN;
-    case '8': return KEY_EIGHT;
-    case '9': return KEY_NINE;
-    /* case 0x3A-40: return KEY_; */
-    case 'A': return KEY_A;
-    case 'B': return KEY_B;
-    case 'C': return KEY_C;
-    case 'D': return KEY_D;
-    case 'E': return KEY_E;
-    case 'F': return KEY_F;
-    case 'G': return KEY_G;
-    case 'H': return KEY_H;
-    case 'I': return KEY_I;
-    case 'J': return KEY_J;
-    case 'K': return KEY_K;
-    case 'L': return KEY_L;
-    case 'M': return KEY_M;
-    case 'N': return KEY_N;
-    case 'O': return KEY_O;
-    case 'P': return KEY_P;
-    case 'Q': return KEY_Q;
-    case 'R': return KEY_R;
-    case 'S': return KEY_S;
-    case 'T': return KEY_T;
-    case 'U': return KEY_U;
-    case 'V': return KEY_V;
-    case 'W': return KEY_W;
-    case 'X': return KEY_X;
-    case 'Y': return KEY_Y;
-    case 'Z': return KEY_Z;
-    /* case VK_LWIN: return KEY_; */
-    /* case VK_RWIN: return KEY_; */
-    /* case VK_APPS: return KEY_; */
-    /* case VK_SLEEP: return KEY_; */
-    /* case VK_NUMPAD0: return KEY_; */
-    /* case VK_NUMPAD1: return KEY_; */
-    /* case VK_NUMPAD2: return KEY_; */
-    /* case VK_NUMPAD3: return KEY_; */
-    /* case VK_NUMPAD4: return KEY_; */
-    /* case VK_NUMPAD5: return KEY_; */
-    /* case VK_NUMPAD6: return KEY_; */
-    /* case VK_NUMPAD7: return KEY_; */
-    /* case VK_NUMPAD8: return KEY_; */
-    /* case VK_NUMPAD9: return KEY_; */
-    /* case VK_MULTIPLY: return KEY_; */
-    /* case VK_ADD: return KEY_; */
-    /* case VK_SEPARATOR: return KEY_; */
-    /* case VK_SUBTRACT: return KEY_; */
-    /* case VK_DECIMAL: return KEY_; */
-    /* case VK_DIVIDE: return KEY_; */
-    /* case VK_F1: return KEY_; */
-    /* case VK_F2: return KEY_; */
-    /* case VK_F3: return KEY_; */
-    /* case VK_F4: return KEY_; */
-    /* case VK_F5: return KEY_; */
-    /* case VK_F6: return KEY_; */
-    /* case VK_F7: return KEY_; */
-    /* case VK_F8: return KEY_; */
-    /* case VK_F9: return KEY_; */
-    /* case VK_F10: return KEY_; */
-    /* case VK_F11: return KEY_; */
-    /* case VK_F12: return KEY_; */
-    /* case VK_F13: return KEY_; */
-    /* case VK_F14: return KEY_; */
-    /* case VK_F15: return KEY_; */
-    /* case VK_F16: return KEY_; */
-    /* case VK_F17: return KEY_; */
-    /* case VK_F18: return KEY_; */
-    /* case VK_F19: return KEY_; */
-    /* case VK_F20: return KEY_; */
-    /* case VK_F21: return KEY_; */
-    /* case VK_F22: return KEY_; */
-    /* case VK_F23: return KEY_; */
-    /* case VK_F24: return KEY_; */
-    /* case VK_NUMLOCK: return KEY_; */
-    /* case VK_SCROLL: return KEY_; */
-    /* case VK_LSHIFT: return KEY_; */
-    /* case VK_RSHIFT: return KEY_; */
-    /* case VK_LCONTROL: return KEY_; */
-    /* case VK_RCONTROL: return KEY_; */
-    /* case VK_LMENU: return KEY_; */
-    /* case VK_RMENU: return KEY_; */
-    /* case VK_BROWSER_BACK: return KEY_; */
-    /* case VK_BROWSER_FORWARD: return KEY_; */
-    /* case VK_BROWSER_REFRESH: return KEY_; */
-    /* case VK_BROWSER_STOP: return KEY_; */
-    /* case VK_BROWSER_SEARCH: return KEY_; */
-    /* case VK_BROWSER_FAVORITES: return KEY_; */
-    /* case VK_BROWSER_HOME: return KEY_; */
-    /* case VK_VOLUME_MUTE: return KEY_; */
-    /* case VK_VOLUME_DOWN: return KEY_; */
-    /* case VK_VOLUME_UP: return KEY_; */
-    /* case VK_MEDIA_NEXT_TRACK: return KEY_; */
-    /* case VK_MEDIA_PREV_TRACK: return KEY_; */
-    /* case VK_MEDIA_STOP: return KEY_; */
-    /* case VK_MEDIA_PLAY_PAUSE: return KEY_; */
-    /* case VK_LAUNCH_MAIL: return KEY_; */
-    /* case VK_LAUNCH_MEDIA_SELECT: return KEY_; */
-    /* case VK_LAUNCH_APP1: return KEY_; */
-    /* case VK_LAUNCH_APP2: return KEY_; */
-    /* case VK_OEM_1: return KEY_; */
-    /* case VK_OEM_PLUS: return KEY_; */
-    /* case VK_OEM_COMMA: return KEY_; */
-    /* case VK_OEM_MINUS: return KEY_; */
-    /* case VK_OEM_PERIOD: return KEY_; */
-    /* case VK_OEM_2: return KEY_; */
-    /* case VK_OEM_3: return KEY_; */
-    /* case VK_OEM_4: return KEY_; */
-    /* case VK_OEM_5: return KEY_; */
-    /* case VK_OEM_6: return KEY_; */
-    /* case VK_OEM_7: return KEY_; */
-    /* case VK_OEM_8: return KEY_; */
-    /* case VK_OEM_102: return KEY_; */
-    /* case VK_PROCESSKEY: return KEY_; */
-    /* case VK_PACKET: return KEY_; */
-    /* case VK_ATTN: return KEY_; */
-    /* case VK_CRSEL: return KEY_; */
-    /* case VK_EXSEL: return KEY_; */
-    /* case VK_EREOF: return KEY_; */
-    /* case VK_PLAY: return KEY_; */
-    /* case VK_ZOOM: return KEY_; */
-    /* case VK_NONAME: return KEY_; */
-    /* case VK_PA1: return KEY_; */
-    /* case VK_OEM_CLEAR: return KEY_; */
-    default: return KEY_NULL;
+    switch (wparam)
+    {
+        /* case VK_LBUTTON: return KEY_; */
+        /* case VK_RBUTTON: return KEY_; */
+        /* case VK_CANCEL: return KEY_; */
+        /* case VK_MBUTTON: return KEY_; */
+        /* case VK_XBUTTON1: return KEY_; */
+        /* case VK_XBUTTON2: return KEY_; */
+        /* case VK_BACK: return KEY_; */
+        /* case VK_TAB: return KEY_; */
+        /* case VK_CLEAR: return KEY_; */
+        case VK_RETURN: return KEY_ENTER;
+        /* case VK_SHIFT: return KEY_; */
+        /* case VK_CONTROL: return KEY_; */
+        /* case VK_MENU: return KEY_; */
+        /* case VK_PAUSE: return KEY_; */
+        /* case VK_CAPITAL: return KEY_; */
+        /* case VK_KANA: return KEY_; */
+        /* case VK_HANGUL: return KEY_; */
+        /* case VK_IME_ON: return KEY_; */
+        /* case VK_JUNJA: return KEY_; */
+        /* case VK_FINAL: return KEY_; */
+        /* case VK_HANJA: return KEY_; */
+        /* case VK_KANJI: return KEY_; */
+        /* case VK_IME_OFF: return KEY_; */
+        case VK_ESCAPE: return KEY_ESCAPE;
+        /* case VK_CONVERT: return KEY_; */
+        /* case VK_NONCONVERT: return KEY_; */
+        /* case VK_ACCEPT: return KEY_; */
+        /* case VK_MODECHANGE: return KEY_; */
+        case VK_SPACE: return KEY_SPACE;
+        /* case VK_PRIOR: return KEY_; */
+        /* case VK_NEXT: return KEY_; */
+        /* case VK_END: return KEY_; */
+        /* case VK_HOME: return KEY_; */
+        case VK_LEFT: return KEY_LEFT;
+        case VK_UP: return KEY_UP;
+        case VK_RIGHT: return KEY_RIGHT;
+        case VK_DOWN: return KEY_DOWN;
+        /* case VK_SELECT: return KEY_; */
+        /* case VK_PRINT: return KEY_; */
+        /* case VK_EXECUTE: return KEY_; */
+        /* case VK_SNAPSHOT: return KEY_; */
+        /* case VK_INSERT: return KEY_; */
+        /* case VK_DELETE: return KEY_; */
+        /* case VK_HELP: return KEY_; */
+        case '0': return KEY_ZERO;
+        case '1': return KEY_ONE;
+        case '2': return KEY_TWO;
+        case '3': return KEY_THREE;
+        case '4': return KEY_FOUR;
+        case '5': return KEY_FIVE;
+        case '6': return KEY_SIX;
+        case '7': return KEY_SEVEN;
+        case '8': return KEY_EIGHT;
+        case '9': return KEY_NINE;
+        /* case 0x3A-40: return KEY_; */
+        case 'A': return KEY_A;
+        case 'B': return KEY_B;
+        case 'C': return KEY_C;
+        case 'D': return KEY_D;
+        case 'E': return KEY_E;
+        case 'F': return KEY_F;
+        case 'G': return KEY_G;
+        case 'H': return KEY_H;
+        case 'I': return KEY_I;
+        case 'J': return KEY_J;
+        case 'K': return KEY_K;
+        case 'L': return KEY_L;
+        case 'M': return KEY_M;
+        case 'N': return KEY_N;
+        case 'O': return KEY_O;
+        case 'P': return KEY_P;
+        case 'Q': return KEY_Q;
+        case 'R': return KEY_R;
+        case 'S': return KEY_S;
+        case 'T': return KEY_T;
+        case 'U': return KEY_U;
+        case 'V': return KEY_V;
+        case 'W': return KEY_W;
+        case 'X': return KEY_X;
+        case 'Y': return KEY_Y;
+        case 'Z': return KEY_Z;
+        /* case VK_LWIN: return KEY_; */
+        /* case VK_RWIN: return KEY_; */
+        /* case VK_APPS: return KEY_; */
+        /* case VK_SLEEP: return KEY_; */
+        /* case VK_NUMPAD0: return KEY_; */
+        /* case VK_NUMPAD1: return KEY_; */
+        /* case VK_NUMPAD2: return KEY_; */
+        /* case VK_NUMPAD3: return KEY_; */
+        /* case VK_NUMPAD4: return KEY_; */
+        /* case VK_NUMPAD5: return KEY_; */
+        /* case VK_NUMPAD6: return KEY_; */
+        /* case VK_NUMPAD7: return KEY_; */
+        /* case VK_NUMPAD8: return KEY_; */
+        /* case VK_NUMPAD9: return KEY_; */
+        /* case VK_MULTIPLY: return KEY_; */
+        /* case VK_ADD: return KEY_; */
+        /* case VK_SEPARATOR: return KEY_; */
+        /* case VK_SUBTRACT: return KEY_; */
+        /* case VK_DECIMAL: return KEY_; */
+        /* case VK_DIVIDE: return KEY_; */
+        /* case VK_F1: return KEY_; */
+        /* case VK_F2: return KEY_; */
+        /* case VK_F3: return KEY_; */
+        /* case VK_F4: return KEY_; */
+        /* case VK_F5: return KEY_; */
+        /* case VK_F6: return KEY_; */
+        /* case VK_F7: return KEY_; */
+        /* case VK_F8: return KEY_; */
+        /* case VK_F9: return KEY_; */
+        /* case VK_F10: return KEY_; */
+        /* case VK_F11: return KEY_; */
+        /* case VK_F12: return KEY_; */
+        /* case VK_F13: return KEY_; */
+        /* case VK_F14: return KEY_; */
+        /* case VK_F15: return KEY_; */
+        /* case VK_F16: return KEY_; */
+        /* case VK_F17: return KEY_; */
+        /* case VK_F18: return KEY_; */
+        /* case VK_F19: return KEY_; */
+        /* case VK_F20: return KEY_; */
+        /* case VK_F21: return KEY_; */
+        /* case VK_F22: return KEY_; */
+        /* case VK_F23: return KEY_; */
+        /* case VK_F24: return KEY_; */
+        /* case VK_NUMLOCK: return KEY_; */
+        /* case VK_SCROLL: return KEY_; */
+        /* case VK_LSHIFT: return KEY_; */
+        /* case VK_RSHIFT: return KEY_; */
+        /* case VK_LCONTROL: return KEY_; */
+        /* case VK_RCONTROL: return KEY_; */
+        /* case VK_LMENU: return KEY_; */
+        /* case VK_RMENU: return KEY_; */
+        /* case VK_BROWSER_BACK: return KEY_; */
+        /* case VK_BROWSER_FORWARD: return KEY_; */
+        /* case VK_BROWSER_REFRESH: return KEY_; */
+        /* case VK_BROWSER_STOP: return KEY_; */
+        /* case VK_BROWSER_SEARCH: return KEY_; */
+        /* case VK_BROWSER_FAVORITES: return KEY_; */
+        /* case VK_BROWSER_HOME: return KEY_; */
+        /* case VK_VOLUME_MUTE: return KEY_; */
+        /* case VK_VOLUME_DOWN: return KEY_; */
+        /* case VK_VOLUME_UP: return KEY_; */
+        /* case VK_MEDIA_NEXT_TRACK: return KEY_; */
+        /* case VK_MEDIA_PREV_TRACK: return KEY_; */
+        /* case VK_MEDIA_STOP: return KEY_; */
+        /* case VK_MEDIA_PLAY_PAUSE: return KEY_; */
+        /* case VK_LAUNCH_MAIL: return KEY_; */
+        /* case VK_LAUNCH_MEDIA_SELECT: return KEY_; */
+        /* case VK_LAUNCH_APP1: return KEY_; */
+        /* case VK_LAUNCH_APP2: return KEY_; */
+        /* case VK_OEM_1: return KEY_; */
+        /* case VK_OEM_PLUS: return KEY_; */
+        /* case VK_OEM_COMMA: return KEY_; */
+        /* case VK_OEM_MINUS: return KEY_; */
+        /* case VK_OEM_PERIOD: return KEY_; */
+        /* case VK_OEM_2: return KEY_; */
+        /* case VK_OEM_3: return KEY_; */
+        /* case VK_OEM_4: return KEY_; */
+        /* case VK_OEM_5: return KEY_; */
+        /* case VK_OEM_6: return KEY_; */
+        /* case VK_OEM_7: return KEY_; */
+        /* case VK_OEM_8: return KEY_; */
+        /* case VK_OEM_102: return KEY_; */
+        /* case VK_PROCESSKEY: return KEY_; */
+        /* case VK_PACKET: return KEY_; */
+        /* case VK_ATTN: return KEY_; */
+        /* case VK_CRSEL: return KEY_; */
+        /* case VK_EXSEL: return KEY_; */
+        /* case VK_EREOF: return KEY_; */
+        /* case VK_PLAY: return KEY_; */
+        /* case VK_ZOOM: return KEY_; */
+        /* case VK_NONAME: return KEY_; */
+        /* case VK_PA1: return KEY_; */
+        /* case VK_OEM_CLEAR: return KEY_; */
+        default: return KEY_NULL;
     }
 }
 
 static LPCWSTR GetCursorName(int cursor)
 {
-    switch (cursor) {
-    case MOUSE_CURSOR_DEFAULT      : return IDC_ARROW;
-    case MOUSE_CURSOR_ARROW        : return IDC_ARROW;
-    case MOUSE_CURSOR_IBEAM        : return IDC_IBEAM;
-    case MOUSE_CURSOR_CROSSHAIR    : return IDC_CROSS;
-    case MOUSE_CURSOR_POINTING_HAND: return IDC_HAND;
-    case MOUSE_CURSOR_RESIZE_EW    : return IDC_SIZEWE;
-    case MOUSE_CURSOR_RESIZE_NS    : return IDC_SIZENS;
-    case MOUSE_CURSOR_RESIZE_NWSE  : return IDC_SIZENWSE;
-    case MOUSE_CURSOR_RESIZE_NESW  : return IDC_SIZENESW;
-    case MOUSE_CURSOR_RESIZE_ALL   : return IDC_SIZEALL;
-    case MOUSE_CURSOR_NOT_ALLOWED  : return IDC_NO;
-    default: abort();
+    switch (cursor)
+    {
+        case MOUSE_CURSOR_DEFAULT      : return IDC_ARROW;
+        case MOUSE_CURSOR_ARROW        : return IDC_ARROW;
+        case MOUSE_CURSOR_IBEAM        : return IDC_IBEAM;
+        case MOUSE_CURSOR_CROSSHAIR    : return IDC_CROSS;
+        case MOUSE_CURSOR_POINTING_HAND: return IDC_HAND;
+        case MOUSE_CURSOR_RESIZE_EW    : return IDC_SIZEWE;
+        case MOUSE_CURSOR_RESIZE_NS    : return IDC_SIZENS;
+        case MOUSE_CURSOR_RESIZE_NWSE  : return IDC_SIZENWSE;
+        case MOUSE_CURSOR_RESIZE_NESW  : return IDC_SIZENESW;
+        case MOUSE_CURSOR_RESIZE_ALL   : return IDC_SIZEALL;
+        case MOUSE_CURSOR_NOT_ALLOWED  : return IDC_NO;
+        default: abort();
     }
 }
 
 
 static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC _, LPRECT rect, LPARAM lparam)
 {
-    int* count = (int*)lparam;
+    int *count = (int*)lparam;
     *count += 1;
     // always return TRUE to continue the loop, otherwise, the caller
     // can't distinguish between stopping the loop and an error
@@ -724,16 +771,19 @@ static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC _, LPRECT rect, LPAR
 typedef struct {
     HMONITOR needle;
     int index;
-    int match_index;
+    int matchIndex;
     RECT rect;
 } FindMonitorContext;
+
 static BOOL CALLBACK FindMonitorProc(HMONITOR handle, HDC _, LPRECT rect, LPARAM lparam)
 {
-    FindMonitorContext* c = (FindMonitorContext*)lparam;
-    if (handle == c->needle) {
-        c->match_index = c->index;
+    FindMonitorContext *c = (FindMonitorContext*)lparam;
+    if (handle == c->needle)
+    {
+        c->matchIndex = c->index;
         c->rect = *rect;
     }
+
     c->index += 1;
     // always return TRUE to continue the loop, otherwise, the caller
     // can't distinguish between stopping the loop and an error
@@ -746,58 +796,78 @@ typedef struct {
 } FlagsOp;
 
 static void GetStyleChangeFlagOps(
-    DWORD core_window_flags,
-    STYLESTRUCT* ss,
-    FlagsOp* deferred_flags
+    DWORD coreWindowFlags,
+    STYLESTRUCT *ss,
+    FlagsOp *deferredFlags
 ) {
     {
-        bool resizable = (core_window_flags & FLAG_WINDOW_RESIZABLE);
-        bool resizable_old = ResizableFromStyle(ss->styleOld);
-        bool resizable_new = ResizableFromStyle(ss->styleNew);
-        if (resizable != resizable_old) {
-            TRACELOG(LOG_ERROR, "expected resizable %u but got %u", resizable, resizable_old);
+        bool resizable = (coreWindowFlags & FLAG_WINDOW_RESIZABLE);
+        bool resizableOld = ResizableFromStyle(ss->styleOld);
+        bool resizableNew = ResizableFromStyle(ss->styleNew);
+        if (resizable != resizableOld)
+        {
+            TRACELOG(LOG_ERROR, "expected resizable %u but got %u", resizable, resizableOld);
             abort();
         }
-        if (resizable_old != resizable_new) {
-            //TRACELOG(LOG_INFO, "resizable = %u", resizable_new);
-            if (resizable_new) {
-                deferred_flags->set |= FLAG_WINDOW_RESIZABLE;
-            } else {
-                deferred_flags->clear |= FLAG_WINDOW_RESIZABLE;
+
+        if (resizableOld != resizableNew)
+        {
+            //TRACELOG(LOG_INFO, "resizable = %u", resizableNew);
+            if (resizableNew)
+            {
+                deferredFlags->set |= FLAG_WINDOW_RESIZABLE;
+            }
+            else
+            {
+                deferredFlags->clear |= FLAG_WINDOW_RESIZABLE;
             }
         }
     }
+
     {
-        bool decorated = (0 == (core_window_flags & FLAG_WINDOW_UNDECORATED));
-        bool decorated_old = DecoratedFromStyle(ss->styleOld);
-        bool decorated_new = DecoratedFromStyle(ss->styleNew);
-        if (decorated != decorated_old) {
-            TRACELOG(LOG_ERROR, "expected decorated %u but got %u", decorated, decorated_old);
+        bool decorated = (0 == (coreWindowFlags & FLAG_WINDOW_UNDECORATED));
+        bool decoratedOld = DecoratedFromStyle(ss->styleOld);
+        bool decoratedNew = DecoratedFromStyle(ss->styleNew);
+        if (decorated != decoratedOld)
+        {
+            TRACELOG(LOG_ERROR, "expected decorated %u but got %u", decorated, decoratedOld);
             abort();
         }
-        if (decorated_old != decorated_new) {
-            //TRACELOG(LOG_INFO, "decorated = %u", decorated_new);
-            if (decorated_new) {
-                deferred_flags->clear |= FLAG_WINDOW_UNDECORATED;
-            } else {
-                deferred_flags->set |= FLAG_WINDOW_UNDECORATED;
+
+        if (decoratedOld != decoratedNew)
+        {
+            //TRACELOG(LOG_INFO, "decorated = %u", decoratedNew);
+            if (decoratedNew)
+            {
+                deferredFlags->clear |= FLAG_WINDOW_UNDECORATED;
+            }
+            else
+            {
+                deferredFlags->set |= FLAG_WINDOW_UNDECORATED;
             }
         }
     }
+
     {
-        bool hidden = (core_window_flags & FLAG_WINDOW_HIDDEN);
-        bool hidden_old = HiddenFromStyle(ss->styleOld);
-        bool hidden_new = HiddenFromStyle(ss->styleNew);
-        if (hidden != hidden_old) {
-            TRACELOG(LOG_ERROR, "expected hidden %u but got %u", hidden, hidden_old);
+        bool hidden = (coreWindowFlags & FLAG_WINDOW_HIDDEN);
+        bool hiddenOld = HiddenFromStyle(ss->styleOld);
+        bool hiddenNew = HiddenFromStyle(ss->styleNew);
+        if (hidden != hiddenOld)
+        {
+            TRACELOG(LOG_ERROR, "expected hidden %u but got %u", hidden, hiddenOld);
             abort();
         }
-        if (hidden_old != hidden_new) {
-            TRACELOG(LOG_INFO, "hidden = %u", hidden_new);
-            if (hidden_new) {
-                deferred_flags->set |= FLAG_WINDOW_HIDDEN;
-            } else {
-                deferred_flags->clear |= FLAG_WINDOW_HIDDEN;
+
+        if (hiddenOld != hiddenNew)
+        {
+            TRACELOG(LOG_INFO, "hidden = %u", hiddenNew);
+            if (hiddenNew)
+            {
+                deferredFlags->set |= FLAG_WINDOW_HIDDEN;
+            }
+            else
+            {
+                deferredFlags->clear |= FLAG_WINDOW_HIDDEN;
             }
         }
     }
@@ -825,13 +895,13 @@ static bool AdoptWindowResize(unsigned flags)
 
 // The last screen size requested by the app, the backend must keep the client area
 // this size (after DPI scaling is applied) when the window isn't fullscreen/maximized/minimized.
-static Vector2 global_app_screen_size = (Vector2){0, 0};
-static unsigned global_desired_flags = 0;
-static HWND global_hwnd = NULL;
-static HDC global_hdc = NULL;
-static HGLRC global_gl_context = NULL;
-static LARGE_INTEGER global_timer_frequency;
-static bool global_cursor_enabled = true;
+static Vector2 globalAppScreenSize = (Vector2){0, 0};
+static unsigned globalDesiredFlags = 0;
+static HWND globalHwnd = NULL;
+static HDC globalHdc = NULL;
+static HGLRC globalGlContext = NULL;
+static LARGE_INTEGER globalTimerFrequency;
+static bool globalCursorEnabled = true;
 
 static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
 {
@@ -839,13 +909,17 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     /* BYTE scancode = lparam >> 16; */
     /* TRACELOG(LOG_INFO, "KEY key=%d vk=%lu scan=%u = %u", key, wparam, scancode, state); */
-    if (key != KEY_NULL) {
+    if (key != KEY_NULL)
+    {
         /* TRACELOG(LOG_INFO, "KEY[%d] = %d (old=%d)\n", key, state, CORE.Input.Keyboard.currentKeyState[key]); */
         CORE.Input.Keyboard.currentKeyState[key] = state;
-        if (key == KEY_ESCAPE && state == 1) {
+        if (key == KEY_ESCAPE && state == 1)
+        {
             CORE.Window.shouldClose = 1;
         }
-    } else {
+    }
+    else
+    {
         TRACELOG(LOG_WARNING, "unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
     }
 
@@ -860,26 +934,31 @@ static void HandleMouseButton(int button, char state)
 static void HandleRawInput(LPARAM lparam)
 {
     RAWINPUT input;
+
     {
-        UINT input_size = sizeof(input);
-        UINT size = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &input_size, sizeof(RAWINPUTHEADER));
+        UINT inputSize = sizeof(input);
+        UINT size = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &inputSize, sizeof(RAWINPUTHEADER));
         if (size == (UINT)-1) {
             LogFail("GetRawInputData", GetLastError());
             abort();
         }
-        if (size != input_size) abort(); // bug?
+        if (size != inputSize) abort(); // bug?
     }
 
-    if (input.header.dwType != RIM_TYPEMOUSE) {
+    if (input.header.dwType != RIM_TYPEMOUSE)
+    {
         TRACELOG(LOG_ERROR, "Unexpected WM_INPUT type %lu", input.header.dwType);
         abort();
     }
 
-    if (input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+    if (input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
+    {
         TRACELOG(LOG_ERROR, "TODO: handle absolute mouse inputs!");
         abort();
     }
-    if (input.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) {
+
+    if (input.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
+    {
         TRACELOG(LOG_ERROR, "TODO: handle virtual desktop mouse inputs!");
         abort();
     }
@@ -892,34 +971,36 @@ static void HandleRawInput(LPARAM lparam)
     if (CORE.Input.Mouse.currentPosition.y != 0) abort();
 }
 
-static void HandleWindowResize(HWND hwnd, Vector2* app_screen_size_ref)
+static void HandleWindowResize(HWND hwnd, Vector2 *appScreenSizeRef)
 {
     if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)
         return;
 
-    SIZE client_size = GetClientSize(hwnd);
-    TRACELOG(LOG_DEBUG, "NewClientSize %lux%lu", client_size.cx, client_size.cy);
-    /* CORE.Window.currentFbo.width = client_size.cx; */
-    /* CORE.Window.currentFbo.height = client_size.cy; */
-    /* glViewport(0, 0, client_size.cx, client_size.cy); */
-    SetupViewport(client_size.cx, client_size.cy);
+    SIZE clientSize = GetClientSize(hwnd);
+    TRACELOG(LOG_DEBUG, "NewClientSize %lux%lu", clientSize.cx, clientSize.cy);
+    /* CORE.Window.currentFbo.width = clientSize.cx; */
+    /* CORE.Window.currentFbo.height = clientSize.cy; */
+    /* glViewport(0, 0, clientSize.cx, clientSize.cy); */
+    SetupViewport(clientSize.cx, clientSize.cy);
     CORE.Window.resizedLastFrame = true;
-    float dpi_scale = ScaleFromDpi(GetWindowDpi(hwnd));
+    float dpiScale = ScaleFromDpi(GetWindowDpi(hwnd));
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
-    Vector2 screen_size = (Vector2){
-        PtFromPx(dpi_scale, highdpi, client_size.cx),
-        PtFromPx(dpi_scale, highdpi, client_size.cy),
+    Vector2 screenSize = (Vector2){
+        PtFromPx(dpiScale, highdpi, clientSize.cx),
+        PtFromPx(dpiScale, highdpi, clientSize.cy),
     };
-    CORE.Window.screen.width = roundf(screen_size.x);
-    CORE.Window.screen.height = roundf(screen_size.y);
-    if (AdoptWindowResize(CORE.Window.flags)) {
+    CORE.Window.screen.width = roundf(screenSize.x);
+    CORE.Window.screen.height = roundf(screenSize.y);
+    if (AdoptWindowResize(CORE.Window.flags))
+    {
         TRACELOG(
             LOG_DEBUG,
             "updating app size to %fx%f from window resize",
-            screen_size.x, screen_size.y
+            screenSize.x, screenSize.y
         );
-        *app_screen_size_ref = screen_size;
+        *appScreenSizeRef = screenSize;
     }
+
     CORE.Window.screenScale = MatrixScale(
         (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height,
@@ -927,15 +1008,17 @@ static void HandleWindowResize(HWND hwnd, Vector2* app_screen_size_ref)
     );
 }
 
-static void UpdateWindowStyle(HWND hwnd, unsigned desired_flags)
+static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
 {
     {
         DWORD current = STYLE_MASK_WRITABLE & MakeWindowStyle(CORE.Window.flags);
-        DWORD desired = STYLE_MASK_WRITABLE & MakeWindowStyle(desired_flags);
-        if (current != desired) {
+        DWORD desired = STYLE_MASK_WRITABLE & MakeWindowStyle(desiredFlags);
+        if (current != desired)
+        {
             SetLastError(0);
             DWORD previous = STYLE_MASK_WRITABLE & SetWindowLongPtrW(hwnd, GWL_STYLE, desired);
-            if (previous != current) {
+            if (previous != current)
+            {
                 TRACELOG(
                     LOG_ERROR,
                     "SetWindowLong returned writable flags 0x%x but expected 0x%x (diff=0x%x, error=%lu)",
@@ -946,16 +1029,21 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desired_flags)
                 );
                 abort();
             }
-            CheckFlags("UpdateWindowStyle", hwnd, desired_flags, desired, STYLE_MASK_WRITABLE);
+
+            CheckFlags("UpdateWindowStyle", hwnd, desiredFlags, desired, STYLE_MASK_WRITABLE);
         }
     }
 
-    Mized current_mized = MizedFromStyle(MakeWindowStyle(CORE.Window.flags));
-    Mized desired_mized = MizedFromStyle(MakeWindowStyle(desired_flags));
-    if (current_mized != desired_mized) switch (desired_mized) {
-        case MIZED_NONE: ShowWindow(hwnd, SW_RESTORE); break;
-        case MIZED_MIN: ShowWindow(hwnd, SW_MINIMIZE); break;
-        case MIZED_MAX: ShowWindow(hwnd, SW_MAXIMIZE); break;
+    Mized currentMized = MizedFromStyle(MakeWindowStyle(CORE.Window.flags));
+    Mized desiredMized = MizedFromStyle(MakeWindowStyle(desiredFlags));
+    if (currentMized != desiredMized)
+    {
+        switch (desiredMized)
+        {
+            case MIZED_NONE: ShowWindow(hwnd, SW_RESTORE); break;
+            case MIZED_MIN: ShowWindow(hwnd, SW_MINIMIZE); break;
+            case MIZED_MAX: ShowWindow(hwnd, SW_MAXIMIZE); break;
+        }
     }
 }
 
@@ -963,21 +1051,25 @@ typedef enum {
     SANITIZE_FLAGS_FIRST,
     SANITIZE_FLAGS_NORMAL,
 } SanitizeFlagsKind;
+
 static unsigned SanitizeFlags(SanitizeFlagsKind kind, unsigned flags)
 {
-    if ((flags & FLAG_WINDOW_MAXIMIZED) && (flags & FLAG_BORDERLESS_WINDOWED_MODE)) {
+    if ((flags & FLAG_WINDOW_MAXIMIZED) && (flags & FLAG_BORDERLESS_WINDOWED_MODE))
+    {
         TRACELOG(LOG_INFO, "borderless windows mode is overriding maximized");
         flags &= ~FLAG_WINDOW_MAXIMIZED;
     }
 
-    switch (kind) {
-    case SANITIZE_FLAGS_FIRST: break;
-    case SANITIZE_FLAGS_NORMAL: break;
-        if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT))) {
-            TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
-            flags &= ~FLAG_MSAA_4X_HINT;
-        }
-        break;
+    switch (kind)
+    {
+        case SANITIZE_FLAGS_FIRST: break;
+        case SANITIZE_FLAGS_NORMAL: break;
+            if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT)))
+            {
+                TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
+                flags &= ~FLAG_MSAA_4X_HINT;
+            }
+            break;
     }
 
     return flags;
@@ -1008,53 +1100,60 @@ static unsigned SanitizeFlags(SanitizeFlagsKind kind, unsigned flags)
 // state. This implementation is able to handle any/all of these special situations with a
 // retry loop that continues until we either reach the desired state or the state stops
 // changing.
-static void UpdateFlags(HWND hwnd, unsigned desired_flags, Vector2 app_screen_size)
+static void UpdateFlags(HWND hwnd, unsigned desiredFlags, Vector2 appScreenSize)
 {
     // flags that just apply immediately without needing any operations
-    CORE.Window.flags |= (desired_flags & FLAG_MASK_NO_UPDATE);
+    CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
 
     {
-        int vsync = (CORE.Window.flags & FLAG_VSYNC_HINT) ? 1 : 0;
+        int vsync = (CORE.Window.flags & FLAG_VSYNC_HINT)? 1 : 0;
         PFNWGLSWAPINTERVALEXTPROC f = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-        if (f) {
+        if (f)
+        {
             (*f)(vsync);
-            if (vsync) {
+            if (vsync)
+            {
                 CORE.Window.flags |= FLAG_VSYNC_HINT;
-            } else {
+            }
+            else
+            {
                 CORE.Window.flags &= ~FLAG_VSYNC_HINT;
             }
         }
     }
 
-    DWORD previous_style;
-    for (unsigned attempt = 1; ; attempt++) {
+    DWORD previousStyle;
+    for (unsigned attempt = 1; ; attempt++)
+    {
         CheckFlags("UpdateFlags", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), STYLE_MASK_ALL);
 
-        bool window_size_updated = false;
-        if (MakeWindowStyle(CORE.Window.flags) == MakeWindowStyle(desired_flags)) {
-            window_size_updated = UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, app_screen_size, desired_flags);
-            if ((FLAG_MASK_REQUIRED & desired_flags) == (FLAG_MASK_REQUIRED & CORE.Window.flags))
+        bool windowSizeUpdated = false;
+        if (MakeWindowStyle(CORE.Window.flags) == MakeWindowStyle(desiredFlags))
+        {
+            windowSizeUpdated = UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, appScreenSize, desiredFlags);
+            if ((FLAG_MASK_REQUIRED & desiredFlags) == (FLAG_MASK_REQUIRED & CORE.Window.flags))
                 break;
         }
 
         if (
             (attempt > 1) &&
-            (previous_style == MakeWindowStyle(CORE.Window.flags)) &&
-            !window_size_updated
+            (previousStyle == MakeWindowStyle(CORE.Window.flags)) &&
+            !windowSizeUpdated
         ) {
             TRACELOG(
                 LOG_ERROR,
                 // TODO: print more information
                 "UpdateFlags failed after %u attempt(s) wanted 0x%x but is 0x%x (diff=0x%x)",
                 attempt,
-                desired_flags,
+                desiredFlags,
                 CORE.Window.flags,
-                desired_flags ^ CORE.Window.flags
+                desiredFlags ^ CORE.Window.flags
             );
             abort();
         }
-        previous_style = MakeWindowStyle(CORE.Window.flags);
-        UpdateWindowStyle(hwnd, desired_flags);
+
+        previousStyle = MakeWindowStyle(CORE.Window.flags);
+        UpdateWindowStyle(hwnd, desiredFlags);
     }
 }
 
@@ -1071,9 +1170,12 @@ void ToggleFullscreen(void)
 
 void ToggleBorderlessWindowed(void)
 {
-    if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) {
+    if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    {
         ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
-    } else {
+    }
+    else
+    {
         SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
     }
 }
@@ -1092,9 +1194,12 @@ void MinimizeWindow(void)
 void RestoreWindow(void)
 {
     if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) &&
-        (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)) {
+        (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)
+    ) {
         ClearWindowState(FLAG_WINDOW_MINIMIZED);
-    } else {
+    }
+    else
+    {
         ClearWindowState(FLAG_WINDOW_MINIMIZED|FLAG_WINDOW_MAXIMIZED);
     }
 }
@@ -1102,15 +1207,15 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    global_desired_flags = SanitizeFlags(SANITIZE_FLAGS_NORMAL, CORE.Window.flags | flags);
-    UpdateFlags(global_hwnd, global_desired_flags, global_app_screen_size);
+    globalDesiredFlags = SanitizeFlags(SANITIZE_FLAGS_NORMAL, CORE.Window.flags | flags);
+    UpdateFlags(globalHwnd, globalDesiredFlags, globalAppScreenSize);
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    global_desired_flags = SanitizeFlags(SANITIZE_FLAGS_NORMAL, CORE.Window.flags & ~flags);
-    UpdateFlags(global_hwnd, global_desired_flags, global_app_screen_size);
+    globalDesiredFlags = SanitizeFlags(SANITIZE_FLAGS_NORMAL, CORE.Window.flags & ~flags);
+    UpdateFlags(globalHwnd, globalDesiredFlags, globalAppScreenSize);
 }
 
 // Set icon for window
@@ -1130,9 +1235,10 @@ void SetWindowIcons(Image *images, int count)
 void SetWindowTitle(const char *title)
 {
     CORE.Window.title = title;
-    WCHAR* titlew;
-    AToWAlloca(titlew, CORE.Window.title);
-    if (!SetWindowTextW(global_hwnd, titlew)) {
+    WCHAR *titlew;
+    A_TO_W_ALLOCA(titlew, CORE.Window.title);
+    if (!SetWindowTextW(globalHwnd, titlew))
+    {
         LogFail("SetWindowText", GetLastError());
         abort();
     }
@@ -1193,24 +1299,27 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return global_hwnd;
+    return globalHwnd;
 }
 
 int GetMonitorCount(void)
 {
     int count = 0;
-    if (!EnumDisplayMonitors(NULL, NULL, CountMonitorsProc, (LPARAM)&count)) {
+    if (!EnumDisplayMonitors(NULL, NULL, CountMonitorsProc, (LPARAM)&count))
+    {
         LogFail("EnumDisplayMonitors", GetLastError());
         abort();
     }
+
     return count;
 }
 
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    HMONITOR monitor = MonitorFromWindow(global_hwnd, MONITOR_DEFAULTTOPRIMARY);
-    if (!monitor) {
+    HMONITOR monitor = MonitorFromWindow(globalHwnd, MONITOR_DEFAULTTOPRIMARY);
+    if (!monitor)
+    {
         LogFail("MonitorFromWindow", GetLastError());
         abort();
     }
@@ -1218,12 +1327,14 @@ int GetCurrentMonitor(void)
     FindMonitorContext context;
     context.needle = monitor;
     context.index = 0;
-    context.match_index = -1;
-    if (!EnumDisplayMonitors(NULL, NULL, FindMonitorProc, (LPARAM)&context)) {
+    context.matchIndex = -1;
+    if (!EnumDisplayMonitors(NULL, NULL, FindMonitorProc, (LPARAM)&context))
+    {
         LogFail("EnumDisplayMonitors", GetLastError());
         abort();
     }
-    return context.match_index;
+
+    return context.matchIndex;
 }
 
 // Get selected monitor position
@@ -1293,7 +1404,7 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    float scale = ScaleFromDpi(GetWindowDpi(global_hwnd));
+    float scale = ScaleFromDpi(GetWindowDpi(globalHwnd));
     return (Vector2){ scale, scale };
 }
 
@@ -1337,10 +1448,14 @@ void HideCursor(void)
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    if (global_cursor_enabled) {
+    if (globalCursorEnabled)
+    {
         TRACELOG(LOG_INFO, "EnableCursor: already enabled");
-    } else {
-        if (!ClipCursor(NULL)) {
+    }
+    else
+    {
+        if (!ClipCursor(NULL))
+        {
             LogFail("ClipCursor", GetLastError());
             abort();
         }
@@ -1358,7 +1473,7 @@ void EnableCursor(void)
         }
 
         ShowCursor();
-        global_cursor_enabled = true;
+        globalCursorEnabled = true;
         TRACELOG(LOG_INFO, "EnableCursor: enabled");
     }
 }
@@ -1366,68 +1481,79 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    if (global_cursor_enabled) {
+    if (globalCursorEnabled)
+    {
 
         {
             RAWINPUTDEVICE rid;
             rid.usUsagePage = 0x01; // HID_USAGE_PAGE_GENERIC
             rid.usUsage = 0x02; // HID_USAGE_GENERIC_MOUSE
             rid.dwFlags = RIDEV_INPUTSINK; // Add to this window even in background
-            rid.hwndTarget = global_hwnd;
+            rid.hwndTarget = globalHwnd;
             if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
                 LogFail("RegisterRawInputDevices", GetLastError());
                 abort();
             }
         }
 
-        RECT client_rect;
-        if (!GetClientRect(global_hwnd, &client_rect)) {
+        RECT clientRect;
+        if (!GetClientRect(globalHwnd, &clientRect))
+        {
             LogFail("GetClientRect", GetLastError());
             abort();
         }
-        POINT topleft = { client_rect.left, client_rect.top };
-        if (!ClientToScreen(global_hwnd, &topleft)) {
+
+        POINT topleft = { clientRect.left, clientRect.top };
+        if (!ClientToScreen(globalHwnd, &topleft))
+        {
             LogFail("ClientToScreen", GetLastError());
             abort();
         }
-        LONG width = client_rect.right - client_rect.left;
-        LONG height = client_rect.bottom - client_rect.top;
+
+        LONG width = clientRect.right - clientRect.left;
+        LONG height = clientRect.bottom - clientRect.top;
 
         TRACELOG(LOG_INFO, "ClipCursor client %d,%d %d,%d (topleft %d,%d)",
-            client_rect.left,
-            client_rect.top,
-            client_rect.right,
-            client_rect.bottom,
+            clientRect.left,
+            clientRect.top,
+            clientRect.right,
+            clientRect.bottom,
             topleft.x,
             topleft.y
         );
-        LONG center_x = topleft.x + width / 2;
-        LONG center_y = topleft.y + height / 2;
-        RECT clip_rect = { center_x, center_y, center_x + 1, center_y + 1 };
-        if (!ClipCursor(&clip_rect)) {
+        LONG centerX = topleft.x + width/2;
+        LONG centerY = topleft.y + height/2;
+        RECT clipRect = { centerX, centerY, centerX + 1, centerY + 1 };
+        if (!ClipCursor(&clipRect))
+        {
             LogFail("ClipCursor", GetLastError());
             abort();
         }
+
         CORE.Input.Mouse.previousPosition = (Vector2){ 0, 0 };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0, 0 };
         HideCursor();
 
-        global_cursor_enabled = false;
+        globalCursorEnabled = false;
         TRACELOG(LOG_INFO, "DisableCursor: disabled");
-    } else {
+    }
+    else
+    {
         TRACELOG(LOG_INFO, "DisableCursor: already disabled");
     }
 }
 
 void SwapScreenBuffer(void)
 {
-    if (!global_hdc) abort();
-    if (!SwapBuffers(global_hdc)) {
+    if (!globalHdc) abort();
+    if (!SwapBuffers(globalHdc))
+    {
         LogFail("SwapBuffers", GetLastError());
         abort();
     }
 
-    if (!ValidateRect(global_hwnd, NULL)) {
+    if (!ValidateRect(globalHwnd, NULL))
+    {
         LogFail("ValidateRect", GetLastError());
         abort();
     }
@@ -1437,7 +1563,7 @@ double GetTime(void)
 {
     LARGE_INTEGER now;
     QueryPerformanceCounter(&now);
-    return (double)(now.QuadPart - CORE.Time.base) / (double)global_timer_frequency.QuadPart;
+    return (double)(now.QuadPart - CORE.Time.base)/(double)globalTimerFrequency.QuadPart;
 }
 
 // Open URL with default system browser (if available)
@@ -1475,12 +1601,15 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
 
 void SetMousePosition(int x, int y)
 {
-    if (global_cursor_enabled) {
+    if (globalCursorEnabled)
+    {
         CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
         TRACELOG(LOG_WARNING, "SetMousePosition not implemented");
         assert(0); // crash debug builds only
-    } else {
+    }
+    else
+    {
         TRACELOG(LOG_ERROR, "Possible? Should we allow this?");
         abort();
     }
@@ -1488,12 +1617,14 @@ void SetMousePosition(int x, int y)
 
 void SetMouseCursor(int cursor)
 {
-    LPCWSTR cursor_name = GetCursorName(cursor);
-    HCURSOR hcursor = LoadCursorW(NULL, cursor_name);
-    if (!hcursor) {
-        TRACELOG(LOG_ERROR, "LoadCursor %d (win32 %d) failed, error=%lu", cursor, (size_t)cursor_name, GetLastError());
+    LPCWSTR cursorName = GetCursorName(cursor);
+    HCURSOR hcursor = LoadCursorW(NULL, cursorName);
+    if (!hcursor)
+    {
+        TRACELOG(LOG_ERROR, "LoadCursor %d (win32 %d) failed, error=%lu", cursor, (size_t)cursorName, GetLastError());
         abort();
     }
+
     SetCursor(hcursor);
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -1542,7 +1673,8 @@ void PollInputEvents(void)
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     MSG msg;
-    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+    {
         if (msg.message == WM_PAINT)
             return;
         TranslateMessage(&msg);
@@ -1554,310 +1686,354 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-#define WM_APP_UPDATE_WINDOW_SIZE (WM_APP+1)
+#define WM_APP_UPDATE_WINDOW_SIZE (WM_APP + 1)
 
-static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, FlagsOp* deferred_flags)
+static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, FlagsOp *deferredFlags)
 {
-    switch (msg) {
-    case WM_CREATE: {
-        global_hdc = GetDC(hwnd);
-        if (!global_hdc) {
-            LogFail("GetDC", GetLastError());
-            return -1;
-        }
+    switch (msg)
+    {
+        case WM_CREATE:
+        {
+            globalHdc = GetDC(hwnd);
+            if (!globalHdc)
+            {
+                LogFail("GetDC", GetLastError());
+                return -1;
+            }
 
-        if (CORE.Window.flags & FLAG_MSAA_4X_HINT) {
-            TRACELOG(LOG_ERROR, "TODO: implement FLAG_MSAA_4X_HINT");
-            abort();
-        }
+            if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+            {
+                TRACELOG(LOG_ERROR, "TODO: implement FLAG_MSAA_4X_HINT");
+                abort();
+            }
 
-        PIXELFORMATDESCRIPTOR pixelFormatDesc = {0};
-        pixelFormatDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-        pixelFormatDesc.nVersion = 1;
-        pixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-        pixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-        pixelFormatDesc.cColorBits = 32;
-        pixelFormatDesc.cAlphaBits = 8;
-        pixelFormatDesc.cDepthBits = 24;
+            PIXELFORMATDESCRIPTOR pixelFormatDesc = {0};
+            pixelFormatDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+            pixelFormatDesc.nVersion = 1;
+            pixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+            pixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
+            pixelFormatDesc.cColorBits = 32;
+            pixelFormatDesc.cAlphaBits = 8;
+            pixelFormatDesc.cDepthBits = 24;
 
-        int pixelFormat = ChoosePixelFormat(global_hdc, &pixelFormatDesc);
-        if (!pixelFormat) {
-            LogFail("ChoosePixelFormat", GetLastError());
-            return -1;
-        }
-        if (!SetPixelFormat(global_hdc, pixelFormat, &pixelFormatDesc)) {
-            LogFail("SetPixelFormat", GetLastError());
-            return -1;
-        }
-        global_gl_context = wglCreateContext(global_hdc);
-        if (!global_gl_context) {
-            LogFail("wglCreateContext", GetLastError());
-            return -1;
-        }
-        if (!wglMakeCurrent(global_hdc, global_gl_context)) {
-            LogFail("wglMakeCurrent", GetLastError());
-            return -1;
-        }
+            int pixelFormat = ChoosePixelFormat(globalHdc, &pixelFormatDesc);
+            if (!pixelFormat)
+            {
+                LogFail("ChoosePixelFormat", GetLastError());
+                return -1;
+            }
 
-        rlLoadExtensions(WglGetProcAddress);
+            if (!SetPixelFormat(globalHdc, pixelFormat, &pixelFormatDesc))
+            {
+                LogFail("SetPixelFormat", GetLastError());
+                return -1;
+            }
 
-        global_hwnd = hwnd;
-        return 0;
-    }
-    case WM_DESTROY:
-        wglMakeCurrent(global_hdc, NULL);
-        if (global_gl_context) {
-            if (!wglDeleteContext(global_gl_context)) abort();
-            global_gl_context = NULL;
-        }
-        if (global_hdc) {
-            if (!ReleaseDC(hwnd, global_hdc)) abort();
-            global_hdc = NULL;
-        }
-        return 0;
-    case WM_CLOSE:
-        CORE.Window.shouldClose = true;
-        return 0;
-    case WM_KILLFOCUS:
-        memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
-        memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
-        return 0;
-    case WM_SIZING: {
-        if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE) {
-            // TODO: enforce min/max size
-            TRACELOG(LOG_WARNING, "TODO: enforce min/max size!");
-        } else {
-            TRACELOG(LOG_WARNING, "non-resizable window is being resized");
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            abort(); // TODO
-        }
-        return TRUE;
-    }
-    case WM_STYLECHANGING:
-        if (wparam == GWL_STYLE) {
-            STYLESTRUCT* ss = (STYLESTRUCT*)lparam;
-            GetStyleChangeFlagOps(CORE.Window.flags, ss, deferred_flags);
+            globalGlContext = wglCreateContext(globalHdc);
+            if (!globalGlContext)
+            {
+                LogFail("wglCreateContext", GetLastError());
+                return -1;
+            }
 
-            UINT dpi = GetWindowDpi(hwnd);
-            SIZE client_size = GetClientSize(hwnd);
-            SIZE old_size = CalcWindowSize(dpi, client_size, ss->styleOld);
-            SIZE new_size = CalcWindowSize(dpi, client_size, ss->styleNew);
-            if (old_size.cx != new_size.cx || old_size.cy != new_size.cy) {
-                TRACELOG(
-                    LOG_INFO,
-                    "resize from style change: %dx%d to %dx%d",
-                    old_size.cx, old_size.cy,
-                    new_size.cx, new_size.cy
-                );
-                if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) {
-                    // looks like windows will automatically "unminimize" a window
-                    // if a style changes modifies it's size
-                    TRACELOG(LOG_INFO, "style change modifed window size, removing maximized flag");
-                    deferred_flags->clear |= FLAG_WINDOW_MAXIMIZED;
+            if (!wglMakeCurrent(globalHdc, globalGlContext))
+            {
+                LogFail("wglMakeCurrent", GetLastError());
+                return -1;
+            }
+
+            rlLoadExtensions(WglGetProcAddress);
+
+            globalHwnd = hwnd;
+
+        } return 0;
+        case WM_DESTROY:
+            wglMakeCurrent(globalHdc, NULL);
+            if (globalGlContext)
+            {
+                if (!wglDeleteContext(globalGlContext)) abort();
+                globalGlContext = NULL;
+            }
+
+            if (globalHdc)
+            {
+                if (!ReleaseDC(hwnd, globalHdc)) abort();
+                globalHdc = NULL;
+            }
+
+            return 0;
+        case WM_CLOSE:
+            CORE.Window.shouldClose = true;
+            return 0;
+        case WM_KILLFOCUS:
+            memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
+            memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+            return 0;
+        case WM_SIZING:
+            if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE) {
+                // TODO: enforce min/max size
+                TRACELOG(LOG_WARNING, "TODO: enforce min/max size!");
+            } else {
+                TRACELOG(LOG_WARNING, "non-resizable window is being resized");
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                abort(); // TODO
+            }
+            return TRUE;
+        case WM_STYLECHANGING:
+            if (wparam == GWL_STYLE)
+            {
+                STYLESTRUCT *ss = (STYLESTRUCT*)lparam;
+                GetStyleChangeFlagOps(CORE.Window.flags, ss, deferredFlags);
+
+                UINT dpi = GetWindowDpi(hwnd);
+                SIZE clientSize = GetClientSize(hwnd);
+                SIZE oldSize = CalcWindowSize(dpi, clientSize, ss->styleOld);
+                SIZE newSize = CalcWindowSize(dpi, clientSize, ss->styleNew);
+                if (oldSize.cx != newSize.cx || oldSize.cy != newSize.cy) {
+                    TRACELOG(
+                        LOG_INFO,
+                        "resize from style change: %dx%d to %dx%d",
+                        oldSize.cx, oldSize.cy,
+                        newSize.cx, newSize.cy
+                    );
+                    if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) {
+                        // looks like windows will automatically "unminimize" a window
+                        // if a style changes modifies it's size
+                        TRACELOG(LOG_INFO, "style change modifed window size, removing maximized flag");
+                        deferredFlags->clear |= FLAG_WINDOW_MAXIMIZED;
+                    }
                 }
             }
-        }
-        return 0;
-    case WM_WINDOWPOSCHANGING: {
-        WINDOWPOS* pos = (WINDOWPOS*)lparam;
-        if (pos->flags & SWP_SHOWWINDOW) {
-            if (pos->flags & SWP_HIDEWINDOW) abort();
-            deferred_flags->clear |= FLAG_WINDOW_HIDDEN;
-        } else if (pos->flags & SWP_HIDEWINDOW) {
-            deferred_flags->set |= FLAG_WINDOW_HIDDEN;
-        }
+            return 0;
+        case WM_WINDOWPOSCHANGING:
+        {
+            WINDOWPOS *pos = (WINDOWPOS*)lparam;
+            if (pos->flags & SWP_SHOWWINDOW)
+            {
+                if (pos->flags & SWP_HIDEWINDOW) abort();
+                deferredFlags->clear |= FLAG_WINDOW_HIDDEN;
+            }
+            else if (pos->flags & SWP_HIDEWINDOW)
+            {
+                deferredFlags->set |= FLAG_WINDOW_HIDDEN;
+            }
 
-        Mized mized = MIZED_NONE;
-        if (IsMinimized2(hwnd)) {
-            mized = MIZED_MIN;
-        } else {
-            WINDOWPLACEMENT placement;
-            placement.length = sizeof(placement);
-            if (!GetWindowPlacement(hwnd, &placement)) {
-                LogFail("GetWindowPlacement", GetLastError());
+            Mized mized = MIZED_NONE;
+            if (IsMinimized2(hwnd))
+            {
+                mized = MIZED_MIN;
+            }
+            else
+            {
+                WINDOWPLACEMENT placement;
+                placement.length = sizeof(placement);
+                if (!GetWindowPlacement(hwnd, &placement))
+                {
+                    LogFail("GetWindowPlacement", GetLastError());
+                    abort();
+                }
+
+                if (placement.showCmd == SW_SHOWMAXIMIZED) {
+                    mized = MIZED_MAX;
+                }
+            }
+
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            /* TRACELOG(LOG_INFO, "window pos=%d,%d size=%dx%d", pos->x, pos->y, pos->cx, pos->cy); */
+
+            switch (mized)
+            {
+                case MIZED_NONE:
+                {
+                    deferredFlags->clear |= (
+                        FLAG_WINDOW_MINIMIZED |
+                        FLAG_WINDOW_MAXIMIZED
+                    );
+                    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+                    MONITORINFO info;
+                    info.cbSize = sizeof(info);
+                    if (!GetMonitorInfoW(monitor, &info))
+                    {
+                        LogFail("GetMonitorInfo", GetLastError());
+                        abort();
+                    }
+
+                    if (
+                        (pos->x == info.rcMonitor.left) &&
+                        (pos->y == info.rcMonitor.top) &&
+                        (pos->cx == (info.rcMonitor.right - info.rcMonitor.left)) &&
+                        (pos->cy == (info.rcMonitor.bottom - info.rcMonitor.top))
+                    ) {
+                        deferredFlags->set |= FLAG_BORDERLESS_WINDOWED_MODE;
+                    }
+                    else
+                    {
+                        deferredFlags->clear |= FLAG_BORDERLESS_WINDOWED_MODE;
+                    }
+
+                } break;
+                case MIZED_MIN:
+                    // !!! NOTE !!! Do not update the maximized/borderless
+                    // flags because when hwnd is minimized it temporarily overrides
+                    // the maximized state/flag which gets restored on SW_RESTORE
+                    deferredFlags->set |= FLAG_WINDOW_MINIMIZED;
+                    break;
+                case MIZED_MAX:
+                    deferredFlags->clear |= FLAG_WINDOW_MINIMIZED;
+                    deferredFlags->set |= FLAG_WINDOW_MAXIMIZED;
+                    break;
+            }
+
+            return 0;
+        }
+        case WM_SIZE:
+            // don't trust the docs, they say you won't get this message if you don't call DefWindowProc
+            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created you'll get this
+            // message without getting WM_WINDOWPOSCHANGED.
+            HandleWindowResize(hwnd, &globalAppScreenSize);
+            return 0;
+        case WM_WINDOWPOSCHANGED: {
+            WINDOWPOS *pos = (WINDOWPOS*)lparam;
+            if (!(pos->flags & SWP_NOSIZE))
+            {
+                HandleWindowResize(hwnd, &globalAppScreenSize);
+            }
+
+            return 0;
+        }
+        case WM_GETDPISCALEDSIZE:
+        {
+            SIZE *inoutSize = (SIZE*)lparam;
+            UINT newDpi = wparam;
+
+            // for any of these other cases, we might want to post a window
+            // resize event after the dpi changes?
+            if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
+            if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
+            if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) return TRUE;
+
+            float dpiScale = ScaleFromDpi(newDpi);
+            bool dpiScaling = CORE.Window.flags & FLAG_WINDOW_HIGHDPI;
+            SIZE desired = PxFromPt2(dpiScale, dpiScaling, globalAppScreenSize);
+            inoutSize->cx = desired.cx;
+            inoutSize->cy = desired.cy;
+        } return TRUE;
+        case WM_DPICHANGED:
+        {
+            RECT *suggestedRect = (RECT*)lparam;
+            // Never set the window size to anything other than the suggested rect here.
+            // Doing so can cause a window to stutter between monitors when transitioning
+            // between them.
+            if (!SetWindowPos(
+                hwnd,
+                NULL,
+                suggestedRect->left,
+                suggestedRect->top,
+                suggestedRect->right - suggestedRect->left,
+                suggestedRect->bottom - suggestedRect->top,
+                SWP_NOZORDER | SWP_NOACTIVATE
+            )) {
+                LogFail("SetWindowPos", GetLastError());
                 abort();
             }
-            if (placement.showCmd == SW_SHOWMAXIMIZED) {
-                mized = MIZED_MAX;
+        } return 0;
+        case WM_SETCURSOR:
+            if (LOWORD(lparam) == HTCLIENT)
+            {
+                SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, IDC_ARROW));
+                return 0;
             }
-        }
-
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        /* TRACELOG(LOG_INFO, "window pos=%d,%d size=%dx%d", pos->x, pos->y, pos->cx, pos->cy); */
-
-        switch (mized) {
-        case MIZED_NONE:
-            deferred_flags->clear |= (
-                FLAG_WINDOW_MINIMIZED |
-                FLAG_WINDOW_MAXIMIZED
-            );
-            HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-            MONITORINFO info;
-            info.cbSize = sizeof(info);
-            if (!GetMonitorInfoW(monitor, &info)) {
-                LogFail("GetMonitorInfo", GetLastError());
+            return DefWindowProc(hwnd, msg, wparam, lparam);
+        case WM_INPUT:
+            if (globalCursorEnabled)
+            {
+                TRACELOG(LOG_ERROR, "Unexpected raw mouse input"); // impossible right?
                 abort();
             }
-            if (
-                (pos->x == info.rcMonitor.left) &&
-                (pos->y == info.rcMonitor.top) &&
-                (pos->cx == (info.rcMonitor.right - info.rcMonitor.left)) &&
-                (pos->cy == (info.rcMonitor.bottom - info.rcMonitor.top))
-            ) {
-                deferred_flags->set |= FLAG_BORDERLESS_WINDOWED_MODE;
-            } else {
-                deferred_flags->clear |= FLAG_BORDERLESS_WINDOWED_MODE;
+            HandleRawInput(lparam);
+            return 0;
+        case WM_MOUSEMOVE:
+            if (globalCursorEnabled)
+            {
+                CORE.Input.Mouse.currentPosition.x = (float)GET_X_LPARAM(lparam);
+                CORE.Input.Mouse.currentPosition.y = (float)GET_Y_LPARAM(lparam);
+                CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
             }
-            break;
-        case MIZED_MIN:
-            // !!! NOTE !!! Do not update the maximized/borderless
-            // flags because when hwnd is minimized it temporarily overrides
-            // the maximized state/flag which gets restored on SW_RESTORE
-            deferred_flags->set |= FLAG_WINDOW_MINIMIZED;
-            break;
-        case MIZED_MAX:
-            deferred_flags->clear |= FLAG_WINDOW_MINIMIZED;
-            deferred_flags->set |= FLAG_WINDOW_MAXIMIZED;
-            break;
-        }
-
-        return 0;
-    }
-    case WM_SIZE:
-        // don't trust the docs, they say you won't get this message if you don't call DefWindowProc
-        // in response to WM_WINDOWPOSCHANGED but looks like when a window is created you'll get this
-        // message without getting WM_WINDOWPOSCHANGED.
-        HandleWindowResize(hwnd, &global_app_screen_size);
-        return 0;
-    case WM_WINDOWPOSCHANGED: {
-        WINDOWPOS* pos = (WINDOWPOS*)lparam;
-        if (!(pos->flags & SWP_NOSIZE)) {
-            HandleWindowResize(hwnd, &global_app_screen_size);
-        }
-        return 0;
-    }
-    case WM_GETDPISCALEDSIZE: {
-        SIZE *inout_size = (SIZE*)lparam;
-        UINT new_dpi = wparam;
-
-        // for any of these other cases, we might want to post a window
-        // resize event after the dpi changes?
-        if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
-        if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
-        if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) return TRUE;
-
-        float dpi_scale = ScaleFromDpi(new_dpi);
-        bool dpi_scaling = CORE.Window.flags & FLAG_WINDOW_HIGHDPI;
-        SIZE desired = PxFromPt2(dpi_scale, dpi_scaling, global_app_screen_size);
-        inout_size->cx = desired.cx;
-        inout_size->cy = desired.cy;
-        return TRUE;
-    }
-    case WM_DPICHANGED: {
-        RECT *suggested_rect = (RECT*)lparam;
-        // Never set the window size to anything other than the suggested rect here.
-        // Doing so can cause a window to stutter between monitors when transitioning
-        // between them.
-        if (!SetWindowPos(
-            hwnd,
-            NULL,
-            suggested_rect->left,
-            suggested_rect->top,
-            suggested_rect->right - suggested_rect->left,
-            suggested_rect->bottom - suggested_rect->top,
-            SWP_NOZORDER | SWP_NOACTIVATE
-        )) {
-            LogFail("SetWindowPos", GetLastError());
-            abort();
-        }
-        return 0;
-    }
-    case WM_SETCURSOR:
-        if (LOWORD(lparam) == HTCLIENT) {
-            SetCursor(CORE.Input.Mouse.cursorHidden ? NULL : LoadCursorW(NULL, IDC_ARROW));
             return 0;
+        case WM_KEYDOWN: HandleKey(wparam, lparam, 1); return 0;
+        case WM_KEYUP: HandleKey(wparam, lparam, 0); return 0;
+        case WM_LBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_LEFT, 1); return 0;
+        case WM_LBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_LEFT, 0); return 0;
+        case WM_RBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_RIGHT, 1); return 0;
+        case WM_RBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_RIGHT, 0); return 0;
+        case WM_MBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_MIDDLE, 1); return 0;
+        case WM_MBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_MIDDLE, 0); return 0;
+        case WM_XBUTTONDOWN: switch (HIWORD(wparam))
+        {
+            case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 1); return 0;
+            case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 1); return 0;
+            default:
+                TRACELOG(LOG_WARNING, "TODO: handle ex mouse button DOWN wparam=%u", HIWORD(wparam));
+                return 0;
         }
-        return DefWindowProc(hwnd, msg, wparam, lparam);
-    case WM_INPUT:
-        if (global_cursor_enabled) {
-            TRACELOG(LOG_ERROR, "Unexpected raw mouse input"); // impossible right?
-            abort();
+        case WM_XBUTTONUP: switch (HIWORD(wparam))
+        {
+            case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 0); return 0;
+            case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 0); return 0;
+            default:
+                TRACELOG(LOG_WARNING, "TODO: handle ex mouse button UP   wparam=%u", HIWORD(wparam));
+                return 0;
         }
-        HandleRawInput(lparam);
-        return 0;
-    case WM_MOUSEMOVE:
-        if (global_cursor_enabled) {
-            CORE.Input.Mouse.currentPosition.x = (float)GET_X_LPARAM(lparam);
-            CORE.Input.Mouse.currentPosition.y = (float)GET_Y_LPARAM(lparam);
-            CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-        }
-        return 0;
-    case WM_KEYDOWN: HandleKey(wparam, lparam, 1); return 0;
-    case WM_KEYUP: HandleKey(wparam, lparam, 0); return 0;
-    case WM_LBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_LEFT, 1); return 0;
-    case WM_LBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_LEFT, 0); return 0;
-    case WM_RBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_RIGHT, 1); return 0;
-    case WM_RBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_RIGHT, 0); return 0;
-    case WM_MBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_MIDDLE, 1); return 0;
-    case WM_MBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_MIDDLE, 0); return 0;
-    case WM_XBUTTONDOWN: switch (HIWORD(wparam)) {
-        case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 1); return 0;
-        case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 1); return 0;
+        case WM_MOUSEWHEEL:
+            CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA;
+            return 0;
+        case WM_MOUSEHWHEEL:
+            CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA;
+            return 0;
+        case WM_APP_UPDATE_WINDOW_SIZE:
+            UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, globalAppScreenSize, CORE.Window.flags);
+            return 0;
         default:
-            TRACELOG(LOG_WARNING, "TODO: handle ex mouse button DOWN wparam=%u", HIWORD(wparam));
-            return 0;
-        }
-    case WM_XBUTTONUP: switch (HIWORD(wparam)) {
-        case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 0); return 0;
-        case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 0); return 0;
-        default:
-            TRACELOG(LOG_WARNING, "TODO: handle ex mouse button UP   wparam=%u", HIWORD(wparam));
-            return 0;
-        }
-    case WM_MOUSEWHEEL:
-        CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam)) / WHEEL_DELTA;
-        return 0;
-    case WM_MOUSEHWHEEL:
-        CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam)) / WHEEL_DELTA;
-        return 0;
-    case WM_APP_UPDATE_WINDOW_SIZE:
-        UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, global_app_screen_size, CORE.Window.flags);
-        return 0;
-    default:
-        return DefWindowProcW(hwnd, msg, wparam, lparam);
+            return DefWindowProcW(hwnd, msg, wparam, lparam);
     }
 }
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     // sanity check, should we remove this?
     DWORD mask = STYLE_MASK_ALL;
-    if (global_hwnd == hwnd) {
+    if (globalHwnd == hwnd)
+    {
         if (msg == WM_WINDOWPOSCHANGING) {
             mask &= ~(WS_MINIMIZE | WS_MAXIMIZE);
         }
         CheckFlags("WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
     }
 
-    FlagsOp flags_op;
-    flags_op.set = 0;
-    flags_op.clear = 0;
-    LRESULT result = WndProc2(hwnd, msg, wparam, lparam, &flags_op);
+    FlagsOp flagsOp;
+    flagsOp.set = 0;
+    flagsOp.clear = 0;
+    LRESULT result = WndProc2(hwnd, msg, wparam, lparam, &flagsOp);
 
     // sanity check, should we remove this?
-    if (global_hwnd == hwnd) {
+    if (globalHwnd == hwnd)
+     {
         CheckFlags("After WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
     }
 
     // Operations to execute after the above check
-    if (flags_op.set & flags_op.clear) {
-        TRACELOG(LOG_ERROR, "the flags 0x%x were both set and cleared!", flags_op.set & flags_op.clear);
+    if (flagsOp.set & flagsOp.clear)
+    {
+        TRACELOG(LOG_ERROR, "the flags 0x%x were both set and cleared!", flagsOp.set & flagsOp.clear);
         abort();
     }
+
     {
         DWORD save = CORE.Window.flags;
-        CORE.Window.flags |= flags_op.set;
-        CORE.Window.flags &= ~flags_op.clear;
-        if (save != CORE.Window.flags) {
+        CORE.Window.flags |= flagsOp.set;
+        CORE.Window.flags &= ~flagsOp.clear;
+        if (save != CORE.Window.flags)
+        {
             TRACELOG(
                 LOG_DEBUG,
                 "DeferredFlags: 0x%x > 0x%x (diff 0x%x)",
@@ -1867,25 +2043,29 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             );
         }
     }
+
     return result;
 }
 
 
 int InitPlatform(void)
 {
-    global_desired_flags = SanitizeFlags(SANITIZE_FLAGS_FIRST, CORE.Window.flags);
+    globalDesiredFlags = SanitizeFlags(SANITIZE_FLAGS_FIRST, CORE.Window.flags);
     // from this point CORE.Window.flags should always reflect the actual state of the window
-    CORE.Window.flags = FLAG_WINDOW_HIDDEN | (global_desired_flags & FLAG_MASK_NO_UPDATE);
+    CORE.Window.flags = FLAG_WINDOW_HIDDEN | (globalDesiredFlags & FLAG_MASK_NO_UPDATE);
 
-    global_app_screen_size = (Vector2){ CORE.Window.screen.width, CORE.Window.screen.height };
+    globalAppScreenSize = (Vector2){ CORE.Window.screen.width, CORE.Window.screen.height };
 
-    if (IsWindows10Version1703OrGreaterWin32()) {
+    if (IsWindows10Version1703OrGreaterWin32())
+    {
         TRACELOG(LOG_INFO, "DpiAware: >=Win10Creators");
         if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
             LogFail("SetProcessDpiAwarenessContext", GetLastError());
             abort();
         }
-    } else if (IsWindows8Point1OrGreater()) {
+    }
+    else if (IsWindows8Point1OrGreater())
+    {
         TRACELOG(LOG_INFO, "DpiAware: >=Win8.1");
         HMODULE shcore = LoadLibraryW(L"shcore.dll");
         if (!shcore) {
@@ -1902,10 +2082,14 @@ int InitPlatform(void)
             LogFailHr("SetProcessDpiAwareness", hr);
             abort();
         }
-    } else if (IsWindowsVistaOrGreater()) {
+    }
+    else if (IsWindowsVistaOrGreater())
+    {
         TRACELOG(LOG_INFO, "DpiAware: >=WinVista");
         SetProcessDPIAware();
-    } else {
+    }
+    else
+    {
         TRACELOG(LOG_INFO, "DpiAware: <WinVista");
     }
 
@@ -1919,7 +2103,8 @@ int InitPlatform(void)
         // TODO: audit if we want to set this since we're implementing WM_SETCURSOR
         c.hCursor = LoadCursorW(NULL, IDC_ARROW);
         c.lpszClassName = CLASS_NAME;
-        if (0 == RegisterClassExW(&c)) {
+        if (0 == RegisterClassExW(&c))
+        {
             LogFail("RegisterClass", GetLastError());
             return -1;
         }
@@ -1931,17 +2116,23 @@ int InitPlatform(void)
     HMONITOR monitor;
 
     {
-        POINT primary_topleft = {0, 0};
-        monitor = MonitorFromPoint(primary_topleft, MONITOR_DEFAULTTOPRIMARY);
-        if (!monitor) {
+        POINT primaryTopLeft = {0, 0};
+        monitor = MonitorFromPoint(primaryTopLeft, MONITOR_DEFAULTTOPRIMARY);
+        if (!monitor)
+        {
             LogFail("MonitorFromPoint", GetLastError());
             // we'll keep going
-        } else {
+        }
+        else
+        {
             MONITORINFO info;
             info.cbSize = sizeof(info);
-            if (!GetMonitorInfoW(monitor, &info)) {
+            if (!GetMonitorInfoW(monitor, &info))
+            {
                 LogFail("GetMonitorInfo", GetLastError());
-            } else {
+            }
+            else
+            {
                 CORE.Window.display.width = info.rcMonitor.right - info.rcMonitor.left;
                 CORE.Window.display.height = info.rcMonitor.bottom - info.rcMonitor.top;
             }
@@ -1949,13 +2140,15 @@ int InitPlatform(void)
     }
 
     CreateWindowAlloca(CORE.Window.title, MakeWindowStyle(CORE.Window.flags));
-    if (!global_hwnd) {
+    if (!globalHwnd)
+    {
         LogFail("CreateWindow", GetLastError());
         return -1;
     }
+
     CORE.Window.ready = true;
-    UpdateWindowSize(UPDATE_WINDOW_FIRST, global_hwnd, global_app_screen_size, global_desired_flags);
-    UpdateFlags(global_hwnd, global_desired_flags, global_app_screen_size);
+    UpdateWindowSize(UPDATE_WINDOW_FIRST, globalHwnd, globalAppScreenSize, globalDesiredFlags);
+    UpdateFlags(globalHwnd, globalDesiredFlags, globalAppScreenSize);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // TODO: not sure why this needs to be here?
@@ -1969,7 +2162,7 @@ int InitPlatform(void)
 
     CORE.Storage.basePath = GetWorkingDirectory();
 
-    QueryPerformanceFrequency(&global_timer_frequency);
+    QueryPerformanceFrequency(&globalTimerFrequency);
 
     {
         LARGE_INTEGER time;
@@ -1984,11 +2177,14 @@ int InitPlatform(void)
 
 void ClosePlatform(void)
 {
-    if (global_hwnd) {
-        if (0 == DestroyWindow(global_hwnd)) {
+    if (globalHwnd)
+    {
+        if (0 == DestroyWindow(globalHwnd))
+        {
             LogFail("DestroyWindow", GetLastError());
             abort();
         }
-        global_hwnd = NULL;
+
+        globalHwnd = NULL;
     }
 }
