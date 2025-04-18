@@ -129,7 +129,6 @@ static bool ResizableFromStyle(DWORD style)
 }
 static bool DecoratedFromStyle(DWORD style)
 {
-    bool is_off;
     if (style & STYLE_FLAGS_UNDECORATED_ON) {
         if (style & STYLE_FLAGS_UNDECORATED_OFF) {
             TRACELOG(LOG_ERROR, "style 0x%x has both undecorated on/off flags", style);
@@ -471,7 +470,7 @@ static BOOL IsWindows10Version1703OrGreaterWin32(void)
         LogFail("GetProcAddress 'RtlVerifyVersionInfo'", GetLastError());
         return 0;
     }
-    OSVERSIONINFOEX osvi = { 0 };
+    RTL_OSVERSIONINFOEXW osvi = { 0 };
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     osvi.dwMajorVersion = 10;
     osvi.dwMinorVersion = 0;
@@ -712,26 +711,6 @@ static LPCWSTR GetCursorName(int cursor)
     }
 }
 
-
-static UINT GetMonitorDpi(HMONITOR monitor)
-{
-    UINT dpi_x;
-    UINT dpi_y;
-    HRESULT hr = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y);
-    if (hr < 0) {
-        LogFailHr("GetDpiForMonitor", hr);
-        abort();
-    }
-    if (dpi_x != dpi_y) {
-        TRACELOG(LOG_ERROR, "DPI X (%lu) != DPI Y (%lu)", dpi_x, dpi_y);
-        abort();
-    }
-    if (dpi_x < 96) {
-        TRACELOG(LOG_ERROR, "unexpected dpi %lu", dpi_x);
-        abort();
-    }
-    return dpi_x;
-}
 
 static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC _, LPRECT rect, LPARAM lparam)
 {
