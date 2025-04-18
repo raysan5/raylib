@@ -2109,7 +2109,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     if (deviceBitsPerSample > 4)  deviceBitsPerSample = 4;
     deviceBitsPerSample *= AUDIO.System.device.playback.channels;
 
-    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0) ? (AUDIO.System.device.sampleRate / 30 * deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0) ? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
