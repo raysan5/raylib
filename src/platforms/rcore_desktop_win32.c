@@ -977,6 +977,11 @@ static void HandleWindowResize(HWND hwnd, Vector2 *appScreenSizeRef)
         return;
 
     SIZE clientSize = GetClientSize(hwnd);
+
+    // TODO: not sure if this function is doing what we need, leaving this disabled
+    //       call to workaround unused function error
+    if (0) SetupFramebuffer(0, 0);
+
     TRACELOG(LOG_DEBUG, "NewClientSize %lux%lu", clientSize.cx, clientSize.cy);
     /* CORE.Window.currentFbo.width = clientSize.cx; */
     /* CORE.Window.currentFbo.height = clientSize.cy; */
