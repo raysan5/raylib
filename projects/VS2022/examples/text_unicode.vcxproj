@@ -556,7 +556,7 @@
     <ClCompile Include="..\..\..\examples\text\text_unicode.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\..\src\raylib.rc" />
+    <ResourceCompile Include="..\..\..\examples\examples.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

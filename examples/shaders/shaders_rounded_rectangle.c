@@ -108,8 +108,8 @@ int main(void)
 
             // Draw rectangle box with rounded corners using shader
             Rectangle rec = { 50, 70, 110, 60 };
-            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
-            DrawText("Rounded rectangle", rec.x - 20, rec.y - 35, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 20, (int)rec.y - 20, (int)rec.width + 40, (int)rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle", (int)rec.x - 20, (int)rec.y - 35, 10, DARKGRAY);
 
             // Flip Y axis to match shader coordinate system
             rec.y = GetScreenHeight() - rec.y - rec.height;
@@ -128,8 +128,8 @@ int main(void)
 
             // Draw rectangle shadow using shader
             rec = (Rectangle){ 50, 200, 110, 60 };
-            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
-            DrawText("Rounded rectangle shadow", rec.x - 20, rec.y - 35, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 20, (int)rec.y - 20, (int)rec.width + 40, (int)rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle shadow", (int)rec.x - 20, (int)rec.y - 35, 10, DARKGRAY);
 
             rec.y = GetScreenHeight() - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
@@ -147,8 +147,8 @@ int main(void)
 
             // Draw rectangle's border using shader
             rec = (Rectangle){ 50, 330, 110, 60 };
-            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
-            DrawText("Rounded rectangle border", rec.x - 20, rec.y - 35, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 20, (int)rec.y - 20, (int)rec.width + 40, (int)rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle border", (int)rec.x - 20, (int)rec.y - 35, 10, DARKGRAY);
 
             rec.y = GetScreenHeight() - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);

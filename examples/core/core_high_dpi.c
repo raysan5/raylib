@@ -15,9 +15,9 @@
 
 static void DrawTextCenter(const char *text, int x, int y, int fontSize, Color color)
 {
-    Vector2 size = MeasureTextEx(GetFontDefault(), text, fontSize, 3);
+    Vector2 size = MeasureTextEx(GetFontDefault(), text, (float)fontSize, 3);
     Vector2 pos = (Vector2){x - size.x/2, y - size.y/2 };
-    DrawTextEx(GetFontDefault(), text, pos, fontSize, 3, color);
+    DrawTextEx(GetFontDefault(), text, pos, (float)fontSize, 3, color);
 }
 
 //------------------------------------------------------------------------------------
@@ -86,11 +86,11 @@ int main(void)
             const int minTextSpace = 30;
             int last_text_x = -minTextSpace;
             for (int i = cellSize; i < GetRenderWidth(); i += cellSize, odd = !odd) {
-                int x = ((float)i) / dpiScale.x;
+                int x = (int)(((float)i) / dpiScale.x);
                 if (odd) {
-                    DrawRectangle(x, pixelGridTop, cellSizePx, pixelGridBottom-pixelGridTop, CLITERAL(Color){ 0, 121, 241, 100 });
+                    DrawRectangle(x, pixelGridTop, (int)cellSizePx, pixelGridBottom-pixelGridTop, CLITERAL(Color){ 0, 121, 241, 100 });
                 }
-                DrawLine(x, pixelGridTop, ((float)i) / dpiScale.x, pixelGridLabelY - 10, GRAY);
+                DrawLine(x, pixelGridTop, (int)(((float)i) / dpiScale.x), pixelGridLabelY - 10, GRAY);
                 if (x - last_text_x >= minTextSpace) {
                     DrawTextCenter(TextFormat("%d", i), x, pixelGridLabelY, 12, LIGHTGRAY);
                     last_text_x = x;

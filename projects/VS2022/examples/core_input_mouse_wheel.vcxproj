@@ -556,7 +556,7 @@
     <ClCompile Include="..\..\..\examples\core\core_input_mouse_wheel.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\..\src\raylib.rc" />
+    <ResourceCompile Include="..\..\..\examples\examples.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
