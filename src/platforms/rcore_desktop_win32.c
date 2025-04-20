@@ -746,17 +746,17 @@ static LPCWSTR GetCursorName(int cursor)
 {
     switch (cursor)
     {
-        case MOUSE_CURSOR_DEFAULT      : return IDC_ARROW;
-        case MOUSE_CURSOR_ARROW        : return IDC_ARROW;
-        case MOUSE_CURSOR_IBEAM        : return IDC_IBEAM;
-        case MOUSE_CURSOR_CROSSHAIR    : return IDC_CROSS;
-        case MOUSE_CURSOR_POINTING_HAND: return IDC_HAND;
-        case MOUSE_CURSOR_RESIZE_EW    : return IDC_SIZEWE;
-        case MOUSE_CURSOR_RESIZE_NS    : return IDC_SIZENS;
-        case MOUSE_CURSOR_RESIZE_NWSE  : return IDC_SIZENWSE;
-        case MOUSE_CURSOR_RESIZE_NESW  : return IDC_SIZENESW;
-        case MOUSE_CURSOR_RESIZE_ALL   : return IDC_SIZEALL;
-        case MOUSE_CURSOR_NOT_ALLOWED  : return IDC_NO;
+        case MOUSE_CURSOR_DEFAULT      : return (LPCWSTR)IDC_ARROW;
+        case MOUSE_CURSOR_ARROW        : return (LPCWSTR)IDC_ARROW;
+        case MOUSE_CURSOR_IBEAM        : return (LPCWSTR)IDC_IBEAM;
+        case MOUSE_CURSOR_CROSSHAIR    : return (LPCWSTR)IDC_CROSS;
+        case MOUSE_CURSOR_POINTING_HAND: return (LPCWSTR)IDC_HAND;
+        case MOUSE_CURSOR_RESIZE_EW    : return (LPCWSTR)IDC_SIZEWE;
+        case MOUSE_CURSOR_RESIZE_NS    : return (LPCWSTR)IDC_SIZENS;
+        case MOUSE_CURSOR_RESIZE_NWSE  : return (LPCWSTR)IDC_SIZENWSE;
+        case MOUSE_CURSOR_RESIZE_NESW  : return (LPCWSTR)IDC_SIZENESW;
+        case MOUSE_CURSOR_RESIZE_ALL   : return (LPCWSTR)IDC_SIZEALL;
+        case MOUSE_CURSOR_NOT_ALLOWED  : return (LPCWSTR)IDC_NO;
         default: abort();
     }
 }
@@ -1441,7 +1441,7 @@ Image GetClipboardImage(void)
 void ShowCursor(void)
 {
     CORE.Input.Mouse.cursorHidden = false;
-    SetCursor(LoadCursorW(NULL, IDC_ARROW));
+    SetCursor(LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
 }
 
 // Hides mouse cursor
@@ -1949,7 +1949,7 @@ static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, Flags
         case WM_SETCURSOR:
             if (LOWORD(lparam) == HTCLIENT)
             {
-                SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, IDC_ARROW));
+                SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
                 return 0;
             }
 
@@ -2094,7 +2094,7 @@ int InitPlatform(void)
         c.cbWndExtra = sizeof(LONG_PTR); // extra space for the Tuple object ptr
         c.hInstance = GetModuleHandleW(0);
         // TODO: audit if we want to set this since we're implementing WM_SETCURSOR
-        c.hCursor = LoadCursorW(NULL, IDC_ARROW);
+        c.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
         c.lpszClassName = CLASS_NAME;
         if (0 == RegisterClassExW(&c))
         {
