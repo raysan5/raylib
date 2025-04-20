@@ -620,6 +620,8 @@ RLAPI double rlGetCullDistanceFar(void);                // Get cull plane distan
 //------------------------------------------------------------------------------------
 RLAPI void rlBegin(int mode);                           // Initialize drawing mode (how to organize vertex)
 RLAPI void rlEnd(void);                                 // Finish vertex providing
+RLAPI void rlStartBatch(int mode, unsigned int textureId);
+RLAPI void rlEndBatch(void);
 RLAPI void rlVertex2i(int x, int y);                    // Define one vertex (position) - 2 int
 RLAPI void rlVertex2f(float x, float y);                // Define one vertex (position) - 2 float
 RLAPI void rlVertex3f(float x, float y, float z);       // Define one vertex (position) - 3 float
@@ -1430,6 +1432,23 @@ double rlGetCullDistanceFar(void)
 #if defined(GRAPHICS_API_OPENGL_11)
 // Fallback to OpenGL 1.1 function calls
 //---------------------------------------
+void rlStartBatch(int mode, unsigned int textureId)
+{
+    switch (mode)
+    {
+        case RL_LINES: glBegin(GL_LINES); break;
+        case RL_TRIANGLES: glBegin(GL_TRIANGLES); break;
+        case RL_QUADS: glBegin(GL_QUADS); break;
+        default: break;
+    }
+    rlEnableTexture(id);
+}
+
+void rlEndBatch(void)
+{
+    rlDisableTexture();
+}
+
 void rlBegin(int mode)
 {
     switch (mode)
@@ -1452,12 +1471,11 @@ void rlColor3f(float x, float y, float z) { glColor3f(x, y, z); }
 void rlColor4f(float x, float y, float z, float w) { glColor4f(x, y, z, w); }
 #endif
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-// Initialize drawing mode (how to organize vertex)
-void rlBegin(int mode)
+
+void rlStartBatch(int mode, unsigned int textureId)
 {
-    // Draw mode can be RL_LINES, RL_TRIANGLES and RL_QUADS
-    // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
-    if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode)
+    if (mode != RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode
+        || textureId != RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId)
     {
         if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
         {
@@ -1481,8 +1499,26 @@ void rlBegin(int mode)
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = mode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = RLGL.State.defaultTextureId;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = textureId;
     }
+}
+
+void rlEndBatch(void)
+{
+    // NOTE: If quads batch limit is reached, we force a draw call and next batch starts
+    if (RLGL.State.vertexCounter >=
+        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementCount*4)
+    {
+        rlDrawRenderBatch(RLGL.currentBatch);
+    }
+}
+
+// Initialize drawing mode (how to organize vertex)
+void rlBegin(int mode)
+{
+    // Draw mode can be RL_LINES, RL_TRIANGLES and RL_QUADS
+    // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
+    rlStartBatch(mode, RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId);
 }
 
 // Finish vertex providing
@@ -1653,32 +1689,7 @@ void rlSetTexture(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_11)
         rlEnableTexture(id);
 #else
-        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId != id)
-        {
-            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
-            {
-                // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
-                // that way, following QUADS drawing will keep aligned with index processing
-                // It implies adding some extra alignment vertex at the end of the draw,
-                // those vertex are not processed but they are considered as an additional offset
-                // for the next set of vertex to be drawn
-                if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4);
-                else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4)));
-                else RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = 0;
-
-                if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment))
-                {
-                    RLGL.State.vertexCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
-
-                    RLGL.currentBatch->drawCounter++;
-                }
-            }
-
-            if (RLGL.currentBatch->drawCounter >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
-
-            RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = id;
-            RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
-        }
+        rlStartBatch(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode, id);
 #endif
     }
 }

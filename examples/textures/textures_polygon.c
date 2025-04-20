@@ -115,10 +115,8 @@ int main(void)
 // without crossing perimeter, points must be in anticlockwise order
 void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
 {
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, texture.id);
     
-    rlSetTexture(texture.id);
-
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
         for (int i = 0; i < pointCount - 1; i++)
@@ -134,5 +132,5 @@ void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2
         }
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 }

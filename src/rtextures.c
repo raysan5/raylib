@@ -4546,8 +4546,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
 
-        rlSetTexture(texture.id);
-        rlBegin(RL_QUADS);
+        rlStartBatch(RL_QUADS, texture.id);
 
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
@@ -4573,7 +4572,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             rlVertex2f(topRight.x, topRight.y);
 
         rlEnd();
-        rlSetTexture(0);
+        rlEndBatch();
 
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
@@ -4581,13 +4580,12 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // I leave here the old implementation for educational purposes,
         // just in case someone wants to do some performance test
         /*
-        rlSetTexture(texture.id);
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
             if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
-            rlBegin(RL_QUADS);
+            rlStart(RL_QUADS, texture.id);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
@@ -4612,7 +4610,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
                 rlVertex2f(dest.width, 0.0f);
             rlEnd();
         rlPopMatrix();
-        rlSetTexture(0);
+        rlEndBatch();
         */
     }
 }
@@ -4676,14 +4674,12 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
         coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
 
-        rlSetTexture(texture.id);
-
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
             rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
-            rlBegin(RL_QUADS);
+            rlStartBatch(RL_QUADS, texture.id);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
                 rlNormal3f(0.0f, 0.0f, 1.0f);               // Normal vector pointing towards viewer
 
@@ -4810,7 +4806,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
             rlEnd();
         rlPopMatrix();
 
-        rlSetTexture(0);
+        rlEndBatch();
     }
 }
 

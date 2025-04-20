@@ -103,8 +103,6 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
-    // Set desired texture to be enabled while drawing following vertex data
-    rlSetTexture(texture.id);
 
     // Vertex data transformation can be defined with the commented lines,
     // but in this example we calculate the transformed vertex data directly when calling rlVertex3f()
@@ -114,7 +112,8 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
         //rlRotatef(45, 0, 1, 0);
         //rlScalef(2.0f, 2.0f, 2.0f);
 
-        rlBegin(RL_QUADS);
+        // Set desired texture to be enabled while drawing following vertex data
+        rlStartBatch(RL_QUADS, texture.id);
             rlColor4ub(color.r, color.g, color.b, color.a);
             // Front Face
             rlNormal3f(0.0f, 0.0f, 1.0f);       // Normal Pointing Towards Viewer
@@ -155,7 +154,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
         rlEnd();
     //rlPopMatrix();
 
-    rlSetTexture(0);
+    rlEndBatch();
 }
 
 // Draw cube with texture piece applied to all faces
@@ -168,11 +167,9 @@ void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, f
     float texHeight = (float)texture.height;
 
     // Set desired texture to be enabled while drawing following vertex data
-    rlSetTexture(texture.id);
-
-    // We calculate the normalized texture coordinates for the desired texture-source-rectangle
-    // It means converting from (tex.width, tex.height) coordinates to [0.0f, 1.0f] equivalent 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, texture.id);
+        // We calculate the normalized texture coordinates for the desired texture-source-rectangle
+        // It means converting from (tex.width, tex.height) coordinates to [0.0f, 1.0f] equivalent
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         // Front face
@@ -243,5 +240,5 @@ void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, f
 
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 }

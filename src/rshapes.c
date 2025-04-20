@@ -133,10 +133,9 @@ void DrawPixel(int posX, int posY, Color color)
 void DrawPixelV(Vector2 position, Color color)
 {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
 
         rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -155,9 +154,9 @@ void DrawPixelV(Vector2 position, Color color)
 
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
 
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -176,7 +175,7 @@ void DrawPixelV(Vector2 position, Color color)
 // Draw a line (using gl lines)
 void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f((float)startPosX, (float)startPosY);
         rlVertex2f((float)endPosX, (float)endPosY);
@@ -186,7 +185,7 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 // Draw a line (using gl lines)
 void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(startPos.x, startPos.y);
         rlVertex2f(endPos.x, endPos.y);
@@ -198,7 +197,7 @@ void DrawLineStrip(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount < 2) return; // Security check
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < pointCount - 1; i++)
@@ -312,10 +311,9 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
     float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
 
         // NOTE: Every QUAD actually represents two segments
         for (int i = 0; i < segments/2; i++)
@@ -357,9 +355,9 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
 
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
         for (int i = 0; i < segments; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -404,7 +402,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
     float angle = startAngle;
     bool showCapLines = true;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         if (showCapLines)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -434,7 +432,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
 // Draw a gradient-filled circle
 void DrawCircleGradient(int centerX, int centerY, float radius, Color inner, Color outer)
 {
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(inner.r, inner.g, inner.b, inner.a);
@@ -456,7 +454,7 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 // Draw circle outline (Vector version)
 void DrawCircleLinesV(Vector2 center, float radius, Color color)
 {
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
@@ -471,7 +469,7 @@ void DrawCircleLinesV(Vector2 center, float radius, Color color)
 // Draw ellipse
 void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -485,7 +483,7 @@ void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color c
 // Draw ellipse outline
 void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -541,10 +539,9 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
     float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
         for (int i = 0; i < segments; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -565,9 +562,9 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
         }
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
         for (int i = 0; i < segments; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -631,7 +628,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
     float angle = startAngle;
     bool showCapLines = true;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         if (showCapLines)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -721,10 +718,9 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     }
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
 
         rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -743,9 +739,9 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
 
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -776,10 +772,9 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color lef
 // Draw a gradient-filled rectangle
 void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color topRight, Color bottomRight)
 {
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
         rlNormal3f(0.0f, 0.0f, 1.0f);
 
         // NOTE: Default raylib font character 95 is a white square
@@ -800,7 +795,7 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 }
 
 // Draw rectangle outline
@@ -813,7 +808,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
     float xOffset = 0.5f/mat.m0;
     float yOffset = 0.5f/mat.m5;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f((float)posX + xOffset, (float)posY + yOffset);
         rlVertex2f((float)posX + (float)width - xOffset, (float)posY + yOffset);
@@ -836,7 +831,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
     DrawRectangle(posX, posY + height - 1, width, 1, color);
     DrawRectangle(posX, posY + 1, 1, height - 2, color);
 #else
-    rlBegin(RL_LINES);
+    rlStart(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f((float)posX, (float)posY);
         rlVertex2f((float)posX + (float)width, (float)posY + 1);
@@ -941,10 +936,9 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
         // Draw all the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
         {
@@ -1044,9 +1038,9 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[9].x, point[9].y);
 
     rlEnd();
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
 
         // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
@@ -1195,10 +1189,9 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     if (lineThick > 1)
     {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-        rlSetTexture(GetShapesTexture().id);
         Rectangle shapeRect = GetShapesTextureRectangle();
 
-        rlBegin(RL_QUADS);
+        rlStartBatch(RL_QUADS, GetShapesTexture().id);
 
             // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
@@ -1270,9 +1263,9 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
             rlVertex2f(point[14].x, point[14].y);
 
         rlEnd();
-        rlSetTexture(0);
+        rlEndBatch();
 #else
-        rlBegin(RL_TRIANGLES);
+        rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
 
             // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
@@ -1337,7 +1330,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     else
     {
         // Use LINES to draw the outline
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
 
             // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
@@ -1371,10 +1364,9 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
@@ -1390,9 +1382,9 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
         rlVertex2f(v3.x, v3.y);
     rlEnd();
 
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
         rlVertex2f(v2.x, v2.y);
@@ -1405,7 +1397,7 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
         rlVertex2f(v2.x, v2.y);
@@ -1425,10 +1417,9 @@ void DrawTriangleFan(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        rlSetTexture(GetShapesTexture().id);
         Rectangle shapeRect = GetShapesTextureRectangle();
 
-        rlBegin(RL_QUADS);
+        rlStartBatch(RL_QUADS, GetShapesTexture().id);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 1; i < pointCount - 1; i++)
@@ -1446,7 +1437,7 @@ void DrawTriangleFan(const Vector2 *points, int pointCount, Color color)
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
             }
         rlEnd();
-        rlSetTexture(0);
+        rlEndBatch();
     }
 }
 
@@ -1456,7 +1447,7 @@ void DrawTriangleStrip(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        rlBegin(RL_TRIANGLES);
+        rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 2; i < pointCount; i++)
@@ -1486,10 +1477,9 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
     float angleStep = 360.0f/(float)sides*DEG2RAD;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1510,9 +1500,9 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
             centralAngle = nextAngle;
         }
     rlEnd();
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1534,7 +1524,7 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
     float centralAngle = rotation*DEG2RAD;
     float angleStep = 360.0f/(float)sides*DEG2RAD;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1555,10 +1545,9 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
     float innerRadius = radius - (lineThick*cosf(DEG2RAD*exteriorAngle/2.0f));
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, GetShapesTexture().id);
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1579,9 +1568,9 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
             centralAngle = nextAngle;
         }
     rlEnd();
-    rlSetTexture(0);
+    rlEndBatch();
 #else
-    rlBegin(RL_TRIANGLES);
+    rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);

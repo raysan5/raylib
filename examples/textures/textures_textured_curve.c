@@ -208,8 +208,7 @@ static void DrawTexturedCurve(void)
         Vector2 currentNegNormal = Vector2Add(current, Vector2Scale(normal, -curveWidth));
 
         // Draw the segment as a quad
-        rlSetTexture(texRoad.id);
-        rlBegin(RL_QUADS);
+        rlStartBatch(RL_QUADS, texRoad.id);
             rlColor4ub(255,255,255,255);
             rlNormal3f(0.0f, 0.0f, 1.0f);
 

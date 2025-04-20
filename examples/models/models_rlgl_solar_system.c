@@ -142,7 +142,7 @@ void DrawSphereBasic(Color color)
     // buffer to store all required vertex, batch is reseted if required
     rlCheckRenderBatchLimit((rings + 2)*slices*6);
 
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < (rings + 2); i++)

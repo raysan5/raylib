@@ -281,7 +281,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 // Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         rlVertex2f(position.x, position.y);
@@ -299,7 +299,7 @@ static void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices / 2;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
             if (i == 0)
@@ -341,7 +341,7 @@ static void DrawCube(Vector3 position, float width, float height, float length, 
         //rlScalef(2.0f, 2.0f, 2.0f);
         //rlRotatef(45, 0, 1, 0);
 
-        rlBegin(RL_TRIANGLES);
+        rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             // Front Face -----------------------------------------------------
@@ -413,7 +413,7 @@ static void DrawCubeWires(Vector3 position, float width, float height, float len
         rlTranslatef(position.x, position.y, position.z);
         //rlRotatef(45, 0, 1, 0);
 
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             // Front Face -----------------------------------------------------

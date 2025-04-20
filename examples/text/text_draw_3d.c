@@ -488,12 +488,11 @@ static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, floa
         if (SHOW_LETTER_BOUNDRY) DrawCubeWiresV((Vector3){ position.x + width/2, position.y, position.z + height/2}, (Vector3){ width, LETTER_BOUNDRY_SIZE, height }, LETTER_BOUNDRY_COLOR);
 
         rlCheckRenderBatchLimit(4 + 4*backface);
-        rlSetTexture(font.texture.id);
 
         rlPushMatrix();
             rlTranslatef(position.x, position.y, position.z);
 
-            rlBegin(RL_QUADS);
+            rlStartBatch(RL_QUADS, font.texture.id);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
                 // Front Face
@@ -515,7 +514,7 @@ static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, floa
             rlEnd();
         rlPopMatrix();
 
-        rlSetTexture(0);
+        rlEndBatch();
     }
 }
 

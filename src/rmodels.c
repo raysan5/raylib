@@ -175,7 +175,7 @@ static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *mate
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(startPos.x, startPos.y, startPos.z);
         rlVertex3f(endPos.x, endPos.y, endPos.z);
@@ -188,7 +188,7 @@ void DrawPoint3D(Vector3 position, Color color)
 {
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex3f(0.0f, 0.0f, 0.0f);
             rlVertex3f(0.0f, 0.0f, 0.1f);
@@ -203,7 +203,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
         rlTranslatef(center.x, center.y, center.z);
         rlRotatef(rotationAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
 
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
             for (int i = 0; i < 360; i += 10)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
@@ -218,7 +218,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
 // Draw a color-filled triangle (vertex in counter-clockwise order!)
 void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 {
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(v1.x, v1.y, v1.z);
         rlVertex3f(v2.x, v2.y, v2.z);
@@ -231,7 +231,7 @@ void DrawTriangleStrip3D(const Vector3 *points, int pointCount, Color color)
 {
     if (pointCount < 3) return; // Security check
 
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 2; i < pointCount; i++)
@@ -266,7 +266,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
         //rlRotatef(45, 0, 1, 0);
         //rlScalef(1.0f, 1.0f, 1.0f);   // NOTE: Vertices are directly scaled on definition
 
-        rlBegin(RL_TRIANGLES);
+        rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             // Front face
@@ -348,7 +348,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             // Front face
@@ -435,7 +435,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
-        rlBegin(RL_TRIANGLES);
+        rlStart(RL_TRIANGLES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < (rings + 2); i++)
@@ -472,7 +472,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
-        rlBegin(RL_TRIANGLES);
+        rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             float ringangle = DEG2RAD*(180.0f/(rings + 1)); // Angle between latitudinal parallels
@@ -520,7 +520,7 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < (rings + 2); i++)
@@ -564,7 +564,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
-        rlBegin(RL_TRIANGLES);
+        rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             if (radiusTop > 0)
@@ -627,7 +627,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
 
     float baseAngle = (2.0f*PI)/sides;
 
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < sides; i++)
@@ -682,7 +682,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
-        rlBegin(RL_LINES);
+        rlStartBatch(RL_LINES, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < sides; i++)
@@ -718,7 +718,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 
     float baseAngle = (2.0f*PI)/sides;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < sides; i++)
@@ -769,7 +769,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
     float baseSliceAngle = (2.0f*PI)/slices;
     float baseRingAngle  = PI*0.5f/rings;
 
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         // render both caps
@@ -912,7 +912,7 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
     float baseSliceAngle = (2.0f*PI)/slices;
     float baseRingAngle  = PI*0.5f/rings;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         // render both caps
@@ -1035,7 +1035,7 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
 
-        rlBegin(RL_QUADS);
+        rlStartBatch(RL_QUADS, rlGetTextureIdDefault());
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
 
@@ -1052,7 +1052,7 @@ void DrawRay(Ray ray, Color color)
 {
     float scale = 10000;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -1066,7 +1066,7 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
-    rlBegin(RL_LINES);
+    rlStartBatch(RL_LINES, rlGetTextureIdDefault());
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
             if (i == 0)
@@ -3874,8 +3874,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     texcoords[2] = (Vector2){ (float)(source.x + source.width)/texture.width, (float)source.y/texture.height };
     texcoords[3] = (Vector2){ (float)source.x/texture.width, (float)source.y/texture.height };
 
-    rlSetTexture(texture.id);
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, texture.id);
 
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
         for (int i = 0; i < 4; i++)
@@ -3885,7 +3884,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
         }
 
     rlEnd();
-    rlSetTexture(0);
+    rlEndBatch();
 }
 
 // Draw a bounding box with wires

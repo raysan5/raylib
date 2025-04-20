@@ -143,10 +143,10 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(GetShapesTexture().id);
+    Texture texShapes = GetShapesTexture();
     Rectangle shapeRect = GetShapesTextureRectangle();
 
-    rlBegin(RL_QUADS);
+    rlStartBatch(RL_QUADS, texShapes.id);
         // Draw all the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k)
         {
@@ -262,7 +262,7 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
         rlVertex2f(point[9].x, point[9].y);
 
     rlEnd();
-    rlSetTexture(0);
+    rlEndBatch();
 #else
 
     // Here we use the 'Diagram' to guide ourselves to which point receives what color.
@@ -270,7 +270,7 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
     // will naturally come from OpenGL interpolation.
     // But this time instead of Quad, we think in triangles.
 
-    rlBegin(RL_TRIANGLES);
+    rlStartBatch(RL_TRIANGLES, rlGetTextureIdDefault());
         // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k)
         {
