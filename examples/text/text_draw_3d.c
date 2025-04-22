@@ -65,8 +65,6 @@ typedef struct WaveTextConfig {
 static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, float fontSize, bool backface, Color tint);
 // Draw a 2D text in 3D space
 static void DrawText3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, Color tint);
-// Measure a text in 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
-static Vector3 MeasureText3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 
 // Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`.
 // This is a modified version of the original code by @Nighten found here https://github.com/NightenDushi/Raylib_DrawTextStyle
@@ -108,8 +106,8 @@ int main(void)
     // Use the default font
     Font font = GetFontDefault();
     float fontSize = 0.8f;
-    float fontSpacing = 0.5f;
-    float lineSpacing = -1.0f;
+    float fontSpacing = 0.05f;
+    float lineSpacing = -0.1f;
 
     // Set the text (using markdown!)
     char text[64] = "Hello ~~World~~ in 3D!";
@@ -317,44 +315,44 @@ int main(void)
                         rlRotatef(180.0f, 0.0f, 1.0f, 0.0f);
                         char *opt = (char *)TextFormat("< SIZE: %2.1f >", fontSize);
                         quads += TextLength(opt);
-                        Vector3 m = MeasureText3D(GetFontDefault(), opt, 0.8f, 1.0f, 0.0f);
+                        Vector2 m = MeasureTextEx(GetFontDefault(), opt, 0.8f, 0.1f);
                         Vector3 pos = { -m.x/2.0f, 0.01f, 2.0f};
-                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 1.0f, 0.0f, false, BLUE);
-                        pos.z += 0.5f + m.z * 10.0f;
+                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 0.1f, 0.0f, false, BLUE);
+                        pos.z += 0.5f + m.y;
 
                         opt = (char *)TextFormat("< SPACING: %2.1f >", fontSpacing);
                         quads += TextLength(opt);
-                        m = MeasureText3D(GetFontDefault(), opt, 0.8f, 1.0f, 0.0f);
+                        m = MeasureTextEx(GetFontDefault(), opt, 0.8f, 0.1f);
                         pos.x = -m.x/2.0f;
-                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 1.0f, 0.0f, false, BLUE);
-                        pos.z += 0.5f + m.z * 10.0f;
+                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 0.1f, 0.0f, false, BLUE);
+                        pos.z += 0.5f + m.y;
 
                         opt = (char *)TextFormat("< LINE: %2.1f >", lineSpacing);
                         quads += TextLength(opt);
-                        m = MeasureText3D(GetFontDefault(), opt, 0.8f, 1.0f, 0.0f);
+                        m = MeasureTextEx(GetFontDefault(), opt, 0.8f, 0.1f);
                         pos.x = -m.x/2.0f;
-                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 1.0f, 0.0f, false, BLUE);
-                        pos.z += 1.0f + m.z * 10.0f;
+                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 0.1f, 0.0f, false, BLUE);
+                        pos.z += 0.5f + m.y;
 
                         opt = (char *)TextFormat("< LBOX: %3s >", slb? "ON" : "OFF");
                         quads += TextLength(opt);
-                        m = MeasureText3D(GetFontDefault(), opt, 0.8f, 1.0f, 0.0f);
+                        m = MeasureTextEx(GetFontDefault(), opt, 0.8f, 0.1f);
                         pos.x = -m.x/2.0f;
-                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 1.0f, 0.0f, false, RED);
-                        pos.z += 0.5f + m.z * 10.0f;
+                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 0.1f, 0.0f, false, RED);
+                        pos.z += 0.5f + m.y;
 
                         opt = (char *)TextFormat("< TBOX: %3s >", SHOW_TEXT_BOUNDRY? "ON" : "OFF");
                         quads += TextLength(opt);
-                        m = MeasureText3D(GetFontDefault(), opt, 0.8f, 1.0f, 0.0f);
+                        m = MeasureTextEx(GetFontDefault(), opt, 0.8f, 0.1f);
                         pos.x = -m.x/2.0f;
-                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 1.0f, 0.0f, false, RED);
-                        pos.z += 0.5f + m.z * 10.0f;
+                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 0.1f, 0.0f, false, RED);
+                        pos.z += 0.5f + m.y;
 
                         opt = (char *)TextFormat("< LAYER DISTANCE: %.3f >", layerDistance);
                         quads += TextLength(opt);
-                        m = MeasureText3D(GetFontDefault(), opt, 0.8f, 1.0f, 0.0f);
+                        m = MeasureTextEx(GetFontDefault(), opt, 0.8f, 0.1f);
                         pos.x = -m.x/2.0f;
-                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 1.0f, 0.0f, false, DARKPURPLE);
+                        DrawText3D(GetFontDefault(), opt, pos, 0.8f, 0.1f, 0.0f, false, DARKPURPLE);
                     rlPopMatrix();
                     //-------------------------------------------------------------------------
 
@@ -362,44 +360,44 @@ int main(void)
                     //-------------------------------------------------------------------------
                     opt = "All the text displayed here is in 3D";
                     quads += 36;
-                    m = MeasureText3D(GetFontDefault(), opt, 1.0f, 0.5f, 0.0f);
+                    m = MeasureTextEx(GetFontDefault(), opt, 1.0f, 0.05f);
                     pos = (Vector3){-m.x/2.0f, 0.01f, 2.0f};
-                    DrawText3D(GetFontDefault(), opt, pos, 1.0f, 0.5f, 0.0f, false, DARKBLUE);
-                    pos.z += 1.5f + m.z;
+                    DrawText3D(GetFontDefault(), opt, pos, 1.0f, 0.05f, 0.0f, false, DARKBLUE);
+                    pos.z += 1.5f + m.y;
 
                     opt = "press [Left]/[Right] to change the font size";
                     quads += 44;
-                    m = MeasureText3D(GetFontDefault(), opt, 0.6f, 0.5f, 0.0f);
+                    m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
-                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.5f, 0.0f, false, DARKBLUE);
-                    pos.z += 0.5f + m.z;
+                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
+                    pos.z += 0.5f + m.y;
 
                     opt = "press [Up]/[Down] to change the font spacing";
                     quads += 44;
-                    m = MeasureText3D(GetFontDefault(), opt, 0.6f, 0.5f, 0.0f);
+                    m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
-                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.5f, 0.0f, false, DARKBLUE);
-                    pos.z += 0.5f + m.z;
+                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
+                    pos.z += 0.5f + m.y;
 
                     opt = "press [PgUp]/[PgDown] to change the line spacing";
                     quads += 48;
-                    m = MeasureText3D(GetFontDefault(), opt, 0.6f, 0.5f, 0.0f);
+                    m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
-                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.5f, 0.0f, false, DARKBLUE);
-                    pos.z += 0.5f + m.z;
+                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
+                    pos.z += 0.5f + m.y;
 
                     opt = "press [F1] to toggle the letter boundry";
                     quads += 39;
-                    m = MeasureText3D(GetFontDefault(), opt, 0.6f, 0.5f, 0.0f);
+                    m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
-                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.5f, 0.0f, false, DARKBLUE);
-                    pos.z += 0.5f + m.z;
+                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
+                    pos.z += 0.5f + m.y;
 
                     opt = "press [F2] to toggle the text boundry";
                     quads += 37;
-                    m = MeasureText3D(GetFontDefault(), opt, 0.6f, 0.5f, 0.0f);
+                    m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
-                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.5f, 0.0f, false, DARKBLUE);
+                    DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
                     //-------------------------------------------------------------------------
 
                     SHOW_LETTER_BOUNDRY = slb;
@@ -462,8 +460,8 @@ static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, floa
 
     // Character destination rectangle on screen
     // NOTE: We consider charsPadding on drawing
-    position.x += (float)(font.glyphs[index].offsetX - font.glyphPadding)/(float)font.baseSize*scale;
-    position.z += (float)(font.glyphs[index].offsetY - font.glyphPadding)/(float)font.baseSize*scale;
+    position.x += (float)(font.glyphs[index].offsetX - font.glyphPadding)*scale;
+    position.z += (float)(font.glyphs[index].offsetY - font.glyphPadding)*scale;
 
     // Character source rectangle from font texture atlas
     // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
@@ -544,7 +542,7 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
         {
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
-            textOffsetY += scale + lineSpacing*scale;
+            textOffsetY += fontSize + lineSpacing;
             textOffsetX = 0.0f;
         }
         else
@@ -554,67 +552,12 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
                 DrawTextCodepoint3D(font, codepoint, (Vector3){ position.x + textOffsetX, position.y, position.z + textOffsetY }, fontSize, backface, tint);
             }
 
-            if (font.glyphs[index].advanceX == 0) textOffsetX += (float)(font.recs[index].width + fontSpacing)*scale;
-            else textOffsetX += (float)(font.glyphs[index].advanceX + fontSpacing)*scale;
+            if (font.glyphs[index].advanceX == 0) textOffsetX += (float)font.recs[index].width*scale + fontSpacing;
+            else textOffsetX += (float)font.glyphs[index].advanceX*scale + fontSpacing;
         }
 
         i += codepointByteCount;   // Move text bytes counter to next codepoint
     }
-}
-
-// Measure a text in 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
-static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float fontSpacing, float lineSpacing)
-{
-    int len = TextLength(text);
-    int tempLen = 0;                // Used to count longer text line num chars
-    int lenCounter = 0;
-
-    float tempTextWidth = 0.0f;     // Used to count longer text line width
-
-    float scale = fontSize/(float)font.baseSize;
-    float textHeight = scale;
-    float textWidth = 0.0f;
-
-    int letter = 0;                 // Current character
-    int index = 0;                  // Index position in sprite font
-
-    for (int i = 0; i < len; i++)
-    {
-        lenCounter++;
-
-        int next = 0;
-        letter = GetCodepoint(&text[i], &next);
-        index = GetGlyphIndex(font, letter);
-
-        // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set next = 1
-        if (letter == 0x3f) next = 1;
-        i += next - 1;
-
-        if (letter != '\n')
-        {
-            if (font.glyphs[index].advanceX != 0) textWidth += (font.glyphs[index].advanceX+fontSpacing)*scale;
-            else textWidth += (font.recs[index].width + font.glyphs[index].offsetX)*scale;
-        }
-        else
-        {
-            if (tempTextWidth < textWidth) tempTextWidth = textWidth;
-            lenCounter = 0;
-            textWidth = 0.0f;
-            textHeight += scale + lineSpacing*scale;
-        }
-
-        if (tempLen < lenCounter) tempLen = lenCounter;
-    }
-
-    if (tempTextWidth < textWidth) tempTextWidth = textWidth;
-
-    Vector3 vec = { 0 };
-    vec.x = tempTextWidth + (float)((tempLen - 1)*fontSpacing*scale); // Adds chars spacing to measure
-    vec.y = 0.25f;
-    vec.z = textHeight;
-
-    return vec;
 }
 
 // Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`.
@@ -645,7 +588,7 @@ static void DrawTextWave3D(Font font, const char *text, Vector3 position, float 
         {
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
-            textOffsetY += scale + lineSpacing*scale;
+            textOffsetY += fontSize + lineSpacing;
             textOffsetX = 0.0f;
             k = 0;
         }
@@ -672,8 +615,8 @@ static void DrawTextWave3D(Font font, const char *text, Vector3 position, float 
                 DrawTextCodepoint3D(font, codepoint, (Vector3){ pos.x + textOffsetX, pos.y, pos.z + textOffsetY }, fontSize, backface, tint);
             }
 
-            if (font.glyphs[index].advanceX == 0) textOffsetX += (float)(font.recs[index].width + fontSpacing)*scale;
-            else textOffsetX += (float)(font.glyphs[index].advanceX + fontSpacing)*scale;
+            if (font.glyphs[index].advanceX == 0) textOffsetX += (float)font.recs[index].width*scale + fontSpacing;
+            else textOffsetX += (float)font.glyphs[index].advanceX*scale + fontSpacing;
         }
 
         i += codepointByteCount;   // Move text bytes counter to next codepoint
@@ -698,8 +641,6 @@ static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, fl
 
     for (int i = 0; i < len; i++)
     {
-        lenCounter++;
-
         int next = 0;
         letter = GetCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
@@ -717,7 +658,8 @@ static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, fl
             }
             else
             {
-                if (font.glyphs[index].advanceX != 0) textWidth += (font.glyphs[index].advanceX+fontSpacing)*scale;
+                lenCounter++;
+                if (font.glyphs[index].advanceX != 0) textWidth += font.glyphs[index].advanceX*scale;
                 else textWidth += (font.recs[index].width + font.glyphs[index].offsetX)*scale;
             }
         }
@@ -726,7 +668,7 @@ static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, fl
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
             lenCounter = 0;
             textWidth = 0.0f;
-            textHeight += scale + lineSpacing*scale;
+            textHeight += fontSize + lineSpacing;
         }
 
         if (tempLen < lenCounter) tempLen = lenCounter;
@@ -735,7 +677,7 @@ static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, fl
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
     Vector3 vec = { 0 };
-    vec.x = tempTextWidth + (float)((tempLen - 1)*fontSpacing*scale); // Adds chars spacing to measure
+    vec.x = tempTextWidth + (float)((tempLen - 1)*fontSpacing); // Adds chars spacing to measure
     vec.y = 0.25f;
     vec.z = textHeight;
 
