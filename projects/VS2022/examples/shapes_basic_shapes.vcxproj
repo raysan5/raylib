@@ -556,7 +556,7 @@
     <ClCompile Include="..\..\..\examples\shapes\shapes_basic_shapes.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\..\src\raylib.rc" />
+    <ResourceCompile Include="..\..\..\examples\examples.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

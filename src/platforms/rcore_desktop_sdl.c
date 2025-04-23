@@ -518,6 +518,8 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
+    if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
+
     CORE.Window.flags |= flags;
 
     if (flags & FLAG_VSYNC_HINT)
@@ -1363,10 +1365,7 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Map touch position to mouse position for convenience
-    if (CORE.Input.Touch.pointCount == 0)
-    {
-        CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-    }
+    if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
     bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones

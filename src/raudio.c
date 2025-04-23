@@ -2104,8 +2104,12 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
 
-    // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
-    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.System.device.sampleRate/30 : AUDIO.Buffer.defaultSize;
+    // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate at the device bit size/rate
+    int deviceBitsPerSample = AUDIO.System.device.playback.format;
+    if (deviceBitsPerSample > 4)  deviceBitsPerSample = 4;
+    deviceBitsPerSample *= AUDIO.System.device.playback.channels;
+
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0) ? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
