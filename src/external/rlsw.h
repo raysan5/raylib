@@ -124,7 +124,7 @@ typedef double          GLclampd;
 //#define GL_COLOR_WRITEMASK                0x0C23
 //#define GL_CURRENT_INDEX                  0x0B01
 #define GL_CURRENT_COLOR                    0x0B00
-#define GL_CURRENT_NORMAL                   0x0B02
+//#define GL_CURRENT_NORMAL                   0x0B02
 //#define GL_CURRENT_RASTER_COLOR           0x0B04
 //#define GL_CURRENT_RASTER_DISTANCE        0x0B09
 //#define GL_CURRENT_RASTER_INDEX           0x0B05
@@ -154,7 +154,7 @@ typedef double          GLclampd;
 #define GL_TEXTURE                          0x1702
 
 #define GL_VERTEX_ARRAY                     0x8074
-#define GL_NORMAL_ARRAY                     0x8075
+//#define GL_NORMAL_ARRAY                   0x8075
 #define GL_COLOR_ARRAY                      0x8076
 //#define GL_INDEX_ARRAY                    0x8077
 #define GL_TEXTURE_COORD_ARRAY              0x8078
@@ -293,13 +293,11 @@ typedef double          GLclampd;
 #define glColor4fv(v)                               swColor4fv(v)
 #define glTexCoord2f(u, v)                          swTexCoord2f(u, v)
 #define glTexCoord2fv(v)                            swTexCoord2fv(v)
-#define glNormal3f(x, y, z)                         swNormal3f(x, y, z)
-#define glNormal3fv(v)                              swNormal3fv(v)
+
 #define glEnableClientState(t)                      ((void)(t))
 #define glDisableClientState(t)                     swBindArray(t, 0)
 #define glVertexPointer(sz, t, s, p)                swBindArray(SW_VERTEX_ARRAY, p)
 #define glTexCoordPointer(sz, t, s, p)              swBindArray(SW_TEXTURE_COORD_ARRAY, p)
-#define glNormalPointer(t, s, p)                    swBindArray(SW_NORMAL_ARRAY, p)
 #define glColorPointer(sz, t, s, p)                 swBindArray(SW_COLOR_ARRAY, p)
 #define glDrawArrays(m, o, c)                       swDrawArrays(m, o, c)
 #define glGenTextures(c, v)                         swGenTextures(c, v)
@@ -322,6 +320,9 @@ typedef double          GLclampd;
 #define glTexSubImage2D(X,Y,Z,W,A,B,C,D,E)      ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A),(void)(B),(void)(C),(void)(D),(void)(E))
 #define glGetTexImage(X,Y,Z,W,A)                ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A))
 #define glDrawElements(X,Y,Z,W)                 ((void)(X),(void)(Y),(void)(Z),(void)(W))
+#define glNormal3f(X,Y,Z)                       ((void)(X),(void)(Y),(void)(Z))
+#define glNormal3fv(X)                          ((void)(X))
+#define glNormalPointer(X,Y,Z)                  ((void)(X),(void)(Y),(void)(Z))
 
 
 /* === RLSW Enums === */
@@ -341,7 +342,6 @@ typedef enum {
     SW_EXTENSIONS = GL_EXTENSIONS,
     SW_COLOR_CLEAR_VALUE = GL_COLOR_CLEAR_VALUE,
     SW_CURRENT_COLOR = GL_CURRENT_COLOR,
-    SW_CURRENT_NORMAL = GL_CURRENT_NORMAL,
     SW_CURRENT_TEXTURE_COORDS = GL_CURRENT_TEXTURE_COORDS,
     SW_MODELVIEW_MATRIX = GL_MODELVIEW_MATRIX,
     SW_MODELVIEW_STACK_DEPTH = GL_MODELVIEW_STACK_DEPTH,
@@ -366,7 +366,6 @@ typedef enum {
 typedef enum {
     SW_VERTEX_ARRAY = GL_VERTEX_ARRAY,
     SW_TEXTURE_COORD_ARRAY = GL_TEXTURE_COORD_ARRAY,
-    SW_NORMAL_ARRAY = GL_NORMAL_ARRAY,
     SW_COLOR_ARRAY = GL_COLOR_ARRAY
 } SWarray;
 
@@ -512,9 +511,6 @@ void swColor4fv(const float* v);
 void swTexCoord2f(float u, float v);
 void swTexCoord2fv(const float* v);
 
-void swNormal3f(float x, float y, float z);
-void swNormal3fv(const float* v);
-
 void swBindArray(SWarray type, void *buffer);
 void swDrawArrays(SWdraw mode, int offset, int count);
 
@@ -586,7 +582,6 @@ typedef uint16_t sw_half_t;
 typedef struct {
 
     float position[4];                  // Position coordinates
-    float normal[3];                    // Normal vector
     float texcoord[2];                  // Texture coordinates
     float color[4];                     // Color
 
@@ -654,7 +649,6 @@ typedef struct {
     struct {
         float* positions;
         float* texcoords;
-        float* normals;
         uint8_t* colors;
     } array;
 
@@ -3134,10 +3128,6 @@ bool swInit(int w, int h)
     RLSW.vertexBuffer[0].texcoord[0] = 0.0f;
     RLSW.vertexBuffer[0].texcoord[1] = 0.0f;
 
-    RLSW.vertexBuffer[0].normal[0] = 0.0f;
-    RLSW.vertexBuffer[0].normal[1] = 0.0f;
-    RLSW.vertexBuffer[0].normal[2] = 1.0f;
-
     RLSW.srcFactor = SW_SRC_ALPHA;
     RLSW.dstFactor = SW_ONE_MINUS_SRC_ALPHA;
 
@@ -3300,11 +3290,6 @@ void swGetFloatv(SWget name, float* v)
         v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[1];
         v[2] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[2];
         v[3] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[3];
-        break;
-    case SW_CURRENT_NORMAL:
-        v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].normal[0];
-        v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].normal[1];
-        v[2] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].normal[2];
         break;
     case SW_CURRENT_TEXTURE_COORDS:
         v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[0];
@@ -3965,20 +3950,6 @@ void swTexCoord2fv(const float* v)
     RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[1] = t;
 }
 
-void swNormal3f(float x, float y, float z)
-{
-    RLSW.vertexBuffer[RLSW.vertexCounter].normal[0] = x;
-    RLSW.vertexBuffer[RLSW.vertexCounter].normal[1] = y;
-    RLSW.vertexBuffer[RLSW.vertexCounter].normal[2] = z;
-}
-
-void swNormal3fv(const float* v)
-{
-    RLSW.vertexBuffer[RLSW.vertexCounter].normal[0] = v[0];
-    RLSW.vertexBuffer[RLSW.vertexCounter].normal[1] = v[1];
-    RLSW.vertexBuffer[RLSW.vertexCounter].normal[2] = v[2];
-}
-
 void swBindArray(SWarray type, void *buffer)
 {
     switch (type) {
@@ -3987,9 +3958,6 @@ void swBindArray(SWarray type, void *buffer)
         break;
     case SW_TEXTURE_COORD_ARRAY:
         RLSW.array.texcoords = buffer;
-        break;
-    case SW_NORMAL_ARRAY:
-        RLSW.array.normals = buffer;
         break;
     case SW_COLOR_ARRAY:
         RLSW.array.colors = buffer;
@@ -4011,9 +3979,6 @@ void swDrawArrays(SWdraw mode, int offset, int count)
     for (int i = offset; i < count; i++) {
         if (RLSW.array.texcoords) {
             swTexCoord2fv(RLSW.array.texcoords + 2 * i);
-        }
-        if (RLSW.array.normals) {
-            swNormal3fv(RLSW.array.normals + 3 * i);
         }
         if (RLSW.array.colors) {
             swColor4ubv(RLSW.array.colors + 4 * i);
