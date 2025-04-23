@@ -454,6 +454,7 @@ void swClose(void);
 
 bool swResizeFramebuffer(int w, int h);
 void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void* pixels);
+void* swGetColorBuffer(int* w, int* h);
 
 void swEnable(SWstate state);
 void swDisable(SWstate state);
@@ -3209,6 +3210,14 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
             sw_set_pixel(pixels, y * srcW + x, pFormat, color);
         }
     }
+}
+
+void* swGetColorBuffer(int* w, int* h)
+{
+    if (w) *w = RLSW.framebuffer.width;
+    if (h) *h = RLSW.framebuffer.height;
+
+    return RLSW.framebuffer.color;
 }
 
 void swEnable(SWstate state)
