@@ -447,6 +447,7 @@ void swClose(void);
 
 bool swResizeFramebuffer(int w, int h);
 void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void* pixels);
+void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void* pixels);
 void* swGetColorBuffer(int* w, int* h);
 
 void swEnable(SWstate state);
@@ -3160,14 +3161,57 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
 
     void* src = RLSW.framebuffer.color;
 
-    int srcW = RLSW.framebuffer.width;
-    int srcHm1 = RLSW.framebuffer.height - 1;
+    int wSrc = RLSW.framebuffer.width;
+    int hSrcM1 = RLSW.framebuffer.height - 1;
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             float color[4];
-            sw_framebuffer_read_color(color, sw_framebuffer_get_color_addr(src, (srcHm1 - y) * srcW + x));
-            sw_set_pixel(pixels, y * srcW + x, pFormat, color);
+            sw_framebuffer_read_color(color, sw_framebuffer_get_color_addr(src, (hSrcM1 - y) * wSrc + x));
+            sw_set_pixel(pixels, y * wSrc + x, pFormat, color);
+        }
+    }
+}
+
+void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, 
+                       int xSrc, int ySrc, int wSrc, int hSrc,
+                       SWformat format, SWtype type, void* pixels)
+{
+    sw_pixelformat_e pFormat = sw_get_pixel_format(format, type);
+
+    void* src = RLSW.framebuffer.color;
+    int fbWidth = RLSW.framebuffer.width;
+    int fbHeight = RLSW.framebuffer.height;
+
+    // Calculation of scaling factors in 16.16 (fixed-point)
+    const int xScale = (wSrc << 16) / wDst;
+    const int yScale = (hSrc << 16) / hDst;
+
+    const int xSrcBase = xSrc << 16;
+    const int ySrcBase = ySrc << 16;
+
+    for (int y = 0; y < hDst; y++) {
+        const int ySrcFixed = ySrcBase + y * yScale;
+        const int ySrcInt = ySrcFixed >> 16;
+
+        if ((unsigned)ySrcInt >= (unsigned)fbHeight) {
+            continue;
+        }
+
+        for (int x = 0; x < wDst; x++) {
+            const int xSrcFixed = xSrcBase + x * xScale;
+            const int xSrcInt = xSrcFixed >> 16;
+
+            if ((unsigned)xSrcInt >= (unsigned)fbWidth) {
+                continue;
+            }
+
+            float color[4];
+            const int srcIndex = ySrcInt * fbWidth + xSrcInt;
+            sw_framebuffer_read_color(color, sw_framebuffer_get_color_addr(src, srcIndex));
+
+            const int dstIndex = (yDst + y) * wDst + (xDst + x);
+            sw_set_pixel(pixels, dstIndex, pFormat, color);
         }
     }
 }
