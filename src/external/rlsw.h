@@ -28,10 +28,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// TODO: Review the use of viewport dimensions stored with -1  
-//       It seems there are issues with the NDC -> screen projection  
-//       Also, consider testing and reviewing, if necessary, scissor clipping as well as line clipping  
-
 /* === RLSW Definition And Macros === */
 
 #ifndef SW_MALLOC
@@ -2727,13 +2723,13 @@ static inline void FUNC_NAME(int x, int y, float z, float color[4])         \
 {                                                                           \
     if (CHECK_BOUNDS == 1)                                                  \
     {                                                                       \
-        if (x < RLSW.vpMin[0] || x > RLSW.vpMax[0]) return;                 \
-        if (y < RLSW.vpMin[1] || y > RLSW.vpMax[1]) return;                 \
+        if (x < RLSW.vpMin[0] || x >= RLSW.vpMax[0]) return;                \
+        if (y < RLSW.vpMin[1] || y >= RLSW.vpMax[1]) return;                \
     }                                                                       \
     else if (CHECK_BOUNDS == SW_SCISSOR_TEST)                               \
     {                                                                       \
-        if (x < RLSW.scMin[0] || x > RLSW.scMax[0]) return;                 \
-        if (y < RLSW.scMin[1] || y > RLSW.scMax[1]) return;                 \
+        if (x < RLSW.scMin[0] || x >= RLSW.scMax[0]) return;                \
+        if (y < RLSW.scMin[1] || y >= RLSW.scMax[1]) return;                \
     }                                                                       \
                                                                             \
     int offset = y * RLSW.framebuffer.width + x;                            \
@@ -3324,59 +3320,43 @@ SWerrcode swGetError(void)
 
 void swViewport(int x, int y, int width, int height)
 {
-    if (x <= -width || y <= -height) {
-        RLSW.errCode = SW_INVALID_OPERATION;
+    if (width < 0 || height < 0) {
+        RLSW.errCode = SW_INVALID_VALUE;
         return;
     }
 
     RLSW.vpPos[0] = x;
     RLSW.vpPos[1] = y;
+    RLSW.vpDim[0] = width;
+    RLSW.vpDim[1] = height;
 
-    RLSW.vpDim[0] = width - 1;
-    RLSW.vpDim[1] = height - 1;
-
-    RLSW.vpMin[0] = (x < 0) ? 0 : x;
-    RLSW.vpMin[1] = (y < 0) ? 0 : y;
-
-    int fbW = RLSW.framebuffer.width - 1;
-    int fbH = RLSW.framebuffer.height - 1;
-
-    int vpMaxX = x + width;
-    int vpMaxY = y + height;
-
-    RLSW.vpMax[0] = (vpMaxX < fbW) ? vpMaxX : fbW;
-    RLSW.vpMax[1] = (vpMaxY < fbH) ? vpMaxY : fbH;
+    RLSW.vpMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
+    RLSW.vpMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
+    RLSW.vpMax[0] = sw_clampi(x + width, 0, RLSW.framebuffer.width - 1);
+    RLSW.vpMax[1] = sw_clampi(y + height, 0, RLSW.framebuffer.height - 1);
 }
 
 void swScissor(int x, int y, int width, int height)
 {
-    sw_clampi(x, 0, RLSW.framebuffer.width);
-    sw_clampi(y, 0, RLSW.framebuffer.height);
-    sw_clampi(width, 0, RLSW.framebuffer.width);
-    sw_clampi(width, 0, RLSW.framebuffer.height);
+    if (width < 0 || height < 0) {
+        RLSW.errCode = SW_INVALID_VALUE;
+        return;
+    }
 
     RLSW.scPos[0] = x;
     RLSW.scPos[1] = y;
+    RLSW.scDim[0] = width;
+    RLSW.scDim[1] = height;
 
-    RLSW.scDim[0] = width - 1;
-    RLSW.scDim[1] = height - 1;
+    RLSW.scMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
+    RLSW.scMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
+    RLSW.scMax[0] = sw_clampi(x + width, 0, RLSW.framebuffer.width - 1);
+    RLSW.scMax[1] = sw_clampi(y + height, 0, RLSW.framebuffer.height - 1);
 
-    RLSW.scMin[0] = (x < 0) ? 0 : x;
-    RLSW.scMin[1] = (y < 0) ? 0 : y;
-
-    int fbW = RLSW.framebuffer.width - 1;
-    int fbH = RLSW.framebuffer.height - 1;
-
-    int vpMaxX = x + width;
-    int vpMaxY = y + height;
-
-    RLSW.scMax[0] = (vpMaxX < fbW) ? vpMaxX : fbW;
-    RLSW.scMax[1] = (vpMaxY < fbH) ? vpMaxY : fbH;
-
-    RLSW.scHMin[0] = (2.0f * (float)RLSW.scMin[0] / (float)(RLSW.vpDim[0] + 1)) - 1.0f;
-    RLSW.scHMax[0] = (2.0f * (float)RLSW.scMax[0] / (float)(RLSW.vpDim[0] + 1)) - 1.0f;
-    RLSW.scHMax[1] = 1.0f - (2.0f * (float)RLSW.scMin[1] / (float)(RLSW.vpDim[1] + 1));
-    RLSW.scHMin[1] = 1.0f - (2.0f * (float)RLSW.scMax[1] / (float)(RLSW.vpDim[1] + 1));
+    RLSW.scHMin[0] = (2.0f * (float)RLSW.scMin[0] / (float)RLSW.vpDim[0]) - 1.0f;
+    RLSW.scHMax[0] = (2.0f * (float)RLSW.scMax[0] / (float)RLSW.vpDim[0]) - 1.0f;
+    RLSW.scHMax[1] = 1.0f - (2.0f * (float)RLSW.scMin[1] / (float)RLSW.vpDim[1]);
+    RLSW.scHMin[1] = 1.0f - (2.0f * (float)RLSW.scMax[1] / (float)RLSW.vpDim[1]);
 }
 
 void swClearColor(float r, float g, float b, float a)
