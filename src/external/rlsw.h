@@ -193,8 +193,7 @@ typedef double          GLclampd;
 #define GL_LINEAR                           0x2601
 
 #define GL_REPEAT                           0x2901
-#define GL_CLAMP_TO_EDGE                    0x812F  //< (OpenGL 1.2)
-#define GL_MIRRORED_REPEAT                  0x8370  //< (OpenGL 2.0)
+#define GL_CLAMP                            0x2900
 
 #define GL_TEXTURE_MAG_FILTER               0x2800
 #define GL_TEXTURE_MIN_FILTER               0x2801
@@ -425,8 +424,7 @@ typedef enum {
 
 typedef enum {
     SW_REPEAT = GL_REPEAT,
-    SW_CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE,
-    SW_MIRRORED_REPEAT = GL_MIRRORED_REPEAT
+    SW_CLAMP = GL_CLAMP,
 } SWwrap;
 
 typedef enum {
@@ -1644,40 +1642,14 @@ static inline void sw_set_pixel(void* pixels, uint32_t offset, sw_pixelformat_e 
 
 /* === Texture Sampling Part === */
 
-static inline void sw_texture_map_repeat(int* out, float in, int max)
-{
-    // Upscale to nearest texture coordinates
-    // NOTE: We use '(int)(x+0.5)' although this is incorrect
-    //       regarding the direction of rounding in case of negative values
-    //       and also less accurate than roundf, but it remains so much more
-    //       efficient that it is preferable for now to opt for this option.
-
-    *out = abs((int)((in - (int)in) * (max - 1) + 0.5f));
-}
-
-static inline void sw_texture_map_clamp_to_edge(int* out, float in, int max)
-{
-    *out = (int)(sw_saturate(in) * (max - 1) + 0.5f);
-}
-
-static inline void sw_texture_map_mirrored_repeat(int* out, float in, int max)
-{
-    in = fmodf(fabsf(in), 2);
-    if (in > 1.0f) in = 1.0f - (in - 1.0f);
-    *out = (int)(in * (max - 1) + 0.5f);
-}
-
 static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
 {
     switch (mode) {
     case SW_REPEAT:
-        sw_texture_map_repeat(out, in, max);
+        *out = (int)((in - floorf(in)) * max + 0.5f);
         break;
-    case SW_CLAMP_TO_EDGE:
-        sw_texture_map_clamp_to_edge(out, in, max);
-        break;
-    case SW_MIRRORED_REPEAT:
-        sw_texture_map_mirrored_repeat(out, in, max);
+    case SW_CLAMP:
+        *out = (int)(sw_saturate(in) * (max - 1) + 0.5f);
         break;
     }
 }
@@ -1733,16 +1705,18 @@ static inline void sw_texture_sample(float* color, const sw_texture_t* tex, floa
     float du2 = xDu * xDu + yDu * yDu;
     float dv2 = xDv * xDv + yDv * yDv;
     float L2 = (du2 > dv2) ? du2 : dv2;
-    
-    bool useMinFilter = (L2 > 1.0f);
-    int filter = useMinFilter ? tex->minFilter : tex->magFilter;
-    
-    if (filter == SW_NEAREST) {
+
+    SWfilter filter = (L2 > 1.0f)
+        ? tex->minFilter : tex->magFilter;
+
+    switch (filter) {
+    case SW_NEAREST:
         sw_texture_sample_nearest(color, tex, u, v);
-    }
-    else /* SW_LINEAR */ {
+        break;
+    case SW_LINEAR:
         sw_texture_sample_linear(color, tex, u, v);
-    }    
+        break;
+    }
 }
 
 
@@ -2996,7 +2970,7 @@ static inline bool sw_is_texture_filter_valid(int filter)
 
 static inline bool sw_is_texture_wrap_valid(int wrap)
 {
-    return (wrap == SW_REPEAT || wrap == SW_CLAMP_TO_EDGE || SW_MIRRORED_REPEAT);
+    return (wrap == SW_REPEAT || wrap == SW_CLAMP);
 }
 
 static inline bool sw_is_draw_mode_valid(int mode)
