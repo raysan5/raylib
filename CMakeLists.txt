@@ -46,8 +46,9 @@ endif()
 # Main sources directory (the second parameter sets the output directory name to raylib)
 add_subdirectory(src raylib)
 
-# Uninstall target
-if(NOT TARGET uninstall)
+# Uninstall target, only create when building raylib by itself
+# Avoid conflicting target names when using raylib with other libraries
+if(NOT TARGET uninstall AND PROJECT_IS_TOP_LEVEL)
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Uninstall.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
