@@ -1401,9 +1401,7 @@ unsigned int TextLength(const char *text)
 
     if (text != NULL)
     {
-        // NOTE: Alternative: use strlen(text)
-
-        while (*text++) length++;
+        length = strlen(text);
     }
 
     return length;
@@ -1497,20 +1495,13 @@ int TextCopy(char *dst, const char *src)
 {
     int bytes = 0;
 
-    if ((src != NULL) && (dst != NULL))
+    // strcpy is marked restrict, meaning src and dst must not alias.
+    // Attempt to defend against that, but this is not fully robust
+    // as someone could pass in two sub-portions of the same string.
+    if ((src != NULL) && (dst != NULL) && (src != dst))
     {
-        // NOTE: Alternative: use strcpy(dst, src)
-
-        while (*src != '\0')
-        {
-            *dst = *src;
-            dst++;
-            src++;
-
-            bytes++;
-        }
-
-        *dst = '\0';
+        strcpy(dst, src);
+        bytes = strlen(src);
     }
 
     return bytes;
@@ -1547,13 +1538,7 @@ const char *TextSubtext(const char *text, int position, int length)
     if (length > maxLength) length = maxLength;
     if (length >= MAX_TEXT_BUFFER_LENGTH) length = MAX_TEXT_BUFFER_LENGTH - 1;
 
-    // NOTE: Alternative: memcpy(buffer, text + position, length)
-
-    for (int c = 0 ; c < length ; c++)
-    {
-        buffer[c] = text[position + c];
-    }
-
+    memcpy(buffer, text + position, length);
     buffer[length] = '\0';
 
     return buffer;
@@ -1618,9 +1603,9 @@ char *TextInsert(const char *text, const char *insert, int position)
 
     char *result = (char *)RL_MALLOC(textLen + insertLen + 1);
 
-    for (int i = 0; i < position; i++) result[i] = text[i];
-    for (int i = position; i < insertLen + position; i++) result[i] = insert[i];
-    for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i];
+    memcpy(result, text, position);
+    memcpy(result + position, insert, insertLen);
+    memcpy(result + position + insertLen, text + position, textLen - position);
 
     result[textLen + insertLen] = '\0';     // Make sure text string is valid!
 
