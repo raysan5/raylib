@@ -604,6 +604,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     audioBuffer->usage = usage;
     audioBuffer->frameCursorPos = 0;
+    audioBuffer->framesProcessed = 0;
     audioBuffer->sizeInFrames = sizeInFrames;
 
     // Buffers should be marked as processed by default so that a call to
@@ -650,6 +651,9 @@ void PlayAudioBuffer(AudioBuffer *buffer)
         buffer->playing = true;
         buffer->paused = false;
         buffer->frameCursorPos = 0;
+        buffer->framesProcessed = 0;
+        buffer->isSubBufferProcessed[0] = true;
+        buffer->isSubBufferProcessed[1] = true;
         ma_mutex_unlock(&AUDIO.System.lock);
     }
 }
