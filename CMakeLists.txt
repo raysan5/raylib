@@ -23,14 +23,6 @@ cmake_policy(SET CMP0063 NEW)
 # Anywhere you see include(...) you can check <root>/cmake for that file
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# RAYLIB_IS_MAIN determines whether the project is being used from root
-# or if it is added as a dependency (through add_subdirectory for example).
-if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  set(RAYLIB_IS_MAIN TRUE)
-else()
-  set(RAYLIB_IS_MAIN FALSE)
-endif()
-
 # Sets compiler flags and language standard
 include(CompilerFlags)
 
