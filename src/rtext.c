@@ -161,6 +161,10 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
+    // check to see if we have allready allocated the font for an image, and if we don't need to upload, then just return
+    if (defaultFont.glyphs != NULL && !isGpuReady) 
+        return;
+
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
@@ -256,8 +260,19 @@ extern void LoadFontDefault(void)
 
         counter++;
     }
-
-    if (isGpuReady) defaultFont.texture = LoadTextureFromImage(imFont);
+    
+    if (isGpuReady)
+    {
+        defaultFont.texture = LoadTextureFromImage(imFont);
+        
+        // we have already loaded the font glyph data an image, and the GPU is ready, we are done
+        // if we don't do this, we will leak memory by reallocating the glyphs and rects
+        if (defaultFont.glyphs != NULL)
+        {
+            UnloadImage(imFont);
+            return;
+        }
+    }
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, glyphCount
     //------------------------------------------------------------------------------
@@ -282,7 +297,7 @@ extern void LoadFontDefault(void)
 
         testPosX += (int)(defaultFont.recs[i].width + (float)charsDivisor);
 
-        if (testPosX >= defaultFont.texture.width)
+        if (testPosX >= imFont.width)
         {
             currentLine++;
             currentPosX = 2*charsDivisor + charsWidth[i];
