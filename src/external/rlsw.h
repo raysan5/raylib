@@ -2044,13 +2044,20 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
     int xEnd   = (int)(end->screen[0] + 0.5f);                                      \
     int y      = (int)(start->screen[1] + 0.5f);                                    \
                                                                                     \
-    /* Calculate the initial interpolation parameter and its increment */           \
-    float dt = 1.0f / (end->screen[0] - start->screen[0]);                          \
-    float t  = (xStart - start->screen[0]) * dt;                                    \
+    /* Safely compute the inverse horizontal distance */                            \
+    float dx = end->screen[0] - start->screen[0];                                   \
+    if (fabsf(dx) < 1e-6f) return;                                                  \
                                                                                     \
+    /* Calculate the interpolation step along the X axis */                         \
+    float dt = 1.0f / dx;                                                           \
+                                                                                    \
+    /* Initialize the interpolation parameter                                       \
+       't' ranges from 0 to 1 across the scanline */                                \
+    float t = (xStart - start->screen[0]) * dt;                                     \
+                                                                                    \
+    /* Calculate the horizontal gradients for UV coordinates */                     \
     float xDu, xDv;                                                                 \
     if (ENABLE_TEXTURE) {                                                           \
-        /* Calculate the horizontal gradients for UV coordinates */                 \
         xDu = (end->texcoord[0] - start->texcoord[0]) * dt;                         \
         xDv = (end->texcoord[1] - start->texcoord[1]) * dt;                         \
     }                                                                               \
