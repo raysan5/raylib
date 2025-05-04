@@ -626,8 +626,6 @@ typedef struct {
     float clearColor[4];                                // Color used to clear the screen
     float clearDepth;                                   // Depth value used to clear the screen
 
-    uint32_t currentTexture;
-
     int vpPos[2];                                               // Represents the top-left corner of the viewport
     int vpDim[2];                                               // Represents the dimensions of the viewport (minus one)
     int vpMin[2];                                               // Represents the minimum renderable point of the viewport (top-left)
@@ -640,6 +638,8 @@ typedef struct {
     float scHMin[2];                                            // Represents the minimum renderable point of the scissor rect in clip space
     float scHMax[2];                                            // Represents the maximum renderable point of the scissor rect in clip space
 
+    uint32_t currentTexture;
+
     struct {
         float* positions;
         float* texcoords;
@@ -651,6 +651,7 @@ typedef struct {
 
     SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
     SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles) 
+    int reqVertices;                                            // Number of vertices required for the primitive being drawn
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
@@ -3766,6 +3767,23 @@ void swBegin(SWdraw mode)
         RLSW.isDirtyMVP = false;
     }
 
+    /* --- Obtaining the number of vertices needed for this primitive --- */
+
+    switch (mode) {
+    case SW_POINTS:
+        RLSW.reqVertices = 1;
+        break;
+    case SW_LINES:
+        RLSW.reqVertices = 2;
+        break;
+    case SW_TRIANGLES:
+        RLSW.reqVertices = 3;
+        break;
+    case SW_QUADS:
+        RLSW.reqVertices = 4;
+        break;
+    }
+    
     /* --- Initialize some values --- */
 
     RLSW.vertexCounter = 0;
@@ -3774,7 +3792,7 @@ void swBegin(SWdraw mode)
 
 void swEnd(void)
 {
-    RLSW.vertexCounter = 0;
+    RLSW.drawMode = 0;
 }
 
 void swVertex2i(int x, int y)
@@ -3844,27 +3862,9 @@ void swVertex4fv(const float* v)
     vertex->homogeneous[2] = (*mat)[2] * v[0] + (*mat)[6] * v[1] + (*mat)[10] * v[2] + (*mat)[14] * v[3];
     vertex->homogeneous[3] = (*mat)[3] * v[0] + (*mat)[7] * v[1] + (*mat)[11] * v[2] + (*mat)[15] * v[3];
 
-    /* --- Obtaining the number of vertices needed for this primitive --- */
-
-    int neededVertices = 0;
-    switch (RLSW.drawMode) {
-    case SW_POINTS:
-        neededVertices = 1;
-        break;
-    case SW_LINES:
-        neededVertices = 2;
-        break;
-    case SW_TRIANGLES:
-        neededVertices = 3;
-        break;
-    case SW_QUADS:
-        neededVertices = 4;
-        break;
-    }
-
     /* --- Immediate rendering of the primitive if the required number is reached --- */
 
-    if (RLSW.vertexCounter == neededVertices) {
+    if (RLSW.vertexCounter == RLSW.reqVertices) {
         switch (RLSW.polyMode) {
         case SW_FILL:
             sw_poly_fill_render();
@@ -3876,7 +3876,7 @@ void swVertex4fv(const float* v)
             sw_poly_point_render();
             break;
         }
-        RLSW.vertexBuffer[0] = RLSW.vertexBuffer[neededVertices - 1];
+        RLSW.vertexBuffer[0] = RLSW.vertexBuffer[RLSW.reqVertices - 1];
         RLSW.vertexCounter = 0;
     }
     else {
