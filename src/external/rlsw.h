@@ -627,7 +627,6 @@ typedef struct {
     float clearDepth;                                   // Depth value used to clear the screen
 
     uint32_t currentTexture;
-    sw_matrix_t *currentMatrix;
 
     int vpPos[2];                                               // Represents the top-left corner of the viewport
     int vpDim[2];                                               // Represents the dimensions of the viewport (minus one)
@@ -655,22 +654,16 @@ typedef struct {
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
-    sw_matrix_t matProjection;                                  // Projection matrix, user adjustable
-    sw_matrix_t matTexture;                                     // Texture matrix, user adjustable
-    sw_matrix_t matModel;                                       // Model matrix, user adjustable (the one used if we push in SW_MODELVIEW mode)
-    sw_matrix_t matView;                                        // View matrix, user adjustable (the default one used in SW_MODELVIEW mode)
-    sw_matrix_t matMVP;                                         // Model view projection matrix, calculated and used internally
-
     sw_matrix_t stackProjection[SW_MAX_PROJECTION_STACK_SIZE];  // Projection matrix stack for push/pop operations
     sw_matrix_t stackModelview[SW_MAX_MODELVIEW_STACK_SIZE];    // Modelview matrix stack for push/pop operations
     sw_matrix_t stackTexture[SW_MAX_TEXTURE_STACK_SIZE];        // Texture matrix stack for push/pop operations
     uint32_t stackProjectionCounter;                            // Counter for matrix stack operations
     uint32_t stackModelviewCounter;                             // Counter for matrix stack operations
     uint32_t stackTextureCounter;                               // Counter for matrix stack operations
-
     SWmatrix currentMatrixMode;                                 // Current matrix mode (e.g., sw_MODELVIEW, sw_PROJECTION)
-    bool modelMatrixUsed;                                       // Flag indicating if the model matrix is used
-    bool needToUpdateMVP;
+    sw_matrix_t* currentMatrix;                                 // Pointer to the currently used matrix according to the mode
+    sw_matrix_t matMVP;                                         // Model view projection matrix, calculated and used internally
+    bool isDirtyMVP;                                            // Indicates if the MVP matrix should be rebuilt
 
     SWfactor srcFactor;
     SWfactor dstFactor;
@@ -721,6 +714,7 @@ static inline void sw_matrix_mul(sw_matrix_t dst, const sw_matrix_t left, const 
     }
 }
 
+/*
 static inline void sw_vec4_transform(float dst[4], const float v[4], const sw_matrix_t mat)
 {
     float tmp[4] = {
@@ -734,6 +728,7 @@ static inline void sw_vec4_transform(float dst[4], const float v[4], const sw_ma
         dst[i] = tmp[i];
     }
 }
+*/
 
 static inline float sw_saturate(float x)
 {
@@ -1977,14 +1972,9 @@ static inline bool sw_triangle_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_V
     return n > 0;
 }
 
-static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+static inline void sw_triangle_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
-    // Step 1: MVP projection for all vertices
-    for (int i = 0; i < *vertexCounter; i++) {
-        sw_vec4_transform(polygon[i].homogeneous, polygon[i].position, RLSW.matMVP);
-    }
-
-    // Step 2: Face culling - discard triangles facing away
+    // Step 1: Face culling - discard triangles facing away
     if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
 
         // NOTE: Face culling is done before clipping to avoid unnecessary computations.
@@ -2011,7 +2001,7 @@ static inline void sw_triangle_project_and_clip(sw_vertex_t polygon[SW_MAX_CLIPP
         }
     }
     
-    // Step 3: Clipping and perspective projection
+    // Step 2: Clipping and perspective projection
     if (sw_triangle_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
 
         // Transformation to screen space and normalization
@@ -2316,7 +2306,7 @@ static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* 
     polygon[1] = *v1;
     polygon[2] = *v2;
 
-    sw_triangle_project_and_clip(polygon, &vertexCounter);
+    sw_triangle_clip_and_project(polygon, &vertexCounter);
 
     if (vertexCounter < 3) {
         return;
@@ -2425,11 +2415,8 @@ static inline bool sw_line_clip(sw_vertex_t* v0, sw_vertex_t* v1)
     return true;
 }
 
-static inline bool sw_line_project_and_clip(sw_vertex_t* v0, sw_vertex_t* v1)
+static inline bool sw_line_clip_and_project(sw_vertex_t* v0, sw_vertex_t* v1)
 {
-    sw_vec4_transform(v0->homogeneous, v0->position, RLSW.matMVP);
-    sw_vec4_transform(v1->homogeneous, v1->position, RLSW.matMVP);
-
     if (!sw_line_clip(v0, v1)) {
         return false;
     }
@@ -2645,7 +2632,7 @@ DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH_BLEND, sw_line_raster_DEPTH_
 
 static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
 {
-    if (!sw_line_project_and_clip(v0, v1)) {
+    if (!sw_line_clip_and_project(v0, v1)) {
         return;
     }
 
@@ -2682,10 +2669,8 @@ static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
 
 /* === Point Rendering Part === */
 
-static inline bool sw_point_project_and_clip(sw_vertex_t* v)
+static inline bool sw_point_clip_and_project(sw_vertex_t* v)
 {
-    sw_vec4_transform(v->homogeneous, v->position, RLSW.matMVP);
-
     if (v->homogeneous[3] != 1.0f) {
         for (int_fast8_t i = 0; i < 3; i++) {
             if (v->homogeneous[i] < -v->homogeneous[3] || v->homogeneous[i] > v->homogeneous[3]) {
@@ -2824,7 +2809,7 @@ DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_BLEND_SCISSOR, sw_point_ra
 
 static inline void sw_point_render(sw_vertex_t* v)
 {
-    if (!sw_point_project_and_clip(v)) {
+    if (!sw_point_clip_and_project(v)) {
         return;
     }
 
@@ -3083,13 +3068,17 @@ bool swInit(int w, int h)
     RLSW.clearDepth = 1.0f;
 
     RLSW.currentMatrixMode = SW_MODELVIEW;
-    RLSW.currentMatrix = &RLSW.matView;
-    RLSW.needToUpdateMVP = true;
+    RLSW.currentMatrix = &RLSW.stackModelview[0];
 
-    sw_matrix_id(RLSW.matProjection);
-    sw_matrix_id(RLSW.matTexture);
-    sw_matrix_id(RLSW.matModel);
-    sw_matrix_id(RLSW.matView);
+    sw_matrix_id(RLSW.stackProjection[0]);
+    sw_matrix_id(RLSW.stackModelview[0]);
+    sw_matrix_id(RLSW.stackTexture[0]);
+    sw_matrix_id(RLSW.matMVP);
+
+    RLSW.stackProjectionCounter = 1;
+    RLSW.stackModelviewCounter = 1;
+    RLSW.stackTextureCounter = 1;
+    RLSW.isDirtyMVP = false;
 
     RLSW.vertexBuffer[0].color[0] = 1.0f;
     RLSW.vertexBuffer[0].color[1] = 1.0f;
@@ -3472,14 +3461,13 @@ void swMatrixMode(SWmatrix mode)
 {
     switch (mode) {
     case SW_PROJECTION:
-        RLSW.currentMatrix = &RLSW.matProjection;
+        RLSW.currentMatrix = &RLSW.stackProjection[RLSW.stackProjectionCounter - 1];
         break;
     case SW_MODELVIEW:
-        RLSW.currentMatrix = RLSW.modelMatrixUsed
-            ? &RLSW.matModel : &RLSW.matView;
+        RLSW.currentMatrix = &RLSW.stackModelview[RLSW.stackModelviewCounter - 1];
         break;
     case SW_TEXTURE:
-        RLSW.currentMatrix = &RLSW.matTexture;
+        RLSW.currentMatrix = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         break;
     default:
         RLSW.errCode = SW_INVALID_ENUM;
@@ -3494,41 +3482,57 @@ void swPushMatrix(void)
     switch (RLSW.currentMatrixMode) {
 
     case SW_PROJECTION:
-        if (RLSW.stackProjectionCounter >= SW_MAX_PROJECTION_STACK_SIZE) {
-            RLSW.errCode = SW_STACK_OVERFLOW;
-            return;
+        {
+            if (RLSW.stackProjectionCounter >= SW_MAX_PROJECTION_STACK_SIZE) {
+                RLSW.errCode = SW_STACK_OVERFLOW;
+                return;
+            }
+
+            int iOld = RLSW.stackProjectionCounter - 1;
+            int iNew = RLSW.stackProjectionCounter++;
+
+            for (int i = 0; i < 16; i++) {
+                RLSW.stackProjection[iNew][i] = RLSW.stackProjection[iOld][i];
+            }
+
+            RLSW.currentMatrix = &RLSW.stackProjection[iNew];
         }
-        for (int i = 0; i < 16; i++) {
-            RLSW.stackProjection[RLSW.stackProjectionCounter][i] = RLSW.matProjection[i];
-        }
-        RLSW.stackProjectionCounter++;
         break;
 
     case SW_MODELVIEW:
-        if (RLSW.stackModelviewCounter >= SW_MAX_MODELVIEW_STACK_SIZE) {
-            RLSW.errCode = SW_STACK_OVERFLOW;
-            return;
-        }
-        if (RLSW.modelMatrixUsed) {
-            for (int i = 0; i < 16; i++) {
-                RLSW.stackModelview[RLSW.stackModelviewCounter][i] = RLSW.matModel[i];
+        {
+            if (RLSW.stackModelviewCounter >= SW_MAX_MODELVIEW_STACK_SIZE) {
+                RLSW.errCode = SW_STACK_OVERFLOW;
+                return;
             }
-            RLSW.stackModelviewCounter++;
-        } else {
-            RLSW.currentMatrix = &RLSW.matModel;
-            RLSW.modelMatrixUsed = true;
+
+            int iOld = RLSW.stackModelviewCounter - 1;
+            int iNew = RLSW.stackModelviewCounter++;
+
+            for (int i = 0; i < 16; i++) {
+                RLSW.stackModelview[iNew][i] = RLSW.stackModelview[iOld][i];
+            }
+
+            RLSW.currentMatrix = &RLSW.stackModelview[iNew];
         }
         break;
 
     case SW_TEXTURE:
-        if (RLSW.stackTextureCounter >= SW_MAX_TEXTURE_STACK_SIZE) {
-            RLSW.errCode = SW_STACK_OVERFLOW;
-            return;
+        {
+            if (RLSW.stackTextureCounter >= SW_MAX_TEXTURE_STACK_SIZE) {
+                RLSW.errCode = SW_STACK_OVERFLOW;
+                return;
+            }
+
+            int iOld = RLSW.stackTextureCounter - 1;
+            int iNew = RLSW.stackTextureCounter++;
+
+            for (int i = 0; i < 16; i++) {
+                RLSW.stackTexture[iNew][i] = RLSW.stackTexture[iOld][i];
+            }
+
+            RLSW.currentMatrix = &RLSW.stackTexture[iNew];
         }
-        for (int i = 0; i < 16; i++) {
-            RLSW.stackTexture[RLSW.stackTextureCounter][i] = RLSW.matTexture[i];
-        }
-        RLSW.stackTextureCounter++;
         break;
 
     }
@@ -3539,41 +3543,37 @@ void swPopMatrix(void)
     switch (RLSW.currentMatrixMode) {
 
     case SW_PROJECTION:
-        if (RLSW.stackProjectionCounter <= 0) {
-            RLSW.errCode = SW_STACK_UNDERFLOW;
-            return;
-        }
-        RLSW.stackProjectionCounter--;
-        for (int i = 0; i < 16; i++) {
-            RLSW.matProjection[i] = RLSW.stackProjection[RLSW.stackProjectionCounter][i];
+        {
+            if (RLSW.stackProjectionCounter <= 0) {
+                RLSW.errCode = SW_STACK_UNDERFLOW;
+                return;
+            }
+
+            RLSW.currentMatrix = &RLSW.stackProjection[--RLSW.stackProjectionCounter];
+            RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         }
         break;
 
     case SW_MODELVIEW:
-        if (RLSW.stackModelviewCounter == 0)  {
-            if (!RLSW.modelMatrixUsed) {
+        {
+            if (RLSW.stackModelviewCounter <= 0) {
                 RLSW.errCode = SW_STACK_UNDERFLOW;
                 return;
             }
-            sw_matrix_id(RLSW.matModel);
-            RLSW.currentMatrix = &RLSW.matView;
-            RLSW.modelMatrixUsed = false;
-        } else {
-            RLSW.stackModelviewCounter--;
-            for (int i = 0; i < 16; i++) {
-                RLSW.matModel[i] = RLSW.stackModelview[RLSW.stackModelviewCounter][i];
-            }
+
+            RLSW.currentMatrix = &RLSW.stackModelview[--RLSW.stackModelviewCounter];
+            RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         }
         break;
 
     case SW_TEXTURE:
-        if (RLSW.stackTextureCounter <= 0) {
-            RLSW.errCode = SW_STACK_UNDERFLOW;
-            return;
-        }
-        RLSW.stackTextureCounter--;
-        for (int i = 0; i < 16; i++) {
-            RLSW.matTexture[i] = RLSW.stackTexture[RLSW.stackTextureCounter][i];
+        {
+            if (RLSW.stackTextureCounter <= 0) {
+                RLSW.errCode = SW_STACK_UNDERFLOW;
+                return;
+            }
+
+            RLSW.currentMatrix = &RLSW.stackTexture[--RLSW.stackTextureCounter];
         }
         break;
 
@@ -3584,7 +3584,9 @@ void swLoadIdentity(void)
 {
     sw_matrix_id(*RLSW.currentMatrix);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swTranslatef(float x, float y, float z)
@@ -3598,7 +3600,9 @@ void swTranslatef(float x, float y, float z)
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swRotatef(float angle, float x, float y, float z)
@@ -3642,7 +3646,9 @@ void swRotatef(float angle, float x, float y, float z)
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swScalef(float x, float y, float z)
@@ -3656,14 +3662,18 @@ void swScalef(float x, float y, float z)
 
     sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swMultMatrixf(const float* mat)
 {
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swFrustum(double left, double right, double bottom, double top, double znear, double zfar)
@@ -3696,7 +3706,9 @@ void swFrustum(double left, double right, double bottom, double top, double znea
 
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swOrtho(double left, double right, double bottom, double top, double znear, double zfar)
@@ -3729,15 +3741,33 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
 
     sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
 
-    RLSW.needToUpdateMVP = true;
+    if (RLSW.currentMatrixMode != SW_TEXTURE) {
+        RLSW.isDirtyMVP = true;
+    }
 }
 
 void swBegin(SWdraw mode)
 {
+    /* --- Check if the draw mode is valid --- */
+
     if (!sw_is_draw_mode_valid(mode)) {
         RLSW.errCode = SW_INVALID_ENUM;
         return;
     }
+
+    /* --- Recalculate the MVP if this is needed --- */
+
+    if (RLSW.isDirtyMVP) {
+        sw_matrix_mul(
+            RLSW.matMVP,
+            RLSW.stackModelview[RLSW.stackModelviewCounter - 1],
+            RLSW.stackProjection[RLSW.stackProjectionCounter - 1]
+        );
+        RLSW.isDirtyMVP = false;
+    }
+
+    /* --- Initialize some values --- */
+
     RLSW.vertexCounter = 0;
     RLSW.drawMode = mode;
 }
@@ -3797,10 +3827,24 @@ void swVertex4f(float x, float y, float z, float w)
 
 void swVertex4fv(const float* v)
 {
+    /* --- Copy the position in the current vertex --- */
+
+    sw_vertex_t* vertex = &RLSW.vertexBuffer[RLSW.vertexCounter++];
+
     for (int i = 0; i < 4; i++) {
-        RLSW.vertexBuffer[RLSW.vertexCounter].position[i] = v[i];
+        vertex->position[i] = v[i];
     }
-    RLSW.vertexCounter++;
+
+    /* --- Calculation of homogeneous coordinates --- */
+
+    const sw_matrix_t* mat = &RLSW.matMVP;
+
+    vertex->homogeneous[0] = (*mat)[0] * v[0] + (*mat)[4] * v[1] + (*mat)[8] * v[2] + (*mat)[12] * v[3];
+    vertex->homogeneous[1] = (*mat)[1] * v[0] + (*mat)[5] * v[1] + (*mat)[9] * v[2] + (*mat)[13] * v[3];
+    vertex->homogeneous[2] = (*mat)[2] * v[0] + (*mat)[6] * v[1] + (*mat)[10] * v[2] + (*mat)[14] * v[3];
+    vertex->homogeneous[3] = (*mat)[3] * v[0] + (*mat)[7] * v[1] + (*mat)[11] * v[2] + (*mat)[15] * v[3];
+
+    /* --- Obtaining the number of vertices needed for this primitive --- */
 
     int neededVertices = 0;
     switch (RLSW.drawMode) {
@@ -3818,14 +3862,9 @@ void swVertex4fv(const float* v)
         break;
     }
 
+    /* --- Immediate rendering of the primitive if the required number is reached --- */
+
     if (RLSW.vertexCounter == neededVertices) {
-
-        if (RLSW.needToUpdateMVP) {
-            RLSW.needToUpdateMVP = false;
-            sw_matrix_mul(RLSW.matMVP, RLSW.matModel, RLSW.matView);
-            sw_matrix_mul(RLSW.matMVP, RLSW.matMVP, RLSW.matProjection);
-        }
-
         switch (RLSW.polyMode) {
         case SW_FILL:
             sw_poly_fill_render();
@@ -3837,7 +3876,6 @@ void swVertex4fv(const float* v)
             sw_poly_point_render();
             break;
         }
-
         RLSW.vertexBuffer[0] = RLSW.vertexBuffer[neededVertices - 1];
         RLSW.vertexCounter = 0;
     }
@@ -3932,8 +3970,10 @@ void swColor4fv(const float* v)
 
 void swTexCoord2f(float u, float v)
 {
-    float s = RLSW.matTexture[0]*u + RLSW.matTexture[4]*v + RLSW.matTexture[12];
-    float t = RLSW.matTexture[1]*u + RLSW.matTexture[5]*v + RLSW.matTexture[13];
+    const sw_matrix_t* mat = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+
+    float s = (*mat)[0]*u + (*mat)[4]*v + (*mat)[12];
+    float t = (*mat)[1]*u + (*mat)[5]*v + (*mat)[13];
 
     RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[0] = s;
     RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[1] = t;
@@ -3941,8 +3981,10 @@ void swTexCoord2f(float u, float v)
 
 void swTexCoord2fv(const float* v)
 {
-    float s = RLSW.matTexture[0]*v[0] + RLSW.matTexture[4]*v[1] + RLSW.matTexture[12];
-    float t = RLSW.matTexture[1]*v[0] + RLSW.matTexture[5]*v[1] + RLSW.matTexture[13];
+    const sw_matrix_t* mat = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+
+    float s = (*mat)[0]*v[0] + (*mat)[4]*v[1] + (*mat)[12];
+    float t = (*mat)[1]*v[0] + (*mat)[5]*v[1] + (*mat)[13];
 
     RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[0] = s;
     RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[1] = t;
