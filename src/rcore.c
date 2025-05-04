@@ -3738,7 +3738,6 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
 {
     char path[MAX_FILEPATH_LENGTH] = { 0 };
-    memset(path, 0, MAX_FILEPATH_LENGTH);
 
     struct dirent *dp = NULL;
     DIR *dir = opendir(basePath);
