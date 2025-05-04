@@ -108,7 +108,7 @@ static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, flo
     // Calculate normalized vectors for spatial positioning
     Vector3 normalizedDirection = Vector3Normalize(direction);
     Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));
-    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, listener.up));
+    Vector3 right = Vector3Normalize(Vector3CrossProduct(listener.up, forward));
     
     // Reduce volume for sounds behind the listener
     float dotProduct = Vector3DotProduct(forward, normalizedDirection);
