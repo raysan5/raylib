@@ -8,7 +8,7 @@ include(JoinPaths)
 
 # Sets build type if not set by now
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    if(RAYLIB_IS_MAIN)
+    if(PROJECT_IS_TOP_LEVEL)
         set(default_build_type Debug)
     else()
         message(WARNING "Default build type is not set (CMAKE_BUILD_TYPE)")

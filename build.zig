@@ -504,7 +504,7 @@ fn addExamples(
     raylib: *std.Build.Step.Compile,
 ) !*std.Build.Step {
     if (target.result.os.tag == .emscripten) {
-        @panic("Emscripten building via Zig unsupported");
+        return &b.addFail("Emscripten building via Zig unsupported").step;
     }
 
     const all = b.step(module, "All " ++ module ++ " examples");
