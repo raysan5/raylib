@@ -5815,15 +5815,17 @@ static Model LoadGLTF(const char *fileName)
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
+                bool hasJoints = false;
+
                 // NOTE: We only support primitives defined by triangles
                 if (mesh->primitives[p].type != cgltf_primitive_type_triangles) continue;
 
                 for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
                 {
                     // NOTE: JOINTS_1 + WEIGHT_1 will be used for +4 joints influencing a vertex -> Not supported by raylib
-
                     if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints) // JOINTS_n (vec4: 4 bones max per vertex / u8, u16)
                     {
+                        hasJoints = true;
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // NOTE: JOINTS_n can only be vec4 and u8/u16
@@ -5922,6 +5924,34 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint weight attribute data format not supported, use vec4 float", fileName);
                     }
+                }
+
+                // check if we are animated, and the mesh was not given any bone assignments, but is the child of a bone node
+                // in this case we need to fully attach all the verts to the parent bone so it will animate with the bone.
+                if (data->skins_count > 0 && !hasJoints && node->parent != NULL && node->parent->mesh == NULL)
+                {
+                    int parentBoneId = -1;
+                    for (int joint = 0; joint < model.boneCount; joint++)
+                    {
+                        if (data->skins[0].joints[joint] == node->parent)
+                        {
+                            parentBoneId = joint;
+                            break;
+                        }
+                    }
+
+                    if (parentBoneId >= 0)
+                    {
+                        model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 4, sizeof(unsigned char));
+                        model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount * 4, sizeof(float));
+
+                        for (int vertexIndex = 0; vertexIndex < model.meshes[meshIndex].vertexCount * 4; vertexIndex += 4)
+                        {
+                            model.meshes[meshIndex].boneIds[vertexIndex] = (unsigned char)parentBoneId;
+                            model.meshes[meshIndex].boneWeights[vertexIndex] = 1.0f;
+                        }
+                    }
+                  
                 }
 
                 // Animated vertex data
