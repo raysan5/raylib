@@ -222,7 +222,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     .aarch64 => "aarch64-linux-android",
                     .riscv64 => "riscv64-linux-android",
                     else => error.InvalidAndroidTarget,
-                };
+                } catch @panic("invalid android target!");
                 const androidNdkPathString: []const u8 = options.android_ndk;
                 if (androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
                 const androidApiLevel: []const u8 = options.android_api_version;
