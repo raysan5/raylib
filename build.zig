@@ -205,7 +205,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 raylib.root_module.addCMacro("PLATFORM_DRM", "");
                 raylib.root_module.addCMacro("EGL_NO_X11", "");
                 raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
-            } else if (target.result.abi == .android) {
+            } else if (target.result.abi.isAndroid()) {
 
                 //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
                 const hostTuple = switch (builtin.target.os.tag) {
