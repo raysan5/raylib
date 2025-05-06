@@ -215,7 +215,14 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     else => @panic("unsupported host OS"),
                 };
 
-                const androidTriple = try target.result.linuxTriple(b.allocator);
+                const androidTriple = switch (target.result.cpu.arch) {
+                    .x86 => "i686-linux-android",
+                    .x86_64 => "x86_64-linux-android",
+                    .arm => "arm-linux-androideabi",
+                    .aarch64 => "aarch64-linux-android",
+                    .riscv64 => "riscv64-linux-android",
+                    else => error.InvalidAndroidTarget,
+                };
                 const androidNdkPathString: []const u8 = options.android_ndk;
                 if (androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
                 const androidApiLevel: []const u8 = options.android_api_version;
