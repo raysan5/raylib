@@ -496,12 +496,18 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
                     vertices[2] = (Vector3){ cosslice*vertices[2].x - sinslice*vertices[2].z, vertices[2].y, sinslice*vertices[2].x + cosslice*vertices[2].z }; // Rotation matrix around y axis
                     vertices[3] = (Vector3){ cosslice*vertices[3].x - sinslice*vertices[3].z, vertices[3].y, sinslice*vertices[3].x + cosslice*vertices[3].z };
 
+                    rlNormal3f(vertices[0].x, vertices[0].y, vertices[0].z);
                     rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
                     rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                    rlNormal3f(vertices[1].x, vertices[1].y, vertices[1].z);
                     rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
 
+                    rlNormal3f(vertices[0].x, vertices[0].y, vertices[0].z);
                     rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlNormal3f(vertices[2].x, vertices[2].y, vertices[2].z);
                     rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+                    rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
                     rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
                 }
 
