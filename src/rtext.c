@@ -331,6 +331,9 @@ extern void UnloadFontDefault(void)
     if (isGpuReady) UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
     RL_FREE(defaultFont.recs);
+    defaultFont.glyphCount = 0;
+    defaultFont.glyphs = NULL;
+    defaultFont.recs = NULL;
 }
 #endif      // SUPPORT_DEFAULT_FONT
 
