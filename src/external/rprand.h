@@ -90,7 +90,7 @@
     #define RPRAND_FREE(ptr)          free(ptr)
 #endif
 
-// Simple log system to avoid RPNG_LOG() calls if required
+// Simple log system to avoid log calls if required
 // NOTE: Avoiding those calls, also avoids const strings memory usage
 #define RPRAND_SHOW_LOG_INFO
 #if defined(RPNG_SHOW_LOG_INFO)
