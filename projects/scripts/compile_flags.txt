@@ -1,0 +1,2 @@
+-IC:/raylib/include/
+-std=c99
