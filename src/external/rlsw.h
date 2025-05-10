@@ -736,23 +736,28 @@ static inline void sw_vec4_transform(float dst[4], const float v[4], const sw_ma
 
 static inline float sw_saturate(float x)
 {
-    // After several comparisons, this saturation method
-    // seems to be the most optimized by GCC and Clang,
-    // and it does not produce any conditional branching.
+    // Clamps a floating point value between 0.0 and 1.0
 
-    // However, it is possible that a clamp could be
-    // more efficient on certain platforms.
-    // Comparisons will need to be made.
+    // This implementation uses IEEE 754 bit manipulation:
+    // - Uses the sign bit to detect negative values
+    // - Directly compares with binary representation of 1.0f to detect values > 1.0
 
-    // SEE: https://godbolt.org/z/5qYznK5zj
+    // Use union to access the bits of the float as an unsigned int
+    union { float f; uint32_t u; } v;
+    v.f = x;
 
-    // Saturation from below: max(0, x)
-    float y = 0.5f * (x + fabsf(x));
+    // Check sign bit (bit 31): if set, x is negative, return 0.0f
+    if (v.u & 0x80000000) return 0.0f;
 
-    // Saturation from above: min(1, y)
-    return y - 0.5f * ((y - 1.0f) + fabsf(y - 1.0f));
+    // Extract the unsigned magnitude (exponent + mantissa bits)
+    uint32_t expMantissa = v.u & 0x7FFFFFFF;
 
-    // return (x < 0.0f) ? 0.0f : ((x > 1.0f) ? 1.0f : x);
+    // If magnitude > binary representation of 1.0f (0x3F800000), return 1.0f
+    // This efficiently handles all values > 1.0f without additional computation
+    if (expMantissa > 0x3F800000) return 1.0f;
+
+    // Value is between 0.0f and 1.0f inclusive, return unchanged
+    return x;
 }
 
 static inline int sw_clampi(int v, int min, int max)
@@ -1246,7 +1251,6 @@ int sw_get_pixel_bpp(sw_pixelformat_e format)
 
     return bpp;
 }
-
 
 static inline void sw_get_pixel_grayscale(float* color, const void* pixels, uint32_t offset)
 {
