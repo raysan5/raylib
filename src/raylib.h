@@ -476,6 +476,11 @@ typedef struct Sound {
     unsigned int frameCount;    // Total number of frames (considering channels)
 } Sound;
 
+// 3D Sound
+typedef struct Sound3D {
+    int audioID; // Audio Identifier 
+} Sound3D;
+
 // Music, audio stream, anything longer than ~10 seconds should be streamed
 typedef struct Music {
     AudioStream stream;         // Audio stream
@@ -1665,6 +1670,17 @@ RLAPI void WaveCrop(Wave *wave, int initFrame, int finalFrame);       // Crop a 
 RLAPI void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels); // Convert wave data to desired format
 RLAPI float *LoadWaveSamples(Wave wave);                              // Load samples data from wave as a 32bit float data array
 RLAPI void UnloadWaveSamples(float *samples);                         // Unload samples data loaded with LoadWaveSamples()
+
+// 3D Sound Playback functions 
+RLAPI void InitAudioSystem3D();                                       // Initialize the 3D Functionality 
+RLAPI void UnloadAudioSystem3D();                                     // Clears all the allocated 3D Sounds
+RLAPI void UpdateAudioSystem3D();                                     // Used to update playback on 3D Sounds
+RLAPI void BindListenerToCamera(Camera3D camera);                     // Sets playback to camera position 
+RLAPI Sound3D LoadSound3D(const char *path);                          // Load from a file 
+RLAPI void UnloadSound3D(Sound3D sound3D);                            // Free up your memory kids 
+RLAPI void PlaySound3D(Sound3D sound3D, Vector3 position, float maxVolume, float minDistance, float maxDistance);  // Play sound at position and parameters 
+RLAPI void StopSound3D(Sound3D sound3D);                              // Stop sound 
+RLAPI bool IsSound3DPlaying(Sound3D sound3D);                         // Check if sound is playing. 
 
 // Music management functions
 RLAPI Music LoadMusicStream(const char *fileName);                    // Load music stream from file

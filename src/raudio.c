@@ -299,6 +299,10 @@ typedef struct tagBITMAPINFOHEADER {
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
 
+#ifndef MAX_3DSOUND_SOURCES
+    #define MAX_3DSOUND_SOURCES 25 // Max Number of 3D Audio Slots
+    // NOTE: Please change this if you need more Sounds. 
+#endif
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -393,6 +397,31 @@ typedef struct AudioData {
     rAudioProcessor *mixedProcessor;
 } AudioData;
 
+// NOTE: This is not exposed to raylib.h, meant for backend use only. 
+typedef struct Listener3D {
+    Vector3 position;
+    Vector3 forward;
+    Vector3 up;
+} Listener3D;
+
+// NOTE: This is not exposed to raylib.h, meant for backend use only. 
+typedef struct Audio3D {
+    Sound sound;
+    Vector3 position;
+    float maxVolume;
+    float pan;
+    float minDistance;
+    float maxDistance;
+    bool available;
+} Audio3D;
+
+// NOTE: This is not exposed to raylib.h, meant for backend use only. 
+typedef struct SoundSystem3D { 
+    Audio3D audioSources[MAX_3DSOUND_SOURCES];
+    int audioCount;
+    Listener3D listener;
+} SoundSystem3D;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -406,6 +435,7 @@ static AudioData AUDIO = {          // Global AUDIO context
     .mixedProcessor = NULL
 };
 
+static SoundSystem3D AudioSystem3D; // Global 3D Audio System Definition.
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -2705,6 +2735,179 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
         else TRACELOG(LOG_WARNING, "STREAM: Buffer not available for updating");
     }
 }
+
+// 3D Audio Functionality
+void InitAudioSystem3D() {
+	if (IsAudioDeviceReady()) {
+		AudioSystem3D.listener.position = (Vector3){ 0, 0, 0 };
+		AudioSystem3D.audioCount = 0;
+
+		TRACELOG(LOG_INFO, "AUDIO: 3D Audio System initialized successfully");
+	}
+}
+
+void UnloadAudioSystem3D() {
+	for (int i = 0; i < AudioSystem3D.audioCount; i++) {
+		UnloadSound(AudioSystem3D.audioSources[i].sound);
+		AudioSystem3D.audioSources[i].available = false;
+	}
+}
+
+void BindListenerToCamera(Camera3D camera) {
+	AudioSystem3D.listener.position = camera.position;
+
+	Vector3 forward = {
+		camera.target.x - camera.position.x,
+		camera.target.y - camera.position.y,
+		camera.target.z - camera.position.z
+	};
+
+	float length = sqrtf(forward.x * forward.x + forward.y * forward.y + forward.z * forward.z);
+	if (length > 0.0f) {
+		forward.x /= length;
+		forward.y /= length;
+		forward.z /= length;
+	}
+
+	AudioSystem3D.listener.forward = forward;
+	AudioSystem3D.listener.up = camera.up;
+}
+
+Sound3D LoadSound3D(const char *path) {
+	Sound3D audio = { 0 };
+	bool openSpotFound = false;
+	int foundSpot = 0;
+
+	for (int i = 0; i < AudioSystem3D.audioCount; i++) {
+		if (AudioSystem3D.audioSources[i].available) {
+			foundSpot = i;
+			openSpotFound = true;
+			break;
+		}
+	}
+
+	if (openSpotFound) {
+		audio.audioID = foundSpot;
+		AudioSystem3D.audioSources[foundSpot].sound = LoadSound(path);
+		AudioSystem3D.audioSources[foundSpot].available = false;
+	} else {
+		if (AudioSystem3D.audioCount == MAX_3DSOUND_SOURCES) {
+			TraceLog(LOG_WARNING, "AUDIO: Max 3D sound sources reached");
+			return (Sound3D){ .audioID = -1 };
+		}
+
+		audio.audioID = AudioSystem3D.audioCount;
+		AudioSystem3D.audioSources[audio.audioID].sound = LoadSound(path);
+		AudioSystem3D.audioSources[audio.audioID].available = false;
+		AudioSystem3D.audioCount++;
+	}
+
+	return audio;
+}
+
+void UnloadSound3D(Sound3D sound3D) {
+	UnloadSound(AudioSystem3D.audioSources[sound3D.audioID].sound);
+	AudioSystem3D.audioSources[sound3D.audioID].available = true;
+}
+
+void UpdateAudioSystem3D() {
+	for (int i = 0; i < AudioSystem3D.audioCount; i++) {
+		if (IsSoundPlaying(AudioSystem3D.audioSources[i].sound)) {
+			Vector3 position = AudioSystem3D.audioSources[i].position;
+			float maxDistance = AudioSystem3D.audioSources[i].maxDistance;
+			float minDistance = AudioSystem3D.audioSources[i].minDistance;
+			float maxVolume = AudioSystem3D.audioSources[i].maxVolume;
+
+			Vector3 toSource = {
+				position.x - AudioSystem3D.listener.position.x,
+				position.y - AudioSystem3D.listener.position.y,
+				position.z - AudioSystem3D.listener.position.z
+			};
+
+			float distance = sqrtf(toSource.x * toSource.x + toSource.y * toSource.y + toSource.z * toSource.z);
+
+			// Volume attenuation
+			float volume = 0.0f;
+			if (distance <= minDistance) {
+				volume = maxVolume;
+			} else if (distance < maxDistance) {
+				float t = (distance - minDistance) / (maxDistance - minDistance);
+				volume = maxVolume * (1.0f - t);
+			}
+			if (volume < 0.0f) volume = 0.0f;
+			if (volume > maxVolume) volume = maxVolume;
+
+			// Orientation vectors
+			Vector3 forward = AudioSystem3D.listener.forward;
+			float forwardLen = sqrtf(forward.x * forward.x + forward.y * forward.y + forward.z * forward.z);
+			if (forwardLen > 0.0f) {
+				forward.x /= forwardLen;
+				forward.y /= forwardLen;
+				forward.z /= forwardLen;
+			}
+
+			Vector3 up = AudioSystem3D.listener.up;
+			float upLen = sqrtf(up.x * up.x + up.y * up.y + up.z * up.z);
+			if (upLen > 0.0f) {
+				up.x /= upLen;
+				up.y /= upLen;
+				up.z /= upLen;
+			}
+
+			Vector3 right = {
+				up.y * forward.z - up.z * forward.y,
+				up.z * forward.x - up.x * forward.z,
+				up.x * forward.y - up.y * forward.x
+			};
+
+			float rightLen = sqrtf(right.x * right.x + right.y * right.y + right.z * right.z);
+			if (rightLen > 0.0f) {
+				right.x /= rightLen;
+				right.y /= rightLen;
+				right.z /= rightLen;
+			}
+
+			float localX = toSource.x * right.x + toSource.y * right.y + toSource.z * right.z;
+			float localY = toSource.x * up.x + toSource.y * up.y + toSource.z * up.z;
+			float localZ = toSource.x * forward.x + toSource.y * forward.y + toSource.z * forward.z;
+
+			// Panning calculation
+			float pan = 0.0f;
+			float horizDist = sqrtf(localX * localX + localZ * localZ);
+			if (horizDist > 0.001f) {
+				pan = localX / horizDist;
+			}
+			pan += (localY / 20.0f) * 0.2f;
+
+			if (pan < -1.0f) pan = -1.0f;
+			if (pan > 1.0f) pan = 1.0f;
+
+			SetSoundVolume(AudioSystem3D.audioSources[i].sound, volume);
+			SetSoundPan(AudioSystem3D.audioSources[i].sound, pan);
+		}
+	}
+}
+
+void PlaySound3D(Sound3D sound3D, Vector3 position, float maxVolume, float minDistance, float maxDistance) {
+	int id = sound3D.audioID;
+	AudioSystem3D.audioSources[id].position = position;
+	AudioSystem3D.audioSources[id].maxDistance = maxDistance;
+	AudioSystem3D.audioSources[id].minDistance = minDistance;
+	AudioSystem3D.audioSources[id].maxVolume = maxVolume;
+
+	PlaySound(AudioSystem3D.audioSources[id].sound);
+}
+
+bool IsSound3DPlaying(Sound3D sound3D) {
+	return IsSoundPlaying(AudioSystem3D.audioSources[sound3D.audioID].sound);
+}
+
+void StopSound3D(Sound3D sound3D) {
+	if (IsSoundPlaying(AudioSystem3D.audioSources[sound3D.audioID].sound)) {
+		StopSound(AudioSystem3D.audioSources[sound3D.audioID].sound);
+	}
+}
+
 
 // Some required functions for audio standalone module version
 #if defined(RAUDIO_STANDALONE)
