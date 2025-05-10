@@ -1793,8 +1793,46 @@ void SetRandomSeed(unsigned int seed)
 #endif
 }
 
-// Get a random value between min and max included
-int GetRandomValue(int min, int max)
+// Get a random float between zero and one included
+float GetRandomFloat(void)
+{
+    float value = 0.0f;
+
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    value = rprand_get_float();
+#else
+    // rand() returns a value in the range [0, RAND_MAX], convert to [0.0, 1.0]
+    value = (float)rand() / (float)RAND_MAX;
+#endif
+
+    return value;
+}
+
+// Get a random float between min and max included
+float GetRandomRangeFloat(float min, float max)
+{
+    float value = 0.0f;
+
+    if (min > max)
+    {
+        float tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    value = rprand_get_range_float(min, max);
+#else
+    // rand() returns a value in the range [0, RAND_MAX], convert to [0.0, 1.0]
+    float normalized = (float)rand() / (float)RAND_MAX;
+    value = min + normalized * (max - min);
+#endif
+
+    return value;
+}
+
+// Get a random integer between min and max included
+int GetRandomRangeInt(int min, int max)
 {
     int value = 0;
 
@@ -1806,7 +1844,7 @@ int GetRandomValue(int min, int max)
     }
 
 #if defined(SUPPORT_RPRAND_GENERATOR)
-    value = rprand_get_value(min, max);
+    value = rprand_get_range_int(min, max);
 #else
     // WARNING: Ranges higher than RAND_MAX will return invalid results
     // More specifically, if (max - min) > INT_MAX there will be an overflow,
@@ -1814,7 +1852,7 @@ int GetRandomValue(int min, int max)
     // NOTE: Depending on the library it can be as low as 32767
     if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
     {
-        TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
+        TRACELOG(LOG_WARNING, "Invalid GetRandomRangeInt() arguments, range should not be higher than %i", RAND_MAX);
     }
 
     value = (rand()%(abs(max - min) + 1) + min);
