@@ -124,14 +124,14 @@ int main(void)
     // and initialize the shader locations
     for (int i = 0; i < MAX_SPOTS; i++)
     {
-        spots[i].position.x = (float)GetRandomValue(64, screenWidth - 64);
-        spots[i].position.y = (float)GetRandomValue(64, screenHeight - 64);
+        spots[i].position.x = (float)GetRandomRangeInt(64, screenWidth - 64);
+        spots[i].position.y = (float)GetRandomRangeInt(64, screenHeight - 64);
         spots[i].speed = (Vector2){ 0, 0 };
 
         while ((fabs(spots[i].speed.x) + fabs(spots[i].speed.y)) < 2)
         {
-            spots[i].speed.x = GetRandomValue(-400, 40) / 10.0f;
-            spots[i].speed.y = GetRandomValue(-400, 40) / 10.0f;
+            spots[i].speed.x = GetRandomRangeInt(-400, 40) / 10.0f;
+            spots[i].speed.y = GetRandomRangeInt(-400, 40) / 10.0f;
         }
 
         spots[i].inner = 28.0f * (i + 1);
@@ -235,8 +235,8 @@ static void ResetStar(Star *s)
 
     do
     {
-        s->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
-        s->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
+        s->speed.x = (float)GetRandomRangeInt(-1000, 1000)/100.0f;
+        s->speed.y = (float)GetRandomRangeInt(-1000, 1000)/100.0f;
 
     } while (!(fabs(s->speed.x) + (fabs(s->speed.y) > 1)));
 

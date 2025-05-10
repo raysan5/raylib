@@ -29,7 +29,7 @@ int main(void)
 
     // SetRandomSeed(0xaabbccff);   // Set a custom random seed if desired, by default: "time(NULL)"
 
-    int randValue = GetRandomValue(-8, 5);   // Get a random integer number between -8 and 5 (both included)
+    int randValue = GetRandomRangeInt(-8, 5);   // Get a random integer number between -8 and 5 (both included)
     
     unsigned int framesCounter = 0; // Variable used to count frames
     
@@ -46,7 +46,7 @@ int main(void)
         // Every two seconds (120 frames) a new random value is generated
         if (((framesCounter/120)%2) == 1)
         {
-            randValue = GetRandomValue(-8, 5);
+            randValue = GetRandomRangeInt(-8, 5);
             framesCounter = 0;
         }
         //----------------------------------------------------------------------------------

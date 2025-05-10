@@ -55,8 +55,8 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_R))
         {
-            score = GetRandomValue(1000, 2000);
-            hiscore = GetRandomValue(2000, 4000);
+            score = GetRandomRangeInt(1000, 2000);
+            hiscore = GetRandomRangeInt(2000, 4000);
         }
 
         if (IsKeyPressed(KEY_ENTER))

@@ -84,12 +84,12 @@ int main(void)
 
     for (int i = 0; i < MAX_PARTICLES; i++)
     {
-        particles[i].x = (float)GetRandomValue(20, screenWidth - 20);
-        particles[i].y = (float)GetRandomValue(50, screenHeight - 20);
+        particles[i].x = (float)GetRandomRangeInt(20, screenWidth - 20);
+        particles[i].y = (float)GetRandomRangeInt(50, screenHeight - 20);
         
         // Give each particle a slightly different period. But don't spread it to much. 
         // This way the particles line up every so often and you get a glimps of what is going on.
-        particles[i].period = (float)GetRandomValue(10, 30)/10.0f;
+        particles[i].period = (float)GetRandomRangeInt(10, 30)/10.0f;
     }
 
     // Create a plain OpenGL vertex buffer with the data and an vertex array object 

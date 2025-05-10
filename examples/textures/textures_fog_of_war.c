@@ -53,7 +53,7 @@ int main(void)
 
     // Load map tiles (generating 2 random tile ids for testing)
     // NOTE: Map tile ids should be probably loaded from an external map file
-    for (unsigned int i = 0; i < map.tilesY*map.tilesX; i++) map.tileIds[i] = GetRandomValue(0, 1);
+    for (unsigned int i = 0; i < map.tilesY*map.tilesX; i++) map.tileIds[i] = GetRandomRangeInt(0, 1);
 
     // Player position on the screen (pixel coordinates, not tile coordinates)
     Vector2 playerPosition = { 180, 130 };

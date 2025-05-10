@@ -47,9 +47,9 @@ int main(void)
 
     for (int i = 0; i < MAX_COLUMNS; i++)
     {
-        heights[i] = (float)GetRandomValue(1, 12);
-        positions[i] = (Vector3){ (float)GetRandomValue(-15, 15), heights[i]/2.0f, (float)GetRandomValue(-15, 15) };
-        colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
+        heights[i] = (float)GetRandomRangeInt(1, 12);
+        positions[i] = (Vector3){ (float)GetRandomRangeInt(-15, 15), heights[i]/2.0f, (float)GetRandomRangeInt(-15, 15) };
+        colors[i] = (Color){ GetRandomRangeInt(20, 255), GetRandomRangeInt(10, 55), 30, 255 };
     }
 
     DisableCursor();                    // Limit cursor to relative movement inside the window

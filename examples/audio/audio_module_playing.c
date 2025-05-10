@@ -50,11 +50,11 @@ int main(void)
     for (int i = MAX_CIRCLES - 1; i >= 0; i--)
     {
         circles[i].alpha = 0.0f;
-        circles[i].radius = (float)GetRandomValue(10, 40);
-        circles[i].position.x = (float)GetRandomValue((int)circles[i].radius, (int)(screenWidth - circles[i].radius));
-        circles[i].position.y = (float)GetRandomValue((int)circles[i].radius, (int)(screenHeight - circles[i].radius));
-        circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
-        circles[i].color = colors[GetRandomValue(0, 13)];
+        circles[i].radius = (float)GetRandomRangeInt(10, 40);
+        circles[i].position.x = (float)GetRandomRangeInt((int)circles[i].radius, (int)(screenWidth - circles[i].radius));
+        circles[i].position.y = (float)GetRandomRangeInt((int)circles[i].radius, (int)(screenHeight - circles[i].radius));
+        circles[i].speed = (float)GetRandomRangeInt(1, 100)/2000.0f;
+        circles[i].color = colors[GetRandomRangeInt(0, 13)];
     }
 
     Music music = LoadMusicStream("resources/mini1111.xm");
@@ -112,11 +112,11 @@ int main(void)
             if (circles[i].alpha <= 0.0f)
             {
                 circles[i].alpha = 0.0f;
-                circles[i].radius = (float)GetRandomValue(10, 40);
-                circles[i].position.x = (float)GetRandomValue((int)circles[i].radius, (int)(screenWidth - circles[i].radius));
-                circles[i].position.y = (float)GetRandomValue((int)circles[i].radius, (int)(screenHeight - circles[i].radius));
-                circles[i].color = colors[GetRandomValue(0, 13)];
-                circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
+                circles[i].radius = (float)GetRandomRangeInt(10, 40);
+                circles[i].position.x = (float)GetRandomRangeInt((int)circles[i].radius, (int)(screenWidth - circles[i].radius));
+                circles[i].position.y = (float)GetRandomRangeInt((int)circles[i].radius, (int)(screenHeight - circles[i].radius));
+                circles[i].color = colors[GetRandomRangeInt(0, 13)];
+                circles[i].speed = (float)GetRandomRangeInt(1, 100)/2000.0f;
             }
         }
         //----------------------------------------------------------------------------------

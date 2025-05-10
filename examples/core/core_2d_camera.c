@@ -38,17 +38,17 @@ int main(void)
 
     for (int i = 0; i < MAX_BUILDINGS; i++)
     {
-        buildings[i].width = (float)GetRandomValue(50, 200);
-        buildings[i].height = (float)GetRandomValue(100, 800);
+        buildings[i].width = (float)GetRandomRangeInt(50, 200);
+        buildings[i].height = (float)GetRandomRangeInt(100, 800);
         buildings[i].y = screenHeight - 130.0f - buildings[i].height;
         buildings[i].x = -6000.0f + spacing;
 
         spacing += (int)buildings[i].width;
 
         buildColors[i] = (Color){
-            (unsigned char)GetRandomValue(200, 240),
-            (unsigned char)GetRandomValue(200, 240),
-            (unsigned char)GetRandomValue(200, 250),
+            (unsigned char)GetRandomRangeInt(200, 240),
+            (unsigned char)GetRandomRangeInt(200, 240),
+            (unsigned char)GetRandomRangeInt(200, 250),
             255};
     }
 

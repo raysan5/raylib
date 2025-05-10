@@ -119,9 +119,9 @@ int main(void)
 static Color GenerateRandomColor()
 {
     Color color = { 
-        GetRandomValue(0, 255), 
-        GetRandomValue(0, 255),
-        GetRandomValue(0, 255),
+        GetRandomRangeInt(0, 255), 
+        GetRandomRangeInt(0, 255),
+        GetRandomRangeInt(0, 255),
         255
     };
 

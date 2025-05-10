@@ -232,7 +232,7 @@ int main(void)
                 for (int i = 0; i < TEXT_MAX_LAYERS; ++i)
                 {
                     multi[i] = GenerateRandomColor(0.5f, 0.8f);
-                    multi[i].a = GetRandomValue(0, 255);
+                    multi[i].a = GetRandomRangeInt(0, 255);
                 }
             }
         }
@@ -688,7 +688,7 @@ static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, fl
 static Color GenerateRandomColor(float s, float v)
 {
     const float Phi = 0.618033988749895f; // Golden ratio conjugate
-    float h = (float)GetRandomValue(0, 360);
+    float h = (float)GetRandomRangeInt(0, 360);
     h = fmodf((h + h*Phi), 360.0f);
     return ColorFromHSV(h, s, v);
 }

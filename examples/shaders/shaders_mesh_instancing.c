@@ -60,9 +60,9 @@ int main(void)
     // Translate and rotate cubes randomly
     for (int i = 0; i < MAX_INSTANCES; i++)
     {
-        Matrix translation = MatrixTranslate((float)GetRandomValue(-50, 50), (float)GetRandomValue(-50, 50), (float)GetRandomValue(-50, 50));
-        Vector3 axis = Vector3Normalize((Vector3){ (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360) });
-        float angle = (float)GetRandomValue(0, 180)*DEG2RAD;
+        Matrix translation = MatrixTranslate((float)GetRandomRangeInt(-50, 50), (float)GetRandomRangeInt(-50, 50), (float)GetRandomRangeInt(-50, 50));
+        Vector3 axis = Vector3Normalize((Vector3){ (float)GetRandomRangeInt(0, 360), (float)GetRandomRangeInt(0, 360), (float)GetRandomRangeInt(0, 360) });
+        float angle = (float)GetRandomRangeInt(0, 180)*DEG2RAD;
         Matrix rotation = MatrixRotate(axis, angle);
         
         transforms[i] = MatrixMultiply(rotation, translation);

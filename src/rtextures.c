@@ -980,14 +980,14 @@ Image GenImageChecked(int width, int height, int checksX, int checksY, Color col
 }
 
 // Generate image: white noise
-// NOTE: It requires GetRandomValue(), defined in [rcore]
+// NOTE: It requires GetRandomRangeInt(), defined in [rcore]
 Image GenImageWhiteNoise(int width, int height, float factor)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
     for (int i = 0; i < width*height; i++)
     {
-        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
+        if (GetRandomRangeInt(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
         else pixels[i] = BLACK;
     }
 
@@ -1066,8 +1066,8 @@ Image GenImageCellular(int width, int height, int tileSize)
 
     for (int i = 0; i < seedCount; i++)
     {
-        int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
-        int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
+        int y = (i/seedsPerRow)*tileSize + GetRandomRangeInt(0, tileSize - 1);
+        int x = (i%seedsPerRow)*tileSize + GetRandomRangeInt(0, tileSize - 1);
         seeds[i] = (Vector2){ (float)x, (float)y };
     }
 

@@ -204,7 +204,7 @@ void SetupBoxes(Rectangle *boxes, int *count)
 
     for (int i = 5; i < MAX_BOXES; i++)
     {
-        boxes[i] = (Rectangle){(float)GetRandomValue(0,GetScreenWidth()), (float)GetRandomValue(0,GetScreenHeight()), (float)GetRandomValue(10,100), (float)GetRandomValue(10,100) };
+        boxes[i] = (Rectangle){(float)GetRandomRangeInt(0,GetScreenWidth()), (float)GetRandomRangeInt(0,GetScreenHeight()), (float)GetRandomRangeInt(10,100), (float)GetRandomRangeInt(10,100) };
     }
 
     *count = MAX_BOXES;
