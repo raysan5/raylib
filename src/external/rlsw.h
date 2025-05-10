@@ -519,6 +519,7 @@ void swBindTexture(uint32_t id);
 #endif // RLSW_H
 
 
+#define RLSW_IMPL
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
@@ -758,6 +759,37 @@ static inline float sw_saturate(float x)
 
     // Value is between 0.0f and 1.0f inclusive, return unchanged
     return x;
+}
+
+static inline float sw_fract(float x)
+{
+    // Computes the positive fractional part of a float.
+    // Equivalent to fabs(x) - floorf(fabs(x)).
+    // Uses IEEE 754 bit tricks for efficiency and edge case handling.
+
+    union { float f; uint32_t u; } v;
+    v.f = x;
+
+    // Get absolute value bits (clear sign bit)
+    uint32_t abs_bits = v.u & 0x7FFFFFFF;
+
+    // Case 1: |x| < 1.0f -> integer part is 0, return |x|
+    if (abs_bits < 0x3F800000) {
+        v.u = abs_bits; // Ensure positive result
+        return v.f;
+    }
+
+    // Case 2: |x| ≥ 2^24 -> float is an exact integer, return 0.0f
+    // Also handles Inf and NaN as 0.0f
+    if (abs_bits >= 0x4B000000) {
+        return 0.0f;
+    }
+
+    // Case 3: 1.0f ≤ |x| < 2^24 -> compute |x| - floor(|x|)
+    v.u = abs_bits;
+    float abs_x = v.f;
+
+    return abs_x - floorf(abs_x);
 }
 
 static inline int sw_clampi(int v, int min, int max)
@@ -1668,7 +1700,7 @@ static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
 {
     switch (mode) {
     case SW_REPEAT:
-        *out = (int)((in - floorf(in)) * max + 0.5f);
+        *out = (int)(sw_fract(in) * max + 0.5f);
         break;
     case SW_CLAMP:
         *out = (int)(sw_saturate(in) * (max - 1) + 0.5f);
