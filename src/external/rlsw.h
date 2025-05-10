@@ -519,7 +519,6 @@ void swBindTexture(uint32_t id);
 #endif // RLSW_H
 
 
-#define RLSW_IMPL
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
@@ -901,84 +900,35 @@ static inline void sw_framebuffer_inc_depth_addr(void** ptr)
     *ptr = (void*)(((uint8_t*)*ptr) + SW_DEPTH_PIXEL_SIZE);
 }
 
+#if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
+
 static inline void sw_framebuffer_read_color(float dst[4], const void* src)
 {
-#if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
     uint8_t pixel = ((uint8_t*)src)[0];
+
     dst[0] = ((pixel >> 5) & 0x07) * (1.0f / 7.0f);
     dst[1] = ((pixel >> 2) & 0x07) * (1.0f / 7.0f);
     dst[2] = (pixel & 0x03) * (1.0f / 3.0f);
     dst[3] = 1.0f;
-#elif (SW_COLOR_BUFFER_BITS == 16) // RGB - 565
-    uint16_t pixel = ((uint16_t*)src)[0];
-    dst[0] = ((pixel >> 11) & 0x1F) * (1.0f / 31.0f);
-    dst[1] = ((pixel >> 5) & 0x3F) * (1.0f / 63.0f);
-    dst[2] = (pixel & 0x1F) * (1.0f / 31.0f);
-    dst[3] = 1.0f;
-#elif (SW_COLOR_BUFFER_BITS == 24) // RGB - 888
-    dst[0] = ((uint8_t*)src)[0] * (1.0f / 255.0f);
-    dst[1] = ((uint8_t*)src)[1] * (1.0f / 255.0f);
-    dst[2] = ((uint8_t*)src)[2] * (1.0f / 255.0f);
-    dst[3] = 1.0f;
-#endif
 }
 
 static inline void sw_framebuffer_write_color(void* dst, float color[3])
 {
-#if (SW_COLOR_BUFFER_BITS == 8) // RGB - 332
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
     uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
     uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+
     ((uint8_t*)dst)[0] = (r << 5) | (g << 2) | b;
-
-#elif (SW_COLOR_BUFFER_BITS == 16) // RGB - 565
-    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
-    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
-    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
-    ((uint16_t*)dst)[0] = (r << 11) | (g << 5) | b;
-
-#elif (SW_COLOR_BUFFER_BITS == 24) // RGB - 888
-    ((uint8_t*)dst)[0] = (uint8_t)(color[0] * UINT8_MAX);
-    ((uint8_t*)dst)[1] = (uint8_t)(color[1] * UINT8_MAX);
-    ((uint8_t*)dst)[2] = (uint8_t)(color[2] * UINT8_MAX);
-#endif
-}
-
-static inline float sw_framebuffer_read_depth(const void* src)
-{
-#if (SW_DEPTH_BUFFER_BITS == 8)
-    return (float)((uint8_t*)src)[0] * (1.0f / UINT8_MAX);
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-    return (float)((uint16_t*)src)[0] * (1.0f / UINT16_MAX);
-#elif (SW_DEPTH_BUFFER_BITS == 24)
-    uint32_t depth24 = (((uint8_t*)src)[0] << 16) |
-                       (((uint8_t*)src)[1] << 8) |
-                       ((uint8_t*)src)[2];
-    return depth24 / (float)0xFFFFFF;
-#endif
-}
-
-static inline void sw_framebuffer_write_depth(void* dst, float depth)
-{
-#if (SW_DEPTH_BUFFER_BITS == 8)
-    ((uint8_t*)dst)[0] = (uint8_t)(depth * UINT8_MAX);
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-    ((uint16_t*)dst)[0] = (uint16_t)(depth * UINT16_MAX);
-#elif (SW_DEPTH_BUFFER_BITS == 24)
-    uint32_t depth24 = (uint32_t)(depth * 0xFFFFFF);
-    ((uint8_t*)dst)[0] = (depth24 >> 16) & 0xFF;
-    ((uint8_t*)dst)[1] = (depth24 >> 8) & 0xFF;
-    ((uint8_t*)dst)[2] = depth24 & 0xFF;
-#endif
 }
 
 static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
 {
-#if (SW_COLOR_BUFFER_BITS == 8)
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
     uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
     uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+
     uint8_t* p = (uint8_t*)ptr;
+
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
             for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
@@ -990,11 +940,37 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
             p[i] = (r << 5) | (g << 2) | b;
         }
     }
-#elif (SW_COLOR_BUFFER_BITS == 16)
+}
+
+#elif (SW_COLOR_BUFFER_BITS == 16) // RGB - 565
+
+static inline void sw_framebuffer_read_color(float dst[4], const void* src)
+{
+    uint16_t pixel = ((uint16_t*)src)[0];
+
+    dst[0] = ((pixel >> 11) & 0x1F) * (1.0f / 31.0f);
+    dst[1] = ((pixel >> 5) & 0x3F) * (1.0f / 63.0f);
+    dst[2] = (pixel & 0x1F) * (1.0f / 31.0f);
+    dst[3] = 1.0f;
+}
+
+static inline void sw_framebuffer_write_color(void* dst, float color[3])
+{
     uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
     uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
     uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+
+    ((uint16_t*)dst)[0] = (r << 11) | (g << 5) | b;
+}
+
+static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
+{
+    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
+    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
+    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+
     uint16_t* p = (uint16_t*)ptr;
+
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
             for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
@@ -1006,11 +982,33 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
             p[i] = (r << 11) | (g << 5) | b;
         }
     }
-#elif (SW_COLOR_BUFFER_BITS == 24)
+}
+
+#elif (SW_COLOR_BUFFER_BITS == 24) // RGB - 888
+
+static inline void sw_framebuffer_read_color(float dst[4], const void* src)
+{
+    dst[0] = ((uint8_t*)src)[0] * (1.0f / 255.0f);
+    dst[1] = ((uint8_t*)src)[1] * (1.0f / 255.0f);
+    dst[2] = ((uint8_t*)src)[2] * (1.0f / 255.0f);
+    dst[3] = 1.0f;
+}
+
+static inline void sw_framebuffer_write_color(void* dst, float color[3])
+{
+    ((uint8_t*)dst)[0] = (uint8_t)(color[0] * UINT8_MAX);
+    ((uint8_t*)dst)[1] = (uint8_t)(color[1] * UINT8_MAX);
+    ((uint8_t*)dst)[2] = (uint8_t)(color[2] * UINT8_MAX);
+}
+
+static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
+{
     uint8_t r = (uint8_t)(color[0] * 255);
     uint8_t g = (uint8_t)(color[1] * 255);
     uint8_t b = (uint8_t)(color[2] * 255);
+
     uint8_t* p = (uint8_t*)ptr;
+
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
             for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
@@ -1027,14 +1025,27 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4]
             *p++ = b;
         }
     }
-#endif
+}
+
+#endif // SW_COLOR_BUFFER_BITS
+
+#if (SW_DEPTH_BUFFER_BITS == 8)
+
+static inline float sw_framebuffer_read_depth(const void* src)
+{
+    return (float)((uint8_t*)src)[0] * (1.0f / UINT8_MAX);
+}
+
+static inline void sw_framebuffer_write_depth(void* dst, float depth)
+{
+    ((uint8_t*)dst)[0] = (uint8_t)(depth * UINT8_MAX);
 }
 
 static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 {
-#if (SW_DEPTH_BUFFER_BITS == 8)
     uint8_t v  = value * UINT8_MAX;
     uint8_t* p = (uint8_t*)ptr;
+
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
             for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
@@ -1047,9 +1058,25 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
             p[i] = v;
         }
     }
+}
+
 #elif (SW_DEPTH_BUFFER_BITS == 16)
+
+static inline float sw_framebuffer_read_depth(const void* src)
+{
+    return (float)((uint16_t*)src)[0] * (1.0f / UINT16_MAX);
+}
+
+static inline void sw_framebuffer_write_depth(void* dst, float depth)
+{
+    ((uint16_t*)dst)[0] = (uint16_t)(depth * UINT16_MAX);
+}
+
+static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
+{
     uint16_t v  = value * UINT16_MAX;
     uint16_t* p = (uint16_t*)ptr;
+
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
             for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
@@ -1062,9 +1089,33 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
             p[i] = v;
         }
     }
+}
+
 #elif (SW_DEPTH_BUFFER_BITS == 24)
+
+static inline float sw_framebuffer_read_depth(const void* src)
+{
+    uint32_t depth24 = (((uint8_t*)src)[0] << 16) |
+                       (((uint8_t*)src)[1] << 8) |
+                       ((uint8_t*)src)[2];
+
+    return depth24 / (float)0xFFFFFF;
+}
+
+static inline void sw_framebuffer_write_depth(void* dst, float depth)
+{
+    uint32_t depth24 = (uint32_t)(depth * 0xFFFFFF);
+
+    ((uint8_t*)dst)[0] = (depth24 >> 16) & 0xFF;
+    ((uint8_t*)dst)[1] = (depth24 >> 8) & 0xFF;
+    ((uint8_t*)dst)[2] = depth24 & 0xFF;
+}
+
+static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
+{
     uint32_t v = value * UINT32_MAX;
     uint8_t* p = (uint8_t*)ptr;
+
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
             for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
@@ -1082,8 +1133,9 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
             *p++ = v & 0xFF;
         }
     }
-#endif
 }
+
+#endif // SW_DEPTH_BUFFER_BITS
 
 static inline void sw_framebuffer_fill(void* colorPtr, void* depthPtr, int size, float color[4], float depth_value)
 {
