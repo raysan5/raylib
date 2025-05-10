@@ -519,6 +519,7 @@ void swBindTexture(uint32_t id);
 #endif // RLSW_H
 
 
+#define RLSW_IMPL
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
@@ -631,8 +632,6 @@ typedef struct {
     int vpMin[2];                                               // Represents the minimum renderable point of the viewport (top-left)
     int vpMax[2];                                               // Represents the maximum renderable point of the viewport (bottom-right)
 
-    int scPos[2];                                               // Represents the top-left corner of the scissor rect
-    int scDim[2];                                               // Represents the dimensions of the scissor rect (minus one)
     int scMin[2];                                               // Represents the minimum renderable point of the scissor rect (top-left)
     int scMax[2];                                               // Represents the maximum renderable point of the scissor rect (bottom-right)
     float scHMin[2];                                            // Represents the minimum renderable point of the scissor rect in clip space
@@ -3383,11 +3382,6 @@ void swScissor(int x, int y, int width, int height)
         RLSW.errCode = SW_INVALID_VALUE;
         return;
     }
-
-    RLSW.scPos[0] = x;
-    RLSW.scPos[1] = y;
-    RLSW.scDim[0] = width;
-    RLSW.scDim[1] = height;
 
     RLSW.scMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
     RLSW.scMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
