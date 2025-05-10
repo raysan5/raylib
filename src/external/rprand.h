@@ -117,7 +117,9 @@ extern "C" {                // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 RPRANDAPI void rprand_set_seed(unsigned long long seed);        // Set rprand_state for Xoshiro128**, seed is 64bit
-RPRANDAPI int rprand_get_value(int min, int max);               // Get random value within a range, min and max included
+RPRANDAPI float rprand_get_float(void);                         // Get random float between 0 and 1
+RPRANDAPI int rprand_get_range_int(int min, int max);           // Get random integer within a range, min and max included
+RPRANDAPI float rprand_get_range_float(float min, float max);   // Get random float within a range, min and max included
 
 RPRANDAPI int *rprand_load_sequence(unsigned int count, int min, int max); // Load pseudo-random numbers sequence with no duplicates
 RPRANDAPI void rprand_unload_sequence(int *sequence);           // Unload pseudo-random numbers sequence
@@ -178,12 +180,36 @@ void rprand_set_seed(unsigned long long seed)
     rprand_state[3] = (uint32_t)((rprand_splitmix64() & 0xffffffff00000000) >> 32);
 }
 
-// Get random value within a range, min and max included
-int rprand_get_value(int min, int max)
+// Get random float between 0 and 1
+float rprand_get_float(void)
+{
+    uint32_t x = rprand_xoshiro();
+
+    // Uses the 23 bits of the mantissa of a float and sets the exponent for [1,2)
+    union { uint32_t i; float f; } u;
+
+    // Places the random bits in the mantissa of a float [1,2)
+    u.i = (x >> 9) | 0x3F800000;
+
+    return u.f - 1.0f; // Subtracts 1.0 to obtain [0,1)
+}
+
+// Get random integer within a range, min and max included
+int rprand_get_range_int(int min, int max)
 {
     int value = rprand_xoshiro()%(abs(max - min) + 1) + min;
 
     return value;
+}
+
+// Get random float within a range, min and max included
+float rprand_get_range_float(float min, float max)
+{
+    uint32_t x = rprand_xoshiro();
+    union { uint32_t i; float f; } u;
+    u.i = (x >> 9) | 0x3F800000; // [1,2)
+
+    return min + (u.f - 1.0f) * (max - min);
 }
 
 // Load pseudo-random numbers sequence with no duplicates, min and max included
