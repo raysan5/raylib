@@ -519,7 +519,6 @@ void swBindTexture(uint32_t id);
 #endif // RLSW_H
 
 
-#define RLSW_IMPL
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
@@ -571,6 +570,8 @@ typedef enum {
     SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
     SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } sw_pixelformat_e;
+
+typedef void (*sw_factor_f)(float *factor, const float *src, const float *dst);
 
 typedef float sw_matrix_t[4*4];
 typedef uint16_t sw_half_t;
@@ -667,6 +668,9 @@ typedef struct {
 
     SWfactor srcFactor;
     SWfactor dstFactor;
+
+    sw_factor_f srcFactorFunc;
+    sw_factor_f dstFactorFunc;
 
     SWface cullFace;                                            // Faces to cull
     SWerrcode errCode;                                          // Last error code
@@ -1714,141 +1718,78 @@ static inline void sw_texture_sample(float* color, const sw_texture_t* tex, floa
 
 /* === Color Blending Functions === */
 
-static inline void sw_blend_colors(float dst[4], float src[4])
+static inline void sw_factor_zero(float *factor, const float *src, const float *dst)
 {
-    float src_factor[4] = { 0 };
-    float dst_factor[4] = { 0 };
-
-    switch (RLSW.srcFactor) {
-    case SW_ZERO:
-        src_factor[0] = src_factor[1] = src_factor[2] = src_factor[3] = 0.0f;
-        break;
-    case SW_ONE:
-        src_factor[0] = src_factor[1] = src_factor[2] = src_factor[3] = 1.0f;
-        break;
-    case SW_SRC_COLOR:
-        src_factor[0] = src[0];
-        src_factor[1] = src[1];
-        src_factor[2] = src[2];
-        src_factor[3] = src[3];
-        break;
-    case SW_ONE_MINUS_SRC_COLOR:
-        src_factor[0] = 1.0f - src[0];
-        src_factor[1] = 1.0f - src[1];
-        src_factor[2] = 1.0f - src[2];
-        src_factor[3] = 1.0f - src[3];
-        break;
-    case SW_SRC_ALPHA:
-        src_factor[0] = src[3];
-        src_factor[1] = src[3];
-        src_factor[2] = src[3];
-        src_factor[3] = src[3];
-        break;
-    case SW_ONE_MINUS_SRC_ALPHA:
-        src_factor[0] = 1.0f - src[3];
-        src_factor[1] = 1.0f - src[3];
-        src_factor[2] = 1.0f - src[3];
-        src_factor[3] = 1.0f - src[3];
-        break;
-    case SW_DST_ALPHA:
-        src_factor[0] = dst[3];
-        src_factor[1] = dst[3];
-        src_factor[2] = dst[3];
-        src_factor[3] = dst[3];
-        break;
-    case SW_ONE_MINUS_DST_ALPHA:
-        src_factor[0] = 1.0f - dst[3];
-        src_factor[1] = 1.0f - dst[3];
-        src_factor[2] = 1.0f - dst[3];
-        src_factor[3] = 1.0f - dst[3];
-        break;
-    case SW_DST_COLOR:
-        src_factor[0] = dst[0];
-        src_factor[1] = dst[1];
-        src_factor[2] = dst[2];
-        src_factor[3] = dst[3];
-        break;
-    case SW_ONE_MINUS_DST_COLOR:
-        src_factor[0] = 1.0f - dst[0];
-        src_factor[1] = 1.0f - dst[1];
-        src_factor[2] = 1.0f - dst[2];
-        src_factor[3] = 1.0f - dst[3];
-        break;
-    case SW_SRC_ALPHA_SATURATE:
-        src_factor[0] = 1.0f;
-        src_factor[1] = 1.0f;
-        src_factor[2] = 1.0f;
-        src_factor[3] = fminf(src[3], 1.0f);
-        break;
-    }
-
-    switch (RLSW.dstFactor) {
-    case SW_ZERO:
-        dst_factor[0] = dst_factor[1] = dst_factor[2] = dst_factor[3] = 0.0f;
-        break;
-    case SW_ONE:
-        dst_factor[0] = dst_factor[1] = dst_factor[2] = dst_factor[3] = 1.0f;
-        break;
-    case SW_SRC_COLOR:
-        dst_factor[0] = src[0];
-        dst_factor[1] = src[1];
-        dst_factor[2] = src[2];
-        dst_factor[3] = src[3];
-        break;
-    case SW_ONE_MINUS_SRC_COLOR:
-        dst_factor[0] = 1.0f - src[0];
-        dst_factor[1] = 1.0f - src[1];
-        dst_factor[2] = 1.0f - src[2];
-        dst_factor[3] = 1.0f - src[3];
-        break;
-    case SW_SRC_ALPHA:
-        dst_factor[0] = src[3];
-        dst_factor[1] = src[3];
-        dst_factor[2] = src[3];
-        dst_factor[3] = src[3];
-        break;
-    case SW_ONE_MINUS_SRC_ALPHA:
-        dst_factor[0] = 1.0f - src[3];
-        dst_factor[1] = 1.0f - src[3];
-        dst_factor[2] = 1.0f - src[3];
-        dst_factor[3] = 1.0f - src[3];
-        break;
-    case SW_DST_ALPHA:
-        dst_factor[0] = dst[3];
-        dst_factor[1] = dst[3];
-        dst_factor[2] = dst[3];
-        dst_factor[3] = dst[3];
-        break;
-    case SW_ONE_MINUS_DST_ALPHA:
-        dst_factor[0] = 1.0f - dst[3];
-        dst_factor[1] = 1.0f - dst[3];
-        dst_factor[2] = 1.0f - dst[3];
-        dst_factor[3] = 1.0f - dst[3];
-        break;
-    case SW_DST_COLOR:
-        dst_factor[0] = dst[0];
-        dst_factor[1] = dst[1];
-        dst_factor[2] = dst[2];
-        dst_factor[3] = dst[3];
-        break;
-    case SW_ONE_MINUS_DST_COLOR:
-        dst_factor[0] = 1.0f - dst[0];
-        dst_factor[1] = 1.0f - dst[1];
-        dst_factor[2] = 1.0f - dst[2];
-        dst_factor[3] = 1.0f - dst[3];
-        break;
-    case SW_SRC_ALPHA_SATURATE:
-        // NOTE: This case is only available for the source.  
-        //       Since the factors are validated before assignment,  
-        //       we should never reach this point.  
-        break;
-    }
-
-    for (int i = 0; i < 4; ++i) {
-        dst[i] = src_factor[i] * src[i] + dst_factor[i] * dst[i];
-    }
+    factor[0] = factor[1] = factor[2] = factor[3] = 0.0f;
 }
 
+static inline void sw_factor_one(float *factor, const float *src, const float *dst)
+{
+    factor[0] = factor[1] = factor[2] = factor[3] = 1.0f;
+}
+
+static inline void sw_factor_src_color(float *factor, const float *src, const float *dst)
+{
+    factor[0] = src[0]; factor[1] = src[1]; factor[2] = src[2]; factor[3] = src[3];
+}
+
+static inline void sw_factor_one_minus_src_color(float *factor, const float *src, const float *dst)
+{
+    factor[0] = 1.0f - src[0]; factor[1] = 1.0f - src[1]; 
+    factor[2] = 1.0f - src[2]; factor[3] = 1.0f - src[3];
+}
+
+static inline void sw_factor_src_alpha(float *factor, const float *src, const float *dst)
+{
+    factor[0] = factor[1] = factor[2] = factor[3] = src[3];
+}
+
+static inline void sw_factor_one_minus_src_alpha(float *factor, const float *src, const float *dst)
+{
+    float inv_alpha = 1.0f - src[3];
+    factor[0] = factor[1] = factor[2] = factor[3] = inv_alpha;
+}
+
+static inline void sw_factor_dst_alpha(float *factor, const float *src, const float *dst)
+{
+    factor[0] = factor[1] = factor[2] = factor[3] = dst[3];
+}
+
+static inline void sw_factor_one_minus_dst_alpha(float *factor, const float *src, const float *dst)
+{
+    float inv_alpha = 1.0f - dst[3];
+    factor[0] = factor[1] = factor[2] = factor[3] = inv_alpha;
+}
+
+static inline void sw_factor_dst_color(float *factor, const float *src, const float *dst)
+{
+    factor[0] = dst[0]; factor[1] = dst[1]; factor[2] = dst[2]; factor[3] = dst[3];
+}
+
+static inline void sw_factor_one_minus_dst_color(float *factor, const float *src, const float *dst)
+{
+    factor[0] = 1.0f - dst[0]; factor[1] = 1.0f - dst[1]; 
+    factor[2] = 1.0f - dst[2]; factor[3] = 1.0f - dst[3];
+}
+
+static inline void sw_factor_src_alpha_saturate(float *factor, const float *src, const float *dst)
+{
+    factor[0] = factor[1] = factor[2] = 1.0f;
+    factor[3] = (src[3] < 1.0f) ? src[3] : 1.0f;
+}
+
+static inline void sw_blend_colors(float dst[4], float src[4])
+{
+    float srcFactor[4], dstFactor[4];
+
+    RLSW.srcFactorFunc(srcFactor, src, dst);
+    RLSW.dstFactorFunc(dstFactor, src, dst);
+
+    dst[0] = srcFactor[0] * src[0] + dstFactor[0] * dst[0];
+    dst[1] = srcFactor[1] * src[1] + dstFactor[1] * dst[1];
+    dst[2] = srcFactor[2] * src[2] + dstFactor[2] * dst[2];
+    dst[3] = srcFactor[3] * src[3] + dstFactor[3] * dst[3];
+}
 
 /* === Projection Helper Functions === */
 
@@ -3098,6 +3039,9 @@ bool swInit(int w, int h)
     RLSW.srcFactor = SW_SRC_ALPHA;
     RLSW.dstFactor = SW_ONE_MINUS_SRC_ALPHA;
 
+    RLSW.srcFactorFunc = sw_factor_src_alpha;
+    RLSW.dstFactorFunc = sw_factor_one_minus_src_alpha;
+
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
@@ -3429,6 +3373,78 @@ void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
     }
     RLSW.srcFactor = sfactor;
     RLSW.dstFactor = dfactor;
+
+    switch (sfactor) {
+    case SW_ZERO:
+        RLSW.srcFactorFunc = sw_factor_zero;
+        break;
+    case SW_ONE:
+        RLSW.srcFactorFunc = sw_factor_one;
+        break;
+    case SW_SRC_COLOR:
+        RLSW.srcFactorFunc = sw_factor_src_color;
+        break;
+    case SW_ONE_MINUS_SRC_COLOR:
+        RLSW.srcFactorFunc = sw_factor_one_minus_src_color;
+        break;
+    case SW_SRC_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_src_alpha;
+        break;
+    case SW_ONE_MINUS_SRC_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_one_minus_src_alpha;
+        break;
+    case SW_DST_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_dst_alpha;
+        break;
+    case SW_ONE_MINUS_DST_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_one_minus_dst_alpha;
+        break;
+    case SW_DST_COLOR:
+        RLSW.srcFactorFunc = sw_factor_dst_color;
+        break;
+    case SW_ONE_MINUS_DST_COLOR:
+        RLSW.srcFactorFunc = sw_factor_one_minus_dst_color;
+        break;
+    case SW_SRC_ALPHA_SATURATE:
+        RLSW.srcFactorFunc = sw_factor_src_alpha_saturate;
+        break;
+    }
+
+    switch (dfactor) {
+    case SW_ZERO:
+        RLSW.srcFactorFunc = sw_factor_zero;
+        break;
+    case SW_ONE:
+        RLSW.srcFactorFunc = sw_factor_one;
+        break;
+    case SW_SRC_COLOR:
+        RLSW.srcFactorFunc = sw_factor_src_color;
+        break;
+    case SW_ONE_MINUS_SRC_COLOR:
+        RLSW.srcFactorFunc = sw_factor_one_minus_src_color;
+        break;
+    case SW_SRC_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_src_alpha;
+        break;
+    case SW_ONE_MINUS_SRC_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_one_minus_src_alpha;
+        break;
+    case SW_DST_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_dst_alpha;
+        break;
+    case SW_ONE_MINUS_DST_ALPHA:
+        RLSW.srcFactorFunc = sw_factor_one_minus_dst_alpha;
+        break;
+    case SW_DST_COLOR:
+        RLSW.srcFactorFunc = sw_factor_dst_color;
+        break;
+    case SW_ONE_MINUS_DST_COLOR:
+        RLSW.srcFactorFunc = sw_factor_one_minus_dst_color;
+        break;
+    case SW_SRC_ALPHA_SATURATE:
+        // NOTE: Should never be reached
+        break;
+    }
 }
 
 void swPolygonMode(SWpoly mode)
