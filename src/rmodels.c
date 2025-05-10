@@ -1429,16 +1429,12 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
     rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
-    if (mesh.animVertices)
-        rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
-    else
-        rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
+    if (mesh.animVertices) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
+    else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
     rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    if (mesh.normals)
-        rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormalss);
-    else
-        rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormalss);
+    else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
@@ -5215,7 +5211,7 @@ static Model LoadGLTF(const char *fileName)
     /*********************************************************************************************
 
         Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend)
-        Transform handling implemented by Paul Melis (@paulmelis).
+        Transform handling implemented by Paul Melis (@paulmelis)
         Reviewed by Ramon Santamaria (@raysan5)
 
         FEATURES:
@@ -5225,10 +5221,10 @@ static Model LoadGLTF(const char *fileName)
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
           - Supports basic animations
-          - Transforms, including parent-child relations, are applied on the mesh data, but the
-            hierarchy is not kept (as it can't be represented).
+          - Transforms, including parent-child relations, are applied on the mesh data,
+            but the hierarchy is not kept (as it can't be represented)
           - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
-            are turned into separate raylib Meshes.
+            are turned into separate raylib Meshes
 
         RESTRICTIONS:
           - Only triangle meshes supported
@@ -5444,7 +5440,7 @@ static Model LoadGLTF(const char *fileName)
         // Any glTF mesh linked from more than one Node (i.e. instancing)
         // is turned into multiple Mesh's, as each Node will have its own
         // transform applied.
-        // Note: the code below disregards the scenes defined in the file, all nodes are used.
+        // NOTE: The code below disregards the scenes defined in the file, all nodes are used.
         //----------------------------------------------------------------------------------------------------
         int meshIndex = 0;
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -5894,7 +5890,6 @@ static Model LoadGLTF(const char *fileName)
 
                         if (attribute->type == cgltf_type_vec4)
                         {
-                            // TODO: Support component types: u8, u16?
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
                                 // Init raylib mesh bone weight to copy glTF attribute data
@@ -5930,6 +5925,7 @@ static Model LoadGLTF(const char *fileName)
 
                                 // Load 4 components of float data type into mesh.boneWeights
                                 // for cgltf_attribute_type_weights we have:
+
                                 //   - data.meshes[0] (256 vertices)
                                 //   - 256 values, provided as cgltf_type_vec4 of float (4 byte per joint, stride 16)
                                 LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].boneWeights)
@@ -5940,8 +5936,8 @@ static Model LoadGLTF(const char *fileName)
                     }
                 }
 
-                // check if we are animated, and the mesh was not given any bone assignments, but is the child of a bone node
-                // in this case we need to fully attach all the verts to the parent bone so it will animate with the bone.
+                // Check if we are animated, and the mesh was not given any bone assignments, but is the child of a bone node
+                // in this case we need to fully attach all the verts to the parent bone so it will animate with the bone
                 if (data->skins_count > 0 && !hasJoints && node->parent != NULL && node->parent->mesh == NULL)
                 {
                     int parentBoneId = -1;
@@ -5956,16 +5952,15 @@ static Model LoadGLTF(const char *fileName)
 
                     if (parentBoneId >= 0)
                     {
-                        model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 4, sizeof(unsigned char));
-                        model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount * 4, sizeof(float));
+                        model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                        model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
-                        for (int vertexIndex = 0; vertexIndex < model.meshes[meshIndex].vertexCount * 4; vertexIndex += 4)
+                        for (int vertexIndex = 0; vertexIndex < model.meshes[meshIndex].vertexCount*4; vertexIndex += 4)
                         {
                             model.meshes[meshIndex].boneIds[vertexIndex] = (unsigned char)parentBoneId;
                             model.meshes[meshIndex].boneWeights[vertexIndex] = 1.0f;
                         }
                     }
-                  
                 }
 
                 // Animated vertex data
@@ -5986,9 +5981,8 @@ static Model LoadGLTF(const char *fileName)
                     model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
                 }
 
-                meshIndex++;       // Move to next mesh
+                meshIndex++; // Move to next mesh
             }
-
         }
 
         // Free all cgltf loaded data
