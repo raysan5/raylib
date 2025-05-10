@@ -775,9 +775,31 @@ static inline float sw_lerp(float a, float b, float t)
 static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_vertex_t* b, float t)
 {
     sw_vertex_t result;
-    for (int i = 0; i < offsetof(sw_vertex_t, screen) / sizeof(float); i++) {
-        ((float*)&result)[i] = sw_lerp(((float*)a)[i], ((float*)b)[i], t);
-    }
+
+    const float tInv = 1.0f - t;
+
+    // Position interpolation (4 components)
+    result.position[0] = a->position[0] * tInv + b->position[0] * t;
+    result.position[1] = a->position[1] * tInv + b->position[1] * t;
+    result.position[2] = a->position[2] * tInv + b->position[2] * t;
+    result.position[3] = a->position[3] * tInv + b->position[3] * t;
+
+    // Texture coordinate interpolation (2 components)
+    result.texcoord[0] = a->texcoord[0] * tInv + b->texcoord[0] * t;
+    result.texcoord[1] = a->texcoord[1] * tInv + b->texcoord[1] * t;
+
+    // Color interpolation (4 components)
+    result.color[0] = a->color[0] * tInv + b->color[0] * t;
+    result.color[1] = a->color[1] * tInv + b->color[1] * t;
+    result.color[2] = a->color[2] * tInv + b->color[2] * t;
+    result.color[3] = a->color[3] * tInv + b->color[3] * t;
+
+    // Homogeneous coordinate interpolation (4 components)
+    result.homogeneous[0] = a->homogeneous[0] * tInv + b->homogeneous[0] * t;
+    result.homogeneous[1] = a->homogeneous[1] * tInv + b->homogeneous[1] * t;
+    result.homogeneous[2] = a->homogeneous[2] * tInv + b->homogeneous[2] * t;
+    result.homogeneous[3] = a->homogeneous[3] * tInv + b->homogeneous[3] * t;
+
     return result;
 }
 
