@@ -1123,7 +1123,7 @@ RLAPI bool SaveFileData(const char *fileName, void *data, int dataSize); // Save
 RLAPI bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName); // Export data to code (.h), returns true on success
 RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
 RLAPI void UnloadFileText(char *text);                            // Unload file text data allocated by LoadFileText()
-RLAPI bool SaveFileText(const char *fileName, char *text);        // Save text data to file (write), string must be '\0' terminated, returns true on success
+RLAPI bool SaveFileText(const char *fileName, const char *text);  // Save text data to file (write), string must be '\0' terminated, returns true on success
 //------------------------------------------------------------------
 
 // File system functions
