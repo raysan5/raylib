@@ -998,21 +998,25 @@ static inline void sw_framebuffer_write_color(void* dst, float color[3])
 
 static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
 {
-    uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
-    uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
-    uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+    uint8_t r8 = (uint8_t)(color[0] * 7.0f + 0.5f);
+    uint8_t g8 = (uint8_t)(color[1] * 7.0f + 0.5f);
+    uint8_t b8 = (uint8_t)(color[2] * 3.0f + 0.5f);
+
+    uint8_t packedColor = ((r8 & 0x07) << 5) | ((g8 & 0x07) << 2) | (b8 & 0x03);
 
     uint8_t* p = (uint8_t*)ptr;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                p[y * RLSW.framebuffer.width + x] = (r << 5) | (g << 2) | b;
+            uint8_t* curPtr = p + y * RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int xCount = 0; xCount < wScissor; xCount++) {
+                *curPtr++ = packedColor;
             }
         }
     } else {
         for (int i = 0; i < size; i++) {
-            p[i] = (r << 5) | (g << 2) | b;
+            *p++ = packedColor;
         }
     }
 }
@@ -1054,21 +1058,25 @@ static inline void sw_framebuffer_write_color(void* dst, float color[3])
 
 static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
 {
-    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
-    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
-    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+    uint16_t r16 = (uint16_t)(color[0] * 31.0f + 0.5f);
+    uint16_t g_16 = (uint16_t)(color[1] * 63.0f + 0.5f);
+    uint16_t b_16 = (uint16_t)(color[2] * 31.0f + 0.5f);
+
+    uint16_t packedColor = ((r16 & 0x1F) << 11) | ((g_16 & 0x3F) << 5) | (b_16 & 0x1F);
 
     uint16_t* p = (uint16_t*)ptr;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                p[y * RLSW.framebuffer.width + x] = (r << 11) | (g << 5) | b;
+            uint16_t* curPtr = p + y * RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int xCount = 0; xCount < wScissor; xCount++) {
+                *curPtr++ = packedColor;
             }
         }
     } else {
         for (int i = 0; i < size; i++) {
-            p[i] = (r << 11) | (g << 5) | b;
+            *p++ = packedColor;
         }
     }
 }
@@ -1100,19 +1108,20 @@ static inline void sw_framebuffer_write_color(void* dst, float color[3])
 
 static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
 {
-    uint8_t r = (uint8_t)(color[0] * 255);
-    uint8_t g = (uint8_t)(color[1] * 255);
-    uint8_t b = (uint8_t)(color[2] * 255);
+    uint8_t r = (uint8_t)(color[0] * 255.0f);
+    uint8_t g = (uint8_t)(color[1] * 255.0f);
+    uint8_t b = (uint8_t)(color[2] * 255.0f);
 
     uint8_t* p = (uint8_t*)ptr;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                int offset = (y * RLSW.framebuffer.width + x) * 3;
-                p[offset + 0] = r;
-                p[offset + 1] = g;
-                p[offset + 2] = b;
+            uint8_t* curPtr = p + 3 * (y * RLSW.framebuffer.width + RLSW.scMin[0]);
+            for (int xCount = 0; xCount < wScissor; xCount++) {
+                *curPtr++ = r;
+                *curPtr++ = g;
+                *curPtr++ = b;
             }
         }
     } else {
@@ -1140,19 +1149,21 @@ static inline void sw_framebuffer_write_depth(void* dst, float depth)
 
 static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 {
-    uint8_t v  = value * UINT8_MAX;
+    uint8_t d8  = (uint8_t)(value * UINT8_MAX);
     uint8_t* p = (uint8_t*)ptr;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                p[y * RLSW.framebuffer.width + x] = v;
+            uint8_t* curPtr = p + y * RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int xCount = 0; xCount < wScissor; xCount++) {
+                *curPtr++ = d8;
             }
         }
     }
     else {
         for (int i = 0; i < size; i++) {
-            p[i] = v;
+            *p++ = d8;
         }
     }
 }
@@ -1171,19 +1182,21 @@ static inline void sw_framebuffer_write_depth(void* dst, float depth)
 
 static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 {
-    uint16_t v  = value * UINT16_MAX;
+    uint16_t d16  = (uint16_t)(value * UINT16_MAX);
     uint16_t* p = (uint16_t*)ptr;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                p[y * RLSW.framebuffer.width + x] = v;
+            uint16_t* curPtr = p + y * RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int xCount = 0; xCount < wScissor; xCount++) {
+                *curPtr++ = d16;
             }
         }
     }
     else {
         for (int i = 0; i < size; i++) {
-            p[i] = v;
+            *p++ = d16;
         }
     }
 }
@@ -1210,24 +1223,29 @@ static inline void sw_framebuffer_write_depth(void* dst, float depth)
 
 static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 {
-    uint32_t v = value * UINT32_MAX;
+    uint32_t d32 = (uint32_t)(value * UINT32_MAX);
+    uint8_t d_byte0 = (uint8_t)((d32 >> 16) & 0xFF);
+    uint8_t d_byte1 = (uint8_t)((d32 >> 8) & 0xFF);
+    uint8_t d_byte2 = (uint8_t)(d32 & 0xFF);
+
     uint8_t* p = (uint8_t*)ptr;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                int offset = y * RLSW.framebuffer.width + x;
-                p[3 * offset + 0] = (v >> 16) & 0xFF;
-                p[3 * offset + 1] = (v >> 8) & 0xFF;
-                p[3 * offset + 2] = v & 0xFF;
+            uint8_t* curPtr = p + 3 * (y * RLSW.framebuffer.width + RLSW.scMin[0]);
+            for (int xCount = 0; xCount < wScissor; xCount++) {
+                *curPtr++ = d_byte0;
+                *curPtr++ = d_byte1;
+                *curPtr++ = d_byte2;
             }
         }
     }
     else {
         for (int i = 0; i < size; i++) {
-            *p++ = (v >> 16) & 0xFF;
-            *p++ = (v >> 8) & 0xFF;
-            *p++ = v & 0xFF;
+            *p++ = d_byte0;
+            *p++ = d_byte1;
+            *p++ = d_byte2;
         }
     }
 }
@@ -1237,78 +1255,121 @@ static inline void sw_framebuffer_fill_depth(void* ptr, int size, float value)
 static inline void sw_framebuffer_fill(void* colorPtr, void* depthPtr, int size, float color[4], float depth_value)
 {
 #if (SW_COLOR_BUFFER_BITS == 8)
-    uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
-    uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
-    uint8_t b = ((uint8_t)(color[2] * UINT8_MAX) >> 6) & 0x03;
+    // Calculate and pack 3:3:2 color
+    // Scale color components to the max value for each bit depth and round
+    uint8_t r8 = (uint8_t)(color[0] * 7.0f + 0.5f);
+    uint8_t g8 = (uint8_t)(color[1] * 7.0f + 0.5f);
+    uint8_t b8 = (uint8_t)(color[2] * 3.0f + 0.5f);
+    // Pack the components into a single byte
+    uint8_t packedColor = ((r8 & 0x07) << 5) | ((g8 & 0x07) << 2) | (b8 & 0x03);
     uint8_t* cptr = (uint8_t*)colorPtr;
 #elif (SW_COLOR_BUFFER_BITS == 16)
-    uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
-    uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
-    uint8_t b = (uint8_t)(color[2] * 31.0f + 0.5f) & 0x1F;
+    // Calculate and pack 5:6:5 color
+    // Scale color components to the max value for each bit depth and round
+    uint16_t r16 = (uint16_t)(color[0] * 31.0f + 0.5f);
+    uint16_t r16 = (uint16_t)(color[1] * 63.0f + 0.5f);
+    uint16_t b16 = (uint16_t)(color[2] * 31.0f + 0.5f);
+    // Pack the components into a 16-bit value
+    uint16_t packedColor = ((r16 & 0x1F) << 11) | ((r16 & 0x3F) << 5) | (b16 & 0x1F);
     uint16_t* cptr = (uint16_t*)colorPtr;
 #elif (SW_COLOR_BUFFER_BITS == 24)
-    uint8_t r = (uint8_t)(color[0] * 255);
-    uint8_t g = (uint8_t)(color[1] * 255);
-    uint8_t b = (uint8_t)(color[2] * 255);
+    // Calculate 8:8:8 color components
+    uint8_t r24 = (uint8_t)(color[0] * 255.0f);
+    uint8_t g24 = (uint8_t)(color[1] * 255.0f);
+    uint8_t b24 = (uint8_t)(color[2] * 255.0f);
     uint8_t* cptr = (uint8_t*)colorPtr;
 #endif
 
 #if (SW_DEPTH_BUFFER_BITS == 8)
-    uint8_t d  = depth_value * UINT8_MAX;
+    // Calculate 8-bit depth
+    uint8_t d8  = (uint8_t)(depth_value * UINT8_MAX);
     uint8_t* dptr = (uint8_t*)depthPtr;
 #elif (SW_DEPTH_BUFFER_BITS == 16)
-    uint16_t d  = depth_value * UINT16_MAX;
+    // Calculate 16-bit depth
+    uint16_t d16  = (uint16_t)(depth_value * UINT16_MAX);
     uint16_t* dptr = (uint16_t*)depthPtr;
 #elif (SW_DEPTH_BUFFER_BITS == 24)
-    uint32_t d = depth_value * UINT32_MAX;
+    // Calculate 24-bit depth and pre-calculate bytes
+    uint32_t d32 = (uint32_t)(depth_value * UINT32_MAX);
+    uint8_t dByte0 = (uint8_t)((d32 >> 16) & 0xFF);
+    uint8_t dByte1 = (uint8_t)((d32 >> 8) & 0xFF);
+    uint8_t dByte2 = (uint8_t)(d32 & 0xFF);
     uint8_t* dptr = (uint8_t*)depthPtr;
 #endif
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
+        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            for (int x = RLSW.scMin[0]; x <= RLSW.scMax[0]; x++) {
-                int offset = y * RLSW.framebuffer.width + x;
+            int row_start_index = y * RLSW.framebuffer.width + RLSW.scMin[0];
+
+            // Calculate starting pointers for the current row within the scissor rectangle
 #           if (SW_COLOR_BUFFER_BITS == 8)
-                cptr[offset] = (r << 5) | (g << 2) | b;
+            uint8_t* curCPtr = cptr + row_start_index;
 #           elif (SW_COLOR_BUFFER_BITS == 16)
-                cptr[offset] = (r << 11) | (g << 5) | b;
+            uint16_t* curCPtr = cptr + row_start_index;
 #           elif (SW_COLOR_BUFFER_BITS == 24)
-                cptr[3 * offset + 0] = r;
-                cptr[3 * offset + 1] = g;
-                cptr[3 * offset + 2] = b;
+            uint8_t* curCPtr = cptr + 3 * row_start_index;
 #           endif
+
 #           if (SW_DEPTH_BUFFER_BITS == 8)
-                dptr[offset] = d;
+            uint8_t* curDPtr = dptr + row_start_index;
 #           elif (SW_DEPTH_BUFFER_BITS == 16)
-                dptr[offset] = d;
+            uint16_t* curDPtr = dptr + row_start_index;
 #           elif (SW_DEPTH_BUFFER_BITS == 24)
-                dptr[3 * offset + 0] = (d >> 16) & 0xFF;
-                dptr[3 * offset + 1] = (d >> 8) & 0xFF;
-                dptr[3 * offset + 2] = d & 0xFF;
+            uint8_t* curDPtr = dptr + 3 * row_start_index;
+#           endif
+
+            // Fill the current row within the scissor rectangle
+            for (int xCount = 0; xCount < wScissor; xCount++)
+            {
+                // Write color
+#           if (SW_COLOR_BUFFER_BITS == 8)
+                *curCPtr++ = packedColor;
+#           elif (SW_COLOR_BUFFER_BITS == 16)
+                *curCPtr++ = packedColor;
+#           elif (SW_COLOR_BUFFER_BITS == 24)
+                *curCPtr++ = r24;
+                *curCPtr++ = g24;
+                *curCPtr++ = b24;
+#           endif
+
+                // Write depth
+#           if (SW_DEPTH_BUFFER_BITS == 8)
+                *curDPtr++ = d8;
+#           elif (SW_DEPTH_BUFFER_BITS == 16)
+                *curDPtr++ = d16;
+#           elif (SW_DEPTH_BUFFER_BITS == 24)
+                *curDPtr++ = dByte0;
+                *curDPtr++ = dByte1;
+                *curDPtr++ = dByte2;
 #           endif
             }
         }
         return;
     }
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
+    {
+        // Write color
 #   if (SW_COLOR_BUFFER_BITS == 8)
-        cptr[i] = (r << 5) | (g << 2) | b;
+        *cptr++ = packedColor;
 #   elif (SW_COLOR_BUFFER_BITS == 16)
-        cptr[i] = (r << 11) | (g << 5) | b;
+        *cptr++ = packedColor;
 #   elif (SW_COLOR_BUFFER_BITS == 24)
-        *cptr++ = r;
-        *cptr++ = g;
-        *cptr++ = b;
+        *cptr++ = r24;
+        *cptr++ = g24;
+        *cptr++ = b24;
 #   endif
+
+        // Write depth
 #   if (SW_DEPTH_BUFFER_BITS == 8)
-        dptr[i] = d;
+        *dptr++ = d8;
 #   elif (SW_DEPTH_BUFFER_BITS == 16)
-        dptr[i] = d;
+        *dptr++ = d16;
 #   elif (SW_DEPTH_BUFFER_BITS == 24)
-        *dptr++ = (d >> 16) & 0xFF;
-        *dptr++ = (d >> 8) & 0xFF;
-        *dptr++ = d & 0xFF;
+        *dptr++ = dByte0;
+        *dptr++ = dByte1;
+        *dptr++ = dByte2;
 #   endif
     }
 }
