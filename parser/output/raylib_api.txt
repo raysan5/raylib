@@ -985,7 +985,7 @@ Callback 005: SaveFileTextCallback() (2 input parameters)
   Return type: bool
   Description: FileIO: Save text data
   Param[1]: fileName (type: const char *)
-  Param[2]: text (type: char *)
+  Param[2]: text (type: const char *)
 Callback 006: AudioCallback() (2 input parameters)
   Name: AudioCallback
   Return type: void
