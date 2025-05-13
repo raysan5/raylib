@@ -290,6 +290,7 @@ typedef struct CoreData {
         bool shouldClose;                   // Check if window set for closing
         bool resizedLastFrame;              // Check if window has been resized last frame
         bool eventWaiting;                  // Wait for events before ending frame
+        double eventWaitingTimeout;         // If waiting for events, wait with this timeout (0 means wait forever)
         bool usingFbo;                      // Using FBO (RenderTexture) for rendering instead of default framebuffer
 
         Point position;                     // Window position (required on fullscreen toggle)
@@ -860,6 +861,13 @@ void EnableEventWaiting(void)
 void DisableEventWaiting(void)
 {
     CORE.Window.eventWaiting = false;
+}
+
+// Set timeout to wait for events [>0.0f], if waiting for events is enabled
+void SetEventWaitingTimeout(double seconds)
+{
+    if (seconds <= 0) CORE.Window.eventWaitingTimeout = 0;
+    else CORE.Window.eventWaitingTimeout = seconds;
 }
 
 // Check if cursor is not visible

@@ -1268,7 +1268,15 @@ void PollInputEvents(void)
 
     if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
     {
-        glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+        if ((CORE.Window.eventWaiting) && (CORE.Window.eventWaitingTimeout > 0))
+        {
+            // Wait for timeout or input events before continue (drawing is paused)
+            glfwWaitEventsTimeout(CORE.Window.eventWaitingTimeout);
+        }
+        else {
+            glfwWaitEvents();   // Wait for input events before continue (drawing is paused)
+        }
+
         CORE.Time.previous = GetTime();
     }
     else glfwPollEvents();      // Poll input events: keyboard/mouse/window events (callbacks) -> Update keys state

@@ -1019,6 +1019,7 @@ RLAPI const char *GetClipboardText(void);                         // Get clipboa
 RLAPI Image GetClipboardImage(void);                              // Get clipboard image content
 RLAPI void EnableEventWaiting(void);                              // Enable waiting for events on EndDrawing(), no automatic event polling
 RLAPI void DisableEventWaiting(void);                             // Disable waiting for events on EndDrawing(), automatic events polling
+RLAPI void SetEventWaitingTimeout(double seconds);                // Set timeout to wait for events [>0.0f], if waiting for events is enabled
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
