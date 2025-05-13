@@ -256,6 +256,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib.root_module.linkSystemLibrary("GLESv2", .{});
                     raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
                 }
+                raylib.root_module.linkSystemLibrary("EGL", .{});
 
                 setDesktopPlatform(raylib, .android);
             } else {
