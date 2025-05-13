@@ -954,7 +954,7 @@ typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args); 
 typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
 typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
-typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileIO: Save text data
+typedef bool (*SaveFileTextCallback)(const char *fileName, const char *text); // FileIO: Save text data
 
 //------------------------------------------------------------------------------------
 // Global Variables Definition

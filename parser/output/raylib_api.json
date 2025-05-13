@@ -3139,7 +3139,7 @@
           "name": "fileName"
         },
         {
-          "type": "char *",
+          "type": "const char *",
           "name": "text"
         }
       ]

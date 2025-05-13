@@ -672,7 +672,7 @@
         </Callback>
         <Callback name="SaveFileTextCallback" retType="bool" paramCount="2" desc="FileIO: Save text data">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="char *" name="text" desc="" />
+            <Param type="const char *" name="text" desc="" />
         </Callback>
         <Callback name="AudioCallback" retType="void" paramCount="2" desc="">
             <Param type="void *" name="bufferData" desc="" />
