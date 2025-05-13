@@ -653,9 +653,9 @@ void PollInputEvents(void) {
         if (event.code == ABS_MT_TRACKING_ID) {
           platform.touch.fingers[slot].action = event.value == -1 ? TOUCH_ACTION_UP : TOUCH_ACTION_DOWN;
         } else if (event.code == ABS_MT_POSITION_X) {
-          platform.touch.fingers[slot].y = CORE.Window.screen.height - event.value;
+          platform.touch.fingers[slot].y = event.value;
         } else if (event.code == ABS_MT_POSITION_Y) {
-          platform.touch.fingers[slot].x = event.value;
+          platform.touch.fingers[slot].x = CORE.Window.screen.width - event.value;
         }
       }
     }
