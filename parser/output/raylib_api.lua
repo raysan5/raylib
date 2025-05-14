@@ -3108,7 +3108,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "char *", name = "text"}
+        {type = "const char *", name = "text"}
       }
     },
     {
@@ -4006,7 +4006,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "char *", name = "text"}
+        {type = "const char *", name = "text"}
       }
     },
     {
@@ -4211,7 +4211,7 @@ return {
       description = "Decode Base64 string data, memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
-        {type = "const unsigned char *", name = "data"},
+        {type = "const char *", name = "data"},
         {type = "int *", name = "outputSize"}
       }
     },

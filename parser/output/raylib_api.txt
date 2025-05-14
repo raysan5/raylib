@@ -985,7 +985,7 @@ Callback 005: SaveFileTextCallback() (2 input parameters)
   Return type: bool
   Description: FileIO: Save text data
   Param[1]: fileName (type: const char *)
-  Param[2]: text (type: char *)
+  Param[2]: text (type: const char *)
 Callback 006: AudioCallback() (2 input parameters)
   Name: AudioCallback
   Return type: void
@@ -1656,7 +1656,7 @@ Function 123: SaveFileText() (2 input parameters)
   Return type: bool
   Description: Save text data to file (write), string must be '\0' terminated, returns true on success
   Param[1]: fileName (type: const char *)
-  Param[2]: text (type: char *)
+  Param[2]: text (type: const char *)
 Function 124: FileExists() (1 input parameters)
   Name: FileExists
   Return type: bool
@@ -1795,7 +1795,7 @@ Function 149: DecodeDataBase64() (2 input parameters)
   Name: DecodeDataBase64
   Return type: unsigned char *
   Description: Decode Base64 string data, memory must be MemFree()
-  Param[1]: data (type: const unsigned char *)
+  Param[1]: data (type: const char *)
   Param[2]: outputSize (type: int *)
 Function 150: ComputeCRC32() (2 input parameters)
   Name: ComputeCRC32
