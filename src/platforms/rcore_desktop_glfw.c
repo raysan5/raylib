@@ -1752,6 +1752,10 @@ static void ErrorCallback(int error, const char *description)
 // NOTE: Window resizing not enabled by default, use SetConfigFlags()
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
+    // WARNING: On window minimization, callback is called,
+    // but we don't want to change internal screen values, it breaks things 
+    if ((width == 0) || (height == 0)) return;
+
     // Reset viewport and projection matrix for new size
     SetupViewport(width, height);
 
