@@ -1578,7 +1578,7 @@ const char *TextSubtext(const char *text, int position, int length)
 }
 
 // Replace text string
-// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
+// REQUIRES: strstr(), strncpy(), strcpy()
 // WARNING: Allocated memory must be manually freed
 char *TextReplace(const char *text, const char *replace, const char *by)
 {
