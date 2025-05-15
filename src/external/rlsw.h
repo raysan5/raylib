@@ -3329,7 +3329,7 @@ static inline void sw_point_render(sw_vertex_t* v)
 static inline void sw_poly_point_render(void)
 {
     for (int i = 0; i < RLSW.vertexCounter; i++) {
-        sw_point_render(RLSW.vertexBuffer);
+        sw_point_render(&RLSW.vertexBuffer[i]);
     }
 }
 
