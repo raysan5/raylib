@@ -2171,7 +2171,7 @@ static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 }
 
 
-/* === Triangle Rendering Part === */
+/* === Polygon Clipping Part === */
 
 #define DEFINE_CLIP_FUNC(name, FUNC_IS_INSIDE, FUNC_COMPUTE_T)                          \
 static inline int sw_clip_##name(                                                       \
@@ -2250,7 +2250,7 @@ DEFINE_CLIP_FUNC(scissor_y_max, IS_INSIDE_SCISSOR_Y_MAX, COMPUTE_T_SCISSOR_Y_MAX
 
 // Main clip function
 
-static inline bool sw_triangle_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
     sw_vertex_t tmp[SW_MAX_CLIPPED_POLYGON_VERTICES];
     int n = *vertexCounter;
@@ -2284,6 +2284,9 @@ static inline bool sw_triangle_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_V
     return n > 0;
 }
 
+
+/* === Triangle Rendering Part === */
+
 static inline void sw_triangle_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
     // Step 1: Face culling - discard triangles facing away
@@ -2312,13 +2315,13 @@ static inline void sw_triangle_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPP
             return;
         }
     }
-    
+
     // Step 2: Clipping and perspective projection
-    if (sw_triangle_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
+    if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
 
         // Transformation to screen space and normalization
         for (int i = 0; i < *vertexCounter; i++) {
-            sw_vertex_t *v = &polygon[i];  // Use &polygon[i] instead of polygon + i
+            sw_vertex_t *v = &polygon[i];
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
@@ -2628,6 +2631,137 @@ static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* 
     sw_triangle_clip_and_project(polygon, &vertexCounter);
 
     if (vertexCounter < 3) {
+        return;
+    }
+
+#   define TRIANGLE_RASTER(RASTER_FUNC)                         \
+    {                                                           \
+        for (int i = 0; i < vertexCounter - 2; i++) {           \
+            RASTER_FUNC(                                        \
+                &polygon[0], &polygon[i + 1], &polygon[i + 2],  \
+                &RLSW.loadedTextures[RLSW.currentTexture]       \
+            );                                                  \
+        }                                                       \
+    }
+
+    if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+        TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
+    }
+    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+        TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
+    }
+    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) {
+        TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
+    }
+    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) {
+        TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
+    }
+    else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+        TRIANGLE_RASTER(sw_triangle_raster_BLEND)
+    }
+    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+        TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
+    }
+    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D)) {
+        TRIANGLE_RASTER(sw_triangle_raster_TEX)
+    }
+    else {
+        TRIANGLE_RASTER(sw_triangle_raster)
+    }
+}
+
+
+/* === Quad Rendering Part === */
+
+static inline void sw_quad_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+{
+    // Step 1: Face culling - discard quads facing away
+    if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
+
+        // NOTE: We use Green's theorem (signed polygon area) instead of triangulation.
+        // This is faster but only reliable if the quad is convex and not self-intersecting.
+        // For face culling purposes, this approximation is acceptable.
+
+        // Preload homogeneous coordinates into local variables
+        const float* h0 = polygon[0].homogeneous;
+        const float* h1 = polygon[1].homogeneous;
+        const float* h2 = polygon[2].homogeneous;
+        const float* h3 = polygon[3].homogeneous;
+
+        // Compute 1/w once and delay divisions
+        const float invW0 = 1.0f / h0[3];
+        const float invW1 = 1.0f / h1[3];
+        const float invW2 = 1.0f / h2[3];
+        const float invW3 = 1.0f / h3[3];
+
+        // Pre-multiply to get x/w and y/w coordinates
+        const float x0 = h0[0] * invW0, y0 = h0[1] * invW0;
+        const float x1 = h1[0] * invW1, y1 = h1[1] * invW1;
+        const float x2 = h2[0] * invW2, y2 = h2[1] * invW2;
+        const float x3 = h3[0] * invW3, y3 = h3[1] * invW3;
+
+        // Use Green's theorem (signed polygon area)
+        // area = 0.5 * sum of (xi * yi+1 - xi+1 * yi)
+        // The factor 0.5 is not needed here, only the sign matters.
+        const float sgnArea = 
+            (x0 * y1 - x1 * y0)
+          + (x1 * y2 - x2 * y1)
+          + (x2 * y3 - x3 * y2)
+          + (x3 * y0 - x0 * y3);
+
+        // Perform face culling based on area sign
+        if ((RLSW.cullFace == SW_FRONT) ? (sgnArea >= 0.0f) : (sgnArea <= 0.0f)) {
+            *vertexCounter = 0;
+            return;
+        }
+    }
+
+    // Step 2: Clipping and perspective projection
+    if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 4) {
+
+        // Transformation to screen space and normalization
+        for (int i = 0; i < *vertexCounter; i++) {
+            sw_vertex_t *v = &polygon[i];
+
+            // Calculation of the reciprocal of W for normalization
+            // as well as perspective-correct attributes
+            const float invW = 1.0f / v->homogeneous[3];
+            v->homogeneous[3] = invW;
+
+            // Division of XYZ coordinates by weight
+            v->homogeneous[0] *= invW;
+            v->homogeneous[1] *= invW;
+            v->homogeneous[2] *= invW;
+
+            // Division of texture coordinates (perspective-correct)
+            v->texcoord[0] *= invW;
+            v->texcoord[1] *= invW;
+
+            // Division of colors (perspective-correct)
+            v->color[0] *= invW;
+            v->color[1] *= invW;
+            v->color[2] *= invW;
+            v->color[3] *= invW;
+            
+            // Transformation to screen space
+            sw_project_ndc_to_screen(v->screen, v->homogeneous);
+        }
+    }
+}
+
+static inline void sw_quad_render(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2, const sw_vertex_t* v3)
+{
+    int vertexCounter = 4;
+
+    sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES];
+    polygon[0] = *v0;
+    polygon[1] = *v1;
+    polygon[2] = *v2;
+    polygon[3] = *v3;
+
+    sw_quad_clip_and_project(polygon, &vertexCounter);
+
+    if (vertexCounter < 4) {
         return;
     }
 
@@ -3237,15 +3371,11 @@ static inline void sw_poly_fill_render(void)
         );
         break;
     case SW_QUADS:
-        sw_triangle_render(
+        sw_quad_render(
             &RLSW.vertexBuffer[0],
             &RLSW.vertexBuffer[1],
-            &RLSW.vertexBuffer[2]
-        );
-        sw_triangle_render(
             &RLSW.vertexBuffer[2],
-            &RLSW.vertexBuffer[3],
-            &RLSW.vertexBuffer[0]
+            &RLSW.vertexBuffer[3]
         );
         break;
     }
