@@ -2291,39 +2291,41 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 
 /* === Triangle Rendering Part === */
 
+static inline bool sw_triangle_face_culling(void)
+{
+    // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+    //       However, culling requires NDC coordinates, while clipping must be done 
+    //       in homogeneous space to correctly interpolate newly generated vertices.
+    //       This means we need to compute 1/W twice: 
+    //       - Once before clipping for face culling.
+    //       - Again after clipping for the new vertices.
+
+    // Preload homogeneous coordinates into local variables
+    const float* h0 = RLSW.vertexBuffer[0].homogeneous;
+    const float* h1 = RLSW.vertexBuffer[1].homogeneous;
+    const float* h2 = RLSW.vertexBuffer[2].homogeneous;
+
+    // Compute 1/w once and delay divisions
+    const float invW0 = 1.0f / h0[3];
+    const float invW1 = 1.0f / h1[3];
+    const float invW2 = 1.0f / h2[3];
+
+    // Compute the signed 2D area (cross product in Z)
+    const float x0 = h0[0] * invW0, y0 = h0[1] * invW0;
+    const float x1 = h1[0] * invW1, y1 = h1[1] * invW1;
+    const float x2 = h2[0] * invW2, y2 = h2[1] * invW2;
+    const float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+
+    // Discard the triangle if it faces the culled direction
+    return (RLSW.cullFace == SW_FRONT)
+        ? (sgnArea < 0) : (sgnArea > 0);
+}
+
 static inline void sw_triangle_clip_and_project(void)
 {
     sw_vertex_t* polygon = RLSW.vertexBuffer;
     int* vertexCounter = &RLSW.vertexCounter;
 
-    // Step 1: Face culling - discard triangles facing away
-    if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
-
-        // NOTE: Face culling is done before clipping to avoid unnecessary computations.
-        //       However, culling requires NDC coordinates, while clipping must be done 
-        //       in homogeneous space to correctly interpolate newly generated vertices.
-        //       This means we need to compute 1/W twice: 
-        //       - Once before clipping for face culling.
-        //       - Again after clipping for the new vertices.
-
-        const float invW0 = 1.0f / polygon[0].homogeneous[3];
-        const float invW1 = 1.0f / polygon[1].homogeneous[3];
-        const float invW2 = 1.0f / polygon[2].homogeneous[3];
-
-        // Compute the signed 2D area (cross product in Z)
-        const float x0 = polygon[0].homogeneous[0] * invW0, y0 = polygon[0].homogeneous[1] * invW0;
-        const float x1 = polygon[1].homogeneous[0] * invW1, y1 = polygon[1].homogeneous[1] * invW1;
-        const float x2 = polygon[2].homogeneous[0] * invW2, y2 = polygon[2].homogeneous[1] * invW2;
-        const float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
-
-        // Discard the triangle if it faces the culled direction
-        if ((RLSW.cullFace == SW_FRONT) ? (sgnArea >= 0) : (sgnArea <= 0)) {
-            *vertexCounter = 0;
-            return;
-        }
-    }
-
-    // Step 2: Clipping and perspective projection
     if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
 
         // Transformation to screen space and normalization
@@ -2628,6 +2630,12 @@ DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND, sw_triangle_raster_sc
 
 static inline void sw_triangle_render(void)
 {
+    if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
+        if (!sw_triangle_face_culling()) {
+            return;
+        }
+    }
+
     sw_triangle_clip_and_project();
 
     if (RLSW.vertexCounter < 3) {
@@ -2677,53 +2685,49 @@ static inline void sw_triangle_render(void)
 
 /* === Quad Rendering Part === */
 
-static inline void sw_quad_clip_and_project()
+static inline bool sw_quad_face_culling(void)
+{
+    // NOTE: We use Green's theorem (signed polygon area) instead of triangulation.
+    // This is faster but only reliable if the quad is convex and not self-intersecting.
+    // For face culling purposes, this approximation is acceptable.
+
+    // Preload homogeneous coordinates into local variables
+    const float* h0 = RLSW.vertexBuffer[0].homogeneous;
+    const float* h1 = RLSW.vertexBuffer[1].homogeneous;
+    const float* h2 = RLSW.vertexBuffer[2].homogeneous;
+    const float* h3 = RLSW.vertexBuffer[3].homogeneous;
+
+    // Compute 1/w once and delay divisions
+    const float invW0 = 1.0f / h0[3];
+    const float invW1 = 1.0f / h1[3];
+    const float invW2 = 1.0f / h2[3];
+    const float invW3 = 1.0f / h3[3];
+
+    // Pre-multiply to get x/w and y/w coordinates
+    const float x0 = h0[0] * invW0, y0 = h0[1] * invW0;
+    const float x1 = h1[0] * invW1, y1 = h1[1] * invW1;
+    const float x2 = h2[0] * invW2, y2 = h2[1] * invW2;
+    const float x3 = h3[0] * invW3, y3 = h3[1] * invW3;
+
+    // Use Green's theorem (signed polygon area)
+    // area = 0.5 * sum of (xi * yi+1 - xi+1 * yi)
+    // The factor 0.5 is not needed here, only the sign matters.
+    const float sgnArea = 
+        (x0 * y1 - x1 * y0)
+        + (x1 * y2 - x2 * y1)
+        + (x2 * y3 - x3 * y2)
+        + (x3 * y0 - x0 * y3);
+
+    // Perform face culling based on area sign
+    return (RLSW.cullFace == SW_FRONT)
+        ? (sgnArea < 0.0f) : (sgnArea > 0.0f);
+}
+
+static inline void sw_quad_clip_and_project(void)
 {
     sw_vertex_t* polygon = RLSW.vertexBuffer;
     int* vertexCounter = &RLSW.vertexCounter;
 
-    // Step 1: Face culling - discard quads facing away
-    if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
-
-        // NOTE: We use Green's theorem (signed polygon area) instead of triangulation.
-        // This is faster but only reliable if the quad is convex and not self-intersecting.
-        // For face culling purposes, this approximation is acceptable.
-
-        // Preload homogeneous coordinates into local variables
-        const float* h0 = polygon[0].homogeneous;
-        const float* h1 = polygon[1].homogeneous;
-        const float* h2 = polygon[2].homogeneous;
-        const float* h3 = polygon[3].homogeneous;
-
-        // Compute 1/w once and delay divisions
-        const float invW0 = 1.0f / h0[3];
-        const float invW1 = 1.0f / h1[3];
-        const float invW2 = 1.0f / h2[3];
-        const float invW3 = 1.0f / h3[3];
-
-        // Pre-multiply to get x/w and y/w coordinates
-        const float x0 = h0[0] * invW0, y0 = h0[1] * invW0;
-        const float x1 = h1[0] * invW1, y1 = h1[1] * invW1;
-        const float x2 = h2[0] * invW2, y2 = h2[1] * invW2;
-        const float x3 = h3[0] * invW3, y3 = h3[1] * invW3;
-
-        // Use Green's theorem (signed polygon area)
-        // area = 0.5 * sum of (xi * yi+1 - xi+1 * yi)
-        // The factor 0.5 is not needed here, only the sign matters.
-        const float sgnArea = 
-            (x0 * y1 - x1 * y0)
-          + (x1 * y2 - x2 * y1)
-          + (x2 * y3 - x3 * y2)
-          + (x3 * y0 - x0 * y3);
-
-        // Perform face culling based on area sign
-        if ((RLSW.cullFace == SW_FRONT) ? (sgnArea >= 0.0f) : (sgnArea <= 0.0f)) {
-            *vertexCounter = 0;
-            return;
-        }
-    }
-
-    // Step 2: Clipping and perspective projection
     if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 4) {
 
         // Transformation to screen space and normalization
@@ -2758,6 +2762,12 @@ static inline void sw_quad_clip_and_project()
 
 static inline void sw_quad_render(void)
 {
+    if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
+        if (!sw_quad_face_culling()) {
+            return;
+        }
+    }
+
     sw_quad_clip_and_project();
 
     if (RLSW.vertexCounter < 4) {
