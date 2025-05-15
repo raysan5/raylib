@@ -646,7 +646,7 @@ typedef struct {
         uint8_t* colors;
     } array;
 
-    sw_vertex_t vertexBuffer[4];                                // Buffer used for storing primitive vertices, used for processing and rendering
+    sw_vertex_t vertexBuffer[SW_MAX_CLIPPED_POLYGON_VERTICES];  // Buffer used for storing primitive vertices, used for processing and rendering
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
     SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
@@ -2287,8 +2287,11 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 
 /* === Triangle Rendering Part === */
 
-static inline void sw_triangle_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+static inline void sw_triangle_clip_and_project(void)
 {
+    sw_vertex_t* polygon = RLSW.vertexBuffer;
+    int* vertexCounter = &RLSW.vertexCounter;
+
     // Step 1: Face culling - discard triangles facing away
     if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
 
@@ -2619,26 +2622,21 @@ DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND, sw_triangle_raster_scanline
 DEFINE_TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND, sw_triangle_raster_scanline_DEPTH_BLEND, false)
 DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND, sw_triangle_raster_scanline_TEX_DEPTH_BLEND, true)
 
-static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2)
+static inline void sw_triangle_render(void)
 {
-    int vertexCounter = 3;
+    sw_triangle_clip_and_project();
 
-    sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES];
-    polygon[0] = *v0;
-    polygon[1] = *v1;
-    polygon[2] = *v2;
-
-    sw_triangle_clip_and_project(polygon, &vertexCounter);
-
-    if (vertexCounter < 3) {
+    if (RLSW.vertexCounter < 3) {
         return;
     }
 
 #   define TRIANGLE_RASTER(RASTER_FUNC)                         \
     {                                                           \
-        for (int i = 0; i < vertexCounter - 2; i++) {           \
+        for (int i = 0; i < RLSW.vertexCounter - 2; i++) {      \
             RASTER_FUNC(                                        \
-                &polygon[0], &polygon[i + 1], &polygon[i + 2],  \
+                &RLSW.vertexBuffer[0],                          \
+                &RLSW.vertexBuffer[i + 1],                      \
+                &RLSW.vertexBuffer[i + 2],                      \
                 &RLSW.loadedTextures[RLSW.currentTexture]       \
             );                                                  \
         }                                                       \
@@ -2668,13 +2666,18 @@ static inline void sw_triangle_render(const sw_vertex_t* v0, const sw_vertex_t* 
     else {
         TRIANGLE_RASTER(sw_triangle_raster)
     }
+
+#   undef TRIANGLE_RASTER
 }
 
 
 /* === Quad Rendering Part === */
 
-static inline void sw_quad_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
+static inline void sw_quad_clip_and_project()
 {
+    sw_vertex_t* polygon = RLSW.vertexBuffer;
+    int* vertexCounter = &RLSW.vertexCounter;
+
     // Step 1: Face culling - discard quads facing away
     if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
 
@@ -2749,27 +2752,21 @@ static inline void sw_quad_clip_and_project(sw_vertex_t polygon[SW_MAX_CLIPPED_P
     }
 }
 
-static inline void sw_quad_render(const sw_vertex_t* v0, const sw_vertex_t* v1, const sw_vertex_t* v2, const sw_vertex_t* v3)
+static inline void sw_quad_render(void)
 {
-    int vertexCounter = 4;
+    sw_quad_clip_and_project();
 
-    sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES];
-    polygon[0] = *v0;
-    polygon[1] = *v1;
-    polygon[2] = *v2;
-    polygon[3] = *v3;
-
-    sw_quad_clip_and_project(polygon, &vertexCounter);
-
-    if (vertexCounter < 4) {
+    if (RLSW.vertexCounter < 4) {
         return;
     }
 
 #   define TRIANGLE_RASTER(RASTER_FUNC)                         \
     {                                                           \
-        for (int i = 0; i < vertexCounter - 2; i++) {           \
+        for (int i = 0; i < RLSW.vertexCounter - 2; i++) {      \
             RASTER_FUNC(                                        \
-                &polygon[0], &polygon[i + 1], &polygon[i + 2],  \
+                &RLSW.vertexBuffer[0],                          \
+                &RLSW.vertexBuffer[i + 1],                      \
+                &RLSW.vertexBuffer[i + 2],                      \
                 &RLSW.loadedTextures[RLSW.currentTexture]       \
             );                                                  \
         }                                                       \
@@ -2799,6 +2796,8 @@ static inline void sw_quad_render(const sw_vertex_t* v0, const sw_vertex_t* v1, 
     else {
         TRIANGLE_RASTER(sw_triangle_raster)
     }
+
+#   undef TRIANGLE_RASTER
 }
 
 
@@ -3083,38 +3082,38 @@ DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH, sw_line_raster_DEPTH)
 DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_BLEND, sw_line_raster_BLEND)
 DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH_BLEND, sw_line_raster_DEPTH_BLEND)
 
-static inline void sw_line_render(sw_vertex_t* v0, sw_vertex_t* v1)
+static inline void sw_line_render(sw_vertex_t* vertices)
 {
-    if (!sw_line_clip_and_project(v0, v1)) {
+    if (!sw_line_clip_and_project(&vertices[0], &vertices[1])) {
         return;
     }
 
     if (RLSW.lineWidth >= 2.0f) {
         if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
-            sw_line_thick_raster_DEPTH_BLEND(v0, v1);
+            sw_line_thick_raster_DEPTH_BLEND(&vertices[0], &vertices[1]);
         }
         else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
-            sw_line_thick_raster_BLEND(v0, v1);
+            sw_line_thick_raster_BLEND(&vertices[0], &vertices[1]);
         }
         else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
-            sw_line_thick_raster_DEPTH(v0, v1);
+            sw_line_thick_raster_DEPTH(&vertices[0], &vertices[1]);
         }
         else {
-            sw_line_thick_raster(v0, v1);
+            sw_line_thick_raster(&vertices[0], &vertices[1]);
         }
     }
     else {
         if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
-            sw_line_raster_DEPTH_BLEND(v0, v1);
+            sw_line_raster_DEPTH_BLEND(&vertices[0], &vertices[1]);
         }
         else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
-            sw_line_raster_BLEND(v0, v1);
+            sw_line_raster_BLEND(&vertices[0], &vertices[1]);
         }
         else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
-            sw_line_raster_DEPTH(v0, v1);
+            sw_line_raster_DEPTH(&vertices[0], &vertices[1]);
         }
         else {
-            sw_line_raster(v0, v1);
+            sw_line_raster(&vertices[0], &vertices[1]);
         }
     }
 }
@@ -3338,45 +3337,32 @@ static inline void sw_poly_line_render(void)
 {
     const sw_vertex_t* vertices = RLSW.vertexBuffer;
     int cm1 = RLSW.vertexCounter - 1;
-    sw_vertex_t v0, v1;
 
     for (int i = 0; i < cm1; i++) {
-        v0 = vertices[i], v1 = vertices[i + 1];
-        sw_line_render(&v0, &v1);
+        sw_line_render((sw_vertex_t[2]){
+            vertices[i], vertices[i + 1]
+        });
     }
 
-    v0 = vertices[cm1], v1 = vertices[0];
-    sw_line_render(&v0, &v1);
+    sw_line_render((sw_vertex_t[2]){
+        vertices[cm1], vertices[0]
+    });
 }
 
 static inline void sw_poly_fill_render(void)
 {
     switch (RLSW.drawMode) {
     case SW_POINTS:
-        sw_point_render(
-            &RLSW.vertexBuffer[0]
-        );
+        sw_point_render(&RLSW.vertexBuffer[0]);
         break;
     case SW_LINES:
-        sw_line_render(
-            &RLSW.vertexBuffer[0],
-            &RLSW.vertexBuffer[1]
-        );
+        sw_line_render(RLSW.vertexBuffer);
         break;
     case SW_TRIANGLES:
-        sw_triangle_render(
-            &RLSW.vertexBuffer[0],
-            &RLSW.vertexBuffer[1],
-            &RLSW.vertexBuffer[2]
-        );
+        sw_triangle_render();
         break;
     case SW_QUADS:
-        sw_quad_render(
-            &RLSW.vertexBuffer[0],
-            &RLSW.vertexBuffer[1],
-            &RLSW.vertexBuffer[2],
-            &RLSW.vertexBuffer[3]
-        );
+        sw_quad_render();
         break;
     }
 }
