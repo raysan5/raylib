@@ -42,6 +42,14 @@
 #   define SW_FREE(ptr) free(ptr)
 #endif
 
+#ifndef SW_RESTRICT
+#   ifdef _MSC_VER
+#       define SW_RESTRICT __restrict
+#   else
+#       define SW_RESTRICT restrict
+#   endif
+#endif
+
 #ifndef SW_GL_BINDING_COPY_TEXTURE
 #   define SW_GL_BINDING_COPY_TEXTURE true
 #endif
@@ -803,35 +811,31 @@ static inline float sw_lerp(float a, float b, float t)
     return a + t * (b - a);
 }
 
-static inline sw_vertex_t sw_lerp_vertex_PNTCH(const sw_vertex_t* a, const sw_vertex_t* b, float t)
+static inline void sw_lerp_vertex_PNTCH(sw_vertex_t* SW_RESTRICT out, const sw_vertex_t* SW_RESTRICT a, const sw_vertex_t* SW_RESTRICT b, float t)
 {
-    sw_vertex_t result;
-
     const float tInv = 1.0f - t;
 
     // Position interpolation (4 components)
-    result.position[0] = a->position[0] * tInv + b->position[0] * t;
-    result.position[1] = a->position[1] * tInv + b->position[1] * t;
-    result.position[2] = a->position[2] * tInv + b->position[2] * t;
-    result.position[3] = a->position[3] * tInv + b->position[3] * t;
+    out->position[0] = a->position[0] * tInv + b->position[0] * t;
+    out->position[1] = a->position[1] * tInv + b->position[1] * t;
+    out->position[2] = a->position[2] * tInv + b->position[2] * t;
+    out->position[3] = a->position[3] * tInv + b->position[3] * t;
 
     // Texture coordinate interpolation (2 components)
-    result.texcoord[0] = a->texcoord[0] * tInv + b->texcoord[0] * t;
-    result.texcoord[1] = a->texcoord[1] * tInv + b->texcoord[1] * t;
+    out->texcoord[0] = a->texcoord[0] * tInv + b->texcoord[0] * t;
+    out->texcoord[1] = a->texcoord[1] * tInv + b->texcoord[1] * t;
 
     // Color interpolation (4 components)
-    result.color[0] = a->color[0] * tInv + b->color[0] * t;
-    result.color[1] = a->color[1] * tInv + b->color[1] * t;
-    result.color[2] = a->color[2] * tInv + b->color[2] * t;
-    result.color[3] = a->color[3] * tInv + b->color[3] * t;
+    out->color[0] = a->color[0] * tInv + b->color[0] * t;
+    out->color[1] = a->color[1] * tInv + b->color[1] * t;
+    out->color[2] = a->color[2] * tInv + b->color[2] * t;
+    out->color[3] = a->color[3] * tInv + b->color[3] * t;
 
     // Homogeneous coordinate interpolation (4 components)
-    result.homogeneous[0] = a->homogeneous[0] * tInv + b->homogeneous[0] * t;
-    result.homogeneous[1] = a->homogeneous[1] * tInv + b->homogeneous[1] * t;
-    result.homogeneous[2] = a->homogeneous[2] * tInv + b->homogeneous[2] * t;
-    result.homogeneous[3] = a->homogeneous[3] * tInv + b->homogeneous[3] * t;
-
-    return result;
+    out->homogeneous[0] = a->homogeneous[0] * tInv + b->homogeneous[0] * t;
+    out->homogeneous[1] = a->homogeneous[1] * tInv + b->homogeneous[1] * t;
+    out->homogeneous[2] = a->homogeneous[2] * tInv + b->homogeneous[2] * t;
+    out->homogeneous[3] = a->homogeneous[3] * tInv + b->homogeneous[3] * t;
 }
 
 
@@ -2190,7 +2194,7 @@ static inline int sw_clip_##name(                                               
         /* If transition between interior/exterior, calculate intersection point */     \
         if (prevInside != currInside) {                                                 \
             float t = FUNC_COMPUTE_T(prev->homogeneous, curr->homogeneous);             \
-            output[outputCount++] = sw_lerp_vertex_PNTCH(prev, curr, t);                \
+            sw_lerp_vertex_PNTCH(&output[outputCount++], prev, curr, t);                \
         }                                                                               \
                                                                                         \
         /* If current vertex inside, add it */                                          \
@@ -2546,8 +2550,8 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
         float t2 = dy * invH10;                                                     \
                                                                                     \
         /* Vertex interpolation */                                                  \
-        start = sw_lerp_vertex_PNTCH(v0, v2, t1);                                   \
-        end   = sw_lerp_vertex_PNTCH(v0, v1, t2);                                   \
+        sw_lerp_vertex_PNTCH(&start, v0, v2, t1);                                   \
+        sw_lerp_vertex_PNTCH(&end, v0, v1, t2);                                     \
         start.screen[0] = xLeft;                                                    \
         start.screen[1] = (float)y;                                                 \
         end.screen[0] = xRight;                                                     \
@@ -2582,8 +2586,8 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
         float t2 = (float)(y - y1) * invH21;                                        \
                                                                                     \
         /* Vertex interpolation */                                                  \
-        start = sw_lerp_vertex_PNTCH(v0, v2, t1);                                   \
-        end   = sw_lerp_vertex_PNTCH(v1, v2, t2);                                   \
+        sw_lerp_vertex_PNTCH(&start, v0, v2, t1);                                   \
+        sw_lerp_vertex_PNTCH(&end, v1, v2, t2);                                     \
         start.screen[0] = xLeft;                                                    \
         start.screen[1] = (float)y;                                                 \
         end.screen[0] = xRight;                                                     \
