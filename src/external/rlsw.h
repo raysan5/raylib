@@ -579,7 +579,11 @@ typedef enum {
     SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } sw_pixelformat_e;
 
-typedef void (*sw_factor_f)(float *factor, const float *src, const float *dst);
+typedef void (*sw_factor_f)(
+    float* SW_RESTRICT factor,
+    const float* SW_RESTRICT src,
+    const float* SW_RESTRICT dst
+);
 
 typedef float sw_matrix_t[4*4];
 typedef uint16_t sw_half_t;
@@ -2093,67 +2097,67 @@ static inline void sw_texture_sample(float* color, const sw_texture_t* tex, floa
 
 /* === Color Blending Functions === */
 
-static inline void sw_factor_zero(float *factor, const float *src, const float *dst)
+static inline void sw_factor_zero(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = factor[1] = factor[2] = factor[3] = 0.0f;
 }
 
-static inline void sw_factor_one(float *factor, const float *src, const float *dst)
+static inline void sw_factor_one(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = factor[1] = factor[2] = factor[3] = 1.0f;
 }
 
-static inline void sw_factor_src_color(float *factor, const float *src, const float *dst)
+static inline void sw_factor_src_color(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = src[0]; factor[1] = src[1]; factor[2] = src[2]; factor[3] = src[3];
 }
 
-static inline void sw_factor_one_minus_src_color(float *factor, const float *src, const float *dst)
+static inline void sw_factor_one_minus_src_color(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = 1.0f - src[0]; factor[1] = 1.0f - src[1]; 
     factor[2] = 1.0f - src[2]; factor[3] = 1.0f - src[3];
 }
 
-static inline void sw_factor_src_alpha(float *factor, const float *src, const float *dst)
+static inline void sw_factor_src_alpha(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = factor[1] = factor[2] = factor[3] = src[3];
 }
 
-static inline void sw_factor_one_minus_src_alpha(float *factor, const float *src, const float *dst)
+static inline void sw_factor_one_minus_src_alpha(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     float inv_alpha = 1.0f - src[3];
     factor[0] = factor[1] = factor[2] = factor[3] = inv_alpha;
 }
 
-static inline void sw_factor_dst_alpha(float *factor, const float *src, const float *dst)
+static inline void sw_factor_dst_alpha(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = factor[1] = factor[2] = factor[3] = dst[3];
 }
 
-static inline void sw_factor_one_minus_dst_alpha(float *factor, const float *src, const float *dst)
+static inline void sw_factor_one_minus_dst_alpha(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     float inv_alpha = 1.0f - dst[3];
     factor[0] = factor[1] = factor[2] = factor[3] = inv_alpha;
 }
 
-static inline void sw_factor_dst_color(float *factor, const float *src, const float *dst)
+static inline void sw_factor_dst_color(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = dst[0]; factor[1] = dst[1]; factor[2] = dst[2]; factor[3] = dst[3];
 }
 
-static inline void sw_factor_one_minus_dst_color(float *factor, const float *src, const float *dst)
+static inline void sw_factor_one_minus_dst_color(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = 1.0f - dst[0]; factor[1] = 1.0f - dst[1]; 
     factor[2] = 1.0f - dst[2]; factor[3] = 1.0f - dst[3];
 }
 
-static inline void sw_factor_src_alpha_saturate(float *factor, const float *src, const float *dst)
+static inline void sw_factor_src_alpha_saturate(float* SW_RESTRICT factor, const float* SW_RESTRICT src, const float* SW_RESTRICT dst)
 {
     factor[0] = factor[1] = factor[2] = 1.0f;
     factor[3] = (src[3] < 1.0f) ? src[3] : 1.0f;
 }
 
-static inline void sw_blend_colors(float dst[4], float src[4])
+static inline void sw_blend_colors(float* SW_RESTRICT dst/*[4]*/, float* SW_RESTRICT src/*[4]*/)
 {
     float srcFactor[4], dstFactor[4];
 
