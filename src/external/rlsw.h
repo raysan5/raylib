@@ -2059,7 +2059,7 @@ static inline void sw_texture_sample_linear(float* color, const sw_texture_t* te
 }
 
 static inline void sw_texture_sample(float* color, const sw_texture_t* tex, float u, float v,
-                                     float xDu, float yDu, float xDv, float yDv)
+                                     float duDx, float duDy, float dvDx, float dvDy)
 {
     // TODO: It seems there are some incorrect detections depending on the context
     //       This is probably due to the fact that the fractions are obtained
@@ -2068,13 +2068,13 @@ static inline void sw_texture_sample(float* color, const sw_texture_t* tex, floa
 
     // Previous method: There is no need to compute the square root
     // because using the squared value, the comparison remains `L2 > 1.0f * 1.0f`
-    //float du = sqrtf(xDu * xDu + yDu * yDu);
-    //float dv = sqrtf(xDv * xDv + yDv * yDv);
+    //float du = sqrtf(duDx * duDx + duDy * duDy);
+    //float dv = sqrtf(dvDx * dvDx + dvDy * dvDy);
     //float L = (du > dv) ? du : dv;
 
     // Calculate the derivatives for each axis
-    float du2 = xDu * xDu + yDu * yDu;
-    float dv2 = xDv * xDv + yDv * yDv;
+    float du2 = duDx * duDx + duDy * duDy;
+    float dv2 = dvDx * dvDx + dvDy * dvDy;
     float L2 = (du2 > dv2) ? du2 : dv2;
 
     SWfilter filter = (L2 > 1.0f)
@@ -2360,7 +2360,7 @@ static inline void sw_triangle_clip_and_project(void)
 
 #define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
 static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start,     \
-                             const sw_vertex_t* end, float yDu, float yDv)          \
+                             const sw_vertex_t* end, float duDy, float dvDy)        \
 {                                                                                   \
     /* Convert and center the screen coordinates */                                 \
     int xStart = (int)(start->screen[0] + 0.5f);                                    \
@@ -2379,10 +2379,10 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
     float t = (xStart - start->screen[0]) * dt;                                     \
                                                                                     \
     /* Calculate the horizontal gradients for UV coordinates */                     \
-    float xDu, xDv;                                                                 \
+    float duDx, dvDx;                                                               \
     if (ENABLE_TEXTURE) {                                                           \
-        xDu = (end->texcoord[0] - start->texcoord[0]) * dt;                         \
-        xDv = (end->texcoord[1] - start->texcoord[1]) * dt;                         \
+        duDx = (end->texcoord[0] - start->texcoord[0]) * dt;                        \
+        dvDx = (end->texcoord[1] - start->texcoord[1]) * dt;                        \
     }                                                                               \
                                                                                     \
     /* Pre-calculate the color differences for interpolation */                     \
@@ -2399,8 +2399,8 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
     float u, v;                                                                     \
     if (ENABLE_TEXTURE) {                                                           \
         /* Initialize the interpolated texture coordinates */                       \
-        u = start->texcoord[0] + t * xDu;                                           \
-        v = start->texcoord[1] + t * xDv;                                           \
+        u = start->texcoord[0] + t * duDx;                                          \
+        v = start->texcoord[1] + t * dvDx;                                          \
     }                                                                               \
                                                                                     \
     /* Pre-calculate the starting pointer for the color framebuffer row */          \
@@ -2438,7 +2438,7 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
             float srcColor[4];                                                      \
             if (ENABLE_TEXTURE)                                                     \
             {                                                                       \
-                sw_texture_sample(srcColor, tex, u * w, v * w, xDu, yDu, xDv, yDv); \
+                sw_texture_sample(srcColor, tex, u * w, v * w, duDx, duDy, dvDx, dvDy); \
                 srcColor[0] *= (start->color[0] + t * dcol[0]) * w;                 \
                 srcColor[1] *= (start->color[1] + t * dcol[1]) * w;                 \
                 srcColor[2] *= (start->color[2] + t * dcol[2]) * w;                 \
@@ -2465,7 +2465,7 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
             if (ENABLE_TEXTURE)                                                     \
             {                                                                       \
                 float color[4];                                                     \
-                sw_texture_sample(color, tex, u * w, v * w, xDu, yDu, xDv, yDv);    \
+                sw_texture_sample(color, tex, u * w, v * w, duDx, duDy, dvDx, dvDy);    \
                 color[0] = sw_saturate(color[0] * (start->color[0] + t * dcol[0]) * w); \
                 color[1] = sw_saturate(color[1] * (start->color[1] + t * dcol[1]) * w); \
                 color[2] = sw_saturate(color[2] * (start->color[2] + t * dcol[2]) * w); \
@@ -2487,8 +2487,8 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
         sw_framebuffer_inc_color_addr(&cptr);                                       \
         sw_framebuffer_inc_depth_addr(&dptr);                                       \
         if (ENABLE_TEXTURE) {                                                       \
-            u += xDu;                                                               \
-            v += xDv;                                                               \
+            u += duDx;                                                              \
+            v += dvDx;                                                              \
         }                                                                           \
     }                                                                               \
 }
@@ -2528,10 +2528,10 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
     int yBottom = (int)(y2 + 0.5f);                                                 \
                                                                                     \
     /* Global calculation of vertical texture gradients for the triangle */         \
-    float yDu, yDv;                                                                 \
+    float duDy, dvDy;                                                               \
     if (ENABLE_TEXTURE) {                                                           \
-        yDu = (v2->texcoord[0] - v0->texcoord[0]) * invH20;                         \
-        yDv = (v2->texcoord[1] - v0->texcoord[1]) * invH20;                         \
+        duDy = (v2->texcoord[0] - v0->texcoord[0]) * invH20;                        \
+        dvDy = (v2->texcoord[1] - v0->texcoord[1]) * invH20;                        \
     }                                                                               \
                                                                                     \
     /* Initializing scanline variables */                                           \
@@ -2565,7 +2565,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
             end = tmp;                                                              \
         }                                                                           \
                                                                                     \
-        FUNC_SCANLINE(tex, &start, &end, yDu, yDv);                                 \
+        FUNC_SCANLINE(tex, &start, &end, duDy, dvDy);                               \
                                                                                     \
         /* Incremental update */                                                    \
         discardTL:                                                                  \
@@ -2601,7 +2601,7 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
             end = tmp;                                                              \
         }                                                                           \
                                                                                     \
-        FUNC_SCANLINE(tex, &start, &end, yDu, yDv);                                 \
+        FUNC_SCANLINE(tex, &start, &end, duDy, dvDy);                               \
                                                                                     \
         /* Incremental update */                                                    \
         discardBL:                                                                  \
@@ -2760,6 +2760,288 @@ static inline void sw_quad_clip_and_project(void)
     }
 }
 
+static inline bool sw_quad_is_axis_aligned(void)
+{
+    int horizontal = 0;
+    int vertical = 0;
+
+    for (int i = 0; i < 4; i++) {
+        const float* v0 = RLSW.vertexBuffer[i].position;
+        const float* v1 = RLSW.vertexBuffer[(i + 1) % 4].position;
+
+        float dx = v1[0] - v0[0];
+        float dy = v1[1] - v0[1];
+
+        if (fabsf(dx) > 1e-6f && fabsf(dy) < 1e-6f) {
+            horizontal++;
+        }
+        else if (fabsf(dy) > 1e-6f && fabsf(dx) < 1e-6f) {
+            vertical++;
+        }
+        else {
+            // Diagonal edge -> not axis-aligned
+            return false;
+        }
+    }
+
+    return (horizontal == 2 && vertical == 2);
+}
+
+static inline void sw_quad_sort_cw(const sw_vertex_t** output)
+{
+    // Sort 4 quad vertices into clockwise order with fixed layout:
+    //
+    //   v0 -- v1
+    //   |      |
+    //   v3 -- v2
+    //
+    // The goal is:
+    // - v0: top-left (minimum Y, then minimum X)
+    // - v1: top-right (same Y row as v0, maximum X)
+    // - v3: bottom-left (maximum Y, minimum X)
+    // - v2: bottom-right (maximum Y, maximum X)
+
+    const sw_vertex_t* input = RLSW.vertexBuffer;
+
+    // Find indices of vertices with min Y (top) and max Y (bottom)
+    int minYIndex = 0, maxYIndex = 0;
+    for (int i = 1; i < 4; i++) {
+        if (input[i].screen[1] < input[minYIndex].screen[1]) minYIndex = i;
+        if (input[i].screen[1] > input[maxYIndex].screen[1]) maxYIndex = i;
+    }
+
+    // Find indices of the remaining two vertices
+    int others[2], idx = 0;
+    for (int i = 0; i < 4; i++) {
+        if (i != minYIndex && i != maxYIndex) {
+            others[idx++] = i;
+        }
+    }
+
+    // Determine left/right among the middle vertices by X coordinate
+    int leftMidIndex = (input[others[0]].screen[0] < input[others[1]].screen[0]) ? others[0] : others[1];
+    int rightMidIndex = (leftMidIndex == others[0]) ? others[1] : others[0];
+
+    // Assign top vertices: v0 = top-left, v1 = top-right
+    if (input[minYIndex].screen[0] < input[leftMidIndex].screen[0]) {
+        output[0] = &input[minYIndex];      // v0: top-left
+        output[1] = &input[leftMidIndex];   // v1: top-right
+    } else {
+        output[0] = &input[leftMidIndex];
+        output[1] = &input[minYIndex];
+    }
+
+    // Assign bottom vertices: v3 = bottom-left, v2 = bottom-right
+    if (input[maxYIndex].screen[0] < input[rightMidIndex].screen[0]) {
+        output[3] = &input[maxYIndex];      // v3: bottom-left
+        output[2] = &input[rightMidIndex];  // v2: bottom-right
+    } else {
+        output[3] = &input[rightMidIndex];
+        output[2] = &input[maxYIndex];
+    }
+}
+
+// REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth, still appear perfectly aligned from a certain point of view?
+//         Because in that case, we would still need to perform perspective division for textures and colors...
+#define DEFINE_QUAD_RASTER_AXIS_ALIGNED(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
+static inline void FUNC_NAME(void)                                              \
+{                                                                               \
+    const sw_vertex_t* sortedVerts[4];                                          \
+    sw_quad_sort_cw(sortedVerts);                                               \
+                                                                                \
+    const sw_vertex_t* v0 = sortedVerts[0];                                     \
+    const sw_vertex_t* v1 = sortedVerts[1];                                     \
+    const sw_vertex_t* v2 = sortedVerts[2];                                     \
+    const sw_vertex_t* v3 = sortedVerts[3];                                     \
+                                                                                \
+    /* Bornes écran (axis-aligned) */                                           \
+                                                                                \
+    int xMin = (int)v0->screen[0];                                              \
+    int yMin = (int)v0->screen[1];                                              \
+    int xMax = (int)v2->screen[0];                                              \
+    int yMax = (int)v2->screen[1];                                              \
+                                                                                \
+    float width = (float)(xMax - xMin);                                         \
+    float height = (float)(yMax - yMin);                                        \
+                                                                                \
+    float invWidth = 1.0f / width;                                              \
+    float invHeight = 1.0f / height;                                            \
+                                                                                \
+    /* Pré-calculs des coefficients pour l'interpolation bilinéaire */          \
+                                                                                \
+    float zA, zB, zC, zD;                                                       \
+                                                                                \
+    zA = v0->homogeneous[2];                                                    \
+    zB = v1->homogeneous[2] - v0->homogeneous[2];                               \
+    zC = v3->homogeneous[2] - v0->homogeneous[2];                               \
+    zD = v2->homogeneous[2] - v3->homogeneous[2] - v1->homogeneous[2] + v0->homogeneous[2]; \
+                                                                                \
+    float colorA[4];                                                            \
+    float colorB[4];                                                            \
+    float colorC[4];                                                            \
+    float colorD[4];                                                            \
+                                                                                \
+    for (int c = 0; c < 4; c++) {                                               \
+        colorA[c] = v0->color[c];                                               \
+        colorB[c] = v1->color[c] - v0->color[c];                                \
+        colorC[c] = v3->color[c] - v0->color[c];                                \
+        colorD[c] = v2->color[c] - v3->color[c] - v1->color[c] + v0->color[c];  \
+    }                                                                           \
+                                                                                \
+    float texA[2];                                                              \
+    float texB[2];                                                              \
+    float texC[2];                                                              \
+    float texD[2];                                                              \
+                                                                                \
+    if (ENABLE_TEXTURE)                                                         \
+    {                                                                           \
+        for (int uv = 0; uv < 2; uv++) {                                        \
+            texA[uv] = v0->texcoord[uv];                                        \
+            texB[uv] = v1->texcoord[uv] - v0->texcoord[uv];                     \
+            texC[uv] = v3->texcoord[uv] - v0->texcoord[uv];                     \
+            texD[uv] = v2->texcoord[uv] - v3->texcoord[uv] - v1->texcoord[uv] + v0->texcoord[uv]; \
+        }                                                                       \
+    }                                                                           \
+                                                                                \
+    /* Pré-calcul des gradients UV (constants sur tout le quad) */              \
+                                                                                \
+    float duDx, dvDx, duDy, dvDy;                                               \
+                                                                                \
+    if (ENABLE_TEXTURE)                                                         \
+    {                                                                           \
+        duDx = ((v1->texcoord[0] - v0->texcoord[0]) + (v2->texcoord[0] - v3->texcoord[0])) * 0.5f * invWidth; \
+        dvDx = ((v1->texcoord[1] - v0->texcoord[1]) + (v2->texcoord[1] - v3->texcoord[1])) * 0.5f * invWidth; \
+        duDy = ((v3->texcoord[0] - v0->texcoord[0]) + (v2->texcoord[0] - v1->texcoord[0])) * 0.5f * invHeight; \
+        dvDy = ((v3->texcoord[1] - v0->texcoord[1]) + (v2->texcoord[1] - v1->texcoord[1])) * 0.5f * invHeight; \
+    }                                                                           \
+                                                                                \
+    const sw_texture_t* tex = &RLSW.loadedTextures[RLSW.currentTexture];        \
+    void* cDstBase = RLSW.framebuffer.color;                                    \
+    void* dDstBase = RLSW.framebuffer.depth;                                    \
+    int wDst = RLSW.framebuffer.width;                                          \
+                                                                                \
+    for (int y = yMin; y < yMax; y++)                                           \
+    {                                                                           \
+        float ty = (y - yMin) * invHeight;                                      \
+        void* cptr = sw_framebuffer_get_color_addr(cDstBase, y * wDst + xMin);  \
+        void* dptr = sw_framebuffer_get_depth_addr(dDstBase, y * wDst + xMin);  \
+                                                                                \
+        /* Calculer les valeurs de départ pour cette ligne (pour x = xMin) */   \
+                                                                                \
+        float z = zA + zC * ty;                                                 \
+                                                                                \
+        float srcColor[4];                                                      \
+        srcColor[0] = colorA[0] + colorC[0] * ty;                               \
+        srcColor[1] = colorA[1] + colorC[1] * ty;                               \
+        srcColor[2] = colorA[2] + colorC[2] * ty;                               \
+        srcColor[3] = colorA[3] + colorC[3] * ty;                               \
+                                                                                \
+        float u, v;                                                             \
+        if (ENABLE_TEXTURE) {                                                   \
+            u = texA[0] + texC[0] * ty;                                         \
+            v = texA[1] + texC[1] * ty;                                         \
+        }                                                                       \
+                                                                                \
+        /* Calcul des incréments par pixel sur X (constants pour une ligne) */  \
+                                                                                \
+        float zIncX = (zB + zD * ty) * invWidth;                                \
+                                                                                \
+        float colorIncX[4];                                                     \
+        colorIncX[0] = (colorB[0] + colorD[0] * ty) * invWidth;                 \
+        colorIncX[1] = (colorB[1] + colorD[1] * ty) * invWidth;                 \
+        colorIncX[2] = (colorB[2] + colorD[2] * ty) * invWidth;                 \
+        colorIncX[3] = (colorB[3] + colorD[3] * ty) * invWidth;                 \
+                                                                                \
+        float uvIncX[2];                                                        \
+        if (ENABLE_TEXTURE) {                                                   \
+            uvIncX[0] = (texB[0] + texD[0] * ty) * invWidth;                    \
+            uvIncX[1] = (texB[1] + texD[1] * ty) * invWidth;                    \
+        }                                                                       \
+                                                                                \
+        /* Rasterisation de la ligne */                                         \
+                                                                                \
+        for (int x = xMin; x < xMax; x++)                                       \
+        {                                                                       \
+            /* Interpolate Z for depth testing */                               \
+                                                                                \
+            if (ENABLE_DEPTH_TEST)                                              \
+            {                                                                   \
+                /* TODO: Implement different depth funcs? */                    \
+                float depth =  sw_framebuffer_read_depth(dptr);                 \
+                if (z > depth) goto discard;                                    \
+            }                                                                   \
+                                                                                \
+            sw_framebuffer_write_depth(dptr, z);                                \
+                                                                                \
+            /* Calcul de la couleur du pixel */                                 \
+                                                                                \
+            float fragColor[4] = {                                              \
+                srcColor[0],                                                    \
+                srcColor[1],                                                    \
+                srcColor[2],                                                    \
+                srcColor[3]                                                     \
+            };                                                                  \
+                                                                                \
+            if (ENABLE_TEXTURE)                                                 \
+            {                                                                   \
+                float texColor[4];                                              \
+                sw_texture_sample(texColor, tex, u, v, duDx, duDy, dvDx, dvDy); \
+                fragColor[0] *= texColor[0];                                    \
+                fragColor[1] *= texColor[1];                                    \
+                fragColor[2] *= texColor[2];                                    \
+                fragColor[3] *= texColor[3];                                    \
+            }                                                                   \
+                                                                                \
+            if (ENABLE_COLOR_BLEND)                                             \
+            {                                                                   \
+                float dstColor[4];                                              \
+                sw_framebuffer_read_color(dstColor, cptr);                      \
+                                                                                \
+                sw_blend_colors(dstColor, fragColor);                           \
+                dstColor[0] = sw_saturate(dstColor[0]);                         \
+                dstColor[1] = sw_saturate(dstColor[1]);                         \
+                dstColor[2] = sw_saturate(dstColor[2]);                         \
+                                                                                \
+                sw_framebuffer_write_color(cptr, dstColor);                     \
+            }                                                                   \
+            else                                                                \
+            {                                                                   \
+                sw_framebuffer_write_color(cptr, fragColor);                    \
+            }                                                                   \
+                                                                                \
+            /* Incrémenter les valeurs pour le pixel suivant */                 \
+                                                                                \
+        discard:                                                                \
+                                                                                \
+            z += zIncX;                                                         \
+                                                                                \
+            srcColor[0] += colorIncX[0];                                        \
+            srcColor[1] += colorIncX[1];                                        \
+            srcColor[2] += colorIncX[2];                                        \
+            srcColor[3] += colorIncX[3];                                        \
+                                                                                \
+            if (ENABLE_TEXTURE) {                                               \
+                u += uvIncX[0];                                                 \
+                v += uvIncX[1];                                                 \
+            }                                                                   \
+                                                                                \
+            /* Avancer le pointeur couleur sur la ligne */                      \
+                                                                                \
+            sw_framebuffer_inc_color_addr(&cptr);                               \
+            sw_framebuffer_inc_depth_addr(&dptr);                               \
+        }                                                                       \
+    }                                                                           \
+}
+
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned, 0, 0, 0)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX, 1, 0, 0)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_DEPTH, 0, 1, 0)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_BLEND, 0, 0, 1)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_DEPTH, 1, 1, 0)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_BLEND, 1, 0, 1)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_DEPTH_BLEND, 0, 1, 1)
+DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND, 1, 1, 1)
+
 static inline void sw_quad_render(void)
 {
     if (RLSW.stateFlags & SW_STATE_CULL_FACE) {
@@ -2770,7 +3052,36 @@ static inline void sw_quad_render(void)
 
     sw_quad_clip_and_project();
 
-    if (RLSW.vertexCounter < 4) {
+    if (RLSW.vertexCounter < 3) {
+        return;
+    }
+
+    if (RLSW.vertexCounter == 4 && sw_quad_is_axis_aligned())
+    {
+        if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+            sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND();
+        }
+        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) {
+            sw_quad_raster_axis_aligned_DEPTH_BLEND();
+        }
+        else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) {
+            sw_quad_raster_axis_aligned_TEX_BLEND();
+        }
+        else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) {
+            sw_quad_raster_axis_aligned_TEX_DEPTH();
+        }
+        else if (SW_STATE_CHECK(SW_STATE_BLEND)) {
+            sw_quad_raster_axis_aligned_BLEND();
+        }
+        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) {
+            sw_quad_raster_axis_aligned_DEPTH();
+        }
+        else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D)) {
+            sw_quad_raster_axis_aligned_TEX();
+        }
+        else {
+            sw_quad_raster_axis_aligned();
+        }
         return;
     }
 
