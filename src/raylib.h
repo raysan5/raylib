@@ -82,6 +82,8 @@
 *
 **********************************************************************************************/
 
+#include "Macros.h"
+
 #ifndef RAYLIB_H
 #define RAYLIB_H
 
@@ -1706,6 +1708,12 @@ RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processo
 
 RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
+
+// Cameras
+
+RLAPI void CameraYaw(Camera* cameraPointer, float yaw, bool local);
+RLAPI void CameraPitch(Camera* cameraPointer, float pitch);
+RLAPI void CameraRoll(Camera* cameraPointer, float roll);
 
 #if defined(__cplusplus)
 }

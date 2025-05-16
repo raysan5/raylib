@@ -69,6 +69,8 @@
 *
 **********************************************************************************************/
 
+#include "Macros.h"
+
 #if defined(RAUDIO_STANDALONE)
     #include "raudio.h"
 #else
