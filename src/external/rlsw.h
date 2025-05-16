@@ -2854,7 +2854,7 @@ static inline void FUNC_NAME(void)                                              
     const sw_vertex_t* v2 = sortedVerts[2];                                     \
     const sw_vertex_t* v3 = sortedVerts[3];                                     \
                                                                                 \
-    /* Bornes écran (axis-aligned) */                                           \
+    /* Screen bounds (axis-aligned) */                                          \
                                                                                 \
     int xMin = (int)v0->screen[0];                                              \
     int yMin = (int)v0->screen[1];                                              \
@@ -2867,7 +2867,7 @@ static inline void FUNC_NAME(void)                                              
     float invWidth = 1.0f / width;                                              \
     float invHeight = 1.0f / height;                                            \
                                                                                 \
-    /* Pré-calculs des coefficients pour l'interpolation bilinéaire */          \
+    /* Precomputed coefficients for bilinear interpolation */                   \
                                                                                 \
     float zA, zB, zC, zD;                                                       \
                                                                                 \
@@ -2903,7 +2903,7 @@ static inline void FUNC_NAME(void)                                              
         }                                                                       \
     }                                                                           \
                                                                                 \
-    /* Pré-calcul des gradients UV (constants sur tout le quad) */              \
+    /* Precomputed UV gradients (constant across the entire quad) */            \
                                                                                 \
     float duDx, dvDx, duDy, dvDy;                                               \
                                                                                 \
@@ -2926,7 +2926,7 @@ static inline void FUNC_NAME(void)                                              
         void* cptr = sw_framebuffer_get_color_addr(cDstBase, y * wDst + xMin);  \
         void* dptr = sw_framebuffer_get_depth_addr(dDstBase, y * wDst + xMin);  \
                                                                                 \
-        /* Calculer les valeurs de départ pour cette ligne (pour x = xMin) */   \
+        /* Compute starting values for this scanline (for x = xMin) */          \
                                                                                 \
         float z = zA + zC * ty;                                                 \
                                                                                 \
@@ -2942,7 +2942,7 @@ static inline void FUNC_NAME(void)                                              
             v = texA[1] + texC[1] * ty;                                         \
         }                                                                       \
                                                                                 \
-        /* Calcul des incréments par pixel sur X (constants pour une ligne) */  \
+        /* Compute per-pixel increments along X (constant for a scanline) */    \
                                                                                 \
         float zIncX = (zB + zD * ty) * invWidth;                                \
                                                                                 \
@@ -2958,7 +2958,7 @@ static inline void FUNC_NAME(void)                                              
             uvIncX[1] = (texB[1] + texD[1] * ty) * invWidth;                    \
         }                                                                       \
                                                                                 \
-        /* Rasterisation de la ligne */                                         \
+        /* Scanline rasterization */                                            \
                                                                                 \
         for (int x = xMin; x < xMax; x++)                                       \
         {                                                                       \
@@ -2973,7 +2973,7 @@ static inline void FUNC_NAME(void)                                              
                                                                                 \
             sw_framebuffer_write_depth(dptr, z);                                \
                                                                                 \
-            /* Calcul de la couleur du pixel */                                 \
+            /* Pixel color computation */                                       \
                                                                                 \
             float fragColor[4] = {                                              \
                 srcColor[0],                                                    \
@@ -3009,7 +3009,7 @@ static inline void FUNC_NAME(void)                                              
                 sw_framebuffer_write_color(cptr, fragColor);                    \
             }                                                                   \
                                                                                 \
-            /* Incrémenter les valeurs pour le pixel suivant */                 \
+            /* Increment values for the next pixel */                           \
                                                                                 \
         discard:                                                                \
                                                                                 \
@@ -3025,7 +3025,7 @@ static inline void FUNC_NAME(void)                                              
                 v += uvIncX[1];                                                 \
             }                                                                   \
                                                                                 \
-            /* Avancer le pointeur couleur sur la ligne */                      \
+            /* Advance the pointers along the line */                           \
                                                                                 \
             sw_framebuffer_inc_color_addr(&cptr);                               \
             sw_framebuffer_inc_depth_addr(&dptr);                               \
