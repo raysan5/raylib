@@ -149,7 +149,8 @@
 #endif
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
-#if !defined(GRAPHICS_API_OPENGL_11) && \
+#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE) && \
+    !defined(GRAPHICS_API_OPENGL_11) && \
     !defined(GRAPHICS_API_OPENGL_21) && \
     !defined(GRAPHICS_API_OPENGL_33) && \
     !defined(GRAPHICS_API_OPENGL_43) && \
@@ -3705,6 +3706,7 @@ void rlCopyFramebuffer(int x, int y, int w, int h, int format, void* pixels)
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     swCopyFramebuffer(x, y, w, h, glFormat, glType, pixels);
 }
+
 void rlResizeFramebuffer(int width, int height)
 {
     swResizeFramebuffer(width, height);
