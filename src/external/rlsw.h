@@ -566,17 +566,6 @@ typedef enum {
     SW_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
     SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
     SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
-    SW_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-    SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-    SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA,           // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_ETC1_RGB,            // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_ETC2_RGB,            // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
-    SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-    SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } sw_pixelformat_e;
 
 typedef void (*sw_factor_f)(
@@ -1778,36 +1767,25 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
     return -1; // Unsupported format
 }
 
-int sw_get_pixel_bpp(sw_pixelformat_e format)
+int sw_get_pixel_bytes(sw_pixelformat_e format)
 {
     int bpp = 0;
 
     switch (format)
     {
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 1; break;
         case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
-        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 16; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 16*3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 16*4; break;
-        case SW_PIXELFORMAT_COMPRESSED_DXT1_RGB:
-        case SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
-        case SW_PIXELFORMAT_COMPRESSED_ETC1_RGB:
-        case SW_PIXELFORMAT_COMPRESSED_ETC2_RGB:
-        case SW_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-        case SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
-        case SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
-        case SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
-        case SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-        case SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 2; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 4; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 3; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 4; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 4*3; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 4*4; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 2; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 2*3; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 2*4; break;
         default: break;
     }
 
@@ -1996,19 +1974,6 @@ static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offse
 
     case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         sw_get_pixel_rgba_16161616(color, pixels, offset);
-        break;
-
-    case SW_PIXELFORMAT_COMPRESSED_DXT1_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ETC1_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_ETC2_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:
         break;
 
     }
@@ -3973,17 +3938,7 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
         sw_framebuffer_copy_to_R16G16B16A16(x, y, w, h, pixels);
         break;
 
-    case SW_PIXELFORMAT_COMPRESSED_DXT1_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ETC1_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_ETC2_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:
+    default:
         RLSW.errCode = SW_INVALID_ENUM;
         break;
 
@@ -4057,17 +4012,7 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst,
         sw_framebuffer_blit_to_R16G16B16A16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pixels);
         break;
 
-    case SW_PIXELFORMAT_COMPRESSED_DXT1_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ETC1_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_ETC2_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-    case SW_PIXELFORMAT_COMPRESSED_PVRT_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:
-    case SW_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:
+    default:
         RLSW.errCode = SW_INVALID_ENUM;
         break;
 
@@ -5025,7 +4970,7 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy
     sw_texture_t* texture = &RLSW.loadedTextures[id];
 
     if (copy) {
-        int bpp = sw_get_pixel_bpp(pixelFormat);
+        int bpp = sw_get_pixel_bytes(pixelFormat);
         int size = bpp * width * height;
         texture->pixels.ptr = SW_MALLOC(size);
         if (texture->pixels.ptr == NULL) {
