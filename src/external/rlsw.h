@@ -4553,7 +4553,7 @@ void swScalef(float x, float y, float z)
 
 void swMultMatrixf(const float* mat)
 {
-    sw_matrix_mul(*RLSW.currentMatrix, *RLSW.currentMatrix, mat);
+    sw_matrix_mul(*RLSW.currentMatrix, mat, *RLSW.currentMatrix);
 
     if (RLSW.currentMatrixMode != SW_TEXTURE) {
         RLSW.isDirtyMVP = true;
