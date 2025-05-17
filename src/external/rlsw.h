@@ -3787,10 +3787,10 @@ bool swInit(int w, int h)
     swViewport(0, 0, w, h);
     swScissor(0, 0, w, h);
 
-    RLSW.loadedTextures = SW_MALLOC(SW_MAX_TEXTURES);
+    RLSW.loadedTextures = SW_MALLOC(SW_MAX_TEXTURES * sizeof(sw_texture_t));
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
-    RLSW.freeTextureIds = SW_MALLOC(SW_MAX_TEXTURES);
+    RLSW.freeTextureIds = SW_MALLOC(SW_MAX_TEXTURES * sizeof(uint32_t));
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
     RLSW.clearColor[0] = 0.0f;
