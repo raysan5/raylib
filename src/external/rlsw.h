@@ -4898,17 +4898,20 @@ void swDrawArrays(SWdraw mode, int offset, int count)
     }
 
     swBegin(mode);
+    {
+        swTexCoord2f(0.0f, 0.0f);
+        swColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    for (int i = offset; i < count; i++) {
-        if (RLSW.array.texcoords) {
-            swTexCoord2fv(RLSW.array.texcoords + 2 * i);
+        for (int i = offset; i < count; i++) {
+            if (RLSW.array.texcoords) {
+                swTexCoord2fv(RLSW.array.texcoords + 2 * i);
+            }
+            if (RLSW.array.colors) {
+                swColor4ubv(RLSW.array.colors + 4 * i);
+            }
+            swVertex3fv(RLSW.array.positions + 3 * i);
         }
-        if (RLSW.array.colors) {
-            swColor4ubv(RLSW.array.colors + 4 * i);
-        }
-        swVertex3fv(RLSW.array.positions + 3 * i);
     }
-
     swEnd();
 }
 
@@ -5055,7 +5058,7 @@ void swBindTexture(uint32_t id)
         return;
     }
 
-    if (id > 0 && RLSW.loadedTextures[id].pixels.cptr == NULL) {
+    if (RLSW.loadedTextures[id].pixels.cptr == NULL) {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
     }
