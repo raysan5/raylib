@@ -526,7 +526,7 @@ void swBindTexture(uint32_t id);
 
 #endif // RLSW_H
 
-
+#define RLSW_IMPL
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
@@ -1979,6 +1979,9 @@ static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offse
         sw_get_pixel_rgba_16161616(color, pixels, offset);
         break;
 
+    case SW_PIXELFORMAT_UNKNOWN:
+        break;
+
     }
 }
 
@@ -2335,97 +2338,103 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
                              const sw_vertex_t* end, float duDy, float dvDy)        \
 {                                                                                   \
     /* Convert and center the screen coordinates */                                 \
+                                                                                    \
     int xStart = (int)(start->screen[0] + 0.5f);                                    \
     int xEnd   = (int)(end->screen[0] + 0.5f);                                      \
     int y      = (int)(start->screen[1] + 0.5f);                                    \
                                                                                     \
-    /* Safely compute the inverse horizontal distance */                            \
+    /* Compute the inverse horizontal distance along the X axis */                  \
+                                                                                    \
     float dx = end->screen[0] - start->screen[0];                                   \
     if (fabsf(dx) < 1e-6f) return;                                                  \
+    float dxRcp = 1.0f / dx;                                                        \
                                                                                     \
-    /* Calculate the interpolation step along the X axis */                         \
-    float dt = 1.0f / dx;                                                           \
+    /* Compute the interpolation steps along the X axis */                          \
                                                                                     \
-    /* Initialize the interpolation parameter                                       \
-       't' ranges from 0 to 1 across the scanline */                                \
-    float t = (xStart - start->screen[0]) * dt;                                     \
+    float dzDx = (end->homogeneous[2] - start->homogeneous[2]) * dxRcp;             \
+    float dwDx = (end->homogeneous[3] - start->homogeneous[3]) * dxRcp;             \
                                                                                     \
-    /* Calculate the horizontal gradients for UV coordinates */                     \
+    float dcDx[4];                                                                  \
+    dcDx[0] = (end->color[0] - start->color[0]) * dxRcp;                            \
+    dcDx[1] = (end->color[1] - start->color[1]) * dxRcp;                            \
+    dcDx[2] = (end->color[2] - start->color[2]) * dxRcp;                            \
+    dcDx[3] = (end->color[3] - start->color[3]) * dxRcp;                            \
+                                                                                    \
     float duDx, dvDx;                                                               \
     if (ENABLE_TEXTURE) {                                                           \
-        duDx = (end->texcoord[0] - start->texcoord[0]) * dt;                        \
-        dvDx = (end->texcoord[1] - start->texcoord[1]) * dt;                        \
+        duDx = (end->texcoord[0] - start->texcoord[0]) * dxRcp;                     \
+        dvDx = (end->texcoord[1] - start->texcoord[1]) * dxRcp;                     \
     }                                                                               \
                                                                                     \
-    /* Pre-calculate the color differences for interpolation */                     \
-    float dcol[4];                                                                  \
-    for (int i = 0; i < 4; i++) {                                                   \
-        dcol[i] = end->color[i] - start->color[i];                                  \
-    }                                                                               \
+    /* Initializing the interpolation starting values */                            \
                                                                                     \
-    /* Pre-calculate the differences in Z and W                                     \
-       (for depth testing and perspective correction) */                            \
-    float dz = end->homogeneous[2] - start->homogeneous[2];                         \
-    float dw = end->homogeneous[3] - start->homogeneous[3];                         \
+    float z = start->homogeneous[2];                                                \
+    float w = start->homogeneous[3];                                                \
+                                                                                    \
+    float color[4];                                                                 \
+    color[0] = start->color[0];                                                     \
+    color[1] = start->color[1];                                                     \
+    color[2] = start->color[2];                                                     \
+    color[3] = start->color[3];                                                     \
                                                                                     \
     float u, v;                                                                     \
     if (ENABLE_TEXTURE) {                                                           \
-        /* Initialize the interpolated texture coordinates */                       \
-        u = start->texcoord[0] + t * duDx;                                          \
-        v = start->texcoord[1] + t * dvDx;                                          \
+        u = start->texcoord[0];                                                     \
+        v = start->texcoord[1];                                                     \
     }                                                                               \
                                                                                     \
-    /* Pre-calculate the starting pointer for the color framebuffer row */          \
+    /* Pre-calculate the starting pointers for the framebuffer row */               \
+                                                                                    \
     void* cptr = sw_framebuffer_get_color_addr(                                     \
-        RLSW.framebuffer.color, y * RLSW.framebuffer.width + xStart                 \
-    );                                                                              \
+        RLSW.framebuffer.color, y * RLSW.framebuffer.width + xStart);               \
                                                                                     \
-    /* Pre-calculate the pointer for the depth buffer row */                        \
     void* dptr = sw_framebuffer_get_depth_addr(                                     \
-        RLSW.framebuffer.depth, y * RLSW.framebuffer.width + xStart                 \
-    );                                                                              \
+        RLSW.framebuffer.depth, y * RLSW.framebuffer.width + xStart);               \
                                                                                     \
-    /* Scanline rasterization loop */                                               \
-    for (int x = xStart; x < xEnd; x++) {                                           \
-        /* Interpolate Z and W for depth testing and perspective correction */      \
-        float w = 1.0f / (start->homogeneous[3] + t * dw);                          \
-        float z = start->homogeneous[2] + t * dz;                                   \
+    /* Scanline rasterization */                                                    \
+                                                                                    \
+    for (int x = xStart; x < xEnd; x++)                                             \
+    {                                                                               \
+        /* Test and write depth */                                                  \
                                                                                     \
         if (ENABLE_DEPTH_TEST)                                                      \
         {                                                                           \
-            /* Depth testing with direct access to the depth buffer */              \
             /* TODO: Implement different depth funcs? */                            \
             float depth =  sw_framebuffer_read_depth(dptr);                         \
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
-        /* Update the depth buffer */                                               \
         sw_framebuffer_write_depth(dptr, z);                                        \
+                                                                                    \
+        /* Pixel color computation */                                               \
+                                                                                    \
+        float wRcp = 1.0f / w;                                                      \
+                                                                                    \
+        float srcColor[4] = {                                                       \
+            color[0] * wRcp,                                                        \
+            color[1] * wRcp,                                                        \
+            color[2] * wRcp,                                                        \
+            color[3] * wRcp                                                         \
+        };                                                                          \
+                                                                                    \
+        if (ENABLE_TEXTURE)                                                         \
+        {                                                                           \
+            float texColor[4];                                                      \
+            float s = u * wRcp;                                                     \
+            float t = v * wRcp;                                                     \
+            sw_texture_sample(texColor, tex, s, t, duDx, duDy, dvDx, dvDy);         \
+            srcColor[0] *= texColor[0];                                             \
+            srcColor[1] *= texColor[1];                                             \
+            srcColor[2] *= texColor[2];                                             \
+            srcColor[3] *= texColor[3];                                             \
+        }                                                                           \
                                                                                     \
         if (ENABLE_COLOR_BLEND)                                                     \
         {                                                                           \
             float dstColor[4];                                                      \
             sw_framebuffer_read_color(dstColor, cptr);                              \
                                                                                     \
-            float srcColor[4];                                                      \
-            if (ENABLE_TEXTURE)                                                     \
-            {                                                                       \
-                sw_texture_sample(srcColor, tex, u * w, v * w, duDx, duDy, dvDx, dvDy); \
-                srcColor[0] *= (start->color[0] + t * dcol[0]) * w;                 \
-                srcColor[1] *= (start->color[1] + t * dcol[1]) * w;                 \
-                srcColor[2] *= (start->color[2] + t * dcol[2]) * w;                 \
-                srcColor[3] *= (start->color[3] + t * dcol[3]) * w;                 \
-            }                                                                       \
-            else                                                                    \
-            {                                                                       \
-                srcColor[0] = (start->color[0] + t * dcol[0]) * w;                  \
-                srcColor[1] = (start->color[1] + t * dcol[1]) * w;                  \
-                srcColor[2] = (start->color[2] + t * dcol[2]) * w;                  \
-                srcColor[3] = (start->color[3] + t * dcol[3]) * w;                  \
-            }                                                                       \
-                                                                                    \
             sw_blend_colors(dstColor, srcColor);                                    \
-                                                                                    \
             dstColor[0] = sw_saturate(dstColor[0]);                                 \
             dstColor[1] = sw_saturate(dstColor[1]);                                 \
             dstColor[2] = sw_saturate(dstColor[2]);                                 \
@@ -2434,34 +2443,26 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
         }                                                                           \
         else                                                                        \
         {                                                                           \
-            if (ENABLE_TEXTURE)                                                     \
-            {                                                                       \
-                float color[4];                                                     \
-                sw_texture_sample(color, tex, u * w, v * w, duDx, duDy, dvDx, dvDy);    \
-                color[0] = sw_saturate(color[0] * (start->color[0] + t * dcol[0]) * w); \
-                color[1] = sw_saturate(color[1] * (start->color[1] + t * dcol[1]) * w); \
-                color[2] = sw_saturate(color[2] * (start->color[2] + t * dcol[2]) * w); \
-                sw_framebuffer_write_color(cptr, color);                            \
-            }                                                                       \
-            else                                                                    \
-            {                                                                       \
-                float color[3];                                                     \
-                color[0] = sw_saturate((start->color[0] + t * dcol[0]) * w);        \
-                color[1] = sw_saturate((start->color[1] + t * dcol[1]) * w);        \
-                color[2] = sw_saturate((start->color[2] + t * dcol[2]) * w);        \
-                sw_framebuffer_write_color(cptr, color);                            \
-            }                                                                       \
+            sw_framebuffer_write_color(cptr, srcColor);                             \
         }                                                                           \
                                                                                     \
         /* Increment the interpolation parameter, UVs, and pointers */              \
-        discard:                                                                    \
-        t += dt;                                                                    \
-        sw_framebuffer_inc_color_addr(&cptr);                                       \
-        sw_framebuffer_inc_depth_addr(&dptr);                                       \
+                                                                                    \
+    discard:                                                                        \
+                                                                                    \
+        z += dzDx;                                                                  \
+        w += dwDx;                                                                  \
+        color[0] += dcDx[0];                                                        \
+        color[1] += dcDx[1];                                                        \
+        color[2] += dcDx[2];                                                        \
+        color[3] += dcDx[3];                                                        \
         if (ENABLE_TEXTURE) {                                                       \
             u += duDx;                                                              \
             v += dvDx;                                                              \
         }                                                                           \
+                                                                                    \
+        sw_framebuffer_inc_color_addr(&cptr);                                       \
+        sw_framebuffer_inc_depth_addr(&dptr);                                       \
     }                                                                               \
 }
 
@@ -2934,7 +2935,7 @@ static inline void FUNC_NAME(void)                                              
                                                                                 \
         for (int x = xMin; x < xMax; x++)                                       \
         {                                                                       \
-            /* Interpolate Z for depth testing */                               \
+            /* Test and write depth */                                          \
                                                                                 \
             if (ENABLE_DEPTH_TEST)                                              \
             {                                                                   \
