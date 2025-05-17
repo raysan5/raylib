@@ -832,10 +832,11 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
 
     // Calculate how far the top-left pixel is along the gradient direction from the center of said gradient
     float startingPos = 0.5f - (cosDir*width/2) - (sinDir*height/2);
+
     // With directions that lie in the first or third quadrant (i.e. from top-left to
     // bottom-right or vice-versa), pixel (0, 0) is the farthest point on the gradient
     // (i.e. the pixel which should become one of the gradient's ends color); while for
-    // directions that lie in the second or fourth quadrant, that point is pixel (width, 0).
+    // directions that lie in the second or fourth quadrant, that point is pixel (width, 0)
     float maxPosValue = ((signbit(sinDir) != 0) == (signbit(cosDir) != 0))? fabsf(startingPos) : fabsf(startingPos + width*cosDir);
     for (int i = 0; i < width; i++)
     {
@@ -3835,7 +3836,7 @@ void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c
 
     // Calculate the inverse of the sum of the barycentric coordinates for normalization
     // NOTE 1: Here, we act as if we multiply by 255 the reciprocal, which avoids additional
-    //         calculations in the loop. This is acceptable because we are only interpolating colors.
+    //         calculations in the loop. This is acceptable because we are only interpolating colors
     // NOTE 2: This sum remains constant throughout the triangle
     float wInvSum = 255.0f/(w1Row + w2Row + w3Row);
 

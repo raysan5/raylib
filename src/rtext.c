@@ -331,6 +331,9 @@ extern void UnloadFontDefault(void)
     if (isGpuReady) UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
     RL_FREE(defaultFont.recs);
+    defaultFont.glyphCount = 0;
+    defaultFont.glyphs = NULL;
+    defaultFont.recs = NULL;
 }
 #endif      // SUPPORT_DEFAULT_FONT
 
@@ -1575,7 +1578,7 @@ const char *TextSubtext(const char *text, int position, int length)
 }
 
 // Replace text string
-// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
+// REQUIRES: strstr(), strncpy(), strcpy()
 // WARNING: Allocated memory must be manually freed
 char *TextReplace(const char *text, const char *replace, const char *by)
 {

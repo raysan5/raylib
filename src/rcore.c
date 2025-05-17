@@ -523,25 +523,25 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
-// We're using `#pragma message` because `#warning` is not adopted by MSVC.
+// We're using '#pragma message' because '#warning' is not adopted by MSVC
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #if !defined(SUPPORT_MODULE_RTEXTURES)
-        #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
+        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
     #endif
 
     // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
     #if !defined(SUPPORT_FILEFORMAT_BMP) && defined(_WIN32)
-        #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
+        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
     #endif
 
-    // From what I've tested applications on Wayland saves images on clipboard as PNG.
+    // From what I've tested applications on Wayland saves images on clipboard as PNG
     #if (!defined(SUPPORT_FILEFORMAT_PNG) || !defined(SUPPORT_FILEFORMAT_JPG)) && !defined(_WIN32)
-        #pragma message ("Warning: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
+        #pragma message ("WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
     #endif
 
-    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined.
+    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
     // #if !defined(STBI_REQUIRED)
-    //     #pragma message ("Warning: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
+    //     #pragma message ("WARNING: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
     // #endif
 
 #endif // SUPPORT_CLIPBOARD_IMAGE
@@ -2575,7 +2575,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 }
 
 // Decode Base64 string data
-unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
+unsigned char *DecodeDataBase64(const char *data, int *outputSize)
 {
     static const unsigned char base64decodeTable[] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
