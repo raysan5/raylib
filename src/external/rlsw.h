@@ -3879,6 +3879,7 @@ bool swInit(int w, int h)
     RLSW.loadedTextures[0].tWrap = SW_REPEAT;
     RLSW.loadedTextures[0].tx = 0.5f;
     RLSW.loadedTextures[0].ty = 0.5f;
+    RLSW.loadedTextures[0].copy = false;
 
     RLSW.loadedTextureCount = 1;
 
@@ -3887,21 +3888,17 @@ bool swInit(int w, int h)
 
 void swClose(void)
 {
-    if (RLSW.framebuffer.color != NULL) {
-        SW_FREE(RLSW.framebuffer.color);
+    for (int i = 1; i < RLSW.loadedTextureCount; i++) {
+        sw_texture_t* texture = &RLSW.loadedTextures[i];
+        if (sw_is_texture_valid(i) && texture->copy) {
+            SW_FREE(texture->pixels.ptr);
+        }
     }
 
-    if (RLSW.framebuffer.depth != NULL) {
-        SW_FREE(RLSW.framebuffer.depth);
-    }
-
-    if (RLSW.loadedTextures != NULL) {
-        SW_FREE(RLSW.loadedTextures);
-    }
-
-    if (RLSW.freeTextureIds != NULL) {
-        SW_FREE(RLSW.freeTextureIds);
-    }
+    SW_FREE(RLSW.framebuffer.color);
+    SW_FREE(RLSW.framebuffer.depth);
+    SW_FREE(RLSW.loadedTextures);
+    SW_FREE(RLSW.freeTextureIds);
 
     RLSW = (sw_context_t) { 0 };
 }
