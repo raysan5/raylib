@@ -2697,7 +2697,7 @@ static inline void sw_quad_clip_and_project(void)
     sw_vertex_t* polygon = RLSW.vertexBuffer;
     int* vertexCounter = &RLSW.vertexCounter;
 
-    if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 4) {
+    if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
 
         // Transformation to screen space and normalization
         for (int i = 0; i < *vertexCounter; i++) {
