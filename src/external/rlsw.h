@@ -553,7 +553,8 @@ void swBindTexture(uint32_t id);
 /* === Internal Structs === */
 
 typedef enum {
-    SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+    SW_PIXELFORMAT_UNKNOWN = 0,
+    SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE,         // 8 bit per pixel (no alpha)
     SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
     SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
     SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
@@ -1731,7 +1732,8 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
         case SW_LUMINANCE_ALPHA:  channels = 2; break;
         case SW_RGB:              channels = 3; break;
         case SW_RGBA:             channels = 4; break;
-        default: return -1; // Unknown format
+        default:
+            return SW_PIXELFORMAT_UNKNOWN;
     }
 
     // Determine the depth of each channel (type)
@@ -1743,7 +1745,8 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
         case SW_UNSIGNED_INT:     bitsPerChannel = 32; break;
         case SW_INT:              bitsPerChannel = 32; break;
         case SW_FLOAT:            bitsPerChannel = 32; break;
-        default: return -1; // Unknown type
+        default:
+            return SW_PIXELFORMAT_UNKNOWN;
     }
 
     // Map the format and type to the correct internal format
@@ -1764,7 +1767,7 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
         if (channels == 4) return SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32;
     }
 
-    return -1; // Unsupported format
+    return SW_PIXELFORMAT_UNKNOWN;
 }
 
 int sw_get_pixel_bytes(sw_pixelformat_e format)
@@ -4962,7 +4965,7 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy
 
     int pixelFormat = sw_get_pixel_format(format, type);
 
-    if (pixelFormat < 0) {
+    if (pixelFormat <= SW_PIXELFORMAT_UNKNOWN) {
         RLSW.errCode = SW_INVALID_ENUM;
         return;
     }
