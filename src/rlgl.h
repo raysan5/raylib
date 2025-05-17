@@ -433,7 +433,8 @@ typedef struct rlRenderBatch {
 
 // OpenGL version
 typedef enum {
-    RL_OPENGL_11 = 1,           // OpenGL 1.1
+    RL_OPENGL_11_SOFTWARE = 0,  // Software rendering
+    RL_OPENGL_11,               // OpenGL 1.1
     RL_OPENGL_21,               // OpenGL 2.1 (GLSL 120)
     RL_OPENGL_33,               // OpenGL 3.3 (GLSL 330)
     RL_OPENGL_43,               // OpenGL 4.3 (using GLSL 330)
@@ -2659,7 +2660,9 @@ void rlLoadExtensions(void *loader)
 int rlGetVersion(void)
 {
     int glVersion = 0;
-#if defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    glVersion = RL_OPENGL_11_SOFTWARE;
+#elif defined(GRAPHICS_API_OPENGL_11)
     glVersion = RL_OPENGL_11;
 #endif
 #if defined(GRAPHICS_API_OPENGL_21)
