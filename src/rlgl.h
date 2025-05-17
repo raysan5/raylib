@@ -2330,7 +2330,11 @@ void rlglInit(int width, int height)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    swInit(width, height);
+    if (!swInit(width, height))
+    {
+        TRACELOG(RL_LOG_ERROR, "RLGL: Software renderer initialization failed!");
+        exit(-1);
+    }
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
