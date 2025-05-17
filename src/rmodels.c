@@ -1432,10 +1432,10 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.animVertices) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
-    rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormals);
+    if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
+    rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
