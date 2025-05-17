@@ -2764,54 +2764,75 @@ static inline void sw_quad_sort_cw(const sw_vertex_t** output)
 {
     // Sort 4 quad vertices into clockwise order with fixed layout:
     //
-    //   v0 -- v1
-    //   |      |
-    //   v3 -- v2
+    // v0 -- v1
+    // |    |
+    // v3 -- v2
     //
     // The goal is:
     // - v0: top-left (minimum Y, then minimum X)
-    // - v1: top-right (same Y row as v0, maximum X)
-    // - v3: bottom-left (maximum Y, minimum X)
+    // - v1: top-right (minimum Y row, maximum X)
     // - v2: bottom-right (maximum Y, maximum X)
+    // - v3: bottom-left (maximum Y, minimum X)
 
     const sw_vertex_t* input = RLSW.vertexBuffer;
 
-    // Find indices of vertices with min Y (top) and max Y (bottom)
-    int minYIndex = 0, maxYIndex = 0;
+    // Separate vertices into top and bottom based on Y-coordinate
+    const sw_vertex_t* top[2] = {NULL, NULL};
+    const sw_vertex_t* bottom[2] = {NULL, NULL};
+    int topCount = 0, bottomCount = 0;
+
+    // Find minimum and maximum Y
+    float minY = input[0].screen[1];
+    float maxY = input[0].screen[1];
+
     for (int i = 1; i < 4; i++) {
-        if (input[i].screen[1] < input[minYIndex].screen[1]) minYIndex = i;
-        if (input[i].screen[1] > input[maxYIndex].screen[1]) maxYIndex = i;
+        if (input[i].screen[1] < minY) minY = input[i].screen[1];
+        if (input[i].screen[1] > maxY) maxY = input[i].screen[1];
     }
 
-    // Find indices of the remaining two vertices
-    int others[2], idx = 0;
+    // Separate vertices based on Y-coordinate
     for (int i = 0; i < 4; i++) {
-        if (i != minYIndex && i != maxYIndex) {
-            others[idx++] = i;
+        if (input[i].screen[1] == minY && topCount < 2) {
+            top[topCount++] = &input[i];
+        } else if (input[i].screen[1] == maxY && bottomCount < 2) {
+            bottom[bottomCount++] = &input[i];
         }
     }
 
-    // Determine left/right among the middle vertices by X coordinate
-    int leftMidIndex = (input[others[0]].screen[0] < input[others[1]].screen[0]) ? others[0] : others[1];
-    int rightMidIndex = (leftMidIndex == others[0]) ? others[1] : others[0];
-
-    // Assign top vertices: v0 = top-left, v1 = top-right
-    if (input[minYIndex].screen[0] < input[leftMidIndex].screen[0]) {
-        output[0] = &input[minYIndex];      // v0: top-left
-        output[1] = &input[leftMidIndex];   // v1: top-right
-    } else {
-        output[0] = &input[leftMidIndex];
-        output[1] = &input[minYIndex];
+    // If we don't have enough top/bottom vertices (e.g., Y values are all different),
+    // classify vertices as top or bottom based on whether they're closer to minY or maxY
+    for (int i = 0; i < 4; i++) {
+        if (topCount < 2 && &input[i] != top[0] && &input[i] != bottom[0] && &input[i] != bottom[1]) {
+            if (fabs(input[i].screen[1] - minY) <= fabs(input[i].screen[1] - maxY)) {
+                top[topCount++] = &input[i];
+            }
+        }
+        if (bottomCount < 2 && &input[i] != top[0] && &input[i] != top[1] && &input[i] != bottom[0]) {
+            if (fabs(input[i].screen[1] - maxY) < fabs(input[i].screen[1] - minY)) {
+                bottom[bottomCount++] = &input[i];
+            }
+        }
     }
 
-    // Assign bottom vertices: v3 = bottom-left, v2 = bottom-right
-    if (input[maxYIndex].screen[0] < input[rightMidIndex].screen[0]) {
-        output[3] = &input[maxYIndex];      // v3: bottom-left
-        output[2] = &input[rightMidIndex];  // v2: bottom-right
-    } else {
-        output[3] = &input[rightMidIndex];
-        output[2] = &input[maxYIndex];
+    // Sort top vertices by X (left to right)
+    if (topCount == 2 && top[0]->screen[0] > top[1]->screen[0]) {
+        const sw_vertex_t* temp = top[0];
+        top[0] = top[1];
+        top[1] = temp;
     }
+
+    // Sort bottom vertices by X (left to right)
+    if (bottomCount == 2 && bottom[0]->screen[0] > bottom[1]->screen[0]) {
+        const sw_vertex_t* temp = bottom[0];
+        bottom[0] = bottom[1];
+        bottom[1] = temp;
+    }
+
+    // Assign vertices in clockwise order as per the required layout
+    output[0] = top[0];                 // v0: top-left
+    output[1] = top[topCount-1];        // v1: top-right
+    output[2] = bottom[bottomCount-1];  // v2: bottom-right
+    output[3] = bottom[0];              // v3: bottom-left
 }
 
 // REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth, still appear perfectly aligned from a certain point of view?
