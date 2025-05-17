@@ -158,7 +158,7 @@ typedef double          GLclampd;
 #define GL_TEXTURE                          0x1702
 
 #define GL_VERTEX_ARRAY                     0x8074
-//#define GL_NORMAL_ARRAY                   0x8075
+#define GL_NORMAL_ARRAY                     0x8075  //< WARNING: Not implemented (defined for RLGL)
 #define GL_COLOR_ARRAY                      0x8076
 //#define GL_INDEX_ARRAY                    0x8077
 #define GL_TEXTURE_COORD_ARRAY              0x8078

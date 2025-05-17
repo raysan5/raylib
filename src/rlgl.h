@@ -849,7 +849,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #define SW_MALLOC(sz) RL_MALLOC(sz)
         #define SW_REALLOC(ptr, newSz) RL_REALLOC(ptr, newSz)
         #define SW_FREE(ptr) RL_FREE(ptr)
-        #include "./external/rlsw.h"        // OpenGL 1.1 software implementation
+        #include "external/rlsw.h"          // OpenGL 1.1 software implementation
     #else
         #if defined(__APPLE__)
             #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
