@@ -526,7 +526,7 @@ void swBindTexture(uint32_t id);
 
 #endif // RLSW_H
 
-#define RLSW_IMPL
+
 #ifdef RLSW_IMPL
 
 #include <stdlib.h>
