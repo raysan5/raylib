@@ -599,20 +599,20 @@ typedef struct {
         void* ptr;          //< WARNING: Should only be used to allocate and free data
     } pixels;
 
-    int width;
-    int height;
-    int format;
+    int width, height;      //< Dimensions of the texture
+    int wM1, hM1;           //< Dimensions minus one
+    int format;             //< Pixel format (internal representation)
 
-    SWfilter minFilter;
-    SWfilter magFilter;
+    SWfilter minFilter;     //< Minification filter
+    SWfilter magFilter;     //< Magnification filter
 
-    SWwrap sWrap;
-    SWwrap tWrap;
+    SWwrap sWrap;           //< texcoord.x wrap mode
+    SWwrap tWrap;           //< texcoord.y wrap mode
 
-    float tx;
-    float ty;
+    float tx;               //< Texel width
+    float ty;               //< Texel height
 
-    bool copy;
+    bool copy;              //< Flag indicating whether memory has been allocated
 
 } sw_texture_t;
 
@@ -2068,18 +2068,18 @@ static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
 static inline void sw_texture_sample_nearest(float* color, const sw_texture_t* tex, float u, float v)
 {
     int x, y;
-    sw_texture_map(&x, u, tex->width, tex->sWrap);
-    sw_texture_map(&y, v, tex->height, tex->tWrap);
+    sw_texture_map(&x, u, tex->wM1, tex->sWrap);
+    sw_texture_map(&y, v, tex->hM1, tex->tWrap);
     sw_get_pixel(color, tex->pixels.cptr, y * tex->width + x, tex->format);
 }
 
 static inline void sw_texture_sample_linear(float* color, const sw_texture_t* tex, float u, float v)
 {
     int x0, y0, x1, y1;
-    sw_texture_map(&x0, u, tex->width, tex->sWrap);
-    sw_texture_map(&y0, v, tex->height, tex->tWrap);
-    sw_texture_map(&x1, u + tex->tx, tex->width, tex->sWrap);
-    sw_texture_map(&y1, v + tex->ty, tex->height, tex->tWrap);
+    sw_texture_map(&x0, u, tex->wM1, tex->sWrap);
+    sw_texture_map(&y0, v, tex->hM1, tex->tWrap);
+    sw_texture_map(&x1, u + tex->tx, tex->wM1, tex->sWrap);
+    sw_texture_map(&y1, v + tex->ty, tex->hM1, tex->tWrap);
 
     float fx = u * (tex->width - 1) - x0;
     float fy = v * (tex->height - 1) - y0;
@@ -3915,6 +3915,8 @@ bool swInit(int w, int h)
     RLSW.loadedTextures[0].pixels.cptr = defTex;
     RLSW.loadedTextures[0].width = 2;
     RLSW.loadedTextures[0].height = 2;
+    RLSW.loadedTextures[0].wM1 = 1;
+    RLSW.loadedTextures[0].hM1 = 1;
     RLSW.loadedTextures[0].format = SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32;
     RLSW.loadedTextures[0].minFilter = SW_NEAREST;
     RLSW.loadedTextures[0].magFilter = SW_NEAREST;
@@ -5064,6 +5066,8 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy
 
     texture->width = width;
     texture->height = height;
+    texture->wM1 = width - 1;
+    texture->hM1 = height - 1;
     texture->format = pixelFormat;
     texture->tx = 1.0f / width;
     texture->ty = 1.0f / height;
