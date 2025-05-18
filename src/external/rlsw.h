@@ -2166,7 +2166,7 @@ static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
         *out = (int)(sw_fract(in) * max + 0.5f);
         break;
     case SW_CLAMP:
-        *out = (int)(sw_saturate(in) * (max - 1) + 0.5f);
+        *out = (int)(sw_saturate(in) * max + 0.5f);
         break;
     }
 }
