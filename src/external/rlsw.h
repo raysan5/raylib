@@ -1032,7 +1032,7 @@ static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void* src)
     dst[3] = 255;
 }
 
-static inline void sw_framebuffer_write_color(void* dst, float color[3])
+static inline void sw_framebuffer_write_color(void* dst, const float color[3])
 {
     uint8_t r = ((uint8_t)(color[0] * UINT8_MAX) >> 5) & 0x07;
     uint8_t g = ((uint8_t)(color[1] * UINT8_MAX) >> 5) & 0x07;
@@ -1041,7 +1041,7 @@ static inline void sw_framebuffer_write_color(void* dst, float color[3])
     ((uint8_t*)dst)[0] = (r << 5) | (g << 2) | b;
 }
 
-static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
+static inline void sw_framebuffer_fill_color(void* ptr, int size, const float color[3])
 {
     uint8_t r8 = (uint8_t)(color[0] * 7.0f + 0.5f);
     uint8_t g8 = (uint8_t)(color[1] * 7.0f + 0.5f);
@@ -1092,7 +1092,7 @@ static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void* src)
     dst[3] = 255;
 }
 
-static inline void sw_framebuffer_write_color(void* dst, float color[3])
+static inline void sw_framebuffer_write_color(void* dst, const float color[3])
 {
     uint8_t r = (uint8_t)(color[0] * 31.0f + 0.5f) & 0x1F;
     uint8_t g = (uint8_t)(color[1] * 63.0f + 0.5f) & 0x3F;
@@ -1101,7 +1101,7 @@ static inline void sw_framebuffer_write_color(void* dst, float color[3])
     ((uint16_t*)dst)[0] = (r << 11) | (g << 5) | b;
 }
 
-static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
+static inline void sw_framebuffer_fill_color(void* ptr, int size, const float color[3])
 {
     uint16_t r16 = (uint16_t)(color[0] * 31.0f + 0.5f);
     uint16_t g_16 = (uint16_t)(color[1] * 63.0f + 0.5f);
@@ -1144,14 +1144,14 @@ static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void* src)
     dst[3] = 255;
 }
 
-static inline void sw_framebuffer_write_color(void* dst, float color[3])
+static inline void sw_framebuffer_write_color(void* dst, const float color[3])
 {
     ((uint8_t*)dst)[0] = (uint8_t)(color[0] * UINT8_MAX);
     ((uint8_t*)dst)[1] = (uint8_t)(color[1] * UINT8_MAX);
     ((uint8_t*)dst)[2] = (uint8_t)(color[2] * UINT8_MAX);
 }
 
-static inline void sw_framebuffer_fill_color(void* ptr, int size, float color[4])
+static inline void sw_framebuffer_fill_color(void* ptr, int size, const float color[3])
 {
     uint8_t r = (uint8_t)(color[0] * 255.0f);
     uint8_t g = (uint8_t)(color[1] * 255.0f);
@@ -2266,7 +2266,7 @@ static inline void sw_factor_src_alpha_saturate(float* SW_RESTRICT factor, const
     factor[3] = (src[3] < 1.0f) ? src[3] : 1.0f;
 }
 
-static inline void sw_blend_colors(float* SW_RESTRICT dst/*[4]*/, float* SW_RESTRICT src/*[4]*/)
+static inline void sw_blend_colors(float* SW_RESTRICT dst/*[4]*/, const float* SW_RESTRICT src/*[4]*/)
 {
     float srcFactor[4], dstFactor[4];
 
@@ -3631,7 +3631,7 @@ static inline bool sw_point_clip_and_project(sw_vertex_t* v)
 }
 
 #define DEFINE_POINT_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND, CHECK_BOUNDS) \
-static inline void FUNC_NAME(int x, int y, float z, float color[4])         \
+static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
 {                                                                           \
     if (CHECK_BOUNDS == 1)                                                  \
     {                                                                       \
@@ -3683,7 +3683,7 @@ static inline void FUNC_NAME(sw_vertex_t* v)                                \
     int cy = v->screen[1];                                                  \
     float cz = v->homogeneous[2];                                           \
     int radius = RLSW.pointRadius;                                          \
-    float* color = v->color;                                                \
+    const float* color = v->color;                                          \
                                                                             \
     int x = 0;                                                              \
     int y = radius;                                                         \
