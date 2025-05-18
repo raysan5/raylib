@@ -805,7 +805,11 @@ static inline float sw_lerp(float a, float b, float t)
     return a + t * (b - a);
 }
 
-static inline void sw_lerp_vertex_PNTCH(sw_vertex_t* SW_RESTRICT out, const sw_vertex_t* SW_RESTRICT a, const sw_vertex_t* SW_RESTRICT b, float t)
+static inline void sw_lerp_vertex_PTCH(
+    sw_vertex_t* SW_RESTRICT out,
+    const sw_vertex_t* SW_RESTRICT a,
+    const sw_vertex_t* SW_RESTRICT b,
+    float t)
 {
     const float tInv = 1.0f - t;
 
@@ -830,6 +834,62 @@ static inline void sw_lerp_vertex_PNTCH(sw_vertex_t* SW_RESTRICT out, const sw_v
     out->homogeneous[1] = a->homogeneous[1] * tInv + b->homogeneous[1] * t;
     out->homogeneous[2] = a->homogeneous[2] * tInv + b->homogeneous[2] * t;
     out->homogeneous[3] = a->homogeneous[3] * tInv + b->homogeneous[3] * t;
+}
+
+static inline void sw_get_vertex_grad_PTCH(
+    sw_vertex_t* SW_RESTRICT out,
+    const sw_vertex_t* SW_RESTRICT a,
+    const sw_vertex_t* SW_RESTRICT b,
+    float scale)
+{
+    // Calculate gradients for Position
+    out->position[0] = (b->position[0] - a->position[0]) * scale;
+    out->position[1] = (b->position[1] - a->position[1]) * scale;
+    out->position[2] = (b->position[2] - a->position[2]) * scale;
+    out->position[3] = (b->position[3] - a->position[3]) * scale;
+
+    // Calculate gradients for Texture coordinates
+    out->texcoord[0] = (b->texcoord[0] - a->texcoord[0]) * scale;
+    out->texcoord[1] = (b->texcoord[1] - a->texcoord[1]) * scale;
+
+    // Calculate gradients for Color
+    out->color[0] = (b->color[0] - a->color[0]) * scale;
+    out->color[1] = (b->color[1] - a->color[1]) * scale;
+    out->color[2] = (b->color[2] - a->color[2]) * scale;
+    out->color[3] = (b->color[3] - a->color[3]) * scale;
+
+    // Calculate gradients for Homogeneous coordinates
+    out->homogeneous[0] = (b->homogeneous[0] - a->homogeneous[0]) * scale;
+    out->homogeneous[1] = (b->homogeneous[1] - a->homogeneous[1]) * scale;
+    out->homogeneous[2] = (b->homogeneous[2] - a->homogeneous[2]) * scale;
+    out->homogeneous[3] = (b->homogeneous[3] - a->homogeneous[3]) * scale;
+}
+
+static inline void sw_add_vertex_grad_PTCH(
+    sw_vertex_t* SW_RESTRICT out,
+    const sw_vertex_t* SW_RESTRICT gradients)
+{
+    // Add gradients to Position
+    out->position[0] += gradients->position[0];
+    out->position[1] += gradients->position[1];
+    out->position[2] += gradients->position[2];
+    out->position[3] += gradients->position[3];
+
+    // Add gradients to Texture coordinates
+    out->texcoord[0] += gradients->texcoord[0];
+    out->texcoord[1] += gradients->texcoord[1];
+
+    // Add gradients to Color
+    out->color[0] += gradients->color[0];
+    out->color[1] += gradients->color[1];
+    out->color[2] += gradients->color[2];
+    out->color[3] += gradients->color[3];
+
+    // Add gradients to Homogeneous coordinates
+    out->homogeneous[0] += gradients->homogeneous[0];
+    out->homogeneous[1] += gradients->homogeneous[1];
+    out->homogeneous[2] += gradients->homogeneous[2];
+    out->homogeneous[3] += gradients->homogeneous[3];
 }
 
 
@@ -2169,7 +2229,7 @@ static inline int sw_clip_##name(                                               
         /* If transition between interior/exterior, calculate intersection point */     \
         if (prevInside != currInside) {                                                 \
             float t = FUNC_COMPUTE_T(prev->homogeneous, curr->homogeneous);             \
-            sw_lerp_vertex_PNTCH(&output[outputCount++], prev, curr, t);                \
+            sw_lerp_vertex_PTCH(&output[outputCount++], prev, curr, t);                 \
         }                                                                               \
                                                                                         \
         /* If current vertex inside, add it */                                          \
@@ -2341,7 +2401,7 @@ static inline void FUNC_NAME(const sw_texture_t* tex, const sw_vertex_t* start, 
                                                                                     \
     int xStart = (int)(start->screen[0] + 0.5f);                                    \
     int xEnd   = (int)(end->screen[0] + 0.5f);                                      \
-    int y      = (int)(start->screen[1] + 0.5f);                                    \
+    int y      = (int)start->screen[1];                                             \
                                                                                     \
     /* Compute the inverse horizontal distance along the X axis */                  \
                                                                                     \
@@ -2471,115 +2531,100 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
                              const sw_texture_t* tex)                               \
 {                                                                                   \
     /* Swap vertices by increasing y */                                             \
+                                                                                    \
     if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t* tmp = v0; v0 = v1; v1 = tmp; }  \
     if (v1->screen[1] > v2->screen[1]) { const sw_vertex_t* tmp = v1; v1 = v2; v2 = tmp; }  \
     if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t* tmp = v0; v0 = v1; v1 = tmp; }  \
                                                                                     \
     /* Extracting coordinates from the sorted vertices */                           \
+                                                                                    \
     float x0 = v0->screen[0], y0 = v0->screen[1];                                   \
     float x1 = v1->screen[0], y1 = v1->screen[1];                                   \
     float x2 = v2->screen[0], y2 = v2->screen[1];                                   \
                                                                                     \
     /* Compute height differences */                                                \
+                                                                                    \
     float h20 = y2 - y0;                                                            \
     float h10 = y1 - y0;                                                            \
     float h21 = y2 - y1;                                                            \
                                                                                     \
+    if (h20 < 1e-6f) {                                                              \
+        return;                                                                     \
+    }                                                                               \
+                                                                                    \
     /* Precompute the inverse values without additional checks */                   \
-    float invH20 = (h20 > 1e-6f) ? 1.0f / h20 : 0.0f;                               \
+                                                                                    \
+    float invH20 = 1.0f / h20;                                                      \
     float invH10 = (h10 > 1e-6f) ? 1.0f / h10 : 0.0f;                               \
     float invH21 = (h21 > 1e-6f) ? 1.0f / h21 : 0.0f;                               \
                                                                                     \
     /* Pre-calculation of slopes (dx/dy) */                                         \
+                                                                                    \
     float dx02 = (x2 - x0) * invH20;                                                \
     float dx01 = (x1 - x0) * invH10;                                                \
     float dx12 = (x2 - x1) * invH21;                                                \
                                                                                     \
     /* Y bounds (vertical clipping) */                                              \
+                                                                                    \
     int yTop = (int)(y0 + 0.5f);                                                    \
     int yMiddle = (int)(y1 + 0.5f);                                                 \
     int yBottom = (int)(y2 + 0.5f);                                                 \
                                                                                     \
-    /* Global calculation of vertical texture gradients for the triangle */         \
-    float duDy, dvDy;                                                               \
-    if (ENABLE_TEXTURE) {                                                           \
-        duDy = (v2->texcoord[0] - v0->texcoord[0]) * invH20;                        \
-        dvDy = (v2->texcoord[1] - v0->texcoord[1]) * invH20;                        \
-    }                                                                               \
+    /* Compute gradients for each side of the triangle */                           \
+                                                                                    \
+    sw_vertex_t vDy20, vDy10, vDy21;                                                \
+    sw_get_vertex_grad_PTCH(&vDy20, v2, v0, invH20);                                \
+    sw_get_vertex_grad_PTCH(&vDy10, v1, v0, invH10);                                \
+    sw_get_vertex_grad_PTCH(&vDy21, v2, v1, invH21);                                \
                                                                                     \
     /* Initializing scanline variables */                                           \
-    float xLeft = x0, xRight = x0;                                                  \
-    sw_vertex_t start, end;                                                         \
+                                                                                    \
+    sw_vertex_t vLeft = *v0;                                                        \
+    vLeft.screen[0] = x0;                                                           \
+                                                                                    \
+    sw_vertex_t vRight = *v0;                                                       \
+    vRight.screen[0] = x0;                                                          \
                                                                                     \
     /* Scanline for the upper part of the triangle */                               \
-    for (int y = yTop; y < yMiddle; y++) {                                          \
                                                                                     \
-        /* Discard the lines that are degenerate */                                 \
-        if (fabsf(xRight - xLeft) <= 1e-6f) {                                       \
-            goto discardTL;                                                         \
+    for (int y = yTop; y < yMiddle; y++)                                            \
+    {                                                                               \
+        vLeft.screen[1] = vRight.screen[1] = y;                                     \
+                                                                                    \
+        if (vLeft.screen[0] < vRight.screen[0]) {                                   \
+            FUNC_SCANLINE(tex, &vLeft, &vRight, vDy20.texcoord[0], vDy20.texcoord[1]); \
+        }                                                                           \
+        else {                                                                      \
+            FUNC_SCANLINE(tex, &vRight, &vLeft, vDy20.texcoord[0], vDy20.texcoord[1]); \
         }                                                                           \
                                                                                     \
-        /* Calculation of interpolation factors */                                  \
-        float dy = (float)y - y0;                                                   \
-        float t1 = dy * invH20;                                                     \
-        float t2 = dy * invH10;                                                     \
+        sw_add_vertex_grad_PTCH(&vLeft, &vDy20);                                    \
+        vLeft.screen[0]  += dx02;                                                   \
                                                                                     \
-        /* Vertex interpolation */                                                  \
-        sw_lerp_vertex_PNTCH(&start, v0, v2, t1);                                   \
-        sw_lerp_vertex_PNTCH(&end, v0, v1, t2);                                     \
-        start.screen[0] = xLeft;                                                    \
-        start.screen[1] = (float)y;                                                 \
-        end.screen[0] = xRight;                                                     \
-        end.screen[1] = (float)y;                                                   \
-                                                                                    \
-        if (xLeft > xRight) {                                                       \
-            sw_vertex_t tmp = start;                                                \
-            start = end;                                                            \
-            end = tmp;                                                              \
-        }                                                                           \
-                                                                                    \
-        FUNC_SCANLINE(tex, &start, &end, duDy, dvDy);                               \
-                                                                                    \
-        /* Incremental update */                                                    \
-        discardTL:                                                                  \
-        xLeft  += dx02;                                                             \
-        xRight += dx01;                                                             \
+        sw_add_vertex_grad_PTCH(&vRight, &vDy10);                                   \
+        vRight.screen[0] += dx01;                                                   \
     }                                                                               \
                                                                                     \
     /* Scanline for the lower part of the triangle */                               \
-    xRight = x1; /* Restart the right side from the second vertex */                \
-    for (int y = yMiddle; y < yBottom; y++) {                                       \
                                                                                     \
-        /* Discard the lines that are degenerate */                                 \
-        if (fabsf(xRight - xLeft) <= 1e-6f) {                                       \
-            goto discardBL;                                                         \
+    vRight = *v1, vRight.screen[0] = x1;                                            \
+                                                                                    \
+    for (int y = yMiddle; y < yBottom; y++)                                         \
+    {                                                                               \
+        vLeft.screen[1] = vRight.screen[1] = y;                                     \
+                                                                                    \
+        if (vLeft.screen[0] < vRight.screen[0]) {                                   \
+            FUNC_SCANLINE(tex, &vLeft, &vRight, vDy20.texcoord[0], vDy20.texcoord[1]); \
+        }                                                                           \
+        else {                                                                      \
+            FUNC_SCANLINE(tex, &vRight, &vLeft, vDy20.texcoord[0], vDy20.texcoord[1]); \
         }                                                                           \
                                                                                     \
-        /* Calculation of interpolation factors */                                  \
-        float dy = (float)y - y0;                                                   \
-        float t1 = dy * invH20;                                                     \
-        float t2 = (float)(y - y1) * invH21;                                        \
+        sw_add_vertex_grad_PTCH(&vLeft, &vDy20);                                    \
+        vLeft.screen[0]  += dx02;                                                   \
                                                                                     \
-        /* Vertex interpolation */                                                  \
-        sw_lerp_vertex_PNTCH(&start, v0, v2, t1);                                   \
-        sw_lerp_vertex_PNTCH(&end, v1, v2, t2);                                     \
-        start.screen[0] = xLeft;                                                    \
-        start.screen[1] = (float)y;                                                 \
-        end.screen[0] = xRight;                                                     \
-        end.screen[1] = (float)y;                                                   \
-                                                                                    \
-        if (xLeft > xRight) {                                                       \
-            sw_vertex_t tmp = start;                                                \
-            start = end;                                                            \
-            end = tmp;                                                              \
-        }                                                                           \
-                                                                                    \
-        FUNC_SCANLINE(tex, &start, &end, duDy, dvDy);                               \
-                                                                                    \
-        /* Incremental update */                                                    \
-        discardBL:                                                                  \
-        xLeft  += dx02;                                                             \
-        xRight += dx12;                                                             \
+        sw_add_vertex_grad_PTCH(&vRight, &vDy21);                                   \
+        vRight.screen[0] += dx12;                                                   \
     }                                                                               \
 }
 
