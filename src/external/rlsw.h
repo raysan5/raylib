@@ -753,59 +753,31 @@ static inline void sw_vec4_transform(float dst[4], const float v[4], const sw_ma
 
 static inline float sw_saturate(float x)
 {
-    // Clamps a floating point value between 0.0 and 1.0
+    union { float f; uint32_t u; } fb;
+    fb.f = x;
 
-    // This implementation uses IEEE 754 bit manipulation:
-    // - Uses the sign bit to detect negative values
-    // - Directly compares with binary representation of 1.0f to detect values > 1.0
+    const uint32_t ZERO_BITS = 0x00000000;       // Bit pattern of 0.0f
+    const uint32_t ONE_BITS  = 0x3F800000;       // Bit pattern of 1.0f (exp = 127, mantissa = 0)
 
-    // Use union to access the bits of the float as an unsigned int
-    union { float f; uint32_t u; } v;
-    v.f = x;
+    // Check if x < 0.0f
+    // If sign bit is set (MSB), x is negative
+    if ((fb.u & 0x80000000) != 0) {
+        return 0.0f;
+    }
 
-    // Check sign bit (bit 31): if set, x is negative, return 0.0f
-    if (v.u & 0x80000000) return 0.0f;
+    // Check if x > 1.0f
+    // Works for positive floats: IEEE 754 ordering matches integer ordering
+    if (fb.u > ONE_BITS) {
+        return 1.0f;
+    }
 
-    // Extract the unsigned magnitude (exponent + mantissa bits)
-    uint32_t expMantissa = v.u & 0x7FFFFFFF;
-
-    // If magnitude > binary representation of 1.0f (0x3F800000), return 1.0f
-    // This efficiently handles all values > 1.0f without additional computation
-    if (expMantissa > 0x3F800000) return 1.0f;
-
-    // Value is between 0.0f and 1.0f inclusive, return unchanged
+    // x is in [0.0f, 1.0f]
     return x;
 }
 
 static inline float sw_fract(float x)
 {
-    // Computes the positive fractional part of a float.
-    // Equivalent to fabs(x) - floorf(fabs(x)).
-    // Uses IEEE 754 bit tricks for efficiency and edge case handling.
-
-    union { float f; uint32_t u; } v;
-    v.f = x;
-
-    // Get absolute value bits (clear sign bit)
-    uint32_t abs_bits = v.u & 0x7FFFFFFF;
-
-    // Case 1: |x| < 1.0f -> integer part is 0, return |x|
-    if (abs_bits < 0x3F800000) {
-        v.u = abs_bits; // Ensure positive result
-        return v.f;
-    }
-
-    // Case 2: |x| ≥ 2^24 -> float is an exact integer, return 0.0f
-    // Also handles Inf and NaN as 0.0f
-    if (abs_bits >= 0x4B000000) {
-        return 0.0f;
-    }
-
-    // Case 3: 1.0f ≤ |x| < 2^24 -> compute |x| - floor(|x|)
-    v.u = abs_bits;
-    float abs_x = v.f;
-
-    return abs_x - floorf(abs_x);
+    return x - floorf(x);
 }
 
 static inline int sw_clampi(int v, int min, int max)
