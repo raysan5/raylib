@@ -50,6 +50,10 @@
 #   endif
 #endif
 
+#ifndef SW_GL_FRAMEBUFFER_COPY_BGRA
+#   define SW_GL_FRAMEBUFFER_COPY_BGRA true
+#endif
+
 #ifndef SW_GL_BINDING_COPY_TEXTURE
 #   define SW_GL_BINDING_COPY_TEXTURE true
 #endif
@@ -1496,7 +1500,11 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R5G6B5, uint16_t)
     uint8_t g6 = (color[1] * 63 + 127) / 255;
     uint8_t b5 = (color[2] * 31 + 127) / 255;
 
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    uint16_t rgb565 = (b5 << 11) | (g6 << 5) | r5;
+#else // RGBA
     uint16_t rgb565 = (r5 << 11) | (g6 << 5) | b5;
+#endif
 
     *dst++ = rgb565;
 }
@@ -1504,9 +1512,15 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R8G8B8, uint8_t)
 {
-    dst[0] = color[0]; // R
-    dst[1] = color[1]; // G
-    dst[2] = color[2]; // B
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
 
     dst += 3;
 }
@@ -1519,7 +1533,11 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R5G5B5A1, uint16_t)
     uint8_t b5 = (color[2] * 31 + 127) / 255;
     uint8_t a1 = color[3] >= 128 ? 1 : 0;
 
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    uint16_t pixel = (b5 << 11) | (g5 << 6) | (r5 << 1) | a1;
+#else // RGBA
     uint16_t pixel = (r5 << 11) | (g5 << 6) | (b5 << 1) | a1;
+#endif
 
     *dst++ = pixel;
 }
@@ -1532,7 +1550,11 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R4G4B4A4, uint16_t)
     uint8_t b4 = (color[2] * 15 + 127) / 255;
     uint8_t a4 = (color[3] * 15 + 127) / 255;
 
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    uint16_t pixel = (b4 << 12) | (g4 << 8) | (r4 << 4) | a4;
+#else // RGBA
     uint16_t pixel = (r4 << 12) | (g4 << 8) | (b4 << 4) | a4;
+#endif
 
     *dst++ = pixel;
 }
@@ -1540,10 +1562,16 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R8G8B8A8, uint8_t)
 {
-    dst[0] = color[0]; // R
-    dst[1] = color[1]; // G
-    dst[2] = color[2]; // B
-    dst[3] = color[3]; // A
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
+    dst[3] = color[3];
 
     dst += 4;
 }
@@ -1558,9 +1586,15 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R32G32B32, float)
 {
-    dst[0] = color[0];  // R
-    dst[1] = color[1];  // G
-    dst[2] = color[2];  // B
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
 
     dst += 3;
 }
@@ -1568,10 +1602,16 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R32G32B32A32, float)
 {
-    dst[0] = color[0];  // R
-    dst[1] = color[1];  // G
-    dst[2] = color[2];  // B
-    dst[3] = color[3];  // A
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
+    dst[3] = color[3];
 
     dst += 4;
 }
@@ -1586,9 +1626,15 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16G16B16, sw_half_t)
 {
-    dst[0] = sw_cvt_fh(color[0]);  // R
-    dst[1] = sw_cvt_fh(color[1]);  // G
-    dst[2] = sw_cvt_fh(color[2]);  // B
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = sw_cvt_fh(color[2]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[0]);
+#else // RGBA
+    dst[0] = sw_cvt_fh(color[0]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[2]);
+#endif
 
     dst += 3;
 }
@@ -1596,10 +1642,16 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16G16B16A16, sw_half_t)
 {
-    dst[0] = sw_cvt_fh(color[0]);  // R
-    dst[1] = sw_cvt_fh(color[1]);  // G
-    dst[2] = sw_cvt_fh(color[2]);  // B
-    dst[3] = sw_cvt_fh(color[3]);  // A
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = sw_cvt_fh(color[2]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[0]);
+#else // RGBA
+    dst[0] = sw_cvt_fh(color[0]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[2]);
+#endif
+    dst[3] = sw_cvt_fh(color[3]);
 
     dst += 4;
 }
@@ -1680,7 +1732,11 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R5G6B5, uint16_t)
     uint8_t g6 = (color[1] * 63 + 127) / 255;
     uint8_t b5 = (color[2] * 31 + 127) / 255;
 
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    uint16_t rgb565 = (b5 << 11) | (g6 << 5) | r5;
+#else // RGBA
     uint16_t rgb565 = (r5 << 11) | (g6 << 5) | b5;
+#endif
 
     *dst++ = rgb565;
 }
@@ -1688,9 +1744,15 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R8G8B8, uint8_t)
 {
-    dst[0] = color[0]; // R
-    dst[1] = color[1]; // G
-    dst[2] = color[2]; // B
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
 
     dst += 3;
 }
@@ -1703,7 +1765,11 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R5G5B5A1, uint16_t)
     uint8_t b5 = (color[2] * 31 + 127) / 255;
     uint8_t a1 = color[3] >= 128 ? 1 : 0;
 
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    uint16_t pixel = (b5 << 11) | (g5 << 6) | (r5 << 1) | a1;
+#else // RGBA
     uint16_t pixel = (r5 << 11) | (g5 << 6) | (b5 << 1) | a1;
+#endif
 
     *dst++ = pixel;
 }
@@ -1716,7 +1782,11 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R4G4B4A4, uint16_t)
     uint8_t b4 = (color[2] * 15 + 127) / 255;
     uint8_t a4 = (color[3] * 15 + 127) / 255;
 
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    uint16_t pixel = (b4 << 12) | (g4 << 8) | (r4 << 4) | a4;
+#else // RGBA
     uint16_t pixel = (r4 << 12) | (g4 << 8) | (b4 << 4) | a4;
+#endif
 
     *dst++ = pixel;
 }
@@ -1724,10 +1794,16 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R8G8B8A8, uint8_t)
 {
-    dst[0] = color[0]; // R
-    dst[1] = color[1]; // G
-    dst[2] = color[2]; // B
-    dst[3] = color[3]; // A
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
+    dst[3] = color[3];
 
     dst += 4;
 }
@@ -1742,9 +1818,15 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R32G32B32, float)
 {
-    dst[0] = color[0];  // R
-    dst[1] = color[1];  // G
-    dst[2] = color[2];  // B
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
 
     dst += 3;
 }
@@ -1752,10 +1834,16 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R32G32B32A32, float)
 {
-    dst[0] = color[0];  // R
-    dst[1] = color[1];  // G
-    dst[2] = color[2];  // B
-    dst[3] = color[3];  // A
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = color[2];
+    dst[1] = color[1];
+    dst[2] = color[0];
+#else // RGBA
+    dst[0] = color[0];
+    dst[1] = color[1];
+    dst[2] = color[2];
+#endif
+    dst[3] = color[3];
 
     dst += 4;
 }
@@ -1770,9 +1858,15 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16G16B16, sw_half_t)
 {
-    dst[0] = sw_cvt_fh(color[0]);  // R
-    dst[1] = sw_cvt_fh(color[1]);  // G
-    dst[2] = sw_cvt_fh(color[2]);  // B
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = sw_cvt_fh(color[2]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[0]);
+#else // RGBA
+    dst[0] = sw_cvt_fh(color[0]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[2]);
+#endif
 
     dst += 3;
 }
@@ -1780,10 +1874,16 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16G16B16A16, sw_half_t)
 {
-    dst[0] = sw_cvt_fh(color[0]);  // R
-    dst[1] = sw_cvt_fh(color[1]);  // G
-    dst[2] = sw_cvt_fh(color[2]);  // B
-    dst[3] = sw_cvt_fh(color[3]);  // A
+#if SW_GL_FRAMEBUFFER_COPY_BGRA
+    dst[0] = sw_cvt_fh(color[2]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[0]);
+#else // RGBA
+    dst[0] = sw_cvt_fh(color[0]);
+    dst[1] = sw_cvt_fh(color[1]);
+    dst[2] = sw_cvt_fh(color[2]);
+#endif
+    dst[3] = sw_cvt_fh(color[3]);
 
     dst += 4;
 }
