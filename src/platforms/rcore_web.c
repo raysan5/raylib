@@ -1662,6 +1662,9 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
         }
     }
 
+    // trigger resize event after a brief pause to ensure the canvas exists to resize
+    EM_ASM({ setTimeout(function() { window.dispatchEvent(new Event("resize")); }, 50); });
+
     return 1; // The event was consumed by the callback handler
 }
 
