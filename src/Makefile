@@ -235,20 +235,22 @@ endif
 # NOTE: By default use OpenGL 3.3 on desktop platforms
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
-    #GRAPHICS = GRAPHICS_API_OPENGL_21      # Uncomment to use OpenGL 2.1
-    #GRAPHICS = GRAPHICS_API_OPENGL_43      # Uncomment to use OpenGL 4.3
-    #GRAPHICS = GRAPHICS_API_OPENGL_ES2     # Uncomment to use OpenGL ES 2.0 (ANGLE)
+    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES2         # Uncomment to use OpenGL ES 2.0 (ANGLE)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
-    #GRAPHICS = GRAPHICS_API_OPENGL_21      # Uncomment to use OpenGL 2.1
-    #GRAPHICS = GRAPHICS_API_OPENGL_43      # Uncomment to use OpenGL 4.3
-    #GRAPHICS = GRAPHICS_API_OPENGL_ES2     # Uncomment to use OpenGL ES 2.0 (ANGLE)
+    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES2         # Uncomment to use OpenGL ES 2.0 (ANGLE)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # On DRM OpenGL ES 2.0 must be used
