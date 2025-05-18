@@ -2552,25 +2552,25 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
                                                                                     \
     /* Compute height differences */                                                \
                                                                                     \
-    float h20 = y2 - y0;                                                            \
-    float h10 = y1 - y0;                                                            \
-    float h21 = y2 - y1;                                                            \
+    float h02 = y2 - y0;                                                            \
+    float h01 = y1 - y0;                                                            \
+    float h12 = y2 - y1;                                                            \
                                                                                     \
-    if (h20 < 1e-6f) {                                                              \
+    if (h02 < 1e-6f) {                                                              \
         return;                                                                     \
     }                                                                               \
                                                                                     \
     /* Precompute the inverse values without additional checks */                   \
                                                                                     \
-    float invH20 = 1.0f / h20;                                                      \
-    float invH10 = (h10 > 1e-6f) ? 1.0f / h10 : 0.0f;                               \
-    float invH21 = (h21 > 1e-6f) ? 1.0f / h21 : 0.0f;                               \
+    float invH02 = 1.0f / h02;                                                      \
+    float invH01 = (h01 > 1e-6f) ? 1.0f / h01 : 0.0f;                               \
+    float invH12 = (h12 > 1e-6f) ? 1.0f / h12 : 0.0f;                               \
                                                                                     \
-    /* Pre-calculation of slopes (dx/dy) */                                         \
+    /* Pre-calculation of slopes */                                                 \
                                                                                     \
-    float dx02 = (x2 - x0) * invH20;                                                \
-    float dx01 = (x1 - x0) * invH10;                                                \
-    float dx12 = (x2 - x1) * invH21;                                                \
+    float dx02 = (x2 - x0) * invH02;                                                \
+    float dx01 = (x1 - x0) * invH01;                                                \
+    float dx12 = (x2 - x1) * invH12;                                                \
                                                                                     \
     /* Y bounds (vertical clipping) */                                              \
                                                                                     \
@@ -2580,10 +2580,10 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
                                                                                     \
     /* Compute gradients for each side of the triangle */                           \
                                                                                     \
-    sw_vertex_t vDy20, vDy10, vDy21;                                                \
-    sw_get_vertex_grad_PTCH(&vDy20, v2, v0, invH20);                                \
-    sw_get_vertex_grad_PTCH(&vDy10, v1, v0, invH10);                                \
-    sw_get_vertex_grad_PTCH(&vDy21, v2, v1, invH21);                                \
+    sw_vertex_t vDy02, vDy01, vDy12;                                                \
+    sw_get_vertex_grad_PTCH(&vDy02, v0, v2, invH02);                                \
+    sw_get_vertex_grad_PTCH(&vDy01, v0, v1, invH01);                                \
+    sw_get_vertex_grad_PTCH(&vDy12, v1, v2, invH12);                                \
                                                                                     \
     /* Initializing scanline variables */                                           \
                                                                                     \
@@ -2600,16 +2600,16 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
         vLeft.screen[1] = vRight.screen[1] = y;                                     \
                                                                                     \
         if (vLeft.screen[0] < vRight.screen[0]) {                                   \
-            FUNC_SCANLINE(tex, &vLeft, &vRight, vDy20.texcoord[0], vDy20.texcoord[1]); \
+            FUNC_SCANLINE(tex, &vLeft, &vRight, vDy02.texcoord[0], vDy02.texcoord[1]); \
         }                                                                           \
         else {                                                                      \
-            FUNC_SCANLINE(tex, &vRight, &vLeft, vDy20.texcoord[0], vDy20.texcoord[1]); \
+            FUNC_SCANLINE(tex, &vRight, &vLeft, vDy02.texcoord[0], vDy02.texcoord[1]); \
         }                                                                           \
                                                                                     \
-        sw_add_vertex_grad_PTCH(&vLeft, &vDy20);                                    \
+        sw_add_vertex_grad_PTCH(&vLeft, &vDy02);                                    \
         vLeft.screen[0]  += dx02;                                                   \
                                                                                     \
-        sw_add_vertex_grad_PTCH(&vRight, &vDy10);                                   \
+        sw_add_vertex_grad_PTCH(&vRight, &vDy01);                                   \
         vRight.screen[0] += dx01;                                                   \
     }                                                                               \
                                                                                     \
@@ -2622,16 +2622,16 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1, const
         vLeft.screen[1] = vRight.screen[1] = y;                                     \
                                                                                     \
         if (vLeft.screen[0] < vRight.screen[0]) {                                   \
-            FUNC_SCANLINE(tex, &vLeft, &vRight, vDy20.texcoord[0], vDy20.texcoord[1]); \
+            FUNC_SCANLINE(tex, &vLeft, &vRight, vDy02.texcoord[0], vDy02.texcoord[1]); \
         }                                                                           \
         else {                                                                      \
-            FUNC_SCANLINE(tex, &vRight, &vLeft, vDy20.texcoord[0], vDy20.texcoord[1]); \
+            FUNC_SCANLINE(tex, &vRight, &vLeft, vDy02.texcoord[0], vDy02.texcoord[1]); \
         }                                                                           \
                                                                                     \
-        sw_add_vertex_grad_PTCH(&vLeft, &vDy20);                                    \
+        sw_add_vertex_grad_PTCH(&vLeft, &vDy02);                                    \
         vLeft.screen[0]  += dx02;                                                   \
                                                                                     \
-        sw_add_vertex_grad_PTCH(&vRight, &vDy21);                                   \
+        sw_add_vertex_grad_PTCH(&vRight, &vDy12);                                   \
         vRight.screen[0] += dx12;                                                   \
     }                                                                               \
 }
