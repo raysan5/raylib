@@ -2899,7 +2899,12 @@ static inline bool sw_quad_is_axis_aligned(void)
     int horizontal = 0;
     int vertical = 0;
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
+        if (RLSW.vertexBuffer[i].homogeneous[3] != 1.0f) {
+            return false;
+        }
+
         const float* v0 = RLSW.vertexBuffer[i].position;
         const float* v1 = RLSW.vertexBuffer[(i + 1) % 4].position;
 
