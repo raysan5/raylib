@@ -2302,7 +2302,10 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
     #define CLIP_AGAINST_PLANE(FUNC_CLIP)                       \
     {                                                           \
         n = FUNC_CLIP(tmp, polygon, n);                         \
-        if (n == 0) return false;                               \
+        if (n < 3) {                                            \
+            *vertexCounter = 0;                                 \
+            return false;                                       \
+        }                                                       \
         for (int i = 0; i < n; i++) {                           \
             polygon[i] = tmp[i];                                \
         }                                                       \
@@ -2325,7 +2328,7 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 
     *vertexCounter = n;
 
-    return n > 0;
+    return (n >= 3);
 }
 
 
@@ -2366,7 +2369,7 @@ static inline void sw_triangle_clip_and_project(void)
     sw_vertex_t* polygon = RLSW.vertexBuffer;
     int* vertexCounter = &RLSW.vertexCounter;
 
-    if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
+    if (sw_polygon_clip(polygon, vertexCounter)) {
 
         // Transformation to screen space and normalization
         for (int i = 0; i < *vertexCounter; i++) {
@@ -2751,7 +2754,7 @@ static inline void sw_quad_clip_and_project(void)
     sw_vertex_t* polygon = RLSW.vertexBuffer;
     int* vertexCounter = &RLSW.vertexCounter;
 
-    if (sw_polygon_clip(polygon, vertexCounter) && *vertexCounter >= 3) {
+    if (sw_polygon_clip(polygon, vertexCounter)) {
 
         // Transformation to screen space and normalization
         for (int i = 0; i < *vertexCounter; i++) {
