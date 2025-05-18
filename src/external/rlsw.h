@@ -2439,31 +2439,49 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 static inline bool sw_triangle_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations.
-    //       However, culling requires NDC coordinates, while clipping must be done 
-    //       in homogeneous space to correctly interpolate newly generated vertices.
-    //       This means we need to compute 1/W twice: 
-    //       - Once before clipping for face culling.
-    //       - Again after clipping for the new vertices.
+    //       To handle triangles crossing the w=0 plane correctly,
+    //       we perform the winding order test in homogeneous coordinates directly,
+    //       before the perspective division (division by w).
+    //       This test determines the orientation of the triangle in the (x,y,w) plane,
+    //       which corresponds to the projected 2D winding order sign,
+    //       even with negative w values.
 
     // Preload homogeneous coordinates into local variables
     const float* h0 = RLSW.vertexBuffer[0].homogeneous;
     const float* h1 = RLSW.vertexBuffer[1].homogeneous;
     const float* h2 = RLSW.vertexBuffer[2].homogeneous;
 
-    // Compute 1/w once and delay divisions
-    const float invW0 = 1.0f / h0[3];
-    const float invW1 = 1.0f / h1[3];
-    const float invW2 = 1.0f / h2[3];
+    // Compute a value proportional to the signed area in the projected 2D plane,
+    // calculated directly using homogeneous coordinates BEFORE division by w.
+    // This is the determinant of the matrix formed by the (x, y, w) components
+    // of the vertices, which correctly captures the winding order in homogeneous
+    // space and its relationship to the projected 2D winding order, even with
+    // negative w values.
+    // The determinant formula used here is:
+    // h0.x * (h1.y * h2.w - h2.y * h1.w) +
+    // h1.x * (h2.y * h0.w - h0.y * h2.w) +
+    // h2.x * (h0.y * h1.w - h1.y * h0.w)
 
-    // Compute the signed 2D area (cross product in Z)
-    const float x0 = h0[0] * invW0, y0 = h0[1] * invW0;
-    const float x1 = h1[0] * invW1, y1 = h1[1] * invW1;
-    const float x2 = h2[0] * invW2, y2 = h2[1] * invW2;
-    const float sgnArea = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+    const float hSgnArea =
+        h0[0] * (h1[1] * h2[3] - h2[1] * h1[3]) +
+        h1[0] * (h2[1] * h0[3] - h0[1] * h2[3]) +
+        h2[0] * (h0[1] * h1[3] - h1[1] * h0[3]);
 
-    // Discard the triangle if it faces the culled direction
+    // Discard the triangle if its winding order (determined by the sign
+    // of the homogeneous area/determinant) matches the culled direction.
+    // A positive hSgnArea typically corresponds to a counter-clockwise
+    // winding in the projected space when all w > 0.
+    // This test is robust for points with w > 0 or w < 0, correctly
+    // capturing the change in orientation when crossing the w=0 plane.
+
+    // The culling logic remains the same based on the signed area/determinant.
+    // A value of 0 for hSgnArea means the points are collinear in (x, y, w)
+    // space, which corresponds to a degenerate triangle projection.
+    // Such triangles are typically not culled by this test (0 < 0 is false, 0 > 0 is false)
+    // and should be handled by the clipper if necessary.
     return (RLSW.cullFace == SW_FRONT)
-        ? (sgnArea < 0) : (sgnArea > 0);
+        ? (hSgnArea < 0) // Cull if winding is "clockwise" in the projected sense
+        : (hSgnArea > 0); // Cull if winding is "counter-clockwise" in the projected sense
 }
 
 static inline void sw_triangle_clip_and_project(void)
@@ -2815,40 +2833,56 @@ static inline void sw_triangle_render(void)
 
 static inline bool sw_quad_face_culling(void)
 {
-    // NOTE: We use Green's theorem (signed polygon area) instead of triangulation.
-    // This is faster but only reliable if the quad is convex and not self-intersecting.
-    // For face culling purposes, this approximation is acceptable.
+    // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+    //       To handle quads crossing the w=0 plane correctly,
+    //       we perform the winding order test in homogeneous coordinates directly,
+    //       before the perspective division (division by w).
+    //       For a convex quad with vertices P0, P1, P2, P3 in sequential order,
+    //       the winding order of the quad is the same as the winding order
+    //       of the triangle P0 P1 P2. We use the homogeneous triangle
+    //       winding test on this first triangle.
 
     // Preload homogeneous coordinates into local variables
     const float* h0 = RLSW.vertexBuffer[0].homogeneous;
     const float* h1 = RLSW.vertexBuffer[1].homogeneous;
     const float* h2 = RLSW.vertexBuffer[2].homogeneous;
-    const float* h3 = RLSW.vertexBuffer[3].homogeneous;
 
-    // Compute 1/w once and delay divisions
-    const float invW0 = 1.0f / h0[3];
-    const float invW1 = 1.0f / h1[3];
-    const float invW2 = 1.0f / h2[3];
-    const float invW3 = 1.0f / h3[3];
+    // NOTE: h3 is not needed for this test
+    // const float* h3 = RLSW.vertexBuffer[3].homogeneous;
 
-    // Pre-multiply to get x/w and y/w coordinates
-    const float x0 = h0[0] * invW0, y0 = h0[1] * invW0;
-    const float x1 = h1[0] * invW1, y1 = h1[1] * invW1;
-    const float x2 = h2[0] * invW2, y2 = h2[1] * invW2;
-    const float x3 = h3[0] * invW3, y3 = h3[1] * invW3;
+    // Compute a value proportional to the signed area of the triangle P0 P1 P2
+    // in the projected 2D plane, calculated directly using homogeneous coordinates
+    // BEFORE division by w.
+    // This is the determinant of the matrix formed by the (x, y, w) components
+    // of the vertices P0, P1, and P2. Its sign correctly indicates the winding order
+    // in homogeneous space and its relationship to the projected 2D winding order,
+    // even with negative w values.
+    // The determinant formula used here is:
+    // h0.x * (h1.y * h2.w - h2.y * h1.w) +
+    // h1.x * (h2.y * h0.w - h0.y * h2.w) +
+    // h2.x * (h0.y * h1.w - h1.y * h0.w)
 
-    // Use Green's theorem (signed polygon area)
-    // area = 0.5 * sum of (xi * yi+1 - xi+1 * yi)
-    // The factor 0.5 is not needed here, only the sign matters.
-    const float sgnArea = 
-        (x0 * y1 - x1 * y0)
-        + (x1 * y2 - x2 * y1)
-        + (x2 * y3 - x3 * y2)
-        + (x3 * y0 - x0 * y3);
+    const float hSgnArea =
+        h0[0] * (h1[1] * h2[3] - h2[1] * h1[3]) +
+        h1[0] * (h2[1] * h0[3] - h0[1] * h2[3]) +
+        h2[0] * (h0[1] * h1[3] - h1[1] * h0[3]);
 
-    // Perform face culling based on area sign
+    // Perform face culling based on the winding order determined by the sign
+    // of the homogeneous area/determinant of triangle P0 P1 P2.
+    // This test is robust for points with w > 0 or w < 0 within the triangle,
+    // correctly capturing the change in orientation when crossing the w=0 plane.
+
+    // A positive hSgnArea typically corresponds to a counter-clockwise
+    // winding in the projected space when all w > 0.
+    // A value of 0 for hSgnArea means P0, P1, P2 are collinear in (x, y, w)
+    // space, which corresponds to a degenerate triangle projection.
+    // Such quads might also be degenerate or non-planar. They are typically
+    // not culled by this test (0 < 0 is false, 0 > 0 is false)
+    // and should be handled by the clipper if necessary.
+
     return (RLSW.cullFace == SW_FRONT)
-        ? (sgnArea < 0.0f) : (sgnArea > 0.0f);
+        ? (hSgnArea < 0.0f) // Cull if winding is "clockwise" in the projected sense
+        : (hSgnArea > 0.0f); // Cull if winding is "counter-clockwise" in the projected sense
 }
 
 static inline void sw_quad_clip_and_project(void)
