@@ -3376,133 +3376,140 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
     int x2 = (int)(v1->screen[0] + 0.5f);                               \
     int y2 = (int)(v1->screen[1] + 0.5f);                               \
                                                                         \
-    float z1 = v0->homogeneous[2];                                      \
-    float z2 = v1->homogeneous[2];                                      \
+    int dx = x2 - x1;                                                   \
+    int dy = y2 - y1;                                                   \
                                                                         \
-    int shortLen = y2 - y1;                                             \
-    int longLen = x2 - x1;                                              \
-    bool yLonger = 0;                                                   \
+    /* Handling of lines that are more horizontal or vertical */        \
                                                                         \
-    if (abs(shortLen) > abs(longLen)) {                                 \
-        int tmp = shortLen;                                             \
-        shortLen = longLen;                                             \
-        longLen = tmp;                                                  \
-        yLonger = 1;                                                    \
+    if (dx == 0 && dy == 0) {                                           \
+        /* TODO: A point should be rendered here */                     \
+        return;                                                         \
     }                                                                   \
                                                                         \
-    float invEndVal = 1.0f / longLen;                                   \
-    int endVal = longLen;                                               \
-    int sgnInc = 1;                                                     \
+    bool yLonger = (abs(dy) > abs(dx));                                 \
+    int longLen, shortLen;                                              \
                                                                         \
-    if (longLen < 0) {                                                  \
-        longLen = -longLen;                                             \
-        sgnInc = -1;                                                    \
+    if (yLonger) {                                                      \
+        longLen = dy;                                                   \
+        shortLen = dx;                                                  \
+    } else {                                                            \
+        longLen = dx;                                                   \
+        shortLen = dy;                                                  \
     }                                                                   \
                                                                         \
-    int decInc = (longLen == 0) ? 0                                     \
-        : (shortLen << 16) / longLen;                                   \
+    /* Handling of traversal direction */                               \
+                                                                        \
+    int sgnInc = (longLen < 0) ? -1 : 1;                                \
+    int abslongLen = abs(longLen);                                      \
+                                                                        \
+    /* Calculation of the increment step for the shorter coordinate */  \
+                                                                        \
+    int decInc = 0;                                                     \
+    if (abslongLen != 0) {                                              \
+        decInc = (shortLen << 16) / abslongLen;                         \
+    }                                                                   \
+                                                                        \
+    float longLenRcp = (abslongLen != 0) ? (1.0f / abslongLen) : 0.0f;  \
+                                                                        \
+    /* Calculation of interpolation steps */                            \
+                                                                        \
+    const float zStep = (v1->homogeneous[2] - v0->homogeneous[2]) * longLenRcp; \
+    const float rStep = (v1->color[0] - v0->color[0]) * longLenRcp;     \
+    const float gStep = (v1->color[1] - v0->color[1]) * longLenRcp;     \
+    const float bStep = (v1->color[2] - v0->color[2]) * longLenRcp;     \
+    const float aStep = (v1->color[3] - v0->color[3]) * longLenRcp;     \
+                                                                        \
+    float z = v0->homogeneous[2];                                       \
+                                                                        \
+    float color[4] = {                                                  \
+        v0->color[0],                                                   \
+        v0->color[1],                                                   \
+        v0->color[2],                                                   \
+        v0->color[3]                                                    \
+    };                                                                  \
                                                                         \
     const int fbWidth = RLSW.framebuffer.width;                         \
-    const float zDiff = z2 - z1;                                        \
-                                                                        \
-    uint8_t* colorBuffer = RLSW.framebuffer.color;                      \
-    uint16_t* depthBuffer = RLSW.framebuffer.depth;                     \
+    void* cBuffer = RLSW.framebuffer.color;                             \
+    void* dBuffer = RLSW.framebuffer.depth;                             \
                                                                         \
     int j = 0;                                                          \
-    if (yLonger) {                                                      \
-        for (int i = 0; i != endVal; i += sgnInc, j += decInc) {        \
-            float t = (float)i * invEndVal;                             \
                                                                         \
-            int x = x1 + (j >> 16);                                     \
-            int y = y1 + i;                                             \
-            float z = z1 + t * zDiff;                                   \
-            int offset = y * fbWidth + x;                               \
+    if (yLonger)                                                        \
+    {                                                                   \
+        for (int i = 0; i != longLen; i += sgnInc)                      \
+        {                                                               \
+            int offset = (y1 + i) * fbWidth + (x1 + (j >> 16));         \
                                                                         \
-            void* dptr = sw_framebuffer_get_depth_addr(                 \
-                depthBuffer, offset                                     \
-            );                                                          \
+            void* dptr = sw_framebuffer_get_depth_addr(dBuffer, offset); \
                                                                         \
             if (ENABLE_DEPTH_TEST) {                                    \
                 float depth = sw_framebuffer_read_depth(dptr);          \
-                if (z > depth) continue;                                \
+                if (z > depth) goto discardA;                           \
             }                                                           \
                                                                         \
             sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void* cptr = sw_framebuffer_get_color_addr(                 \
-                colorBuffer, offset                                     \
-            );                                                          \
+            void* cptr = sw_framebuffer_get_color_addr(cBuffer, offset); \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
                 float dstColor[4];                                      \
                 sw_framebuffer_read_color(dstColor, cptr);              \
                                                                         \
-                float srcColor[4];                                      \
-                srcColor[0] = sw_lerp(v0->color[0], v1->color[0], t);   \
-                srcColor[1] = sw_lerp(v0->color[1], v1->color[1], t);   \
-                srcColor[2] = sw_lerp(v0->color[2], v1->color[2], t);   \
-                srcColor[3] = sw_lerp(v0->color[3], v1->color[3], t);   \
-                                                                        \
-                sw_blend_colors(dstColor, srcColor);                    \
+                sw_blend_colors(dstColor, color);                       \
                 sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
             else                                                        \
             {                                                           \
-                float color[3];                                         \
-                color[0] = sw_lerp(v0->color[0], v1->color[0], t);      \
-                color[1] = sw_lerp(v0->color[1], v1->color[1], t);      \
-                color[2] = sw_lerp(v0->color[2], v1->color[2], t);      \
                 sw_framebuffer_write_color(cptr, color);                \
             }                                                           \
+                                                                        \
+        discardA:                                                       \
+            j += decInc;                                                \
+            z += zStep;                                                 \
+            color[0] += rStep;                                          \
+            color[1] += gStep;                                          \
+            color[2] += bStep;                                          \
+            color[3] += aStep;                                          \
         }                                                               \
     }                                                                   \
-    else {                                                              \
-        for (int i = 0; i != endVal; i += sgnInc, j += decInc) {        \
-            float t = (float)i * invEndVal;                             \
+    else                                                                \
+    {                                                                   \
+        for (int i = 0; i != longLen; i += sgnInc)                      \
+        {                                                               \
+            int offset = (y1 + (j >> 16)) * fbWidth + (x1 + i);         \
                                                                         \
-            int x = x1 + i;                                             \
-            int y = y1 + (j >> 16);                                     \
-            float z = z1 + t * zDiff;                                   \
-            int offset = y * fbWidth + x;                               \
-                                                                        \
-            void* dptr = sw_framebuffer_get_depth_addr(                 \
-                depthBuffer, offset                                     \
-            );                                                          \
+            void* dptr = sw_framebuffer_get_depth_addr(dBuffer, offset); \
                                                                         \
             if (ENABLE_DEPTH_TEST) {                                    \
                 float depth = sw_framebuffer_read_depth(dptr);          \
-                if (z > depth) continue;                                \
+                if (z > depth) goto discardB;                           \
             }                                                           \
                                                                         \
             sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void* cptr = sw_framebuffer_get_color_addr(                 \
-                colorBuffer, offset                                     \
-            );                                                          \
+            void* cptr = sw_framebuffer_get_color_addr(cBuffer, offset); \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
                 float dstColor[4];                                      \
                 sw_framebuffer_read_color(dstColor, cptr);              \
                                                                         \
-                float srcColor[4];                                      \
-                srcColor[0] = sw_lerp(v0->color[0], v1->color[0], t);   \
-                srcColor[1] = sw_lerp(v0->color[1], v1->color[1], t);   \
-                srcColor[2] = sw_lerp(v0->color[2], v1->color[2], t);   \
-                srcColor[3] = sw_lerp(v0->color[3], v1->color[3], t);   \
-                                                                        \
-                sw_blend_colors(dstColor, srcColor);                    \
+                sw_blend_colors(dstColor, color);                       \
                 sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
             else                                                        \
             {                                                           \
-                float color[3];                                         \
-                color[0] = sw_lerp(v0->color[0], v1->color[0], t);      \
-                color[1] = sw_lerp(v0->color[1], v1->color[1], t);      \
-                color[2] = sw_lerp(v0->color[2], v1->color[2], t);      \
                 sw_framebuffer_write_color(cptr, color);                \
             }                                                           \
+                                                                        \
+        discardB:                                                       \
+            j += decInc;                                                \
+            z += zStep;                                                 \
+            color[0] += rStep;                                          \
+            color[1] += gStep;                                          \
+            color[2] += bStep;                                          \
+            color[3] += aStep;                                          \
         }                                                               \
     }                                                                   \
 }
