@@ -79,7 +79,7 @@
 #endif
 
 #ifndef SW_MAX_CLIPPED_POLYGON_VERTICES
-#   define SW_MAX_CLIPPED_POLYGON_VERTICES 24
+#   define SW_MAX_CLIPPED_POLYGON_VERTICES 64
 #endif
 
 #ifndef SW_CLIP_EPSILON
@@ -647,6 +647,11 @@ typedef struct {
         float* texcoords;
         uint8_t* colors;
     } array;
+
+    struct {
+        float texcoord[2];
+        float color[4];
+    } current;
 
     sw_vertex_t vertexBuffer[SW_MAX_CLIPPED_POLYGON_VERTICES];  // Buffer used for storing primitive vertices, used for processing and rendering
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
@@ -3879,13 +3884,13 @@ bool swInit(int w, int h)
     RLSW.stackTextureCounter = 1;
     RLSW.isDirtyMVP = false;
 
-    RLSW.vertexBuffer[0].color[0] = 1.0f;
-    RLSW.vertexBuffer[0].color[1] = 1.0f;
-    RLSW.vertexBuffer[0].color[2] = 1.0f;
-    RLSW.vertexBuffer[0].color[3] = 1.0f;
+    RLSW.current.texcoord[0] = 0.0f;
+    RLSW.current.texcoord[1] = 0.0f;
 
-    RLSW.vertexBuffer[0].texcoord[0] = 0.0f;
-    RLSW.vertexBuffer[0].texcoord[1] = 0.0f;
+    RLSW.current.color[0] = 1.0f;
+    RLSW.current.color[1] = 1.0f;
+    RLSW.current.color[2] = 1.0f;
+    RLSW.current.color[3] = 1.0f;
 
     RLSW.srcFactor = SW_SRC_ALPHA;
     RLSW.dstFactor = SW_ONE_MINUS_SRC_ALPHA;
@@ -4803,6 +4808,16 @@ void swVertex4fv(const float* v)
         vertex->position[i] = v[i];
     }
 
+    /* --- Copy additonal vertex data --- */
+
+    for (int i = 0; i < 2; i++) {
+        vertex->texcoord[i] = RLSW.current.texcoord[i];
+    }
+
+    for (int i = 0; i < 4; i++) {
+        vertex->color[i] = RLSW.current.color[i];
+    }
+
     /* --- Calculation of homogeneous coordinates --- */
 
     const sw_matrix_t* mat = &RLSW.matMVP;
@@ -4826,11 +4841,7 @@ void swVertex4fv(const float* v)
             sw_poly_point_render();
             break;
         }
-        RLSW.vertexBuffer[0] = RLSW.vertexBuffer[RLSW.reqVertices - 1];
         RLSW.vertexCounter = 0;
-    }
-    else {
-        RLSW.vertexBuffer[RLSW.vertexCounter] = RLSW.vertexBuffer[RLSW.vertexCounter - 1];
     }
 }
 
@@ -4914,7 +4925,7 @@ void swColor4f(float r, float g, float b, float a)
 void swColor4fv(const float* v)
 {
     for (int i = 0; i < 4; i++) {
-        RLSW.vertexBuffer[RLSW.vertexCounter].color[i] = v[i];
+        RLSW.current.color[i] = v[i];
     }
 }
 
@@ -4922,22 +4933,16 @@ void swTexCoord2f(float u, float v)
 {
     const sw_matrix_t* mat = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
 
-    float s = (*mat)[0]*u + (*mat)[4]*v + (*mat)[12];
-    float t = (*mat)[1]*u + (*mat)[5]*v + (*mat)[13];
-
-    RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[0] = s;
-    RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[1] = t;
+    RLSW.current.texcoord[0] = (*mat)[0] * u + (*mat)[4] * v + (*mat)[12];
+    RLSW.current.texcoord[1] = (*mat)[1] * u + (*mat)[5] * v + (*mat)[13];
 }
 
 void swTexCoord2fv(const float* v)
 {
     const sw_matrix_t* mat = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
 
-    float s = (*mat)[0]*v[0] + (*mat)[4]*v[1] + (*mat)[12];
-    float t = (*mat)[1]*v[0] + (*mat)[5]*v[1] + (*mat)[13];
-
-    RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[0] = s;
-    RLSW.vertexBuffer[RLSW.vertexCounter].texcoord[1] = t;
+    RLSW.current.texcoord[0] = (*mat)[0] * v[0] + (*mat)[4] * v[1] + (*mat)[12];
+    RLSW.current.texcoord[1] = (*mat)[1] * v[0] + (*mat)[5] * v[1] + (*mat)[13];
 }
 
 void swBindArray(SWarray type, void *buffer)
@@ -4970,12 +4975,8 @@ void swDrawArrays(SWdraw mode, int offset, int count)
         swColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
         for (int i = offset; i < count; i++) {
-            if (RLSW.array.texcoords) {
-                swTexCoord2fv(RLSW.array.texcoords + 2 * i);
-            }
-            if (RLSW.array.colors) {
-                swColor4ubv(RLSW.array.colors + 4 * i);
-            }
+            if (RLSW.array.texcoords) swTexCoord2fv(RLSW.array.texcoords + 2 * i);
+            if (RLSW.array.colors) swColor4ubv(RLSW.array.colors + 4 * i);
             swVertex3fv(RLSW.array.positions + 3 * i);
         }
     }
