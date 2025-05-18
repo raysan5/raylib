@@ -1692,6 +1692,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
     emscripten_set_canvas_element_size(GetCanvasId(), width, height);
 
+    glfwSetWindowSize(platform.handle, width, height); // inform glfw of the new size
+
     SetupViewport(width, height); // Reset viewport and projection matrix for new size
 
     CORE.Window.currentFbo.width = width;
