@@ -79,7 +79,13 @@
 #endif
 
 #ifndef SW_MAX_CLIPPED_POLYGON_VERTICES
-#   define SW_MAX_CLIPPED_POLYGON_VERTICES 64
+// Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane.
+// Considering the largest polygon involved is a quadrilateral (4 vertices),
+// and that clipping occurs against both the frustum (6 planes)
+// and the scissors (4 planes),
+// the maximum number of vertices after clipping is:
+// 4 (original vertices) + 6 (frustum planes) + 4 (scissors planes) = 14
+#   define SW_MAX_CLIPPED_POLYGON_VERTICES 14
 #endif
 
 #ifndef SW_CLIP_EPSILON
@@ -2101,11 +2107,6 @@ static inline void sw_texture_sample_linear(float* color, const sw_texture_t* te
 static inline void sw_texture_sample(float* color, const sw_texture_t* tex, float u, float v,
                                      float duDx, float duDy, float dvDx, float dvDy)
 {
-    // TODO: It seems there are some incorrect detections depending on the context
-    //       This is probably due to the fact that the fractions are obtained
-    //       at the wrong moment during rasterization. It would be worth reviewing
-    //       this, although the scanline method complicates things.
-
     // Previous method: There is no need to compute the square root
     // because using the squared value, the comparison remains `L2 > 1.0f * 1.0f`
     //float du = sqrtf(duDx * duDx + duDy * duDy);
@@ -2296,7 +2297,8 @@ DEFINE_CLIP_FUNC(scissor_y_max, IS_INSIDE_SCISSOR_Y_MAX, COMPUTE_T_SCISSOR_Y_MAX
 
 static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int* vertexCounter)
 {
-    sw_vertex_t tmp[SW_MAX_CLIPPED_POLYGON_VERTICES];
+    static sw_vertex_t tmp[SW_MAX_CLIPPED_POLYGON_VERTICES];
+
     int n = *vertexCounter;
 
     #define CLIP_AGAINST_PLANE(FUNC_CLIP)                       \
