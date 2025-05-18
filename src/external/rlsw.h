@@ -3016,107 +3016,80 @@ static inline void FUNC_NAME(void)                                              
                                                                                 \
     /* Screen bounds (axis-aligned) */                                          \
                                                                                 \
-    int xMin = (int)v0->screen[0];                                              \
-    int yMin = (int)v0->screen[1];                                              \
-    int xMax = (int)v2->screen[0];                                              \
-    int yMax = (int)v2->screen[1];                                              \
+    int xMin = (int)(v0->screen[0] + 0.5f);                                     \
+    int yMin = (int)(v0->screen[1] + 0.5f);                                     \
+    int xMax = (int)(v2->screen[0] + 0.5f);                                     \
+    int yMax = (int)(v2->screen[1] + 0.5f);                                     \
                                                                                 \
-    float width = (float)(xMax - xMin);                                         \
-    float height = (float)(yMax - yMin);                                        \
+    int width = xMax - xMin;                                                    \
+    int height = yMax - yMin;                                                   \
                                                                                 \
-    float invWidth = 1.0f / width;                                              \
-    float invHeight = 1.0f / height;                                            \
+    if (width == 0 || height == 0) return;                                      \
                                                                                 \
-    /* Precomputed coefficients for bilinear interpolation */                   \
+    float wRcp = (width > 0.0f) ? 1.0f / width : 0.0f;                          \
+    float hRcp = (height > 0.0f) ? 1.0f / height : 0.0f;                        \
                                                                                 \
-    float zA, zB, zC, zD;                                                       \
+    /* Calculation of vertex gradients in X and Y */                            \
                                                                                 \
-    zA = v0->homogeneous[2];                                                    \
-    zB = v1->homogeneous[2] - v0->homogeneous[2];                               \
-    zC = v3->homogeneous[2] - v0->homogeneous[2];                               \
-    zD = v2->homogeneous[2] - v3->homogeneous[2] - v1->homogeneous[2] + v0->homogeneous[2]; \
-                                                                                \
-    float colorA[4];                                                            \
-    float colorB[4];                                                            \
-    float colorC[4];                                                            \
-    float colorD[4];                                                            \
-                                                                                \
-    for (int c = 0; c < 4; c++) {                                               \
-        colorA[c] = v0->color[c];                                               \
-        colorB[c] = v1->color[c] - v0->color[c];                                \
-        colorC[c] = v3->color[c] - v0->color[c];                                \
-        colorD[c] = v2->color[c] - v3->color[c] - v1->color[c] + v0->color[c];  \
+    float tcDx[2], tcDy[2];                                                     \
+    if (ENABLE_TEXTURE) {                                                       \
+        tcDx[0] = (v1->texcoord[0] - v0->texcoord[0]) * wRcp;                   \
+        tcDx[1] = (v1->texcoord[1] - v0->texcoord[1]) * wRcp;                   \
+        tcDy[0] = (v3->texcoord[0] - v0->texcoord[0]) * hRcp;                   \
+        tcDy[1] = (v3->texcoord[1] - v0->texcoord[1]) * hRcp;                   \
     }                                                                           \
                                                                                 \
-    float texA[2];                                                              \
-    float texB[2];                                                              \
-    float texC[2];                                                              \
-    float texD[2];                                                              \
+    float cDx[4], cDy[4];                                                       \
+    cDx[0] = (v1->color[0] - v0->color[0]) * wRcp;                              \
+    cDx[1] = (v1->color[1] - v0->color[1]) * wRcp;                              \
+    cDx[2] = (v1->color[2] - v0->color[2]) * wRcp;                              \
+    cDx[3] = (v1->color[3] - v0->color[3]) * wRcp;                              \
+    cDy[0] = (v3->color[0] - v0->color[0]) * hRcp;                              \
+    cDy[1] = (v3->color[1] - v0->color[1]) * hRcp;                              \
+    cDy[2] = (v3->color[2] - v0->color[2]) * hRcp;                              \
+    cDy[3] = (v3->color[3] - v0->color[3]) * hRcp;                              \
                                                                                 \
-    if (ENABLE_TEXTURE)                                                         \
-    {                                                                           \
-        for (int uv = 0; uv < 2; uv++) {                                        \
-            texA[uv] = v0->texcoord[uv];                                        \
-            texB[uv] = v1->texcoord[uv] - v0->texcoord[uv];                     \
-            texC[uv] = v3->texcoord[uv] - v0->texcoord[uv];                     \
-            texD[uv] = v2->texcoord[uv] - v3->texcoord[uv] - v1->texcoord[uv] + v0->texcoord[uv]; \
-        }                                                                       \
+    float zDx, zDy;                                                             \
+    zDx = (v1->homogeneous[2] - v0->homogeneous[2]) * wRcp;                     \
+    zDy = (v3->homogeneous[2] - v0->homogeneous[2]) * hRcp;                     \
+                                                                                \
+    /* Start of quad rasterization */                                           \
+                                                                                \
+    const sw_texture_t* tex;                                                    \
+    if (ENABLE_TEXTURE) {                                                       \
+        tex = &RLSW.loadedTextures[RLSW.currentTexture];                        \
     }                                                                           \
                                                                                 \
-    /* Precomputed UV gradients (constant across the entire quad) */            \
-                                                                                \
-    float duDx, dvDx, duDy, dvDy;                                               \
-                                                                                \
-    if (ENABLE_TEXTURE)                                                         \
-    {                                                                           \
-        duDx = ((v1->texcoord[0] - v0->texcoord[0]) + (v2->texcoord[0] - v3->texcoord[0])) * 0.5f * invWidth; \
-        dvDx = ((v1->texcoord[1] - v0->texcoord[1]) + (v2->texcoord[1] - v3->texcoord[1])) * 0.5f * invWidth; \
-        duDy = ((v3->texcoord[0] - v0->texcoord[0]) + (v2->texcoord[0] - v1->texcoord[0])) * 0.5f * invHeight; \
-        dvDy = ((v3->texcoord[1] - v0->texcoord[1]) + (v2->texcoord[1] - v1->texcoord[1])) * 0.5f * invHeight; \
-    }                                                                           \
-                                                                                \
-    const sw_texture_t* tex = &RLSW.loadedTextures[RLSW.currentTexture];        \
     void* cDstBase = RLSW.framebuffer.color;                                    \
     void* dDstBase = RLSW.framebuffer.depth;                                    \
     int wDst = RLSW.framebuffer.width;                                          \
                                                                                 \
+    float zScanline = v0->homogeneous[2];                                       \
+    float uScanline = v0->texcoord[0];                                          \
+    float vScanline = v0->texcoord[1];                                          \
+                                                                                \
+    float colorScanline[4] = {                                                  \
+        v0->color[0],                                                           \
+        v0->color[1],                                                           \
+        v0->color[2],                                                           \
+        v0->color[3]                                                            \
+    };                                                                          \
+                                                                                \
     for (int y = yMin; y < yMax; y++)                                           \
     {                                                                           \
-        float ty = (y - yMin) * invHeight;                                      \
         void* cptr = sw_framebuffer_get_color_addr(cDstBase, y * wDst + xMin);  \
         void* dptr = sw_framebuffer_get_depth_addr(dDstBase, y * wDst + xMin);  \
                                                                                 \
-        /* Compute starting values for this scanline (for x = xMin) */          \
+        float z = zScanline;                                                    \
+        float u = uScanline;                                                    \
+        float v = vScanline;                                                    \
                                                                                 \
-        float z = zA + zC * ty;                                                 \
-                                                                                \
-        float srcColor[4];                                                      \
-        srcColor[0] = colorA[0] + colorC[0] * ty;                               \
-        srcColor[1] = colorA[1] + colorC[1] * ty;                               \
-        srcColor[2] = colorA[2] + colorC[2] * ty;                               \
-        srcColor[3] = colorA[3] + colorC[3] * ty;                               \
-                                                                                \
-        float u, v;                                                             \
-        if (ENABLE_TEXTURE) {                                                   \
-            u = texA[0] + texC[0] * ty;                                         \
-            v = texA[1] + texC[1] * ty;                                         \
-        }                                                                       \
-                                                                                \
-        /* Compute per-pixel increments along X (constant for a scanline) */    \
-                                                                                \
-        float zIncX = (zB + zD * ty) * invWidth;                                \
-                                                                                \
-        float colorIncX[4];                                                     \
-        colorIncX[0] = (colorB[0] + colorD[0] * ty) * invWidth;                 \
-        colorIncX[1] = (colorB[1] + colorD[1] * ty) * invWidth;                 \
-        colorIncX[2] = (colorB[2] + colorD[2] * ty) * invWidth;                 \
-        colorIncX[3] = (colorB[3] + colorD[3] * ty) * invWidth;                 \
-                                                                                \
-        float uvIncX[2];                                                        \
-        if (ENABLE_TEXTURE) {                                                   \
-            uvIncX[0] = (texB[0] + texD[0] * ty) * invWidth;                    \
-            uvIncX[1] = (texB[1] + texD[1] * ty) * invWidth;                    \
-        }                                                                       \
+        float color[4] = {                                                      \
+            colorScanline[0],                                                   \
+            colorScanline[1],                                                   \
+            colorScanline[2],                                                   \
+            colorScanline[3]                                                    \
+        };                                                                      \
                                                                                 \
         /* Scanline rasterization */                                            \
                                                                                 \
@@ -3135,21 +3108,21 @@ static inline void FUNC_NAME(void)                                              
                                                                                 \
             /* Pixel color computation */                                       \
                                                                                 \
-            float fragColor[4] = {                                              \
-                srcColor[0],                                                    \
-                srcColor[1],                                                    \
-                srcColor[2],                                                    \
-                srcColor[3]                                                     \
+            float srcColor[4] = {                                               \
+                color[0],                                                       \
+                color[1],                                                       \
+                color[2],                                                       \
+                color[3]                                                        \
             };                                                                  \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
                 float texColor[4];                                              \
-                sw_texture_sample(texColor, tex, u, v, duDx, duDy, dvDx, dvDy); \
-                fragColor[0] *= texColor[0];                                    \
-                fragColor[1] *= texColor[1];                                    \
-                fragColor[2] *= texColor[2];                                    \
-                fragColor[3] *= texColor[3];                                    \
+                sw_texture_sample(texColor, tex, u, v, tcDx[0], tcDy[0], tcDx[1], tcDy[1]); \
+                srcColor[0] *= texColor[0];                                     \
+                srcColor[1] *= texColor[1];                                     \
+                srcColor[2] *= texColor[2];                                     \
+                srcColor[3] *= texColor[3];                                     \
             }                                                                   \
                                                                                 \
             if (ENABLE_COLOR_BLEND)                                             \
@@ -3157,38 +3130,47 @@ static inline void FUNC_NAME(void)                                              
                 float dstColor[4];                                              \
                 sw_framebuffer_read_color(dstColor, cptr);                      \
                                                                                 \
-                sw_blend_colors(dstColor, fragColor);                           \
+                sw_blend_colors(dstColor, srcColor);                            \
                 dstColor[0] = sw_saturate(dstColor[0]);                         \
                 dstColor[1] = sw_saturate(dstColor[1]);                         \
                 dstColor[2] = sw_saturate(dstColor[2]);                         \
+                dstColor[3] = sw_saturate(dstColor[3]);                         \
                                                                                 \
                 sw_framebuffer_write_color(cptr, dstColor);                     \
             }                                                                   \
             else                                                                \
             {                                                                   \
-                sw_framebuffer_write_color(cptr, fragColor);                    \
+                sw_framebuffer_write_color(cptr, srcColor);                     \
             }                                                                   \
-                                                                                \
-            /* Increment values for the next pixel */                           \
                                                                                 \
         discard:                                                                \
                                                                                 \
-            z += zIncX;                                                         \
+            z += zDx;                                                           \
                                                                                 \
-            srcColor[0] += colorIncX[0];                                        \
-            srcColor[1] += colorIncX[1];                                        \
-            srcColor[2] += colorIncX[2];                                        \
-            srcColor[3] += colorIncX[3];                                        \
+            color[0] += cDx[0];                                                 \
+            color[1] += cDx[1];                                                 \
+            color[2] += cDx[2];                                                 \
+            color[3] += cDx[3];                                                 \
                                                                                 \
             if (ENABLE_TEXTURE) {                                               \
-                u += uvIncX[0];                                                 \
-                v += uvIncX[1];                                                 \
+                u += tcDx[0];                                                   \
+                v += tcDx[1];                                                   \
             }                                                                   \
-                                                                                \
-            /* Advance the pointers along the line */                           \
                                                                                 \
             sw_framebuffer_inc_color_addr(&cptr);                               \
             sw_framebuffer_inc_depth_addr(&dptr);                               \
+        }                                                                       \
+                                                                                \
+        zScanline += zDy;                                                       \
+                                                                                \
+        colorScanline[0] += cDy[0];                                             \
+        colorScanline[1] += cDy[1];                                             \
+        colorScanline[2] += cDy[2];                                             \
+        colorScanline[3] += cDy[3];                                             \
+                                                                                \
+        if (ENABLE_TEXTURE) {                                                   \
+            uScanline += tcDy[0];                                               \
+            vScanline += tcDy[1];                                               \
         }                                                                       \
     }                                                                           \
 }
