@@ -672,7 +672,7 @@
         </Callback>
         <Callback name="SaveFileTextCallback" retType="bool" paramCount="2" desc="FileIO: Save text data">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="char *" name="text" desc="" />
+            <Param type="const char *" name="text" desc="" />
         </Callback>
         <Callback name="AudioCallback" retType="void" paramCount="2" desc="">
             <Param type="void *" name="bufferData" desc="" />
@@ -1046,7 +1046,7 @@
         </Function>
         <Function name="SaveFileText" retType="bool" paramCount="2" desc="Save text data to file (write), string must be '\0' terminated, returns true on success">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="char *" name="text" desc="" />
+            <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="FileExists" retType="bool" paramCount="1" desc="Check if file exists">
             <Param type="const char *" name="fileName" desc="" />
@@ -1129,7 +1129,7 @@
             <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data, memory must be MemFree()">
-            <Param type="const unsigned char *" name="data" desc="" />
+            <Param type="const char *" name="data" desc="" />
             <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="ComputeCRC32" retType="unsigned int" paramCount="2" desc="Compute CRC32 hash code">

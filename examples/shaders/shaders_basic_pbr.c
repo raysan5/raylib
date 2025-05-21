@@ -125,6 +125,8 @@ int main()
     SetShaderValue(shader, GetShaderLocation(shader, "ambient"), &ambientIntensity, SHADER_UNIFORM_FLOAT);
 
     // Get location for shader parameters that can be modified in real time
+    int metallicValueLoc = GetShaderLocation(shader, "metallicValue");
+    int roughnessValueLoc = GetShaderLocation(shader, "roughnessValue");
     int emissiveIntensityLoc = GetShaderLocation(shader, "emissivePower");
     int emissiveColorLoc = GetShaderLocation(shader, "emissiveColor");
     int textureTilingLoc = GetShaderLocation(shader, "tiling");
@@ -141,7 +143,7 @@ int main()
 
     // Setup materials[0].maps default parameters
     car.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
-    car.materials[0].maps[MATERIAL_MAP_METALNESS].value = 0.0f;
+    car.materials[0].maps[MATERIAL_MAP_METALNESS].value = 1.0f;
     car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.0f;
     car.materials[0].maps[MATERIAL_MAP_OCCLUSION].value = 1.0f;
     car.materials[0].maps[MATERIAL_MAP_EMISSION].color = (Color){ 255, 162, 0, 255 };
@@ -163,8 +165,8 @@ int main()
     floor.materials[0].shader = shader;
     
     floor.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
-    floor.materials[0].maps[MATERIAL_MAP_METALNESS].value = 0.0f;
-    floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.0f;
+    floor.materials[0].maps[MATERIAL_MAP_METALNESS].value = 0.8f;
+    floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.1f;
     floor.materials[0].maps[MATERIAL_MAP_OCCLUSION].value = 1.0f;
     floor.materials[0].maps[MATERIAL_MAP_EMISSION].color = BLACK;
 
@@ -228,6 +230,10 @@ int main()
                 SetShaderValue(shader, textureTilingLoc, &floorTextureTiling, SHADER_UNIFORM_VEC2);
                 Vector4 floorEmissiveColor = ColorNormalize(floor.materials[0].maps[MATERIAL_MAP_EMISSION].color);
                 SetShaderValue(shader, emissiveColorLoc, &floorEmissiveColor, SHADER_UNIFORM_VEC4);
+
+		// Set floor metallic and roughness values
+		SetShaderValue(shader, metallicValueLoc, &floor.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
+		SetShaderValue(shader, roughnessValueLoc, &floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
                 
                 DrawModel(floor, (Vector3){ 0.0f, 0.0f, 0.0f }, 5.0f, WHITE);   // Draw floor model
 
@@ -237,6 +243,10 @@ int main()
                 SetShaderValue(shader, emissiveColorLoc, &carEmissiveColor, SHADER_UNIFORM_VEC4);
                 float emissiveIntensity = 0.01f;
                 SetShaderValue(shader, emissiveIntensityLoc, &emissiveIntensity, SHADER_UNIFORM_FLOAT);
+		
+		// Set old car metallic and roughness values
+		SetShaderValue(shader, metallicValueLoc, &car.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
+		SetShaderValue(shader, roughnessValueLoc, &car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
                 
                 DrawModel(car, (Vector3){ 0.0f, 0.0f, 0.0f }, 0.25f, WHITE);   // Draw car model
 

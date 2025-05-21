@@ -496,12 +496,18 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
                     vertices[2] = (Vector3){ cosslice*vertices[2].x - sinslice*vertices[2].z, vertices[2].y, sinslice*vertices[2].x + cosslice*vertices[2].z }; // Rotation matrix around y axis
                     vertices[3] = (Vector3){ cosslice*vertices[3].x - sinslice*vertices[3].z, vertices[3].y, sinslice*vertices[3].x + cosslice*vertices[3].z };
 
+                    rlNormal3f(vertices[0].x, vertices[0].y, vertices[0].z);
                     rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
                     rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                    rlNormal3f(vertices[1].x, vertices[1].y, vertices[1].z);
                     rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
 
+                    rlNormal3f(vertices[0].x, vertices[0].y, vertices[0].z);
                     rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+                    rlNormal3f(vertices[2].x, vertices[2].y, vertices[2].z);
                     rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+                    rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
                     rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
                 }
 
@@ -1423,9 +1429,13 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
     rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
-    rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
+    if (mesh.animVertices) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
+    else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
+
     rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormals);
+    else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
@@ -3598,16 +3608,16 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 }
 
 // Compute mesh tangents
-// NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
-// Implementation based on: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void GenMeshTangents(Mesh *mesh)
 {
-    if ((mesh->vertices == NULL) || (mesh->texcoords == NULL))
+    // Check if input mesh data is useful
+    if ((mesh == NULL) || (mesh->vertices == NULL) || (mesh->texcoords == NULL) || (mesh->normals == NULL))
     {
-        TRACELOG(LOG_WARNING, "MESH: Tangents generation requires texcoord vertex attribute data");
+        TRACELOG(LOG_WARNING, "MESH: Tangents generation requires vertices, texcoords and normals vertex attribute data");
         return;
     }
 
+    // Allocate or reallocate tangents data
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     else
     {
@@ -3615,26 +3625,51 @@ void GenMeshTangents(Mesh *mesh)
         mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
 
-    Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
-    Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
+    // Allocate temporary arrays for tangents calculation
+    Vector3 *tan1 = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
+    Vector3 *tan2 = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
 
-    if (mesh->vertexCount % 3 != 0)
+    if (tan1 == NULL || tan2 == NULL)
     {
-        TRACELOG(LOG_WARNING, "MESH: vertexCount expected to be a multiple of 3. Expect uninitialized values.");
+        TRACELOG(LOG_WARNING, "MESH: Failed to allocate temporary memory for tangent calculation");
+        if (tan1) RL_FREE(tan1);
+        if (tan2) RL_FREE(tan2);
+        return;
     }
 
-    for (int i = 0; i <= mesh->vertexCount - 3; i += 3)
+    // Process all triangles of the mesh
+    // 'triangleCount' must be always valid
+    for (int t = 0; t < mesh->triangleCount; t++)
     {
-        // Get triangle vertices
-        Vector3 v1 = { mesh->vertices[(i + 0)*3 + 0], mesh->vertices[(i + 0)*3 + 1], mesh->vertices[(i + 0)*3 + 2] };
-        Vector3 v2 = { mesh->vertices[(i + 1)*3 + 0], mesh->vertices[(i + 1)*3 + 1], mesh->vertices[(i + 1)*3 + 2] };
-        Vector3 v3 = { mesh->vertices[(i + 2)*3 + 0], mesh->vertices[(i + 2)*3 + 1], mesh->vertices[(i + 2)*3 + 2] };
+        // Get triangle vertex indices
+        int i0, i1, i2;
+
+        if (mesh->indices != NULL)
+        {
+            // Use indices if available
+            i0 = mesh->indices[t*3 + 0];
+            i1 = mesh->indices[t*3 + 1];
+            i2 = mesh->indices[t*3 + 2];
+        }
+        else
+        {
+            // Sequential access for non-indexed mesh
+            i0 = t*3 + 0;
+            i1 = t*3 + 1;
+            i2 = t*3 + 2;
+        }
+
+        // Get triangle vertices position
+        Vector3 v1 = { mesh->vertices[i0*3 + 0], mesh->vertices[i0*3 + 1], mesh->vertices[i0*3 + 2] };
+        Vector3 v2 = { mesh->vertices[i1*3 + 0], mesh->vertices[i1*3 + 1], mesh->vertices[i1*3 + 2] };
+        Vector3 v3 = { mesh->vertices[i2*3 + 0], mesh->vertices[i2*3 + 1], mesh->vertices[i2*3 + 2] };
 
         // Get triangle texcoords
-        Vector2 uv1 = { mesh->texcoords[(i + 0)*2 + 0], mesh->texcoords[(i + 0)*2 + 1] };
-        Vector2 uv2 = { mesh->texcoords[(i + 1)*2 + 0], mesh->texcoords[(i + 1)*2 + 1] };
-        Vector2 uv3 = { mesh->texcoords[(i + 2)*2 + 0], mesh->texcoords[(i + 2)*2 + 1] };
+        Vector2 uv1 = { mesh->texcoords[i0*2 + 0], mesh->texcoords[i0*2 + 1] };
+        Vector2 uv2 = { mesh->texcoords[i1*2 + 0], mesh->texcoords[i1*2 + 1] };
+        Vector2 uv3 = { mesh->texcoords[i2*2 + 0], mesh->texcoords[i2*2 + 1] };
 
+        // Calculate triangle edges
         float x1 = v2.x - v1.x;
         float y1 = v2.y - v1.y;
         float z1 = v2.z - v1.z;
@@ -3642,65 +3677,95 @@ void GenMeshTangents(Mesh *mesh)
         float y2 = v3.y - v1.y;
         float z2 = v3.z - v1.z;
 
+        // Calculate texture coordinate differences
         float s1 = uv2.x - uv1.x;
         float t1 = uv2.y - uv1.y;
         float s2 = uv3.x - uv1.x;
         float t2 = uv3.y - uv1.y;
 
+        // Calculate denominator and check for degenerate UV
         float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f)? 0.0f : 1.0f/div;
+        float r = (fabsf(div) < 0.0001f)? 0.0f : 1.0f/div;
 
+        // Calculate tangent and bitangent directions
         Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
         Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
 
-        tan1[i + 0] = sdir;
-        tan1[i + 1] = sdir;
-        tan1[i + 2] = sdir;
+        // Accumulate tangents and bitangents for each vertex of the triangle
+        tan1[i0] = Vector3Add(tan1[i0], sdir);
+        tan1[i1] = Vector3Add(tan1[i1], sdir);
+        tan1[i2] = Vector3Add(tan1[i2], sdir);
 
-        tan2[i + 0] = tdir;
-        tan2[i + 1] = tdir;
-        tan2[i + 2] = tdir;
+        tan2[i0] = Vector3Add(tan2[i0], tdir);
+        tan2[i1] = Vector3Add(tan2[i1], tdir);
+        tan2[i2] = Vector3Add(tan2[i2], tdir);
     }
 
-    // Compute tangents considering normals
+    // Calculate final tangents for each vertex
     for (int i = 0; i < mesh->vertexCount; i++)
     {
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = tan1[i];
 
-        // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-#if defined(COMPUTE_TANGENTS_METHOD_01)
-        Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
-        tmp = Vector3Normalize(tmp);
-        mesh->tangents[i*4 + 0] = tmp.x;
-        mesh->tangents[i*4 + 1] = tmp.y;
-        mesh->tangents[i*4 + 2] = tmp.z;
-        mesh->tangents[i*4 + 3] = 1.0f;
-#else
-        Vector3OrthoNormalize(&normal, &tangent);
-        mesh->tangents[i*4 + 0] = tangent.x;
-        mesh->tangents[i*4 + 1] = tangent.y;
-        mesh->tangents[i*4 + 2] = tangent.z;
-        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
-#endif
+        // Handle zero tangent (can happen with degenerate UVs)
+        if (Vector3Length(tangent) < 0.0001f)
+        {
+            // Create a tangent perpendicular to the normal
+            if (fabsf(normal.z) > 0.707f) tangent = (Vector3){ 1.0f, 0.0f, 0.0f };
+            else tangent = Vector3Normalize((Vector3){ -normal.y, normal.x, 0.0f });
+                
+            mesh->tangents[i*4 + 0] = tangent.x;
+            mesh->tangents[i*4 + 1] = tangent.y;
+            mesh->tangents[i*4 + 2] = tangent.z;
+            mesh->tangents[i*4 + 3] = 1.0f;
+            continue;
+        }
+
+        // Gram-Schmidt orthogonalization to make tangent orthogonal to normal
+        // T_prime = T - N * dot(N, T)
+        Vector3 orthogonalized = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
+        
+        // Handle cases where orthogonalized vector is too small
+        if (Vector3Length(orthogonalized) < 0.0001f)
+        {
+            // Create a tangent perpendicular to the normal
+            if (fabsf(normal.z) > 0.707f) orthogonalized = (Vector3){ 1.0f, 0.0f, 0.0f };
+            else orthogonalized = Vector3Normalize((Vector3){ -normal.y, normal.x, 0.0f });
+        }
+        else
+        {
+            // Normalize the orthogonalized tangent
+            orthogonalized = Vector3Normalize(orthogonalized);
+        }
+
+        // Store the calculated tangent
+        mesh->tangents[i*4 + 0] = orthogonalized.x;
+        mesh->tangents[i*4 + 1] = orthogonalized.y;
+        mesh->tangents[i*4 + 2] = orthogonalized.z;
+        
+        // Calculate the handedness (w component)
+        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, orthogonalized), tan2[i]) < 0.0f)? -1.0f : 1.0f;
     }
 
+    // Free temporary arrays
     RL_FREE(tan1);
     RL_FREE(tan2);
 
+    // Update vertex buffers if available
     if (mesh->vboId != NULL)
     {
         if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
         {
-            // Update existing vertex buffer
+            // Update existing tangent vertex buffer
             rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
         }
         else
         {
-            // Load a new tangent attributes buffer
+            // Create new tangent vertex buffer
             mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
         }
 
+        // Set up vertex attributes for shader
         rlEnableVertexArray(mesh->vaoId);
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, 4, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT);
@@ -5201,7 +5266,7 @@ static Model LoadGLTF(const char *fileName)
     /*********************************************************************************************
 
         Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend)
-        Transform handling implemented by Paul Melis (@paulmelis).
+        Transform handling implemented by Paul Melis (@paulmelis)
         Reviewed by Ramon Santamaria (@raysan5)
 
         FEATURES:
@@ -5211,10 +5276,10 @@ static Model LoadGLTF(const char *fileName)
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
           - Supports basic animations
-          - Transforms, including parent-child relations, are applied on the mesh data, but the
-            hierarchy is not kept (as it can't be represented).
+          - Transforms, including parent-child relations, are applied on the mesh data,
+            but the hierarchy is not kept (as it can't be represented)
           - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
-            are turned into separate raylib Meshes.
+            are turned into separate raylib Meshes
 
         RESTRICTIONS:
           - Only triangle meshes supported
@@ -5430,7 +5495,7 @@ static Model LoadGLTF(const char *fileName)
         // Any glTF mesh linked from more than one Node (i.e. instancing)
         // is turned into multiple Mesh's, as each Node will have its own
         // transform applied.
-        // Note: the code below disregards the scenes defined in the file, all nodes are used.
+        // NOTE: The code below disregards the scenes defined in the file, all nodes are used.
         //----------------------------------------------------------------------------------------------------
         int meshIndex = 0;
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -5815,15 +5880,17 @@ static Model LoadGLTF(const char *fileName)
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
+                bool hasJoints = false;
+
                 // NOTE: We only support primitives defined by triangles
                 if (mesh->primitives[p].type != cgltf_primitive_type_triangles) continue;
 
                 for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
                 {
                     // NOTE: JOINTS_1 + WEIGHT_1 will be used for +4 joints influencing a vertex -> Not supported by raylib
-
                     if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints) // JOINTS_n (vec4: 4 bones max per vertex / u8, u16)
                     {
+                        hasJoints = true;
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // NOTE: JOINTS_n can only be vec4 and u8/u16
@@ -5878,7 +5945,6 @@ static Model LoadGLTF(const char *fileName)
 
                         if (attribute->type == cgltf_type_vec4)
                         {
-                            // TODO: Support component types: u8, u16?
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
                                 // Init raylib mesh bone weight to copy glTF attribute data
@@ -5914,6 +5980,7 @@ static Model LoadGLTF(const char *fileName)
 
                                 // Load 4 components of float data type into mesh.boneWeights
                                 // for cgltf_attribute_type_weights we have:
+
                                 //   - data.meshes[0] (256 vertices)
                                 //   - 256 values, provided as cgltf_type_vec4 of float (4 byte per joint, stride 16)
                                 LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].boneWeights)
@@ -5921,6 +5988,33 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint weight attribute data format not supported, use vec4 float", fileName);
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint weight attribute data format not supported, use vec4 float", fileName);
+                    }
+                }
+
+                // Check if we are animated, and the mesh was not given any bone assignments, but is the child of a bone node
+                // in this case we need to fully attach all the verts to the parent bone so it will animate with the bone
+                if (data->skins_count > 0 && !hasJoints && node->parent != NULL && node->parent->mesh == NULL)
+                {
+                    int parentBoneId = -1;
+                    for (int joint = 0; joint < model.boneCount; joint++)
+                    {
+                        if (data->skins[0].joints[joint] == node->parent)
+                        {
+                            parentBoneId = joint;
+                            break;
+                        }
+                    }
+
+                    if (parentBoneId >= 0)
+                    {
+                        model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                        model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
+
+                        for (int vertexIndex = 0; vertexIndex < model.meshes[meshIndex].vertexCount*4; vertexIndex += 4)
+                        {
+                            model.meshes[meshIndex].boneIds[vertexIndex] = (unsigned char)parentBoneId;
+                            model.meshes[meshIndex].boneWeights[vertexIndex] = 1.0f;
+                        }
                     }
                 }
 
@@ -5942,9 +6036,8 @@ static Model LoadGLTF(const char *fileName)
                     model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
                 }
 
-                meshIndex++;       // Move to next mesh
+                meshIndex++; // Move to next mesh
             }
-
         }
 
         // Free all cgltf loaded data

@@ -405,7 +405,7 @@ void UnloadFileText(char *text)
 }
 
 // Save text data to file (write), string must be '\0' terminated
-bool SaveFileText(const char *fileName, char *text)
+bool SaveFileText(const char *fileName, const char *text)
 {
     bool success = false;
 

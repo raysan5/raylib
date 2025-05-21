@@ -3139,7 +3139,7 @@
           "name": "fileName"
         },
         {
-          "type": "char *",
+          "type": "const char *",
           "name": "text"
         }
       ]
@@ -4409,7 +4409,7 @@
           "name": "fileName"
         },
         {
-          "type": "char *",
+          "type": "const char *",
           "name": "text"
         }
       ]
@@ -4707,7 +4707,7 @@
       "returnType": "unsigned char *",
       "params": [
         {
-          "type": "const unsigned char *",
+          "type": "const char *",
           "name": "data"
         },
         {
