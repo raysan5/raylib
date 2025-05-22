@@ -2539,6 +2539,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 }
 
 // Encode data to Base64 string
+// NOTE: Returned string includes NULL terminator, considered on outputSize
 char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 {
     static const unsigned char base64encodeTable[] = {
@@ -2549,7 +2550,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 
     static const int modTable[] = { 0, 2, 1 };
 
-    *outputSize = 4*((dataSize + 2)/3);
+    *outputSize = 4*((dataSize + 2)/3) + 1; // Adding +1 for NULL terminator
 
     char *encodedData = (char *)RL_MALLOC(*outputSize);
 
@@ -2570,6 +2571,8 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
     }
 
     for (int i = 0; i < modTable[dataSize%3]; i++) encodedData[*outputSize - 1 - i] = '=';  // Padding character
+
+    encodedData[*outputSize - 1] = '\0';
 
     return encodedData;
 }
