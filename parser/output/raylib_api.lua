@@ -4198,7 +4198,7 @@ return {
     },
     {
       name = "EncodeDataBase64",
-      description = "Encode data to Base64 string, memory must be MemFree()",
+      description = "Encode data to Base64 string (includes NULL terminator), memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},

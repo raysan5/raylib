@@ -1123,7 +1123,7 @@
             <Param type="int" name="compDataSize" desc="" />
             <Param type="int *" name="dataSize" desc="" />
         </Function>
-        <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string, memory must be MemFree()">
+        <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string (includes NULL terminator), memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int *" name="outputSize" desc="" />

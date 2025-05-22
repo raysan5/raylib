@@ -1787,7 +1787,7 @@ Function 147: DecompressData() (3 input parameters)
 Function 148: EncodeDataBase64() (3 input parameters)
   Name: EncodeDataBase64
   Return type: char *
-  Description: Encode data to Base64 string, memory must be MemFree()
+  Description: Encode data to Base64 string (includes NULL terminator), memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: outputSize (type: int *)
