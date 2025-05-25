@@ -1692,8 +1692,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
     // This event is called whenever the window changes sizes,
     // so the size of the canvas object is explicitly retrieved below
-    int width = EM_ASM_INT( return (!!document.fullscreenElement) ? window.innerWidth : Module.canvas.parentElement.clientWidth; );
-    int height = EM_ASM_INT( return (!!document.fullscreenElement) ? window.innerHeight : Module.canvas.parentElement.clientHeight; );
+    int width = EM_ASM_INT( return window.innerWidth; );
+    int height = EM_ASM_INT( return window.innerHeight; );
     
     if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
     else if ((width > (int)CORE.Window.screenMax.width) && (CORE.Window.screenMax.width > 0)) width = CORE.Window.screenMax.width;
