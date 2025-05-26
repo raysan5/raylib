@@ -78,6 +78,7 @@ struct finger {
 struct touch {
   struct finger fingers[1];
   int fd;
+  int canonical;
 };
 
 // hold all the low level wayland stuff
@@ -288,10 +289,26 @@ static int init_egl () {
    return 0;
 }
 
-static int init_touch(const char *dev_path) {
+static int init_touch(const char *dev_path, const char *origin_path) {
   platform.touch.fd = open(dev_path, O_RDONLY|O_NONBLOCK);
   if (platform.touch.fd < 0) {
     TRACELOG(LOG_WARNING, "COMMA: Failed to open touch device at %s", dev_path);
+    return -1;
+  }
+
+  FILE *fp = fopen(origin_path, "r");
+  if (fp != NULL) {
+    int origin;
+    int ret = fscanf(fp, "%d", &origin);
+    fclose(fp);
+    if (ret != 1) {
+      TRACELOG(LOG_WARNING, "COMMA: Failed to test for screen origin");
+      return -1;
+    } else {
+      platform.touch.canonical = origin == 1;
+    }
+  } else {
+    TRACELOG(LOG_WARNING, "COMMA: Failed to open screen origin");
     return -1;
   }
 
@@ -653,9 +670,9 @@ void PollInputEvents(void) {
         if (event.code == ABS_MT_TRACKING_ID) {
           platform.touch.fingers[slot].action = event.value == -1 ? TOUCH_ACTION_UP : TOUCH_ACTION_DOWN;
         } else if (event.code == ABS_MT_POSITION_X) {
-          platform.touch.fingers[slot].y = event.value;
+          platform.touch.fingers[slot].y = (1 - platform.touch.canonical) * (CORE.Window.screen.height - event.value) + (platform.touch.canonical * event.value);
         } else if (event.code == ABS_MT_POSITION_Y) {
-          platform.touch.fingers[slot].x = CORE.Window.screen.width - event.value;
+          platform.touch.fingers[slot].x = platform.touch.canonical * (CORE.Window.screen.width - event.value) + ((1 - platform.touch.canonical) * event.value);
         }
       }
     }
@@ -690,7 +707,7 @@ int InitPlatform(void) {
     return -1;
   }
 
-  if (init_touch("/dev/input/event2")) {
+  if (init_touch("/dev/input/event2", "/sys/devices/platform/vendor/vendor:gpio-som-id/som_id")) {
     TRACELOG(LOG_FATAL, "COMMA: Failed to initialize touch device");
     return -1;
   }
