@@ -70,13 +70,12 @@
 
 struct finger {
   TouchAction action;
-  TouchAction gesture_action;
   int x;
   int y;
 };
 
 struct touch {
-  struct finger fingers[1];
+  struct finger fingers[MAX_TOUCH_POINTS];
   int fd;
   int canonical;
 };
@@ -312,20 +311,24 @@ static int init_touch(const char *dev_path, const char *origin_path) {
     return -1;
   }
 
-  platform.touch.fingers[0].x = -1;
-  platform.touch.fingers[0].y = -1;
-  platform.touch.fingers[0].action = TOUCH_ACTION_UP;
-  platform.touch.fingers[0].gesture_action = TOUCH_ACTION_UP;
+  for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
+    platform.touch.fingers[i].x = -1;
+    platform.touch.fingers[i].y = -1;
+    platform.touch.fingers[i].action = TOUCH_ACTION_UP;
 
-  CORE.Input.Touch.currentTouchState[0] = 0;
+    CORE.Input.Touch.currentTouchState[0] = 0;
+    CORE.Input.Touch.previousTouchState[0] = 0;
+  }
+
+  for (int i = 0; i < MAX_MOUSE_BUTTONS; ++i) {
+    CORE.Input.Mouse.currentButtonState[i] = 0;
+    CORE.Input.Mouse.previousButtonState[i] = 0;
+  }
+
   CORE.Input.Mouse.currentPosition.x = -1;
   CORE.Input.Mouse.currentPosition.y = -1;
-  CORE.Input.Mouse.currentButtonState[0] = 0;
-
-  CORE.Input.Touch.previousTouchState[0] = 0;
   CORE.Input.Mouse.previousPosition.x = -1;
   CORE.Input.Mouse.previousPosition.y = -1;
-  CORE.Input.Mouse.previousButtonState[0] = 0;
 
   return 0;
 }
@@ -614,68 +617,59 @@ void PollInputEvents(void) {
   // slot i is for events of finger i
   static int slot = 0;
 
-  // must be called every frames
-  UpdateGestures();
+  for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
+    CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
+  }
 
-  CORE.Input.Touch.previousTouchState[0] = CORE.Input.Touch.currentTouchState[0];
-  CORE.Input.Mouse.previousButtonState[0] = CORE.Input.Mouse.currentButtonState[0];
+  for (int i = 0; i < MAX_MOUSE_BUTTONS; ++i) {
+    CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+  }
+
   CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
   CORE.Input.Touch.pointCount = 0;
 
   struct input_event event = {0};
   while (read(platform.touch.fd, &event, sizeof(struct input_event)) == sizeof(struct input_event)) {
-    if (event.type == SYN_REPORT && slot == 0) { // sync event for main finger
+    if (event.type == SYN_REPORT) { // synchronization frame. Expose completed events back to the library
 
-      CORE.Input.Touch.pointCount = 1;
+      for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
+        if (platform.touch.fingers[i].action == TOUCH_ACTION_DOWN) {
 
-      if (platform.touch.fingers[slot].action == TOUCH_ACTION_DOWN) {
-        // detect new touch on screen
-        platform.touch.fingers[slot].gesture_action = platform.touch.fingers[slot].gesture_action == TOUCH_ACTION_UP ? TOUCH_ACTION_DOWN : TOUCH_ACTION_MOVE;
+          CORE.Input.Touch.position[i].x = platform.touch.fingers[i].x;
+          CORE.Input.Touch.position[i].y = platform.touch.fingers[i].y;
+          CORE.Input.Touch.currentTouchState[i] = 1;
 
-        CORE.Input.Touch.position[slot].x = platform.touch.fingers[slot].x;
-        CORE.Input.Touch.position[slot].y = platform.touch.fingers[slot].y;
-        CORE.Input.Touch.currentTouchState[slot] = 1;
-        // map touch state on mouse for conveniance
-        CORE.Input.Mouse.currentPosition.x = platform.touch.fingers[slot].x;
-        CORE.Input.Mouse.currentPosition.y = platform.touch.fingers[slot].y;
-        CORE.Input.Mouse.currentButtonState[slot] = 1;
+          // map main finger on mouse for conveniance. raylib already does that
+          // for pressed state, but not pos
+          if (i == 0) {
+            CORE.Input.Mouse.currentPosition.x = platform.touch.fingers[i].x;
+            CORE.Input.Mouse.currentPosition.y = platform.touch.fingers[i].y;
+          }
 
-      } else if (platform.touch.fingers[slot].action == TOUCH_ACTION_UP) {
-        // finger off the screen
-        platform.touch.fingers[slot].gesture_action = TOUCH_ACTION_UP;
-
-        CORE.Input.Touch.position[slot].x = -1;
-        CORE.Input.Touch.position[slot].y = -1;
-        CORE.Input.Touch.currentTouchState[slot] = 0;
-        CORE.Input.Mouse.currentButtonState[slot] = 0;
-        CORE.Input.Touch.previousTouchState[slot] = 1;
-        CORE.Input.Mouse.previousButtonState[slot] = 1;
-      }
-
-      // interpret gestures (scroll, pinch, drag, ...)
-      GestureEvent gestureEvent = {0};
-      gestureEvent.touchAction = platform.touch.fingers[slot].gesture_action;
-      gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-      gestureEvent.pointId[slot] = slot;
-      gestureEvent.position[slot] = CORE.Input.Touch.position[slot];
-      ProcessGestureEvent(gestureEvent);
-    }
-
-    if (event.type == EV_ABS) {
-      if (event.code == ABS_MT_SLOT) { // new finger on the screen
-        slot = event.value;
-      }
-
-      if (slot == 0) { // only handle events for main finger
-        if (event.code == ABS_MT_TRACKING_ID) {
-          platform.touch.fingers[slot].action = event.value == -1 ? TOUCH_ACTION_UP : TOUCH_ACTION_DOWN;
-        } else if (event.code == ABS_MT_POSITION_X) {
-          platform.touch.fingers[slot].y = (1 - platform.touch.canonical) * (CORE.Window.screen.height - event.value) + (platform.touch.canonical * event.value);
-        } else if (event.code == ABS_MT_POSITION_Y) {
-          platform.touch.fingers[slot].x = platform.touch.canonical * (CORE.Window.screen.width - event.value) + ((1 - platform.touch.canonical) * event.value);
+        } else if (platform.touch.fingers[i].action == TOUCH_ACTION_UP) {
+          CORE.Input.Touch.position[i].x = -1;
+          CORE.Input.Touch.position[i].y = -1;
+          CORE.Input.Touch.currentTouchState[i] = 0;
         }
       }
+
+    } else if (event.type == EV_ABS) { // raw events. Process these untill we get a sync frame
+
+      if (event.code == ABS_MT_SLOT) { // switch finger
+        slot = event.value;
+      } else if (event.code == ABS_MT_TRACKING_ID) { // finger on screen or not
+        platform.touch.fingers[slot].action = event.value == -1 ? TOUCH_ACTION_UP : TOUCH_ACTION_DOWN;
+      } else if (event.code == ABS_MT_POSITION_X) {
+        platform.touch.fingers[slot].y = (1 - platform.touch.canonical) * (CORE.Window.screen.height - event.value) + (platform.touch.canonical * event.value);
+      } else if (event.code == ABS_MT_POSITION_Y) {
+        platform.touch.fingers[slot].x = platform.touch.canonical * (CORE.Window.screen.width - event.value) + ((1 - platform.touch.canonical) * event.value);
+      }
     }
+  }
+
+  // count how many fingers are left on the screen after processing all events
+  for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
+    CORE.Input.Touch.pointCount += platform.touch.fingers[i].action != TOUCH_ACTION_UP;
   }
 }
 
