@@ -80,7 +80,7 @@ void CloseWindow(void);
     #define CloseWindow CloseWindow_win32
     #define ShowCursor __imp_ShowCursor
     #define _APISETSTRING_
-    
+
     #undef MAX_PATH
 
     __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
@@ -913,7 +913,7 @@ int RGFW_gpConvTable[18] = {
     [RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
     [RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
     [RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,    
+    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,
     [RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
 
@@ -925,7 +925,7 @@ void PollInputEvents(void)
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
 #endif
-    
+
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1017,7 +1017,7 @@ void PollInputEvents(void)
 
                         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
                         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event->droppedFiles[i]);
-                        
+
                         CORE.Window.dropFileCount++;
                     }
                     else if (CORE.Window.dropFileCount < 1024)
@@ -1221,7 +1221,7 @@ void PollInputEvents(void)
                         int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = pressed;
-                        
+
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
                         else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
                     }
@@ -1330,7 +1330,7 @@ int InitPlatform(void)
     // TODO: Is this needed by raylib now?
     // If so, rcore_desktop_sdl should be updated too
     //SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-    
+
     if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 
