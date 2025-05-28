@@ -1128,8 +1128,8 @@
             <Param type="int" name="dataSize" desc="" />
             <Param type="int *" name="outputSize" desc="" />
         </Function>
-        <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data, memory must be MemFree()">
-            <Param type="const char *" name="data" desc="" />
+        <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string (expected NULL terminated), memory must be MemFree()">
+            <Param type="const char *" name="text" desc="" />
             <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="ComputeCRC32" retType="unsigned int" paramCount="2" desc="Compute CRC32 hash code">

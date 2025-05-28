@@ -4208,10 +4208,10 @@ return {
     },
     {
       name = "DecodeDataBase64",
-      description = "Decode Base64 string data, memory must be MemFree()",
+      description = "Decode Base64 string (expected NULL terminated), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
-        {type = "const char *", name = "data"},
+        {type = "const char *", name = "text"},
         {type = "int *", name = "outputSize"}
       }
     },
