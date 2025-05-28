@@ -2625,7 +2625,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     if (decodedData == NULL) return NULL;
 
     int outputCount = 0;
-    for (int i = 0, j = 0; i < dataSize;)
+    for (int i = 0; i < dataSize;)
     {
         // Every 4 sixtets must generate 3 octets
         unsigned int sixtetA = base64DecodeTable[(unsigned char)text[i]];
