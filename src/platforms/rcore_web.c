@@ -1081,7 +1081,7 @@ void PollInputEvents(void)
             }
 
             // Register axis data for every connected gamepad
-            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
+            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXES); j++)
             {
                 CORE.Input.Gamepad.axisState[i][j] = gamepadState.axis[j];
             }

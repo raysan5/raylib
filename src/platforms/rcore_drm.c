@@ -124,7 +124,7 @@ typedef struct {
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
-    int gamepadAbsAxisRange[MAX_GAMEPADS][MAX_GAMEPAD_AXIS][2]; // [0] = min, [1] = range value of the axis
+    int gamepadAbsAxisRange[MAX_GAMEPADS][MAX_GAMEPAD_AXES][2]; // [0] = min, [1] = range value of the axis
     int gamepadAbsAxisMap[MAX_GAMEPADS][ABS_CNT]; // Maps the axes gamepads from the evdev api to a sequential one
     int gamepadCount;                   // The number of gamepads registered
 } PlatformData;
@@ -1681,7 +1681,7 @@ static void PollGamepadEvents(void)
 
                     TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: Axis: %2i Value: %i", i, axisRaylib, event.value);
 
-                    if (axisRaylib < MAX_GAMEPAD_AXIS)
+                    if (axisRaylib < MAX_GAMEPAD_AXES)
                     {
                         int min = platform.gamepadAbsAxisRange[i][event.code][0];
                         int range = platform.gamepadAbsAxisRange[i][event.code][1];
