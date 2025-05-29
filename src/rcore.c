@@ -2584,6 +2584,8 @@ bool Base64Encode(const unsigned char *data, unsigned int dataSize, char ** outp
         }
         *encodedData++ = base64EncodeTable[index];
         
+        if (!dataLeft) break;
+
         index = 64;
         if (dataLeft) index = (unsigned int)(data[2] & 0x3f);
         *encodedData++ = base64EncodeTable[index];
