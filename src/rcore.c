@@ -237,8 +237,8 @@ __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod)
 #ifndef MAX_GAMEPAD_NAME_LENGTH
     #define MAX_GAMEPAD_NAME_LENGTH      128        // Maximum number of characters of gamepad name (byte size)
 #endif
-#ifndef MAX_GAMEPAD_AXIS
-    #define MAX_GAMEPAD_AXIS               8        // Maximum number of axis supported (per gamepad)
+#ifndef MAX_GAMEPAD_AXES
+    #define MAX_GAMEPAD_AXES               8        // Maximum number of axis supported (per gamepad)
 #endif
 #ifndef MAX_GAMEPAD_BUTTONS
     #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
@@ -359,7 +359,7 @@ typedef struct CoreData {
             char name[MAX_GAMEPADS][MAX_GAMEPAD_NAME_LENGTH];               // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
-            float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];                // Gamepad axis state
+            float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXES];                // Gamepad axes state
 
         } Gamepad;
     } Input;
@@ -3368,11 +3368,11 @@ int GetGamepadAxisCount(int gamepad)
 // Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
-    float value = (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER)? -1.0f : 0.0f;
+    float value = ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))? -1.0f : 0.0f;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS))
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXES))
     {
-        float movement = value < 0.0f ? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
+        float movement = (value < 0.0f)? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
 
         if (movement > value) value = CORE.Input.Gamepad.axisState[gamepad][axis];
     }
@@ -4050,10 +4050,10 @@ static void RecordAutomationEvent(void)
             if (currentEventList->count == currentEventList->capacity) return;    // Security check
         }
 
-        for (int axis = 0; axis < MAX_GAMEPAD_AXIS; axis++)
+        for (int axis = 0; axis < MAX_GAMEPAD_AXES; axis++)
         {
             // Event type: INPUT_GAMEPAD_AXIS_MOTION
-            float defaultMovement = (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER)? -1.0f : 0.0f;
+            float defaultMovement = ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))? -1.0f : 0.0f;
             if (GetGamepadAxisMovement(gamepad, axis) != defaultMovement)
             {
                 currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
