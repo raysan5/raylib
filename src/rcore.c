@@ -2538,60 +2538,80 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
     return data;
 }
 
+
+// Encode data to dynamically allocated Base64 string.
+// NOTE: Output will be NULL terminated, considered on outputSize
+// If return false check the output string for an error message.
+bool Base64Encode(const unsigned char *data, unsigned int dataSize, char ** output)
+{
+    static char * errorMsgs[] = {
+        "Out of memory!"
+    };
+
+    // Base64 conversion table from RFC 4648 [0..63]
+    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sixtets" (6bit characters)
+    // 65th value is the padding symbol.
+    static const char base64EncodeTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+    // Formula lifted from https://cvs.savannah.gnu.org/viewvc/gnulib/gnulib/lib/base64.h?view=markup&content-type=text%2Fvnd.viewcvs-markup&revision=HEAD#l30 
+    // We add one more to ensure enough space for null terminator. 
+    int allocationSize = ((dataSize + 2) / 3) +1;
+
+    // Load some memory to store encoded string
+    char *encodedData = (char *)RL_CALLOC(allocationSize, 1);
+    if (encodedData == NULL) {
+        *output = errorMsgs[0];
+        return false;
+    }
+    
+    *output = encodedData;
+
+    unsigned int index;
+    int dataLeft = dataSize;
+    
+    while (dataLeft) {
+        index = (unsigned int)(data[0] >> 2 & 0x3f);
+        *encodedData++ =  base64EncodeTable[index];
+        
+        index = (unsigned int)(((data[0] << 4) + 
+            ( --dataLeft ? data[1] >> 4 : 0)) & 0x3f);
+        *encodedData++ = base64EncodeTable[index];
+        
+        index = 64;
+        if (dataLeft) {
+            index = (unsigned int)(((data[1] << 2) + 
+                    (--dataLeft ? data[2] >> 6 : 0)) & 0x3f);
+        }
+        *encodedData++ = base64EncodeTable[index];
+        
+        index = 64;
+        if (dataLeft) index = (unsigned int)(data[2] & 0x3f);
+        *encodedData++ = base64EncodeTable[index];
+
+        if(dataLeft) dataLeft--;
+
+        if(dataLeft) data += 3;
+    }
+
+    // Our null terminator. 
+    *encodedData = '\0';
+
+    return true;
+}
+
 // Encode data to Base64 string
 // NOTE: Returned string includes NULL terminator, considered on outputSize
 char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 {
-    // Base64 conversion table from RFC 4648 [0..63]
-    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sixtets" (6bit characters)
-    static const char base64EncodeTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-    // Compute expected size and padding
-    int paddedSize = dataSize;
-    while (paddedSize%3 != 0) paddedSize++; // Padding bytes to round 4*(dataSize/3) to 4 bytes
-    int estimatedOutputSize = 4*(paddedSize/3);
-    int padding = paddedSize - dataSize;
-
-    // Adding null terminator to string
-    estimatedOutputSize += 1;
-
-    // Load some memory to store encoded string
-    char *encodedData = (char *)RL_CALLOC(estimatedOutputSize, 1);
-    if (encodedData == NULL) return NULL;
-
-    int outputCount = 0;
-    for (int i = 0; i < dataSize;)
-    {
-        unsigned int octetA = 0;
-        unsigned int octetB = 0;
-        unsigned int octetC = 0;
-        unsigned int octetPack = 0;
-
-        octetA = data[i]; // Generates 2 sextets
-        octetB = ((i + 1) < dataSize)? data[i + 1] : 0; // Generates 3 sextets
-        octetC = ((i + 2) < dataSize)? data[i + 2] : 0; // Generates 4 sextets
-
-        octetPack = (octetA << 16) | (octetB << 8) | octetC;
-
-        encodedData[outputCount + 0] = (unsigned char)(base64EncodeTable[(octetPack >> 18) & 0x3f]);
-        encodedData[outputCount + 1] = (unsigned char)(base64EncodeTable[(octetPack >> 12) & 0x3f]);
-        encodedData[outputCount + 2] = (unsigned char)(base64EncodeTable[(octetPack >> 6) & 0x3f]);
-        encodedData[outputCount + 3] = (unsigned char)(base64EncodeTable[octetPack & 0x3f]);
-        outputCount += 4;
-        i += 3;
+    *outputSize=0;
+    char * output = NULL;
+    bool ok = Base64Encode(data, dataSize, &output);
+    if (ok) {
+        *outputSize = (int)strlen(output);
+        return output;
     }
-    
-    // Add required padding bytes
-    for (int p = 0; p < padding; p++) encodedData[outputCount - p - 1] = '=';
-
-    // Add null terminator to string
-    encodedData[outputCount] = '\0';
-    outputCount++;
-
-    if (outputCount != estimatedOutputSize) TRACELOG(LOG_WARNING, "BASE64: Output size differs from estimation");
-
-    *outputSize = estimatedOutputSize;
-    return encodedData;
+    output = NULL;
+    return output;
 }
 
 // Decode Base64 string (expected NULL terminated)
