@@ -864,7 +864,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
     
-    // Hide cursor
+    // Show cursor
     ShowCursor();
 
     // NOTE: lockedMouseCursor handled by EmscriptenPointerlockCallback()
