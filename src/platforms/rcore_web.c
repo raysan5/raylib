@@ -839,6 +839,11 @@ void ShowCursor(void)
 {
     if (CORE.Input.Mouse.cursorHidden)
     {
+        if(lockedMouseCursor)
+        {
+            emscripten_exit_pointerlock();
+        }
+
         EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
 
         CORE.Input.Mouse.cursorHidden = false;
