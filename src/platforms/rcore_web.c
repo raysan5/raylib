@@ -863,8 +863,11 @@ void EnableCursor(void)
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    
+    // Hide cursor
+    ShowCursor();
 
-    // NOTE: isMouseLocked handled by EmscriptenPointerlockCallback()
+    // NOTE: lockedMouseCursor handled by EmscriptenPointerlockCallback()
 }
 
 // Disables cursor (lock cursor)
@@ -873,10 +876,13 @@ void DisableCursor(void)
     // TODO: figure out how not to hard code the canvas ID here.
     emscripten_request_pointerlock(GetCanvasId(), 1);
 
+    // Hide cursor
+    HideCursor();
+
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    // NOTE: isMouseLocked handled by EmscriptenPointerlockCallback()
+    // NOTE: lockedMouseCursor handled by EmscriptenPointerlockCallback()
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -1591,13 +1597,9 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
-    // If the pointer is not locked, follow the position
-    if (!lockedMouseCursor)
-    {
-        CORE.Input.Mouse.currentPosition.x = (float)x;
-        CORE.Input.Mouse.currentPosition.y = (float)y;
-        CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-    }
+    CORE.Input.Mouse.currentPosition.x = (float)x;
+    CORE.Input.Mouse.currentPosition.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
