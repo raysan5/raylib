@@ -134,12 +134,12 @@ void TraceLog(int logType, const char *text, ...)
 
     switch (logType)
     {
-        case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
-        case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
-        case LOG_INFO: strcpy(buffer, "INFO: "); break;
-        case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
-        case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
-        case LOG_FATAL: strcpy(buffer, "FATAL: "); break;
+        case LOG_TRACE: strcpy(buffer, "\x1b[90mTRACE:\x1b[0m "); break;        // Bright Black (Gray)
+        case LOG_DEBUG: strcpy(buffer, "\x1b[36mDEBUG:\x1b[0m "); break;        // Cyan
+        case LOG_INFO: strcpy(buffer, "\x1b[32mINFO:\x1b[0m "); break;          // Green
+        case LOG_WARNING: strcpy(buffer, "\x1b[33mWARNING:\x1b[0m "); break;    // Yellow
+        case LOG_ERROR: strcpy(buffer, "\x1b[31mERROR:\x1b[0m "); break;        // Red
+        case LOG_FATAL: strcpy(buffer, "\x1b[1;31mFATAL:\x1b[0m "); break;      // Bright Red
         default: break;
     }
 
