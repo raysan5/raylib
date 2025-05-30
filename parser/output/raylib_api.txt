@@ -774,7 +774,7 @@ Enum 06: GamepadButton (18 values)
   Value[GAMEPAD_BUTTON_RIGHT_THUMB]: 17
 Enum 07: GamepadAxis (6 values)
   Name: GamepadAxis
-  Description: Gamepad axis
+  Description: Gamepad axes
   Value[GAMEPAD_AXIS_LEFT_X]: 0
   Value[GAMEPAD_AXIS_LEFT_Y]: 1
   Value[GAMEPAD_AXIS_RIGHT_X]: 2
@@ -1943,12 +1943,12 @@ Function 176: GetGamepadButtonPressed() (0 input parameters)
 Function 177: GetGamepadAxisCount() (1 input parameters)
   Name: GetGamepadAxisCount
   Return type: int
-  Description: Get gamepad axis count for a gamepad
+  Description: Get axis count for a gamepad
   Param[1]: gamepad (type: int)
 Function 178: GetGamepadAxisMovement() (2 input parameters)
   Name: GetGamepadAxisMovement
   Return type: float
-  Description: Get axis movement value for a gamepad axis
+  Description: Get movement value for a gamepad axis
   Param[1]: gamepad (type: int)
   Param[2]: axis (type: int)
 Function 179: SetGamepadMappings() (1 input parameters)
