@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_desktop - Functions to manage window, graphics device and inputs
+*   rcore_desktop_glfw - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: DESKTOP: GLFW
 *       - Windows (Win32, Win64)
@@ -1238,7 +1238,7 @@ void PollInputEvents(void)
                 }
             }
 
-            // Get current axis state
+            // Get current state of axes
             const float *axes = state.axes;
 
             for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1); k++)
@@ -1246,7 +1246,7 @@ void PollInputEvents(void)
                 CORE.Input.Gamepad.axisState[i][k] = axes[k];
             }
 
-            // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather axis)
+            // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather as axes)
             if (CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1f)
             {
                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = 1;

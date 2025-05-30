@@ -124,7 +124,7 @@ typedef struct {
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
-    int gamepadAbsAxisRange[MAX_GAMEPADS][MAX_GAMEPAD_AXES][2]; // [0] = min, [1] = range value of the axis
+    int gamepadAbsAxisRange[MAX_GAMEPADS][MAX_GAMEPAD_AXES][2]; // [0] = min, [1] = range value of the axes
     int gamepadAbsAxisMap[MAX_GAMEPADS][ABS_CNT]; // Maps the axes gamepads from the evdev api to a sequential one
     int gamepadCount;                   // The number of gamepads registered
 } PlatformData;
@@ -1460,7 +1460,7 @@ static void ConfigureEvdevDevice(char *device)
         // matter if we support them
         else if (hasAbsXY && TEST_BIT(keyBits, BTN_MOUSE)) isMouse = true;
 
-        // If any of the common joystick axis is present, we assume it's a gamepad
+        // If any of the common joystick axes are present, we assume it's a gamepad
         else
         {
             for (int axis = (hasAbsXY? ABS_Z : ABS_X); axis < ABS_PRESSURE; axis++)
@@ -1546,7 +1546,7 @@ static void ConfigureEvdevDevice(char *device)
         if (absAxisCount > 0)
         {
             // TODO / NOTE
-            // So gamepad axis (as in the actual linux joydev.c) are just simply enumerated
+            // So gamepad axes (as in the actual linux joydev.c) are just simply enumerated
             // and (at least for some input drivers like xpat) it's convention to use
             // ABS_X, ABX_Y for one joystick ABS_RX, ABS_RY for the other and the Z axes for the
             // shoulder buttons

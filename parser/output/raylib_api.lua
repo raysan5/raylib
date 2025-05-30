@@ -2300,7 +2300,7 @@ return {
     },
     {
       name = "GamepadAxis",
-      description = "Gamepad axis",
+      description = "Gamepad axes",
       values = {
         {
           name = "GAMEPAD_AXIS_LEFT_X",
@@ -4426,7 +4426,7 @@ return {
     },
     {
       name = "GetGamepadAxisCount",
-      description = "Get gamepad axis count for a gamepad",
+      description = "Get axis count for a gamepad",
       returnType = "int",
       params = {
         {type = "int", name = "gamepad"}
@@ -4434,7 +4434,7 @@ return {
     },
     {
       name = "GetGamepadAxisMovement",
-      description = "Get axis movement value for a gamepad axis",
+      description = "Get movement value for a gamepad axis",
       returnType = "float",
       params = {
         {type = "int", name = "gamepad"},

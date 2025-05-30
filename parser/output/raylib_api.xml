@@ -486,7 +486,7 @@
             <Value name="GAMEPAD_BUTTON_LEFT_THUMB" integer="16" desc="Gamepad joystick pressed button left" />
             <Value name="GAMEPAD_BUTTON_RIGHT_THUMB" integer="17" desc="Gamepad joystick pressed button right" />
         </Enum>
-        <Enum name="GamepadAxis" valueCount="6" desc="Gamepad axis">
+        <Enum name="GamepadAxis" valueCount="6" desc="Gamepad axes">
             <Value name="GAMEPAD_AXIS_LEFT_X" integer="0" desc="Gamepad left stick X axis" />
             <Value name="GAMEPAD_AXIS_LEFT_Y" integer="1" desc="Gamepad left stick Y axis" />
             <Value name="GAMEPAD_AXIS_RIGHT_X" integer="2" desc="Gamepad right stick X axis" />
@@ -1216,10 +1216,10 @@
         </Function>
         <Function name="GetGamepadButtonPressed" retType="int" paramCount="0" desc="Get the last gamepad button pressed">
         </Function>
-        <Function name="GetGamepadAxisCount" retType="int" paramCount="1" desc="Get gamepad axis count for a gamepad">
+        <Function name="GetGamepadAxisCount" retType="int" paramCount="1" desc="Get axis count for a gamepad">
             <Param type="int" name="gamepad" desc="" />
         </Function>
-        <Function name="GetGamepadAxisMovement" retType="float" paramCount="2" desc="Get axis movement value for a gamepad axis">
+        <Function name="GetGamepadAxisMovement" retType="float" paramCount="2" desc="Get movement value for a gamepad axis">
             <Param type="int" name="gamepad" desc="" />
             <Param type="int" name="axis" desc="" />
         </Function>
