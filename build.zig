@@ -366,8 +366,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
-pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency) void {
-    const raylib_dep = b.dependencyFromBuildZig(@This(), .{});
+pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency, options: Options) void {
+    const raylib_dep = b.dependencyFromBuildZig(@This(), options);
     var gen_step = b.addWriteFiles();
     raylib.step.dependOn(&gen_step.step);
 
