@@ -253,7 +253,7 @@ extern void LoadFontDefault(void)
             }
             else
             {
-                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
+                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xff;
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
             }
         }
