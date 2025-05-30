@@ -1825,7 +1825,7 @@ void PollInputEvents(void)
                     {
                         if (platform.gamepadId[i] == event.jaxis.which)
                         {
-                            // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
+                            // SDL axis value range is -32768 to 32767, we normalize it to raylib's -1.0 to 1.0f range
                             float value = event.jaxis.value/(float)32767;
                             CORE.Input.Gamepad.axisState[i][axis] = value;
 
