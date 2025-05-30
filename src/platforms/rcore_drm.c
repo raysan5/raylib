@@ -1551,7 +1551,7 @@ static void ConfigureEvdevDevice(char *device)
             // ABS_X, ABX_Y for one joystick ABS_RX, ABS_RY for the other and the Z axes for the
             // shoulder buttons
             // If these are now enumerated you get LJOY_X, LJOY_Y, LEFT_SHOULDERB, RJOY_X, ...
-            // That means they don't match the GamepadAxis enum
+            // That means they don't match the GamepadAxes enum
             // This could be fixed
             int axisIndex = 0;
             for (int axis = ABS_X; axis < ABS_PRESSURE; axis++)
