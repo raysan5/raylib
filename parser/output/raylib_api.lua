@@ -2299,7 +2299,7 @@ return {
       }
     },
     {
-      name = "GamepadAxis",
+      name = "GamepadAxes",
       description = "Gamepad axes",
       values = {
         {

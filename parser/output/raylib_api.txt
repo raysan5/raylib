@@ -772,8 +772,8 @@ Enum 06: GamepadButton (18 values)
   Value[GAMEPAD_BUTTON_MIDDLE_RIGHT]: 15
   Value[GAMEPAD_BUTTON_LEFT_THUMB]: 16
   Value[GAMEPAD_BUTTON_RIGHT_THUMB]: 17
-Enum 07: GamepadAxis (6 values)
-  Name: GamepadAxis
+Enum 07: GamepadAxes (6 values)
+  Name: GamepadAxes
   Description: Gamepad axes
   Value[GAMEPAD_AXIS_LEFT_X]: 0
   Value[GAMEPAD_AXIS_LEFT_Y]: 1
