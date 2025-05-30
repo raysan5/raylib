@@ -87,6 +87,10 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
+#if defined(PLATFORM_ANDROID)
+    #include <stdio.h>  // Required for: FILE    - Only used by android_fopen
+#endif
+
 #define RAYLIB_VERSION_MAJOR 5
 #define RAYLIB_VERSION_MINOR 6
 #define RAYLIB_VERSION_PATCH 0
@@ -1124,6 +1128,12 @@ RLAPI bool ExportDataAsCode(const unsigned char *data, int dataSize, const char 
 RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
 RLAPI void UnloadFileText(char *text);                            // Unload file text data allocated by LoadFileText()
 RLAPI bool SaveFileText(const char *fileName, const char *text);  // Save text data to file (write), string must be '\0' terminated, returns true on success
+#if defined(PLATFORM_ANDROID)
+    RLAPI FILE *android_fopen(const char *filename, const char *mode); // Open an asset file
+    #if !defined(fopen)
+        #define fopen(name, mode) android_fopen(name, mode)
+    #endif
+#endif
 //------------------------------------------------------------------
 
 // File system functions
