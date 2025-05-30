@@ -137,6 +137,7 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
 
 // Emscripten input callback events
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
@@ -1362,9 +1363,11 @@ int InitPlatform(void)
     // Trigger this once to get initial window sizing
     EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 
-    // Support keyboard events -> Not used, GLFW.JS takes care of that
-    // emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-    // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    // Support keyboard events
+    // NOTE: used only to consume keyboard events. GLFW.JS takes care of
+    //       the actual input.
+    emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
 
     // Support mouse events
     emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
@@ -1618,6 +1621,14 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     // Gesture data is sent to gestures-system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
+}
+
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
+{
+    // NOTE: handled by GLFW, this is only to consume the keyboard events so we
+    //       make use of F-keys and other shortcuts without triggering browser
+    //       functions.
+    return 1; // The event was consumed by the callback handler
 }
 
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
