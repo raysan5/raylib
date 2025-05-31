@@ -1320,6 +1320,13 @@ int InitPlatform(void)
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
 
+    if (platform.window != NULL)
+    {
+        // NOTE: RGFW's exit key is distinct from raylib's exit key (which can
+        // be set with SetExitKey()) and defaults to Escape
+        platform.window->exitKey = RGFW_keyNULL;
+    }
+
 #ifndef PLATFORM_WEB_RGFW
     RGFW_area screenSize = RGFW_getScreenSize();
     CORE.Window.display.width = screenSize.w;
