@@ -177,6 +177,7 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_shiftR] = KEY_RIGHT_SHIFT,
     [RGFW_controlR] = KEY_RIGHT_CONTROL,
     [RGFW_altR] = KEY_RIGHT_ALT,
+    [RGFW_superR] = KEY_RIGHT_SUPER,
     #endif
     [RGFW_space] = KEY_SPACE,
 
