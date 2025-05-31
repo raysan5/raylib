@@ -2090,13 +2090,13 @@
         </Function>
         <Function name="ImageDrawTriangleFan" retType="void" paramCount="4" desc="Draw a triangle fan defined by points within an image (first vertex is the center)">
             <Param type="Image *" name="dst" desc="" />
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ImageDrawTriangleStrip" retType="void" paramCount="4" desc="Draw a triangle strip defined by points within an image">
             <Param type="Image *" name="dst" desc="" />
-            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
