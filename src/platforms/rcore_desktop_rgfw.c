@@ -177,6 +177,7 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_shiftR] = KEY_RIGHT_SHIFT,
     [RGFW_controlR] = KEY_RIGHT_CONTROL,
     [RGFW_altR] = KEY_RIGHT_ALT,
+    [RGFW_superR] = KEY_RIGHT_SUPER,
     #endif
     [RGFW_space] = KEY_SPACE,
 
@@ -584,7 +585,7 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    RGFW_window_moveToMonitor(platform.window, RGFW_getMonitors()[monitor]);
+    RGFW_window_moveToMonitor(platform.window, RGFW_getMonitors(NULL)[monitor]);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -641,7 +642,7 @@ int GetMonitorCount(void)
     #define MAX_MONITORS_SUPPORTED 6
 
     int count = MAX_MONITORS_SUPPORTED;
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     for (int i = 0; i < 6; i++)
     {
@@ -658,7 +659,7 @@ int GetMonitorCount(void)
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
     RGFW_monitor mon = { 0 };
 
     if (platform.window) mon = RGFW_window_getMonitor(platform.window);
@@ -675,7 +676,7 @@ int GetCurrentMonitor(void)
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return (Vector2){ (float)mons[monitor].x, (float)mons[monitor].y };
 }
@@ -683,7 +684,7 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].mode.area.w;
 }
@@ -691,7 +692,7 @@ int GetMonitorWidth(int monitor)
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].mode.area.h;
 }
@@ -699,7 +700,7 @@ int GetMonitorHeight(int monitor)
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].physW;
 }
@@ -707,7 +708,7 @@ int GetMonitorPhysicalWidth(int monitor)
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return (int)mons[monitor].physH;
 }
@@ -715,7 +716,7 @@ int GetMonitorPhysicalHeight(int monitor)
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return (int)mons[monitor].mode.refreshRate;
 }
@@ -723,7 +724,7 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].name;
 }
@@ -1319,6 +1320,13 @@ int InitPlatform(void)
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
+
+    if (platform.window != NULL)
+    {
+        // NOTE: RGFW's exit key is distinct from raylib's exit key (which can
+        // be set with SetExitKey()) and defaults to Escape
+        platform.window->exitKey = RGFW_keyNULL;
+    }
 
 #ifndef PLATFORM_WEB_RGFW
     RGFW_area screenSize = RGFW_getScreenSize();

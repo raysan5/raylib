@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="582">
+    <Functions count="584">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1409,9 +1409,21 @@
             <Param type="float" name="radiusV" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawEllipseV" retType="void" paramCount="4" desc="Draw ellipse (Vector version)">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radiusH" desc="" />
+            <Param type="float" name="radiusV" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawEllipseLines" retType="void" paramCount="5" desc="Draw ellipse outline">
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
+            <Param type="float" name="radiusH" desc="" />
+            <Param type="float" name="radiusV" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawEllipseLinesV" retType="void" paramCount="4" desc="Draw ellipse outline (Vector version)">
+            <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="radiusH" desc="" />
             <Param type="float" name="radiusV" desc="" />
             <Param type="Color" name="color" desc="" />
