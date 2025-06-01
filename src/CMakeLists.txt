@@ -70,6 +70,52 @@ if (SUPPORT_VULKAN AND Vulkan_FOUND)
         target_include_directories(raylib PUBLIC $<BUILD_INTERFACE:${Vulkan_INCLUDE_DIRS}>)
         message(STATUS "Adding Vulkan include directories: ${Vulkan_INCLUDE_DIRS}")
     endif()
+
+    # Shader compilation for Vulkan
+    find_program(GLSLANG_VALIDATOR NAMES glslangValidator glslangValidator.exe PATHS ENV PATH NO_DEFAULT_PATH DOC "Path to glslangValidator executable")
+
+    if(NOT GLSLANG_VALIDATOR)
+        message(WARNING "glslangValidator not found. Cannot compile Vulkan GLSL shaders to SPIR-V. Vulkan backend may not work correctly if precompiled shaders are not up-to-date or available.")
+    else()
+        message(STATUS "Found glslangValidator: ${GLSLANG_VALIDATOR}")
+
+        set(VULKAN_SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}) # Shaders are in src/
+        set(SPIRV_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/spirv_shaders) # Output to build directory
+        file(MAKE_DIRECTORY ${SPIRV_OUTPUT_DIR})
+
+        set(SHAPES_VERT_GLSL ${VULKAN_SHADER_DIR}/shapes_vert.glsl)
+        set(SHAPES_FRAG_GLSL ${VULKAN_SHADER_DIR}/shapes_frag.glsl)
+
+        set(SHAPES_VERT_SPV_H ${SPIRV_OUTPUT_DIR}/shapes_vert.spv.h)
+        set(SHAPES_FRAG_SPV_H ${SPIRV_OUTPUT_DIR}/shapes_frag.spv.h)
+
+        # Custom command to compile shapes_vert.glsl to shapes_vert.spv.h
+        add_custom_command(
+            OUTPUT ${SHAPES_VERT_SPV_H}
+            COMMAND ${GLSLANG_VALIDATOR} -V -x shapes_vert_spv_data -o ${SHAPES_VERT_SPV_H} ${SHAPES_VERT_GLSL}
+            DEPENDS ${SHAPES_VERT_GLSL}
+            COMMENT "Compiling ${SHAPES_VERT_GLSL} to ${SHAPES_VERT_SPV_H}"
+            VERBATIM)
+
+        # Custom command to compile shapes_frag.glsl to shapes_frag.spv.h
+        add_custom_command(
+            OUTPUT ${SHAPES_FRAG_SPV_H}
+            COMMAND ${GLSLANG_VALIDATOR} -V -x shapes_frag_spv_data -o ${SHAPES_FRAG_SPV_H} ${SHAPES_FRAG_GLSL}
+            DEPENDS ${SHAPES_FRAG_GLSL}
+            COMMENT "Compiling ${SHAPES_FRAG_GLSL} to ${SHAPES_FRAG_SPV_H}"
+            VERBATIM)
+
+        # Add generated headers to a custom target to ensure they are built
+        add_custom_target(VulkanShaders ALL DEPENDS ${SHAPES_VERT_SPV_H} ${SHAPES_FRAG_SPV_H})
+
+        # Add the output directory to include directories for raylib target
+        # This allows rlvk.c to include the generated .spv.h files
+        target_include_directories(raylib PRIVATE ${SPIRV_OUTPUT_DIR})
+
+        # Make raylib target depend on VulkanShaders
+        # This ensures shaders are compiled before raylib tries to compile rlvk.c
+        add_dependencies(raylib VulkanShaders)
+    endif()
 endif()
 
 if (SUPPORT_MODULE_RAUDIO)

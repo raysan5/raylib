@@ -5,6 +5,55 @@
 #include <string.h>     // For strcmp, memset
 #include <stdbool.h>    // For bool type
 
+// CPU-side vertex buffer
+static rlvkVertex *rlvkCPUVertexBuffer = NULL;
+static uint32_t rlvkCPUVertexCount = 0;
+static uint32_t rlvkCPUVertexBufferCapacity = 0;
+static const uint32_t RLVK_DEFAULT_CPU_VERTEX_BUFFER_CAPACITY = RLVK_MAX_BATCH_ELEMENTS * 4; // Same as RL_DEFAULT_BATCH_BUFFER_ELEMENTS * 4
+
+// Current vertex attribute state
+static float currentTexcoordX = 0.0f, currentTexcoordY = 0.0f;
+static unsigned char currentColorR = 255, currentColorG = 255, currentColorB = 255, currentColorA = 255;
+
+// GPU vertex buffer resources (one per frame in flight / swapchain image)
+static rlvkBuffer *rlvkGPUVertexBuffers = NULL;
+static VkDeviceSize rlvkGPUVertexBufferSize = 0; // Size of each individual GPU vertex buffer
+
+// Current primitive topology
+static int currentPrimitiveMode = 0; // Default to RL_TRIANGLES, will be set by rlvkSetPrimitiveMode
+
+// Default Texture, Sampler, and Descriptor Set
+static VkImage vkDefaultTextureImage = VK_NULL_HANDLE;
+static VkDeviceMemory vkDefaultTextureImageMemory = VK_NULL_HANDLE;
+static VkImageView vkDefaultTextureImageView = VK_NULL_HANDLE;
+static VkSampler vkDefaultTextureSampler = VK_NULL_HANDLE;
+static VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+static VkDescriptorSet vkDefaultDescriptorSet = VK_NULL_HANDLE;
+// static unsigned int rlvkDefaultTextureId = 0; // Not strictly needed if managed internally
+
+// Shader and Pipeline
+static VkShaderModule vkVertShaderModule = VK_NULL_HANDLE;
+static VkShaderModule vkFragShaderModule = VK_NULL_HANDLE;
+static VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
+static VkPipeline vkGraphicsPipeline = VK_NULL_HANDLE;
+static VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+
+// Placeholder SPIR-V bytecode (Replace with actual compiled shader data)
+// IMPORTANT: These are NOT valid SPIR-V. They are just small placeholders.
+// User must compile src/shapes_vert.glsl and src/shapes_frag.glsl to SPIR-V
+// (e.g., using glslangValidator) and replace these arrays with the actual bytecode.
+static const uint32_t shapes_vert_spv_placeholder[] = {
+    0x07230203, 0x00010000, 0x000d000a, 0x0000001b,
+    0x00000000, 0x00020011, 0x00000001, 0x0006000b,
+    // ... rest of placeholder ...
+};
+static const uint32_t shapes_frag_spv_placeholder[] = {
+    0x07230203, 0x00010000, 0x000d000a, 0x0000000f,
+    0x00000000, 0x00020011, 0x00000001, 0x0006000b,
+    // ... rest of placeholder ...
+};
+
+
 // Core Vulkan Handles
 static VkInstance vkInstance = VK_NULL_HANDLE;
 static VkSurfaceKHR vkSurface = VK_NULL_HANDLE;
@@ -666,14 +715,544 @@ void rlvkInit(VkInstance instance, VkSurfaceKHR surface, int width, int height) 
     }
     TRACELOG(LOG_INFO, "RLVK: Synchronization primitives created successfully.");
 
+    rlvkInitializeVertexBuffer(); // Initialize CPU vertex buffer
+
+    // Initialize GPU vertex buffers
+    rlvkGPUVertexBufferSize = RLVK_DEFAULT_CPU_VERTEX_BUFFER_CAPACITY * sizeof(rlvkVertex);
+    rlvkGPUVertexBuffers = (rlvkBuffer*)RL_MALLOC(vkSwapchainImageCount * sizeof(rlvkBuffer));
+    if (!rlvkGPUVertexBuffers) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to allocate memory for GPU vertex buffers array.");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    for (uint32_t i = 0; i < vkSwapchainImageCount; i++) {
+        if (!rlvkCreateBuffer(rlvkGPUVertexBufferSize,
+                              VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                              &rlvkGPUVertexBuffers[i].buffer,
+                              &rlvkGPUVertexBuffers[i].memory)) {
+            TRACELOG(LOG_FATAL, "RLVK: Failed to create GPU vertex buffer for frame %u.", i);
+            // Cleanup already created buffers
+            for (uint32_t j = 0; j < i; j++) {
+                vkDestroyBuffer(vkDevice, rlvkGPUVertexBuffers[j].buffer, NULL);
+                vkFreeMemory(vkDevice, rlvkGPUVertexBuffers[j].memory, NULL);
+            }
+            RL_FREE(rlvkGPUVertexBuffers);
+            rlvkGPUVertexBuffers = NULL;
+            // Perform other necessary cleanup...
+            rlvkReady = false;
+            return;
+        }
+        TRACELOG(LOG_INFO, "RLVK: GPU vertex buffer %u created (Size: %lu bytes).", i, rlvkGPUVertexBufferSize);
+    }
+
+    // Create Shader Modules
+    // IMPORTANT: Using placeholder SPIR-V data. Replace with actual compiled bytecode.
+    vkVertShaderModule = rlvkCreateShaderModule(shapes_vert_spv_placeholder, sizeof(shapes_vert_spv_placeholder));
+    vkFragShaderModule = rlvkCreateShaderModule(shapes_frag_spv_placeholder, sizeof(shapes_frag_spv_placeholder));
+
+    if (vkVertShaderModule == VK_NULL_HANDLE || vkFragShaderModule == VK_NULL_HANDLE) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create shader modules.");
+        // Perform necessary cleanup of already created resources...
+        rlvkReady = false;
+        return;
+    }
+
+    // Create Descriptor Set Layout (for texture sampler)
+    VkDescriptorSetLayoutBinding samplerLayoutBinding = {0};
+    samplerLayoutBinding.binding = 0;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.pImmutableSamplers = NULL;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo = {0};
+    descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutInfo.bindingCount = 1;
+    descriptorSetLayoutInfo.pBindings = &samplerLayoutBinding;
+
+    if (vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutInfo, NULL, &vkDescriptorSetLayout) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create descriptor set layout!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    // Create Pipeline Layout
+    VkPushConstantRange pushConstantRange = {0};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(float[16]); // sizeof(Matrix)
+
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {0};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &vkDescriptorSetLayout;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+
+    if (vkCreatePipelineLayout(vkDevice, &pipelineLayoutInfo, NULL, &vkPipelineLayout) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create pipeline layout!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    // Create Graphics Pipeline
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo = {0};
+    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertShaderStageInfo.module = vkVertShaderModule;
+    vertShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo = {0};
+    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragShaderStageInfo.module = vkFragShaderModule;
+    fragShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+    VkVertexInputBindingDescription bindingDescription = {0};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(rlvkVertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription attributeDescriptions[3];
+    // Position
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(rlvkVertex, position);
+    // TexCoord
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(rlvkVertex, texcoord);
+    // Color
+    attributeDescriptions[2].binding = 0;
+    attributeDescriptions[2].location = 2;
+    attributeDescriptions[2].format = VK_FORMAT_R8G8B8A8_UNORM; // Matches shader expectation (normalized ubyte)
+    attributeDescriptions[2].offset = offsetof(rlvkVertex, color);
+
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = sizeof(attributeDescriptions) / sizeof(VkVertexInputAttributeDescription);
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly = {0};
+    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST; // Default, can be dynamic later
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+    VkPipelineViewportStateCreateInfo viewportState = {0};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.viewportCount = 1;
+    viewportState.scissorCount = 1;
+
+    VkPipelineRasterizationStateCreateInfo rasterizer = {0};
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = VK_CULL_MODE_NONE; // VK_CULL_MODE_BACK_BIT;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // VK_FRONT_FACE_CLOCKWISE if flipping Y
+    rasterizer.depthBiasEnable = VK_FALSE;
+
+    VkPipelineMultisampleStateCreateInfo multisampling = {0};
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineDepthStencilStateCreateInfo depthStencil = {0};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable = VK_FALSE;
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachment = {0};
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    VkPipelineColorBlendStateCreateInfo colorBlending = {0};
+    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+
+    VkDynamicState dynamicStates[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamicState = {0};
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.dynamicStateCount = sizeof(dynamicStates) / sizeof(VkDynamicState);
+    dynamicState.pDynamicStates = dynamicStates;
+
+    VkGraphicsPipelineCreateInfo pipelineInfo = {0};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = &depthStencil;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.pDynamicState = &dynamicState;
+    pipelineInfo.layout = vkPipelineLayout;
+    pipelineInfo.renderPass = vkRenderPass;
+    pipelineInfo.subpass = 0;
+
+    if (vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &vkGraphicsPipeline) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create graphics pipeline!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    // Create Default Texture, Sampler, and Descriptor Set
+    // 1. Create Sampler
+    VkSamplerCreateInfo samplerInfo = {0};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_NEAREST;
+    samplerInfo.minFilter = VK_FILTER_NEAREST;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1.0f;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+    if (vkCreateSampler(vkDevice, &samplerInfo, NULL, &vkDefaultTextureSampler) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create default texture sampler!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    // 2. Create Image and Staging Buffer
+    unsigned char pixels[4] = {255, 255, 255, 255};
+    VkDeviceSize imageSize = sizeof(pixels);
+    rlvkBuffer stagingBuffer;
+
+    if (!rlvkCreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                          &stagingBuffer.buffer, &stagingBuffer.memory)) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create staging buffer for default texture!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    void* data;
+    vkMapMemory(vkDevice, stagingBuffer.memory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, (size_t)imageSize);
+    vkUnmapMemory(vkDevice, stagingBuffer.memory);
+
+    VkImageCreateInfo imageCreateInfo = {0};
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.extent.width = 1;
+    imageCreateInfo.extent.height = 1;
+    imageCreateInfo.extent.depth = 1;
+    imageCreateInfo.mipLevels = 1;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM; // Or _SRGB if color space transformations are handled
+    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(vkDevice, &imageCreateInfo, NULL, &vkDefaultTextureImage) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create default texture image!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(vkDevice, vkDefaultTextureImage, &memReqs);
+    VkMemoryAllocateInfo allocInfoImage = {0};
+    allocInfoImage.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfoImage.allocationSize = memReqs.size;
+    allocInfoImage.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (vkAllocateMemory(vkDevice, &allocInfoImage, NULL, &vkDefaultTextureImageMemory) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to allocate default texture image memory!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+    vkBindImageMemory(vkDevice, vkDefaultTextureImage, vkDefaultTextureImageMemory, 0);
+
+    // 3. Transition Image Layout and Copy
+    // Define a lambda or local function to record commands for this specific operation
+    void record_default_texture_init_cmds_with_copy(VkCommandBuffer cmdBuf) {
+        // Transition UNDEFINED -> TRANSFER_DST
+        VkImageMemoryBarrier barrier = {0};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = vkDefaultTextureImage;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+
+        // Copy Buffer to Image
+        VkBufferImageCopy region = {0};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = (VkOffset3D){0, 0, 0};
+        region.imageExtent = (VkExtent3D){1, 1, 1};
+        vkCmdCopyBufferToImage(cmdBuf, stagingBuffer.buffer, vkDefaultTextureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        // Transition TRANSFER_DST -> SHADER_READ_ONLY
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+    }
+    rlvkRecordAndSubmitCommandBuffer(record_default_texture_init_cmds_with_copy, "default texture initialization");
+
+    // Cleanup staging buffer
+    vkDestroyBuffer(vkDevice, stagingBuffer.buffer, NULL);
+    vkFreeMemory(vkDevice, stagingBuffer.memory, NULL);
+
+    // 4. Create Image View
+    VkImageViewCreateInfo viewInfo = {0};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = vkDefaultTextureImage;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM; // Must match image format
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
+    if (vkCreateImageView(vkDevice, &viewInfo, NULL, &vkDefaultTextureImageView) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create default texture image view!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    // Cleanup staging buffer
+    vkDestroyBuffer(vkDevice, stagingBuffer.buffer, NULL);
+    vkFreeMemory(vkDevice, stagingBuffer.memory, NULL);
+
+
+    // 5. Create Descriptor Pool
+    VkDescriptorPoolSize poolSize = {0};
+    poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSize.descriptorCount = 1; // Enough for the default texture
+    VkDescriptorPoolCreateInfo poolInfo = {0};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = 1; // Enough for the default texture
+    if (vkCreateDescriptorPool(vkDevice, &poolInfo, NULL, &vkDescriptorPool) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to create descriptor pool!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    // 6. Allocate and Update Default Descriptor Set
+    VkDescriptorSetAllocateInfo descAllocInfo = {0};
+    descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descAllocInfo.descriptorPool = vkDescriptorPool;
+    descAllocInfo.descriptorSetCount = 1;
+    descAllocInfo.pSetLayouts = &vkDescriptorSetLayout; // From pipeline creation
+    if (vkAllocateDescriptorSets(vkDevice, &descAllocInfo, &vkDefaultDescriptorSet) != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to allocate default descriptor set!");
+        // Perform necessary cleanup...
+        rlvkReady = false;
+        return;
+    }
+
+    VkDescriptorImageInfo imageBindingInfo = {0};
+    imageBindingInfo.sampler = vkDefaultTextureSampler;
+    imageBindingInfo.imageView = vkDefaultTextureImageView;
+    imageBindingInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; // Ensure this is the layout after transition
+
+    VkWriteDescriptorSet descriptorWrite = {0};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = vkDefaultDescriptorSet;
+    descriptorWrite.dstBinding = 0; // Matches shader binding
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pImageInfo = &imageBindingInfo;
+    vkUpdateDescriptorSets(vkDevice, 1, &descriptorWrite, 0, NULL);
+
+
     rlvkReady = true; // All initialization steps completed successfully
     TRACELOG(LOG_INFO, "RLVK: Vulkan backend initialized successfully.");
 }
 
+// Helper function to find a suitable memory type for buffer allocation
+static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+    TRACELOG(LOG_FATAL, "RLVK: Failed to find suitable memory type!");
+    // This is a critical error, should probably throw or handle more gracefully
+    return UINT32_MAX; // Should not happen if logic is correct and device is suitable
+}
+
+
+// Helper function to create a Vulkan buffer and allocate its memory
+static bool rlvkCreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory) {
+    VkBufferCreateInfo bufferInfo = {0};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(vkDevice, &bufferInfo, NULL, buffer) != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to create buffer.");
+        return false;
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(vkDevice, *buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {0};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (allocInfo.memoryTypeIndex == UINT32_MAX) { // Check if findMemoryType failed
+        TRACELOG(LOG_ERROR, "RLVK: findMemoryType failed, cannot allocate buffer memory.");
+        vkDestroyBuffer(vkDevice, *buffer, NULL); // Clean up the created buffer handle
+        *buffer = VK_NULL_HANDLE;
+        return false;
+    }
+
+    if (vkAllocateMemory(vkDevice, &allocInfo, NULL, bufferMemory) != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to allocate buffer memory.");
+        vkDestroyBuffer(vkDevice, *buffer, NULL); // Clean up the created buffer handle
+        *buffer = VK_NULL_HANDLE;
+        return false;
+    }
+
+    if (vkBindBufferMemory(vkDevice, *buffer, *bufferMemory, 0) != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to bind buffer memory.");
+        vkFreeMemory(vkDevice, *bufferMemory, NULL); // Clean up allocated memory
+        vkDestroyBuffer(vkDevice, *buffer, NULL);    // Clean up the created buffer handle
+        *buffer = VK_NULL_HANDLE;
+        *bufferMemory = VK_NULL_HANDLE;
+        return false;
+    }
+    return true;
+}
+
+
 void rlvkClose(void) {
     TRACELOG(LOG_INFO, "RLVK: Closing Vulkan backend.");
 
+    rlvkDestroyVertexBuffer(); // Destroy CPU vertex buffer
+
     if (vkDevice != VK_NULL_HANDLE) {
+        vkDeviceWaitIdle(vkDevice); // Ensure device is idle before destroying resources
+    }
+
+    // Destroy GPU vertex buffers
+    if (rlvkGPUVertexBuffers != NULL) {
+        for (uint32_t i = 0; i < vkSwapchainImageCount; i++) {
+            if (rlvkGPUVertexBuffers[i].buffer != VK_NULL_HANDLE) {
+                vkDestroyBuffer(vkDevice, rlvkGPUVertexBuffers[i].buffer, NULL);
+            }
+            if (rlvkGPUVertexBuffers[i].memory != VK_NULL_HANDLE) {
+                vkFreeMemory(vkDevice, rlvkGPUVertexBuffers[i].memory, NULL);
+            }
+        }
+        RL_FREE(rlvkGPUVertexBuffers);
+        rlvkGPUVertexBuffers = NULL;
+        TRACELOG(LOG_DEBUG, "RLVK: GPU vertex buffers destroyed.");
+    }
+
+    if (vkGraphicsPipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(vkDevice, vkGraphicsPipeline, NULL);
+        vkGraphicsPipeline = VK_NULL_HANDLE;
+    }
+    if (vkPipelineLayout != VK_NULL_HANDLE) {
+        vkDestroyPipelineLayout(vkDevice, vkPipelineLayout, NULL);
+        vkPipelineLayout = VK_NULL_HANDLE;
+    }
+    if (vkDescriptorSetLayout != VK_NULL_HANDLE) {
+        vkDestroyDescriptorSetLayout(vkDevice, vkDescriptorSetLayout, NULL);
+        vkDescriptorSetLayout = VK_NULL_HANDLE;
+    }
+    if (vkFragShaderModule != VK_NULL_HANDLE) {
+        vkDestroyShaderModule(vkDevice, vkFragShaderModule, NULL);
+        vkFragShaderModule = VK_NULL_HANDLE;
+    }
+    if (vkVertShaderModule != VK_NULL_HANDLE) {
+        vkDestroyShaderModule(vkDevice, vkVertShaderModule, NULL);
+        vkVertShaderModule = VK_NULL_HANDLE;
+    }
+
+    // Cleanup default texture resources
+    if (vkDefaultTextureSampler != VK_NULL_HANDLE) {
+        vkDestroySampler(vkDevice, vkDefaultTextureSampler, NULL);
+        vkDefaultTextureSampler = VK_NULL_HANDLE;
+    }
+    if (vkDefaultTextureImageView != VK_NULL_HANDLE) {
+        vkDestroyImageView(vkDevice, vkDefaultTextureImageView, NULL);
+        vkDefaultTextureImageView = VK_NULL_HANDLE;
+    }
+    if (vkDefaultTextureImage != VK_NULL_HANDLE) {
+        vkDestroyImage(vkDevice, vkDefaultTextureImage, NULL);
+        vkDefaultTextureImage = VK_NULL_HANDLE;
+    }
+    if (vkDefaultTextureImageMemory != VK_NULL_HANDLE) {
+        vkFreeMemory(vkDevice, vkDefaultTextureImageMemory, NULL);
+        vkDefaultTextureImageMemory = VK_NULL_HANDLE;
+    }
+    if (vkDescriptorPool != VK_NULL_HANDLE) {
+        vkDestroyDescriptorPool(vkDevice, vkDescriptorPool, NULL);
+        vkDescriptorPool = VK_NULL_HANDLE;
+    }
+    // vkDefaultDescriptorSet is freed when the pool is destroyed
+
+    if (vkImageAvailableSemaphore != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(vkDevice); // Ensure device is idle before destroying resources
     }
 
@@ -785,8 +1364,113 @@ bool rlvkIsReady(void) {
     return rlvkReady;
 }
 
+void rlvkInitializeVertexBuffer(void) {
+    rlvkCPUVertexBuffer = (rlvkVertex *)RL_MALLOC(RLVK_DEFAULT_CPU_VERTEX_BUFFER_CAPACITY * sizeof(rlvkVertex));
+    if (rlvkCPUVertexBuffer == NULL) {
+        TRACELOG(LOG_FATAL, "RLVK: Failed to allocate CPU vertex buffer.");
+        // This is a critical error, a real application might try to recover or exit.
+        rlvkCPUVertexBufferCapacity = 0;
+        rlvkCPUVertexCount = 0;
+        return;
+    }
+    rlvkCPUVertexBufferCapacity = RLVK_DEFAULT_CPU_VERTEX_BUFFER_CAPACITY;
+    rlvkCPUVertexCount = 0;
+    TRACELOG(LOG_INFO, "RLVK: CPU vertex buffer initialized (Capacity: %u vertices)", rlvkCPUVertexBufferCapacity);
+}
+
+void rlvkResizeVertexBuffer(void) {
+    if (rlvkCPUVertexBuffer == NULL) { // Should not happen if rlvkInitializeVertexBuffer was called
+        TRACELOG(LOG_WARNING, "RLVK: Attempted to resize a NULL CPU vertex buffer. Initializing instead.");
+        rlvkInitializeVertexBuffer();
+        return;
+    }
+
+    uint32_t newCapacity = rlvkCPUVertexBufferCapacity * 2;
+    // Consider adding a maximum capacity check if necessary
+    // if (newCapacity > SOME_ABSOLUTE_MAX_CAPACITY) newCapacity = SOME_ABSOLUTE_MAX_CAPACITY;
+    // if (newCapacity <= rlvkCPUVertexBufferCapacity) { // Overflow or already at max
+    //     TRACELOG(LOG_ERROR, "RLVK: Failed to resize CPU vertex buffer (max capacity reached or overflow).");
+    //     return;
+    // }
+
+
+    rlvkVertex *newBuffer = (rlvkVertex *)RL_REALLOC(rlvkCPUVertexBuffer, newCapacity * sizeof(rlvkVertex));
+    if (newBuffer == NULL) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to reallocate CPU vertex buffer (New Capacity: %u). Current data preserved.", newCapacity);
+        // Keep using the old buffer if reallocation fails.
+        return;
+    }
+    rlvkCPUVertexBuffer = newBuffer;
+    rlvkCPUVertexBufferCapacity = newCapacity;
+    TRACELOG(LOG_INFO, "RLVK: CPU vertex buffer resized (New Capacity: %u vertices)", rlvkCPUVertexBufferCapacity);
+}
+
+void rlvkResetVertexBuffer(void) {
+    rlvkCPUVertexCount = 0;
+    // TRACELOG(LOG_DEBUG, "RLVK: CPU vertex buffer reset (count cleared)."); // Can be noisy
+}
+
+void rlvkDestroyVertexBuffer(void) {
+    if (rlvkCPUVertexBuffer != NULL) {
+        RL_FREE(rlvkCPUVertexBuffer);
+        rlvkCPUVertexBuffer = NULL;
+    }
+    rlvkCPUVertexBufferCapacity = 0;
+    rlvkCPUVertexCount = 0;
+    TRACELOG(LOG_INFO, "RLVK: CPU vertex buffer destroyed.");
+}
+
+
+void rlvkSetColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+    currentColorR = r;
+    currentColorG = g;
+    currentColorB = b;
+    currentColorA = a;
+}
+
+void rlvkSetTexCoord(float x, float y) {
+    currentTexcoordX = x;
+    currentTexcoordY = y;
+}
+
+void rlvkAddVertex(float x, float y, float z) {
+    if (rlvkCPUVertexBuffer == NULL) {
+        TRACELOG(LOG_WARNING, "RLVK: Attempted to add vertex to NULL buffer. Initializing buffer.");
+        rlvkInitializeVertexBuffer();
+        if (rlvkCPUVertexBuffer == NULL) return; // Initialization failed
+    }
+
+    if (rlvkCPUVertexCount >= rlvkCPUVertexBufferCapacity) {
+        TRACELOG(LOG_DEBUG, "RLVK: CPU vertex buffer full (Count: %u, Capacity: %u). Resizing.", rlvkCPUVertexCount, rlvkCPUVertexBufferCapacity);
+        rlvkResizeVertexBuffer();
+        if (rlvkCPUVertexCount >= rlvkCPUVertexBufferCapacity) { // Check if resize failed or was insufficient
+            TRACELOG(LOG_ERROR, "RLVK: Failed to add vertex, buffer resize unsuccessful or insufficient.");
+            return;
+        }
+    }
+
+    rlvkVertex *vertex = &rlvkCPUVertexBuffer[rlvkCPUVertexCount];
+
+    vertex->position[0] = x;
+    vertex->position[1] = y;
+    vertex->position[2] = z;
+
+    vertex->texcoord[0] = currentTexcoordX;
+    vertex->texcoord[1] = currentTexcoordY;
+
+    vertex->color[0] = currentColorR;
+    vertex->color[1] = currentColorG;
+    vertex->color[2] = currentColorB;
+    vertex->color[3] = currentColorA;
+
+    rlvkCPUVertexCount++;
+}
+
+
 void rlvkBeginDrawing(void) {
     if (!rlvkReady) return;
+
+    rlvkResetVertexBuffer(); // Reset vertex count for the new frame/batch
 
     // Wait for the fence of the current frame to ensure the command buffer is free to be reused
     // MAX_FRAMES_IN_FLIGHT should be used here instead of vkSwapchainImageCount if they can differ.
@@ -861,12 +1545,238 @@ void rlvkBeginDrawing(void) {
     scissor.offset = (VkOffset2D){0, 0};
     scissor.extent = vkSwapchainExtent;
     vkCmdSetScissor(currentCmdBuffer, 0, 1, &scissor);
+
+    // Bind Graphics Pipeline
+    if (vkGraphicsPipeline != VK_NULL_HANDLE) {
+        vkCmdBindPipeline(currentCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipeline);
+    } else {
+        TRACELOG(LOG_WARNING, "RLVK: Graphics pipeline not available for binding in rlvkBeginDrawing.");
+    }
+
+    // Bind the vertex buffer for the current frame
+    // NOTE: This assumes one vertex buffer per swapchain image, indexed by acquiredImageIndex.
+    // If MAX_FRAMES_IN_FLIGHT is different, currentFrame might be more appropriate.
+    if (rlvkGPUVertexBuffers != NULL && rlvkGPUVertexBuffers[acquiredImageIndex].buffer != VK_NULL_HANDLE) {
+        VkBuffer currentVkBuffer = rlvkGPUVertexBuffers[acquiredImageIndex].buffer;
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(currentCmdBuffer, 0, 1, &currentVkBuffer, offsets);
+    } else {
+        TRACELOG(LOG_WARNING, "RLVK: GPU vertex buffer not available for binding in rlvkBeginDrawing.");
+    }
+
+    // Bind Default Descriptor Set
+    if (vkDefaultDescriptorSet != VK_NULL_HANDLE && vkPipelineLayout != VK_NULL_HANDLE) {
+        vkCmdBindDescriptorSets(currentCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, &vkDefaultDescriptorSet, 0, NULL);
+    } else {
+        TRACELOG(LOG_WARNING, "RLVK: Default descriptor set or pipeline layout not available for binding.");
+    }
 }
+
+
+// Helper function to create a shader module from SPIR-V code
+static VkShaderModule rlvkCreateShaderModule(const uint32_t* code, size_t codeSize) {
+    VkShaderModuleCreateInfo createInfo = {0};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = codeSize;
+    createInfo.pCode = code;
+
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(vkDevice, &createInfo, NULL, &shaderModule) != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to create shader module (size: %zu bytes)", codeSize);
+        return VK_NULL_HANDLE;
+    }
+    TRACELOG(LOG_INFO, "RLVK: Shader module created successfully (size: %zu bytes)", codeSize);
+    return shaderModule;
+}
+
+// Helper function to record and submit a one-time command buffer
+static void rlvkRecordAndSubmitCommandBuffer(void (*record_commands)(VkCommandBuffer), const char* purpose_log_msg) {
+    if (vkDevice == VK_NULL_HANDLE || vkCommandPool == VK_NULL_HANDLE || vkGraphicsQueue == VK_NULL_HANDLE) {
+        TRACELOG(LOG_ERROR, "RLVK: Cannot execute one-time submit: Vulkan core components not ready.");
+        return;
+    }
+
+    VkCommandBufferAllocateInfo allocInfo = {0};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = vkCommandPool; // Use the existing graphics command pool
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    VkResult result = vkAllocateCommandBuffers(vkDevice, &allocInfo, &commandBuffer);
+    if (result != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to allocate command buffer for %s (Error: %i)", purpose_log_msg, result);
+        return;
+    }
+
+    VkCommandBufferBeginInfo beginInfo = {0};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    if (result != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to begin command buffer for %s (Error: %i)", purpose_log_msg, result);
+        vkFreeCommandBuffers(vkDevice, vkCommandPool, 1, &commandBuffer);
+        return;
+    }
+
+    record_commands(commandBuffer); // Call the provided function to record commands
+
+    result = vkEndCommandBuffer(commandBuffer);
+    if (result != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to end command buffer for %s (Error: %i)", purpose_log_msg, result);
+        vkFreeCommandBuffers(vkDevice, vkCommandPool, 1, &commandBuffer);
+        return;
+    }
+
+    VkSubmitInfo submitInfo = {0};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    // Using a fence to wait for completion, though vkQueueWaitIdle is simpler for a single submission.
+    // For robustness, a fence is better if other submissions could be happening.
+    // Given this is a one-time setup operation, vkQueueWaitIdle is acceptable.
+    result = vkQueueSubmit(vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    if (result != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to submit command buffer for %s (Error: %i)", purpose_log_msg, result);
+        vkFreeCommandBuffers(vkDevice, vkCommandPool, 1, &commandBuffer);
+        return;
+    }
+
+    result = vkQueueWaitIdle(vkGraphicsQueue); // Wait for the commands to complete
+    if (result != VK_SUCCESS) {
+        TRACELOG(LOG_ERROR, "RLVK: Failed to wait for queue idle after %s (Error: %i)", purpose_log_msg, result);
+    }
+
+    vkFreeCommandBuffers(vkDevice, vkCommandPool, 1, &commandBuffer);
+    TRACELOG(LOG_DEBUG, "RLVK: Successfully executed one-time command buffer for %s.", purpose_log_msg);
+}
+
+
+// Commands for default texture layout transition and copy
+static void recordDefaultTextureInitCommands(VkCommandBuffer commandBuffer) {
+    // 1. Transition layout from UNDEFINED to TRANSFER_DST_OPTIMAL
+    VkImageMemoryBarrier barrier = {0};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = vkDefaultTextureImage;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0,
+        0, NULL,
+        0, NULL,
+        1, &barrier
+    );
+
+    // 2. Copy from staging buffer to image (assuming stagingBuffer is globally accessible or passed)
+    // This requires stagingBuffer to be valid and filled at this point.
+    // For simplicity, let's assume stagingBuffer is accessible. A better design would pass it.
+    // We need to find where stagingBuffer is declared for default texture. It's local to rlvkInit.
+    // This implies the copy needs to be part of the same command buffer recording as the transitions,
+    // or stagingBuffer needs to be made accessible here.
+    // For now, this function will only handle transitions. Copy will be inline or in another helper.
+    // The task description implies this function should handle the copy.
+    // Let's assume we pass stagingBuffer.buffer to this function, or make it static for a moment (not ideal).
+    // For the subtask, I'll adjust rlvkInit to call this helper with necessary parameters, or inline this.
+    // For now, this will be a placeholder for the copy part. The actual copy will be done in rlvkInit's command recording.
+
+    // 3. Transition layout from TRANSFER_DST_OPTIMAL to SHADER_READ_ONLY_OPTIMAL
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0,
+        0, NULL,
+        0, NULL,
+        1, &barrier
+    );
+}
+
 
 void rlvkEndDrawing(void) {
     if (!rlvkReady) return;
 
     VkCommandBuffer currentCmdBuffer = vkCommandBuffers[acquiredImageIndex]; // Or vkCommandBuffers[currentFrame]
+
+    // Upload vertex data to GPU buffer
+    if (rlvkCPUVertexCount > 0 && rlvkGPUVertexBuffers != NULL) {
+        rlvkBuffer currentGPUBuffer = rlvkGPUVertexBuffers[acquiredImageIndex]; // Or use currentFrame
+        VkDeviceSize requiredSize = rlvkCPUVertexCount * sizeof(rlvkVertex);
+        VkDeviceSize numVerticesToCopy = rlvkCPUVertexCount;
+
+        if (requiredSize > rlvkGPUVertexBufferSize) {
+            TRACELOG(LOG_WARNING, "RLVK: CPU vertex data size (%u bytes) exceeds GPU buffer capacity (%lu bytes). Clipping data.", (unsigned int)requiredSize, rlvkGPUVertexBufferSize);
+            numVerticesToCopy = rlvkGPUVertexBufferSize / sizeof(rlvkVertex);
+            requiredSize = numVerticesToCopy * sizeof(rlvkVertex);
+        }
+
+        if (requiredSize > 0) // Ensure there's actually something to copy after potential clipping
+        {
+            void* data;
+            VkResult mapResult = vkMapMemory(vkDevice, currentGPUBuffer.memory, 0, requiredSize, 0, &data);
+            if (mapResult == VK_SUCCESS) {
+                memcpy(data, rlvkCPUVertexBuffer, requiredSize);
+                vkUnmapMemory(vkDevice, currentGPUBuffer.memory);
+
+                // Calculate MVP matrix from RLGL.State
+                Matrix modelMatrix = RLGL.State.transformRequired ? RLGL.State.transform : rlMatrixIdentity();
+                Matrix viewMatrix = RLGL.State.modelview;
+                Matrix projectionMatrix = RLGL.State.projection;
+
+                Matrix mvMatrix = rlMatrixMultiply(viewMatrix, modelMatrix);
+                Matrix mvpMatrix = rlMatrixMultiply(projectionMatrix, mvMatrix);
+
+                // Convert Matrix to float[16] for Vulkan
+                // rlMatrixToFloat is a static function in rlgl.h implementation.
+                // We need to ensure it's callable or replicate. For now, assume it's available or will be handled.
+                // If it's not directly callable, we'll need to use its definition:
+                float mvpFloats[16] = {
+                    mvpMatrix.m0, mvpMatrix.m1, mvpMatrix.m2, mvpMatrix.m3,
+                    mvpMatrix.m4, mvpMatrix.m5, mvpMatrix.m6, mvpMatrix.m7,
+                    mvpMatrix.m8, mvpMatrix.m9, mvpMatrix.m10, mvpMatrix.m11,
+                    mvpMatrix.m12, mvpMatrix.m13, mvpMatrix.m14, mvpMatrix.m15
+                };
+
+                // Upload MVP matrix via push constants
+                // Ensure vkPipelineLayout was created with a push constant range for vertex shader
+                if (vkPipelineLayout != VK_NULL_HANDLE) {
+                    vkCmdPushConstants(
+                        currentCmdBuffer,
+                        vkPipelineLayout,
+                        VK_SHADER_STAGE_VERTEX_BIT,
+                        0,                          // offset
+                        sizeof(float[16]),          // size (must match shader)
+                        mvpFloats                   // pValues
+                    );
+                } else {
+                    TRACELOG(LOG_WARNING, "RLVK: Pipeline layout is NULL, cannot push MVP constants.");
+                }
+
+                // Draw the vertices
+                vkCmdDraw(currentCmdBuffer, numVerticesToCopy, 1, 0, 0);
+
+            } else {
+                TRACELOG(LOG_ERROR, "RLVK: Failed to map GPU vertex buffer memory (Error: %i)", mapResult);
+            }
+        }
+    }
 
     vkCmdEndRenderPass(currentCmdBuffer);
     if (vkEndCommandBuffer(currentCmdBuffer) != VK_SUCCESS) {
@@ -956,6 +1866,16 @@ int rlvkGetLocationAttrib(unsigned int shaderId, const char *attribName) {
 
 void rlvkSetUniform(int locIndex, const void *value, int uniformType, int count) {
     // printf("rlvkSetUniform called (STUB) for locIndex: %d\n", locIndex);
+}
+
+void rlvkSetPrimitiveMode(int mode) {
+    // This function is used to store the primitive mode set by rlBegin.
+    // It will be used later when creating/binding graphics pipelines.
+    // For now, Vulkan drawing defaults to triangles.
+    // RL_QUADS are typically handled by sending 4 vertices and drawing them as two triangles.
+    // RL_LINES will require a different pipeline state.
+    currentPrimitiveMode = mode;
+    // TRACELOG(LOG_DEBUG, "RLVK: Primitive mode set to %d", mode);
 }
 
 // ... other rlgl equivalent function stub implementations ...
