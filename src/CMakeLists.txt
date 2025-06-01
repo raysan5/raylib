@@ -39,6 +39,11 @@ set(raylib_sources
     utils.c
     )
 
+if (SUPPORT_VULKAN AND Vulkan_FOUND)
+    list(APPEND raylib_sources rlvk.c)
+    message(STATUS "Vulkan source (rlvk.c) added to compilation.")
+endif()
+
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 if (NOT ${PLATFORM} MATCHES "Web")
     include(GlfwImport)
@@ -48,6 +53,24 @@ endif ()
 # also selects the proper graphics API and version for that platform
 # Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
+
+if (SUPPORT_VULKAN AND Vulkan_FOUND)
+    if(TARGET Vulkan::Vulkan)
+        target_link_libraries(raylib PUBLIC Vulkan::Vulkan)
+        message(STATUS "Linking raylib with Vulkan::Vulkan target.")
+    elseif(Vulkan_LIBRARIES)
+        # For older CMake or non-imported target setups for Vulkan
+        target_link_libraries(raylib PUBLIC ${Vulkan_LIBRARIES})
+        message(STATUS "Linking raylib with Vulkan libraries: ${Vulkan_LIBRARIES}")
+    else()
+        message(WARNING "Vulkan support is enabled, but no Vulkan link target or libraries (Vulkan::Vulkan or Vulkan_LIBRARIES) were found/specified by find_package(Vulkan).")
+    endif()
+    # Ensure Vulkan include directories are available to the raylib target
+    if (Vulkan_INCLUDE_DIRS)
+        target_include_directories(raylib PUBLIC $<BUILD_INTERFACE:${Vulkan_INCLUDE_DIRS}>)
+        message(STATUS "Adding Vulkan include directories: ${Vulkan_INCLUDE_DIRS}")
+    endif()
+endif()
 
 if (SUPPORT_MODULE_RAUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")

@@ -826,6 +826,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(RLGL_IMPLEMENTATION)
 
+#if defined(GRAPHICS_API_VULKAN)
+    #include "rlvk.h" // Path relative to rcore.c or where rlgl.h implementation is
+#endif
+
 // Expose OpenGL functions from glad in raylib
 #if defined(BUILD_LIBTYPE_SHARED)
     #define GLAD_API_CALL_EXPORT
@@ -1455,6 +1459,14 @@ void rlColor4f(float x, float y, float z, float w) { glColor4f(x, y, z, w); }
 // Initialize drawing mode (how to organize vertex)
 void rlBegin(int mode)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // In Vulkan, rlBegin equivalent would be part of starting a command buffer or render pass.
+    // For immediate mode emulation, this might involve setting up for a new batch.
+    // rlvkBeginDrawing() is the target. The 'mode' parameter might be used by rlvk to set pipeline state.
+    rlvkBeginDrawing();
+    // The original logic for rlBegin in OpenGL was to manage batching and draw call generation
+    // based on mode changes. Vulkan path might do similar for its own batching or just rely on rlvk.
+#else
     // Draw mode can be RL_LINES, RL_TRIANGLES and RL_QUADS
     // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
     if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode)
@@ -1483,15 +1495,22 @@ void rlBegin(int mode)
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = RLGL.State.defaultTextureId;
     }
+#endif // GRAPHICS_API_VULKAN
 }
 
 // Finish vertex providing
 void rlEnd(void)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // In Vulkan, rlEnd equivalent would be part of ending a command buffer or render pass.
+    // rlvkEndDrawing() is the target.
+    rlvkEndDrawing();
+#else
     // NOTE: Depth increment is dependant on rlOrtho(): z-near and z-far values,
     // as well as depth buffer bit-depth (16bit or 24bit or 32bit)
     // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
     RLGL.currentBatch->currentDepth += (1.0f/20000.0f);
+#endif // GRAPHICS_API_VULKAN
 }
 
 // Define one vertex (position)
@@ -2050,6 +2069,9 @@ bool rlIsStereoRenderEnabled(void)
 // Clear color buffer with color
 void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    rlvkClearBackground(r, g, b, a); // Call the Vulkan equivalent
+#else
     // Color values clamp to 0.0f(0) and 1.0f(255)
     float cr = (float)r/255;
     float cg = (float)g/255;
@@ -2057,6 +2079,7 @@ void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned ch
     float ca = (float)a/255;
 
     glClearColor(cr, cg, cb, ca);
+#endif
 }
 
 // Clear used screen buffers (color and depth)
@@ -2233,6 +2256,43 @@ static void GLAPIENTRY rlDebugMessageCallback(GLenum source, GLenum type, GLuint
 // Initialize rlgl: OpenGL extensions, default buffers/shaders/textures, OpenGL states
 void rlglInit(int width, int height)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // Most Vulkan initialization is platform and rlvk specific.
+    // rlgl itself might initialize shared data structures here if any.
+    // For now, rlvkInit() is expected to be called from rcore.c's InitWindow.
+    // Load default batch for Vulkan if its structure is generic enough,
+    // or rlvk will handle its own batching system.
+    // The plan says: "Initialize rlgl default data (buffers and shaders)"
+    // This might mean setting up RLGL.State for Vulkan mode.
+
+    // Init default white texture (Vulkan specific)
+    // unsigned char pixels[4] = { 255, 255, 255, 255 };
+    // RLGL.State.defaultTextureId = rlvkLoadTexture(pixels, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+    // if (RLGL.State.defaultTextureId != 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Default texture loaded successfully (Vulkan)", RLGL.State.defaultTextureId);
+    // else TRACELOG(LOG_WARNING, "TEXTURE: Failed to load default texture (Vulkan)");
+
+    // Load default shader (Vulkan specific)
+    // rlLoadShaderDefault(); // This needs to be Vulkan aware
+    // RLGL.State.currentShaderId = RLGL.State.defaultShaderId;
+    // RLGL.State.currentShaderLocs = RLGL.State.defaultShaderLocs;
+
+    // For now, assume rlvkInit handles this, and rcore.c calls it.
+    // rlglInit under Vulkan might just set some state flags.
+    TRACELOG(LOG_INFO, "RLGL: rlglInit called for Vulkan. Expecting rlvkInit to be called from rcore.");
+    RLGL.State.currentMatrixMode = RL_MODELVIEW;
+    RLGL.State.currentMatrix = &RLGL.State.modelview;
+    RLGL.State.modelview = rlMatrixIdentity();
+    RLGL.State.projection = rlMatrixIdentity();
+    RLGL.State.transform = rlMatrixIdentity();
+    // Other RLGL.State initializations as needed.
+
+    // Store screen size into global variables
+    RLGL.State.framebufferWidth = width;
+    RLGL.State.framebufferHeight = height;
+
+    TRACELOG(RL_LOG_INFO, "RLGL: Default Vulkan state initialized successfully"); // This is a bit optimistic, more setup needed in rlvk
+
+#else   // This means !defined(GRAPHICS_API_VULKAN)
     // Enable OpenGL debug context if required
 #if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT) && defined(GRAPHICS_API_OPENGL_43)
     if ((glDebugMessageCallback != NULL) && (glDebugMessageControl != NULL))
@@ -2319,11 +2379,18 @@ void rlglInit(int width, int height)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
     glClearDepth(1.0f);                                     // Set clear depth value (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
+#endif // GRAPHICS_API_VULKAN defined check
 }
 
 // Vertex Buffer Object deinitialization (memory free)
 void rlglClose(void)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // rlvkClose(); // This will be called from rcore.c's CloseWindow
+    TRACELOG(LOG_INFO, "RLGL: rlglClose called for Vulkan. Expecting rlvkClose to be called from rcore.");
+    // Unload default batch if managed by rlgl for vulkan
+    // rlUnloadRenderBatch(RLGL.defaultBatch); // This needs to be Vulkan aware or not done here if rlvk handles it
+#else // !defined(GRAPHICS_API_VULKAN)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlUnloadRenderBatch(RLGL.defaultBatch);
 
@@ -2332,6 +2399,7 @@ void rlglClose(void)
     glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
     TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Default texture unloaded successfully", RLGL.State.defaultTextureId);
 #endif
+#endif // GRAPHICS_API_VULKAN defined check
 }
 
 // Load OpenGL extensions
@@ -3173,6 +3241,11 @@ bool rlCheckRenderBatchLimit(int vCount)
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // return rlvkLoadTexture(data, width, height, format, mipmapCount); // Actual call to Vulkan backend
+    TRACELOG(LOG_DEBUG, "RLGL: rlLoadTexture called (Vulkan path - using stub)");
+    return 0; // Placeholder for Vulkan
+#else
     unsigned int id = 0;
 
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
@@ -3322,6 +3395,7 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
     else TRACELOG(RL_LOG_WARNING, "TEXTURE: Failed to load texture");
 
     return id;
+#endif // GRAPHICS_API_VULKAN
 }
 
 // Load depth texture/renderbuffer (to be attached to fbo)
@@ -4064,6 +4138,11 @@ void rlUnloadVertexBuffer(unsigned int vboId)
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
 unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // return rlvkLoadShaderCode(vsCode, fsCode); // Actual call to Vulkan backend
+    TRACELOG(LOG_DEBUG, "RLGL: rlLoadShaderCode called (Vulkan path - using stub)");
+    return 0; // Placeholder for Vulkan
+#else
     unsigned int id = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -4136,6 +4215,7 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
 #endif
 
     return id;
+#endif // GRAPHICS_API_VULKAN
 }
 
 // Compile custom shader and return shader id
@@ -4306,6 +4386,11 @@ int rlGetLocationAttrib(unsigned int shaderId, const char *attribName)
 // Set shader value uniform
 void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
 {
+#if defined(GRAPHICS_API_VULKAN)
+    // rlvkSetUniform(locIndex, value, uniformType, count); // Actual call to Vulkan backend
+    TRACELOG(LOG_DEBUG, "RLGL: rlSetUniform called (Vulkan path - using stub for locIndex %d)", locIndex);
+    // No return value, placeholder action is just logging.
+#else
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     switch (uniformType)
     {
@@ -4329,6 +4414,7 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
         // TODO: Support glUniform1uiv(), glUniform2uiv(), glUniform3uiv(), glUniform4uiv()
     }
 #endif
+#endif // GRAPHICS_API_VULKAN
 }
 
 // Set shader value attribute

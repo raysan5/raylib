@@ -123,6 +123,16 @@
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"                // Vector2, Vector3, Quaternion and Matrix functionality
 
+#if defined(GRAPHICS_API_VULKAN)
+    #include "rlvk.h" // If rlvk functions are called directly from rcore
+    // It's also possible that rlgl.h handles the dispatch via its own functions.
+    // The plan suggests InitPlatformVulkan will provide instance/surface to rlvkInit.
+    // Global/static VkInstance and VkSurfaceKHR to be set by platform layer for rlvkInit.
+    // This is a temporary approach for the subtask.
+    VkInstance vkInstanceHandle = VK_NULL_HANDLE;
+    VkSurfaceKHR vkSurfaceHandle = VK_NULL_HANDLE;
+#endif
+
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define RGESTURES_IMPLEMENTATION
     #include "rgestures.h"          // Gestures detection functionality
@@ -681,7 +691,13 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize platform
     //--------------------------------------------------------------
+    //int result = InitPlatform();
+#if defined(GRAPHICS_API_VULKAN)
+    // InitPlatformVulkan() will be created in step 6 and should set vkInstanceHandle and vkSurfaceHandle
+    int result = InitPlatformVulkan();
+#else
     int result = InitPlatform();
+#endif
 
     if (result != 0)
     {
@@ -690,10 +706,39 @@ void InitWindow(int width, int height, const char *title)
     }
     //--------------------------------------------------------------
 
+#if defined(GRAPHICS_API_VULKAN)
+    if (CORE.Window.ready) { // Assuming InitPlatformVulkan sets CORE.Window.ready on success
+        rlvkInit(vkInstanceHandle, vkSurfaceHandle, CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+        if (rlvkIsReady()) {
+             isGpuReady = true;
+             TRACELOG(LOG_INFO, "RCORE: Vulkan backend initialized successfully via rlvkInit.");
+        } else {
+            TRACELOG(LOG_ERROR, "RCORE: Failed to initialize Vulkan backend via rlvkInit.");
+            CORE.Window.ready = false; // Ensure window is not marked as ready
+            // Potentially call ClosePlatformVulkan here if InitPlatformVulkan succeeded but rlvkInit failed
+            ClosePlatformVulkan();
+            return;
+        }
+    }
+#endif
+
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-    isGpuReady = true; // Flag to note GPU has been initialized successfully
+
+    #if !defined(GRAPHICS_API_VULKAN)
+        // If not using Vulkan (i.e., using OpenGL), and rlglInit() for OpenGL has completed,
+        // then the GPU is considered ready.
+        // This line was originally after rlglInit() before Vulkan changes.
+        isGpuReady = true;
+    #endif
+    // If GRAPHICS_API_VULKAN is defined, isGpuReady is set (or not) earlier,
+    // based on the success of rlvkInit().
+    // We can add a final check here if really needed, but the previous logic should suffice:
+    // else if (!isGpuReady && defined(GRAPHICS_API_VULKAN)) {
+    //    TRACELOG(LOG_ERROR, "RCORE: GPU not ready after Vulkan initialization sequence (final check).");
+    // }
+
 
     // Setup default viewport
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -753,11 +798,21 @@ void CloseWindow(void)
     UnloadFontDefault();        // WARNING: Module required: rtext
 #endif
 
+#if defined(GRAPHICS_API_VULKAN)
+    if (rlvkIsReady()) { // Check if it was successfully initialized
+        rlvkClose();
+    }
+#endif
     rlglClose();                // De-init rlgl
 
     // De-initialize platform
     //--------------------------------------------------------------
+    //ClosePlatform();
+#if defined(GRAPHICS_API_VULKAN)
+    ClosePlatformVulkan();
+#else
     ClosePlatform();
+#endif
     //--------------------------------------------------------------
 
     CORE.Window.ready = false;

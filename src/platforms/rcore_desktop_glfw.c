@@ -54,6 +54,25 @@
 #include "GLFW/glfw3.h"         // GLFW3 library: Windows, OpenGL context and Input management
                                 // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 
+#if defined(GRAPHICS_API_VULKAN)
+    #if defined(__APPLE__)
+        // MoltenVK requires a specific include order and defines
+        #define VK_USE_PLATFORM_MACOS_MVK
+        #define VK_USE_PLATFORM_METAL_EXT // If using newer MoltenVK/GLFW with direct Metal layer access
+    #elif defined(_WIN32)
+        #define VK_USE_PLATFORM_WIN32_KHR
+    #else // Assuming X11 or Wayland for other Linux/Unix via GLFW
+        // GLFW handles these includes mostly, but define for clarity if needed by MoltenVK headers
+        #if defined(GLFW_EXPOSE_NATIVE_X11) // This define might be set by glfw3native.h later
+            #define VK_USE_PLATFORM_XLIB_KHR
+        #endif
+        #if defined(GLFW_EXPOSE_NATIVE_WAYLAND) // This define might be set by glfw3native.h later
+            #define VK_USE_PLATFORM_WAYLAND_KHR
+        #endif
+    #endif
+    #include <vulkan/vulkan.h>
+#endif
+
 // Support retrieving native window handlers
 #if defined(_WIN32)
     typedef void *PVOID;
@@ -107,6 +126,12 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
+
+#if defined(GRAPHICS_API_VULKAN)
+// Vulkan specific platform functions
+static int InitPlatformVulkan(void);
+static void ClosePlatformVulkan(void);
+#endif
 
 // Error callback event
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -1317,6 +1342,181 @@ static void DeallocateWrapper(void* block, void* user)
 }
 
 // Initialize platform: graphics, inputs and more
+#if defined(GRAPHICS_API_VULKAN)
+// Initialize platform for Vulkan (GLFW STUB)
+static int InitPlatformVulkan(void) {
+    TRACELOG(LOG_INFO, "PLATFORM: Initializing platform for Vulkan (GLFW STUB)");
+
+    glfwSetErrorCallback(ErrorCallback);
+
+    const GLFWallocator allocator = {
+        .allocate = AllocateWrapper,
+        .deallocate = DeallocateWrapper,
+        .reallocate = ReallocateWrapper,
+        .user = NULL,
+    };
+    glfwInitAllocator(&allocator);
+
+    #if defined(__APPLE__)
+    glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
+    #endif
+
+    if (!glfwInit()) {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize GLFW for Vulkan");
+        return RL_FALSE;
+    }
+
+    if (!glfwVulkanSupported()) {
+        TRACELOG(LOG_FATAL, "PLATFORM: Vulkan not supported by GLFW or system drivers");
+        glfwTerminate();
+        return RL_FALSE;
+    }
+    TRACELOG(LOG_INFO, "PLATFORM: GLFW Vulkan support detected.");
+
+    glfwDefaultWindowHints();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Critical for Vulkan
+
+    // Common window hints from InitPlatform()
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
+    if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED; // Cannot be set on creation
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED; // Cannot be set on creation
+    if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
+    else glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+    else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
+    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+    else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
+    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE); // Keep old behavior for now
+     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+        #if defined(__APPLE__)
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+        #endif
+    } else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+    if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
+    // MSAA hint is not relevant for Vulkan in this context
+
+    // Determine monitor for fullscreen or initial placement
+    GLFWmonitor *monitor = NULL;
+    if (CORE.Window.fullscreen) {
+        monitor = glfwGetPrimaryMonitor();
+        if (!monitor) {
+            TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor for Vulkan fullscreen");
+            glfwTerminate();
+            return RL_FALSE;
+        }
+        SetDimensionsFromMonitor(monitor);
+    } else {
+        // For windowed mode, get current monitor to center on later
+        // This part is tricky because GetCurrentMonitor() needs a window handle.
+        // We'll get primary and center on that if no better option before window creation.
+        monitor = glfwGetPrimaryMonitor(); // Default to primary for initial setup
+        if (monitor) SetDimensionsFromMonitor(monitor);
+        else { TRACELOG(LOG_WARNING, "GLFW: Could not get primary monitor for initial Vulkan window setup."); }
+    }
+
+    // Create window
+    int creationWidth = (CORE.Window.screen.width > 0) ? CORE.Window.screen.width : 640;
+    int creationHeight = (CORE.Window.screen.height > 0) ? CORE.Window.screen.height : 480;
+
+    platform.handle = glfwCreateWindow(creationWidth, creationHeight, (CORE.Window.title != 0)? CORE.Window.title : " ", CORE.Window.fullscreen ? monitor : NULL, NULL);
+    CORE.Window.handle = platform.handle;
+    if (!CORE.Window.handle) {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to create GLFW window for Vulkan");
+        glfwTerminate();
+        return RL_FALSE;
+    }
+    TRACELOG(LOG_INFO, "PLATFORM: GLFW window created for Vulkan");
+
+    vkInstanceHandle = (VkInstance)0x1;
+    vkSurfaceHandle = (VkSurfaceKHR)0x1;
+    TRACELOG(LOG_INFO, "PLATFORM: VkInstance and VkSurfaceKHR STUBBED as non-null for rlvkInit testing.");
+
+    // Setup GLFW callbacks
+    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);
+    glfwSetWindowPosCallback(platform.handle, WindowPosCallback);
+    glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
+    glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
+    glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
+    glfwSetDropCallback(platform.handle, WindowDropCallback);
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+       glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
+    }
+    glfwSetKeyCallback(platform.handle, KeyCallback);
+    glfwSetCharCallback(platform.handle, CharCallback);
+    glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
+    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);
+    glfwSetScrollCallback(platform.handle, MouseScrollCallback);
+    glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
+    glfwSetJoystickCallback(JoystickCallback);
+    glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
+
+    int fbWidth = CORE.Window.screen.width; // Fallback to screen width
+    int fbHeight = CORE.Window.screen.height; // Fallback to screen height
+    // For Vulkan with GLFW_NO_API, glfwGetFramebufferSize might still be relevant for HighDPI scenarios
+    // where window coords and pixel coords differ.
+    glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+    CORE.Window.render.width = fbWidth;
+    CORE.Window.render.height = fbHeight;
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
+
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+        #if !defined(__APPLE__)
+        if (CORE.Window.screen.width > 0 && CORE.Window.screen.height > 0) { // Avoid division by zero
+             CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+             SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+        }
+        #endif
+    }
+
+    if (!CORE.Window.fullscreen && monitor) { // monitor might be null if primary couldn't be fetched
+        int monitorX = 0, monitorY = 0;
+        glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+        int areaWidth = 0, areaHeight = 0;
+        glfwGetMonitorWorkarea(monitor, NULL, NULL, &areaWidth, &areaHeight);
+
+        int posX = monitorX + (areaWidth - CORE.Window.render.width)/2;
+        int posY = monitorY + (areaHeight - CORE.Window.render.height)/2;
+        if (posX < monitorX) posX = monitorX;
+        if (posY < monitorY) posY = monitorY;
+        SetWindowPosition(posX, posY);
+    }
+
+    CORE.Window.ready = RL_TRUE;
+    TRACELOG(LOG_INFO, "PLATFORM: Vulkan platform initialized successfully (GLFW STUBBED VkInstance/Surface)");
+
+    InitTimer();
+    CORE.Storage.basePath = GetWorkingDirectory();
+
+    return RL_TRUE;
+}
+
+static void ClosePlatformVulkan(void) {
+    TRACELOG(LOG_INFO, "PLATFORM: Closing Vulkan platform (GLFW STUB)");
+    #if defined(GRAPHICS_API_VULKAN)
+        vkSurfaceHandle = VK_NULL_HANDLE;
+        vkInstanceHandle = VK_NULL_HANDLE;
+        TRACELOG(LOG_INFO, "PLATFORM: VkInstance and VkSurfaceKHR STUBBED as NULL.");
+    #endif
+
+    if (CORE.Window.handle != NULL) {
+         glfwDestroyWindow(CORE.Window.handle);
+         CORE.Window.handle = NULL;
+         platform.handle = NULL;
+    }
+    glfwTerminate();
+    TRACELOG(LOG_INFO, "PLATFORM: Vulkan platform resources closed (GLFW STUBBED VkInstance/Surface)");
+}
+#endif // GRAPHICS_API_VULKAN
+
 int InitPlatform(void)
 {
     glfwSetErrorCallback(ErrorCallback);
