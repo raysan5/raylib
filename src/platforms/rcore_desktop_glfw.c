@@ -1343,9 +1343,9 @@ static void DeallocateWrapper(void* block, void* user)
 
 // Initialize platform: graphics, inputs and more
 #if defined(GRAPHICS_API_VULKAN)
-// Initialize platform for Vulkan (GLFW STUB)
+// Initialize platform for Vulkan
 static int InitPlatformVulkan(void) {
-    TRACELOG(LOG_INFO, "PLATFORM: Initializing platform for Vulkan (GLFW STUB)");
+    TRACELOG(LOG_INFO, "PLATFORM: Initializing platform for Vulkan");
 
     glfwSetErrorCallback(ErrorCallback);
 
@@ -1361,18 +1361,93 @@ static int InitPlatformVulkan(void) {
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
     #endif
 
-    if (!glfwInit()) {
+    if (glfwInit() == GLFW_FALSE) {
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize GLFW for Vulkan");
         return RL_FALSE;
     }
 
-    if (!glfwVulkanSupported()) {
+    if (glfwVulkanSupported() == GLFW_FALSE) {
         TRACELOG(LOG_FATAL, "PLATFORM: Vulkan not supported by GLFW or system drivers");
         glfwTerminate();
         return RL_FALSE;
     }
     TRACELOG(LOG_INFO, "PLATFORM: GLFW Vulkan support detected.");
 
+    // Get required instance extensions
+    uint32_t requiredExtensionsCount = 0;
+    const char **requiredExtensions = glfwGetRequiredInstanceExtensions(&requiredExtensionsCount);
+    if (requiredExtensions == NULL) {
+        TRACELOG(LOG_FATAL, "PLATFORM: Could not get required Vulkan instance extensions");
+        glfwTerminate();
+        return RL_FALSE;
+    }
+
+    TRACELOG(LOG_INFO, "PLATFORM: Required Vulkan instance extensions (%u):", requiredExtensionsCount);
+    for (uint32_t i = 0; i < requiredExtensionsCount; i++) TRACELOG(LOG_INFO, "    %s", requiredExtensions[i]);
+
+    // Define desired validation layers
+    const char *validationLayers[] = { "VK_LAYER_KHRONOS_validation" };
+    uint32_t enabledLayerCount = 0;
+    const char *enabledLayers[1]; // Max 1 layer for now
+
+#if defined(RLGL_ENABLE_VULKAN_DEBUG) // Or a custom define for enabling validation layers
+    uint32_t layerCount = 0;
+    vkEnumerateInstanceLayerProperties(&layerCount, NULL);
+    if (layerCount > 0) {
+        VkLayerProperties *availableLayers = (VkLayerProperties *)RL_MALLOC(layerCount * sizeof(VkLayerProperties));
+        if (availableLayers == NULL) {
+            TRACELOG(LOG_WARNING, "PLATFORM: Failed to allocate memory for Vulkan layer properties");
+        } else {
+            vkEnumerateInstanceLayerProperties(&layerCount, availableLayers);
+            bool layerFound = false;
+            for (uint32_t i = 0; i < layerCount; i++) {
+                if (strcmp(validationLayers[0], availableLayers[i].layerName) == 0) {
+                    layerFound = true;
+                    break;
+                }
+            }
+            RL_FREE(availableLayers);
+
+            if (layerFound) {
+                enabledLayers[0] = validationLayers[0];
+                enabledLayerCount = 1;
+                TRACELOG(LOG_INFO, "PLATFORM: Enabled validation layer: %s", enabledLayers[0]);
+            } else {
+                TRACELOG(LOG_WARNING, "PLATFORM: Validation layer VK_LAYER_KHRONOS_validation not available");
+            }
+        }
+    } else {
+        TRACELOG(LOG_INFO, "PLATFORM: No Vulkan instance layers found.");
+    }
+#endif
+
+    VkApplicationInfo appInfo = {0};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = (CORE.Window.title != NULL) ? CORE.Window.title : "raylib Vulkan App";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "raylib";
+    appInfo.engineVersion = VK_MAKE_VERSION(RAYLIB_VERSION_MAJOR, RAYLIB_VERSION_MINOR, RAYLIB_VERSION_PATCH);
+    appInfo.apiVersion = VK_API_VERSION_1_1;
+
+    VkInstanceCreateInfo createInfo = {0};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo = &appInfo;
+    createInfo.enabledExtensionCount = requiredExtensionsCount;
+    createInfo.ppEnabledExtensionNames = requiredExtensions;
+    createInfo.enabledLayerCount = enabledLayerCount;
+    createInfo.ppEnabledLayerNames = (enabledLayerCount > 0) ? enabledLayers : NULL;
+
+    // Initialize global vkInstanceHandle
+    vkInstanceHandle = VK_NULL_HANDLE; // Ensure it's NULL before creation
+    VkResult result = vkCreateInstance(&createInfo, NULL, &vkInstanceHandle);
+    if (result != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to create Vulkan instance (Error: %i)", result);
+        glfwTerminate();
+        return RL_FALSE;
+    }
+    TRACELOG(LOG_INFO, "PLATFORM: Vulkan instance created successfully");
+
+    // Window hints should be set *before* window creation
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Critical for Vulkan
 
@@ -1384,8 +1459,8 @@ static int InitPlatformVulkan(void) {
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED; // Cannot be set on creation
-    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED; // Cannot be set on creation
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED; // Cannot be set on creation, will be handled later if set
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED; // Cannot be set on creation, will be handled later if set
     if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
     else glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
@@ -1396,7 +1471,7 @@ static int InitPlatformVulkan(void) {
      if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
         #if defined(__APPLE__)
-        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+        // glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE); // This hint might be managed differently or implicitly with Vulkan/MoltenVK
         #endif
     } else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
@@ -1427,17 +1502,30 @@ static int InitPlatformVulkan(void) {
     int creationHeight = (CORE.Window.screen.height > 0) ? CORE.Window.screen.height : 480;
 
     platform.handle = glfwCreateWindow(creationWidth, creationHeight, (CORE.Window.title != 0)? CORE.Window.title : " ", CORE.Window.fullscreen ? monitor : NULL, NULL);
-    CORE.Window.handle = platform.handle;
-    if (!CORE.Window.handle) {
+    if (!platform.handle) {
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to create GLFW window for Vulkan");
+        vkDestroyInstance(vkInstanceHandle, NULL); // Clean up created instance
+        vkInstanceHandle = VK_NULL_HANDLE;
         glfwTerminate();
         return RL_FALSE;
     }
     TRACELOG(LOG_INFO, "PLATFORM: GLFW window created for Vulkan");
+    CORE.Window.handle = platform.handle; // Assign global window handle after successful creation
 
-    vkInstanceHandle = (VkInstance)0x1;
-    vkSurfaceHandle = (VkSurfaceKHR)0x1;
-    TRACELOG(LOG_INFO, "PLATFORM: VkInstance and VkSurfaceKHR STUBBED as non-null for rlvkInit testing.");
+    // Create Vulkan surface
+    vkSurfaceHandle = VK_NULL_HANDLE; // Ensure it's NULL before creation
+    VkResult surfaceResult = glfwCreateWindowSurface(vkInstanceHandle, platform.handle, NULL, &vkSurfaceHandle);
+    if (surfaceResult != VK_SUCCESS) {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to create Vulkan window surface (Error: %i)", surfaceResult);
+        vkDestroyInstance(vkInstanceHandle, NULL);
+        vkInstanceHandle = VK_NULL_HANDLE;
+        glfwDestroyWindow(platform.handle);
+        platform.handle = NULL;
+        CORE.Window.handle = NULL;
+        glfwTerminate();
+        return RL_FALSE;
+    }
+    TRACELOG(LOG_INFO, "PLATFORM: Vulkan window surface created successfully");
 
     // Setup GLFW callbacks
     glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);
@@ -1491,7 +1579,7 @@ static int InitPlatformVulkan(void) {
     }
 
     CORE.Window.ready = RL_TRUE;
-    TRACELOG(LOG_INFO, "PLATFORM: Vulkan platform initialized successfully (GLFW STUBBED VkInstance/Surface)");
+    TRACELOG(LOG_INFO, "PLATFORM: Vulkan platform initialized successfully");
 
     InitTimer();
     CORE.Storage.basePath = GetWorkingDirectory();
@@ -1500,20 +1588,50 @@ static int InitPlatformVulkan(void) {
 }
 
 static void ClosePlatformVulkan(void) {
-    TRACELOG(LOG_INFO, "PLATFORM: Closing Vulkan platform (GLFW STUB)");
-    #if defined(GRAPHICS_API_VULKAN)
-        vkSurfaceHandle = VK_NULL_HANDLE;
-        vkInstanceHandle = VK_NULL_HANDLE;
-        TRACELOG(LOG_INFO, "PLATFORM: VkInstance and VkSurfaceKHR STUBBED as NULL.");
-    #endif
+    TRACELOG(LOG_INFO, "PLATFORM: Closing Vulkan platform");
 
-    if (CORE.Window.handle != NULL) {
-         glfwDestroyWindow(CORE.Window.handle);
-         CORE.Window.handle = NULL;
-         platform.handle = NULL;
+    // Destroy Vulkan surface
+    // Note: vkGetInstanceProcAddr is not strictly needed for vkDestroySurfaceKHR if Vulkan headers are recent enough
+    // and vkDestroySurfaceKHR was linked directly or via a loader. However, explicitly getting the function pointer
+    // is safer if there's any doubt about the linking process or for older setups.
+    // For simplicity and modern Vulkan loaders (like the one GLFW might use internally or if linked with Vulkan SDK),
+    // direct call is often fine. If issues arise, use vkGetInstanceProcAddr.
+    if (vkSurfaceHandle != VK_NULL_HANDLE && vkInstanceHandle != VK_NULL_HANDLE) {
+        // PFN_vkDestroySurfaceKHR pfnDestroySurfaceKHR = (PFN_vkDestroySurfaceKHR)vkGetInstanceProcAddr(vkInstanceHandle, "vkDestroySurfaceKHR");
+        // if (pfnDestroySurfaceKHR) pfnDestroySurfaceKHR(vkInstanceHandle, vkSurfaceHandle, NULL);
+        // else TRACELOG(LOG_WARNING, "PLATFORM: Failed to get vkDestroySurfaceKHR proc address");
+        // Assuming vkDestroySurfaceKHR is available directly through linking/loader:
+        vkDestroySurfaceKHR(vkInstanceHandle, vkSurfaceHandle, NULL);
+        vkSurfaceHandle = VK_NULL_HANDLE; // Set to NULL after destruction
+        TRACELOG(LOG_INFO, "PLATFORM: Vulkan surface destroyed");
+    } else if (vkInstanceHandle == VK_NULL_HANDLE && vkSurfaceHandle != VK_NULL_HANDLE) {
+        TRACELOG(LOG_WARNING, "PLATFORM: vkInstanceHandle is NULL, cannot destroy vkSurfaceHandle. Surface might be leaked if instance was lost prematurely.");
+        vkSurfaceHandle = VK_NULL_HANDLE; // Still nullify to prevent reuse attempts
     }
+
+
+    // Destroy Vulkan instance
+    if (vkInstanceHandle != VK_NULL_HANDLE) {
+        vkDestroyInstance(vkInstanceHandle, NULL);
+        vkInstanceHandle = VK_NULL_HANDLE; // Set to NULL after destruction
+        TRACELOG(LOG_INFO, "PLATFORM: Vulkan instance destroyed");
+    }
+
+    // Destroy GLFW window
+    // Use platform.handle as it's the direct reference to the created window.
+    // CORE.Window.handle should mirror platform.handle but platform.handle is the source of truth here.
+    if (platform.handle != NULL) {
+         glfwDestroyWindow(platform.handle);
+         platform.handle = NULL; // Set to NULL after destruction
+         CORE.Window.handle = NULL; // Ensure CORE's copy is also NULL
+         TRACELOG(LOG_INFO, "PLATFORM: GLFW window destroyed");
+    }
+
+    // Terminate GLFW
     glfwTerminate();
-    TRACELOG(LOG_INFO, "PLATFORM: Vulkan platform resources closed (GLFW STUBBED VkInstance/Surface)");
+    TRACELOG(LOG_INFO, "PLATFORM: GLFW terminated");
+
+    TRACELOG(LOG_INFO, "PLATFORM: Vulkan platform resources closed successfully");
 }
 #endif // GRAPHICS_API_VULKAN
 
