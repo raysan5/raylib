@@ -1,0 +1,181 @@
+# Raylib Vulkan Upgrade Plan
+
+This document outlines the strategy for integrating Vulkan as a compile-time graphics backend option for raylib. The goal is to maintain the existing raylib API and ease of use while providing an alternative, modern graphics API.
+
+## 1. Define Vulkan API Abstraction Layer (`rlvk`)
+
+A new abstraction layer, similar to `rlgl` for OpenGL, will be created for Vulkan. This layer, tentatively named `rlvk`, will reside in `src/rlvk.h` and `src/rlvk.c`.
+
+**Key Responsibilities of `rlvk`:**
+
+*   **Initialization & Deinitialization:**
+    *   `rlvkInit()`:
+        *   Initialize Vulkan loader.
+        *   Create Vulkan instance (`vkCreateInstance`).
+        *   Setup debug messenger (if `RLGL_ENABLE_OPENGL_DEBUG_CONTEXT` or a new Vulkan equivalent is defined).
+        *   Select a suitable physical device (`vkEnumeratePhysicalDevices`, `vkGetPhysicalDeviceProperties`, `vkGetPhysicalDeviceFeatures`, `vkGetPhysicalDeviceQueueFamilyProperties`).
+        *   Create a logical device (`vkCreateDevice`) with necessary queues (graphics, present).
+        *   Create a Vulkan surface using the platform layer (e.g., via GLFW's `glfwCreateWindowSurface`).
+        *   Create the swapchain (`vkCreateSwapchainKHR`).
+        *   Create image views for swapchain images (`vkCreateImageView`).
+        *   Create a default render pass (`vkCreateRenderPass`).
+        *   Create framebuffers for each swapchain image view, associating them with the render pass (`vkCreateFramebuffer`).
+        *   Create a command pool (`vkCreateCommandPool`).
+        *   Allocate primary command buffers (`vkAllocateCommandBuffers`).
+        *   Create synchronization primitives (semaphores for image available/render finished, fences for command buffer execution) (`vkCreateSemaphore`, `vkCreateFence`).
+        *   Initialize default resources (e.g., default white texture, default shaders in SPIR-V).
+        *   Setup default pipeline state objects (PSO) for common rendering tasks (e.g., 2D textured quads, 3D models).
+    *   `rlvkClose()`:
+        *   Wait for device to be idle (`vkDeviceWaitIdle`).
+        *   Destroy all Vulkan resources in reverse order of creation (synchronization primitives, command buffers, command pool, framebuffers, render pass, image views, swapchain, logical device, surface, debug messenger, instance).
+
+*   **Core Rendering Loop Functions:**
+    *   `rlvkBeginDrawing()`:
+        *   Acquire the next available swapchain image (`vkAcquireNextImageKHR`).
+        *   Begin the primary command buffer (`vkBeginCommandBuffer`).
+        *   Begin the default render pass (`vkCmdBeginRenderPass`).
+        *   Set default viewport and scissor.
+    *   `rlvkEndDrawing()`:
+        *   End the render pass (`vkCmdEndRenderPass`).
+        *   End the command buffer (`vkEndCommandBuffer`).
+        *   Submit the command buffer to the graphics queue (`vkQueueSubmit`), waiting on the image available semaphore and signaling the render finished semaphore.
+        *   Present the rendered image to the swapchain (`vkQueuePresentKHR`), waiting on the render finished semaphore.
+
+*   **Matrix Operations:**
+    *   Maintain projection and modelview matrix stacks similar to `rlgl`.
+    *   `rlvkMatrixMode()`, `rlvkPushMatrix()`, `rlvkPopMatrix()`, `rlvkLoadIdentity()`, `rlvkTranslatef()`, `rlvkRotatef()`, `rlvkScalef()`, `rlvkMultMatrixf()`.
+    *   These will update internal matrix state, which will then be passed to shaders via UBOs/push constants.
+
+*   **Viewport and Clipping:**
+    *   `rlvkViewport()`: Set dynamic viewport state (`vkCmdSetViewport`).
+    *   `rlvkSetClipPlanes()`: Potentially manage via shader logic or dynamic rasterizer state if available/performant. Vulkan does not have direct equivalents to `gl_ClipDistance` in the same way as OpenGL for user-defined clip planes easily manipulated by `rlFrustum`.
+
+*   **Vertex Buffer Management (Batching System):**
+    *   Adapt or reimplement raylib's batching system (`rlRenderBatch`) for Vulkan.
+    *   `rlvkLoadRenderBatch()`: Create Vulkan buffers (vertex, index, staging) for batch data.
+    *   `rlvkUnloadRenderBatch()`: Destroy Vulkan buffers.
+    *   `rlvkDrawRenderBatch()`:
+        *   If batch data has changed, update staging buffers and record commands to copy to device-local buffers (`vkCmdCopyBuffer`).
+        *   Bind appropriate pipeline (PSO).
+        *   Bind descriptor sets (for UBOs, textures).
+        *   Bind vertex and index buffers (`vkCmdBindVertexBuffers`, `vkCmdBindIndexBuffer`).
+        *   Issue draw calls (`vkCmdDrawIndexed` or `vkCmdDraw`).
+    *   `rlvkSetTexture()`: Manage texture binding for the current batch, potentially requiring different descriptor sets or dynamic descriptor updates.
+
+*   **Immediate Mode Emulation (`rlBegin`, `rlEnd`, `rlVertex3f`, etc.):**
+    *   These functions will populate the CPU-side vertex buffers of the active `rlRenderBatch`.
+    *   `rlBegin()` will set the primitive topology for the current batch draw call.
+
+*   **Texture Management:**
+    *   `rlvkLoadTexture()`:
+        *   Create Vulkan image (`vkCreateImage`) with appropriate format, extent, mip levels, usage flags.
+        *   Allocate device memory (`vkAllocateMemory`, `vkBindImageMemory`).
+        *   Create image view (`vkCreateImageView`).
+        *   Create a default sampler (`vkCreateSampler`).
+        *   Transition image layout to `VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL`.
+        *   Upload pixel data using a staging buffer and command buffer operations (`vkCmdCopyBufferToImage`).
+    *   `rlvkLoadTextureDepth()`: Create depth/stencil attachment.
+    *   `rlvkLoadTextureCubemap()`: Similar to `rlvkLoadTexture` but for cubemaps.
+    *   `rlvkUpdateTexture()`: Update a region of an existing texture using staging buffers.
+    *   `rlvkGenTextureMipmaps()`: Generate mipmaps using `vkCmdBlitImage` if supported, or require pre-generated mipmaps.
+    *   `rlvkUnloadTexture()`: Destroy image, image view, sampler, and free device memory.
+
+*   **Shader Management:**
+    *   `rlvkLoadShaderCode()`: Will expect SPIR-V bytecode.
+    *   `rlvkLoadShaderProgram()`: Create `VkShaderModule` from SPIR-V, define pipeline layouts, and potentially create initial `VkPipeline` objects.
+    *   `rlvkGetLocationUniform()`, `rlvkGetLocationAttrib()`: Manage mapping of uniform/attribute names to SPIR-V binding points/locations.
+    *   `rlvkSetUniform()`: Update UBOs or push constants.
+    *   `rlvkSetShader()`: Select the active pipeline and descriptor sets.
+
+*   **Framebuffer Management:**
+    *   `rlvkLoadFramebuffer()`: Create `VkFramebuffer` (distinct from swapchain framebuffers, for render textures).
+    *   `rlvkFramebufferAttach()`: Attach textures to custom framebuffers.
+    *   `rlvkFramebufferComplete()`: Check framebuffer completeness.
+
+*   **Render State Management:**
+    *   `rlvkEnableColorBlend()`, `rlvkDisableColorBlend()`, `rlvkSetBlendMode()`, `rlvkSetBlendFactors()`: Configure `VkPipelineColorBlendStateCreateInfo`.
+    *   `rlvkEnableDepthTest()`, `rlvkDisableDepthTest()`: Configure `VkPipelineDepthStencilStateCreateInfo`.
+    *   `rlvkEnableDepthMask()`, `rlvkDisableDepthMask()`: Part of `VkPipelineDepthStencilStateCreateInfo`.
+    *   `rlvkEnableBackfaceCulling()`, `rlvkDisableBackfaceCulling()`, `rlvkSetCullFace()`: Configure `VkPipelineRasterizationStateCreateInfo`.
+    *   `rlvkEnableScissorTest()`, `rlvkDisableScissorTest()`, `rlvkScissor()`: Set dynamic scissor state (`vkCmdSetScissor`).
+    *   `rlvkEnableWireMode()`, `rlvkDisableWireMode()`: Set `polygonMode` in `VkPipelineRasterizationStateCreateInfo`.
+
+## 2. Core Library Integration (`rcore.c`)
+
+*   **Conditional Compilation:**
+    *   Use `#if defined(GRAPHICS_API_VULKAN)` to conditionally include `rlvk.h` and call `rlvk` functions.
+    *   Ensure only one graphics API is active (e.g., `#elif defined(GRAPHICS_API_OPENGL_XX)`).
+*   **`InitWindow()` Modifications:**
+    *   If `GRAPHICS_API_VULKAN` is defined:
+        *   Call `InitPlatform()` (platform layer, e.g., GLFW, will need Vulkan-specific setup).
+        *   Call `rlvkInit()` instead of `rlglInit()`.
+        *   Set `isGpuReady = true` upon successful Vulkan initialization.
+*   **`CloseWindow()` Modifications:**
+    *   If `GRAPHICS_API_VULKAN` is defined:
+        *   Call `rlvkClose()` before `ClosePlatform()`.
+*   **Drawing Function Adaption:**
+    *   Functions like `ClearBackground()`, `BeginDrawing()`, `EndDrawing()`, `BeginMode2D()`, `EndMode2D()`, `BeginMode3D()`, `EndMode3D()`, `BeginTextureMode()`, `EndTextureMode()`, `BeginShaderMode()`, `EndShaderMode()`, etc., will need to call their `rlvk` counterparts when `GRAPHICS_API_VULKAN` is active.
+
+## 3. Platform Layer Integration (Example: `rcore_desktop_glfw.c`)
+
+*   **Window Creation:**
+    *   When `GRAPHICS_API_VULKAN` is defined:
+        *   Call `glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);` before `glfwCreateWindow()`.
+*   **Surface Creation:**
+    *   After window creation, if Vulkan is active, call `glfwCreateWindowSurface(vulkanInstance, windowHandle, NULL, &vulkanSurface)` to create the Vulkan rendering surface. This surface handle will be needed by `rlvkInit()`.
+*   **Instance Extensions:**
+    *   Query required Vulkan instance extensions from GLFW using `glfwGetRequiredInstanceExtensions()` and pass them to `vkCreateInstance` in `rlvkInit()`.
+*   **Input and Other Callbacks:**
+    *   Most input handling and window event callbacks should remain largely unchanged.
+
+## 4. Build System Changes (CMake)
+
+*   **Add CMake Option:**
+    *   In the main `CMakeLists.txt` or a dedicated options file (e.g., `cmake/CMakeOptions.txt` or a new `cmake/GraphicsAPI.cmake`), add an option to select Vulkan. This could be a boolean `SUPPORT_VULKAN` or an enum-style option like `GRAPHICS_BACKEND` with values "OpenGL" and "Vulkan".
+    *   Example: `option(SUPPORT_VULKAN "Enable Vulkan graphics backend" OFF)`
+*   **Conditional Compilation Define:**
+    *   Based on the CMake option, add a compile definition for `GRAPHICS_API_VULKAN` to `src/config.h` or directly to the target compile definitions.
+    *   Ensure mutual exclusivity with OpenGL defines (e.g., `GRAPHICS_API_OPENGL_33`).
+    *   Example in `src/config.h` (controlled by CMake):
+        ```c
+        // Select desired graphics API (OpenGL or Vulkan)
+        // #define GRAPHICS_API_OPENGL_11
+        // #define GRAPHICS_API_OPENGL_21
+        // #define GRAPHICS_API_OPENGL_33
+        // #define GRAPHICS_API_OPENGL_43
+        // #define GRAPHICS_API_OPENGL_ES2
+        // #define GRAPHICS_API_OPENGL_ES3
+        // #define GRAPHICS_API_VULKAN     // This would be enabled by CMake
+        ```
+*   **Link Vulkan Libraries:**
+    *   When Vulkan is enabled, use `find_package(Vulkan REQUIRED)` to locate the Vulkan SDK.
+    *   Link the raylib library against `Vulkan::Vulkan` (for the loader) and potentially `Vulkan::glslang` or `Vulkan::SPIRV-Tools` if shader compilation is handled by CMake.
+*   **Source Files:**
+    *   Conditionally compile `src/rlvk.c` when Vulkan is enabled.
+*   **Shader Compilation (SPIR-V):**
+    *   If GLSL shaders are to be compiled to SPIR-V at build time:
+        *   Integrate a tool like `glslangValidator` as a custom build step.
+        *   Define rules to find GLSL shaders (e.g., in `src/shaders/glsl/` or a new `src/shaders/vk/`) and compile them to SPIR-V, placing the output in the build directory for embedding or loading.
+
+## 5. Shader Management for Vulkan
+
+*   **SPIR-V Requirement:** Vulkan shaders must be in SPIR-V binary format.
+*   **Compilation Strategy:**
+    *   **Option A (Build-time compilation):** Use `glslangValidator` (or similar) integrated into the CMake build process to compile GLSL shaders to SPIR-V. These SPIR-V files can then be embedded into the executable or loaded at runtime.
+    *   **Option B (Pre-compiled SPIR-V):** Require users or developers to provide pre-compiled SPIR-V shaders.
+    *   Raylib's default shaders will need to be converted to GLSL suitable for Vulkan (e.g., using explicit binding locations) and then compiled to SPIR-V.
+*   **`rlvkLoadShaderCode()`:** This function in `rlvk.c` will expect paths to SPIR-V files or raw SPIR-V bytecode if embedded.
+*   **Descriptor Sets and Pipeline Layouts:**
+    *   `rlvk` will need to manage `VkDescriptorSetLayout`, `VkPipelineLayout`, `VkDescriptorPool`, and `VkDescriptorSet` for binding UBOs and textures to shaders. This is significantly different from OpenGL's `glGetUniformLocation`.
+
+## 6. Potential Challenges and Considerations
+
+*   **API Mapping:** Translating raylib's simple, immediate-mode style OpenGL calls to Vulkan's more complex, explicit API requires careful design of the `rlvk` layer to hide Vulkan's verbosity.
+*   **Performance:** While Vulkan offers potential performance benefits, a naive translation might not achieve them. Efficient batching, command buffer usage, and resource management will be crucial.
+*   **Error Handling:** Vulkan's error reporting is robust but requires more explicit checking.
+*   **Driver Differences:** Vulkan driver quality and feature support can vary.
+*   **Development Complexity:** Implementing a Vulkan backend is a substantial undertaking.
+*   **Shader Management:** Handling SPIR-V and descriptor sets is more involved than GLSL uniform locations.
+*   **Maintaining Simplicity:** A core tenet of raylib is its ease of use. The Vulkan backend should ideally not expose Vulkan's complexity to the end-user.
+
+This plan provides a high-level roadmap. Each step, especially the design and implementation of `rlvk`, involves many detailed sub-tasks.
