@@ -1,6 +1,13 @@
+target_compile_definitions("raylib" PUBLIC "CF_VULKAN_=0")
 # Adding compile definitions
 target_compile_definitions("raylib" PUBLIC "${PLATFORM_CPP}")
 target_compile_definitions("raylib" PUBLIC "${GRAPHICS}")
+
+if (SUPPORT_VULKAN AND Vulkan_FOUND)
+    target_compile_definitions("raylib" PUBLIC "CF_VULKAN_=1")
+    target_compile_definitions("raylib" PUBLIC "GRAPHICS_API_VULKAN")
+    message(STATUS "Vulkan backend enabled via CF_VULKAN_ and GRAPHICS_API_VULKAN")
+endif()
 
 function(define_if target variable)
     if(${${variable}})

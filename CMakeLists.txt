@@ -27,7 +27,17 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(CompilerFlags)
 
 # Registers build options that are exposed to cmake
+option(SUPPORT_VULKAN "Enable Vulkan graphics backend" OFF)
 include(CMakeOptions.txt)
+
+if (SUPPORT_VULKAN)
+    find_package(Vulkan REQUIRED)
+    if (NOT Vulkan_FOUND)
+        message(FATAL_ERROR "Vulkan SDK not found, required for SUPPORT_VULKAN option.")
+    else()
+        message(STATUS "Vulkan SDK found: Headers at ${Vulkan_INCLUDE_DIRS}, Libraries at ${Vulkan_LIBRARIES}")
+    endif()
+endif()
 
 if (UNIX AND NOT APPLE AND NOT "${PLATFORM}" MATCHES "DRM")
   if (NOT GLFW_BUILD_WAYLAND AND NOT GLFW_BUILD_X11)
