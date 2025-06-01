@@ -179,3 +179,258 @@ A new abstraction layer, similar to `rlgl` for OpenGL, will be created for Vulka
 *   **Maintaining Simplicity:** A core tenet of raylib is its ease of use. The Vulkan backend should ideally not expose Vulkan's complexity to the end-user.
 
 This plan provides a high-level roadmap. Each step, especially the design and implementation of `rlvk`, involves many detailed sub-tasks.
+
+## Vulkan Upgrade Plan for raylib
+
+This document outlines the necessary modifications to integrate Vulkan support into the raylib library, managed by a compile-time flag `GRAPHICS_API_VULKAN`.
+
+### 1. Build System (CMake)
+
+**File: `CMakeLists.txt` (Root)**
+*   **Add CMake Option:**
+    *   Introduce an option `SUPPORT_VULKAN` (default OFF) to enable Vulkan backend.
+    ```cmake
+    option(SUPPORT_VULKAN "Enable Vulkan graphics backend" OFF)
+    ```
+*   **Find Vulkan SDK:**
+    *   If `SUPPORT_VULKAN` is ON, use `find_package` to locate the Vulkan SDK.
+    ```cmake
+    if (SUPPORT_VULKAN)
+        find_package(Vulkan REQUIRED)
+        if (NOT Vulkan_FOUND)
+            message(FATAL_ERROR "Vulkan SDK not found, required for SUPPORT_VULKAN option.")
+        else()
+            message(STATUS "Vulkan SDK found: Headers at ${Vulkan_INCLUDE_DIRS}, Libraries at ${Vulkan_LIBRARIES}")
+        endif()
+    endif()
+    ```
+
+**File: `src/CMakeLists.txt`**
+*   **Set Preprocessor Define:**
+    *   In `CompileDefinitions.cmake` (or directly in `src/CMakeLists.txt` if more appropriate), add `GRAPHICS_API_VULKAN` if `SUPPORT_VULKAN` is ON and Vulkan is found.
+    ```cmake
+    # Inside CompileDefinitions.cmake or src/CMakeLists.txt
+    if (SUPPORT_VULKAN AND Vulkan_FOUND)
+        target_compile_definitions(raylib PUBLIC GRAPHICS_API_VULKAN)
+        # Potentially link Vulkan libraries
+        # target_link_libraries(raylib PUBLIC Vulkan::Vulkan) # Modern CMake
+        # or target_link_libraries(raylib PUBLIC ${Vulkan_LIBRARIES}) # Older CMake
+    endif()
+    ```
+    *   The exact linking method (`Vulkan::Vulkan` vs `Vulkan_LIBRARIES`) depends on how `FindVulkan.cmake` exports its targets. `Vulkan::Vulkan` is preferred if available.
+*   **Conditionally Compile Vulkan Source Files:**
+    *   Add new source files for the Vulkan backend (e.g., `rlgl_vulkan.c`, `rcore_vulkan_glfw.c`) to the `raylib_sources` list conditionally.
+    ```cmake
+    if (SUPPORT_VULKAN AND Vulkan_FOUND)
+        list(APPEND raylib_sources
+            platforms/rcore_vulkan_glfw.c # Or other platform specific Vulkan file
+            rlgl_vulkan.c                 # Or however rlgl's Vulkan part is named
+        )
+        # Also ensure Vulkan headers are available
+        target_include_directories(raylib PUBLIC $<BUILD_INTERFACE:${Vulkan_INCLUDE_DIRS}>)
+    endif()
+    ```
+*   **Link Vulkan Libraries:**
+    *   Ensure Vulkan libraries are linked. This might be handled by `LibraryConfigurations.cmake` or directly here. The `target_link_libraries` call mentioned above for preprocessor definitions might already cover this if `Vulkan::Vulkan` is an INTERFACE library that carries its link dependencies. Otherwise, add explicitly:
+    ```cmake
+    if (SUPPORT_VULKAN AND Vulkan_FOUND)
+        # If not handled by an INTERFACE library target like Vulkan::Vulkan
+        target_link_libraries(raylib PUBLIC ${Vulkan_LIBRARIES})
+    endif()
+    ```
+
+**File: `cmake/LibraryConfigurations.cmake`**
+*   This file likely contains logic for selecting graphics APIs (OpenGL versions). It will need to be extended:
+    *   Add checks for `GRAPHICS_API_VULKAN`.
+    *   If defined, ensure it sets up any necessary Vulkan-specific library paths or flags, and potentially skips/overrides some OpenGL configurations.
+
+### 2. Configuration Header
+
+**File: `src/config.h`**
+*   This file might not need explicit changes if `GRAPHICS_API_VULKAN` is purely controlled by CMake.
+*   However, for consistency or manual override capabilities, a section could be added:
+    ```c
+    // Module: rlgl - Configuration Flags
+    // ... existing flags ...
+    // #define GRAPHICS_API_VULKAN 1
+    ```
+*   Code within raylib would then check `#if defined(GRAPHICS_API_VULKAN)`
+
+### 3. Graphics Abstraction Layer (`rlgl`)
+
+**File: `src/rlgl.h`**
+*   **Include Vulkan Headers:**
+    ```c
+    #if defined(GRAPHICS_API_VULKAN)
+        #include <vulkan/vulkan.h>
+        // May need platform-specific Vulkan extensions for surfaces (e.g., vulkan_win32.h)
+        // These would typically be included in the platform-specific rcore_vulkan_*.c file
+    #endif
+    ```
+*   **Conditional Function Declarations / Implementations:**
+    *   The existing `rlgl` functions (`rlLoadTexture`, `rlLoadShaderCode`, `rlBegin`, `rlEnd`, `rlDrawRenderBatch`, etc.) will need to either:
+        1.  Have internal conditional logic:
+            ```c
+            RLAPI void rlBegin(int mode) {
+            #if defined(GRAPHICS_API_VULKAN)
+                // Vulkan implementation for rlBegin
+            #elif defined(GRAPHICS_API_OPENGL_33)
+                // OpenGL 3.3 implementation
+            #else // GRAPHICS_API_OPENGL_11
+                // OpenGL 1.1 implementation
+            #endif
+            }
+            ```
+        2.  Or, more cleanly, `rlgl.h` could define function pointers that are assigned during `rlglInit` to point to either OpenGL or Vulkan implementations. This is a more significant refactor but more extensible.
+            ```c
+            // In rlgl.h
+            // extern void (*rlBeginImpl)(int mode);
+            // #define rlBegin rlBeginImpl
+
+            // In rlglInit() or a new rlglInitVulkan()
+            // #if defined(GRAPHICS_API_VULKAN)
+            //     rlBeginImpl = rlBegin_Vulkan;
+            // #else
+            //     rlBeginImpl = rlBegin_OpenGL;
+            // #endif
+            ```
+    *   Given raylib's style, the first approach (internal conditional logic with `#if defined()`) is more likely.
+
+**New File: `src/rlgl_vulkan.c` (or integrated into `rlgl.h`)**
+*   This file will contain the Vulkan implementations of `rlgl` functions.
+*   **`rlglInit_Vulkan(VkInstance instance, VkSurfaceKHR surface)` (or similar signature):**
+    *   **Physical Device Selection:** Enumerate physical devices, select a suitable one (e.g., discrete GPU with necessary queue families).
+    *   **Logical Device Creation:** Create `VkDevice` with required queues (graphics, present).
+    *   **Swapchain Setup:**
+        *   Query surface capabilities, formats, and present modes.
+        *   Choose swapchain format, extent, and present mode.
+        *   Create `VkSwapchainKHR`.
+        *   Get swapchain images and create `VkImageViews`.
+    *   **Command Pools & Buffers:** Create command pools and pre-allocate command buffers.
+    *   **Render Passes:** Create a default `VkRenderPass` compatible with the swapchain image format (for clearing and basic drawing).
+    *   **Framebuffers:** Create framebuffers for each swapchain image view, associating them with the render pass.
+    *   **Pipelines:**
+        *   Create a default graphics pipeline (vertex input, shaders, viewport, rasterizer, MSAA, depth/stencil, color blending). This will require a default SPIR-V vertex and fragment shader.
+        *   Pipeline layout.
+    *   **Synchronization Primitives:** Create semaphores and fences for frame rendering synchronization.
+    *   **Default Resources:**
+        *   Create a default 1x1 white texture (`VkImage`, `VkDeviceMemory`, `VkImageView`, `VkSampler`).
+        *   Load/compile default SPIR-V shaders for basic textured/colored drawing. Store their `VkShaderModule` handles.
+    *   Initialize Vulkan-specific parts of `RLGL.State` or a new `RLGL_VK_State` struct.
+*   **`rlglClose_Vulkan()`:**
+    *   Call `vkDeviceWaitIdle()`.
+    *   Destroy all Vulkan resources in reverse order of creation (pipelines, framebuffers, render passes, swapchain, device, command pools, default textures/shaders, instance, etc.).
+*   **Drawing Functions (`rlBegin`, `rlEnd`, `rlVertex3f`, `rlSetTexture`, etc.):**
+    *   These will need to manage a Vulkan-specific render batch system.
+    *   `rlBegin` might start a command buffer recording or select a pipeline.
+    *   `rlVertex3f` and related functions will populate CPU-side vertex/index buffers.
+    *   `rlEnd` or `rlDrawRenderBatch` will:
+        *   Copy CPU vertex/index data to Vulkan staging buffers, then to `VkBuffer` (vertex/index buffers).
+        *   Acquire next swapchain image.
+        *   Begin command buffer recording.
+        *   Begin render pass.
+        *   Bind pipeline, descriptor sets (for textures, uniforms).
+        *   Bind vertex/index buffers.
+        *   Set viewport/scissor.
+        *   Issue `vkCmdDraw` or `vkCmdDrawIndexed`.
+        *   End render pass.
+        *   End command buffer.
+        *   Submit command buffer to graphics queue.
+        *   Present swapchain image.
+*   **Texture Functions (`rlLoadTexture`, `rlUpdateTexture`, `rlUnloadTexture`):**
+    *   `rlLoadTexture`: Create `VkImage`, allocate `VkDeviceMemory`, create `VkImageView`, `VkSampler`. Handle data upload via staging buffer.
+    *   `rlUpdateTexture`: Update `VkImage` data, potentially via staging buffer.
+    *   `rlUnloadTexture`: Destroy Vulkan image resources.
+*   **Shader Functions (`rlLoadShaderFromMemory`, `rlLoadShader`):**
+    *   Modify to accept SPIR-V bytecode.
+    *   Create `VkShaderModule` from SPIR-V.
+    *   Store `VkShaderModule` handles. Pipeline creation will use these.
+    *   The existing `Shader` struct in raylib might need to be extended or have a Vulkan-specific counterpart to store `VkPipelineLayout`, `VkPipeline`, and descriptor set layouts/pools if shaders manage their own pipelines.
+
+### 4. Core Layer (`rcore`)
+
+**File: `src/rcore.c`**
+*   **`InitWindow()`:**
+    *   Modify to conditionally call `InitPlatformVulkan()` if `GRAPHICS_API_VULKAN` is defined.
+    ```c
+    #if defined(GRAPHICS_API_VULKAN)
+        result = InitPlatformVulkan(); // New function in platform layer
+    #else
+        result = InitPlatform();       // Existing function
+    #endif
+    ```
+    *   After platform initialization (which creates Vulkan instance & surface), call `rlglInit_Vulkan(instance, surface)` instead of `rlglInit()`.
+*   **`CloseWindow()`:**
+    *   Modify to conditionally call `ClosePlatformVulkan()`.
+    ```c
+    #if defined(GRAPHICS_API_VULKAN)
+        ClosePlatformVulkan();
+    #else
+        ClosePlatform();
+    #endif
+    ```
+    *   Call `rlglClose_Vulkan()` instead of `rlglClose()`.
+
+### 5. Platform Layer (`src/platforms/`)
+
+**New File: `src/platforms/rcore_vulkan_glfw.c` (example for GLFW)**
+*   This file will handle Vulkan-specific initialization for the GLFW platform.
+*   **`InitPlatformVulkan()`:**
+    *   Call `glfwInit()`.
+    *   Check for Vulkan support: `glfwVulkanSupported()`.
+    *   Get required instance extensions: `glfwGetRequiredInstanceExtensions()`.
+    *   Create `VkInstance` using these extensions and potentially validation layers.
+    *   Window hints for Vulkan: `glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)`.
+    *   Create GLFW window: `glfwCreateWindow()`. Store window handle in `platform.handle`.
+    *   Create Vulkan surface: `glfwCreateWindowSurface(vkInstance, platform.handle, NULL, &vkSurface)`.
+    *   Store `vkInstance` and `vkSurface` (perhaps in `PlatformData` struct or pass to `rlglInit_Vulkan`).
+    *   Call `rlglInit_Vulkan(vkInstance, vkSurface)`.
+    *   Setup GLFW input callbacks (can be reused from `rcore_desktop_glfw.c`).
+*   **`ClosePlatformVulkan()`:**
+    *   Call `rlglClose_Vulkan()`.
+    *   Destroy `VkSurfaceKHR` (`vkDestroySurfaceKHR(vkInstance, vkSurface, NULL)`).
+    *   Destroy `VkInstance` (`vkDestroyInstance(vkInstance, NULL)`).
+    *   Call `glfwDestroyWindow(platform.handle)`.
+    *   Call `glfwTerminate()`.
+*   **PlatformData Struct:**
+    *   The existing `PlatformData` struct (if any, or a new one) might need to store `VkInstance` and `VkSurfaceKHR`.
+    ```c
+    // In rcore_vulkan_glfw.c
+    typedef struct PlatformDataVulkan {
+        GLFWwindow *handle;
+        VkInstance instance;
+        VkSurfaceKHR surface;
+        // Other Vulkan specific platform data if needed
+    } PlatformDataVulkan;
+    ```
+
+### 6. Shader System and Examples
+
+*   **SPIR-V Compilation:**
+    *   A build step needs to be added to compile GLSL shaders (from `examples/shaders/resources/shaders/glslXXX/`) to SPIR-V.
+    *   Tools like `glslangValidator` (from Vulkan SDK) can be used for this.
+    *   Example CMake integration:
+        ```cmake
+        # In examples/CMakeLists.txt or similar
+        if (SUPPORT_VULKAN AND Vulkan_FOUND AND GLSLANG_VALIDATOR_EXECUTABLE)
+            # Loop through example shaders and compile them
+            # add_custom_command(...)
+        endif()
+        ```
+*   **Shader Loading in Examples:**
+    *   Examples that load shaders will need to be updated to load the compiled SPIR-V versions when the Vulkan backend is active.
+    *   This might involve path changes or conditional loading based on `GRAPHICS_API_VULKAN`.
+*   **Default Shaders in `rlgl`:**
+    *   The default shaders used internally by `rlgl` (e.g., for `DrawRectangle`, `DrawTexture`) must also be provided in SPIR-V format and loaded by `rlglInit_Vulkan`.
+
+### 7. Memory Management
+
+*   Vulkan requires explicit memory management. `rlgl_vulkan.c` will need to handle `VkDeviceMemory` allocations and deallocations for buffers and images.
+*   Consider using a Vulkan Memory Allocator library (e.g., VMA from AMD) for more robust and efficient memory management, though for a first pass, direct Vulkan calls can be used.
+
+### 8. Error Handling
+
+*   Vulkan API calls return `VkResult`. These should be checked consistently, and errors should be logged using raylib's `TRACELOG`.
+
+This plan provides a high-level overview. Each point, especially within `rlgl_vulkan.c`, involves significant implementation detail.
+The core principle is to abstract Vulkan complexities within `rlgl` and the platform layer, keeping the raylib API consistent for the end-user.
