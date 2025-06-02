@@ -1488,8 +1488,8 @@
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="Color" name="topLeft" desc="" />
             <Param type="Color" name="bottomLeft" desc="" />
-            <Param type="Color" name="topRight" desc="" />
             <Param type="Color" name="bottomRight" desc="" />
+            <Param type="Color" name="topRight" desc="" />
         </Function>
         <Function name="DrawRectangleLines" retType="void" paramCount="5" desc="Draw rectangle outline">
             <Param type="int" name="posX" desc="" />

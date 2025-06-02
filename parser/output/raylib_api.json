@@ -6010,11 +6010,11 @@
         },
         {
           "type": "Color",
-          "name": "topRight"
+          "name": "bottomRight"
         },
         {
           "type": "Color",
-          "name": "bottomRight"
+          "name": "topRight"
         }
       ]
     },
