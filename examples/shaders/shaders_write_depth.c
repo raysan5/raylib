@@ -74,6 +74,8 @@ int main(void)
         
         // Draw
         //----------------------------------------------------------------------------------
+        UnloadRenderTexture(target);
+		    target = LoadRenderTextureDepthTex(GetScreenWidth(), GetScreenHeight());
         // Draw into our custom render texture (framebuffer)
         BeginTextureMode(target);
             ClearBackground(WHITE);
@@ -91,8 +93,8 @@ int main(void)
 
         // Draw into screen our custom render texture 
         BeginDrawing();
-            ClearBackground(RAYWHITE);
-            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
+            ClearBackground(RAYWHITE);        
+            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)GetScreenWidth(), (float)-GetScreenHeight() }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------
