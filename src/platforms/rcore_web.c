@@ -1131,7 +1131,15 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE); // Decorated window
 
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Resizable window
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0)
+    {
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Resizable window
+        
+        // bypass hidpi code block in libglfw.js
+        // https://github.com/raysan5/raylib/pull/4945#issuecomment-2906956170
+        //------------------------------------------------------------------------
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); 
+    }
     else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // Avoid window being resizable
 
     // Disable FLAG_WINDOW_MINIMIZED, not supported on initialization
@@ -1662,6 +1670,9 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
         }
     }
 
+    // trigger resize event after a brief pause to ensure the canvas exists to resize
+    EM_ASM({ setTimeout(function() { window.dispatchEvent(new Event("resize")); }, 50); });
+
     return 1; // The event was consumed by the callback handler
 }
 
@@ -1683,7 +1694,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     // so the size of the canvas object is explicitly retrieved below
     int width = EM_ASM_INT( return window.innerWidth; );
     int height = EM_ASM_INT( return window.innerHeight; );
-
+    
     if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
     else if ((width > (int)CORE.Window.screenMax.width) && (CORE.Window.screenMax.width > 0)) width = CORE.Window.screenMax.width;
 
@@ -1691,6 +1702,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
 
     emscripten_set_canvas_element_size(GetCanvasId(), width, height);
+
+    glfwSetWindowSize(platform.handle, width, height); // inform glfw of the new size
 
     SetupViewport(width, height); // Reset viewport and projection matrix for new size
 
