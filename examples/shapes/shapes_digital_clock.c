@@ -61,7 +61,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - digital clock");
 
     // Initialize clock
@@ -69,7 +69,7 @@ int main(void)
         .mode = MODE_NORMAL,
 
         .second.angle = 45,
-        .second.length = 140,        
+        .second.length = 140,
         .second.thickness = 3,
         .second.color = BEIGE,
 
@@ -104,11 +104,11 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             DrawCircle(400, 225, 5, BLACK); // Clock center dot
-            
+
             DrawClock(myClock, (Vector2){ 400, 225 }); // Clock in selected mode
 
             DrawText("Press [SPACE] to switch clock mode", 10, 10, 20, DARKGRAY);
@@ -138,7 +138,7 @@ static void UpdateClock(Clock *clock)
     time(&rawtime);
     timeinfo = localtime(&rawtime);
 
-    // Updating time data    
+    // Updating time data
     clock->second.value = timeinfo->tm_sec;
     clock->minute.value = timeinfo->tm_min;
     clock->hour.value = timeinfo->tm_hour;
@@ -150,7 +150,7 @@ static void UpdateClock(Clock *clock)
     clock->minute.angle = (timeinfo->tm_min%60)*6.0f;
     clock->minute.angle += (timeinfo->tm_sec%60)*6/60.0f;
     clock->minute.angle -= 90;
-   
+
     clock->second.angle = (timeinfo->tm_sec%60)*6.0f;
     clock->second.angle -= 90;
 }
@@ -161,7 +161,7 @@ static void DrawClock(Clock clock, Vector2 centerPosition)
     if (clock.mode == MODE_HANDS_FREE)
     {
         DrawCircleLinesV(centerPosition, clock.minute.length, LIGHTGRAY);
-        
+
         DrawText(TextFormat("%i", clock.second.value), centerPosition.x + (clock.second.length - 10)*cosf(clock.second.angle*(float)(PI/180)) - DIGIT_SIZE/2, centerPosition.y + clock.second.length*sinf(clock.second.angle*(float)(PI/180)) - DIGIT_SIZE/2, DIGIT_SIZE, GRAY);
 
         DrawText(TextFormat("%i", clock.minute.value), clock.minute.origin.x + clock.minute.length*cosf(clock.minute.angle*(float)(PI/180)) - DIGIT_SIZE/2, centerPosition.y + clock.minute.length*sinf(clock.minute.angle*(float)(PI/180)) - DIGIT_SIZE/2, DIGIT_SIZE, RED);
@@ -171,11 +171,11 @@ static void DrawClock(Clock clock, Vector2 centerPosition)
     else if (clock.mode == MODE_NORMAL)
     {
         // Draw hand seconds
-        DrawRectanglePro((Rectangle){ centerPosition.x, centerPosition.y, clock.second.length, clock.second.thickness }, 
+        DrawRectanglePro((Rectangle){ centerPosition.x, centerPosition.y, clock.second.length, clock.second.thickness },
             (Vector2){ 0.0f, clock.second.thickness/2.0f }, clock.second.angle, clock.second.color);
 
         // Draw hand minutes
-        DrawRectanglePro((Rectangle){ centerPosition.x, centerPosition.y, clock.minute.length, clock.minute.thickness }, 
+        DrawRectanglePro((Rectangle){ centerPosition.x, centerPosition.y, clock.minute.length, clock.minute.thickness },
             (Vector2){ 0.0f, clock.minute.thickness/2.0f }, clock.minute.angle, clock.minute.color);
 
         // Draw hand hours
