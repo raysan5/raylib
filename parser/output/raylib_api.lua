@@ -4976,8 +4976,8 @@ return {
         {type = "Rectangle", name = "rec"},
         {type = "Color", name = "topLeft"},
         {type = "Color", name = "bottomLeft"},
-        {type = "Color", name = "topRight"},
-        {type = "Color", name = "bottomRight"}
+        {type = "Color", name = "bottomRight"},
+        {type = "Color", name = "topRight"}
       }
     },
     {
@@ -6141,7 +6141,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -6152,7 +6152,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }

@@ -721,7 +721,7 @@ void SetWindowIcon(Image image)
             bmask = 0x001F, amask = 0;
             depth = 16, pitch = image.width*2;
         } break;
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: 
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
         {
             // WARNING: SDL2 could be using BGR but SDL3 RGB
             rmask = 0xFF0000, gmask = 0x00FF00;
@@ -1697,8 +1697,8 @@ void PollInputEvents(void)
                         CORE.Input.Gamepad.axisCount[jid] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
                         CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                         CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+                        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
                         strncpy(CORE.Input.Gamepad.name[jid], SDL_GameControllerNameForIndex(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
-                        CORE.Input.Gamepad.name[jid][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
                     }
                     else
                     {

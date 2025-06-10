@@ -989,7 +989,7 @@ void PollInputEvents(void)
 
     if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
     {
-        RGFW_window_eventWait(platform.window, 0); // Wait for input events: keyboard/mouse/window events (callbacks) -> Update keys state
+        RGFW_window_eventWait(platform.window, -1); // Wait for input events: keyboard/mouse/window events (callbacks) -> Update keys state
         CORE.Time.previous = GetTime();
     }
 

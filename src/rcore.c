@@ -2500,7 +2500,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
 
 #if defined(SUPPORT_COMPRESSION_API)
     // Compress data and generate a valid DEFLATE stream
-    struct sdefl *sdefl = RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
+    struct sdefl *sdefl = (struct sdefl *)RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
     int bounds = sdefl_bound(dataSize);
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
 
@@ -2580,7 +2580,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
         outputCount += 4;
         i += 3;
     }
-    
+
     // Add required padding bytes
     for (int p = 0; p < padding; p++) encodedData[outputCount - p - 1] = '=';
 
@@ -2602,10 +2602,10 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     // every character in the corresponding ASCII position
     static const unsigned char base64DecodeTable[256] = {
         ['A'] =  0, ['B'] =  1, ['C'] =  2, ['D'] =  3, ['E'] =  4, ['F'] =  5, ['G'] =  6, ['H'] =  7,
-        ['I'] =  8, ['J'] =  9, ['K'] = 10, ['L'] = 11, ['M'] = 12, ['N'] = 13, ['O'] = 14, ['P'] = 15, 
+        ['I'] =  8, ['J'] =  9, ['K'] = 10, ['L'] = 11, ['M'] = 12, ['N'] = 13, ['O'] = 14, ['P'] = 15,
         ['Q'] = 16, ['R'] = 17, ['S'] = 18, ['T'] = 19, ['U'] = 20, ['V'] = 21, ['W'] = 22, ['X'] = 23, ['Y'] = 24, ['Z'] = 25,
-        ['a'] = 26, ['b'] = 27, ['c'] = 28, ['d'] = 29, ['e'] = 30, ['f'] = 31, ['g'] = 32, ['h'] = 33, 
-        ['i'] = 34, ['j'] = 35, ['k'] = 36, ['l'] = 37, ['m'] = 38, ['n'] = 39, ['o'] = 40, ['p'] = 41, 
+        ['a'] = 26, ['b'] = 27, ['c'] = 28, ['d'] = 29, ['e'] = 30, ['f'] = 31, ['g'] = 32, ['h'] = 33,
+        ['i'] = 34, ['j'] = 35, ['k'] = 36, ['l'] = 37, ['m'] = 38, ['n'] = 39, ['o'] = 40, ['p'] = 41,
         ['q'] = 42, ['r'] = 43, ['s'] = 44, ['t'] = 45, ['u'] = 46, ['v'] = 47, ['w'] = 48, ['x'] = 49, ['y'] = 50, ['z'] = 51,
         ['0'] = 52, ['1'] = 53, ['2'] = 54, ['3'] = 55, ['4'] = 56, ['5'] = 57, ['6'] = 58, ['7'] = 59,
         ['8'] = 60, ['9'] = 61, ['+'] = 62, ['/'] = 63
@@ -2747,7 +2747,7 @@ unsigned int *ComputeMD5(unsigned char *data, int dataSize)
 
     int newDataSize = ((((dataSize + 8)/64) + 1)*64) - 8;
 
-    unsigned char *msg = RL_CALLOC(newDataSize + 64, 1); // Initialize with '0' bits, allocating 64 extra bytes
+    unsigned char *msg = (unsigned char *)RL_CALLOC(newDataSize + 64, 1); // Initialize with '0' bits, allocating 64 extra bytes
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 
@@ -2837,7 +2837,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 
     int newDataSize = ((((dataSize + 8)/64) + 1)*64);
 
-    unsigned char *msg = RL_CALLOC(newDataSize, 1); // Initialize with '0' bits
+    unsigned char *msg = (unsigned char *)RL_CALLOC(newDataSize, 1); // Initialize with '0' bits
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 

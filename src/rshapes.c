@@ -786,7 +786,7 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color lef
 }
 
 // Draw a gradient-filled rectangle
-void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color topRight, Color bottomRight)
+void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color bottomRight, Color topRight)
 {
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
@@ -803,11 +803,11 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
         rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(rec.x, rec.y + rec.height);
 
-        rlColor4ub(topRight.r, topRight.g, topRight.b, topRight.a);
+        rlColor4ub(bottomRight.r, bottomRight.g, bottomRight.b, bottomRight.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(rec.x + rec.width, rec.y + rec.height);
 
-        rlColor4ub(bottomRight.r, bottomRight.g, bottomRight.b, bottomRight.a);
+        rlColor4ub(topRight.r, topRight.g, topRight.b, topRight.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();

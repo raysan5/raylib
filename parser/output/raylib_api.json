@@ -6010,11 +6010,11 @@
         },
         {
           "type": "Color",
-          "name": "topRight"
+          "name": "bottomRight"
         },
         {
           "type": "Color",
-          "name": "bottomRight"
+          "name": "topRight"
         }
       ]
     },
@@ -8302,7 +8302,7 @@
           "name": "dst"
         },
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {
@@ -8325,7 +8325,7 @@
           "name": "dst"
         },
         {
-          "type": "Vector2 *",
+          "type": "const Vector2 *",
           "name": "points"
         },
         {

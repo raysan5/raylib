@@ -948,7 +948,7 @@ int InitPlatform(void)
 
     TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
 
-    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
+    EGLConfig *configs = (EGLConfig *)RL_CALLOC(numConfigs, sizeof(*configs));
     if (!configs)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
@@ -1374,7 +1374,7 @@ static void InitEvdevInput(void)
             if ((strncmp("event", entity->d_name, strlen("event")) == 0) ||     // Search for devices named "event*"
                 (strncmp("mouse", entity->d_name, strlen("mouse")) == 0))       // Search for devices named "mouse*"
             {
-                sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+                snprintf(path, MAX_FILEPATH_LENGTH, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
                 ConfigureEvdevDevice(path);                                     // Configure the device if appropriate
             }
         }

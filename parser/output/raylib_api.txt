@@ -2356,8 +2356,8 @@ Function 239: DrawRectangleGradientEx() (5 input parameters)
   Param[1]: rec (type: Rectangle)
   Param[2]: topLeft (type: Color)
   Param[3]: bottomLeft (type: Color)
-  Param[4]: topRight (type: Color)
-  Param[5]: bottomRight (type: Color)
+  Param[4]: bottomRight (type: Color)
+  Param[5]: topRight (type: Color)
 Function 240: DrawRectangleLines() (5 input parameters)
   Name: DrawRectangleLines
   Return type: void
@@ -3185,7 +3185,7 @@ Function 352: ImageDrawTriangleFan() (4 input parameters)
   Return type: void
   Description: Draw a triangle fan defined by points within an image (first vertex is the center)
   Param[1]: dst (type: Image *)
-  Param[2]: points (type: Vector2 *)
+  Param[2]: points (type: const Vector2 *)
   Param[3]: pointCount (type: int)
   Param[4]: color (type: Color)
 Function 353: ImageDrawTriangleStrip() (4 input parameters)
@@ -3193,7 +3193,7 @@ Function 353: ImageDrawTriangleStrip() (4 input parameters)
   Return type: void
   Description: Draw a triangle strip defined by points within an image
   Param[1]: dst (type: Image *)
-  Param[2]: points (type: Vector2 *)
+  Param[2]: points (type: const Vector2 *)
   Param[3]: pointCount (type: int)
   Param[4]: color (type: Color)
 Function 354: ImageDraw() (5 input parameters)
