@@ -287,7 +287,6 @@ typedef Texture TextureCubemap;
 typedef struct RenderTexture {
     unsigned int id;        // OpenGL framebuffer object id
     Texture texture;        // Color buffer attachment texture
-    Texture depth;          // Depth buffer attachment texture
 } RenderTexture;
 
 // RenderTexture2D, same as RenderTexture
