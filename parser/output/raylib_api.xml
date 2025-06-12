@@ -119,10 +119,9 @@
             <Field type="int" name="mipmaps" desc="Mipmap levels, 1 by default" />
             <Field type="int" name="format" desc="Data format (PixelFormat type)" />
         </Struct>
-        <Struct name="RenderTexture" fieldCount="3" desc="RenderTexture, fbo for texture rendering">
+        <Struct name="RenderTexture" fieldCount="2" desc="RenderTexture, fbo for texture rendering">
             <Field type="unsigned int" name="id" desc="OpenGL framebuffer object id" />
             <Field type="Texture" name="texture" desc="Color buffer attachment texture" />
-            <Field type="Texture" name="depth" desc="Depth buffer attachment texture" />
         </Struct>
         <Struct name="NPatchInfo" fieldCount="6" desc="NPatchInfo, n-patch layout info">
             <Field type="Rectangle" name="source" desc="Texture source rectangle" />

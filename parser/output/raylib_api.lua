@@ -620,11 +620,6 @@ return {
           type = "Texture",
           name = "texture",
           description = "Color buffer attachment texture"
-        },
-        {
-          type = "Texture",
-          name = "depth",
-          description = "Depth buffer attachment texture"
         }
       }
     },

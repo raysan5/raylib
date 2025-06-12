@@ -356,12 +356,11 @@ Struct 08: Texture (5 fields)
   Field[3]: int height // Texture base height
   Field[4]: int mipmaps // Mipmap levels, 1 by default
   Field[5]: int format // Data format (PixelFormat type)
-Struct 09: RenderTexture (3 fields)
+Struct 09: RenderTexture (2 fields)
   Name: RenderTexture
   Description: RenderTexture, fbo for texture rendering
   Field[1]: unsigned int id // OpenGL framebuffer object id
   Field[2]: Texture texture // Color buffer attachment texture
-  Field[3]: Texture depth // Depth buffer attachment texture
 Struct 10: NPatchInfo (6 fields)
   Name: NPatchInfo
   Description: NPatchInfo, n-patch layout info
