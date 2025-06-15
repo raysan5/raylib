@@ -5532,6 +5532,10 @@ static Model LoadGLTF(const char *fileName)
 
                         // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined
 
+                        // make sure we don't leak this buffer if there are multiple attributes of the same type
+                        if (model.meshes[meshIndex].vertices)
+                            MemFree(model.meshes[meshIndex].vertices);
+
                         if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
                             // Init raylib mesh vertices to copy glTF attribute data
@@ -5557,6 +5561,10 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
+                        // make sure we don't leak this buffer if there are multiple attributes of the same type
+                        if (model.meshes[meshIndex].normals)
+                            MemFree(model.meshes[meshIndex].normals);
+
                         if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
                             // Init raylib mesh normals to copy glTF attribute data
@@ -5580,6 +5588,10 @@ static Model LoadGLTF(const char *fileName)
                     else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec3, float
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
+
+                        // make sure we don't leak this buffer if there are multiple attributes of the same type
+                        if (model.meshes[meshIndex].tangents)
+                            MemFree(model.meshes[meshIndex].tangents);
 
                         if ((attribute->type == cgltf_type_vec4) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
@@ -5651,8 +5663,21 @@ static Model LoadGLTF(const char *fileName)
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Texcoords attribute data format not supported, use vec2 float", fileName);
 
                         int index = mesh->primitives[p].attributes[j].index;
-                        if (index == 0) model.meshes[meshIndex].texcoords = texcoordPtr;
-                        else if (index == 1) model.meshes[meshIndex].texcoords2 = texcoordPtr;
+                        if (index == 0)
+                        {
+                            // make sure we don't leak this buffer if there are multiple attributes of the same type
+                            if (model.meshes[meshIndex].texcoords)
+                                MemFree(model.meshes[meshIndex].texcoords);
+
+                            model.meshes[meshIndex].texcoords = texcoordPtr;
+                        }
+                        else if (index == 1)
+                        {
+                            // make sure we don't leak this buffer if there are multiple attributes of the same type
+                            if (model.meshes[meshIndex].texcoords2)
+                                MemFree(model.meshes[meshIndex].texcoords2);
+                            model.meshes[meshIndex].texcoords2 = texcoordPtr;
+                        }
                         else
                         {
                             TRACELOG(LOG_WARNING, "MODEL: [%s] No more than 2 texture coordinates attributes supported", fileName);
@@ -5664,6 +5689,9 @@ static Model LoadGLTF(const char *fileName)
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // WARNING: SPECS: All components of each COLOR_n accessor element MUST be clamped to [0.0, 1.0] range
+                        // make sure we don't leak this buffer if there are multiple attributes of the same type
+                        if (model.meshes[meshIndex].colors)
+                            MemFree(model.meshes[meshIndex].colors);
 
                         if (attribute->type == cgltf_type_vec3)  // RGB
                         {
@@ -5782,6 +5810,10 @@ static Model LoadGLTF(const char *fileName)
 
                     model.meshes[meshIndex].triangleCount = (int)attribute->count/3;
 
+                    // make sure we don't leak this buffer if there are multiple attributes of the same type
+                    if (model.meshes[meshIndex].indices)
+                        MemFree(model.meshes[meshIndex].indices);
+
                     if (attribute->component_type == cgltf_component_type_r_16u)
                     {
                         // Init raylib mesh indices to copy glTF attribute data
@@ -5896,6 +5928,10 @@ static Model LoadGLTF(const char *fileName)
                         // if data is provided in any other format, it is converted to supported format but
                         // it could imply data loss (a warning message is issued in that case)
 
+                        // make sure we don't leak this buffer if there are multiple attributes of the same type
+                        if (model.meshes[meshIndex].boneIds)
+                            MemFree(model.meshes[meshIndex].boneIds);
+
                         if (attribute->type == cgltf_type_vec4)
                         {
                             if (attribute->component_type == cgltf_component_type_r_8u)
@@ -5938,6 +5974,10 @@ static Model LoadGLTF(const char *fileName)
                     else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)  // WEIGHTS_n (vec4, u8n/u16n/f32)
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
+
+                        // make sure we don't leak this buffer if there are multiple attributes of the same type
+                        if (model.meshes[meshIndex].boneWeights)
+                            MemFree(model.meshes[meshIndex].boneWeights);
 
                         if (attribute->type == cgltf_type_vec4)
                         {
