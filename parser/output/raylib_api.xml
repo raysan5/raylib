@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="584">
+    <Functions count="586">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2351,6 +2351,15 @@
             <Param type="float" name="spacing" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
+        <Function name="DrawTextGradientV" retType="void" paramCount="7" desc="Draw text with vertical gradient">
+            <Param type="Font" name="font" desc="" />
+            <Param type="const char *" name="text" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="float" name="fontSize" desc="" />
+            <Param type="float" name="spacing" desc="" />
+            <Param type="Color" name="topTint" desc="" />
+            <Param type="Color" name="bottomTint" desc="" />
+        </Function>
         <Function name="DrawTextPro" retType="void" paramCount="8" desc="Draw text using Font and pro parameters (rotation)">
             <Param type="Font" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
@@ -2367,6 +2376,14 @@
             <Param type="Vector2" name="position" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="DrawTextCodepointGradientV" retType="void" paramCount="6" desc="Draw one character (codepoint) with vertical gradient">
+            <Param type="Font" name="font" desc="" />
+            <Param type="int" name="codepoint" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="float" name="fontSize" desc="" />
+            <Param type="Color" name="topTint" desc="" />
+            <Param type="Color" name="bottomTint" desc="" />
         </Function>
         <Function name="DrawTextCodepoints" retType="void" paramCount="7" desc="Draw multiple character (codepoint)">
             <Param type="Font" name="font" desc="" />

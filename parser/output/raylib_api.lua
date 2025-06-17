@@ -6672,6 +6672,20 @@ return {
       }
     },
     {
+      name = "DrawTextGradientV",
+      description = "Draw text with vertical gradient",
+      returnType = "void",
+      params = {
+        {type = "Font", name = "font"},
+        {type = "const char *", name = "text"},
+        {type = "Vector2", name = "position"},
+        {type = "float", name = "fontSize"},
+        {type = "float", name = "spacing"},
+        {type = "Color", name = "topTint"},
+        {type = "Color", name = "bottomTint"}
+      }
+    },
+    {
       name = "DrawTextPro",
       description = "Draw text using Font and pro parameters (rotation)",
       returnType = "void",
@@ -6696,6 +6710,19 @@ return {
         {type = "Vector2", name = "position"},
         {type = "float", name = "fontSize"},
         {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "DrawTextCodepointGradientV",
+      description = "Draw one character (codepoint) with vertical gradient",
+      returnType = "void",
+      params = {
+        {type = "Font", name = "font"},
+        {type = "int", name = "codepoint"},
+        {type = "Vector2", name = "position"},
+        {type = "float", name = "fontSize"},
+        {type = "Color", name = "topTint"},
+        {type = "Color", name = "bottomTint"}
       }
     },
     {

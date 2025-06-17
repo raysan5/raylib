@@ -145,6 +145,7 @@ static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode
 #if defined(SUPPORT_FILEFORMAT_BDF)
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
+static void _DrawTextureGradientV(Texture2D texture, Rectangle source, Rectangle dest, Color topTint, Color bottomTint);
 static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -1169,6 +1170,12 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 // NOTE: chars spacing is NOT proportional to fontSize
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
+    DrawTextGradientV(font, text, position, fontSize, spacing, tint, tint);
+}
+
+// Draw text with vertical gradient
+void DrawTextGradientV(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color topTint, Color bottomTint)
+{
     if (font.texture.id == 0) font = GetFontDefault();  // Security check in case of not valid font
 
     int size = TextLength(text);    // Total size in bytes of the text, scanned by codepoints in loop
@@ -1195,7 +1202,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
+                DrawTextCodepointGradientV(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, topTint, bottomTint);
             }
 
             if (font.glyphs[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
@@ -1223,6 +1230,12 @@ void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, 
 // Draw one character (codepoint)
 void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint)
 {
+    DrawTextCodepointGradientV(font, codepoint, position, fontSize, tint, tint);
+}
+
+// Draw one character (codepoint) with vertical gradient
+void DrawTextCodepointGradientV(Font font, int codepoint, Vector2 position, float fontSize, Color topTint, Color bottomTint)
+{
     // Character index position in sprite font
     // NOTE: In case a codepoint is not available in the font, index returned points to '?'
     int index = GetGlyphIndex(font, codepoint);
@@ -1241,7 +1254,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
                          font.recs[index].width + 2.0f*font.glyphPadding, font.recs[index].height + 2.0f*font.glyphPadding };
 
     // Draw the character texture on the screen
-    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
+    _DrawTextureGradientV(font.texture, srcRec, dstRec, topTint, bottomTint);
 }
 
 // Draw multiple character (codepoints)
@@ -2592,5 +2605,65 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
     return glyphs;
 }
 #endif      // SUPPORT_FILEFORMAT_BDF
+
+// Draw texture with vertical gradient
+// Same as DrawTexturePro, but without origin and rotation parameters and with an additional color parameter.
+// The two parameters topTint and bottomTint determine the gradient.
+static void _DrawTextureGradientV(Texture2D texture, Rectangle source, Rectangle dest, Color topTint, Color bottomTint)
+{
+    // Check if texture is valid
+    if (texture.id > 0)
+    {
+        float width = (float)texture.width;
+        float height = (float)texture.height;
+
+        bool flipX = false;
+
+        if (source.width < 0) { flipX = true; source.width *= -1; }
+        if (source.height < 0) source.y -= source.height;
+
+        if (dest.width < 0) dest.width *= -1;
+        if (dest.height < 0) dest.height *= -1;
+
+        float x = dest.x;
+        float y = dest.y;
+        Vector2 topLeft = (Vector2){ x, y };
+        Vector2 topRight = (Vector2){ x + dest.width, y };
+        Vector2 bottomLeft = (Vector2){ x, y + dest.height };
+        Vector2 bottomRight = (Vector2){ x + dest.width, y + dest.height };
+
+        rlSetTexture(texture.id);
+        rlBegin(RL_QUADS);
+
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+            // Top-left corner for texture and quad
+            rlColor4ub(topTint.r, topTint.g, topTint.b, topTint.a);
+            if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
+            else rlTexCoord2f(source.x/width, source.y/height);
+            rlVertex2f(topLeft.x, topLeft.y);
+
+            // Bottom-left corner for texture and quad
+            rlColor4ub(bottomTint.r, bottomTint.g, bottomTint.b, bottomTint.a);
+            if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+            else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+            rlVertex2f(bottomLeft.x, bottomLeft.y);
+
+            // Bottom-right corner for texture and quad
+            rlColor4ub(bottomTint.r, bottomTint.g, bottomTint.b, bottomTint.a);
+            if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+            else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+            rlVertex2f(bottomRight.x, bottomRight.y);
+
+            // Top-right corner for texture and quad
+            rlColor4ub(topTint.r, topTint.g, topTint.b, topTint.a);
+            if (flipX) rlTexCoord2f(source.x/width, source.y/height);
+            else rlTexCoord2f((source.x + source.width)/width, source.y/height);
+            rlVertex2f(topRight.x, topRight.y);
+
+        rlEnd();
+        rlSetTexture(0);
+    }
+}
 
 #endif      // SUPPORT_MODULE_RTEXT
