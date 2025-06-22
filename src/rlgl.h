@@ -4178,6 +4178,9 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             RL_FREE(log);
         }
 
+        // Unload object allocated by glCreateShader(), 
+        // despite failing in the compilation process
+        glDeleteShader(shader);
         shader = 0;
     }
     else
