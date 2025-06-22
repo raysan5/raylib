@@ -3757,7 +3757,8 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 // Scan all files and directories recursively from a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
 {
-    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    // WARNING: Path can not be static or it will be reused between recursive function calls!
+    char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
 
     struct dirent *dp = NULL;
