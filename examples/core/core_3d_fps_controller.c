@@ -74,7 +74,7 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 
 void DrawLevel();
 
-void UpdateCameraAngle(Camera* camera, Vector2* rot, float headTimer, float walkLerp, Vector2 lean);
+void UpdateCameraAngle();
 
 void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
 
@@ -167,7 +167,7 @@ void UpdateDrawFrame(void)
     lean.x = Lerp(lean.x, sideway * 0.02f, 10.f * delta);
     lean.y = Lerp(lean.y, forward * 0.015f, 10.f * delta);
 
-    UpdateCameraAngle(&camera, &lookRotation, headTimer, walkLerp, lean);
+    UpdateCameraAngle();
 
     // Draw
     //----------------------------------------------------------------------------------
@@ -272,46 +272,46 @@ void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed
     }
 }
 
-void UpdateCameraAngle(Camera* camera, Vector2* rot, float headTimer, float walkLerp, Vector2 lean)
+void UpdateCameraAngle()
 {
     const Vector3 up = (Vector3){ 0.f, 1.f, 0.f };
     const Vector3 targetOffset = (Vector3){ 0.f, 0.f, -1.f };
 
     /* Left & Right */
-    Vector3 yaw = Vector3RotateByAxisAngle(targetOffset, up, rot->x);
+    Vector3 yaw = Vector3RotateByAxisAngle(targetOffset, up, lookRotation.x);
 
     // Clamp view up
     float maxAngleUp = Vector3Angle(up, yaw);
     maxAngleUp -= 0.001f; // avoid numerical errors
-    if ( -(rot->y) > maxAngleUp) { rot->y = -maxAngleUp; }
+    if ( -(lookRotation.y) > maxAngleUp) { lookRotation.y = -maxAngleUp; }
 
     // Clamp view down
     float maxAngleDown = Vector3Angle(Vector3Negate(up), yaw);
     maxAngleDown *= -1.0f; // downwards angle is negative
     maxAngleDown += 0.001f; // avoid numerical errors
-    if ( -(rot->y) < maxAngleDown) { rot->y = -maxAngleDown; }
+    if ( -(lookRotation.y) < maxAngleDown) { lookRotation.y = -maxAngleDown; }
 
     /* Up & Down */
     Vector3 right = Vector3Normalize(Vector3CrossProduct(yaw, up));
 
     // Rotate view vector around right axis
-    Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, -rot->y - lean.y);
+    Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, -lookRotation.y - lean.y);
 
     // Head animation
     // Rotate up direction around forward axis
     float _sin = sin(headTimer * PI);
     float _cos = cos(headTimer * PI);
     const float stepRotation = 0.01f;
-    camera->up = Vector3RotateByAxisAngle(up, pitch, _sin * stepRotation + lean.x);
+    camera.up = Vector3RotateByAxisAngle(up, pitch, _sin * stepRotation + lean.x);
 
     /* BOB */
     const float bobSide = 0.1f;
     const float bobUp = 0.15f;
     Vector3 bobbing = Vector3Scale(right, _sin * bobSide);
     bobbing.y = fabsf(_cos * bobUp);
-    camera->position = Vector3Add(camera->position, Vector3Scale(bobbing, walkLerp));
+    camera.position = Vector3Add(camera.position, Vector3Scale(bobbing, walkLerp));
 
-    camera->target = Vector3Add(camera->position, pitch);
+    camera.target = Vector3Add(camera.position, pitch);
 }
 
 
