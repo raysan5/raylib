@@ -356,5 +356,7 @@ void DrawLevel()
     towerPos.x *= -1;
     DrawCubeV(towerPos, towerSize, towerColor);
     DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
-}
 
+    // Red sun
+    DrawSphere((Vector3) { 300.f, 300.f, 0.f }, 100.f, (Color) { 255, 0, 0, 255 });
+}
