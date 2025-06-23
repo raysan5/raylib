@@ -19,8 +19,6 @@
 #include "raymath.h"
 #include "rcamera.h"
 
-//#define PLATFORM_WEB
-
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
