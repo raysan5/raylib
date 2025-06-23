@@ -72,6 +72,7 @@ struct finger {
   TouchAction action;
   int x;
   int y;
+  bool resetNextFrame;
 };
 
 struct touch {
@@ -315,6 +316,7 @@ static int init_touch(const char *dev_path, const char *origin_path) {
     platform.touch.fingers[i].x = -1;
     platform.touch.fingers[i].y = -1;
     platform.touch.fingers[i].action = TOUCH_ACTION_UP;
+    platform.touch.fingers[i].resetNextFrame = false;
 
     CORE.Input.Touch.currentTouchState[0] = 0;
     CORE.Input.Touch.previousTouchState[0] = 0;
@@ -619,6 +621,11 @@ void PollInputEvents(void) {
 
   for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
     CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
+    // caused by single frame down and up events
+    if (platform.touch.fingers[i].resetNextFrame) {
+      CORE.Input.Touch.currentTouchState[i] = 0;
+      platform.touch.fingers[i].resetNextFrame = false;
+    }
   }
 
   for (int i = 0; i < MAX_MOUSE_BUTTONS; ++i) {
@@ -627,8 +634,6 @@ void PollInputEvents(void) {
 
   CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
   CORE.Input.Touch.pointCount = 0;
-
-  int released_detected = 0;
 
   struct input_event event = {0};
   while (read(platform.touch.fd, &event, sizeof(struct input_event)) == sizeof(struct input_event)) {
@@ -649,12 +654,16 @@ void PollInputEvents(void) {
           }
 
         } else if (platform.touch.fingers[i].action == TOUCH_ACTION_UP) {
-          if (CORE.Input.Touch.currentTouchState[i] == 1) {
-            released_detected = 1;
-          }
           CORE.Input.Touch.position[i].x = -1;
           CORE.Input.Touch.position[i].y = -1;
-          CORE.Input.Touch.currentTouchState[i] = 0;
+          // if we received a touch down and up event in the same frame,
+          // delay up event by one frame so that API user needs no special handling
+          if (CORE.Input.Touch.previousTouchState[i] == 0) {
+            CORE.Input.Touch.currentTouchState[i] = 1;
+            platform.touch.fingers[i].resetNextFrame = true;  // mark to be reset next event update loop
+          } else {
+            CORE.Input.Touch.currentTouchState[i] = 0;
+          }
         }
       }
 
@@ -670,12 +679,6 @@ void PollInputEvents(void) {
         platform.touch.fingers[slot].x = platform.touch.canonical * (CORE.Window.screen.width - event.value) + ((1 - platform.touch.canonical) * event.value);
       }
     }
-  }
-
-  // hack for now to detect gestures in single frame
-  if (released_detected) {
-    CORE.Input.Touch.previousTouchState[0] = 1;
-    CORE.Input.Touch.currentTouchState[0] = 0;
   }
 
   // count how many fingers are left on the screen after processing all events
