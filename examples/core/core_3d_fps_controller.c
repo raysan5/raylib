@@ -102,7 +102,7 @@ int main(void)
             player.position.y + (BOTTOM_HEIGHT + headLerp),
             player.position.z,
     };
-    UpdateCameraAngle(&camera, &lookRotation, headTimer, walkLerp, lean);
+    UpdateCameraAngle();
     
     DisableCursor();  // Limit cursor to relative movement inside the window
 
