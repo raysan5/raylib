@@ -58,8 +58,8 @@ typedef struct {
     Sound soundJump;
 }Body;
 
-const int screenWidth = 1280;
-const int screenHeight = 720;
+const int screenWidth = 800;
+const int screenHeight = 450;
 Vector2 sensitivity = { 0.001f, 0.001f };
 
 Body player;
