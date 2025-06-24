@@ -1988,6 +1988,10 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
     return utf8;
 }
 #endif      // SUPPORT_TEXT_MANIPULATION
+#endif
+
+// The function GetCodepointNext is utilized in rcore_desktop_sdl.c:1610 for textinput
+#if defined(SUPPORT_MODULE_RTEXT) || defined(PLATFORM_DESKTOP_SDL)
 
 // Get next codepoint in a UTF-8 encoded text, scanning until '\0' is found
 // When an invalid UTF-8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
@@ -2154,6 +2158,10 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 
     return codepoint;
 }
+
+#endif
+
+#if defined(SUPPORT_MODULE_RTEXT)
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
