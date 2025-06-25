@@ -68,8 +68,14 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
+typedef enum {
+    FINGER_STATE_REMOVED = 0, // state when finger was removed and we handled its removal + default state
+    FINGER_STATE_REMOVING, // state when finger is currently being removed from panel (released event)
+    FINGER_STATE_TOUCHING, // state when finger is touching panel at any time
+} FingerState;
+
 struct finger {
-  TouchAction action;
+  FingerState state;
   int x;
   int y;
   bool resetNextFrame;
@@ -315,7 +321,7 @@ static int init_touch(const char *dev_path, const char *origin_path) {
   for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
     platform.touch.fingers[i].x = -1;
     platform.touch.fingers[i].y = -1;
-    platform.touch.fingers[i].action = TOUCH_ACTION_UP;
+    platform.touch.fingers[i].state = FINGER_STATE_REMOVED;
     platform.touch.fingers[i].resetNextFrame = false;
 
     CORE.Input.Touch.currentTouchState[0] = 0;
@@ -640,7 +646,7 @@ void PollInputEvents(void) {
     if (event.type == SYN_REPORT) { // synchronization frame. Expose completed events back to the library
 
       for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
-        if (platform.touch.fingers[i].action == TOUCH_ACTION_DOWN) {
+        if (platform.touch.fingers[i].state == FINGER_STATE_TOUCHING) {
 
           CORE.Input.Touch.position[i].x = platform.touch.fingers[i].x;
           CORE.Input.Touch.position[i].y = platform.touch.fingers[i].y;
@@ -653,9 +659,10 @@ void PollInputEvents(void) {
             CORE.Input.Mouse.currentPosition.y = platform.touch.fingers[i].y;
           }
 
-        } else if (platform.touch.fingers[i].action == TOUCH_ACTION_UP) {
+        } else if (platform.touch.fingers[i].state == FINGER_STATE_REMOVING) {
           CORE.Input.Touch.position[i].x = -1;
           CORE.Input.Touch.position[i].y = -1;
+
           // if we received a touch down and up event in the same frame,
           // delay up event by one frame so that API user needs no special handling
           if (CORE.Input.Touch.previousTouchState[i] == 0) {
@@ -664,6 +671,8 @@ void PollInputEvents(void) {
           } else {
             CORE.Input.Touch.currentTouchState[i] = 0;
           }
+
+          platform.touch.fingers[i].state = FINGER_STATE_REMOVED;
         }
       }
 
@@ -672,7 +681,7 @@ void PollInputEvents(void) {
       if (event.code == ABS_MT_SLOT) { // switch finger
         slot = event.value;
       } else if (event.code == ABS_MT_TRACKING_ID) { // finger on screen or not
-        platform.touch.fingers[slot].action = event.value == -1 ? TOUCH_ACTION_UP : TOUCH_ACTION_DOWN;
+        platform.touch.fingers[slot].state = event.value == -1 ? FINGER_STATE_REMOVING : FINGER_STATE_TOUCHING;
       } else if (event.code == ABS_MT_POSITION_X) {
         platform.touch.fingers[slot].y = (1 - platform.touch.canonical) * (CORE.Window.screen.height - event.value) + (platform.touch.canonical * event.value);
       } else if (event.code == ABS_MT_POSITION_Y) {
@@ -683,7 +692,7 @@ void PollInputEvents(void) {
 
   // count how many fingers are left on the screen after processing all events
   for (int i = 0; i < MAX_TOUCH_POINTS; ++i) {
-    CORE.Input.Touch.pointCount += platform.touch.fingers[i].action != TOUCH_ACTION_UP;
+    CORE.Input.Touch.pointCount += platform.touch.fingers[i].state == FINGER_STATE_TOUCHING;
   }
 }
 
