@@ -289,10 +289,9 @@ static int init_egl () {
      return -1;
    }
 
-   EGLBoolean ok = eglSwapInterval(platform.egl.display, FLAG_VSYNC_HINT ? 1 : 0);
+   EGLBoolean ok = eglSwapInterval(platform.egl.display, FLAG_VSYNC_HINT ? 10 : 0);
    if (ok == EGL_FALSE) {
-     TRACELOG(LOG_WARNING, "eglSwapInterval() failed: 0x%04x", eglGetError());
-//     TRACELOG(LOG_WARNING, "COMMA: eglSwapInterval failed. Error code: %s", eglGetErrorString(eglGetError()));
+     TRACELOG(LOG_WARNING, "COMMA: eglSwapInterval failed. Error code: %s", eglGetErrorString(eglGetError()));
      return -1;
    }
 
