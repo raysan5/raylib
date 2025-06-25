@@ -296,11 +296,6 @@ static int init_egl () {
      return -1;
    }
 
-   EGLint interval = 0;
-   eglQueryString(platform.egl.display, EGL_EXTENSIONS);
-   eglQuerySurface(platform.egl.display, surface, EGL_SWAP_INTERVAL, &interval);
-   TRACELOG(LOG_INFO, "COMMA: swap-interval actually in use = %d", interval);
-
    EGLint minInt = 0, maxInt = 0;
    eglGetConfigAttrib(platform.egl.display, config, EGL_MIN_SWAP_INTERVAL, &minInt);
    eglGetConfigAttrib(platform.egl.display, config, EGL_MAX_SWAP_INTERVAL, &maxInt);
