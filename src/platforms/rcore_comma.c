@@ -212,7 +212,7 @@ static int init_wayland(int width, int height) {
   platform.wayland.wl_surface = wl_compositor_create_surface(platform.wayland.wl_compositor);
 
   // apply rotation transform to the buffer of the surface
-//  wl_surface_set_buffer_transform(platform.wayland.wl_surface, WL_OUTPUT_TRANSFORM_270);
+  wl_surface_set_buffer_transform(platform.wayland.wl_surface, WL_OUTPUT_TRANSFORM_270);
 
   platform.wayland.wl_shell_surface = wl_shell_get_shell_surface(platform.wayland.wl_shell, platform.wayland.wl_surface);
   wl_shell_surface_add_listener(platform.wayland.wl_shell_surface, &wl_shell_surface_listener, NULL);
