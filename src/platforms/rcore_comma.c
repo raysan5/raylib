@@ -289,13 +289,17 @@ static int init_egl () {
      return -1;
    }
 
-   // > 1 is not supported, and FLAG_VSYNC_HINT is always set for some reason
-//   EGLBoolean ok = eglSwapInterval(platform.egl.display, FLAG_VSYNC_HINT ? 1 : 0);
-   EGLBoolean ok = eglSwapInterval(platform.egl.display, 0);
+   // > 1 is not supported
+   EGLBoolean ok = eglSwapInterval(platform.egl.display, (CORE.Window.flags & FLAG_VSYNC_HINT) ? 1 : 0);
    if (ok == EGL_FALSE) {
      TRACELOG(LOG_WARNING, "COMMA: eglSwapInterval failed. Error code: %s", eglGetErrorString(eglGetError()));
      return -1;
    }
+
+   EGLint interval = 0;
+   eglQueryString(dpy, EGL_EXTENSIONS);                 // check for EGL_BUFFER_AGE_EXT etc.
+   eglQuerySurface(dpy, surface, EGL_SWAP_INTERVAL, &interval);
+   TRACELOG(LOG_INFO, "COMMA: swap-interval actually in use = %d", interval);
 
    // enable depth testing. Not necessary if only doing 2D
    glEnable(GL_DEPTH_TEST);
