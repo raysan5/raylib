@@ -297,9 +297,14 @@ static int init_egl () {
    }
 
    EGLint interval = 0;
-   eglQueryString(dpy, EGL_EXTENSIONS);                 // check for EGL_BUFFER_AGE_EXT etc.
-   eglQuerySurface(dpy, surface, EGL_SWAP_INTERVAL, &interval);
+   eglQueryString(platform.egl.display, EGL_EXTENSIONS);
+   eglQuerySurface(platform.egl.display, surface, EGL_SWAP_INTERVAL, &interval);
    TRACELOG(LOG_INFO, "COMMA: swap-interval actually in use = %d", interval);
+
+   EGLint minInt = 0, maxInt = 0;
+   eglGetConfigAttrib(platform.egl.display, config, EGL_MIN_SWAP_INTERVAL, &minInt);
+   eglGetConfigAttrib(platform.egl.display, config, EGL_MAX_SWAP_INTERVAL, &maxInt);
+   TRACELOG(LOG_INFO, "COMMA: swap-interval supported range = %d … %d", minInt, maxInt);
 
    // enable depth testing. Not necessary if only doing 2D
    glEnable(GL_DEPTH_TEST);
