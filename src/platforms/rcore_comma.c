@@ -278,6 +278,11 @@ static int init_egl () {
      return -1;
    }
 
+   EGLBoolean ok = eglSwapInterval(platform.egl.display, FLAG_VSYNC_HINT ? 1 : 0);
+   if (ok == EGL_FALSE) {
+     TRACELOG(LOG_WARNING, "COMMA: eglSwapInterval failed (vsync %s): 0x%04x", FLAG_VSYNC_HINT ? "ON" : "OFF", eglGetError());
+   }
+
    platform.egl.context = eglCreateContext(platform.egl.display, config, EGL_NO_CONTEXT, context_config);
    if (platform.egl.context == EGL_NO_CONTEXT) {
      TRACELOG(LOG_WARNING, "COMMA: Failed to create an OpenGL ES context. Error code: %s", eglGetErrorString(eglGetError()));
