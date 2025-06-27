@@ -13,19 +13,15 @@ out vec4 finalColor;
 
 // NOTE: Add your custom variables here
 
-// NOTE: Render size values should be passed from code
-const float renderWidth = 800;
-const float renderHeight = 450;
-
 float radius = 250.0;
 float angle = 0.8;
 
+uniform vec2 size   = vec2(800.0, 450.0);
 uniform vec2 center = vec2(200.0, 200.0);
 
 void main()
 {
-    vec2 texSize = vec2(renderWidth, renderHeight);
-    vec2 tc = fragTexCoord*texSize;
+    vec2 tc = fragTexCoord*size;
     tc -= center;
 
     float dist = length(tc);
@@ -41,7 +37,7 @@ void main()
     }
 
     tc += center;
-    vec4 color = texture(texture0, tc/texSize)*colDiffuse*fragColor;;
+    vec4 color = texture(texture0, tc/size)*colDiffuse*fragColor;;
 
     finalColor = vec4(color.rgb, 1.0);;
 }
