@@ -585,9 +585,8 @@ fn addExamples(
                 }
 
                 exe_lib.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
-                // addAssets(b, exe_lib);
-                // Create the output directory because emcc can't do it.
 
+                // Create the output directory because emcc can't do it.
                 const emccOutputDirExample = b.pathJoin(&.{ emccOutputDir, name, std.fs.path.sep_str });
                 const mkdir_command = switch (builtin.os.tag) {
                     .windows => b.addSystemCommand(&.{ "cmd.exe", "/c", "if", "not", "exist", emccOutputDirExample, "mkdir", emccOutputDirExample }),
@@ -628,7 +627,6 @@ fn addExamples(
                 }
 
                 const run_step = emscriptenRunStep(b, emsdk_dep, emccOutputDirExampleWithFile) catch |err| {
-                    // do some stuff, maybe log an error
                     std.debug.print("EmscriptenRunStep error: {}\n", .{err});
                     continue;
                 };
