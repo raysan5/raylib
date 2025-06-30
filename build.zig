@@ -108,9 +108,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "-D_GNU_SOURCE",
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
-        // This is off by default but some linux distributions have it on by default
-        // No Stack Protector is set to prevent the issues when running the examples for emscripten
-        "-fno-stack-protector",
     });
 
     if (options.shared) {
@@ -365,7 +362,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
-            // Include emscripten for cross compilation
             if (b.lazyDependency("emsdk", .{})) |dep| {
                 if (try emSdkSetupStep(b, dep)) |emSdkStep| {
                     raylib.step.dependOn(&emSdkStep.step);
@@ -561,19 +557,17 @@ fn addExamples(
             });
             exe_lib.addCSourceFile(.{
                 .file = b.path(path),
-                .flags = &.{
-                    "-fno-stack-protector",
-                },
+                .flags = &.{},
             });
             exe_lib.linkLibC();
-            exe_lib.rdynamic = true;
 
-            exe_lib.root_module.addCMacro("PLATFORM_WEB", "");
-            exe_lib.shared_memory = false;
-            exe_lib.root_module.single_threaded = false;
-
+            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+                //TODO: Make rlgl_standalone example work
+                continue;
+            }
             if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
-                exe_lib.addIncludePath(b.path("src/external"));
+                //TODO: Make raylib_opengl_interop example work
+                continue;
             }
 
             exe_lib.linkLibrary(raylib);
@@ -593,7 +587,7 @@ fn addExamples(
                     else => b.addSystemCommand(&.{ "mkdir", "-p", emccOutputDirExample }),
                 };
 
-                const emcc_exe = switch (builtin.os.tag) { // TODO bundle emcc as a build dependency
+                const emcc_exe = switch (builtin.os.tag) {
                     .windows => "emcc.bat",
                     else => "emcc",
                 };
@@ -608,6 +602,7 @@ fn addExamples(
                     "-sFULL-ES3=1",
                     "-sUSE_GLFW=3",
                     "-sSTACK_OVERFLOW_CHECK=1",
+                    "-sEXPORTED_RUNTIME_METHODS=['requestFullscreen']",
                     "-sASYNCIFY",
                     "-O0",
                     "--emrun",
@@ -626,10 +621,7 @@ fn addExamples(
                     emcc_command.step.dependOn(&item.step);
                 }
 
-                const run_step = emscriptenRunStep(b, emsdk_dep, emccOutputDirExampleWithFile) catch |err| {
-                    std.debug.print("EmscriptenRunStep error: {}\n", .{err});
-                    continue;
-                };
+                const run_step = try emscriptenRunStep(b, emsdk_dep, emccOutputDirExampleWithFile);
                 run_step.step.dependOn(&emcc_command.step);
                 run_step.addArg("--no_browser");
                 const run_option = b.step(name, name);
