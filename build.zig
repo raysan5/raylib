@@ -48,7 +48,7 @@ fn emSdkSetupStep(b: *std.Build, emsdk: *std.Build.Dependency) !?*std.Build.Step
     }
 }
 
-// Adaoted from Not-Nik/raylib-zig
+// Adapted from Not-Nik/raylib-zig
 fn emscriptenRunStep(b: *std.Build, emsdk: *std.Build.Dependency, examplePath: []const u8) !*std.Build.Step.Run {
     const dot_emsc_path = emsdk.path("upstream/emscripten/cache/sysroot/include").getPath(b);
     // If compiling on windows , use emrun.bat.
