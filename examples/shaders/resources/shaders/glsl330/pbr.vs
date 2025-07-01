@@ -36,7 +36,7 @@ void main()
 
     fragTexCoord = vertexTexCoord*2.0;
     fragNormal = normalize(normalMatrix*vertexNormal);
-    vec3 fragTangent = normalize(normalMatrix*vertexTangent.xyz) * vertexTangent.w;
+    vec3 fragTangent = normalize(normalMatrix*vertexTangent.xyz);
     fragTangent = normalize(fragTangent - dot(fragTangent, fragNormal)*fragNormal);
     vec3 fragBinormal = normalize(normalMatrix*vertexBinormal);
     fragBinormal = cross(fragNormal, fragTangent);
