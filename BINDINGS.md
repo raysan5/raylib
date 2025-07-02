@@ -18,6 +18,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [cl-raylib](https://github.com/longlene/cl-raylib)                                       | 4.0              | [Common Lisp](https://common-lisp.net)                               | MIT                  |
 | [claylib/wrap](https://github.com/defun-games/claylib)                                   | 4.5              | [Common Lisp](https://common-lisp.net)                               | Zlib                 |
 | [claw-raylib](https://github.com/bohonghuang/claw-raylib)                                | **auto**         | [Common Lisp](https://common-lisp.net)                               | Apache-2.0           |
+| [raylib](https://github.com/fosskers/raylib)                                             | 5.5              | [Common Lisp](https://common-lisp.net)                               | MPL-2.0              |
 | [chez-raylib](https://github.com/Yunoinsky/chez-raylib)                                  | **auto**         | [Chez Scheme](https://cisco.github.io/ChezScheme)                    | GPLv3                |
 | [CLIPSraylib](https://github.com/mrryanjohnston/CLIPSraylib)                             | **auto**         | [CLIPS](https://www.clipsrules.net/)                                 | MIT                  |
 | [raylib-cr](https://github.com/sol-vin/raylib-cr)                                        | 4.6-dev (5e1a81) | [Crystal](https://crystal-lang.org)                                  | Apache-2.0           |
@@ -50,7 +51,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-luajit-generated](https://github.com/james2doyle/raylib-luajit-generated)        | 5.5              | [Lua](http://www.lua.org)                                            | MIT                  |
 | [raylib-matte](https://github.com/jcorks/raylib-matte)                                   | 4.6-dev          | [Matte](https://github.com/jcorks/matte)                             |  **???**             |
 | [Raylib.nelua](https://github.com/AuzFox/Raylib.nelua)                                   | **5.5**          | [nelua](https://nelua.io)                                            | Zlib                 |
-| [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 5.6-dev              | [Ruby](https://www.ruby-lang.org/en)                                 | Zlib                 |
+| [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 5.6-dev          | [Ruby](https://www.ruby-lang.org/en)                                 | Zlib                 |
 | [naylib](https://github.com/planetis-m/naylib)                                           | **5.6-dev**      | [Nim](https://nim-lang.org)                                          | MIT                  |
 | [node-raylib](https://github.com/RobLoach/node-raylib)                                   | 4.5              | [Node.js](https://nodejs.org/en)                                     | Zlib                 |
 | [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.5**          | [Odin](https://odin-lang.org)                                        | BSD-3Clause          |

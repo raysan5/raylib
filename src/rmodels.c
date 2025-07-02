@@ -5577,7 +5577,7 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Normal attribute data format not supported, use vec3 float", fileName);
                     }
-                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec3, float
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec4, float, w is tangent basis sign
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
@@ -5593,10 +5593,10 @@ static Model LoadGLTF(const char *fileName)
                             float *tangents = model.meshes[meshIndex].tangents;
                             for (unsigned int k = 0; k < attribute->count; k++)
                             {
-                                Vector3 tt = Vector3Transform((Vector3){ tangents[3*k], tangents[3*k+1], tangents[3*k+2] }, worldMatrix);
-                                tangents[3*k] = tt.x;
-                                tangents[3*k+1] = tt.y;
-                                tangents[3*k+2] = tt.z;
+                                Vector3 tt = Vector3Transform((Vector3){ tangents[4*k], tangents[4*k+1], tangents[4*k+2] }, worldMatrix);
+                                tangents[4*k] = tt.x;
+                                tangents[4*k+1] = tt.y;
+                                tangents[4*k+2] = tt.z;
                             }
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangent attribute data format not supported, use vec4 float", fileName);
