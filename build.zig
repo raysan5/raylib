@@ -60,7 +60,7 @@ fn emscriptenRunStep(b: *std.Build, emsdk: *std.Build.Dependency, examplePath: [
     defer b.allocator.free(emrun_run_arg);
 
     if (b.sysroot == null) {
-        emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}", .{emrunExe});
+        emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}" ++ std.fs.path.sep_str ++ "{s}", .{ emsdk.path("upstream/emscripten").getPath(b), emrunExe });
     } else {
         emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}" ++ std.fs.path.sep_str ++ "{s}", .{ dot_emsc_path, emrunExe });
     }
