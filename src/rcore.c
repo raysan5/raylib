@@ -295,6 +295,7 @@ typedef struct CoreData {
         Point position;                     // Window position (required on fullscreen toggle)
         Point previousPosition;             // Window previous position (required on borderless windowed toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
+        Size initScreen;                    // when init window, Screen width and height (used render area)
         Size screen;                        // Screen width and height (used render area)
         Size previousScreen;                // Screen previous width and height (required on borderless windowed toggle)
         Size currentFbo;                    // Current render width and height (depends on active fbo)
@@ -668,6 +669,9 @@ void InitWindow(int width, int height, const char *title)
     // Initialize window data
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+    CORE.Window.initScreen.width = width;
+    CORE.Window.initScreen.height = height;
+
     CORE.Window.eventWaiting = false;
     CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
