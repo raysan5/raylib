@@ -786,7 +786,7 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color lef
 }
 
 // Draw a gradient-filled rectangle
-void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color bottomRight, Color topRight)
+void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color topRight, Color bottomRight)
 {
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
