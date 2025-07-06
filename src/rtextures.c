@@ -2102,8 +2102,8 @@ void ImageBlurGaussian(Image *image, int blurSize)
     Color *pixels = LoadImageColors(*image);
 
     // Loop switches between pixelsCopy1 and pixelsCopy2
-    Vector4 *pixelsCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *pixelsCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *pixelsCopy1 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *pixelsCopy2 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
 
     for (int i = 0; i < (image->height*image->width); i++)
     {
@@ -2251,8 +2251,8 @@ void ImageKernelConvolution(Image *image, const float *kernel, int kernelSize)
 
     Color *pixels = LoadImageColors(*image);
 
-    Vector4 *imageCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *temp = RL_MALLOC(kernelSize*sizeof(Vector4));
+    Vector4 *imageCopy2 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *temp = (Vector4 *)RL_MALLOC(kernelSize*sizeof(Vector4));
 
     for (int i = 0; i < kernelSize; i++)
     {
@@ -3891,7 +3891,7 @@ void ImageDrawTriangleLines(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Colo
 }
 
 // Draw a triangle fan defined by points within an image (first vertex is the center)
-void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color color)
+void ImageDrawTriangleFan(Image *dst, const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
@@ -3903,7 +3903,7 @@ void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color col
 }
 
 // Draw a triangle strip defined by points within an image
-void ImageDrawTriangleStrip(Image *dst, Vector2 *points, int pointCount, Color color)
+void ImageDrawTriangleStrip(Image *dst, const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
@@ -5148,10 +5148,10 @@ Color GetColor(unsigned int hexValue)
 {
     Color color;
 
-    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
-    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
-    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
-    color.a = (unsigned char)hexValue & 0xFF;
+    color.r = (unsigned char)(hexValue >> 24) & 0xff;
+    color.g = (unsigned char)(hexValue >> 16) & 0xff;
+    color.b = (unsigned char)(hexValue >> 8) & 0xff;
+    color.a = (unsigned char)hexValue & 0xff;
 
     return color;
 }
@@ -5391,17 +5391,16 @@ static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
 
-    union
-    {
+    union {
         float fm;
         unsigned int ui;
     } uni;
 
-    const unsigned int e = (x & 0x7C00) >> 10; // Exponent
-    const unsigned int m = (x & 0x03FF) << 13; // Mantissa
+    const unsigned int e = (x & 0x7c00) >> 10; // Exponent
+    const unsigned int m = (x & 0x03cc) << 13; // Mantissa
     uni.fm = (float)m;
     const unsigned int v = uni.ui >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
-    uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
+    uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007fe000)); // sign : normalized : denormalized
 
     result = uni.fm;
 
@@ -5413,18 +5412,17 @@ static unsigned short FloatToHalf(float x)
 {
     unsigned short result = 0;
 
-    union
-    {
+    union {
         float fm;
         unsigned int ui;
     } uni;
     uni.fm = x;
 
     const unsigned int b = uni.ui + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
-    const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
-    const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
+    const unsigned int e = (b & 0x7f800000) >> 23; // Exponent
+    const unsigned int m = b & 0x007fffff; // Mantissa; in line below: 0x007ff000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
 
-    result = (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7FFF; // sign : normalized : denormalized : saturate
+    result = (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7c00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007ff000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7fff; // sign : normalized : denormalized : saturate
 
     return result;
 }

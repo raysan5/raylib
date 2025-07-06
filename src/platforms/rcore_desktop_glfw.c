@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_desktop - Functions to manage window, graphics device and inputs
+*   rcore_desktop_glfw - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: DESKTOP: GLFW
 *       - Windows (Win32, Win64)
@@ -130,9 +130,9 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 static void JoystickCallback(int jid, int event);                                           // GLFW3 Joystick Connected/Disconnected Callback
 
 // Wrappers used by glfwInitAllocator
-static void* AllocateWrapper(size_t size, void* user);                                     // GLFW3 GLFWallocatefun, wrapps around RL_MALLOC macro
-static void* ReallocateWrapper(void* block, size_t size, void* user);                      // GLFW3 GLFWreallocatefun, wrapps around RL_MALLOC macro
-static void DeallocateWrapper(void* block, void* user);                                    // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
+static void *AllocateWrapper(size_t size, void *user);                                     // GLFW3 GLFWallocatefun, wrapps around RL_MALLOC macro
+static void *ReallocateWrapper(void *block, size_t size, void *user);                      // GLFW3 GLFWreallocatefun, wrapps around RL_MALLOC macro
+static void DeallocateWrapper(void *block, void *user);                                    // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -576,7 +576,7 @@ void SetWindowIcons(Image *images, int count)
     else
     {
         int valid = 0;
-        GLFWimage *icons = RL_CALLOC(count, sizeof(GLFWimage));
+        GLFWimage *icons = (GLFWimage *)RL_CALLOC(count, sizeof(GLFWimage));
 
         for (int i = 0; i < count; i++)
         {
@@ -1238,7 +1238,7 @@ void PollInputEvents(void)
                 }
             }
 
-            // Get current axis state
+            // Get current state of axes
             const float *axes = state.axes;
 
             for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1); k++)
@@ -1246,7 +1246,7 @@ void PollInputEvents(void)
                 CORE.Input.Gamepad.axisState[i][k] = axes[k];
             }
 
-            // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather axis)
+            // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather as axes)
             if (CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1f)
             {
                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = 1;
@@ -1300,17 +1300,17 @@ static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
 // We need to provide these because GLFWallocator expects function pointers with specific signatures.
 // Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch.
 // https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
-static void* AllocateWrapper(size_t size, void* user)
+static void *AllocateWrapper(size_t size, void *user)
 {
     (void)user;
     return RL_MALLOC(size);
 }
-static void* ReallocateWrapper(void* block, size_t size, void* user)
+static void *ReallocateWrapper(void *block, size_t size, void *user)
 {
     (void)user;
     return RL_REALLOC(block, size);
 }
-static void DeallocateWrapper(void* block, void* user)
+static void DeallocateWrapper(void *block, void *user)
 {
     (void)user;
     RL_FREE(block);
@@ -1327,6 +1327,7 @@ int InitPlatform(void)
         .reallocate = ReallocateWrapper,
         .user = NULL, // RL_*ALLOC macros are not capable of handling user-provided data
     };
+
     glfwInitAllocator(&allocator);
 
 #if defined(__APPLE__)
@@ -1696,6 +1697,8 @@ int InitPlatform(void)
     // Retrieve gamepad names
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
+        // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
+        // we can get a not-NULL terminated string, so, we only copy up to (MAX_GAMEPAD_NAME_LENGTH - 1)
         if (glfwJoystickPresent(i)) strncpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i), MAX_GAMEPAD_NAME_LENGTH - 1);
     }
     //----------------------------------------------------------------------------
@@ -1753,7 +1756,7 @@ static void ErrorCallback(int error, const char *description)
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // WARNING: On window minimization, callback is called,
-    // but we don't want to change internal screen values, it breaks things 
+    // but we don't want to change internal screen values, it breaks things
     if ((width == 0) || (height == 0)) return;
 
     // Reset viewport and projection matrix for new size
@@ -1973,6 +1976,9 @@ static void JoystickCallback(int jid, int event)
 {
     if (event == GLFW_CONNECTED)
     {
+        // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
+        // we can get a not-NULL terminated string, so, we clean destination and only copy up to -1
+        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
         strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
     }
     else if (event == GLFW_DISCONNECTED)

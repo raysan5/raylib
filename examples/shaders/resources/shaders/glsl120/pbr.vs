@@ -4,7 +4,7 @@
 attribute vec3 vertexPosition;
 attribute vec2 vertexTexCoord;
 attribute vec3 vertexNormal;
-attribute vec3 vertexTangent;
+attribute vec4 vertexTangent;
 attribute vec4 vertexColor;
 
 // Input uniform values
@@ -52,7 +52,7 @@ mat3 transpose(mat3 m)
 void main()
 {
     // Compute binormal from vertex normal and tangent
-    vec3 vertexBinormal = cross(vertexNormal, vertexTangent);
+    vec3 vertexBinormal = cross(vertexNormal, vertexTangent.xyz) * vertexTangent.w;
 
     // Compute fragment normal based on normal transformations
     mat3 normalMatrix = transpose(inverse(mat3(matModel)));
@@ -62,7 +62,7 @@ void main()
 
     fragTexCoord = vertexTexCoord*2.0;
     fragNormal = normalize(normalMatrix*vertexNormal);
-    vec3 fragTangent = normalize(normalMatrix*vertexTangent);
+    vec3 fragTangent = normalize(normalMatrix*vertexTangent.xyz);
     fragTangent = normalize(fragTangent - dot(fragTangent, fragNormal)*fragNormal);
     vec3 fragBinormal = normalize(normalMatrix*vertexBinormal);
     fragBinormal = cross(fragNormal, fragTangent);
