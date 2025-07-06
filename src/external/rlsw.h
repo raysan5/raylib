@@ -1312,10 +1312,10 @@ static inline void sw_framebuffer_fill(void* colorPtr, void* depthPtr, int size,
     // Calculate and pack 5:6:5 color
     // Scale color components to the max value for each bit depth and round
     uint16_t r16 = (uint16_t)(color[0] * 31.0f + 0.5f);
-    uint16_t r16 = (uint16_t)(color[1] * 63.0f + 0.5f);
+    uint16_t g16 = (uint16_t)(color[1] * 63.0f + 0.5f);
     uint16_t b16 = (uint16_t)(color[2] * 31.0f + 0.5f);
     // Pack the components into a 16-bit value
-    uint16_t packedColor = ((r16 & 0x1F) << 11) | ((r16 & 0x3F) << 5) | (b16 & 0x1F);
+    uint16_t packedColor = ((r16 & 0x1F) << 11) | ((g16 & 0x3F) << 5) | (b16 & 0x1F);
     uint16_t* cptr = (uint16_t*)colorPtr;
 #elif (SW_COLOR_BUFFER_BITS == 24)
     // Calculate 8:8:8 color components
