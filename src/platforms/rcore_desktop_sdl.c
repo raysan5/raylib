@@ -1621,7 +1621,7 @@ void PollInputEvents(void)
                     unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, textLen);
                     #else
                     int codepointSize = 0;
-                    codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);
+                    unsigned int codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);
                     #endif
                     CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = codepoint;
                     CORE.Input.Keyboard.charPressedQueueCount++;
