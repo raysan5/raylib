@@ -79,10 +79,10 @@
 
 typedef struct {
     struct gbm_bo *bo;
-    uint32_t fb_id;  // DRM framebuffer ID
+    uint32_t fbId;  // DRM framebuffer ID
 } FramebufferCache;
 
-static FramebufferCache fbCache[MAX_CACHED_BOS];
+static FramebufferCache fbCache[MAX_CACHED_BOS] = {0};
 static volatile int fbCacheCount = 0;
 static volatile bool pendingFlip = false;
 static bool crtcSet = false;
@@ -570,13 +570,14 @@ void DisableCursor(void)
 }
 
 #if defined(SUPPORT_DRM_CACHE)
-static void drm_fb_destroy_callback(struct gbm_bo *bo, void *data) {
-    uint32_t fb_id = (uintptr_t)data;
+//callback to destroy cached framebuffer, set by gbm_bo_set_user_data()
+static void DestroyFrameBufferCallback(struct gbm_bo *bo, void *data) {
+    uint32_t fbId = (uintptr_t)data;
     // Remove from cache
     for (int i = 0; i < fbCacheCount; i++) {
         if (fbCache[i].bo == bo) {
-            TRACELOG(LOG_INFO, "DRM: fb removed %u", (uintptr_t)fb_id);
-            drmModeRmFB(platform.fd, fbCache[i].fb_id); // Release DRM FB
+            TRACELOG(LOG_INFO, "DRM: fb removed %u", (uintptr_t)fbId);
+            drmModeRmFB(platform.fd, fbCache[i].fbId); // Release DRM FB
             // Shift remaining entries
             for (int j = i; j < fbCacheCount - 1; j++) {
                 fbCache[j] = fbCache[j + 1];
@@ -588,11 +589,11 @@ static void drm_fb_destroy_callback(struct gbm_bo *bo, void *data) {
 }
 
 // Create or retrieve cached DRM FB for BO
-static uint32_t get_or_create_fb_for_bo(struct gbm_bo *bo) {
+static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo) {
     // Try to find existing cache entry
     for (int i = 0; i < fbCacheCount; i++) {
         if (fbCache[i].bo == bo) {
-            return fbCache[i].fb_id;
+            return fbCache[i].fbId;
         }
     }
 
@@ -607,21 +608,21 @@ static uint32_t get_or_create_fb_for_bo(struct gbm_bo *bo) {
     uint32_t width = gbm_bo_get_width(bo);
     uint32_t height = gbm_bo_get_height(bo);
 
-    uint32_t fb_id;
-    if (drmModeAddFB(platform.fd, width, height, 24, 32, stride, handle, &fb_id)) {
+    uint32_t fbId;
+    if (drmModeAddFB(platform.fd, width, height, 24, 32, stride, handle, &fbId)) {
         //rmModeAddFB failed
         return 0;
     }
 
     // Store in cache
-    fbCache[fbCacheCount] = (FramebufferCache){ .bo = bo, .fb_id = fb_id };
+    fbCache[fbCacheCount] = (FramebufferCache){ .bo = bo, .fbId = fbId };
     fbCacheCount++;
 
     // Set destroy callback to auto-cleanup
-    gbm_bo_set_user_data(bo, (void*)(uintptr_t)fb_id, drm_fb_destroy_callback);
+    gbm_bo_set_user_data(bo, (void*)(uintptr_t)fbId, DestroyFrameBufferCallback);
 
-    TRACELOG(LOG_INFO, "DRM: added new bo %u" , (uintptr_t)fb_id);
-    return fb_id;
+    TRACELOG(LOG_INFO, "DRM: added new bo %u" , (uintptr_t)fbId);
+    return fbId;
 }
 
 // Renders a blank frame to allocate initial buffers
@@ -652,14 +653,14 @@ int InitSwapScreenBuffer() {
     }
 
     // Create FB for first buffer
-    uint32_t fb_id = get_or_create_fb_for_bo(bo);
-    if (!fb_id) {
+    uint32_t fbId = GetOrCreateFbForBo(bo);
+    if (!fbId) {
         gbm_surface_release_buffer(platform.gbmSurface, bo);
         return -1;
     }
 
     // Initial CRTC setup
-    if (drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fb_id,
+    if (drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fbId,
                        0, 0, &platform.connector->connector_id, 1,
                        &platform.connector->modes[platform.modeIndex])) {
         TRACELOG(LOG_ERROR, "Initial CRTC setup failed: %s", strerror(errno));
@@ -675,7 +676,7 @@ int InitSwapScreenBuffer() {
 
 // Static page flip handler 
 // this will be called once the drmModePageFlip() finished from the drmHandleEvent(platform.fd, &evctx); context
-static void page_flip_handler(int fd, unsigned int frame, 
+static void PageFlipHandler(int fd, unsigned int frame, 
                               unsigned int sec, unsigned int usec, 
                               void *data) {
     (void)fd; (void)frame; (void)sec; (void)usec; // Unused
@@ -701,7 +702,7 @@ void SwapScreenBuffer() {
     // Process pending events non-blocking
     drmEventContext evctx = {
         .version = DRM_EVENT_CONTEXT_VERSION,
-        .page_flip_handler = page_flip_handler
+        .page_flip_handler = PageFlipHandler
     };
     
     struct pollfd pfd = { .fd = platform.fd, .events = POLLIN };
@@ -726,8 +727,8 @@ void SwapScreenBuffer() {
     }
 
     // Get FB ID (creates new one if needed)
-    uint32_t fb_id = get_or_create_fb_for_bo(next_bo);
-    if (!fb_id) {
+    uint32_t fbId = GetOrCreateFbForBo(next_bo);
+    if (!fbId) {
         gbm_surface_release_buffer(platform.gbmSurface, next_bo);
         errCnt[2]++;
         return;
@@ -744,7 +745,7 @@ void SwapScreenBuffer() {
         * is rendered..
         *   returns immediately. 
     */
-    if (drmModePageFlip(platform.fd, platform.crtc->crtc_id, fb_id,
+    if (drmModePageFlip(platform.fd, platform.crtc->crtc_id, fbId,
                        DRM_MODE_PAGE_FLIP_EVENT, platform.prevBO)) {
         if (errno == EBUSY) {
             //Display busy - skip flip
