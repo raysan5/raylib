@@ -71,6 +71,7 @@
 #include "EGL/egl.h"        // Native platform windowing system interface
 #include "EGL/eglext.h"     // EGL extensions
 
+#if defined(SUPPORT_DRM_CACHE)
 #include <poll.h>  // for drmHandleEvent poll
 #include <errno.h> //for EBUSY, EAGAIN
 
@@ -85,6 +86,8 @@ static FramebufferCache fbCache[MAX_CACHED_BOS];
 static volatile int fbCacheCount = 0;
 static volatile bool pendingFlip = false;
 static bool crtcSet = false;
+
+#endif //SUPPORT_DRM_CACHE
 
 #ifndef EGL_OPENGL_ES3_BIT
     #define EGL_OPENGL_ES3_BIT  0x40
@@ -232,7 +235,6 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-int InitSwapScreenBuffer(void);
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
 
@@ -567,6 +569,7 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+#if defined(SUPPORT_DRM_CACHE)
 static void drm_fb_destroy_callback(struct gbm_bo *bo, void *data) {
     uint32_t fb_id = (uintptr_t)data;
     // Remove from cache
@@ -769,7 +772,37 @@ void SwapScreenBuffer() {
         loopCnt = 0;
     }
 }
+#else //SUPPORT_DRM_CACHE is not defined
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+    eglSwapBuffers(platform.device, platform.surface);
 
+    if (!platform.gbmSurface || (-1 == platform.fd) || !platform.connector || !platform.crtc) TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
+
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(platform.gbmSurface);
+    if (!bo) TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
+
+    uint32_t fb = 0;
+    int result = drmModeAddFB(platform.fd, platform.connector->modes[platform.modeIndex].hdisplay, platform.connector->modes[platform.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
+    if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
+
+    result = drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fb, 0, 0, &platform.connector->connector_id, 1, &platform.connector->modes[platform.modeIndex]);
+    if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
+
+    if (platform.prevFB)
+    {
+        result = drmModeRmFB(platform.fd, platform.prevFB);
+        if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
+    }
+
+    platform.prevFB = fb;
+
+    if (platform.prevBO) gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
+
+    platform.prevBO = bo;
+}
+#endif //SUPPORT_DRM_CACHE
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Misc
 //----------------------------------------------------------------------------------
@@ -1099,8 +1132,7 @@ int InitPlatform(void)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-        //ToDo: verify this. In 5.5 it is 16, in master it was 24
-        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
+        EGL_DEPTH_SIZE, 24,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
         EGL_SAMPLE_BUFFERS, sampleBuffer, // Activate MSAA
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
@@ -1273,13 +1305,17 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
+#if defined(SUPPORT_DRM_CACHE)
     if(InitSwapScreenBuffer() == 0) {
         TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
         return 0;
     } else {
+#endif//SUPPORT_DRM_CACHE
         TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized failed");
+#if defined(SUPPORT_DRM_CACHE)
         return -1;
     }
+#endif //SUPPORT_DRM_CACHE
 
 }
 
