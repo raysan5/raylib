@@ -2,26 +2,29 @@
 
 // Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
-in vec4 fragColor;
 
 // Input uniform values
-uniform sampler2D texture0;     // Depth texture
-uniform vec4 colDiffuse;
+uniform sampler2D depthTexture;
+uniform bool flipY;
+
+const float nearPlane = 0.1;
+const float farPlane = 100.0;
 
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Add your custom variables here
-
 void main()
 {
-    float zNear = 0.01; // camera z near
-    float zFar = 10.0;  // camera z far
-    float z = texture(texture0, fragTexCoord).x;
+    // Handle potential Y-flipping
+    vec2 texCoord = fragTexCoord;
+    if (flipY) texCoord.y = 1.0 - texCoord.y;
+
+    // Sample depth
+    float depth = texture(depthTexture, texCoord).r;
 
     // Linearize depth value
-    float depth = (2.0*zNear)/(zFar + zNear - z*(zFar - zNear));
+    float linearDepth = (2.0*nearPlane)/(farPlane + nearPlane - depth*(farPlane - nearPlane));
 
-    // Calculate final fragment color
-    finalColor = vec4(depth, depth, depth, 1.0);
+    // Output final color
+    finalColor = vec4(vec3(linearDepth), 1.0);
 }

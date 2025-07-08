@@ -161,6 +161,10 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
+    // check to see if we have allready allocated the font for an image, and if we don't need to upload, then just return
+    if (defaultFont.glyphs != NULL && !isGpuReady)
+        return;
+
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
@@ -249,7 +253,7 @@ extern void LoadFontDefault(void)
             }
             else
             {
-                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
+                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xff;
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
             }
         }
@@ -257,7 +261,18 @@ extern void LoadFontDefault(void)
         counter++;
     }
 
-    if (isGpuReady) defaultFont.texture = LoadTextureFromImage(imFont);
+    if (isGpuReady)
+    {
+        defaultFont.texture = LoadTextureFromImage(imFont);
+
+        // we have already loaded the font glyph data an image, and the GPU is ready, we are done
+        // if we don't do this, we will leak memory by reallocating the glyphs and rects
+        if (defaultFont.glyphs != NULL)
+        {
+            UnloadImage(imFont);
+            return;
+        }
+    }
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, glyphCount
     //------------------------------------------------------------------------------
@@ -282,7 +297,7 @@ extern void LoadFontDefault(void)
 
         testPosX += (int)(defaultFont.recs[i].width + (float)charsDivisor);
 
-        if (testPosX >= defaultFont.texture.width)
+        if (testPosX >= imFont.width)
         {
             currentLine++;
             currentPosX = 2*charsDivisor + charsWidth[i];
@@ -316,6 +331,9 @@ extern void UnloadFontDefault(void)
     if (isGpuReady) UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
     RL_FREE(defaultFont.recs);
+    defaultFont.glyphCount = 0;
+    defaultFont.glyphs = NULL;
+    defaultFont.recs = NULL;
 }
 #endif      // SUPPORT_DEFAULT_FONT
 
@@ -1075,7 +1093,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "    Image imFont = { fontImageData_%s, %i, %i, 1, %i };\n\n", styleName, image.width, image.height, image.format);
 #endif
     byteCount += sprintf(txtData + byteCount, "    // Load texture from image\n");
-    byteCount += sprintf(txtData + byteCount, "    if (isGpuReady) font.texture = LoadTextureFromImage(imFont);\n");
+    byteCount += sprintf(txtData + byteCount, "    font.texture = LoadTextureFromImage(imFont);\n");
 #if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
     byteCount += sprintf(txtData + byteCount, "    UnloadImage(imFont);  // Uncompressed data can be unloaded from memory\n\n");
 #endif
@@ -1560,7 +1578,7 @@ const char *TextSubtext(const char *text, int position, int length)
 }
 
 // Replace text string
-// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
+// REQUIRES: strstr(), strncpy(), strcpy()
 // WARNING: Allocated memory must be manually freed
 char *TextReplace(const char *text, const char *replace, const char *by)
 {

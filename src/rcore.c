@@ -235,10 +235,10 @@ __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod)
     #define MAX_GAMEPADS                   4        // Maximum number of gamepads supported
 #endif
 #ifndef MAX_GAMEPAD_NAME_LENGTH
-    #define MAX_GAMEPAD_NAME_LENGTH      128        // Maximum number of characters of gamepad name (byte size)
+    #define MAX_GAMEPAD_NAME_LENGTH      128        // Maximum number of characters in a gamepad name (byte size)
 #endif
-#ifndef MAX_GAMEPAD_AXIS
-    #define MAX_GAMEPAD_AXIS               8        // Maximum number of axis supported (per gamepad)
+#ifndef MAX_GAMEPAD_AXES
+    #define MAX_GAMEPAD_AXES               8        // Maximum number of axes supported (per gamepad)
 #endif
 #ifndef MAX_GAMEPAD_BUTTONS
     #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
@@ -354,12 +354,12 @@ typedef struct CoreData {
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
-            int axisCount[MAX_GAMEPADS];    // Register number of available gamepad axis
+            int axisCount[MAX_GAMEPADS];    // Register number of available gamepad axes
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             char name[MAX_GAMEPADS][MAX_GAMEPAD_NAME_LENGTH];               // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
-            float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];                // Gamepad axis state
+            float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXES];                // Gamepad axes state
 
         } Gamepad;
     } Input;
@@ -523,25 +523,25 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
-// We're using `#pragma message` because `#warning` is not adopted by MSVC.
+// We're using '#pragma message' because '#warning' is not adopted by MSVC
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #if !defined(SUPPORT_MODULE_RTEXTURES)
-        #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
+        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
     #endif
 
     // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
     #if !defined(SUPPORT_FILEFORMAT_BMP) && defined(_WIN32)
-        #pragma message ("Warning: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
+        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
     #endif
 
-    // From what I've tested applications on Wayland saves images on clipboard as PNG.
+    // From what I've tested applications on Wayland saves images on clipboard as PNG
     #if (!defined(SUPPORT_FILEFORMAT_PNG) || !defined(SUPPORT_FILEFORMAT_JPG)) && !defined(_WIN32)
-        #pragma message ("Warning: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
+        #pragma message ("WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
     #endif
 
-    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined.
+    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
     // #if !defined(STBI_REQUIRED)
-    //     #pragma message ("Warning: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
+    //     #pragma message ("WARNING: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
     // #endif
 
 #endif // SUPPORT_CLIPBOARD_IMAGE
@@ -1119,7 +1119,7 @@ void BeginTextureMode(RenderTexture2D target)
     //rlScalef(0.0f, -1.0f, 0.0f);  // Flip Y-drawing (?)
 
     // Setup current width/height for proper aspect ratio
-    // calculation when using BeginMode3D()
+    // calculation when using BeginTextureMode()
     CORE.Window.currentFbo.width = target.texture.width;
     CORE.Window.currentFbo.height = target.texture.height;
     CORE.Window.usingFbo = true;
@@ -1322,7 +1322,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
     if (fsFileName != NULL) fShaderStr = LoadFileText(fsFileName);
 
     if ((vShaderStr == NULL) && (fShaderStr == NULL)) TraceLog(LOG_WARNING, "SHADER: Shader files provided are not valid, using default shader");
-    
+
     shader = LoadShaderFromMemory(vShaderStr, fShaderStr);
 
     UnloadFileText(vShaderStr);
@@ -1879,12 +1879,15 @@ void TakeScreenshot(const char *fileName)
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    Vector2 scale = GetWindowScaleDPI();
+    // Apply a scale if we are doing HIGHDPI auto-scaling
+    Vector2 scale = { 1.0f, 1.0f };
+    if (IsWindowState(FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
+
     unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
@@ -1902,6 +1905,8 @@ void TakeScreenshot(const char *fileName)
 // To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
+    if (CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetConfigFlags called after window initialization, Use \"SetWindowState\" to set flags instead");
+
     // Selected flags are set but not evaluated at this point,
     // flag evaluation happens at InitWindow() or SetWindowState()
     CORE.Window.flags |= flags;
@@ -2309,9 +2314,12 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
 // WARNING: files.count is not reseted to 0 after unloading
 void UnloadDirectoryFiles(FilePathList files)
 {
-    for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
+    if (files.paths != NULL)
+    {
+        for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
-    RL_FREE(files.paths);
+        RL_FREE(files.paths);
+    }
 }
 
 // Create directories (including full path requested), returns 0 on success
@@ -2354,6 +2362,7 @@ bool ChangeDirectory(const char *dir)
     bool result = CHDIR(dir);
 
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dir);
+    else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dir);
 
     return (result == 0);
 }
@@ -2491,7 +2500,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
 
 #if defined(SUPPORT_COMPRESSION_API)
     // Compress data and generate a valid DEFLATE stream
-    struct sdefl *sdefl = RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
+    struct sdefl *sdefl = (struct sdefl *)RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
     int bounds = sdefl_bound(dataSize);
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
 
@@ -2530,96 +2539,112 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 }
 
 // Encode data to Base64 string
+// NOTE: Returned string includes NULL terminator, considered on outputSize
 char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 {
-    static const unsigned char base64encodeTable[] = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-        'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
-    };
+    // Base64 conversion table from RFC 4648 [0..63]
+    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sixtets" (6bit characters)
+    static const char base64EncodeTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    static const int modTable[] = { 0, 2, 1 };
+    // Compute expected size and padding
+    int paddedSize = dataSize;
+    while (paddedSize%3 != 0) paddedSize++; // Padding bytes to round 4*(dataSize/3) to 4 bytes
+    int estimatedOutputSize = 4*(paddedSize/3);
+    int padding = paddedSize - dataSize;
 
-    *outputSize = 4*((dataSize + 2)/3);
+    // Adding null terminator to string
+    estimatedOutputSize += 1;
 
-    char *encodedData = (char *)RL_MALLOC(*outputSize);
+    // Load some memory to store encoded string
+    char *encodedData = (char *)RL_CALLOC(estimatedOutputSize, 1);
+    if (encodedData == NULL) return NULL;
 
-    if (encodedData == NULL) return NULL;   // Security check
-
-    for (int i = 0, j = 0; i < dataSize;)
+    int outputCount = 0;
+    for (int i = 0; i < dataSize;)
     {
-        unsigned int octetA = (i < dataSize)? (unsigned char)data[i++] : 0;
-        unsigned int octetB = (i < dataSize)? (unsigned char)data[i++] : 0;
-        unsigned int octetC = (i < dataSize)? (unsigned char)data[i++] : 0;
+        unsigned int octetA = 0;
+        unsigned int octetB = 0;
+        unsigned int octetC = 0;
+        unsigned int octetPack = 0;
 
-        unsigned int triple = (octetA << 0x10) + (octetB << 0x08) + octetC;
+        octetA = data[i]; // Generates 2 sextets
+        octetB = ((i + 1) < dataSize)? data[i + 1] : 0; // Generates 3 sextets
+        octetC = ((i + 2) < dataSize)? data[i + 2] : 0; // Generates 4 sextets
 
-        encodedData[j++] = base64encodeTable[(triple >> 3*6) & 0x3F];
-        encodedData[j++] = base64encodeTable[(triple >> 2*6) & 0x3F];
-        encodedData[j++] = base64encodeTable[(triple >> 1*6) & 0x3F];
-        encodedData[j++] = base64encodeTable[(triple >> 0*6) & 0x3F];
+        octetPack = (octetA << 16) | (octetB << 8) | octetC;
+
+        encodedData[outputCount + 0] = (unsigned char)(base64EncodeTable[(octetPack >> 18) & 0x3f]);
+        encodedData[outputCount + 1] = (unsigned char)(base64EncodeTable[(octetPack >> 12) & 0x3f]);
+        encodedData[outputCount + 2] = (unsigned char)(base64EncodeTable[(octetPack >> 6) & 0x3f]);
+        encodedData[outputCount + 3] = (unsigned char)(base64EncodeTable[octetPack & 0x3f]);
+        outputCount += 4;
+        i += 3;
     }
 
-    for (int i = 0; i < modTable[dataSize%3]; i++) encodedData[*outputSize - 1 - i] = '=';  // Padding character
+    // Add required padding bytes
+    for (int p = 0; p < padding; p++) encodedData[outputCount - p - 1] = '=';
 
+    // Add null terminator to string
+    encodedData[outputCount] = '\0';
+    outputCount++;
+
+    if (outputCount != estimatedOutputSize) TRACELOG(LOG_WARNING, "BASE64: Output size differs from estimation");
+
+    *outputSize = estimatedOutputSize;
     return encodedData;
 }
 
-// Decode Base64 string data
-unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
+// Decode Base64 string (expected NULL terminated)
+unsigned char *DecodeDataBase64(const char *text, int *outputSize)
 {
-    static const unsigned char base64decodeTable[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
-        37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+    // Base64 decode table
+    // NOTE: Following ASCII order [0..255] assigning the expected sixtet value to
+    // every character in the corresponding ASCII position
+    static const unsigned char base64DecodeTable[256] = {
+        ['A'] =  0, ['B'] =  1, ['C'] =  2, ['D'] =  3, ['E'] =  4, ['F'] =  5, ['G'] =  6, ['H'] =  7,
+        ['I'] =  8, ['J'] =  9, ['K'] = 10, ['L'] = 11, ['M'] = 12, ['N'] = 13, ['O'] = 14, ['P'] = 15,
+        ['Q'] = 16, ['R'] = 17, ['S'] = 18, ['T'] = 19, ['U'] = 20, ['V'] = 21, ['W'] = 22, ['X'] = 23, ['Y'] = 24, ['Z'] = 25,
+        ['a'] = 26, ['b'] = 27, ['c'] = 28, ['d'] = 29, ['e'] = 30, ['f'] = 31, ['g'] = 32, ['h'] = 33,
+        ['i'] = 34, ['j'] = 35, ['k'] = 36, ['l'] = 37, ['m'] = 38, ['n'] = 39, ['o'] = 40, ['p'] = 41,
+        ['q'] = 42, ['r'] = 43, ['s'] = 44, ['t'] = 45, ['u'] = 46, ['v'] = 47, ['w'] = 48, ['x'] = 49, ['y'] = 50, ['z'] = 51,
+        ['0'] = 52, ['1'] = 53, ['2'] = 54, ['3'] = 55, ['4'] = 56, ['5'] = 57, ['6'] = 58, ['7'] = 59,
+        ['8'] = 60, ['9'] = 61, ['+'] = 62, ['/'] = 63
     };
 
-    // Get output size of Base64 input data
-    int outSize = 0;
-    for (int i = 0; data[4*i] != 0; i++)
+    // Compute expected size and padding
+    int dataSize = (int)strlen(text); // WARNING: Expecting NULL terminated strings!
+    int ending = dataSize - 1;
+    int padding = 0;
+    while (text[ending] == '=') { padding++; ending--; }
+    int estimatedOutputSize = 3*(dataSize/4) - padding;
+    int maxOutputSize = 3*(dataSize/4);
+
+    // Load some memory to store decoded data
+    // NOTE: Allocated enough size to include padding
+    unsigned char *decodedData = (unsigned char *)RL_CALLOC(maxOutputSize, 1);
+    if (decodedData == NULL) return NULL;
+
+    int outputCount = 0;
+    for (int i = 0; i < dataSize;)
     {
-        if (data[4*i + 3] == '=')
-        {
-            if (data[4*i + 2] == '=') outSize += 1;
-            else outSize += 2;
-        }
-        else outSize += 3;
+        // Every 4 sixtets must generate 3 octets
+        unsigned int sixtetA = base64DecodeTable[(unsigned char)text[i]];
+        unsigned int sixtetB = base64DecodeTable[(unsigned char)text[i + 1]];
+        unsigned int sixtetC = ((unsigned char)text[i + 2] != '=')? base64DecodeTable[(unsigned char)text[i + 2]] : 0;
+        unsigned int sixtetD = ((unsigned char)text[i + 3] != '=')? base64DecodeTable[(unsigned char)text[i + 3]] : 0;
+
+        unsigned int octetPack = (sixtetA << 18) | (sixtetB << 12)  | (sixtetC << 6) | sixtetD;
+
+        decodedData[outputCount + 0] = (octetPack >> 16) & 0xff;
+        decodedData[outputCount + 1] = (octetPack >> 8) & 0xff;
+        decodedData[outputCount + 2] = octetPack & 0xff;
+        outputCount += 3;
+        i += 4;
     }
 
-    // Allocate memory to store decoded Base64 data
-    unsigned char *decodedData = (unsigned char *)RL_MALLOC(outSize);
+    if (estimatedOutputSize != (outputCount - padding)) TRACELOG(LOG_WARNING, "BASE64: Decoded size differs from estimation");
 
-    for (int i = 0; i < outSize/3; i++)
-    {
-        unsigned char a = base64decodeTable[(int)data[4*i]];
-        unsigned char b = base64decodeTable[(int)data[4*i + 1]];
-        unsigned char c = base64decodeTable[(int)data[4*i + 2]];
-        unsigned char d = base64decodeTable[(int)data[4*i + 3]];
-
-        decodedData[3*i] = (a << 2) | (b >> 4);
-        decodedData[3*i + 1] = (b << 4) | (c >> 2);
-        decodedData[3*i + 2] = (c << 6) | d;
-    }
-
-    if (outSize%3 == 1)
-    {
-        int n = outSize/3;
-        unsigned char a = base64decodeTable[(int)data[4*n]];
-        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
-        decodedData[outSize - 1] = (a << 2) | (b >> 4);
-    }
-    else if (outSize%3 == 2)
-    {
-        int n = outSize/3;
-        unsigned char a = base64decodeTable[(int)data[4*n]];
-        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
-        unsigned char c = base64decodeTable[(int)data[4*n + 2]];
-        decodedData[outSize - 2] = (a << 2) | (b >> 4);
-        decodedData[outSize - 1] = (b << 4) | (c >> 2);
-    }
-
-    *outputSize = outSize;
+    *outputSize = estimatedOutputSize;
     return decodedData;
 }
 
@@ -2627,38 +2652,38 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 unsigned int ComputeCRC32(unsigned char *data, int dataSize)
 {
     static unsigned int crcTable[256] = {
-        0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
-        0x0eDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988, 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
-        0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE, 0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
-        0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC, 0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
-        0x3B6E20C8, 0x4C69105E, 0xD56041E4, 0xA2677172, 0x3C03E4D1, 0x4B04D447, 0xD20D85FD, 0xA50AB56B,
-        0x35B5A8FA, 0x42B2986C, 0xDBBBC9D6, 0xACBCF940, 0x32D86CE3, 0x45DF5C75, 0xDCD60DCF, 0xABD13D59,
-        0x26D930AC, 0x51DE003A, 0xC8D75180, 0xBFD06116, 0x21B4F4B5, 0x56B3C423, 0xCFBA9599, 0xB8BDA50F,
-        0x2802B89E, 0x5F058808, 0xC60CD9B2, 0xB10BE924, 0x2F6F7C87, 0x58684C11, 0xC1611DAB, 0xB6662D3D,
-        0x76DC4190, 0x01DB7106, 0x98D220BC, 0xEFD5102A, 0x71B18589, 0x06B6B51F, 0x9FBFE4A5, 0xE8B8D433,
-        0x7807C9A2, 0x0F00F934, 0x9609A88E, 0xE10E9818, 0x7F6A0DBB, 0x086D3D2D, 0x91646C97, 0xE6635C01,
-        0x6B6B51F4, 0x1C6C6162, 0x856530D8, 0xF262004E, 0x6C0695ED, 0x1B01A57B, 0x8208F4C1, 0xF50FC457,
-        0x65B0D9C6, 0x12B7E950, 0x8BBEB8EA, 0xFCB9887C, 0x62DD1DDF, 0x15DA2D49, 0x8CD37CF3, 0xFBD44C65,
-        0x4DB26158, 0x3AB551CE, 0xA3BC0074, 0xD4BB30E2, 0x4ADFA541, 0x3DD895D7, 0xA4D1C46D, 0xD3D6F4FB,
-        0x4369E96A, 0x346ED9FC, 0xAD678846, 0xDA60B8D0, 0x44042D73, 0x33031DE5, 0xAA0A4C5F, 0xDD0D7CC9,
-        0x5005713C, 0x270241AA, 0xBE0B1010, 0xC90C2086, 0x5768B525, 0x206F85B3, 0xB966D409, 0xCE61E49F,
-        0x5EDEF90E, 0x29D9C998, 0xB0D09822, 0xC7D7A8B4, 0x59B33D17, 0x2EB40D81, 0xB7BD5C3B, 0xC0BA6CAD,
-        0xEDB88320, 0x9ABFB3B6, 0x03B6E20C, 0x74B1D29A, 0xEAD54739, 0x9DD277AF, 0x04DB2615, 0x73DC1683,
-        0xE3630B12, 0x94643B84, 0x0D6D6A3E, 0x7A6A5AA8, 0xE40ECF0B, 0x9309FF9D, 0x0A00AE27, 0x7D079EB1,
-        0xF00F9344, 0x8708A3D2, 0x1E01F268, 0x6906C2FE, 0xF762575D, 0x806567CB, 0x196C3671, 0x6E6B06E7,
-        0xFED41B76, 0x89D32BE0, 0x10DA7A5A, 0x67DD4ACC, 0xF9B9DF6F, 0x8EBEEFF9, 0x17B7BE43, 0x60B08ED5,
-        0xD6D6A3E8, 0xA1D1937E, 0x38D8C2C4, 0x4FDFF252, 0xD1BB67F1, 0xA6BC5767, 0x3FB506DD, 0x48B2364B,
-        0xD80D2BDA, 0xAF0A1B4C, 0x36034AF6, 0x41047A60, 0xDF60EFC3, 0xA867DF55, 0x316E8EEF, 0x4669BE79,
-        0xCB61B38C, 0xBC66831A, 0x256FD2A0, 0x5268E236, 0xCC0C7795, 0xBB0B4703, 0x220216B9, 0x5505262F,
-        0xC5BA3BBE, 0xB2BD0B28, 0x2BB45A92, 0x5CB36A04, 0xC2D7FFA7, 0xB5D0CF31, 0x2CD99E8B, 0x5BDEAE1D,
-        0x9B64C2B0, 0xEC63F226, 0x756AA39C, 0x026D930A, 0x9C0906A9, 0xEB0E363F, 0x72076785, 0x05005713,
-        0x95BF4A82, 0xE2B87A14, 0x7BB12BAE, 0x0CB61B38, 0x92D28E9B, 0xE5D5BE0D, 0x7CDCEFB7, 0x0BDBDF21,
-        0x86D3D2D4, 0xF1D4E242, 0x68DDB3F8, 0x1FDA836E, 0x81BE16CD, 0xF6B9265B, 0x6FB077E1, 0x18B74777,
-        0x88085AE6, 0xFF0F6A70, 0x66063BCA, 0x11010B5C, 0x8F659EFF, 0xF862AE69, 0x616BFFD3, 0x166CCF45,
-        0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2, 0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
-        0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0, 0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
-        0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
-        0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
+        0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
+        0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
+        0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
+        0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5,
+        0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,
+        0x35b5a8fa, 0x42b2986c, 0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
+        0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423, 0xcfba9599, 0xb8bda50f,
+        0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924, 0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,
+        0x76dc4190, 0x01db7106, 0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
+        0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d, 0x91646c97, 0xe6635c01,
+        0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e, 0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457,
+        0x65b0d9c6, 0x12b7e950, 0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
+        0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7, 0xa4d1c46d, 0xd3d6f4fb,
+        0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0, 0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9,
+        0x5005713c, 0x270241aa, 0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
+        0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81, 0xb7bd5c3b, 0xc0ba6cad,
+        0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a, 0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683,
+        0xe3630b12, 0x94643b84, 0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
+        0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb, 0x196c3671, 0x6e6b06e7,
+        0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc, 0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5,
+        0xd6d6a3e8, 0xa1d1937e, 0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
+        0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55, 0x316e8eef, 0x4669be79,
+        0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236, 0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f,
+        0xc5ba3bbe, 0xb2bd0b28, 0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
+        0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f, 0x72076785, 0x05005713,
+        0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38, 0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21,
+        0x86d3d2d4, 0xf1d4e242, 0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
+        0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69, 0x616bffd3, 0x166ccf45,
+        0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2, 0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db,
+        0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
+        0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
+        0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };
 
     unsigned int crc = ~0u;
@@ -2722,7 +2747,7 @@ unsigned int *ComputeMD5(unsigned char *data, int dataSize)
 
     int newDataSize = ((((dataSize + 8)/64) + 1)*64) - 8;
 
-    unsigned char *msg = RL_CALLOC(newDataSize + 64, 1); // Initialize with '0' bits, allocating 64 extra bytes
+    unsigned char *msg = (unsigned char *)RL_CALLOC(newDataSize + 64, 1); // Initialize with '0' bits, allocating 64 extra bytes
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 
@@ -2812,7 +2837,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 
     int newDataSize = ((((dataSize + 8)/64) + 1)*64);
 
-    unsigned char *msg = RL_CALLOC(newDataSize, 1); // Initialize with '0' bits
+    unsigned char *msg = (unsigned char *)RL_CALLOC(newDataSize, 1); // Initialize with '0' bits
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 
@@ -3343,11 +3368,11 @@ int GetGamepadAxisCount(int gamepad)
 // Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
-    float value = (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER)? -1.0f : 0.0f;
+    float value = ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))? -1.0f : 0.0f;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS))
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXES))
     {
-        float movement = value < 0.0f ? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
+        float movement = (value < 0.0f)? CORE.Input.Gamepad.axisState[gamepad][axis] : fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]);
 
         if (movement > value) value = CORE.Input.Gamepad.axisState[gamepad][axis];
     }
@@ -3688,12 +3713,16 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                 (strcmp(dp->d_name, "..") != 0))
             {
             #if defined(_WIN32)
-                sprintf(path, "%s\\%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
             #else
-                sprintf(path, "%s/%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
             #endif
 
-                if (filter != NULL)
+                if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
+                {
+                    TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
+                }
+                else if (filter != NULL)
                 {
                     if (IsPathFile(path))
                     {
@@ -3728,6 +3757,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 // Scan all files and directories recursively from a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
 {
+    // WARNING: Path can not be static or it will be reused between recursive function calls!
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
 
@@ -3742,12 +3772,16 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
             {
                 // Construct new path from our base path
             #if defined(_WIN32)
-                sprintf(path, "%s\\%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
             #else
-                sprintf(path, "%s/%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
             #endif
 
-                if (IsPathFile(path))
+                if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
+                {
+                    TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
+                }
+                else if (IsPathFile(path))
                 {
                     if (filter != NULL)
                     {
@@ -4017,10 +4051,10 @@ static void RecordAutomationEvent(void)
             if (currentEventList->count == currentEventList->capacity) return;    // Security check
         }
 
-        for (int axis = 0; axis < MAX_GAMEPAD_AXIS; axis++)
+        for (int axis = 0; axis < MAX_GAMEPAD_AXES; axis++)
         {
             // Event type: INPUT_GAMEPAD_AXIS_MOTION
-            float defaultMovement = (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER)? -1.0f : 0.0f;
+            float defaultMovement = ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))? -1.0f : 0.0f;
             if (GetGamepadAxisMovement(gamepad, axis) != defaultMovement)
             {
                 currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;

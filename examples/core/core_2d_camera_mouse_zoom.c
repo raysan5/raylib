@@ -73,9 +73,9 @@ int main ()
                 camera.target = mouseWorldPos;
 
                 // Zoom increment
-                float scaleFactor = 1.0f + (0.25f*fabsf(wheel));
-                if (wheel < 0) scaleFactor = 1.0f/scaleFactor;
-                camera.zoom = Clamp(camera.zoom*scaleFactor, 0.125f, 64.0f);
+                // Uses log scaling to provide consistent zoom speed
+                float scale = 0.2f*wheel;
+                camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
             }
         }
         else
@@ -96,10 +96,10 @@ int main ()
             if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             {
                 // Zoom increment
+                // Uses log scaling to provide consistent zoom speed
                 float deltaX = GetMouseDelta().x;
-                float scaleFactor = 1.0f + (0.01f*fabsf(deltaX));
-                if (deltaX < 0) scaleFactor = 1.0f/scaleFactor;
-                camera.zoom = Clamp(camera.zoom*scaleFactor, 0.125f, 64.0f);
+                float scale = 0.005f*deltaX;
+                camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
             }
         }
         //----------------------------------------------------------------------------------

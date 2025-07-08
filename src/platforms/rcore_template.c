@@ -114,7 +114,7 @@ void MinimizeWindow(void)
     TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
@@ -208,7 +208,7 @@ int GetMonitorCount(void)
     return 1;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");

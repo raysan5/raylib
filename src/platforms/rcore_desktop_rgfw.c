@@ -54,7 +54,7 @@
 #endif
 
 #if defined(PLATFORM_WEB_RGFW)
-#define RGFW_NO_GL_HEADER 
+#define RGFW_NO_GL_HEADER
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2) && !defined(PLATFORM_WEB_RGFW)
@@ -76,14 +76,14 @@ void CloseWindow(void);
 
 #if defined(_WIN32) || defined(_WIN64)
     #define WIN32_LEAN_AND_MEAN
-	#define Rectangle rectangle_win32
+    #define Rectangle rectangle_win32
     #define CloseWindow CloseWindow_win32
     #define ShowCursor __imp_ShowCursor
-	#define _APISETSTRING_
-	
-	#undef MAX_PATH
+    #define _APISETSTRING_
+    
+    #undef MAX_PATH
 
-	__declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
+    __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
 #endif
 
 #if defined(__APPLE__)
@@ -103,8 +103,8 @@ void CloseWindow(void);
     #undef CloseWindow
     #undef Rectangle
 
-	#undef MAX_PATH
-	#define MAX_PATH 1025
+    #undef MAX_PATH
+    #define MAX_PATH 1025
 #endif
 
 #if defined(__APPLE__)
@@ -128,7 +128,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                   // Global CORE state context
 
-static PlatformData platform = { NULL }; // Platform specific
+static PlatformData platform = { 0 };   // Platform specific
 
 static bool RGFW_disableCursor = false;
 
@@ -175,7 +175,9 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_superL] = KEY_LEFT_SUPER,
     #ifndef RGFW_MACOS
     [RGFW_shiftR] = KEY_RIGHT_SHIFT,
+    [RGFW_controlR] = KEY_RIGHT_CONTROL,
     [RGFW_altR] = KEY_RIGHT_ALT,
+    [RGFW_superR] = KEY_RIGHT_SUPER,
     #endif
     [RGFW_space] = KEY_SPACE,
 
@@ -264,11 +266,12 @@ bool WindowShouldClose(void)
 
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
-{   
+{
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
         CORE.Window.previousPosition = CORE.Window.position;
+        CORE.Window.previousScreen = CORE.Window.screen;
 
         platform.mon = RGFW_window_getMonitor(platform.window);
         CORE.Window.fullscreen = true;
@@ -281,18 +284,20 @@ void ToggleFullscreen(void)
     {
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
-        
-        if (platform.mon.mode.area.w) 
+
+        if (platform.mon.mode.area.w)
         {
             RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
             RGFW_monitor_requestMode(monitor, platform.mon.mode, RGFW_monitorScale);
-            
+
             platform.mon.mode.area.w = 0;
         }
 
         // we update the window position right away
         CORE.Window.position = CORE.Window.previousPosition;
+        RGFW_window_setFullscreen(platform.window, 0);
         RGFW_window_move(platform.window, RGFW_POINT(CORE.Window.position.x, CORE.Window.position.y));
+        RGFW_window_resize(platform.window, RGFW_AREA(CORE.Window.previousScreen.width, CORE.Window.previousScreen.height));
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -303,10 +308,7 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (platform.window == NULL)
-        return;
-    
-    if (CORE.Window.fullscreen) 
+    if (CORE.Window.fullscreen)
     {
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
@@ -315,7 +317,9 @@ void ToggleBorderlessWindowed(void)
 
         RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
         RGFW_window_resize(platform.window, mon.mode.area);
-    } else {
+    }
+    else
+    {
         RGFW_window_setBorder(platform.window, 1);
 
         CORE.Window.position = CORE.Window.previousPosition;
@@ -337,11 +341,10 @@ void MinimizeWindow(void)
     RGFW_window_minimize(platform.window);
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
-    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
-        RGFW_window_focus(platform.window);
+    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
 
     RGFW_window_restore(platform.window);
 }
@@ -349,6 +352,8 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
+    if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
+
     CORE.Window.flags |= flags;
 
     if (flags & FLAG_VSYNC_HINT)
@@ -357,8 +362,7 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_FULLSCREEN_MODE)
     {
-        if (!CORE.Window.fullscreen)
-            ToggleFullscreen();
+        if (!CORE.Window.fullscreen) ToggleFullscreen();
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -384,6 +388,8 @@ void SetWindowState(unsigned int flags)
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
         CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+        platform.window->_flags &= ~RGFW_windowFocusOnShow;
+        RGFW_window_setFlags(platform.window, platform.window->_flags);
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
@@ -430,8 +436,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_FULLSCREEN_MODE)
     {
-        if (CORE.Window.fullscreen)
-            ToggleFullscreen();
+        if (CORE.Window.fullscreen) ToggleFullscreen();
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -444,25 +449,25 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_WINDOW_HIDDEN)
     {
-        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
-            RGFW_window_focus(platform.window);
+        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
+
         RGFW_window_show(platform.window);
     }
     if (flags & FLAG_WINDOW_MINIMIZED)
     {
-        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
-            RGFW_window_focus(platform.window);
+        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
 
         RGFW_window_restore(platform.window);
     }
     if (flags & FLAG_WINDOW_MAXIMIZED)
     {
-        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED))
-            RGFW_window_focus(platform.window);
+        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
+
         RGFW_window_restore(platform.window);
     }
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
+        RGFW_window_setFlags(platform.window, platform.window->_flags | RGFW_windowFocusOnShow);
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
     }
     if (flags & FLAG_WINDOW_TOPMOST)
@@ -487,8 +492,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
-        if (CORE.Window.fullscreen)
-            ToggleBorderlessWindowed();
+        if (CORE.Window.fullscreen) ToggleBorderlessWindowed();
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
@@ -502,7 +506,8 @@ void ClearWindowState(unsigned int flags)
 
 int RGFW_formatToChannels(int format)
 {
-    switch (format) {
+    switch (format)
+    {
         case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         case PIXELFORMAT_UNCOMPRESSED_R16:           // 16 bpp (1 channel - half float)
         case PIXELFORMAT_UNCOMPRESSED_R32:           // 32 bpp (1 channel - float)
@@ -547,21 +552,20 @@ void SetWindowIcons(Image *images, int count)
     if ((images == NULL) || (count <= 0))
     {
         RGFW_window_setIcon(platform.window, NULL, RGFW_AREA(0, 0), 0);
-    } {
-        Image* bigIcon = NULL; 
-        Image* smallIcon = NULL;
+    }
+    else
+    {
+        Image *bigIcon = NULL;
+        Image *smallIcon = NULL;
 
-        for (size_t i = 0; i < count; i++) {
-            if (bigIcon == NULL || (images[i].width > bigIcon->width && images[i].height > bigIcon->height))
-                bigIcon = &images[i];
-            if (smallIcon == NULL || (images[i].width < smallIcon->width && images[i].height > smallIcon->height))
-                smallIcon = &images[i];
+        for (int i = 0; i < count; i++)
+        {
+            if ((bigIcon == NULL) || ((images[i].width > bigIcon->width) && (images[i].height > bigIcon->height))) bigIcon = &images[i];
+            if ((smallIcon == NULL) || ((images[i].width < smallIcon->width) && (images[i].height > smallIcon->height))) smallIcon = &images[i];
         }
-        
-        if (smallIcon != NULL)
-            RGFW_window_setIconEx(platform.window, smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
-        if (bigIcon != NULL)
-            RGFW_window_setIconEx(platform.window, bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
+
+        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
+        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
     }
 }
 
@@ -581,7 +585,7 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    RGFW_window_moveToMonitor(platform.window, RGFW_getMonitors()[monitor]);
+    RGFW_window_moveToMonitor(platform.window, RGFW_getMonitors(NULL)[monitor]);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -624,7 +628,8 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#ifdef RGFW_WEBASM
+    if (platform.window == NULL) return NULL;
+#ifdef RGFW_WASM
     return (void *)platform.window->src.ctx;
 #else
     return (void *)platform.window->src.window;
@@ -637,7 +642,7 @@ int GetMonitorCount(void)
     #define MAX_MONITORS_SUPPORTED 6
 
     int count = MAX_MONITORS_SUPPORTED;
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     for (int i = 0; i < 6; i++)
     {
@@ -651,11 +656,14 @@ int GetMonitorCount(void)
     return count;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
-    RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor mon = { 0 };
+
+    if (platform.window) mon = RGFW_window_getMonitor(platform.window);
+    else mon = RGFW_getPrimaryMonitor();
 
     for (int i = 0; i < 6; i++)
     {
@@ -668,7 +676,7 @@ int GetCurrentMonitor(void)
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return (Vector2){ (float)mons[monitor].x, (float)mons[monitor].y };
 }
@@ -676,7 +684,7 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].mode.area.w;
 }
@@ -684,7 +692,7 @@ int GetMonitorWidth(int monitor)
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].mode.area.h;
 }
@@ -692,7 +700,7 @@ int GetMonitorHeight(int monitor)
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].physW;
 }
@@ -700,7 +708,7 @@ int GetMonitorPhysicalWidth(int monitor)
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return (int)mons[monitor].physH;
 }
@@ -708,7 +716,7 @@ int GetMonitorPhysicalHeight(int monitor)
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return (int)mons[monitor].mode.refreshRate;
 }
@@ -716,7 +724,7 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors();
+    RGFW_monitor *mons = RGFW_getMonitors(NULL);
 
     return mons[monitor].name;
 }
@@ -724,15 +732,19 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
+    if (platform.window == NULL) return (Vector2){ 0.0f, 0.0f };
     return (Vector2){ (float)platform.window->r.x, (float)platform.window->r.y };
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
+    RGFW_monitor monitor = { 0 };
 
-    return (Vector2){monitor.scaleX, monitor.scaleX};
+    if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
+    else monitor = RGFW_getPrimaryMonitor();
+
+    return (Vector2){ monitor.scaleX, monitor.scaleX };
 }
 
 // Set clipboard text content
@@ -747,7 +759,6 @@ const char *GetClipboardText(void)
 {
     return RGFW_readClipboard(NULL);
 }
-
 
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
 #if defined(_WIN32)
@@ -771,7 +782,7 @@ Image GetClipboardImage(void)
     int width = 0;
     int height = 0;
     fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
-    
+
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
     else image = LoadImageFromMemory(".bmp", fileData, dataSize);
 #else
@@ -829,11 +840,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = 0.0;
-    unsigned long long int nanoSeconds = RGFW_getTimeNS();
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-
-    return time;
+    return RGFW_getTime();
 }
 
 // Open URL with default system browser (if available)
@@ -886,29 +893,30 @@ void SetMouseCursor(int cursor)
 const char *GetKeyName(int key)
 {
     TRACELOG(LOG_WARNING, "GetKeyName() unsupported on target platform");
+
     return "";
 }
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
 int RGFW_gpConvTable[18] = {
-	[RGFW_gamepadY] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
-	[RGFW_gamepadB] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-	[RGFW_gamepadA] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-	[RGFW_gamepadX] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-	[RGFW_gamepadL1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
-	[RGFW_gamepadR1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-	[RGFW_gamepadL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-	[RGFW_gamepadR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
-	[RGFW_gamepadSelect] = GAMEPAD_BUTTON_MIDDLE_LEFT,
-	[RGFW_gamepadHome] = GAMEPAD_BUTTON_MIDDLE,
-	[RGFW_gamepadStart] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
-	[RGFW_gamepadUp] = GAMEPAD_BUTTON_LEFT_FACE_UP,
-	[RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-	[RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-	[RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-	[RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,	
-	[RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
+    [RGFW_gamepadY] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+    [RGFW_gamepadB] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+    [RGFW_gamepadA] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+    [RGFW_gamepadX] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+    [RGFW_gamepadL1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+    [RGFW_gamepadR1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+    [RGFW_gamepadL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+    [RGFW_gamepadR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    [RGFW_gamepadSelect] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+    [RGFW_gamepadHome] = GAMEPAD_BUTTON_MIDDLE,
+    [RGFW_gamepadStart] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+    [RGFW_gamepadUp] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+    [RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+    [RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    [RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,    
+    [RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
 
 // Register all input events
@@ -919,7 +927,7 @@ void PollInputEvents(void)
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
 #endif
-	
+    
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -979,19 +987,25 @@ void PollInputEvents(void)
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     }
 
+    if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
+    {
+        RGFW_window_eventWait(platform.window, -1); // Wait for input events: keyboard/mouse/window events (callbacks) -> Update keys state
+        CORE.Time.previous = GetTime();
+    }
+
     while (RGFW_window_checkEvent(platform.window))
     {
         RGFW_event *event = &platform.window->event;
         // All input events can be processed after polling
-        
-		switch (event->type)
+
+        switch (event->type)
         {
-            case RGFW_quit: 
-                if (CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN)
-                    event->type = 0;
-                else
-                    CORE.Window.shouldClose = true; 
-                break;
+            case RGFW_mouseEnter: CORE.Input.Mouse.cursorOnScreen = true; break;
+            case RGFW_mouseLeave: CORE.Input.Mouse.cursorOnScreen = false; break;
+            case RGFW_quit:
+                event->type = 0;
+                CORE.Window.shouldClose = true;
+                return;
             case RGFW_DND:      // Dropped file
             {
                 for (int i = 0; i < event->droppedFilesCount; i++)
@@ -1005,7 +1019,7 @@ void PollInputEvents(void)
 
                         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
                         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event->droppedFiles[i]);
-						
+                        
                         CORE.Window.dropFileCount++;
                     }
                     else if (CORE.Window.dropFileCount < 1024)
@@ -1023,11 +1037,37 @@ void PollInputEvents(void)
             case RGFW_windowResized:
             {
                 SetupViewport(platform.window->r.w, platform.window->r.h);
-                CORE.Window.screen.width = platform.window->r.w;
-                CORE.Window.screen.height =  platform.window->r.h;
+
+                // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+                if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+                {
+                    CORE.Window.screen.width = (int)(platform.window->r.w / GetWindowScaleDPI().x);
+                    CORE.Window.screen.height = (int)(platform.window->r.h / GetWindowScaleDPI().y);
+                }
+                else
+                {
+                    CORE.Window.screen.width = platform.window->r.w;
+                    CORE.Window.screen.height = platform.window->r.h;
+                }
+
                 CORE.Window.currentFbo.width = platform.window->r.w;
                 CORE.Window.currentFbo.height = platform.window->r.h;
                 CORE.Window.resizedLastFrame = true;
+            } break;
+            case RGFW_windowMaximized:
+            {
+                CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
+            } break;
+            case RGFW_windowMinimized:
+            {
+                CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
+            } break;
+            case RGFW_windowRestored:
+            {
+                if (RGFW_window_isMaximized(platform.window))
+                    CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
+                if (RGFW_window_isMinimized(platform.window))
+                    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
             } break;
             case RGFW_windowMoved:
             {
@@ -1079,12 +1119,13 @@ void PollInputEvents(void)
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
-                } else CORE.Input.Mouse.currentWheelMove.y = 0;
+                }
+                else CORE.Input.Mouse.currentWheelMove.y = 0;
 
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
                 else if (btn == RGFW_mouseRight) btn = 2;
-                else if (btn == RGFW_mouseMiddle) btn = 3; 
+                else if (btn == RGFW_mouseMiddle) btn = 3;
 
                 CORE.Input.Mouse.currentButtonState[btn - 1] = 1;
                 CORE.Input.Touch.currentTouchState[btn - 1] = 1;
@@ -1097,7 +1138,8 @@ void PollInputEvents(void)
                 {
                     CORE.Input.Mouse.currentWheelMove.y = event->scroll;
                     break;
-                } else CORE.Input.Mouse.currentWheelMove.y = 0;
+                }
+                else CORE.Input.Mouse.currentWheelMove.y = 0;
 
                 int btn = event->button;
                 if (btn == RGFW_mouseLeft) btn = 1;
@@ -1127,19 +1169,21 @@ void PollInputEvents(void)
                 touchAction = 2;
             } break;
             case RGFW_gamepadConnected:
+            {
                 CORE.Input.Gamepad.ready[platform.window->event.gamepad] = true;
                 CORE.Input.Gamepad.axisCount[platform.window->event.gamepad] = platform.window->event.axisesCount;
                 CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                 CORE.Input.Gamepad.axisState[platform.window->event.gamepad][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
 
                 strcpy(CORE.Input.Gamepad.name[platform.window->event.gamepad], RGFW_getGamepadName(platform.window, platform.window->event.gamepad));
-                break;
+            } break;
             case RGFW_gamepadDisconnected:
+            {
                 CORE.Input.Gamepad.ready[platform.window->event.gamepad] = false;
-                break;
+            } break;
             case RGFW_gamepadButtonPressed:
             {
-				int button = RGFW_gpConvTable[event->button];
+                int button = RGFW_gpConvTable[event->button];
 
                 if (button >= 0)
                 {
@@ -1149,7 +1193,7 @@ void PollInputEvents(void)
             } break;
             case RGFW_gamepadButtonReleased:
             {
-				int button = RGFW_gpConvTable[event->button];
+                int button = RGFW_gpConvTable[event->button];
 
                 CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = 0;
                 if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
@@ -1157,33 +1201,34 @@ void PollInputEvents(void)
             case RGFW_gamepadAxisMove:
             {
                 int axis = -1;
+                float value = 0;
 
-				float value = 0;
-				switch(event->whichAxis) 
+                switch(event->whichAxis)
                 {
-					case 0:
-					{
-						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
-						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
-					} break;
-					case 1:
-					{
-						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
-						CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
-					} break;
-					case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
-					case 3: 
-                    { 
+                    case 0:
+                    {
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
+                    } break;
+                    case 1:
+                    {
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
+                    } break;
+                    case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
+                    case 3:
+                    {
                         if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
-						int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-						int pressed = (value > 0.1f);
-						CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = pressed;
-						
-						if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
-						else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
-					}
-					default: break;
-				}
+
+                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                        int pressed = (value > 0.1f);
+                        CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = pressed;
+                        
+                        if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+                        else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                    }
+                    default: break;
+                }
             } break;
             default: break;
         }
@@ -1239,7 +1284,7 @@ int InitPlatform(void)
     }
 
     if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
-    { 
+    {
         CORE.Window.fullscreen = true;
         flags |= RGFW_windowedFullscreen;
     }
@@ -1251,44 +1296,51 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) flags |= RGFW_windowHide;
     if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) flags |= RGFW_windowMaximize;
 
-
     // NOTE: Some OpenGL context attributes must be set before window creation
-
     // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_21) 
-    { 
+    if (rlGetVersion() == RL_OPENGL_21)
+    {
         RGFW_setGLHint(RGFW_glMajor, 2);
         RGFW_setGLHint(RGFW_glMinor, 1);
-    } 
-    else if (rlGetVersion() == RL_OPENGL_33) 
-    { 
-        RGFW_setGLHint(RGFW_glCore, 3);
+    }
+    else if (rlGetVersion() == RL_OPENGL_33)
+    {
+        RGFW_setGLHint(RGFW_glMajor, 3);
         RGFW_setGLHint(RGFW_glMinor, 3);
-    } 
-    else if (rlGetVersion() == RL_OPENGL_43) 
-    { 
-        RGFW_setGLHint(RGFW_glCore, 3);
+    }
+    else if (rlGetVersion() == RL_OPENGL_43)
+    {
+        RGFW_setGLHint(RGFW_glMajor, 4);
         RGFW_setGLHint(RGFW_glMinor, 3);
     }
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLHint(RGFW_glSamples, 4);
 
+    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) flags |= RGFW_windowFocusOnShow | RGFW_windowFocus;
+
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
+
+    if (platform.window != NULL)
+    {
+        // NOTE: RGFW's exit key is distinct from raylib's exit key (which can
+        // be set with SetExitKey()) and defaults to Escape
+        platform.window->exitKey = RGFW_keyNULL;
+    }
 
 #ifndef PLATFORM_WEB_RGFW
     RGFW_area screenSize = RGFW_getScreenSize();
     CORE.Window.display.width = screenSize.w;
     CORE.Window.display.height = screenSize.h;
 #else
-	CORE.Window.display.width = CORE.Window.screen.width;
+    CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
 #endif
-	// TODO: Is this needed by raylib now? 
+    // TODO: Is this needed by raylib now?
     // If so, rcore_desktop_sdl should be updated too
-	//SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-	
-	if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
+    //SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+    
+    if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 
     // Check surface and context activation
@@ -1338,14 +1390,23 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-#ifdef RGFW_X11
-    for (int i = 0; (i < 4) && (i < MAX_GAMEPADS); i++)
-    {
-        RGFW_registerGamepad(platform.window, i);
-    }
+#if defined(RGFW_WAYLAND)
+    if (RGFW_useWaylandBool) TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
+    else TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (fallback)): Initialized successfully");
+#elif defined(RGFW_X11)
+    #if defined(__APPLE__)
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (MacOS)): Initialized successfully");
+    #else
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11): Initialized successfully");
+    #endif
+#elif defined (RGFW_WINDOWS)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Win32): Initialized successfully");
+#elif defined(RGFW_WASM)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - WASMs): Initialized successfully");
+#elif defined(RGFW_MACOS)
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - MacOS): Initialized successfully");
 #endif
 
-    TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
     return 0;
 }
 
@@ -1359,6 +1420,6 @@ void ClosePlatform(void)
 static KeyboardKey ConvertScancodeToKey(u32 keycode)
 {
     if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return 0;
-    
-	return keyMappingRGFW[keycode];
+
+    return keyMappingRGFW[keycode];
 }

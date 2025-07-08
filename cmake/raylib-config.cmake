@@ -12,7 +12,7 @@
 #   raylib_DEFINITIONS - Compiler switches required for using raylib
 
 option(raylib_USE_STATIC_LIBS "Use static libs" ON)
-option(raylib_VERBOSE "Use static libs" OFF)
+option(raylib_VERBOSE "Show raylib verbose messages" OFF)
 
 if (NOT TARGET raylib)
     set(XPREFIX PC_RAYLIB)
