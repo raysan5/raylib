@@ -1033,6 +1033,8 @@ void UnloadSoundAlias(Sound alias)
 }
 
 // Update sound buffer with new data
+// NOTE 1: data format must match sound.stream.sampleSize
+// NOTE 2: frameCount must not exceed sound.frameCount
 void UpdateSound(Sound sound, const void *data, int frameCount)
 {
     if (sound.stream.buffer != NULL)
