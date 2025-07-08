@@ -149,7 +149,7 @@ int main(void)
 
             int yOffset = 24;
             DrawText("Use keys [W][A][S][D] to move the light", 10, 30 + yOffset * 1, 20, BLACK);
-            DrawText("Use kyes [Up][Down] to change specular exponent", 10, 30 + yOffset * 2, 20, BLACK);
+            DrawText("Use keys [Up][Down] to change specular exponent", 10, 30 + yOffset * 2, 20, BLACK);
             DrawText(TextFormat("Specular Exponent: %.2f", specularExponent), 10, 30 + yOffset * 3, 20, BLUE);
 
             DrawFPS(10, 10);
