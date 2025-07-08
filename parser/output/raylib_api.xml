@@ -2150,11 +2150,11 @@
         <Function name="UnloadRenderTexture" retType="void" paramCount="1" desc="Unload render texture from GPU memory (VRAM)">
             <Param type="RenderTexture2D" name="target" desc="" />
         </Function>
-        <Function name="UpdateTexture" retType="void" paramCount="2" desc="Update GPU texture with new data">
+        <Function name="UpdateTexture" retType="void" paramCount="2" desc="Update GPU texture with new data (pixels should be able to fill texture)">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="const void *" name="pixels" desc="" />
         </Function>
-        <Function name="UpdateTextureRec" retType="void" paramCount="3" desc="Update GPU texture rectangle with new data">
+        <Function name="UpdateTextureRec" retType="void" paramCount="3" desc="Update GPU texture rectangle with new data (pixels and rec should fit in texture)">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="const void *" name="pixels" desc="" />
@@ -2940,7 +2940,7 @@
         <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Checks if a sound is valid (data loaded and buffers initialized)">
             <Param type="Sound" name="sound" desc="" />
         </Function>
-        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data">
+        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (data and frame count should fit in sound)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="const void *" name="data" desc="" />
             <Param type="int" name="sampleCount" desc="" />
