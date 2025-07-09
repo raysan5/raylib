@@ -3465,6 +3465,18 @@ Vector2 GetMousePosition(void)
     return position;
 }
 
+// Get previous mouse position XY
+Vector2 GetPreviousMousePosition(void)
+{
+    Vector2 prevPosition = { 0 };
+
+    prevPosition.x = (CORE.Input.Mouse.previousPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
+    prevPosition.y = (CORE.Input.Mouse.previousPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
+
+    return prevPosition;
+}
+
+
 // Get mouse delta between frames
 Vector2 GetMouseDelta(void)
 {
