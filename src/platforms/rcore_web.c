@@ -1591,8 +1591,8 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     // If the pointer is not locked, follow the position
     if (!CORE.Input.Mouse.cursorHidden)
     {
-        CORE.Input.Mouse.currentPosition.x = (float)x;
-        CORE.Input.Mouse.currentPosition.y = (float)y;
+        CORE.Input.Mouse.currentPosition.x = (float) x * CORE.Window.screen.width  / CORE.Window.initScreen.width;
+        CORE.Input.Mouse.currentPosition.y = (float) y * CORE.Window.screen.height / CORE.Window.initScreen.height;
         CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
     }
 
