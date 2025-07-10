@@ -3271,13 +3271,13 @@ Function 364: UnloadRenderTexture() (1 input parameters)
 Function 365: UpdateTexture() (2 input parameters)
   Name: UpdateTexture
   Return type: void
-  Description: Update GPU texture with new data
+  Description: Update GPU texture with new data (pixels should be able to fill texture)
   Param[1]: texture (type: Texture2D)
   Param[2]: pixels (type: const void *)
 Function 366: UpdateTextureRec() (3 input parameters)
   Name: UpdateTextureRec
   Return type: void
-  Description: Update GPU texture rectangle with new data
+  Description: Update GPU texture rectangle with new data (pixels and rec should fit in texture)
   Param[1]: texture (type: Texture2D)
   Param[2]: rec (type: Rectangle)
   Param[3]: pixels (type: const void *)
@@ -4399,7 +4399,7 @@ Function 530: IsSoundValid() (1 input parameters)
 Function 531: UpdateSound() (3 input parameters)
   Name: UpdateSound
   Return type: void
-  Description: Update sound buffer with new data
+  Description: Update sound buffer with new data (data and frame count should fit in sound)
   Param[1]: sound (type: Sound)
   Param[2]: data (type: const void *)
   Param[3]: sampleCount (type: int)

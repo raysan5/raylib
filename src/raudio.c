@@ -81,7 +81,7 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-#if defined(SUPPORT_MODULE_RAUDIO)
+#if defined(SUPPORT_MODULE_RAUDIO) || defined(RAUDIO_STANDALONE)
 
 #if defined(_WIN32)
 // To avoid conflicting windows.h symbols with raylib, some flags are defined
@@ -1037,6 +1037,8 @@ void UnloadSoundAlias(Sound alias)
 }
 
 // Update sound buffer with new data
+// NOTE 1: data format must match sound.stream.sampleSize
+// NOTE 2: frameCount must not exceed sound.frameCount
 void UpdateSound(Sound sound, const void *data, int frameCount)
 {
     if (sound.stream.buffer != NULL)
