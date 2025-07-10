@@ -2217,9 +2217,9 @@ void ImageBlurGaussian(Image *image, int blurSize)
         else if (pixelsCopy1[i].w <= 255.0f)
         {
             float alpha = (float)pixelsCopy1[i].w/255.0f;
-            pixels[i].r = (unsigned char)((float)pixelsCopy1[i].x/alpha);
-            pixels[i].g = (unsigned char)((float)pixelsCopy1[i].y/alpha);
-            pixels[i].b = (unsigned char)((float)pixelsCopy1[i].z/alpha);
+            pixels[i].r = (unsigned char)fminf((float)pixelsCopy1[i].x/alpha, 255.0);
+            pixels[i].g = (unsigned char)fminf((float)pixelsCopy1[i].y/alpha, 255.0);
+            pixels[i].b = (unsigned char)fminf((float)pixelsCopy1[i].z/alpha, 255.0);
             pixels[i].a = (unsigned char) pixelsCopy1[i].w;
         }
     }
