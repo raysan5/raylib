@@ -299,4 +299,9 @@
 //------------------------------------------------------------------------------------
 #define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
 
+//DRM configuration
+#if defined(PLATFORM_DRM)
+//#define SUPPORT_DRM_CACHE 1 //enable triple buffered DRM caching
+#endif //PLATFORM_DRM
+
 #endif // CONFIG_H
