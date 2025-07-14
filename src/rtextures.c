@@ -3565,34 +3565,39 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     int dx = x2 - x1;
     int dy = y2 - y1;
 
-    // Draw the main line between (x1, y1) and (x2, y2)
-    ImageDrawLine(dst, x1, y1, x2, y2, color);
-
     // Determine if the line is more horizontal or vertical
     if ((dx != 0) && (abs(dy/dx) < 1))
     {
         // Line is more horizontal
-        // Calculate half the width of the line
-        int wy = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dx));
+        int wy = thick - 1;
 
-        // Draw additional lines above and below the main line
-        for (int i = 1; i <= wy; i++)
+        //Draw the main line and lower half
+        for (int i = 0; i <= ((wy+1)/2); i++)
+        {
+            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); // Draw below the main line
+        }
+
+        //Draw the upper half
+        for (int i = 1; i <= (wy/2); i++)
         {
             ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); // Draw above the main line
-            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); // Draw below the main line
         }
     }
     else if (dy != 0)
     {
         // Line is more vertical or perfectly horizontal
-        // Calculate half the width of the line
-        int wx = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dy));
+        int wx = thick - 1;
 
-        // Draw additional lines to the left and right of the main line
-        for (int i = 1; i <= wx; i++)
+        //Draw the main line and right half
+        for (int i = 0; i <= ((wx+1)/2); i++)
+        {
+            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); // Draw right of the main line
+        }
+
+        //Draw the the left half
+        for (int i = 1; i <= (wx/2); i++)
         {
             ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); // Draw left of the main line
-            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); // Draw right of the main line
         }
     }
 }
