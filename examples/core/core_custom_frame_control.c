@@ -61,7 +61,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        PollInputEvents();              // Poll input events (SUPPORT_CUSTOM_FRAME_CONTROL)
+        #ifndef PLATFORM_WEB            // NOTE: On non web platforms the PollInputEvents just works before the inputs checks
+            PollInputEvents();          // Poll input events (SUPPORT_CUSTOM_FRAME_CONTROL)
+        #endif
         
         if (IsKeyPressed(KEY_SPACE)) pause = !pause;
         
@@ -76,6 +78,10 @@ int main(void)
             if (position >= GetScreenWidth()) position = 0;
             timeCounter += deltaTime;   // We count time (seconds)
         }
+
+        #ifdef PLATFORM_WEB             // NOTE: On web platform for some reason the PollInputEvents only works after the inputs check, so just call it after check all your inputs (on web)
+            PollInputEvents();          // Poll input events (SUPPORT_CUSTOM_FRAME_CONTROL)
+        #endif
         //----------------------------------------------------------------------------------
 
         // Draw
