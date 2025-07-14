@@ -3576,13 +3576,13 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
         // Draw the main line and lower half
         for (int i = 0; i <= ((wy+1)/2); i++)
         {
-            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); // Draw below the main line
+            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); 
         }
 
         // Draw the upper half
         for (int i = 1; i <= (wy/2); i++)
         {
-            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); // Draw above the main line
+            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); 
         }
     }
     else if (dy != 0)
@@ -3595,13 +3595,13 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
         //Draw the main line and right half
         for (int i = 0; i <= ((wx+1)/2); i++)
         {
-            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); // Draw right of the main line
+            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); 
         }
 
         // Draw the left half
         for (int i = 1; i <= (wx/2); i++)
         {
-            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); // Draw left of the main line
+            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); 
         }
     }
 }
