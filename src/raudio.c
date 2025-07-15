@@ -1871,6 +1871,7 @@ void SeekMusicStream(Music music, float position)
 void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
+    if (!music.stream.buffer->playing) return;
 
     ma_mutex_lock(&AUDIO.System.lock);
 
