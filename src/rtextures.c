@@ -3576,32 +3576,32 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
         // Draw the main line and lower half
         for (int i = 0; i <= ((wy+1)/2); i++)
         {
-            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); 
+            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color);
         }
 
         // Draw the upper half
         for (int i = 1; i <= (wy/2); i++)
         {
-            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); 
+            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color);
         }
     }
     else if (dy != 0)
     {
         // Line is more vertical or perfectly horizontal
-        
+
         // How many additional lines to draw
         int wx = thick - 1;
 
         //Draw the main line and right half
         for (int i = 0; i <= ((wx+1)/2); i++)
         {
-            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); 
+            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color);
         }
 
         // Draw the left half
         for (int i = 1; i <= (wx/2); i++)
         {
-            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); 
+            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color);
         }
     }
 }
@@ -5409,7 +5409,7 @@ static float HalfToFloat(unsigned short x)
     } uni;
 
     const unsigned int e = (x & 0x7c00) >> 10; // Exponent
-    const unsigned int m = (x & 0x03cc) << 13; // Mantissa
+    const unsigned int m = (x & 0x03ff) << 13; // Mantissa
     uni.fm = (float)m;
     const unsigned int v = uni.ui >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
     uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007fe000)); // sign : normalized : denormalized
