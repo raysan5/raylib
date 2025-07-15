@@ -2921,13 +2921,27 @@ void ImageColorReplace(Image *image, Color color, Color replace)
         }
     }
 
-    int format = image->format;
+    const int format = image->format;
     RL_FREE(image->data);
 
     image->data = pixels;
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-    ImageFormat(image, format);
+    const bool formatHasNoAlpha = (format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
+                        (format == PIXELFORMAT_UNCOMPRESSED_R5G6B5) ||
+                        (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+                        (format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
+                        (format == PIXELFORMAT_UNCOMPRESSED_R16G16B16) ||
+                        (format == PIXELFORMAT_COMPRESSED_DXT1_RGB) ||
+                        (format == PIXELFORMAT_COMPRESSED_ETC1_RGB) ||
+                        (format == PIXELFORMAT_COMPRESSED_ETC2_RGB) ||
+                        (format == PIXELFORMAT_COMPRESSED_PVRT_RGB);
+
+    // Only convert back to original format if it supported alpha
+    if (!formatHasNoAlpha)
+    {
+        ImageFormat(image, format);
+    }
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
