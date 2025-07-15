@@ -1308,12 +1308,12 @@ int InitPlatform(void)
 
 #if defined(SUPPORT_DRM_CACHE)
     if(InitSwapScreenBuffer() == 0) {
+#endif//SUPPORT_DRM_CACHE
         TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
         return 0;
-    } else {
-#endif//SUPPORT_DRM_CACHE
-        TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized failed");
 #if defined(SUPPORT_DRM_CACHE)
+    } else {
+        TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized failed");
         return -1;
     }
 #endif //SUPPORT_DRM_CACHE
