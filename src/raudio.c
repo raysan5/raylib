@@ -1891,13 +1891,25 @@ void UpdateMusicStream(Music music)
     // Check both sub-buffers to check if they require refilling
     for (int i = 0; i < 2; i++)
     {
-        if (!music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
-
         unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
         unsigned int framesToStream = 0;                 // Total frames to be streamed
 
         if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
         else framesToStream = framesLeft;
+
+        if (framesToStream == 0) {
+            bool framesInBufferPlayed = music.stream.buffer->isSubBufferProcessed[0] && music.stream.buffer->isSubBufferProcessed[1];
+            if (framesInBufferPlayed) {
+
+                ma_mutex_unlock(&AUDIO.System.lock);
+                StopMusicStream(music);
+                return;
+            }
+            ma_mutex_unlock(&AUDIO.System.lock);
+            return;
+        }
+
+        if (!music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
 
         int frameCountStillNeeded = framesToStream;
         int frameCountReadTotal = 0;
@@ -2009,21 +2021,7 @@ void UpdateMusicStream(Music music)
         #endif
             default: break;
         }
-
         UpdateAudioStreamInLockedState(music.stream, AUDIO.System.pcmBuffer, framesToStream);
-
-        music.stream.buffer->framesProcessed = music.stream.buffer->framesProcessed%music.frameCount;
-
-        if (framesLeft <= subBufferSizeInFrames)
-        {
-            if (!music.looping)
-            {
-                ma_mutex_unlock(&AUDIO.System.lock);
-                // Streaming is ending, we filled latest frames from input
-                StopMusicStream(music);
-                return;
-            }
-        }
     }
 
     ma_mutex_unlock(&AUDIO.System.lock);
@@ -2688,8 +2686,7 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
             ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
             unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
-            // Total frames processed in buffer is always the complete size, filled with 0 if required
-            stream.buffer->framesProcessed += subBufferSizeInFrames;
+            stream.buffer->framesProcessed += frameCount;
 
             // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic
