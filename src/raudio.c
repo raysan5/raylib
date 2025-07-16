@@ -2086,8 +2086,12 @@ float GetMusicTimePlayed(Music music)
             int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
             int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
             int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+            int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
+            if (framesInBuffers > music.frameCount) {
+                if (!music.looping) framesInBuffers = music.frameCount;
+            }
             int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
-            int framesPlayed = (framesProcessed - framesInFirstBuffer - framesInSecondBuffer + framesSentToMix)%(int)music.frameCount;
+            int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
             if (framesPlayed < 0) framesPlayed += music.frameCount;
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
             ma_mutex_unlock(&AUDIO.System.lock);
