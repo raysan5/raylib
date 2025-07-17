@@ -1897,14 +1897,16 @@ void UpdateMusicStream(Music music)
         if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
         else framesToStream = framesLeft;
 
-        if (framesToStream == 0) {
-            bool framesInBufferPlayed = music.stream.buffer->isSubBufferProcessed[0] && music.stream.buffer->isSubBufferProcessed[1];
-            if (framesInBufferPlayed) {
-
+        if (framesToStream == 0)
+        {
+            // Check if both buffers have been processed
+            if (music.stream.buffer->isSubBufferProcessed[0] && music.stream.buffer->isSubBufferProcessed[1])
+            {
                 ma_mutex_unlock(&AUDIO.System.lock);
                 StopMusicStream(music);
                 return;
             }
+
             ma_mutex_unlock(&AUDIO.System.lock);
             return;
         }
@@ -2021,6 +2023,7 @@ void UpdateMusicStream(Music music)
         #endif
             default: break;
         }
+
         UpdateAudioStreamInLockedState(music.stream, AUDIO.System.pcmBuffer, framesToStream);
     }
 
