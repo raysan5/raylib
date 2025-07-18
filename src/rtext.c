@@ -391,7 +391,7 @@ Font LoadFont(const char *fileName)
         else
         {
             SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
-            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", FONT_TTF_DEFAULT_SIZE, FONT_TTF_DEFAULT_NUMCHARS);
+            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
         }
     }
 
