@@ -342,6 +342,10 @@ ifeq ($(PLATFORM_OS), LINUX)
     CFLAGS += -fPIC
 endif
 
+ifeq ($(PLATFORM_OS),WINDOWS)
+    CFLAGS += -DUNICODE
+endif
+
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
 endif
@@ -627,6 +631,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
         LDLIBS += -latomic
     endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
+    LDLIBS = -lgdi32 -lwinmm -lopengl32 -lshcore
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
