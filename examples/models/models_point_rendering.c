@@ -125,7 +125,7 @@ int main()
             EndMode3D();
 
             // Draw UI text
-            DrawText(TextFormat("Point Count: %d", numPoints), 20, screenHeight - 50, 40, WHITE);
+            DrawText(TextFormat("Point Count: %d", numPoints), 20, GetScreenHeight() - 50, 40, WHITE);
             DrawText("Up - increase points", 20, 70, 20, WHITE);
             DrawText("Down - decrease points", 20, 100, 20, WHITE);
             DrawText("Space - drawing function", 20, 130, 20, WHITE);
