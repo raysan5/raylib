@@ -2217,9 +2217,9 @@ void ImageBlurGaussian(Image *image, int blurSize)
         else if (pixelsCopy1[i].w <= 255.0f)
         {
             float alpha = (float)pixelsCopy1[i].w/255.0f;
-            pixels[i].r = (unsigned char)((float)pixelsCopy1[i].x/alpha);
-            pixels[i].g = (unsigned char)((float)pixelsCopy1[i].y/alpha);
-            pixels[i].b = (unsigned char)((float)pixelsCopy1[i].z/alpha);
+            pixels[i].r = (unsigned char)fminf((float)pixelsCopy1[i].x/alpha, 255.0);
+            pixels[i].g = (unsigned char)fminf((float)pixelsCopy1[i].y/alpha, 255.0);
+            pixels[i].b = (unsigned char)fminf((float)pixelsCopy1[i].z/alpha, 255.0);
             pixels[i].a = (unsigned char) pixelsCopy1[i].w;
         }
     }
@@ -2927,7 +2927,16 @@ void ImageColorReplace(Image *image, Color color, Color replace)
     image->data = pixels;
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-    ImageFormat(image, format);
+    // Only convert back to original format if it supported alpha
+    if ((format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_R5G6B5) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_R16G16B16) ||
+        (format == PIXELFORMAT_COMPRESSED_DXT1_RGB) ||
+        (format == PIXELFORMAT_COMPRESSED_ETC1_RGB) ||
+        (format == PIXELFORMAT_COMPRESSED_ETC2_RGB) ||
+        (format == PIXELFORMAT_COMPRESSED_PVRT_RGB)) ImageFormat(image, format);
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
@@ -3565,34 +3574,43 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     int dx = x2 - x1;
     int dy = y2 - y1;
 
-    // Draw the main line between (x1, y1) and (x2, y2)
-    ImageDrawLine(dst, x1, y1, x2, y2, color);
-
     // Determine if the line is more horizontal or vertical
     if ((dx != 0) && (abs(dy/dx) < 1))
     {
         // Line is more horizontal
-        // Calculate half the width of the line
-        int wy = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dx));
 
-        // Draw additional lines above and below the main line
-        for (int i = 1; i <= wy; i++)
+        // How many additional lines to draw
+        int wy = thick - 1;
+
+        // Draw the main line and lower half
+        for (int i = 0; i <= ((wy+1)/2); i++)
         {
-            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); // Draw above the main line
-            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); // Draw below the main line
+            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color);
+        }
+
+        // Draw the upper half
+        for (int i = 1; i <= (wy/2); i++)
+        {
+            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color);
         }
     }
     else if (dy != 0)
     {
         // Line is more vertical or perfectly horizontal
-        // Calculate half the width of the line
-        int wx = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dy));
 
-        // Draw additional lines to the left and right of the main line
-        for (int i = 1; i <= wx; i++)
+        // How many additional lines to draw
+        int wx = thick - 1;
+
+        //Draw the main line and right half
+        for (int i = 0; i <= ((wx+1)/2); i++)
         {
-            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); // Draw left of the main line
-            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); // Draw right of the main line
+            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color);
+        }
+
+        // Draw the left half
+        for (int i = 1; i <= (wx/2); i++)
+        {
+            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color);
         }
     }
 }
@@ -5400,7 +5418,7 @@ static float HalfToFloat(unsigned short x)
     } uni;
 
     const unsigned int e = (x & 0x7c00) >> 10; // Exponent
-    const unsigned int m = (x & 0x03cc) << 13; // Mantissa
+    const unsigned int m = (x & 0x03ff) << 13; // Mantissa
     uni.fm = (float)m;
     const unsigned int v = uni.ui >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
     uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007fe000)); // sign : normalized : denormalized

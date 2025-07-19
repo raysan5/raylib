@@ -15,15 +15,15 @@
 *       - Support 64 bits generation
 *
 *   ADDITIONAL NOTES:
-*     This library implements two pseudo-random number generation algorithms: 
+*     This library implements two pseudo-random number generation algorithms:
 *
 *         - Xoshiro128** : https://prng.di.unimi.it/xoshiro128starstar.c
 *         - SplitMix64   : https://prng.di.unimi.it/splitmix64.c
 *
 *     SplitMix64 is used to initialize the Xoshiro128** state, from a provided seed
 *
-*     It's suggested to use SplitMix64 to initialize the state of the generators starting from 
-*     a 64-bit seed, as research has shown that initialization must be performed with a generator 
+*     It's suggested to use SplitMix64 to initialize the state of the generators starting from
+*     a 64-bit seed, as research has shown that initialization must be performed with a generator
 *     radically different in nature from the one initialized to avoid correlation on similar seeds.
 *
 *   CONFIGURATION:
@@ -31,7 +31,7 @@
 *           Generates the implementation of the library into the included file.
 *           If not defined, the library is in header only mode and can be included in other headers
 *           or source files without problems. But only ONE file should hold the implementation.
-* 
+*
 *   DEPENDENCIES: none
 *
 *   VERSIONS HISTORY:
@@ -153,7 +153,7 @@ static uint32_t rprand_state[4] = {             // Xoshiro128** state, initializ
     0x218b21e5,
     0xaa91febd,
     0x976414d4
-};        
+};
 
 //----------------------------------------------------------------------------------
 // Module internal functions declaration
@@ -190,8 +190,8 @@ int rprand_get_value(int min, int max)
 int *rprand_load_sequence(unsigned int count, int min, int max)
 {
     int *sequence = NULL;
-    
-    if (count > (unsigned int)(abs(max - min) + 1)) 
+
+    if (count > (unsigned int)(abs(max - min) + 1))
     {
         RPRAND_LOG("WARNING: Sequence count required is greater than range provided\n");
         //count = (max - min);
@@ -244,26 +244,26 @@ static inline uint32_t rprand_rotate_left(const uint32_t x, int k)
 }
 
 // Xoshiro128** generator info:
-//   
+//
 //   Written in 2018 by David Blackman and Sebastiano Vigna (vigna@acm.org)
-//   
+//
 //   To the extent possible under law, the author has dedicated all copyright
 //   and related and neighboring rights to this software to the public domain
 //   worldwide. This software is distributed without any warranty.
-//   
+//
 //   See <http://creativecommons.org/publicdomain/zero/1.0/>.
-//   
+//
 //   This is xoshiro128** 1.1, one of our 32-bit all-purpose, rock-solid
 //   generators. It has excellent speed, a state size (128 bits) that is
 //   large enough for mild parallelism, and it passes all tests we are aware
 //   of.
-// 
+//
 //   Note that version 1.0 had mistakenly s[0] instead of s[1] as state
 //   word passed to the scrambler.
-// 
+//
 //   For generating just single-precision (i.e., 32-bit) floating-point
 //   numbers, xoshiro128+ is even faster.
-// 
+//
 //   The state must be seeded so that it is not everywhere zero.
 //
 uint32_t rprand_xoshiro(void)
@@ -275,29 +275,29 @@ uint32_t rprand_xoshiro(void)
     rprand_state[3] ^= rprand_state[1];
     rprand_state[1] ^= rprand_state[2];
     rprand_state[0] ^= rprand_state[3];
-    
+
     rprand_state[2] ^= t;
-    
+
     rprand_state[3] = rprand_rotate_left(rprand_state[3], 11);
 
     return result;
 }
 
 // SplitMix64 generator info:
-//   
+//
 //   Written in 2015 by Sebastiano Vigna (vigna@acm.org)
-//   
+//
 //   To the extent possible under law, the author has dedicated all copyright
 //   and related and neighboring rights to this software to the public domain
 //   worldwide. This software is distributed without any warranty.
-//   
+//
 //   See <http://creativecommons.org/publicdomain/zero/1.0/>.
-//   
+//
 //
 //   This is a fixed-increment version of Java 8's SplittableRandom generator
 //   See http://dx.doi.org/10.1145/2714064.2660195 and
 //   http://docs.oracle.com/javase/8/docs/api/java/util/SplittableRandom.html
-//   
+//
 //   It is a very fast generator passing BigCrush, and it can be useful if
 //   for some reason you absolutely want 64 bits of state.
 uint64_t rprand_splitmix64()
