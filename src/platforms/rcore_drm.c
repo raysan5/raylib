@@ -71,6 +71,24 @@
 #include "EGL/egl.h"        // Native platform windowing system interface
 #include "EGL/eglext.h"     // EGL extensions
 
+#if defined(SUPPORT_DRM_CACHE)
+#include <poll.h>  // for drmHandleEvent poll
+#include <errno.h> //for EBUSY, EAGAIN
+
+#define MAX_CACHED_BOS 3
+
+typedef struct {
+    struct gbm_bo *bo;
+    uint32_t fbId;  // DRM framebuffer ID
+} FramebufferCache;
+
+static FramebufferCache fbCache[MAX_CACHED_BOS] = {0};
+static volatile int fbCacheCount = 0;
+static volatile bool pendingFlip = false;
+static bool crtcSet = false;
+
+#endif //SUPPORT_DRM_CACHE
+
 #ifndef EGL_OPENGL_ES3_BIT
     #define EGL_OPENGL_ES3_BIT  0x40
 #endif
@@ -551,6 +569,211 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+#if defined(SUPPORT_DRM_CACHE)
+//callback to destroy cached framebuffer, set by gbm_bo_set_user_data()
+static void DestroyFrameBufferCallback(struct gbm_bo *bo, void *data) {
+    uint32_t fbId = (uintptr_t)data;
+    // Remove from cache
+    for (int i = 0; i < fbCacheCount; i++) {
+        if (fbCache[i].bo == bo) {
+            TRACELOG(LOG_INFO, "DRM: fb removed %u", (uintptr_t)fbId);
+            drmModeRmFB(platform.fd, fbCache[i].fbId); // Release DRM FB
+            // Shift remaining entries
+            for (int j = i; j < fbCacheCount - 1; j++) {
+                fbCache[j] = fbCache[j + 1];
+            }
+            fbCacheCount--;
+            break;
+        }
+    }
+}
+
+// Create or retrieve cached DRM FB for BO
+static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo) {
+    // Try to find existing cache entry
+    for (int i = 0; i < fbCacheCount; i++) {
+        if (fbCache[i].bo == bo) {
+            return fbCache[i].fbId;
+        }
+    }
+
+    // Create new entry if cache not full
+    if (fbCacheCount >= MAX_CACHED_BOS) {
+        //FB cache full!
+        return 0;
+    }
+
+    uint32_t handle = gbm_bo_get_handle(bo).u32;
+    uint32_t stride = gbm_bo_get_stride(bo);
+    uint32_t width = gbm_bo_get_width(bo);
+    uint32_t height = gbm_bo_get_height(bo);
+
+    uint32_t fbId;
+    if (drmModeAddFB(platform.fd, width, height, 24, 32, stride, handle, &fbId)) {
+        //rmModeAddFB failed
+        return 0;
+    }
+
+    // Store in cache
+    fbCache[fbCacheCount] = (FramebufferCache){ .bo = bo, .fbId = fbId };
+    fbCacheCount++;
+
+    // Set destroy callback to auto-cleanup
+    gbm_bo_set_user_data(bo, (void*)(uintptr_t)fbId, DestroyFrameBufferCallback);
+
+    TRACELOG(LOG_INFO, "DRM: added new bo %u" , (uintptr_t)fbId);
+    return fbId;
+}
+
+// Renders a blank frame to allocate initial buffers
+void RenderBlankFrame() {
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    eglSwapBuffers(platform.device, platform.surface);
+    
+    // Ensure the buffer is processed
+    glFinish();
+}
+
+// Initialize with first buffer only
+int InitSwapScreenBuffer() {
+    if (!platform.gbmSurface || platform.fd < 0) {
+        TRACELOG(LOG_ERROR, "DRM not initialized");
+        return -1;
+    }
+
+    // Render a blank frame to allocate buffers
+    RenderBlankFrame();
+
+    // Get first buffer
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(platform.gbmSurface);
+    if (!bo) {
+        TRACELOG(LOG_ERROR, "Failed to lock initial buffer");
+        return -1;
+    }
+
+    // Create FB for first buffer
+    uint32_t fbId = GetOrCreateFbForBo(bo);
+    if (!fbId) {
+        gbm_surface_release_buffer(platform.gbmSurface, bo);
+        return -1;
+    }
+
+    // Initial CRTC setup
+    if (drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fbId,
+                       0, 0, &platform.connector->connector_id, 1,
+                       &platform.connector->modes[platform.modeIndex])) {
+        TRACELOG(LOG_ERROR, "Initial CRTC setup failed: %s", strerror(errno));
+        gbm_surface_release_buffer(platform.gbmSurface, bo);
+        return -1;
+    }
+
+    // Keep first buffer locked until flipped
+    platform.prevBO = bo;
+    crtcSet = true;
+    return 0;
+}
+
+// Static page flip handler 
+// this will be called once the drmModePageFlip() finished from the drmHandleEvent(platform.fd, &evctx); context
+static void PageFlipHandler(int fd, unsigned int frame, 
+                              unsigned int sec, unsigned int usec, 
+                              void *data) {
+    (void)fd; (void)frame; (void)sec; (void)usec; // Unused
+    pendingFlip = false;
+    struct gbm_bo *bo_to_release = (struct gbm_bo *)data;
+    //Buffers are released after the flip completes (via page_flip_handler), ensuring they're no longer in use.
+    // Prevents the GPU from writing to a buffer being scanned out
+    if (bo_to_release) {
+        gbm_surface_release_buffer(platform.gbmSurface, bo_to_release);
+    }
+}
+
+// Swap implementation with proper caching
+void SwapScreenBuffer() {
+    static int loopCnt = 0;
+    loopCnt++;
+    static int errCnt[5] = {0};
+    if (!crtcSet || !platform.gbmSurface) return;
+
+    //call this only, if pendingFlip is not set
+    eglSwapBuffers(platform.device, platform.surface);
+
+    // Process pending events non-blocking
+    drmEventContext evctx = {
+        .version = DRM_EVENT_CONTEXT_VERSION,
+        .page_flip_handler = PageFlipHandler
+    };
+    
+    struct pollfd pfd = { .fd = platform.fd, .events = POLLIN };
+    //polling for event for 0ms
+    while (poll(&pfd, 1, 0) > 0) {
+        drmHandleEvent(platform.fd, &evctx);
+    }
+
+    // Skip if previous flip pending
+    if (pendingFlip) {
+        //Skip frame: flip pending
+        errCnt[0]++;
+        return;
+    } 
+
+    // Get new front buffer
+    struct gbm_bo *next_bo = gbm_surface_lock_front_buffer(platform.gbmSurface);
+    if (!next_bo) {
+        //Failed to lock front buffer
+        errCnt[1]++;
+        return;
+    }
+
+    // Get FB ID (creates new one if needed)
+    uint32_t fbId = GetOrCreateFbForBo(next_bo);
+    if (!fbId) {
+        gbm_surface_release_buffer(platform.gbmSurface, next_bo);
+        errCnt[2]++;
+        return;
+    }
+
+    // Attempt page flip
+    /* rmModePageFlip() schedules a buffer-flip for the next vblank and then
+        *   notifies us about it. It takes a CRTC-id, fb-id and an arbitrary
+        *   data-pointer and then schedules the page-flip. This is fully asynchronous and
+        * When the page-flip happens, the DRM-fd will become readable and we can call
+        * drmHandleEvent(). This will read all vblank/page-flip events and call our
+        * modeset_page_flip_event() callback with the data-pointer that we passed to
+        * drmModePageFlip(). We simply call modeset_draw_dev() then so the next frame
+        * is rendered..
+        *   returns immediately. 
+    */
+    if (drmModePageFlip(platform.fd, platform.crtc->crtc_id, fbId,
+                       DRM_MODE_PAGE_FLIP_EVENT, platform.prevBO)) {
+        if (errno == EBUSY) {
+            //Display busy - skip flip
+            errCnt[3]++;
+        } else {
+            //Page flip failed
+            errCnt[4]++;
+        }
+        gbm_surface_release_buffer(platform.gbmSurface, next_bo);
+        return;
+    }
+
+    // Success: update state
+    pendingFlip = true;
+    
+    platform.prevBO = next_bo;
+    //successful usage, do benchmarking
+    //in every 10 sec, at 60FPS 60*10 -> 600 
+    if(loopCnt >= 600) {
+        TRACELOG(LOG_INFO, "DRM err counters: %d, %d, %d, %d, %d, %d",errCnt[0],errCnt[1],errCnt[2],errCnt[3],errCnt[4], loopCnt);
+        //reinit the errors
+        for(int i=0;i<5;i++) {
+            errCnt[i] = 0;
+        }
+        loopCnt = 0;
+    }
+}
+#else //SUPPORT_DRM_CACHE is not defined
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
@@ -580,7 +803,7 @@ void SwapScreenBuffer(void)
 
     platform.prevBO = bo;
 }
-
+#endif //SUPPORT_DRM_CACHE
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Misc
 //----------------------------------------------------------------------------------
@@ -1083,9 +1306,18 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-    TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
+#if defined(SUPPORT_DRM_CACHE)
+    if(InitSwapScreenBuffer() == 0) {
+#endif//SUPPORT_DRM_CACHE
+        TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
+        return 0;
+#if defined(SUPPORT_DRM_CACHE)
+    } else {
+        TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized failed");
+        return -1;
+    }
+#endif //SUPPORT_DRM_CACHE
 
-    return 0;
 }
 
 // Close platform
