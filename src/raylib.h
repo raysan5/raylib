@@ -1713,4 +1713,54 @@ RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio s
 }
 #endif
 
+#if __cplusplus >= 202002L && !defined(RAYLIB_DISABLE_CPP_FORMATTERS)
+
+// Optional C++20 formatters
+//-------------------------------------------------------------------------------
+
+#include <format>
+
+template <>
+struct std::formatter<Vector4> : std::formatter<std::string> {
+    auto format(Vector4 v, std::format_context& ctx) const {
+        auto fmt = std::format("{{{}, {}, {}, {}}}", v.x, v.y, v.z, v.w);
+        return std::formatter<std::string>::format(fmt, ctx);
+    }
+};
+
+template <>
+struct std::formatter<Vector3> : std::formatter<std::string> {
+    auto format(Vector3 v, std::format_context& ctx) const {
+        auto fmt = std::format("{{{}, {}, {}}}", v.x, v.y, v.z);
+        return std::formatter<std::string>::format(fmt, ctx);
+    }
+};
+
+template <>
+struct std::formatter<Vector2> : std::formatter<std::string> {
+    auto format(Vector2 v, std::format_context& ctx) const {
+        auto fmt = std::format("{{{}, {}}}", v.x, v.y);
+        return std::formatter<std::string>::format(fmt, ctx);
+    }
+};
+
+template <>
+struct std::formatter<Rectangle> : std::formatter<std::string> {
+    auto format(Rectangle rec, std::format_context& ctx) const {
+        auto fmt = std::format("{{{}, {}, {}, {}}}", rec.x, rec.y, rec.width, rec.height);
+        return std::formatter<std::string>::format(fmt, ctx);
+    }
+};
+
+template <>
+struct std::formatter<Color> : std::formatter<std::string> {
+    auto format(Color color, std::format_context& ctx) const {
+        auto fmt = std::format("{{{}, {}, {}}}", color.r, color.g, color.b);
+        return std::formatter<std::string>::format(fmt, ctx);
+    }
+};
+
+//-------------------------------------------------------------------------------
+#endif // C++20 formatters
+
 #endif // RAYLIB_H
