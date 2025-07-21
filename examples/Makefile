@@ -548,7 +548,8 @@ SHAPES = \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
-    shapes/shapes_digital_clock
+    shapes/shapes_digital_clock \
+    shapes/shapes_dobule_pendulum
 
 TEXTURES = \
     textures/textures_background_scrolling \
