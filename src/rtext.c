@@ -130,6 +130,7 @@ extern bool isGpuReady;
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
 #endif
+static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -145,7 +146,6 @@ static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode
 #if defined(SUPPORT_FILEFORMAT_BDF)
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
-static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
