@@ -74,9 +74,14 @@
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
-    //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
     //#define GLFW_EXPOSE_NATIVE_WAYLAND
+    #define GLFW_EXPOSE_NATIVE_X11
+    #define Font X11Font                // Hack to fix 'Font' name collision
+                                        // The definition and references to the X11 Font type will be replaced by 'X11Font'
+                                        // Works as long as the current file consistently references any X11 Font as X11Font
+                                        // Since it is never referenced (as of writting), this does not pose an issue
     #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
+    #undef Font                         // Revert hack and allow normal raylib Font usage
 #endif
 #if defined(__APPLE__)
     #include <unistd.h>                 // Required for: usleep()
@@ -705,6 +710,12 @@ void SetWindowFocused(void)
     glfwFocusWindow(platform.handle);
 }
 
+#if defined(__linux__)
+// Local storage for the window handle returned by glfwGetX11Window
+// This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
+// Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
+static XID X11WindowHandle;
+#endif
 // Get native window handle
 void *GetWindowHandle(void)
 {
@@ -713,12 +724,10 @@ void *GetWindowHandle(void)
     return glfwGetWin32Window(platform.handle);
 #endif
 #if defined(__linux__)
-    // NOTE: Returned handle is: unsigned long Window (X.h)
-    // typedef unsigned long XID;
-    // typedef XID Window;
-    //unsigned long id = (unsigned long)glfwGetX11Window(platform.handle);
-    //return NULL;    // TODO: Find a way to return value... cast to void *?
-    return (void *)platform.handle;
+    // Store the window handle localy and return a pointer to the variable instead.
+    // Reasoning detailed in the declaration of X11WindowHandle
+    X11WindowHandle = glfwGetX11Window(platform.handle);
+    return &X11WindowHandle;
 #endif
 #if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
