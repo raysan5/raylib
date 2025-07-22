@@ -51,7 +51,7 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-	SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [shapes] example - Double Pendulum");
 
     // Simulation Paramters
