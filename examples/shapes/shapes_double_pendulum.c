@@ -32,13 +32,11 @@
 #define SIMULATION_STEPS 30
 #define G 9.81
 
-#define scalar float
-
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static Vector2 CalculatePendulumEndPoint(scalar l, scalar theta);
-static Vector2 CalculateDoublePendulumEndPoint(scalar l1, scalar theta1, scalar l2, scalar theta2);
+static Vector2 CalculatePendulumEndPoint(float l, float theta);
+static Vector2 CalculateDoublePendulumEndPoint(float l1, float theta1, float l2, float theta2);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -52,18 +50,18 @@ int main(void)
 
     // Simulation Paramters
     //--------------------------------------------------------------------------------------
-    scalar l1 = 15, m1 = 0.2, theta1 = DEG2RAD * 170, w1 = 0;
-    scalar l2 = 15, m2 = 0.1, theta2 = DEG2RAD * 0, w2 = 0;
-    scalar lengthScaler = 0.1;
-    scalar totalM = m1 + m2;
+    float l1 = 15, m1 = 0.2, theta1 = DEG2RAD * 170, w1 = 0;
+    float l2 = 15, m2 = 0.1, theta2 = DEG2RAD * 0, w2 = 0;
+    float lengthScaler = 0.1;
+    float totalM = m1 + m2;
 
     Vector2 previousPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
     previousPosition.x += CENTER_X;
     previousPosition.y += CENTER_Y;
 
     // Scale length
-    scalar L1 = l1 * lengthScaler;
-    scalar L2 = l2 * lengthScaler;
+    float L1 = l1 * lengthScaler;
+    float L2 = l2 * lengthScaler;
 
     // Draw Parameters
     //--------------------------------------------------------------------------------------
@@ -82,25 +80,25 @@ int main(void)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        scalar dt = GetFrameTime();
-        scalar step = dt / SIMULATION_STEPS, step2 = step * step;
+        float dt = GetFrameTime();
+        float step = dt / SIMULATION_STEPS, step2 = step * step;
 
         // Update Physics - larger steps = better approximation
         //----------------------------------------------------------------------------------
         for (int i = 0; i < SIMULATION_STEPS; ++i)
         {
-            scalar delta = theta1 - theta2;
-            scalar sinD = sin(delta), cosD = cos(delta), cos2D = cos(2 * delta);
-            scalar ww1 = w1 * w1, ww2 = w2 * w2;
+            float delta = theta1 - theta2;
+            float sinD = sin(delta), cosD = cos(delta), cos2D = cos(2 * delta);
+            float ww1 = w1 * w1, ww2 = w2 * w2;
 
             // Calculate a1
-            scalar a1 = (-G * (2 * m1 + m2) * sin(theta1) 
+            float a1 = (-G * (2 * m1 + m2) * sin(theta1) 
                          - m2 * G * sin(theta1 - 2 * theta2) 
                          - 2 * sinD * m2 * (ww2 * L2 + ww1 * L1 * cosD))
                          / (L1 * (2 * m1 + m2 - m2 * cos2D));
 
             // Calculate a2
-            scalar a2 = (2 * sinD * (ww1 * L1 * totalM
+            float a2 = (2 * sinD * (ww1 * L1 * totalM
                          + G * totalM * cos(theta1) 
                          + ww2 * L2 * m2 * cosD))
                          / (L2 * (2 * m1 + m2 - m2 * cos2D));
@@ -170,13 +168,13 @@ int main(void)
 }
 
 // Calculate Pendulum End Point
-static Vector2 CalculatePendulumEndPoint(scalar l, scalar theta)
+static Vector2 CalculatePendulumEndPoint(float l, float theta)
 {
     return (Vector2){ 10 * l * sin(theta), 10 * l * cos(theta) };
 }
 
 // Calculate Double Pendulum End Point
-static Vector2 CalculateDoublePendulumEndPoint(scalar l1, scalar theta1, scalar l2, scalar theta2)
+static Vector2 CalculateDoublePendulumEndPoint(float l1, float theta1, float l2, float theta2)
 {
     Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);
     Vector2 endpoint2 = CalculatePendulumEndPoint(l2, theta2);
