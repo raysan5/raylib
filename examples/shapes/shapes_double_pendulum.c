@@ -32,10 +32,6 @@
 #define SIMULATION_STEPS 30
 #define G 9.81
 
-// Helpers for Angles Conversion
-#define RAD(x) x * PI / 180.0
-#define DEG(x) x * 180.0 / PI
-
 #define scalar float
 
 //----------------------------------------------------------------------------------
@@ -56,8 +52,8 @@ int main(void)
 
     // Simulation Paramters
     //--------------------------------------------------------------------------------------
-    scalar l1 = 15, m1 = 0.2, theta1 = RAD(170), w1 = 0;
-    scalar l2 = 15, m2 = 0.1, theta2 = RAD(0), w2 = 0;
+    scalar l1 = 15, m1 = 0.2, theta1 = DEG2RAD * 170, w1 = 0;
+    scalar l2 = 15, m2 = 0.1, theta2 = DEG2RAD * 0, w2 = 0;
     scalar lengthScaler = 0.1;
     scalar totalM = m1 + m2;
 
@@ -153,11 +149,11 @@ int main(void)
 
             // Draw Double Pendulum
             DrawRectanglePro((Rectangle){ CENTER_X, CENTER_Y, 10 * l1, lineThick },
-                             (Vector2){0, lineThick * 0.5}, 90 - DEG(theta1), RAYWHITE);
+                             (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta1, RAYWHITE);
 
             Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);
             DrawRectanglePro((Rectangle){ CENTER_X + endpoint1.x, CENTER_Y + endpoint1.y, 10 * l2, lineThick },
-                             (Vector2){0, lineThick * 0.5}, 90 - DEG(theta2), RAYWHITE);
+                             (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
