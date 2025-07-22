@@ -549,7 +549,7 @@ SHAPES = \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
     shapes/shapes_digital_clock \
-    shapes/shapes_dobule_pendulum
+    shapes/shapes_double_pendulum
 
 TEXTURES = \
     textures/textures_background_scrolling \
