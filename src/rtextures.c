@@ -170,7 +170,6 @@
     #endif
 
     #define RL_GPUTEX_MALLOC RL_MALLOC
-    #define RL_GPUTEX_CALLOC RL_CALLOC
     #define RL_GPUTEX_FREE RL_FREE
     #define RL_GPUTEX_LOG(...) TRACELOG(LOG_WARNING, "IMAGE: " __VA_ARGS__)
     #define RL_GPUTEX_SHOW_LOG_INFO
