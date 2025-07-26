@@ -110,21 +110,21 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
-            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
+            DrawRectangle(30, GetScreenHeight() - 50, 310, 30, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(30, GetScreenHeight() - 50, 310, 30, Fade(DARKBLUE, 0.5f));
+            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, GetScreenHeight() - 50 + 10, 10, BLUE);
 
             switch (currentModel)
             {
-                case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
-                case 1: DrawText("CUBE", 680, 10, 20, DARKBLUE); break;
-                case 2: DrawText("SPHERE", 680, 10, 20, DARKBLUE); break;
-                case 3: DrawText("HEMISPHERE", 640, 10, 20, DARKBLUE); break;
-                case 4: DrawText("CYLINDER", 680, 10, 20, DARKBLUE); break;
-                case 5: DrawText("TORUS", 680, 10, 20, DARKBLUE); break;
-                case 6: DrawText("KNOT", 680, 10, 20, DARKBLUE); break;
-                case 7: DrawText("POLY", 680, 10, 20, DARKBLUE); break;
-                case 8: DrawText("Custom (triangle)", 580, 10, 20, DARKBLUE); break;
+                case 0: DrawText("PLANE", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 1: DrawText("CUBE", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 2: DrawText("SPHERE", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 3: DrawText("HEMISPHERE", GetScreenWidth() - 160, 10, 20, DARKBLUE); break;
+                case 4: DrawText("CYLINDER", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 5: DrawText("TORUS", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 6: DrawText("KNOT", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 7: DrawText("POLY", GetScreenWidth() - 120, 10, 20, DARKBLUE); break;
+                case 8: DrawText("Custom (triangle)", GetScreenWidth() - 220, 10, 20, DARKBLUE); break;
                 default: break;
             }
 
