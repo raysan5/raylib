@@ -169,10 +169,13 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
+    #define RL_GPUTEX_MALLOC RL_MALLOC
+    #define RL_GPUTEX_FREE RL_FREE
+    #define RL_GPUTEX_LOG(...) TRACELOG(LOG_WARNING, "IMAGE: " __VA_ARGS__)
+    #define RL_GPUTEX_SHOW_LOG_INFO
     #define RL_GPUTEX_IMPLEMENTATION
     #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
                                             // NOTE: Used to read compressed textures data (multiple formats support)
-
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic pop
     #endif

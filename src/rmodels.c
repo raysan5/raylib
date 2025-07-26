@@ -4292,7 +4292,7 @@ static Model LoadOBJ(const char *fileName)
 
     if (fileText == NULL)
     {
-        TRACELOG(LOG_ERROR, "MODEL: [%s] Unable to read obj file", fileName);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Unable to read obj file", fileName);
         return model;
     }
 
@@ -4308,7 +4308,7 @@ static Model LoadOBJ(const char *fileName)
 
     if (ret != TINYOBJ_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "MODEL: Unable to read obj data %s", fileName);
+        TRACELOG(LOG_WARNING, "MODEL: Unable to read obj data %s", fileName);
         return model;
     }
 
