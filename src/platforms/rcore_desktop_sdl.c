@@ -252,8 +252,7 @@ static const int CursorsLUT[] = {
     //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
-
-// SDL3 Migration Layer made to avoid `ifdefs` inside functions when we can.
+// SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can.
 #if defined(PLATFORM_DESKTOP_SDL3)
 
 // SDL3 Migration:
@@ -304,13 +303,13 @@ int SDL_GetNumVideoDisplays(void)
     int monitorCount = 0;
     SDL_DisplayID *displays = SDL_GetDisplays(&monitorCount);
 
-    // Safe because If `mem` is NULL, SDL_free does nothing
+    // Safe because If 'mem' is NULL, SDL_free does nothing
     SDL_free(displays);
 
     return monitorCount;
 }
 
-// SLD3 Migration: To emulate SDL2 this function should return `SDL_DISABLE` or `SDL_ENABLE`
+// SLD3 Migration: To emulate SDL2 this function should return 'SDL_DISABLE' or 'SDL_ENABLE'
 // representing the *processing state* of the event before this function makes any changes to it
 Uint8 SDL_EventState(Uint32 type, int state)
 {
@@ -581,7 +580,7 @@ void SetWindowState(unsigned int flags)
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
         // NOTE: To be able to implement this part it seems that we should
-        // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+        // do it ourselves, via 'windows.h', 'X11/Xlib.h' or even 'Cocoa.h'
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (flags & FLAG_WINDOW_TOPMOST)
@@ -1169,13 +1168,13 @@ Image GetClipboardImage(void)
             image = LoadImageFromMemory(imageExtensions[i], fileData, dataSize);
             if (IsImageValid(image))
             {
-                TRACELOG(LOG_INFO, "Clipboard image: Got image from clipboard as a `%s` successfully", imageExtensions[i]);
+                TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
                 return image;
             }
         }
     }
 
-    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data. Error: %s", SDL_GetError());
+    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard: Couldn't get clipboard data. ERROR: %s", SDL_GetError());
 #endif
 
     return image;
