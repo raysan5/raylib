@@ -168,6 +168,18 @@
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
+ 
+
+    #define RL_GPUTEX_MALLOC     RL_MALLOC
+    #define RL_GPUTEX_CALLOC     RL_CALLOC
+    #define RL_GPUTEX_REALLOC    RL_REALLOC
+    #define RL_GPUTEX_FREE       RL_FREE
+    #define RL_GPUTEX_WARN(...)  TRACELOG(LOG_WARNING, "IMAGE: " __VA_ARGS__)
+    #define RL_GPUTEX_SHOW_WARN_INFO
+
+    // FIXME: probably, we should NOT export public functions from rl_gputex
+    //        but this is how it always worked... so let's keep it this way
+    #define RLGPUTEXAPI RLAPI
 
     #define RL_GPUTEX_IMPLEMENTATION
     #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
