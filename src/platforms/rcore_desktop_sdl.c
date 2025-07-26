@@ -57,8 +57,8 @@
     #include "SDL3/SDL.h"
 #elif USING_SDL2_PROJECT
     #include "SDL2/SDL.h"
-#else 
-    #include "SDL.h"    
+#else
+    #include "SDL.h"
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -66,12 +66,12 @@
     //#include "SDL_opengles2.h"
 #else
     // SDL OpenGL functionality (if required, instead of internal renderer)
-    #ifdef USING_SDL3_PROJECT        
-        #include "SDL3/SDL_opengl.h" 
+    #ifdef USING_SDL3_PROJECT
+        #include "SDL3/SDL_opengl.h"
     #elif USING_SDL2_PROJECT
-        #include "SDL2/SDL_opengl.h" 
-    #else 
-        #include "SDL_opengl.h" 
+        #include "SDL2/SDL_opengl.h"
+    #else
+        #include "SDL_opengl.h"
     #endif
 #endif
 

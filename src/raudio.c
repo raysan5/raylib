@@ -1547,7 +1547,8 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
-        else {
+        else
+        {
             drwav_uninit(ctxWav);
             RL_FREE(ctxWav);
         }

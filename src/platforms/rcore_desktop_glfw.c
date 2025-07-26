@@ -1862,8 +1862,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-    else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
-    else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+    else if (action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
+    else if (action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
     // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
     if (((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
