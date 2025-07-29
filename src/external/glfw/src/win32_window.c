@@ -569,7 +569,6 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             return DefWindowProcW(hWnd, uMsg, wParam, lParam);
         }
     }
-    }
 
     switch (uMsg)
     {
