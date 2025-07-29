@@ -551,8 +551,23 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                     EnableNonClientDpiScaling(hWnd);
             }
         }
+        else
+        {
+            // HACK: SetPropW returns FALSE in some instances (GetLastError() = 0x8 Insufficient resources).
+            //       We already have the global list of windows, check against it. It's not many, and we are already
+            //       doing this in the (one of the callers) PollEvents below.
+            window = _glfw.windowListHead;
+            while (window)
+            {
+                if (window->win32.handle == hWnd) { break; }
+                window = window->next;
+            }
+        }
 
+        if (!window)
+        {
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+    }
     }
 
     switch (uMsg)
@@ -1405,7 +1420,13 @@ static int createNativeWindow(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
-    SetPropW(window->win32.handle, L"GLFW", window);
+    if (!SetPropW(window->win32.handle, L"GLFW", window))
+    {
+        // In some cases, SetPropW returns FALSE: GetLastError() returns 0x8 (Insufficient resources).
+        // The message pump fails to work because windowProc cannot look up the GLFW property.
+        // Instead of failing the program completely by raising an error instead, windowProc looks up
+        // the global window list to find the hWnd under consideration.        
+    }
 
     if (IsWindows7OrGreater())
     {

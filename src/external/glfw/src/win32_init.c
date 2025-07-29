@@ -498,18 +498,19 @@ void _glfwInputErrorWin32(int error, const char* description)
     WCHAR buffer[_GLFW_MESSAGE_SIZE] = L"";
     char message[_GLFW_MESSAGE_SIZE] = "";
 
+    DWORD lastError = GetLastError();
     FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
                        FORMAT_MESSAGE_IGNORE_INSERTS |
                        FORMAT_MESSAGE_MAX_WIDTH_MASK,
                    NULL,
-                   GetLastError() & 0xffff,
+                   lastError & 0xffff,
                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                    buffer,
                    sizeof(buffer) / sizeof(WCHAR),
                    NULL);
     WideCharToMultiByte(CP_UTF8, 0, buffer, -1, message, sizeof(message), NULL, NULL);
 
-    _glfwInputError(error, "%s: %s", description, message);
+    _glfwInputError(error, "%s (0x%lx / %lu): %s", description, lastError, lastError, message);
 }
 
 // Updates key names according to the current keyboard layout
