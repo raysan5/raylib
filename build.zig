@@ -4,6 +4,9 @@ const builtin = @import("builtin");
 /// Minimum supported version of Zig
 const min_ver = "0.13.0";
 
+const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
+const emccOutputFile = "index.html";
+
 comptime {
     const order = std.SemanticVersion.order;
     const parse = std.SemanticVersion.parse;
@@ -16,6 +19,7 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
         .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", ""),
         .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
         .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", ""),
+        .android => raylib.root_module.addCMacro("PLATFORM_ANDROID", ""),
         else => {},
     }
 }
@@ -42,6 +46,26 @@ fn emSdkSetupStep(b: *std.Build, emsdk: *std.Build.Dependency) !?*std.Build.Step
     } else {
         return null;
     }
+}
+
+// Adapted from Not-Nik/raylib-zig
+fn emscriptenRunStep(b: *std.Build, emsdk: *std.Build.Dependency, examplePath: []const u8) !*std.Build.Step.Run {
+    const dot_emsc_path = emsdk.path("upstream/emscripten/cache/sysroot/include").getPath(b);
+    // If compiling on windows , use emrun.bat.
+    const emrunExe = switch (builtin.os.tag) {
+        .windows => "emrun.bat",
+        else => "emrun",
+    };
+    var emrun_run_arg = try b.allocator.alloc(u8, dot_emsc_path.len + emrunExe.len + 1);
+    defer b.allocator.free(emrun_run_arg);
+
+    if (b.sysroot == null) {
+        emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}" ++ std.fs.path.sep_str ++ "{s}", .{ emsdk.path("upstream/emscripten").getPath(b), emrunExe });
+    } else {
+        emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}" ++ std.fs.path.sep_str ++ "{s}", .{ dot_emsc_path, emrunExe });
+    }
+    const run_cmd = b.addSystemCommand(&.{ emrun_run_arg, examplePath });
+    return run_cmd;
 }
 
 /// A list of all flags from `src/config.h` that one may override
@@ -129,18 +153,14 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         try raylib_flags_arr.appendSlice(&config_h_flags);
     }
 
-    const raylib = if (options.shared)
-        b.addSharedLibrary(.{
-            .name = "raylib",
+    const raylib = b.addLibrary(.{
+        .name = "raylib",
+        .linkage = if (options.shared) .dynamic else .static,
+        .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
-        })
-    else
-        b.addStaticLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        });
+        }),
+    });
     raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
@@ -179,7 +199,11 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     raylib.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
-            try c_source_files.append("src/rglfw.c");
+            switch (options.platform) {
+                .glfw => try c_source_files.append("src/rglfw.c"),
+                .rgfw, .sdl, .drm, .android => {},
+            }
+
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
@@ -187,7 +211,74 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .linux => {
-            if (options.platform != .drm) {
+            if (options.platform == .drm) {
+                if (options.opengl_version == .auto) {
+                    raylib.linkSystemLibrary("GLESv2");
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+                }
+
+                raylib.linkSystemLibrary("EGL");
+                raylib.linkSystemLibrary("gbm");
+                raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
+
+                raylib.root_module.addCMacro("PLATFORM_DRM", "");
+                raylib.root_module.addCMacro("EGL_NO_X11", "");
+                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
+            } else if (target.result.abi.isAndroid()) {
+
+                //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
+                const hostTuple = switch (builtin.target.os.tag) {
+                    .linux => "linux-x86_64",
+                    .windows => "windows-x86_64",
+                    .macos => "darwin-x86_64",
+                    else => @panic("unsupported host OS"),
+                };
+
+                const androidTriple = switch (target.result.cpu.arch) {
+                    .x86 => "i686-linux-android",
+                    .x86_64 => "x86_64-linux-android",
+                    .arm => "arm-linux-androideabi",
+                    .aarch64 => "aarch64-linux-android",
+                    .riscv64 => "riscv64-linux-android",
+                    else => error.InvalidAndroidTarget,
+                } catch @panic("invalid android target!");
+                const androidNdkPathString: []const u8 = options.android_ndk;
+                if (androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
+                const androidApiLevel: []const u8 = options.android_api_version;
+
+                const androidSysroot = try std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/toolchains/llvm/prebuilt/", hostTuple, "/sysroot" });
+                const androidLibPath = try std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/lib/", androidTriple });
+                const androidApiSpecificPath = try std.fs.path.join(b.allocator, &.{ androidLibPath, androidApiLevel });
+                const androidIncludePath = try std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/include" });
+                const androidArchIncludePath = try std.fs.path.join(b.allocator, &.{ androidIncludePath, androidTriple });
+                const androidAsmPath = try std.fs.path.join(b.allocator, &.{ androidIncludePath, "/asm-generic" });
+                const androidGluePath = try std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/sources/android/native_app_glue/" });
+
+                raylib.addLibraryPath(.{ .cwd_relative = androidLibPath });
+                raylib.root_module.addLibraryPath(.{ .cwd_relative = androidApiSpecificPath });
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidIncludePath });
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidArchIncludePath });
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidAsmPath });
+                raylib.addSystemIncludePath(.{ .cwd_relative = androidGluePath });
+
+                var libcData = std.ArrayList(u8).init(b.allocator);
+                const writer = libcData.writer();
+                try (std.zig.LibCInstallation{
+                    .include_dir = androidIncludePath,
+                    .sys_include_dir = androidIncludePath,
+                    .crt_dir = androidApiSpecificPath,
+                }).render(writer);
+                const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice());
+                raylib.setLibCFile(libcFile);
+
+                if (options.opengl_version == .auto) {
+                    raylib.root_module.linkSystemLibrary("GLESv2", .{});
+                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+                }
+                raylib.root_module.linkSystemLibrary("EGL", .{});
+
+                setDesktopPlatform(raylib, .android);
+            } else {
                 try c_source_files.append("src/rglfw.c");
 
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
@@ -225,21 +316,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
                     waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
                 }
-
                 setDesktopPlatform(raylib, options.platform);
-            } else {
-                if (options.opengl_version == .auto) {
-                    raylib.linkSystemLibrary("GLESv2");
-                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
-                }
-
-                raylib.linkSystemLibrary("EGL");
-                raylib.linkSystemLibrary("gbm");
-                raylib.linkSystemLibrary2("libdrm", .{ .use_pkg_config = .force });
-
-                raylib.root_module.addCMacro("PLATFORM_DRM", "");
-                raylib.root_module.addCMacro("EGL_NO_X11", "");
-                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
@@ -281,7 +358,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
-            // Include emscripten for cross compilation
             if (b.lazyDependency("emsdk", .{})) |dep| {
                 if (try emSdkSetupStep(b, dep)) |emSdkStep| {
                     raylib.step.dependOn(&emSdkStep.step);
@@ -308,8 +384,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
-pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency) void {
-    const raylib_dep = b.dependencyFromBuildZig(@This(), .{});
+pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency, options: Options) void {
+    const raylib_dep = b.dependencyFromBuildZig(@This(), options);
     var gen_step = b.addWriteFiles();
     raylib.step.dependOn(&gen_step.step);
 
@@ -331,6 +407,8 @@ pub const Options = struct {
     shared: bool = false,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
+    android_ndk: []const u8 = "",
+    android_api_version: []const u8 = "35",
     /// config should be a list of space-separated cflags, eg, "-DSUPPORT_CUSTOM_FRAME_CONTROL"
     config: []const u8 = &.{},
 
@@ -348,6 +426,8 @@ pub const Options = struct {
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
             .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
+            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse std.process.getEnvVarOwned(b.allocator, "ANDROID_NDK_HOME") catch "",
+            .android_api_version = b.option([]const u8, "android_api_version", "specify target android API level") orelse defaults.android_api_version,
         };
     }
 };
@@ -385,6 +465,7 @@ pub const PlatformBackend = enum {
     rgfw,
     sdl,
     drm,
+    android,
 };
 
 pub fn build(b: *std.Build) !void {
@@ -406,6 +487,16 @@ pub fn build(b: *std.Build) !void {
     lib.installHeader(b.path("src/rlgl.h"), "rlgl.h");
 
     b.installArtifact(lib);
+
+    const examples = b.step("examples", "Build/Install all examples");
+    examples.dependOn(try addExamples("audio", b, target, optimize, lib));
+    examples.dependOn(try addExamples("core", b, target, optimize, lib));
+    examples.dependOn(try addExamples("models", b, target, optimize, lib));
+    examples.dependOn(try addExamples("others", b, target, optimize, lib));
+    examples.dependOn(try addExamples("shaders", b, target, optimize, lib));
+    examples.dependOn(try addExamples("shapes", b, target, optimize, lib));
+    examples.dependOn(try addExamples("text", b, target, optimize, lib));
+    examples.dependOn(try addExamples("textures", b, target, optimize, lib));
 }
 
 fn waylandGenerate(
@@ -429,4 +520,196 @@ fn waylandGenerate(
 
     raylib.step.dependOn(&client_step.step);
     raylib.step.dependOn(&private_step.step);
+}
+
+fn addExamples(
+    comptime module: []const u8,
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    raylib: *std.Build.Step.Compile,
+) !*std.Build.Step {
+    const all = b.step(module, "All " ++ module ++ " examples");
+    const module_subpath = b.pathJoin(&.{ "examples", module });
+    const module_resources = b.pathJoin(&.{ module_subpath, "resources@resources" });
+    var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
+    defer if (comptime builtin.zig_version.minor >= 12) dir.close();
+
+    var iter = dir.iterate();
+    while (try iter.next()) |entry| {
+        if (entry.kind != .file) continue;
+        const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
+        const name = entry.name[0..extension_idx];
+        const path = b.pathJoin(&.{ module_subpath, entry.name });
+
+        // zig's mingw headers do not include pthread.h
+        if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
+
+        if (target.result.os.tag == .emscripten) {
+            const exe_lib = b.addLibrary(.{
+                .name = name,
+                .linkage = .static,
+                .root_module = b.createModule(.{
+                    .target = target,
+                    .optimize = optimize,
+                }),
+            });
+            exe_lib.addCSourceFile(.{
+                .file = b.path(path),
+                .flags = &.{},
+            });
+            exe_lib.linkLibC();
+
+            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+                //TODO: Make rlgl_standalone example work
+                continue;
+            }
+            if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+                //TODO: Make raylib_opengl_interop example work
+                continue;
+            }
+
+            exe_lib.linkLibrary(raylib);
+
+            // Include emscripten for cross compilation
+            if (b.lazyDependency("emsdk", .{})) |emsdk_dep| {
+                if (try emSdkSetupStep(b, emsdk_dep)) |emSdkStep| {
+                    exe_lib.step.dependOn(&emSdkStep.step);
+                }
+
+                exe_lib.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+
+                // Create the output directory because emcc can't do it.
+                const emccOutputDirExample = b.pathJoin(&.{ emccOutputDir, name, std.fs.path.sep_str });
+                const mkdir_command = switch (builtin.os.tag) {
+                    .windows => b.addSystemCommand(&.{ "cmd.exe", "/c", "if", "not", "exist", emccOutputDirExample, "mkdir", emccOutputDirExample }),
+                    else => b.addSystemCommand(&.{ "mkdir", "-p", emccOutputDirExample }),
+                };
+
+                const emcc_exe = switch (builtin.os.tag) {
+                    .windows => "emcc.bat",
+                    else => "emcc",
+                };
+
+                const emcc_exe_path = b.pathJoin(&.{ emsdk_dep.path("upstream/emscripten").getPath(b), emcc_exe });
+                const emcc_command = b.addSystemCommand(&[_][]const u8{emcc_exe_path});
+                emcc_command.step.dependOn(&mkdir_command.step);
+                const emccOutputDirExampleWithFile = b.pathJoin(&.{ emccOutputDir, name, std.fs.path.sep_str, emccOutputFile });
+                emcc_command.addArgs(&[_][]const u8{
+                    "-o",
+                    emccOutputDirExampleWithFile,
+                    "-sFULL-ES3=1",
+                    "-sUSE_GLFW=3",
+                    "-sSTACK_OVERFLOW_CHECK=1",
+                    "-sEXPORTED_RUNTIME_METHODS=['requestFullscreen']",
+                    "-sASYNCIFY",
+                    "-O0",
+                    "--emrun",
+                    "--preload-file",
+                    module_resources,
+                    "--shell-file",
+                    b.path("src/shell.html").getPath(b),
+                });
+
+                const link_items: []const *std.Build.Step.Compile = &.{
+                    raylib,
+                    exe_lib,
+                };
+                for (link_items) |item| {
+                    emcc_command.addFileArg(item.getEmittedBin());
+                    emcc_command.step.dependOn(&item.step);
+                }
+
+                const run_step = try emscriptenRunStep(b, emsdk_dep, emccOutputDirExampleWithFile);
+                run_step.step.dependOn(&emcc_command.step);
+                run_step.addArg("--no_browser");
+                const run_option = b.step(name, name);
+
+                run_option.dependOn(&run_step.step);
+
+                all.dependOn(&emcc_command.step);
+            }
+        } else {
+            const exe = b.addExecutable(.{
+                .name = name,
+                .root_module = b.createModule(.{
+                    .target = target,
+                    .optimize = optimize,
+                }),
+            });
+            exe.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
+            exe.linkLibC();
+
+            // special examples that test using these external dependencies directly
+            // alongside raylib
+            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+                exe.addIncludePath(b.path("src"));
+                exe.addIncludePath(b.path("src/external/glfw/include"));
+                if (!hasCSource(raylib.root_module, "rglfw.c")) {
+                    exe.addCSourceFile(.{ .file = b.path("src/rglfw.c"), .flags = &.{} });
+                }
+            }
+            if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+                exe.addIncludePath(b.path("src/external"));
+            }
+
+            exe.linkLibrary(raylib);
+
+            switch (target.result.os.tag) {
+                .windows => {
+                    exe.linkSystemLibrary("winmm");
+                    exe.linkSystemLibrary("gdi32");
+                    exe.linkSystemLibrary("opengl32");
+
+                    exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
+                },
+                .linux => {
+                    exe.linkSystemLibrary("GL");
+                    exe.linkSystemLibrary("rt");
+                    exe.linkSystemLibrary("dl");
+                    exe.linkSystemLibrary("m");
+                    exe.linkSystemLibrary("X11");
+
+                    exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
+                },
+                .macos => {
+                    exe.linkFramework("Foundation");
+                    exe.linkFramework("Cocoa");
+                    exe.linkFramework("OpenGL");
+                    exe.linkFramework("CoreAudio");
+                    exe.linkFramework("CoreVideo");
+                    exe.linkFramework("IOKit");
+
+                    exe.root_module.addCMacro("PLATFORM_DESKTOP", "");
+                },
+                else => {
+                    @panic("Unsupported OS");
+                },
+            }
+
+            const install_cmd = b.addInstallArtifact(exe, .{});
+
+            const run_cmd = b.addRunArtifact(exe);
+            run_cmd.cwd = b.path(module_subpath);
+            run_cmd.step.dependOn(&install_cmd.step);
+
+            const run_step = b.step(name, name);
+            run_step.dependOn(&run_cmd.step);
+
+            all.dependOn(&install_cmd.step);
+        }
+    }
+    return all;
+}
+
+fn hasCSource(module: *std.Build.Module, name: []const u8) bool {
+    for (module.link_objects.items) |o| switch (o) {
+        .c_source_file => |c| if (switch (c.file) {
+            .src_path => |s| std.ascii.endsWithIgnoreCase(s.sub_path, name),
+            .generated, .cwd_relative, .dependency => false,
+        }) return true,
+        .c_source_files => |s| for (s.files) |c| if (std.ascii.endsWithIgnoreCase(c, name)) return true,
+        else => {},
+    };
+    return false;
 }

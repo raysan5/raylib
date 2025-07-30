@@ -163,13 +163,13 @@ bool WindowShouldClose(void)
     // REF: https://emscripten.org/docs/porting/asyncify.html
 
     // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
-    // and encapsulating one frame execution on a UpdateDrawFrame() function, 
+    // and encapsulating one frame execution on a UpdateDrawFrame() function,
     // allowing the browser to manage execution asynchronously
 
     // Optionally we can manage the time we give-control-back-to-browser if required,
     // but it seems below line could generate stuttering on some browsers
     emscripten_sleep(12);
-    
+
     return false;
 }
 
@@ -350,7 +350,7 @@ void MinimizeWindow(void)
     TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     if ((glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE) && (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
@@ -364,6 +364,8 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
+    if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
+
     // Check previous state and requested state to apply required changes
     // NOTE: In most cases the functions already change the flags internally
 
@@ -709,7 +711,7 @@ int GetMonitorCount(void)
     return 1;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
@@ -1079,7 +1081,7 @@ void PollInputEvents(void)
             }
 
             // Register axis data for every connected gamepad
-            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
+            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXES); j++)
             {
                 CORE.Input.Gamepad.axisState[i][j] = gamepadState.axis[j];
             }
@@ -1744,7 +1746,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     if (gamepadEvent->connected && (gamepadEvent->index < MAX_GAMEPADS))
     {
         CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
-        sprintf(CORE.Input.Gamepad.name[gamepadEvent->index], "%s", gamepadEvent->id);
+        snprintf(CORE.Input.Gamepad.name[gamepadEvent->index], MAX_GAMEPAD_NAME_LENGTH, "%s", gamepadEvent->id);
     }
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 

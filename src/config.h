@@ -104,7 +104,7 @@
 #define MAX_KEYBOARD_KEYS             512       // Maximum number of keyboard keys supported
 #define MAX_MOUSE_BUTTONS               8       // Maximum number of mouse buttons supported
 #define MAX_GAMEPADS                    4       // Maximum number of gamepads supported
-#define MAX_GAMEPAD_AXIS                8       // Maximum number of axis supported (per gamepad)
+#define MAX_GAMEPAD_AXES                8       // Maximum number of axes supported (per gamepad)
 #define MAX_GAMEPAD_BUTTONS            32       // Maximum number of buttons supported (per gamepad)
 #define MAX_GAMEPAD_VIBRATION_TIME      2.0f    // Maximum vibration time in seconds
 #define MAX_TOUCH_POINTS                8       // Maximum number of touch points supported
@@ -136,8 +136,8 @@
 
 #define RL_MAX_SHADER_LOCATIONS               32      // Maximum number of shader locations supported
 
-#define RL_CULL_DISTANCE_NEAR               0.01      // Default projection matrix near cull distance
-#define RL_CULL_DISTANCE_FAR              1000.0      // Default projection matrix far cull distance
+#define RL_CULL_DISTANCE_NEAR              0.001      // Default projection matrix near cull distance
+#define RL_CULL_DISTANCE_FAR             10000.0      // Default projection matrix far cull distance
 
 // Default shader vertex attribute locations
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
@@ -189,7 +189,7 @@
 //------------------------------------------------------------------------------------
 // Module: rtextures - Configuration Flags
 //------------------------------------------------------------------------------------
-// Selecte desired fileformats to be supported for image data loading
+// Selected desired fileformats to be supported for image data loading
 #define SUPPORT_FILEFORMAT_PNG      1
 //#define SUPPORT_FILEFORMAT_BMP      1
 //#define SUPPORT_FILEFORMAT_TGA      1

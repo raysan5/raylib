@@ -48,11 +48,11 @@
 *
 **********************************************************************************************/
 
-#include <fcntl.h>   // POSIX file control definitions - open(), creat(), fcntl()
-#include <unistd.h>  // POSIX standard function definitions - read(), close(), STDIN_FILENO
-#include <termios.h> // POSIX terminal control definitions - tcgetattr(), tcsetattr()
-#include <pthread.h> // POSIX threads management (inputs reading)
-#include <dirent.h>  // POSIX directory browsing
+#include <fcntl.h>          // POSIX file control definitions - open(), creat(), fcntl()
+#include <unistd.h>         // POSIX standard function definitions - read(), close(), STDIN_FILENO
+#include <termios.h>        // POSIX terminal control definitions - tcgetattr(), tcsetattr()
+#include <pthread.h>        // POSIX threads management (inputs reading)
+#include <dirent.h>         // POSIX directory browsing
 
 #include <sys/ioctl.h>      // Required for: ioctl() - UNIX System call for device-specific input/output operations
 #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
@@ -71,6 +71,14 @@
 #include "EGL/egl.h"        // Native platform windowing system interface
 #include "EGL/eglext.h"     // EGL extensions
 
+// NOTE: DRM cache enables triple buffered DRM caching
+#if defined(SUPPORT_DRM_CACHE)
+    #include <poll.h>       // Required for: drmHandleEvent() poll
+    #include <errno.h>      // Required for: EBUSY, EAGAIN
+
+    #define MAX_DRM_CACHED_BUFFERS  3
+#endif // SUPPORT_DRM_CACHE
+
 #ifndef EGL_OPENGL_ES3_BIT
     #define EGL_OPENGL_ES3_BIT  0x40
 #endif
@@ -78,18 +86,16 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
+#define USE_LAST_TOUCH_DEVICE           // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
-#define DEFAULT_EVDEV_PATH       "/dev/input/"      // Path to the linux input events
+#define DEFAULT_EVDEV_PATH "/dev/input/"    // Path to the linux input events
 
-// So actually the biggest key is KEY_CNT but we only really map the keys up to
-// KEY_ALS_TOGGLE
+// Actually biggest key is KEY_CNT but we only really map the keys up to KEY_ALS_TOGGLE
 #define KEYMAP_SIZE KEY_ALS_TOGGLE
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 typedef struct {
     // Display data
     int fd;                             // File descriptor for /dev/dri/...
@@ -124,10 +130,22 @@ typedef struct {
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
-    int gamepadAbsAxisRange[MAX_GAMEPADS][MAX_GAMEPAD_AXIS][2]; // [0] = min, [1] = range value of the axis
+    int gamepadAbsAxisRange[MAX_GAMEPADS][MAX_GAMEPAD_AXES][2]; // [0] = min, [1] = range value of the axes
     int gamepadAbsAxisMap[MAX_GAMEPADS][ABS_CNT]; // Maps the axes gamepads from the evdev api to a sequential one
     int gamepadCount;                   // The number of gamepads registered
 } PlatformData;
+
+#if defined(SUPPORT_DRM_CACHE)
+typedef struct {
+    struct gbm_bo *bo;      // Graphics buffer object
+    uint32_t fbId;          // DRM framebuffer ID
+} FramebufferCache;
+
+static FramebufferCache fbCache[MAX_DRM_CACHED_BUFFERS] = { 0 };
+static volatile int fbCacheCount = 0;
+static volatile bool pendingFlip = false;
+static bool crtcSet = false;
+#endif // SUPPORT_DRM_CACHE
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -277,7 +295,7 @@ void MinimizeWindow(void)
     TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
@@ -371,7 +389,7 @@ int GetMonitorCount(void)
     return 1;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
@@ -551,6 +569,212 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+#if defined(SUPPORT_DRM_CACHE)
+
+// Destroy cached framebuffer callback, set by gbm_bo_set_user_data()
+static void DestroyFrameBufferCallback(struct gbm_bo *bo, void *data)
+{
+    uint32_t fbId = (uintptr_t)data;
+
+    // Remove from cache
+    for (int i = 0; i < fbCacheCount; i++)
+    {
+        if (fbCache[i].bo == bo)
+        {
+            TRACELOG(LOG_INFO, "DISPLAY: DRM: Framebuffer removed [%u]", (uintptr_t)fbId);
+            drmModeRmFB(platform.fd, fbCache[i].fbId); // Release DRM FB
+
+            // Shift remaining entries
+            for (int j = i; j < fbCacheCount - 1; j++) fbCache[j] = fbCache[j + 1];
+
+            fbCacheCount--;
+            break;
+        }
+    }
+}
+
+// Create or retrieve cached DRM FB for BO
+static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo)
+{
+    // Try to find existing cache entry
+    for (int i = 0; i < fbCacheCount; i++)
+    {
+        if (fbCache[i].bo == bo) return fbCache[i].fbId;
+    }
+
+    // Create new entry if cache not full
+    if (fbCacheCount >= MAX_DRM_CACHED_BUFFERS) return 0; // FB cache full
+
+    uint32_t handle = gbm_bo_get_handle(bo).u32;
+    uint32_t stride = gbm_bo_get_stride(bo);
+    uint32_t width = gbm_bo_get_width(bo);
+    uint32_t height = gbm_bo_get_height(bo);
+
+    uint32_t fbId = 0;
+    if (drmModeAddFB(platform.fd, width, height, 24, 32, stride, handle, &fbId)) return 0;
+
+    // Store in cache
+    fbCache[fbCacheCount] = (FramebufferCache){ .bo = bo, .fbId = fbId };
+    fbCacheCount++;
+
+    // Set destroy callback to auto-cleanup
+    gbm_bo_set_user_data(bo, (void *)(uintptr_t)fbId, DestroyFrameBufferCallback);
+
+    TRACELOG(LOG_INFO, "DISPLAY: DRM: Added new buffer object [%u]" , (uintptr_t)fbId);
+
+    return fbId;
+}
+
+// Renders a blank frame to allocate initial buffers
+// TODO: WARNING: Platform layers do not include OpenGL code!
+void RenderBlankFrame()
+{
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    eglSwapBuffers(platform.device, platform.surface);
+    glFinish(); // Ensure the buffer is processed
+}
+
+// Initialize with first buffer only
+int InitSwapScreenBuffer()
+{
+    if (!platform.gbmSurface || (platform.fd < 0))
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: DRM: Swap buffers can not be initialized");
+        return -1;
+    }
+
+    // Render a blank frame to allocate buffers
+    RenderBlankFrame();
+
+    // Get first buffer
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(platform.gbmSurface);
+    if (!bo)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: DRM: Failed to lock initial swap buffer");
+        return -1;
+    }
+
+    // Create FB for first buffer
+    uint32_t fbId = GetOrCreateFbForBo(bo);
+    if (!fbId)
+    {
+        gbm_surface_release_buffer(platform.gbmSurface, bo);
+        return -1;
+    }
+
+    // Initial CRTC setup
+    if (drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fbId, 0, 0, &platform.connector->connector_id, 1, &platform.connector->modes[platform.modeIndex]))
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: DRM: Failed to initialize CRTC setup. ERROR: %s", strerror(errno));
+        gbm_surface_release_buffer(platform.gbmSurface, bo);
+        return -1;
+    }
+
+    // Keep first buffer locked until flipped
+    platform.prevBO = bo;
+    crtcSet = true;
+
+    return 0;
+}
+
+// Static page flip handler
+// NOTE: Called once the drmModePageFlip() finished from the drmHandleEvent() context
+static void PageFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data)
+{
+    // Unused inputs
+    (void)fd;
+    (void)frame;
+    (void)sec;
+    (void)usec;
+
+    pendingFlip = false;
+    struct gbm_bo *boToRelease = (struct gbm_bo *)data;
+
+    // Buffers are released after the flip completes (via page_flip_handler), ensuring they're no longer in use
+    // Prevents the GPU from writing to a buffer being scanned out
+    if (boToRelease) gbm_surface_release_buffer(platform.gbmSurface, boToRelease);
+}
+
+// Swap implementation with proper caching
+void SwapScreenBuffer()
+{
+    if (!crtcSet || !platform.gbmSurface) return;
+
+    static int loopCnt = 0;
+    static int errCnt[5] = {0};
+    loopCnt++;
+
+    // Call this only, if pendingFlip is not set
+    eglSwapBuffers(platform.device, platform.surface);
+
+    // Process pending events non-blocking
+    drmEventContext evctx = {
+        .version = DRM_EVENT_CONTEXT_VERSION,
+        .page_flip_handler = PageFlipHandler
+    };
+
+    struct pollfd pfd = { .fd = platform.fd, .events = POLLIN };
+
+    // Polling for event for 0ms
+    while (poll(&pfd, 1, 0) > 0) drmHandleEvent(platform.fd, &evctx);
+
+    // Skip if previous flip pending
+    if (pendingFlip)
+    {
+        errCnt[0]++; // Skip frame: flip pending
+        return;
+    }
+
+    // Get new front buffer
+    struct gbm_bo *nextBO = gbm_surface_lock_front_buffer(platform.gbmSurface);
+    if (!nextBO) // Failed to lock front buffer
+    {
+        errCnt[1]++;
+        return;
+    }
+
+    // Get FB ID (creates new one if needed)
+    uint32_t fbId = GetOrCreateFbForBo(nextBO);
+    if (!fbId)
+    {
+        gbm_surface_release_buffer(platform.gbmSurface, nextBO);
+        errCnt[2]++;
+        return;
+    }
+
+    // Attempt page flip
+    // NOTE: rmModePageFlip() schedules a buffer-flip for the next vblank and then notifies us about it.
+    // It takes a CRTC-id, fb-id and an arbitrary data-pointer and then schedules the page-flip.
+    // This is fully asynchronous and when the page-flip happens, the DRM-fd will become readable and we can call drmHandleEvent().
+    // This will read all vblank/page-flip events and call our modeset_page_flip_event() callback with the data-pointer that we passed to drmModePageFlip().
+    // We simply call modeset_draw_dev() then so the next frame is rendered... returns immediately.
+    if (drmModePageFlip(platform.fd, platform.crtc->crtc_id, fbId, DRM_MODE_PAGE_FLIP_EVENT, platform.prevBO))
+    {
+        if (errno == EBUSY) errCnt[3]++; // Display busy - skip flip
+        else errCnt[4]++; // Page flip failed
+
+        gbm_surface_release_buffer(platform.gbmSurface, nextBO);
+        return;
+    }
+
+    // Success: update state
+    pendingFlip = true;
+    platform.prevBO = nextBO;
+
+/*
+    // Some benchmarking code
+    if (loopCnt >= 600)
+    {
+        TRACELOG(LOG_INFO, "DRM: Error counters: %d, %d, %d, %d, %d, %d", errCnt[0], errCnt[1], errCnt[2], errCnt[3], errCnt[4], loopCnt);
+        for (int i = 0; i < 5; i++) errCnt[i] = 0;
+        loopCnt = 0;
+    }
+*/
+}
+
+#else // !SUPPORT_DRM_CACHE
+
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
@@ -580,6 +804,7 @@ void SwapScreenBuffer(void)
 
     platform.prevBO = bo;
 }
+#endif // SUPPORT_DRM_CACHE
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Misc
@@ -735,20 +960,24 @@ int InitPlatform(void)
 
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     platform.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
+    if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: Default graphic device DRM opened successfully");
 #else
-    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying platform-gpu-card");
+    TRACELOG(LOG_WARNING, "DISPLAY: No graphic card set, trying platform-gpu-card");
     platform.fd = open("/dev/dri/by-path/platform-gpu-card",  O_RDWR); // VideoCore VI (Raspberry Pi 4)
+    if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: platform-gpu-card opened successfully");
 
     if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
     {
-        TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to open platform-gpu-card, trying card1");
         platform.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded
+        if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: card1 opened successfully");
     }
 
     if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
     {
-        TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card1, trying card0");
         platform.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
+        if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: card0 opened successfully");
     }
 #endif
 
@@ -906,7 +1135,7 @@ int InitPlatform(void)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
+        EGL_DEPTH_SIZE, 24,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
         EGL_SAMPLE_BUFFERS, sampleBuffer, // Activate MSAA
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
@@ -944,7 +1173,7 @@ int InitPlatform(void)
 
     TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
 
-    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
+    EGLConfig *configs = (EGLConfig *)RL_CALLOC(numConfigs, sizeof(*configs));
     if (!configs)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
@@ -1079,9 +1308,21 @@ int InitPlatform(void)
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
+#if defined(SUPPORT_DRM_CACHE)
+    if (InitSwapScreenBuffer() == 0)
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
+        return 0;
+    }
+    else
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized failed");
+        return -1;
+    }
+#else // !SUPPORT_DRM_CACHE
     TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
-
     return 0;
+#endif
 }
 
 // Close platform
@@ -1370,7 +1611,7 @@ static void InitEvdevInput(void)
             if ((strncmp("event", entity->d_name, strlen("event")) == 0) ||     // Search for devices named "event*"
                 (strncmp("mouse", entity->d_name, strlen("mouse")) == 0))       // Search for devices named "mouse*"
             {
-                sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+                snprintf(path, MAX_FILEPATH_LENGTH, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
                 ConfigureEvdevDevice(path);                                     // Configure the device if appropriate
             }
         }
@@ -1399,7 +1640,7 @@ static void ConfigureEvdevDevice(char *device)
     int fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        TRACELOG(LOG_WARNING, "DRM: Failed to open input device: %s", device);
+        TRACELOG(LOG_WARNING, "SYSTEM: Failed to open input device: %s", device);
         return;
     }
 
@@ -1456,7 +1697,7 @@ static void ConfigureEvdevDevice(char *device)
         // matter if we support them
         else if (hasAbsXY && TEST_BIT(keyBits, BTN_MOUSE)) isMouse = true;
 
-        // If any of the common joystick axis is present, we assume it's a gamepad
+        // If any of the common joystick axes are present, we assume it's a gamepad
         else
         {
             for (int axis = (hasAbsXY? ABS_Z : ABS_X); axis < ABS_PRESSURE; axis++)
@@ -1542,7 +1783,7 @@ static void ConfigureEvdevDevice(char *device)
         if (absAxisCount > 0)
         {
             // TODO / NOTE
-            // So gamepad axis (as in the actual linux joydev.c) are just simply enumerated
+            // So gamepad axes (as in the actual linux joydev.c) are just simply enumerated
             // and (at least for some input drivers like xpat) it's convention to use
             // ABS_X, ABX_Y for one joystick ABS_RX, ABS_RY for the other and the Z axes for the
             // shoulder buttons
@@ -1677,7 +1918,7 @@ static void PollGamepadEvents(void)
 
                     TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: Axis: %2i Value: %i", i, axisRaylib, event.value);
 
-                    if (axisRaylib < MAX_GAMEPAD_AXIS)
+                    if (axisRaylib < MAX_GAMEPAD_AXES)
                     {
                         int min = platform.gamepadAbsAxisRange[i][event.code][0];
                         int range = platform.gamepadAbsAxisRange[i][event.code][1];

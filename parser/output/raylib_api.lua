@@ -2300,7 +2300,7 @@ return {
     },
     {
       name = "GamepadAxis",
-      description = "Gamepad axis",
+      description = "Gamepad axes",
       values = {
         {
           name = "GAMEPAD_AXIS_LEFT_X",
@@ -3108,7 +3108,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "char *", name = "text"}
+        {type = "const char *", name = "text"}
       }
     },
     {
@@ -3223,7 +3223,7 @@ return {
     },
     {
       name = "RestoreWindow",
-      description = "Set window state: not minimized/maximized",
+      description = "Restore window from being minimized/maximized",
       returnType = "void"
     },
     {
@@ -4006,7 +4006,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "char *", name = "text"}
+        {type = "const char *", name = "text"}
       }
     },
     {
@@ -4198,7 +4198,7 @@ return {
     },
     {
       name = "EncodeDataBase64",
-      description = "Encode data to Base64 string, memory must be MemFree()",
+      description = "Encode data to Base64 string (includes NULL terminator), memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},
@@ -4208,10 +4208,10 @@ return {
     },
     {
       name = "DecodeDataBase64",
-      description = "Decode Base64 string data, memory must be MemFree()",
+      description = "Decode Base64 string (expected NULL terminated), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
-        {type = "const unsigned char *", name = "data"},
+        {type = "const char *", name = "text"},
         {type = "int *", name = "outputSize"}
       }
     },
@@ -4426,7 +4426,7 @@ return {
     },
     {
       name = "GetGamepadAxisCount",
-      description = "Get gamepad axis count for a gamepad",
+      description = "Get axis count for a gamepad",
       returnType = "int",
       params = {
         {type = "int", name = "gamepad"}
@@ -4434,7 +4434,7 @@ return {
     },
     {
       name = "GetGamepadAxisMovement",
-      description = "Get axis movement value for a gamepad axis",
+      description = "Get movement value for a gamepad axis",
       returnType = "float",
       params = {
         {type = "int", name = "gamepad"},
@@ -4839,12 +4839,34 @@ return {
       }
     },
     {
+      name = "DrawEllipseV",
+      description = "Draw ellipse (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radiusH"},
+        {type = "float", name = "radiusV"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "DrawEllipseLines",
       description = "Draw ellipse outline",
       returnType = "void",
       params = {
         {type = "int", name = "centerX"},
         {type = "int", name = "centerY"},
+        {type = "float", name = "radiusH"},
+        {type = "float", name = "radiusV"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawEllipseLinesV",
+      description = "Draw ellipse outline (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
         {type = "float", name = "radiusH"},
         {type = "float", name = "radiusV"},
         {type = "Color", name = "color"}
@@ -4954,8 +4976,8 @@ return {
         {type = "Rectangle", name = "rec"},
         {type = "Color", name = "topLeft"},
         {type = "Color", name = "bottomLeft"},
-        {type = "Color", name = "topRight"},
-        {type = "Color", name = "bottomRight"}
+        {type = "Color", name = "bottomRight"},
+        {type = "Color", name = "topRight"}
       }
     },
     {
@@ -6262,7 +6284,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -6273,7 +6295,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
-        {type = "Vector2 *", name = "points"},
+        {type = "const Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
@@ -6385,7 +6407,7 @@ return {
     },
     {
       name = "UpdateTexture",
-      description = "Update GPU texture with new data",
+      description = "Update GPU texture with new data (pixels should be able to fill texture)",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
@@ -6394,7 +6416,7 @@ return {
     },
     {
       name = "UpdateTextureRec",
-      description = "Update GPU texture rectangle with new data",
+      description = "Update GPU texture rectangle with new data (pixels and rec should fit in texture)",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
@@ -7993,7 +8015,7 @@ return {
     },
     {
       name = "UpdateSound",
-      description = "Update sound buffer with new data",
+      description = "Update sound buffer with new data (data and frame count should fit in sound)",
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"},

@@ -108,7 +108,7 @@ int main(void)
             }
             else
             {
-                // Draw provided text with laoded font, containing all required codepoint glyphs
+                // Draw provided text with loaded font, containing all required codepoint glyphs
                 DrawTextEx(font, text, (Vector2) { 160, 110 }, 48, 5, BLACK);
             }
 
