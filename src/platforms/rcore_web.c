@@ -111,23 +111,23 @@ int InitPlatform(void);          // Initialize platform (graphics, inputs and mo
 void ClosePlatform(void);        // Close platform
 
 // Error callback event
-static void ErrorCallback(int error, const char *description);                      // GLFW3 Error Callback, runs on GLFW3 error
+static void ErrorCallback(int error, const char *description); // GLFW3 Error Callback, runs on GLFW3 error
 
 // Window callbacks events
-static void WindowSizeCallback(GLFWwindow *window, int width, int height);              // GLFW3 WindowSize Callback, runs when window is resized
-static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowSizeCallback(GLFWwindow *window, int width, int height);              // GLFW3 Window Size Callback, runs when window is resized
+static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 Window Iconify Callback, runs when window is minimized/restored
 //static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                // GLFW3 Window Maximize Callback, runs when window is maximized
-static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 Window Focus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);      // GLFW3 Window Drop Callback, runs when drop files into window
 static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
-static void CharCallback(GLFWwindow *window, unsigned int key);                           // GLFW3 Char Key Callback, runs on key pressed (get char value)
-static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);    // GLFW3 Mouse Button Callback, runs on mouse button pressed
-static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);               // GLFW3 Cursor Position Callback, runs on mouse move
-static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);      // GLFW3 Srolling Callback, runs on mouse wheel
-static void CursorEnterCallback(GLFWwindow *window, int enter);                           // GLFW3 Cursor Enter Callback, cursor enters client area
+static void CharCallback(GLFWwindow *window, unsigned int key);                         // GLFW3 Char Key Callback, runs on key pressed (get char value)
+static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);  // GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void MouseMoveCallback(GLFWwindow *window, double x, double y);                  // GLFW3 Mouse Move Callback, runs on mouse move
+static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);    // GLFW3 Mouse Scrolling Callback, runs on mouse wheel
+static void MouseEnterCallback(GLFWwindow *window, int enter);                          // GLFW3 Mouse Enter Callback, cursor enters client area
 
 // Emscripten window callback events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
@@ -137,6 +137,7 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
 
 // Emscripten input callback events
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
@@ -1292,23 +1293,24 @@ int InitPlatform(void)
     emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
 
     // Set window callback events
-    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback); // NOTE: Resizing not allowed by default!
+    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);
     glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
     glfwSetDropCallback(platform.handle, WindowDropCallback);
 
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
-       glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
+        // Window content (framebuffer) scale callback
+        glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
     }
 
     // Set input callback events
     glfwSetKeyCallback(platform.handle, KeyCallback);
     glfwSetCharCallback(platform.handle, CharCallback);
     glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
-    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback); // Track mouse position changes
+    glfwSetCursorPosCallback(platform.handle, MouseMoveCallback);
     glfwSetScrollCallback(platform.handle, MouseScrollCallback);
-    glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
+    glfwSetCursorEnterCallback(platform.handle, MouseEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
     result = true; // TODO: WARNING: glfwGetError(NULL); symbol can not be found in Web
@@ -1348,48 +1350,36 @@ int InitPlatform(void)
     rlLoadExtensions(glfwGetProcAddress);
     //----------------------------------------------------------------------------
 
-    // Initialize input events callbacks
+    // Initialize events callbacks
     //----------------------------------------------------------------------------
-    // Setup callback functions for the DOM events
+    // Setup window events callbacks
     emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenFullscreenChangeCallback);
-
+    emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
+    
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
     // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
     // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
     // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
 
-    // Trigger this once to get initial window sizing
+    // Trigger resize callback to force initial size
     EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 
-    // Support keyboard events -> Not used, GLFW.JS takes care of that
-    // emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-    // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-
-    // Support mouse events
+    // Setup input events
+    // NOTE: Keyboard callbacks only used to consume some events, libglfw.js takes care of the actual input
+    emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
     emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
     emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
-
-    // Following the mouse delta when the mouse is locked
     emscripten_set_mousemove_callback(GetCanvasId(), NULL, 1, EmscriptenMouseMoveCallback);
-
-    // Support touch events
     emscripten_set_touchstart_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
     emscripten_set_touchend_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
     emscripten_set_touchmove_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
     emscripten_set_touchcancel_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
-
-    // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
-
-    // Support focus events
-    emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
-    emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
-
-    // Support visibility events
-    emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
-
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1414,14 +1404,15 @@ void ClosePlatform(void)
     glfwTerminate();
 }
 
-// GLFW3 Error Callback, runs on GLFW3 error
+// GLFW3 callback functions, called on GLFW registered events
+//-------------------------------------------------------------------------------------------------------
+// GLFW3: Called on errors
 static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
 }
 
-// GLFW3 WindowSize Callback, runs when window is resizedLastFrame
-// NOTE: Window resizing not allowed by default
+// GLFW3: Called on window resizing, runs when window is resizedLastFrame
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // Reset viewport and projection matrix for new size
@@ -1450,34 +1441,27 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     // NOTE: Postprocessing texture is not scaled to new size
 }
 
+// GLFW3: Called on window content (framebuffer) scaled
 static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
 {
     CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
 }
 
-// GLFW3 WindowIconify Callback, runs when window is minimized/restored
+// GLFW3: Called on windows minimized/restored
 static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
     if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
     else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
 }
 
-/*
-// GLFW3 Window Maximize Callback, runs when window is maximized
-static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
-{
-    // TODO.
-}
-*/
-
-// GLFW3 WindowFocus Callback, runs when window get/lose focus
+// GLFW3: Called on windows get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
     if (focused) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;   // The window was focused
     else CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;            // The window lost focus
 }
 
-// GLFW3 Window Drop Callback, runs when drop files into window
+// GLFW3: Called on file-drop over the window
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
     if (count > 0)
@@ -1505,7 +1489,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
     }
 }
 
-// GLFW3 Keyboard Callback, runs on key pressed
+// GLFW3: Called on keyboard interaction
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
@@ -1528,7 +1512,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(platform.handle, GLFW_TRUE);
 }
 
-// GLFW3 Char Key Callback, runs on key down (gets equivalent unicode char value)
+// GLFW3: Called on key down interaction, gets equivalent unicode char value for the key
 static void CharCallback(GLFWwindow *window, unsigned int key)
 {
     //TRACELOG(LOG_DEBUG, "Char Callback: KEY:%i(%c)", key, key);
@@ -1547,7 +1531,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     }
 }
 
-// GLFW3 Mouse Button Callback, runs on mouse button pressed
+// GLFW3: Called on mouse button interaction
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
@@ -1563,7 +1547,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
     else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
 
-    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseCursorPosCallback()
+    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseMoveCallback()
 
     // Assign a pointer ID
     gestureEvent.pointId[0] = 0;
@@ -1585,8 +1569,8 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 #endif
 }
 
-// GLFW3 Cursor Position Callback, runs on mouse move
-static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
+// GLFW3: Called on mouse move
+static void MouseMoveCallback(GLFWwindow *window, double x, double y)
 {
     // If the pointer is not locked, follow the position
     if (!CORE.Input.Mouse.cursorHidden)
@@ -1620,6 +1604,39 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 #endif
 }
 
+// GLFW3: Called on mouse wheel scrolling
+static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
+{
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
+}
+
+// GLFW3: Called on mouse entering the window
+static void MouseEnterCallback(GLFWwindow *window, int enter)
+{
+    if (enter) CORE.Input.Mouse.cursorOnScreen = true;
+    else CORE.Input.Mouse.cursorOnScreen = false;
+}
+//-------------------------------------------------------------------------------------------------------
+
+// Emscripten callback functions, called on specific browser events
+//-------------------------------------------------------------------------------------------------------
+// Emscripten: Called on key events
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
+{
+    // NOTE: Only used to consume some keyboard events without triggering browser functions
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on mouse input events
+static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+    // This is only for registering mouse click events with emscripten and doesn't need to do anything
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on mouse move events
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
     // To emulate the GLFW_RAW_MOUSE_MOTION property.
@@ -1632,92 +1649,7 @@ static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseE
     return 1; // The event was consumed by the callback handler
 }
 
-// GLFW3 Scrolling Callback, runs on mouse wheel
-static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
-{
-    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
-}
-
-// GLFW3 CursorEnter Callback, when cursor enters the window
-static void CursorEnterCallback(GLFWwindow *window, int enter)
-{
-    if (enter) CORE.Input.Mouse.cursorOnScreen = true;
-    else CORE.Input.Mouse.cursorOnScreen = false;
-}
-
-// Register fullscreen change events
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
-{
-    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
-    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
-    if (platform.ourFullscreen) platform.ourFullscreen = false;
-    else
-    {
-        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-        if (!wasFullscreen)
-        {
-            CORE.Window.fullscreen = false;
-            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
-            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
-        }
-    }
-
-    return 1; // The event was consumed by the callback handler
-}
-
-// Register window resize event
-// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
-// {
-//     // TODO: Implement EmscriptenWindowResizedCallback()?
-
-//     return 1; // The event was consumed by the callback handler
-// }
-
-// Register DOM element resize event
-static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
-{
-    // Don't resize non-resizeable windows
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return 1;
-
-    // This event is called whenever the window changes sizes,
-    // so the size of the canvas object is explicitly retrieved below
-    int width = EM_ASM_INT( return window.innerWidth; );
-    int height = EM_ASM_INT( return window.innerHeight; );
-
-    if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
-    else if ((width > (int)CORE.Window.screenMax.width) && (CORE.Window.screenMax.width > 0)) width = CORE.Window.screenMax.width;
-
-    if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
-    else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
-
-    emscripten_set_canvas_element_size(GetCanvasId(), width, height);
-
-    SetupViewport(width, height); // Reset viewport and projection matrix for new size
-
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.resizedLastFrame = true;
-
-    if (IsWindowFullscreen()) return 1;
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-
-    // NOTE: Postprocessing texture is not scaled to new size
-
-    return 0;
-}
-
-// Register mouse input events
-static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
-{
-    // This is only for registering mouse click events with emscripten and doesn't need to do anything
-
-    return 1; // The event was consumed by the callback handler
-}
-
-// Register pointer lock events
+// Emscripten: Called on pointer lock events
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
 {
     CORE.Input.Mouse.cursorHidden = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
@@ -1731,7 +1663,7 @@ static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPoin
     return 1; // The event was consumed by the callback handler
 }
 
-// Register connected/disconnected gamepads events
+// Emscripten: Called on connect/disconnect gamepads events
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
 {
     /*
@@ -1753,26 +1685,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     return 1; // The event was consumed by the callback handler
 }
 
-static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData)
-{
-    EM_BOOL consumed = 1;
-    switch (eventType)
-    {
-        case EMSCRIPTEN_EVENT_BLUR: WindowFocusCallback(userData, 0); break;
-        case EMSCRIPTEN_EVENT_FOCUS: WindowFocusCallback(userData, 1); break;
-        default: consumed = 0; break;
-    }
-    return consumed;
-}
-
-static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData)
-{
-    if (visibilityChangeEvent->hidden) CORE.Window.flags |= FLAG_WINDOW_HIDDEN; // The window was hidden
-    else CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN; // The window was restored
-    return 1; // The event was consumed by the callback handler
-}
-
-// Register touch input events
+// Emscripten: Called on touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
     // Register touch points count
@@ -1858,7 +1771,85 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     return 1; // The event was consumed by the callback handler
 }
 
-// obtaining the canvas id provided by the module configuration
+// Emscripten: Called on fullscreen change events
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
+{
+    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
+    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
+    if (platform.ourFullscreen) platform.ourFullscreen = false;
+    else
+    {
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (!wasFullscreen)
+        {
+            CORE.Window.fullscreen = false;
+            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+        }
+    }
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on resize event
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
+{
+    // Don't resize non-resizeable windows
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return 1;
+
+    // This event is called whenever the window changes sizes,
+    // so the size of the canvas object is explicitly retrieved below
+    int width = EM_ASM_INT( return window.innerWidth; );
+    int height = EM_ASM_INT( return window.innerHeight; );
+
+    if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
+    else if ((width > (int)CORE.Window.screenMax.width) && (CORE.Window.screenMax.width > 0)) width = CORE.Window.screenMax.width;
+
+    if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
+    else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
+
+    emscripten_set_canvas_element_size(GetCanvasId(), width, height);
+
+    SetupViewport(width, height); // Reset viewport and projection matrix for new size
+
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+    CORE.Window.resizedLastFrame = true;
+
+    if (IsWindowFullscreen()) return 1;
+
+    // Set current screen size
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+
+    // NOTE: Postprocessing texture is not scaled to new size
+
+    return 0;
+}
+
+// Emscripten: Called on windows focus change events
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData)
+{
+    EM_BOOL consumed = 1;
+    switch (eventType)
+    {
+        case EMSCRIPTEN_EVENT_BLUR: WindowFocusCallback(userData, 0); break;
+        case EMSCRIPTEN_EVENT_FOCUS: WindowFocusCallback(userData, 1); break;
+        default: consumed = 0; break;
+    }
+    return consumed;
+}
+
+// Emscripten: Called on visibility change events
+static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData)
+{
+    if (visibilityChangeEvent->hidden) CORE.Window.flags |= FLAG_WINDOW_HIDDEN; // The window was hidden
+    else CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN; // The window was restored
+    return 1; // The event was consumed by the callback handler
+}
+//-------------------------------------------------------------------------------------------------------
+
+// JS: Get the canvas id provided by the module configuration
 EM_JS(char*, GetCanvasIdJs, (), {
     var canvasId = "#" + Module.canvas.id;
     var lengthBytes = lengthBytesUTF8(canvasId) + 1;
@@ -1867,6 +1858,7 @@ EM_JS(char*, GetCanvasIdJs, (), {
     return stringOnWasmHeap;
 });
 
+// Get canvas id (using embedded JS function)
 static const char *GetCanvasId(void)
 {
     static char *canvasId = NULL;
