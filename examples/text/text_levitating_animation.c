@@ -10,7 +10,7 @@ int main() {
     const Color textColor = WHITE;
 
     // Initialize Raylib
-    InitWindow(screenWidth, screenHeight, "Levitating Text");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - Levitating Text Animation");
     SetTargetFPS(60);
 
     // Initial position of the text (centered on the screen)
