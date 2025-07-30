@@ -95,7 +95,6 @@
     #endif
 #endif
 
-
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_FILEPATH_CAPACITY        8192       // Maximum file paths capacity
@@ -153,7 +152,6 @@
 #endif
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX 9
 
-
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
@@ -173,7 +171,6 @@
 #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
 #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
 
-
 //------------------------------------------------------------------------------------
 // Module: rshapes - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -184,7 +181,6 @@
 // rshapes: Configuration values
 //------------------------------------------------------------------------------------
 #define SPLINE_SEGMENT_DIVISIONS       24       // Spline segments subdivisions
-
 
 //------------------------------------------------------------------------------------
 // Module: rtextures - Configuration Flags
@@ -213,7 +209,6 @@
 // If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
 #define SUPPORT_IMAGE_MANIPULATION      1
 
-
 //------------------------------------------------------------------------------------
 // Module: rtext - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -239,7 +234,6 @@
 #define MAX_TEXT_BUFFER_LENGTH       1024       // Size of internal static buffers used on some functions:
                                                 // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
 #define MAX_TEXTSPLIT_COUNT           128       // Maximum number of substrings to split: TextSplit()
-
 
 //------------------------------------------------------------------------------------
 // Module: rmodels - Configuration Flags

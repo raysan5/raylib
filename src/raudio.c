@@ -451,7 +451,6 @@ void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
@@ -995,7 +994,6 @@ Sound LoadSoundAlias(Sound source)
 
     return sound;
 }
-
 
 // Checks if a sound is valid (data loaded and buffers initialized)
 bool IsSoundValid(Sound sound)
@@ -2348,7 +2346,6 @@ void DetachAudioMixedProcessor(AudioCallback process)
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
-
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition

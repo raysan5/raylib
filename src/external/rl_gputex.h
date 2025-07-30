@@ -141,7 +141,6 @@ RLGPUTEXAPI int rl_save_ktx_to_memory(const char *fileName, void *data, int widt
 
 #endif // RL_GPUTEX_H
 
-
 /***********************************************************************************
 *
 *   RL_GPUTEX IMPLEMENTATION
