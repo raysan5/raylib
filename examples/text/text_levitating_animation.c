@@ -2,55 +2,61 @@
 #include <math.h>
 
 int main() {
-  // Configuration
-  const int screenWidth = 800;
-  const int screenHeight = 450;
-  const char* text = "Raylib in Space!";
-  const int fontSize = 40;
-  const Color textColor = WHITE;
+    // Configuration
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+    const char* text = "Raylib in Space!";
+    const int fontSize = 40;
+    const Color textColor = WHITE;
 
-  // Initialisation de Raylib
-  InitWindow(screenWidth, screenHeight, "Levitating Text");
-  SetTargetFPS(60);
+    // Initialize Raylib
+    InitWindow(screenWidth, screenHeight, "Levitating Text");
+    SetTargetFPS(60);
 
-  // Position initiale du texte (au centre de l'écran)
-  Vector2 textPosition = { (float)screenWidth / 2 - MeasureText(text, fontSize) / 2, (float)screenHeight / 2 };
+    // Initial position of the text (centered on the screen)
+    Vector2 textPosition = { 
+        (float)screenWidth / 2 - MeasureText(text, fontSize) / 2, 
+        (float)screenHeight / 2 
+    };
 
-  // Variables pour l'animation
-  float time = 0.0f;  // Temps écoulé pour le mouvement sinusoïdal
-  float amplitude = 30.0f; // Amplitude du mouvement vertical
-  float frequency = 1.5f;  // Fréquence du mouvement vertical
+    // Animation variables
+    float time = 0.0f;       // Elapsed time for sinusoidal movement
+    float amplitude = 30.0f; // Amplitude of vertical movement
+    float frequency = 1.5f;  // Frequency of vertical movement
 
-  // Boucle principale du jeu
-  while (!WindowShouldClose()) {
-    // Mise à jour
+    // Main game loop
+    while (!WindowShouldClose()) {
+        // Update
+        time += GetFrameTime(); // Increment elapsed time
 
-    time += GetFrameTime(); // Incrémente le temps écoulé
+        // Compute vertical position based on a sine function
+        textPosition.y = (float)screenHeight / 2 + sinf(time * frequency) * amplitude;
 
-    // Calcule la position verticale basée sur une fonction sinusoïdale
-    textPosition.y = (float)screenHeight / 2 + sin(time * frequency) * amplitude;
+        // Draw
+        BeginDrawing();
 
-    // Dessin
-    BeginDrawing();
+            ClearBackground(BLACK);
 
-      ClearBackground(BLACK);
+            // Draw the text at the updated position
+            DrawText(text, (int)textPosition.x, (int)textPosition.y, fontSize, textColor);
 
-      // Dessine le texte à la position mise à jour
-      DrawText(text, (int)textPosition.x, (int)textPosition.y, fontSize, textColor);
+            // Optional: Add stars in the background
+            for (int i = 0; i < 100; ++i) {
+                Vector2 starPosition = {
+                    (float)GetRandomValue(0, screenWidth), 
+                    (float)GetRandomValue(0, screenHeight)
+                };
+                float starSize = (float)GetRandomValue(1, 3);
+                Color starColor = Fade(WHITE, (float)GetRandomValue(20, 80) / 100.0f);
 
-      // Optionnel: Ajoute des étoiles en arrière-plan
-      for (int i = 0; i < 100; ++i) {
-          Vector2 starPosition = {(float)GetRandomValue(0, screenWidth), (float)GetRandomValue(0, screenHeight)};
-          float starSize = (float)GetRandomValue(1, 3);
-          Color starColor = Fade(WHITE, (float)GetRandomValue(20, 80) / 100.0f); // Étoiles plus ou moins brillantes
-          DrawPixelV(starPosition, starColor);
-      }
+                DrawRectangleV(starPosition, (Vector2){starSize, starSize}, starColor); // Use starSize
+            }
 
-    EndDrawing();
-  }
+        EndDrawing();
+    }
 
-  // Libération de la mémoire et fermeture de Raylib
-  CloseWindow();
+    // Clean up and close Raylib
+    CloseWindow();
 
-  return 0;
+    return 0;
 }
