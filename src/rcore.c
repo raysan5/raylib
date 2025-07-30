@@ -1889,7 +1889,7 @@ void TakeScreenshot(const char *fileName)
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
-    ExportImage(image, path);           // WARNING: Module required: rtextures
+    ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
     if (FileExists(path)) TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
@@ -1936,7 +1936,7 @@ bool FileExists(const char *fileName)
 }
 
 // Check file extension
-// NOTE: Extensions checking is not case-sensitive
+// TODO: Avoid [rtext] module dependency
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     #define MAX_FILE_EXTENSION_LENGTH  16
