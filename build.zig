@@ -489,6 +489,7 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(lib);
 
     const examples = b.step("examples", "Build/Install all examples");
+    examples.dependOn(try addExamples("/", b, target, optimize, lib));
     examples.dependOn(try addExamples("audio", b, target, optimize, lib));
     examples.dependOn(try addExamples("core", b, target, optimize, lib));
     examples.dependOn(try addExamples("models", b, target, optimize, lib));
