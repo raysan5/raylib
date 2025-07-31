@@ -489,7 +489,7 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(lib);
 
     const examples = b.step("examples", "Build/Install all examples");
-    examples.dependOn(try addExamples("/", b, target, optimize, lib));
+    examples.dependOn(try addExamples("", b, target, optimize, lib));
     examples.dependOn(try addExamples("audio", b, target, optimize, lib));
     examples.dependOn(try addExamples("core", b, target, optimize, lib));
     examples.dependOn(try addExamples("models", b, target, optimize, lib));
@@ -530,7 +530,10 @@ fn addExamples(
     optimize: std.builtin.OptimizeMode,
     raylib: *std.Build.Step.Compile,
 ) !*std.Build.Step {
-    const all = b.step(module, "All " ++ module ++ " examples");
+    const all = b.step(
+        if (module.len > 0) module else "root",
+        "All " ++ if (module.len > 0) module else "root" ++ " examples",
+    );
     const module_subpath = b.pathJoin(&.{ "examples", module });
     const module_resources = b.pathJoin(&.{ module_subpath, "resources@resources" });
     var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
