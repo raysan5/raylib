@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
             
             printf("\n////////////////////////////////////////////////////////////////////////////////////////////\n");
             printf("//                                                                                        //\n");
-            printf("// rem [raylib examples manager] - A simple command-line tool to manage raylib examples   //\n");
+            printf("// rexm [raylib examples manager] - A simple command-line tool to manage raylib examples  //\n");
             printf("// powered by raylib v5.6-dev                                                             //\n");
             printf("//                                                                                        //\n");
             printf("// Copyright (c) 2025 Ramon Santamaria (@raysan5)                                         //\n");
@@ -283,20 +283,20 @@ int main(int argc, char *argv[])
             printf("////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
             printf("USAGE:\n\n");
-            printf("    > rem help|create|add|rename|remove <example_name> [<example_rename>]\n");
+            printf("    > rexm help|create|add|rename|remove <example_name> [<example_rename>]\n");
 
             printf("\nOPTIONS:\n\n");
             printf("    help                          : Provides command-line usage information\n");
             printf("    create <new_example_name>     : Creates an empty example, from internal template\n");
             printf("    add <example_name>            : Add existing example, category extracted from name\n");
-            printf("                                    Supported categories: core, shapes, textures, text, models\n\n");
+            printf("                                    Supported categories: core, shapes, textures, text, models\n");
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
             printf("    remove <example_name>         : Remove an existing example\n\n");
             printf("\nEXAMPLES:\n\n");
-            printf("    > rem rename core_basic_window core_cool_window\n");
-            printf("        Renames and updates example <core_basic_window> to <core_cool_window>\n\n");
-            printf("    > rem add shapes_custom_stars\n");
+            printf("    > rexm add shapes_custom_stars\n");
             printf("        Add and updates new example provided <shapes_custom_stars>\n\n");
+            printf("    > rexm rename core_basic_window core_cool_window\n");
+            printf("        Renames and updates example <core_basic_window> to <core_cool_window>\n\n");
         } break;
     }
     
