@@ -141,12 +141,18 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[1], "rename") == 0)
         {
             if (argc == 2) LOG("WARNING: No filename provided to create\n");
-            else if (argc == 3) LOG("WARNING: No enough arguments provided\n");
-            else if (argc > 4) LOG("WARNING: Too many arguments provided\n");
+            //else if (argc == 3) LOG("WARNING: No enough arguments provided\n"); All the documentation says 3 args but I don't mind being wrong
+            else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                // TODO: Register exName, exCategory and exRename
-                
+                strcpy(exName, argv[2]);
+                for (int index = 0; index < 32; index++)
+                {
+                    if (exName[index] == '_') break;
+                    exCategory[index] = exName[index];
+                }
+                strcpy(exRename, argv[3]);
+
                 opCode = 3;
             }
         }
