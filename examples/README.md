@@ -216,12 +216,12 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | 148 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
 | 149 | [audio_mixed_processor](audio/audio_mixed_processor.c) | <img src="audio/audio_mixed_processor.png" alt="audio_mixed_processor" width="80"> | ⭐️⭐️⭐️⭐️ | 4.2 | 4.2 | [hkc](https://github.com/hatkidchan) |
 | 150 | [audio_stream_effects](audio/audio_stream_effects.c) | <img src="audio/audio_stream_effects.png" alt="audio_stream_effects" width="80"> | ⭐️⭐️⭐️⭐️ | 4.2 | 5.0 | [Ray](https://github.com/raysan5) |
-| 151 [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐️⭐️☆☆ | 4.6 | 4.6 | [Jeffery Myers](https://github.com/JeffM2501) |
+| 151 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐️⭐️☆☆ | 4.6 | 4.6 | [Jeffery Myers](https://github.com/JeffM2501) |
 | 152 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐️⭐️☆☆ | 5.5 | 5.5 | [Le Juez Victor](https://github.com/Bigfoot71) |
 
 ### category: others
 
-Ex151amples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.
+Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
