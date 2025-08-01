@@ -43,6 +43,13 @@ int main(void)
     {
         // Update
         //-----------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+		ballPosition.x = screenWidth/2.0f;
+		ballPosition.y = screenHeight/2.0f;
+	}
         if (IsKeyPressed(KEY_SPACE)) pause = !pause;
 
         if (!pause)
