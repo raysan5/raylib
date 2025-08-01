@@ -25,9 +25,6 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 450
 
-#define CENTER_X SCREEN_WIDTH * 0.5
-#define CENTER_Y SCREEN_HEIGHT * 0.5 - 100
-
 // Constant for Simulation
 #define SIMULATION_STEPS 30
 #define G 9.81
@@ -37,7 +34,7 @@
 //----------------------------------------------------------------------------------
 static Vector2 CalculatePendulumEndPoint(float l, float theta);
 static Vector2 CalculateDoublePendulumEndPoint(float l1, float theta1, float l2, float theta2);
-
+static Vector2 CalculateCenter(Vector2 screenSize) { return (Vector2){ screenSize.x * 0.5, screenSize.y * 0.5 - 100 }; }
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -47,6 +44,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [shapes] example - Double Pendulum");
+    Vector2 screenSize   = { GetScreenWidth(), GetScreenHeight() };
+    Vector2 screenCenter = CalculateCenter(screenSize);
 
     // Simulation Paramters
     //--------------------------------------------------------------------------------------
@@ -56,8 +55,8 @@ int main(void)
     float totalM = m1 + m2;
 
     Vector2 previousPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-    previousPosition.x += CENTER_X;
-    previousPosition.y += CENTER_Y;
+    previousPosition.x += screenCenter.x;
+    previousPosition.y += screenCenter.y;
 
     // Scale length
     float L1 = l1 * lengthScaler;
@@ -70,7 +69,7 @@ int main(void)
     
     // Create Framebuffer
     //--------------------------------------------------------------------------------------
-    RenderTexture2D target = LoadRenderTexture(SCREEN_WIDTH, SCREEN_HEIGHT);
+    RenderTexture2D target = LoadRenderTexture(screenSize.x, screenSize.y);
     SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
 
     SetTargetFPS(60);
@@ -82,6 +81,16 @@ int main(void)
         // Update
         float dt = GetFrameTime();
         float step = dt / SIMULATION_STEPS, step2 = step * step;
+	if(IsWindowResized())
+	{
+		// Update screen dimensions
+		screenSize.x = GetScreenWidth();
+		screenSize.y = GetScreenHeight();
+		screenCenter = CalculateCenter(screenSize);
+		UnloadRenderTexture(target);
+		target = LoadRenderTexture(screenSize.x, screenSize.y);
+		SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
+	}
 
         // Update Physics - larger steps = better approximation
         //----------------------------------------------------------------------------------
@@ -115,15 +124,15 @@ int main(void)
 
         // Calculate position
         Vector2 currentPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-        currentPosition.x += CENTER_X;
-        currentPosition.y += CENTER_Y;
+        currentPosition.x += screenCenter.x;
+        currentPosition.y += screenCenter.y;
 
         // Draw to framebuffer
         //----------------------------------------------------------------------------------
         BeginTextureMode(target);
 
             // Draw a transparent rectangle - smaller alpha = longer trails
-            DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(BLACK, fateAlpha));
+            DrawRectangle(0, 0, screenSize.x, screenSize.y, Fade(BLACK, fateAlpha));
             
             // Draw trail
             DrawCircleV(previousPosition, trailThick, RED);
@@ -146,11 +155,11 @@ int main(void)
                              (Vector2){ 0, 0 }, WHITE);
 
             // Draw Double Pendulum
-            DrawRectanglePro((Rectangle){ CENTER_X, CENTER_Y, 10 * l1, lineThick },
+            DrawRectanglePro((Rectangle){ screenCenter.x, screenCenter.y, 10 * l1, lineThick },
                              (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta1, RAYWHITE);
 
             Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);
-            DrawRectanglePro((Rectangle){ CENTER_X + endpoint1.x, CENTER_Y + endpoint1.y, 10 * l2, lineThick },
+            DrawRectanglePro((Rectangle){ screenCenter.x + endpoint1.x, screenCenter.y + endpoint1.y, 10 * l2, lineThick },
                              (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
 
         EndDrawing();

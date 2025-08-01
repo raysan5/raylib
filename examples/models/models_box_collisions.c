@@ -22,8 +22,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - box collisions");
 
@@ -50,7 +50,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
+	if (IsWindowResized())
+	{
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         // Move player
         if (IsKeyDown(KEY_RIGHT)) playerPosition.x += 0.2f;
         else if (IsKeyDown(KEY_LEFT)) playerPosition.x -= 0.2f;
@@ -111,7 +115,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Move player with arrow keys to collide", 220, 40, 20, GRAY);
+            DrawText("Move player with arrow keys to collide", screenWidth/2 - 220, 40, 20, GRAY);
 
             DrawFPS(10, 10);
 

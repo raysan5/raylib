@@ -22,8 +22,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib logo animation");
 
@@ -48,6 +48,14 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+    	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
+        logoPositionX = screenWidth/2 - 128;
+        logoPositionY = screenHeight/2 - 128;
+
         // Update
         //----------------------------------------------------------------------------------
         if (state == 0)                 // State 0: Small box blinking
@@ -145,13 +153,13 @@ int main(void)
                 DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
                 DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
 
-                DrawRectangle(GetScreenWidth()/2 - 112, GetScreenHeight()/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
+                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
 
-                DrawText(TextSubtext("raylib", 0, lettersCount), GetScreenWidth()/2 - 44, GetScreenHeight()/2 + 48, 50, Fade(BLACK, alpha));
+                DrawText(TextSubtext("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
             else if (state == 4)
             {
-                DrawText("[R] REPLAY", 340, 200, 20, GRAY);
+                DrawText("[R] REPLAY", screenWidth/2 - 60, screenHeight/2 - 25, 20, GRAY);
             }
 
         EndDrawing();

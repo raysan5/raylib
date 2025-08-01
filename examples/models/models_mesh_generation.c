@@ -26,8 +26,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh generation");
 
@@ -78,6 +78,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if(IsWindowResized())
+	{
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
@@ -110,21 +115,21 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
-            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
+            DrawRectangle(30, screenHeight - 50, 310, 30, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(30, screenHeight - 50, 310, 30, Fade(DARKBLUE, 0.5f));
+            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, screenHeight - 50 + 10, 10, BLUE);
 
             switch (currentModel)
             {
-                case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
-                case 1: DrawText("CUBE", 680, 10, 20, DARKBLUE); break;
-                case 2: DrawText("SPHERE", 680, 10, 20, DARKBLUE); break;
-                case 3: DrawText("HEMISPHERE", 640, 10, 20, DARKBLUE); break;
-                case 4: DrawText("CYLINDER", 680, 10, 20, DARKBLUE); break;
-                case 5: DrawText("TORUS", 680, 10, 20, DARKBLUE); break;
-                case 6: DrawText("KNOT", 680, 10, 20, DARKBLUE); break;
-                case 7: DrawText("POLY", 680, 10, 20, DARKBLUE); break;
-                case 8: DrawText("Custom (triangle)", 580, 10, 20, DARKBLUE); break;
+                case 0: DrawText("PLANE", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 1: DrawText("CUBE", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 2: DrawText("SPHERE", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 3: DrawText("HEMISPHERE", screenWidth - 160, 10, 20, DARKBLUE); break;
+                case 4: DrawText("CYLINDER", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 5: DrawText("TORUS", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 6: DrawText("KNOT", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 7: DrawText("POLY", screenWidth - 120, 10, 20, DARKBLUE); break;
+                case 8: DrawText("Custom (triangle)", screenWidth - 220, 10, 20, DARKBLUE); break;
                 default: break;
             }
 

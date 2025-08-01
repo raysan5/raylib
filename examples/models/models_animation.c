@@ -30,8 +30,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - model animation");
 
@@ -72,6 +72,11 @@ int main(void)
             UpdateModelAnimation(model, anims[0], animFrameCounter);
             if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
         }
+	if (IsWindowResized())
+	{
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         //----------------------------------------------------------------------------------
 
         // Draw

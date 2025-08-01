@@ -24,8 +24,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - following eyes");
 
@@ -46,6 +46,16 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight(); 
+	}
+        scleraLeftPosition.x = screenWidth/2.0f - 100.0f;
+		scleraLeftPosition.y = screenHeight/2.0f;
+        scleraRightPosition.x = screenWidth/2.0f + 100.0f;
+		scleraRightPosition.y = screenHeight/2.0f;
+
         // Update
         //----------------------------------------------------------------------------------
         irisLeftPosition = GetMousePosition();

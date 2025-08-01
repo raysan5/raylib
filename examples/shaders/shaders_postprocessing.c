@@ -69,8 +69,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 
@@ -133,6 +133,13 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
+	if(IsWindowResized())
+	{
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+		UnloadRenderTexture(target);
+		target = LoadRenderTexture(screenWidth, screenHeight);
+	}
         BeginTextureMode(target);       // Enable drawing to texture
             ClearBackground(RAYWHITE);  // Clear texture background
 
@@ -148,7 +155,7 @@ int main(void)
             // Render generated texture using selected postprocessing shader
             BeginShaderMode(shaders[currentShader]);
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2){0, 0}, WHITE);
             EndShaderMode();
 
             // Draw 2d shapes and text over drawn texture
@@ -158,7 +165,7 @@ int main(void)
             DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, BLACK);
             DrawText(postproShaderText[currentShader], 330, 15, 20, RED);
             DrawText("< >", 540, 10, 30, DARKBLUE);
-            DrawFPS(700, 15);
+            DrawFPS(screenWidth - 100, 15);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

@@ -38,8 +38,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     // Shadows are a HUGE topic, and this example shows an extremely simple implementation of the shadowmapping algorithm,
@@ -101,6 +101,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         float dt = GetFrameTime();
 
         Vector3 cameraPos = cam.position;

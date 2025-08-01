@@ -33,8 +33,8 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
     
     InitWindow(screenWidth, screenHeight, "raylib [models] example - point rendering");
 
@@ -62,6 +62,11 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         if (IsKeyPressed(KEY_SPACE)) useDrawModelPoints = !useDrawModelPoints;

@@ -41,8 +41,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth buffer");
 
@@ -69,11 +69,18 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         UpdateCamera(&camera, CAMERA_ORBITAL);
         //----------------------------------------------------------------------------------
         
         // Draw
         //----------------------------------------------------------------------------------
+        UnloadRenderTexture(target);
+		    target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
         // Draw into our custom render texture (framebuffer)
         BeginTextureMode(target);
             ClearBackground(WHITE);
@@ -91,7 +98,7 @@ int main(void)
 
         // Draw into screen our custom render texture 
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);        
             DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();

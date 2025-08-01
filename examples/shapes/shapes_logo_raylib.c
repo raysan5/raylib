@@ -22,8 +22,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib logo using shapes");
 
@@ -37,7 +37,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-
+	if (IsWindowResized())
+	{
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -48,7 +52,7 @@ int main(void)
             DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, RAYWHITE);
             DrawText("raylib", screenWidth/2 - 44, screenHeight/2 + 48, 50, BLACK);
 
-            DrawText("this is NOT a texture!", 350, 370, 10, GRAY);
+            DrawText("this is NOT a texture!", screenWidth/2 - 50, screenHeight/2 + 145, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

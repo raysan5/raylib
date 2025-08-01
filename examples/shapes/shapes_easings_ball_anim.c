@@ -24,8 +24,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings ball anim");
 
@@ -45,6 +45,15 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+		if(state > 0)
+            		ballPositionX = (int)EaseElasticOut((float)120, -100, screenWidth/2.0f + 100, 120);
+		if(state > 1)
+            		ballRadius = (int)EaseElasticIn((float)200, 20, screenWidth/2.0f + 100, 200);
+	}
         if (state == 0)             // Move ball position X with easing
         {
             framesCounter++;
@@ -59,7 +68,7 @@ int main(void)
         else if (state == 1)        // Increase ball radius with easing
         {
             framesCounter++;
-            ballRadius = (int)EaseElasticIn((float)framesCounter, 20, 500, 200);
+            ballRadius = (int)EaseElasticIn((float)framesCounter, 20, screenWidth/2.0f + 100, 200);
 
             if (framesCounter >= 200)
             {
@@ -100,9 +109,9 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             if (state >= 2) DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
-            DrawCircle(ballPositionX, 200, (float)ballRadius, Fade(RED, 1.0f - ballAlpha));
+            DrawCircle(ballPositionX, screenHeight / 2, (float)ballRadius, Fade(RED, 1.0f - ballAlpha));
 
-            if (state == 3) DrawText("PRESS [ENTER] TO PLAY AGAIN!", 240, 200, 20, BLACK);
+            if (state == 3) DrawText("PRESS [ENTER] TO PLAY AGAIN!", screenWidth/2 - 140, (screenHeight/2 - 10), 20, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

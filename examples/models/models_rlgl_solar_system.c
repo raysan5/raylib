@@ -32,8 +32,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     const float sunRadius = 4.0f;
     const float earthRadius = 0.6f;
@@ -66,6 +66,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         earthRotation += (5.0f*rotationSpeed);
@@ -112,7 +117,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("EARTH ORBITING AROUND THE SUN!", 400, 10, 20, MAROON);
+            DrawText("EARTH ORBITING AROUND THE SUN!", screenWidth - 400, 10, 20, MAROON);
             DrawFPS(10, 10);
 
         EndDrawing();

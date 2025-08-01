@@ -35,8 +35,10 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
+    float swirlSize[2]   = { (float)screenWidth, (float)screenHeight };
+    float swirlCenter[2] = { (float)screenWidth/2, (float)screenHeight/2 };
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 
@@ -62,12 +64,11 @@ int main(void)
 
     // Get variable (uniform) location on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
+    int swirlSizeLoc = GetShaderLocation(shader, "size");
     int swirlCenterLoc = GetShaderLocation(shader, "center");
 
-    float swirlCenter[2] = { (float)screenWidth/2, (float)screenHeight/2 };
-
     // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
+    RenderTexture2D target;
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -75,15 +76,27 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
+    	if (IsWindowResized())
+	{
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
+        // Create a RenderTexture2D to be used for render to texture
+        UnloadRenderTexture(target);
+        target = LoadRenderTexture(screenWidth, screenHeight);
+
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
         
         Vector2 mousePosition = GetMousePosition();
 
+        swirlSize[0] = screenWidth;
+        swirlSize[1] = screenHeight;
+        SetShaderValue(shader, swirlSizeLoc, swirlSize, SHADER_UNIFORM_VEC2);
+
         swirlCenter[0] = mousePosition.x;
         swirlCenter[1] = screenHeight - mousePosition.y;
-
         // Send new value to the shader to be used on drawing
         SetShaderValue(shader, swirlCenterLoc, swirlCenter, SHADER_UNIFORM_VEC2);
         //----------------------------------------------------------------------------------
@@ -98,7 +111,7 @@ int main(void)
                 DrawGrid(10, 1.0f);     // Draw a grid
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
 
-            DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RED);
+            DrawText("TEXT DRAWN IN RENDER TEXTURE", screenWidth - 600, 10, 30, RED);
         EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
 
         BeginDrawing();
@@ -107,7 +120,7 @@ int main(void)
             // Enable shader using the custom uniform
             BeginShaderMode(shader);
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2){ 0, 0 }, WHITE);
             EndShaderMode();
 
             // Draw some 2d text over drawn texture

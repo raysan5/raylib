@@ -37,8 +37,8 @@ int main(void)
 {
 	// Initialization
 	//--------------------------------------------------------------------------------------
-	const int screenWidth = 800;
-	const int screenHeight = 450;
+	int screenWidth = 800;
+	int screenHeight = 450;
 
 	const char* voxFileNames[] = {
 		"resources/models/vox/chr_knight.vox",
@@ -126,6 +126,11 @@ int main(void)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
+		if (IsWindowResized())
+		{
+			screenWidth  = GetScreenWidth();
+			screenHeight = GetScreenHeight();
+		}
 		if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE))
 		{
 			const Vector2 mouseDelta = GetMouseDelta();
@@ -182,11 +187,11 @@ int main(void)
 		EndMode3D();
 
 		// Display info
-		DrawRectangle(10, 400, 340, 60, Fade(SKYBLUE, 0.5f));
-		DrawRectangleLines(10, 400, 340, 60, Fade(DARKBLUE, 0.5f));
-		DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, 410, 10, BLUE);
-		DrawText("MOUSE MIDDLE BUTTON to ZOOM OR ROTATE CAMERA", 40, 420, 10, BLUE);
-		DrawText("UP-DOWN-LEFT-RIGHT KEYS to MOVE CAMERA", 40, 430, 10, BLUE);
+		DrawRectangle(10, screenHeight - 50, 340, 60, Fade(SKYBLUE, 0.5f));
+		DrawRectangleLines(10, screenHeight - 50, 340, 60, Fade(DARKBLUE, 0.5f));
+		DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, screenHeight - 50 + 10, 10, BLUE);
+		DrawText("MOUSE MIDDLE BUTTON to ZOOM OR ROTATE CAMERA", 40, screenHeight - 50 + 20, 10, BLUE);
+		DrawText("UP-DOWN-LEFT-RIGHT KEYS to MOVE CAMERA", 40, screenHeight - 50 + 30, 10, BLUE);
 		DrawText(TextFormat("File: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
 
 		EndDrawing();

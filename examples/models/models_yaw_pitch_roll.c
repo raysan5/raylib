@@ -26,8 +26,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [models] example - plane rotations (yaw, pitch, roll)");
@@ -55,6 +55,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if(IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         // Plane pitch (x-axis) controls
         if (IsKeyDown(KEY_DOWN)) pitch += 0.6f;
         else if (IsKeyDown(KEY_UP)) pitch -= 0.6f;
@@ -101,11 +106,11 @@ int main(void)
             EndMode3D();
 
             // Draw controls info
-            DrawRectangle(30, 370, 260, 70, Fade(GREEN, 0.5f));
-            DrawRectangleLines(30, 370, 260, 70, Fade(DARKGREEN, 0.5f));
-            DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, 380, 10, DARKGRAY);
-            DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, 400, 10, DARKGRAY);
-            DrawText("Yaw controlled with: KEY_A / KEY_S", 40, 420, 10, DARKGRAY);
+            DrawRectangle(30, screenHeight - 80, 260, 70, Fade(GREEN, 0.5f));
+            DrawRectangleLines(30, screenHeight - 80, 260, 70, Fade(DARKGREEN, 0.5f));
+            DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, screenHeight - 70, 10, DARKGRAY);
+            DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, screenHeight - 50, 10, DARKGRAY);
+            DrawText("Yaw controlled with: KEY_A / KEY_S", 40, screenHeight - 30, 10, DARKGRAY);
 
             DrawText("(c) WWI Plane Model created by GiaHanLam", screenWidth - 240, screenHeight - 20, 10, DARKGRAY);
 

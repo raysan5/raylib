@@ -62,6 +62,9 @@ typedef struct Star {
     Vector2 speed;
 } Star;
 
+int screenWidth = 800;
+int screenHeight = 450;
+
 static void UpdateStar(Star *s);
 static void ResetStar(Star *s);
 
@@ -72,9 +75,6 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
-
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shader spotlight");
     HideCursor();
 
@@ -85,10 +85,8 @@ int main(void)
     for (int n = 0; n < MAX_STARS; n++) ResetStar(&stars[n]);
 
     // Progress all the stars on, so they don't all start in the centre
-    for (int m = 0; m < screenWidth/2.0; m++)
-    {
+    for (int m = 0; m < screenWidth * 0.5; m++)
         for (int n = 0; n < MAX_STARS; n++) UpdateStar(&stars[n]);
-    }
 
     int frameCounter = 0;
 
@@ -117,7 +115,7 @@ int main(void)
     // Tell the shader how wide the screen is so we can have
     // a pitch black half and a dimly lit half.
     unsigned int wLoc = GetShaderLocation(shdrSpot, "screenWidth");
-    float sw = (float)GetScreenWidth();
+    float sw = (float)screenWidth;
     SetShaderValue(shdrSpot, wLoc, &sw, SHADER_UNIFORM_FLOAT);
 
     // Randomize the locations and velocities of the spotlights
@@ -150,7 +148,15 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         frameCounter++;
+
+        sw = (float)screenWidth;
+        SetShaderValue(shdrSpot, wLoc, &sw, SHADER_UNIFORM_FLOAT);
 
         // Move the stars, resetting them if the go offscreen
         for (int n = 0; n < MAX_STARS; n++) UpdateStar(&stars[n]);
@@ -194,8 +200,8 @@ int main(void)
             for (int i = 0; i < 16; i++)
             {
                 DrawTexture(texRay,
-                    (int)((screenWidth/2.0f) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2f) - 32),
-                    (int)((screenHeight/2.0f) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2f)), WHITE);
+                    (int)((screenWidth * 0.5f) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2f) - 32),
+                    (int)((screenHeight * 0.5f) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2f)), WHITE);
             }
 
             // Draw spot lights
@@ -210,8 +216,8 @@ int main(void)
             DrawFPS(10, 10);
 
             DrawText("Move the mouse!", 10, 30, 20, GREEN);
-            DrawText("Pitch Black", (int)(screenWidth*0.2f), screenHeight/2, 20, GREEN);
-            DrawText("Dark", (int)(screenWidth*.66f), screenHeight/2, 20, GREEN);
+            DrawText("Pitch Black", (int)(screenWidth*0.2f), screenHeight * 0.5f, 20, GREEN);
+            DrawText("Dark", (int)(screenWidth*.66f), screenHeight * 0.5f, 20, GREEN);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -231,7 +237,7 @@ int main(void)
 
 static void ResetStar(Star *s)
 {
-    s->position = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
+    s->position = (Vector2){ screenWidth * 0.5f, screenHeight * 0.5f };
 
     do
     {
@@ -247,8 +253,8 @@ static void UpdateStar(Star *s)
 {
     s->position = Vector2Add(s->position, s->speed);
 
-    if ((s->position.x < 0) || (s->position.x > GetScreenWidth()) ||
-        (s->position.y < 0) || (s->position.y > GetScreenHeight()))
+    if ((s->position.x < 0) || (s->position.x > screenWidth) ||
+        (s->position.y < 0) || (s->position.y > screenHeight))
     {
         ResetStar(s);
     }

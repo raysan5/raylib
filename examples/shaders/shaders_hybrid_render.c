@@ -49,8 +49,9 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
+    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth buffer");
 
@@ -69,12 +70,6 @@ int main(void)
     marchLocs.camDir = GetShaderLocation(shdrRaymarch, "camDir");
     marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
-    // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
-    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
-    SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
-
-    // Use Customized function to create writable depth texture buffer
-    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
 
     // Define the camera to look into our 3d world
     Camera camera = {
@@ -87,6 +82,7 @@ int main(void)
     
     // Camera FOV is pre-calculated in the camera Distance.
     float camDist = 1.0f/(tanf(camera.fovy*0.5f*DEG2RAD));
+    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
     
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -96,6 +92,18 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        // Use Customized function to create writable depth texture buffer
+        // Transfer screenCenter position to shader. Which is used to calculate ray direction.
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+        	screenCenter.x = screenWidth/2.0f;
+		screenCenter.y = screenHeight/2.0f;
+		UnloadRenderTexture(target);
+		target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+	}
+        SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Update Camera Postion in the ray march shader.
@@ -133,7 +141,6 @@ int main(void)
         // Draw into screen our custom render texture 
         BeginDrawing();
             ClearBackground(RAYWHITE);
-        
             DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();

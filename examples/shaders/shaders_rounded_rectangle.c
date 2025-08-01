@@ -68,8 +68,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     const Color rectangleColor = BLUE;
     const Color shadowColor = DARKBLUE;
@@ -100,6 +100,13 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+    	// Update
+	//----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -162,12 +169,10 @@ int main(void)
                 DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-
-
             // Draw one more rectangle with all three colors
-            rec = (Rectangle){ 240, 80, 500, 300 };
-            DrawRectangleLines((int)rec.x - 30, (int)rec.y - 30, (int)rec.width + 60, (int)rec.height + 60, DARKGRAY);
-            DrawText("Rectangle with all three combined", (int)rec.x - 30, (int)rec.y - 45, 10, DARKGRAY);
+            rec = (Rectangle){ 240, 80, screenWidth - 300, screenHeight - 150 };
+            DrawRectangleLines(rec.x - 30, rec.y - 30, rec.width + 60, rec.height + 60, DARKGRAY);
+            DrawText("Rectangle with all three combined", rec.x - 30, rec.y - 45, 10, DARKGRAY);
 
             rec.y = screenHeight - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);

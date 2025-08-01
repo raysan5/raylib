@@ -35,8 +35,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - models loading");
 
@@ -69,6 +69,11 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+    	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_FIRST_PERSON);
@@ -132,8 +137,8 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Drag & drop model to load mesh/texture.", 10, GetScreenHeight() - 20, 10, DARKGRAY);
-            if (selected) DrawText("MODEL SELECTED", GetScreenWidth() - 110, 10, 10, GREEN);
+            DrawText("Drag & drop model to load mesh/texture.", 10, screenHeight - 20, 10, DARKGRAY);
+            if (selected) DrawText("MODEL SELECTED", screenWidth - 110, 10, 10, GREEN);
 
             DrawText("(c) Castle 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
 

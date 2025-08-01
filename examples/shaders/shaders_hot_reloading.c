@@ -34,8 +34,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - hot reloading");
 
@@ -51,9 +51,6 @@ int main(void)
     int mouseLoc = GetShaderLocation(shader, "mouse");
     int timeLoc = GetShaderLocation(shader, "time");
 
-    float resolution[2] = { (float)screenWidth, (float)screenHeight };
-    SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
-
     float totalTime = 0.0f;
     bool shaderAutoReloading = false;
 
@@ -65,6 +62,14 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+	if (IsWindowResized())
+	{
+		screenWidth  = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+	}
+        float resolution[2] = { (float)screenWidth, (float)screenHeight };
+        SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
+
         totalTime += GetFrameTime();
         Vector2 mouse = GetMousePosition();
         float mousePos[2] = { mouse.x, mouse.y };
@@ -120,7 +125,7 @@ int main(void)
                      shaderAutoReloading? "AUTO" : "MANUAL"), 10, 10, 10, shaderAutoReloading? RED : BLACK);
             if (!shaderAutoReloading) DrawText("MOUSE CLICK to SHADER RE-LOADING", 10, 30, 10, BLACK);
 
-            DrawText(TextFormat("Shader last modification: %s", asctime(localtime(&fragShaderFileModTime))), 10, 430, 10, BLACK);
+            DrawText(TextFormat("Shader last modification: %s", asctime(localtime(&fragShaderFileModTime))), 10, screenHeight - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
