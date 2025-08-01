@@ -7,6 +7,7 @@
 *    - add <example_name>
 *    - rename <old_examples_name> <new_example_name>
 *    - remove <example_name>
+*    - validate
 *
 *   Files involved in the processes:
 *    - raylib/examples/<category>/<category>_example_name.c
@@ -60,22 +61,50 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+// raylib example info struct
+typedef struct {
+    char category[16];
+    char name[64];
+    char stars;
+    float verCreated;
+    float verUpdated;
+    char author[64];
+    char authorGitHub[32];
+} rlExampleInfo;
+
 // Example management operations
 typedef enum {
-    OP_NONE     = 0,
-    OP_CREATE   = 1,
-    OP_ADD      = 2,
-    OP_RENAME   = 3,
-    OP_REMOVE   = 4
-} ExampleOperation;
+    OP_NONE     = 0,    // No process to do
+    OP_CREATE   = 1,    // Create new example, using default template
+    OP_ADD      = 2,    // Add existing examples (hopefully following template)
+    OP_RENAME   = 3,    // Rename existing example
+    OP_REMOVE   = 4,    // Remove existing example
+    OP_VALIDATE = 5,    // Validate examples, using [examples_list.txt] as main source by default
+} rlExampleOperation;
 
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
 //----------------------------------------------------------------------------------
 static int FileTextReplace(const char *fileName, const char *textLookUp, const char *textReplace);
 static int FileCopy(const char *srcPath, const char *dstPath);
-static int FileRename(const char *fileName, const char *fileRename); // TODO: Implement, make sure to deal with paths moving
-static int FileRemove(const char *fileName); // TODO: Implement
+static int FileRename(const char *fileName, const char *fileRename);
+static int FileRemove(const char *fileName);
+
+// Load examples collection information
+static rlExampleInfo *LoadExamplesData(const char *fileName, int *exCount);
+static void UnloadExamplesData(rlExampleInfo *exInfo);
+
+// Get text lines (by line-breaks '\n')
+// WARNING: It does not copy text data, just returns line pointers 
+static const char **GetTextLines(const char *text, int *count);
+
+// raylib example line info parser
+// Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
+static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry);
+
+// Sort array of strings by name
+// WARNING: items[] pointers are reorganized
+static void SortStringsByName(char **items, int count);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -87,15 +116,14 @@ int main(int argc, char *argv[])
     char *exBasePath = "C:/GitHub/raylib/examples";
     char *exWebPath = "C:/GitHub/raylib.com/examples";
     char *exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
-    
+    char *exCollectionList = "C:/GitHub/raylib/examples/examples_list.txt";
+
     char inFileName[1024] = { 0 };  // Example input filename
 
-    char exName[1024] = { 0 };      // Example name, without extension: core_basic_window
+    char exName[64] = { 0 };        // Example name, without extension: core_basic_window
     char exCategory[32] = { 0 };    // Example category: core
-    char exRename[1024] = { 0 };    // Example re-name, without extension
-    char exPath[1024] = { 0 };      // Example path -NOT USED-
-    char exFullPath[1024] = { 0 };  // Example full path -NOT USED-
-    
+    char exRename[64] = { 0 };      // Example re-name, without extension
+
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
 
     // Command-line usage mode
@@ -108,6 +136,7 @@ int main(int argc, char *argv[])
         //    add <example_name>            : Add existing example, category extracted from name
         //    rename <old_examples_name> <new_example_name> : Rename an existing example
         //    remove <example_name>         : Remove an existing example
+        //    validate                      : Validate examples collection
         if (strcmp(argv[1], "create") == 0)
         {
             // Check for valid upcoming argument
@@ -116,7 +145,7 @@ int main(int argc, char *argv[])
             else
             {
                 // TODO: Additional security checks for file name?
-                
+
                 strcpy(inFileName, argv[2]); // Register filename for creation
                 opCode = 1;
             }
@@ -131,7 +160,7 @@ int main(int argc, char *argv[])
                 if (IsFileExtension(argv[2], ".c")) // Check for valid file extension: input
                 {
                     // TODO: Parse category name from filename provided!
-                    
+
                     strcpy(inFileName, argv[2]); // Register filename for creation
                     opCode = 2;
                 }
@@ -141,17 +170,11 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[1], "rename") == 0)
         {
             if (argc == 2) LOG("WARNING: No filename provided to create\n");
-            //else if (argc == 3) LOG("WARNING: No enough arguments provided\n"); All the documentation says 3 args but I don't mind being wrong
-            else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
+            else if (argc == 3) LOG("WARNING: No enough arguments provided\n");
+            else if (argc > 4) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                strcpy(exName, argv[2]);
-                for (int index = 0; index < 32; index++)
-                {
-                    if (exName[index] == '_') break;
-                    exCategory[index] = exName[index];
-                }
-                strcpy(exRename, argv[3]);
+                // TODO: Register exName, exCategory and exRename
 
                 opCode = 3;
             }
@@ -167,8 +190,12 @@ int main(int argc, char *argv[])
                 opCode = 4;
             }
         }
+        else if (strcmp(argv[1], "validate") == 0)
+        {
+             opCode = 5;
+        }
     }
-    
+
     switch (opCode)
     {
         case 1:     // Create: New example from template
@@ -181,33 +208,33 @@ int main(int argc, char *argv[])
             if ((opCode != 1) && FileExists(inFileName))
             {
                 FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-            }                
-            
+            }
+
             // Generate all required files
             //--------------------------------------------------------------------------------
             // Create: raylib/examples/<category>/<category>_example_name.c
             // Create: raylib/examples/<category>/<category>_example_name.png
-            FileCopy("C:/GitHub/raylib/examples/examples_template.png", 
+            FileCopy("C:/GitHub/raylib/examples/examples_template.png",
                 TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // To be updated manually!
-            
+
             // Copy: raylib/examples/<category>/resources/*.*  ---> To be updated manually!
-            
+
             // TODO: Update the required files to add new example in the required position (ordered by category and name),
             // it could require some logic to make it possible...
-            
+
             // Edit: raylib/examples/Makefile --> Add new example
             // Edit: raylib/examples/Makefile.Web --> Add new example
             // Edit: raylib/examples/README.md --> Add new example
-            
+
             // Create: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example
             // Edit: raylib.com/common/examples.js --> Add new example
-            
+
             // Compile to: raylib.com/examples/<category>/<category>_example_name.html
             // Compile to: raylib.com/examples/<category>/<category>_example_name.data
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
-            
+
             // Recompile example (on raylib side)
             // NOTE: Tools requirements: emscripten, w64devkit
             system(TextFormat("%s/../build_example_web.bat %s\%s", exBasePath, exCategory, exName));
@@ -225,19 +252,19 @@ int main(int argc, char *argv[])
         case 3:     // Rename
         {
             // Rename all required files
-            rename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), 
+            rename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                 TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
-            rename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName), 
+            rename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                 TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
-            
+
             FileTextReplace(TextFormat("%s/Makefile", exBasePath), exName, exRename);
             FileTextReplace(TextFormat("%s/Makefile.Web", exBasePath), exName, exRename);
             FileTextReplace(TextFormat("%s/README.md", exBasePath), exName, exRename);
-            
-            rename(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+
+            rename(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exRename));
             FileTextReplace(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exName, exRename);
-            
+
             // Remove old web compilation
             FileTextReplace(TextFormat("%s/../common/examples.js", exWebPath), exName, exRename);
             remove(TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
@@ -264,6 +291,25 @@ int main(int argc, char *argv[])
             // TODO: Remove and update all required files...
 
         } break;
+        case 5:     // Validate
+        {
+            // TODO: Validate examples collection against [examples_list.txt]
+            
+            // Validate: raylib/examples/<category>/<category>_example_name.c
+            // Validate: raylib/examples/<category>/<category>_example_name.png
+            // Validate: raylib/examples/<category>/resources/.. -> Not possible for now...
+            // Validate: raylib/examples/Makefile
+            // Validate: raylib/examples/Makefile.Web
+            // Validate: raylib/examples/README.md
+            // Validate: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
+            // Validate: raylib/projects/VS2022/raylib.sln
+            // Validate: raylib.com/common/examples.js
+            // Validate: raylib.com/examples/<category>/<category>_example_name.html
+            // Validate: raylib.com/examples/<category>/<category>_example_name.data
+            // Validate: raylib.com/examples/<category>/<category>_example_name.wasm
+            // Validate: raylib.com/examples/<category>/<category>_example_name.js
+            
+        } break;
         default:    // Help
         {
             // Supported commands:
@@ -272,7 +318,7 @@ int main(int argc, char *argv[])
             //    add <example_name>            : Add existing example, category extracted from name
             //    rename <old_examples_name> <new_example_name> : Rename an existing example
             //    remove <example_name>         : Remove an existing example
-            
+
             printf("\n////////////////////////////////////////////////////////////////////////////////////////////\n");
             printf("//                                                                                        //\n");
             printf("// rexm [raylib examples manager] - A simple command-line tool to manage raylib examples  //\n");
@@ -299,57 +345,197 @@ int main(int argc, char *argv[])
             printf("        Renames and updates example <core_basic_window> to <core_cool_window>\n\n");
         } break;
     }
-    
+
     return 0;
 }
 
 //----------------------------------------------------------------------------------
 // Module specific functions definition
 //----------------------------------------------------------------------------------
+// Load examples collection information
+static rlExampleInfo *LoadExamplesData(const char *fileName, int *exCount)
+{
+    #define MAX_EXAMPLES_INFO   256
+    
+    *exCount = 0;
+    rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(MAX_EXAMPLES_INFO, sizeof(rlExampleInfo));
+    
+    const char *text = LoadFileText(fileName);
+    
+    if (text != NULL)
+    {
+        int lineCount = 0;
+        const char **linePtrs = GetTextLines(text, &lineCount);
+        
+        for (int i = 0; i < lineCount; i++)
+        {
+            // Basic validation for lines start categories
+            if ((linePtrs[i][0] != '#') && 
+               ((linePtrs[i][0] == 'c') ||      // core
+                (linePtrs[i][0] == 's') ||      // shapes, shaders
+                (linePtrs[i][0] == 't') ||      // textures, text
+                (linePtrs[i][0] == 'm') ||      // models
+                (linePtrs[i][0] == 'a') ||      // audio
+                (linePtrs[i][0] == 'o')))       // others
+            {
+                if (ParseExampleInfoLine(linePtrs[i], &exInfo[*exCount]) == 0) *exCount += 1;
+            }
+        }
+    }
+    
+    return exInfo;
+}
+
+// Unload examples collection data
+static void UnloadExamplesData(rlExampleInfo *exInfo)
+{
+    RL_FREE(exInfo);
+}
+
+// Replace text in an existing file
 static int FileTextReplace(const char *fileName, const char *textLookUp, const char *textReplace)
 {
     int result = 0;
     char *fileText = NULL;
     char *fileTextUpdated = { 0 };
-
-    fileText = LoadFileText(fileName);
-    fileTextUpdated = TextReplace(fileText, textLookUp, textReplace);
-    result = SaveFileText(fileName, fileTextUpdated);
-    MemFree(fileTextUpdated);
-    UnloadFileText(fileText);
     
+    if (FileExists(fileName))
+    {
+        fileText = LoadFileText(fileName);
+        fileTextUpdated = TextReplace(fileText, textLookUp, textReplace);
+        result = SaveFileText(fileName, fileTextUpdated);
+        MemFree(fileTextUpdated);
+        UnloadFileText(fileText);
+    }
+
     return result;
 }
 
+// Copy file from one path to another
+// WARNING: Destination path must exist
 static int FileCopy(const char *srcPath, const char *dstPath)
 {
     int result = 0;
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
     
+    // TODO: Create required paths if they do not exist
+
     if ((srcFileData != NULL) && (srcDataSize > 0)) result = SaveFileData(dstPath, srcFileData, srcDataSize);
 
     UnloadFileData(srcFileData);
-    
+
     return result;
 }
 
+// Rename file (if exists)
+// NOTE: Only rename file name required, not full path
 static int FileRename(const char *fileName, const char *fileRename)
 {
     int result = 0;
-    
-    // TODO: Make sure to deal with paths properly for file moving if required
-    
+
     if (FileExists(fileName)) rename(fileName, TextFormat("%s/%s", GetDirectoryPath(fileName), fileRename));
 
     return result;
 }
 
+// Remove file (if exists)
 static int FileRemove(const char *fileName)
 {
     int result = 0;
-    
+
     if (FileExists(fileName)) remove(fileName);
 
     return result;
+}
+
+// Get text lines (by line-breaks '\n')
+// WARNING: It does not copy text data, just returns line pointers 
+static const char **GetTextLines(const char *text, int *count)
+{
+    #define MAX_TEXT_LINE_PTRS   128
+
+    static const char *linePtrs[MAX_TEXT_LINE_PTRS] = { 0 };
+    for (int i = 0; i < MAX_TEXT_LINE_PTRS; i++) linePtrs[i] = NULL;    // Init NULL pointers to substrings
+
+    int textSize = (int)strlen(text);
+
+    linePtrs[0] = text;
+    int len = 0;
+    *count = 1;
+
+    for (int i = 0, k = 0; (i < textSize) && (*count < MAX_TEXT_LINE_PTRS); i++)
+    {
+        if (text[i] == '\n')
+        {
+            k++;
+            linePtrs[k] = &text[i + 1]; // WARNING: next value is valid?
+            len = 0;
+            *count += 1;
+        }
+        else len++;
+    }
+
+    return linePtrs;
+}
+
+// raylib example line info parser
+// Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
+static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
+{
+    #define MAX_EXAMPLE_INFO_LINE_LEN   512
+    
+    char temp[MAX_EXAMPLE_INFO_LINE_LEN] = { 0 };
+    strncpy(temp, line, MAX_EXAMPLE_INFO_LINE_LEN); // WARNING: Copy is needed because strtok() modifies string, adds '\0' 
+    temp[MAX_EXAMPLE_INFO_LINE_LEN - 1] = '\0'; // Ensure null termination
+    
+    int tokenCount = 0;
+    char **tokens = TextSplit(line, ';', &tokenCount);
+
+    // Get category and name
+    strncpy(entry->category, tokens[0], sizeof(entry->category));
+    strncpy(entry->name, tokens[1], sizeof(entry->name));
+
+    // Parsing stars
+    // NOTE: Counting the unicode char occurrences: ⭐️
+    const char *ptr = tokens[2];
+    while (*ptr) 
+    {
+        if (((unsigned char)ptr[0] == 0xE2) && 
+            ((unsigned char)ptr[1] == 0xAD) && 
+            ((unsigned char)ptr[2] == 0x90))
+        {
+            entry->stars++;
+            ptr += 3; // Advance past multibyte character
+        }
+        else ptr++;
+    }
+
+    // Get raylib creation/update versions
+    entry->verCreated = strtof(tokens[3], NULL);
+    entry->verUpdated = strtof(tokens[4], NULL);
+
+    // Get author and github
+    char *quote1 = strchr(tokens[5], '"');
+    char *quote2 = quote1? strchr(quote1 + 1, '"') : NULL;
+    if (quote1 && quote2) strncpy(entry->author, quote1 + 1, sizeof(entry->author));
+    strncpy(entry->authorGitHub, tokens[6], sizeof(entry->authorGitHub));
+
+    return 1;
+}
+
+// Text compare, required for qsort() function
+static int SortTextCompare(const void *a, const void *b)
+{
+    const char *str1 = *(const char **)a;
+    const char *str2 = *(const char **)b;
+    
+    return strcmp(str1, str2);
+}
+
+// Sort array of strings by name
+// WARNING: items[] pointers are reorganized
+static void SortStringsByName(char **items, int count)
+{
+    qsort(items, count, sizeof(char *), SortTextCompare);
 }
