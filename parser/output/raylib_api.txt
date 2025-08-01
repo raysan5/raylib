@@ -3728,7 +3728,7 @@ Function 432: TextJoin() (3 input parameters)
 Function 433: TextSplit() (3 input parameters)
   Name: TextSplit
   Return type: char **
-  Description: Split text into multiple strings
+  Description: Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings
   Param[1]: text (type: const char *)
   Param[2]: delimiter (type: char)
   Param[3]: count (type: int *)

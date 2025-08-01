@@ -6922,7 +6922,7 @@ return {
     },
     {
       name = "TextSplit",
-      description = "Split text into multiple strings",
+      description = "Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings",
       returnType = "char **",
       params = {
         {type = "const char *", name = "text"},
