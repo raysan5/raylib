@@ -585,7 +585,7 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
                                                                                             // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
         // KTX 2.0 defines additional header elements...
     } ktx_header;
-    
+
     Byte[12] identifier
     UInt32 vkFormat
     UInt32 typeSize
@@ -632,10 +632,10 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
     header.faces = 1;
     header.mipmap_levels = mipmaps;         // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
     header.key_value_data_size = 0;         // No extra data after the header
-    
+
     // TODO: WARNING: Function dependant on rlgl library!
     rlGetGlTextureFormats(format, &header.gl_internal_format, &header.gl_format, &header.gl_type); // rlgl module function
-    
+
     header.gl_base_internal_format = header.gl_format; // TODO: WARNING: KTX 1.1 only
 
     // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
@@ -947,7 +947,7 @@ void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsign
 {
     // KTX 1.1 uses OpenGL formats on header info but KTX 2.0 uses Vulkan texture formats,
     // if this library is being improved to support KTX 2.0, it requires those formats to be provided -> View list at the end!
-    
+
     /*
     *gl_internal_format = 0;
     *gl_format = 0;
@@ -1023,7 +1023,7 @@ void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsign
 
 /*
 // OpenGL texture data formats
-// NOTE: Those values can be useful for KTX 1.1 saving, 
+// NOTE: Those values can be useful for KTX 1.1 saving,
 // probably only the latest OpenGL ones, not the extensions ones
 // So, there is no need to include full OpenGL headers
 #define GL_UNSIGNED_BYTE                      0x1401
