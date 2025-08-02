@@ -64,12 +64,12 @@
 // raylib example info struct
 typedef struct {
     char category[16];
-    char name[64];
+    char name[128];
     char stars;
     float verCreated;
     float verUpdated;
     char author[64];
-    char authorGitHub[32];
+    char authorGitHub[64];
 } rlExampleInfo;
 
 // Example management operations
@@ -82,6 +82,10 @@ typedef enum {
     OP_VALIDATE = 5,    // Validate examples, using [examples_list.txt] as main source by default
 } rlExampleOperation;
 
+#define MAX_EXAMPLE_CATEGORIES 8
+
+static const char *exCategories[MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
+
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
 //----------------------------------------------------------------------------------
@@ -91,7 +95,9 @@ static int FileRename(const char *fileName, const char *fileRename);
 static int FileRemove(const char *fileName);
 
 // Load examples collection information
-static rlExampleInfo *LoadExamplesData(const char *fileName, int *exCount);
+// NOTE 1: Load by category: "ALL", "core", "shapes", "textures", "text", "models", "shaders", others"
+// NOTE 2: Sort examples list on request flag
+static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount);
 static void UnloadExamplesData(rlExampleInfo *exInfo);
 
 // Get text lines (by line-breaks '\n')
@@ -104,7 +110,7 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry);
 
 // Sort array of strings by name
 // WARNING: items[] pointers are reorganized
-static void SortStringsByName(char **items, int count);
+static void SortExampleByName(rlExampleInfo *items, int count);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -117,8 +123,8 @@ int main(int argc, char *argv[])
     char *exWebPath = "C:/GitHub/raylib.com/examples";
     char *exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
     char *exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
-    char *exCollectionList = "C:/GitHub/raylib/examples/examples_list.txt";
-
+    char *exCollectionListPath = "C:/GitHub/raylib/examples/examples_list.txt";
+    
     char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
     char exName[64] = { 0 };        // Example name, without extension: core_basic_window
@@ -203,12 +209,29 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Load examples collection information
+    //exInfo = LoadExamplesData(exCollectionListPath, "core", true, &exInfoCount);    
+    //for (int i = 0; i < exInfoCount; i++) printf("%i - %s [%i]\n", i + 1, exInfo[i].name, exInfo[i].stars);
+
     switch (opCode)
     {
         case 1:     // Create: New example from template
         {
             // Create: raylib/examples/<category>/<category>_example_name.c
-            FileCopy(exTemplateFilePath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            char *exText = LoadFileText(exTemplateFilePath);
+            char *exTextUpdated[6] = { 0 };
+            int exIndex = TextFindIndex(exText, "/****************");
+            
+            exTextUpdated[0] = TextReplace(exText + exIndex, "<module>", exCategory);
+            exTextUpdated[1] = TextReplace(exTextUpdated[0], "<name>", exName + strlen(exCategory) + 1);
+            //TextReplace(newExample, "<user_name>", "Ray");
+            //TextReplace(newExample, "@<user_github>", "@raysan5");
+            //TextReplace(newExample, "<year_created>", 2025);
+            //TextReplace(newExample, "<year_updated>", 2025);
+            
+            SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), exTextUpdated[1]);
+            for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
+            UnloadFileText(exText);
         }
         case 2:     // Add: Example from command-line input filename
         {
@@ -220,45 +243,163 @@ int main(int argc, char *argv[])
 
             // Copy: raylib/examples/<category>/resources/...  // WARNING: To be updated manually!
             
-            // Check if example is already listed
-            
-            // If not, add to the main examples_list
-
-            // TODO: Update the required files to add new example in the required position (ordered by category and name),
-            // it could require some logic to make it possible...
+            // Add example to the main collection list, if not already there
+            // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
+            //------------------------------------------------------------------------------------------------
+            char *exColInfo = LoadFileText(exCollectionListPath);
+            if (TextFindIndex(exColInfo, exName) == -1) // Example not found
+            {
+                char *exColInfoUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
+                
+                // Add example to the main list, by category
+                // by default add it last in the category list
+                // NOTE: When populating to other files, lists are sorted by name
+                int nextCatIndex = 0;
+                if (strcmp(exCategory, "core") == 0) nextCatIndex = 1;
+                else if (strcmp(exCategory, "shapes") == 0) nextCatIndex = 2;
+                else if (strcmp(exCategory, "textures") == 0) nextCatIndex = 3;
+                else if (strcmp(exCategory, "text") == 0) nextCatIndex = 4;
+                else if (strcmp(exCategory, "models") == 0) nextCatIndex = 5;
+                else if (strcmp(exCategory, "shaders") == 0) nextCatIndex = 6;
+                else if (strcmp(exCategory, "audio") == 0) nextCatIndex = 7;
+                else if (strcmp(exCategory, "others") == 0) nextCatIndex = -1; // Add to EOF
+                
+                if (nextCatIndex == -1)
+                {
+                    // Add example to the end of the list
+                    int endIndex = strlen(exColInfo);
+                    memcpy(exColInfoUpdated, exColInfo, endIndex);
+                    sprintf(exColInfoUpdated + endIndex, TextFormat("\n%s/%s\n", exCategory, exName));
+                }
+                else
+                {
+                    // Add example to the end of the category list
+                    // TODO: Get required example info from example file header (if provided)
+                    // NOTE: If no example info is provided (other than category/name), just using some default values
+                    int catIndex = TextFindIndex(exColInfo, exCategories[nextCatIndex]);
+                    memcpy(exColInfoUpdated, exColInfo, catIndex);
+                    int textWritenSize = sprintf(exColInfoUpdated + catIndex, TextFormat("%s;%s;⭐️☆☆☆;6.0;6.0;\"Ray\";@raysan5\n", exCategory, exName));
+                    memcpy(exColInfoUpdated + catIndex + textWritenSize, exColInfo + catIndex, strlen(exColInfo) - catIndex);
+                }
+                
+                SaveFileText(exCollectionListPath, exColInfoUpdated);
+                RL_FREE(exColInfoUpdated);
+            }
+            UnloadFileText(exColInfo);
+            //------------------------------------------------------------------------------------------------
 
             // Edit: raylib/examples/Makefile --> Add new example
+            //------------------------------------------------------------------------------------------------
             char *mkText = LoadFileText(TextFormat("%s/Makefile", exBasePath));
+            char *mkTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
+            
             int exListStartIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_START");
             int exListEndIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_END");
-            char *mkTextUpdate = (char *)RL_CALLOC(2*1024*1024, 1); // 2MB
-            memcpy(mkTextUpdate, mkText, exListStartIndex);
-            // TODO: Update required lines...
-            //SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdate);
+            
+            int mkIndex = exListStartIndex;
+            memcpy(mkTextUpdated, mkText, exListStartIndex);
+            TextAppend(mkTextUpdated + mkIndex, "#EXAMPLES_LIST_START\n", &mkIndex);
+            
+            for (int i = 0, exCount = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+            {
+                TextAppend(mkTextUpdated + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])), &mkIndex);  // Category Makefile object ("CORE = \")
+                
+                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount); 
+                
+                printf("loaded category: %s\n", exCategories[i]);
+                
+                for (int x = 0; x < exCount - 1; x++) 
+                    TextAppend(mkTextUpdated + mkIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name), &mkIndex);
+                
+                TextAppend(mkTextUpdated + mkIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name), &mkIndex);
+                
+                UnloadExamplesData(exCatList);
+            }
+            
+            printf("got1\n");
+            
+            // Add the remaining part of the original file
+            TextAppend(mkTextUpdated + mkIndex, mkText + exListEndIndex, &mkIndex);
+            
+            printf("got2\n");
+            
+            // Save updated file
+            SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdated);
             UnloadFileText(mkText);
-            RL_FREE(mkTextUpdate);
+            RL_FREE(mkTextUpdated);
+            
+            printf("got3\n");
+            //------------------------------------------------------------------------------------------------
             
             // Edit: raylib/examples/Makefile.Web --> Add new example
-
+            //------------------------------------------------------------------------------------------------
+            
+            // TODO.
+            
+            //------------------------------------------------------------------------------------------------
+            
             // Edit: raylib/examples/README.md --> Add new example
+            //------------------------------------------------------------------------------------------------
+            
             // TODO: Use [examples_list.txt] to update/regen README.md
             
+            //------------------------------------------------------------------------------------------------
+            
             // Create: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
+            //------------------------------------------------------------------------------------------------
             FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
-            FileTextReplace(, "core_basic_window", exName);
-            FileTextReplace(, "..\..\examples\core", TextFormat("..\..\examples\%s", exCategory));
+            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+                "core_basic_window", exName);
+            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+                "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exCategory));
             
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
             system(TextFormat("dotnet solution raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
+            //------------------------------------------------------------------------------------------------
             
             // Edit: raylib.com/common/examples.js --> Add new example
-            //Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
+            // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
+            //------------------------------------------------------------------------------------------------
             char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
-            int exListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
-            int exListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
+            char *jsTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
+            
+            exListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
+            exListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
+            
+            int jsIndex = exListStartIndex;
+            memcpy(jsTextUpdated, jsText, exListStartIndex);
+            TextAppend(jsTextUpdated + jsIndex, "//EXAMPLE_DATA_LIST_START\n", &jsIndex);
+            TextAppend(jsTextUpdated + jsIndex, "var exampleData = [\n", &jsIndex);
 
+            // NOTE: We avoid "others" category
+            for (int i = 0, exCount = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
+            {
+                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount); 
+                for (int x = 0; x < exCount; x++)
+                {
+                    //char stars[16] = { 0 };
+                    //for (int s = 0; s < 4; s++) strcpy(stars + 3)
+                    
+                    TextAppend(jsTextUpdated + mkIndex, 
+                        TextFormat("    exampleEntry('%s%s%s%s' , '%s'    , '%s'),\n", 
+                            "⭐️", "☆", "☆", "☆", 
+                            exCatList[x].category, 
+                            exCatList[x].name + strlen(exCatList[x].category) + 1), 
+                        &jsIndex);
+                }
+
+                UnloadExamplesData(exCatList);
+            }
+            
+            // Add the remaining part of the original file
+            TextAppend(jsTextUpdated + jsIndex, jsText + exListEndIndex, &jsIndex);
+            
+            // Save updated file
+            SaveFileText(TextFormat("%s/Makefile", exBasePath), jsTextUpdated);
             UnloadFileText(jsText);
+            RL_FREE(jsTextUpdated);
+            //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
             // NOTE: Tools requirements: emscripten, w64devkit
@@ -266,7 +407,9 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.data
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
-            system(TextFormat("%s/../build_example_web.bat %s\%s", exBasePath, exCategory, exName));
+            // TODO: WARNING: This .BAT is not portable and it does not consider RESOURCES for Web properly,
+            // Makefile.Web should be used... but it requires proper editing first!
+            system(TextFormat("%s/../build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -303,7 +446,7 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // NOTE: Tools requirements: emscripten, w64devkit
-            system(TextFormat("%s/../build_example_web.bat %s\%s", exBasePath, exCategory, exName));
+            system(TextFormat("%s/../build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -382,14 +525,14 @@ int main(int argc, char *argv[])
 // Module specific functions definition
 //----------------------------------------------------------------------------------
 // Load examples collection information
-static rlExampleInfo *LoadExamplesData(const char *fileName, int *exCount)
+static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount)
 {
     #define MAX_EXAMPLES_INFO   256
     
-    *exCount = 0;
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(MAX_EXAMPLES_INFO, sizeof(rlExampleInfo));
+    int exCounter = 0;
     
-    const char *text = LoadFileText(fileName);
+    char *text = LoadFileText(fileName);
     
     if (text != NULL)
     {
@@ -407,11 +550,33 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, int *exCount)
                 (linePtrs[i][0] == 'a') ||      // audio
                 (linePtrs[i][0] == 'o')))       // others
             {
-                if (ParseExampleInfoLine(linePtrs[i], &exInfo[*exCount]) == 0) *exCount += 1;
+                rlExampleInfo info = { 0 };
+                int result = ParseExampleInfoLine(linePtrs[i], &info);
+                if (result == 1) // Success on parsing
+                {
+                    if (strcmp(category, "ALL") == 0)
+                    {
+                        // Add all examples to the list
+                        memcpy(&exInfo[exCounter], &info, sizeof(rlExampleInfo));
+                        exCounter++;
+                    }
+                    else if (strcmp(info.category, category) == 0)
+                    {
+                        // Get only specific category examples
+                        memcpy(&exInfo[exCounter], &info, sizeof(rlExampleInfo));
+                        exCounter++;
+                    }
+                }
             }
         }
+    
+        UnloadFileText(text);
     }
     
+    // Sorting required
+    if (sort) SortExampleByName(exInfo, exCounter);
+
+    *exCount = exCounter;
     return exInfo;
 }
 
@@ -509,7 +674,7 @@ static const char **GetTextLines(const char *text, int *count)
 }
 
 // raylib example line info parser
-// Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
+// Parses following line format: core;core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray";@raysan5
 static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
 {
     #define MAX_EXAMPLE_INFO_LINE_LEN   512
@@ -522,8 +687,8 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     char **tokens = TextSplit(line, ';', &tokenCount);
 
     // Get category and name
-    strncpy(entry->category, tokens[0], sizeof(entry->category));
-    strncpy(entry->name, tokens[1], sizeof(entry->name));
+    strcpy(entry->category, tokens[0]);
+    strcpy(entry->name, tokens[1]);
 
     // Parsing stars
     // NOTE: Counting the unicode char occurrences: ⭐️
@@ -547,24 +712,24 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     // Get author and github
     char *quote1 = strchr(tokens[5], '"');
     char *quote2 = quote1? strchr(quote1 + 1, '"') : NULL;
-    if (quote1 && quote2) strncpy(entry->author, quote1 + 1, sizeof(entry->author));
-    strncpy(entry->authorGitHub, tokens[6], sizeof(entry->authorGitHub));
+    if (quote1 && quote2) strcpy(entry->author, quote1 + 1);
+    strcpy(entry->authorGitHub, tokens[6]);
 
     return 1;
 }
 
 // Text compare, required for qsort() function
-static int SortTextCompare(const void *a, const void *b)
+static int rlExampleInfoCompare(const void *a, const void *b)
 {
-    const char *str1 = *(const char **)a;
-    const char *str2 = *(const char **)b;
+    const rlExampleInfo *ex1 = (const rlExampleInfo *)a;
+    const rlExampleInfo *ex2 = (const rlExampleInfo *)b;
     
-    return strcmp(str1, str2);
+    return strcmp(ex1->name, ex2->name);
 }
 
 // Sort array of strings by name
 // WARNING: items[] pointers are reorganized
-static void SortStringsByName(char **items, int count)
+static void SortExampleByName(rlExampleInfo *items, int count)
 {
-    qsort(items, count, sizeof(char *), SortTextCompare);
+    qsort(items, count, sizeof(rlExampleInfo), rlExampleInfoCompare);
 }
