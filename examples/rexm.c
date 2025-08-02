@@ -334,8 +334,10 @@ int main(int argc, char *argv[])
             
             // Edit: raylib/examples/README.md --> Add new example
             //------------------------------------------------------------------------------------------------
-            
             // TODO: Use [examples_list.txt] to update/regen README.md
+            //Look for "| 01 | "
+            // Lines format: | 01 | [core_basic_window](core/core_basic_window.c) | <img src="core/core_basic_window.png" alt="core_basic_window" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
+
             
             //------------------------------------------------------------------------------------------------
             
