@@ -102,7 +102,8 @@ static void UnloadExamplesData(rlExampleInfo *exInfo);
 
 // Get text lines (by line-breaks '\n')
 // WARNING: It does not copy text data, just returns line pointers 
-static const char **GetTextLines(const char *text, int *count);
+static char **LoadTextLines(const char *text, int *count);
+static void UnloadTextLines(char **text);
 
 // raylib example line info parser
 // Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
@@ -356,7 +357,7 @@ int main(int argc, char *argv[])
             // Edit: raylib.com/common/examples.js --> Add new example
             // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
             //------------------------------------------------------------------------------------------------
-            
+            /*
             char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
             char *jsTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
             
@@ -395,7 +396,6 @@ int main(int argc, char *argv[])
                     {
                         jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex,
                             TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
-
                     }
                 }
 
@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
             SaveFileText(TextFormat("%s/../common/examples.js", exWebPath), jsTextUpdated);
             UnloadFileText(jsText);
             RL_FREE(jsTextUpdated);
-            
+            */
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -549,21 +549,21 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
     if (text != NULL)
     {
         int lineCount = 0;
-        const char **linePtrs = GetTextLines(text, &lineCount);
+        const char **lines = LoadTextLines(text, &lineCount);
         
         for (int i = 0; i < lineCount; i++)
         {
             // Basic validation for lines start categories
-            if ((linePtrs[i][0] != '#') && 
-               ((linePtrs[i][0] == 'c') ||      // core
-                (linePtrs[i][0] == 's') ||      // shapes, shaders
-                (linePtrs[i][0] == 't') ||      // textures, text
-                (linePtrs[i][0] == 'm') ||      // models
-                (linePtrs[i][0] == 'a') ||      // audio
-                (linePtrs[i][0] == 'o')))       // others
+            if ((lines[i][0] != '#') && 
+               ((lines[i][0] == 'c') ||      // core
+                (lines[i][0] == 's') ||      // shapes, shaders
+                (lines[i][0] == 't') ||      // textures, text
+                (lines[i][0] == 'm') ||      // models
+                (lines[i][0] == 'a') ||      // audio
+                (lines[i][0] == 'o')))       // others
             {
                 rlExampleInfo info = { 0 };
-                int result = ParseExampleInfoLine(linePtrs[i], &info);
+                int result = ParseExampleInfoLine(lines[i], &info);
                 if (result == 1) // Success on parsing
                 {
                     if (strcmp(category, "ALL") == 0)
@@ -655,34 +655,37 @@ static int FileRemove(const char *fileName)
     return result;
 }
 
-// Get text lines (by line-breaks '\n')
-// WARNING: It does not copy text data, just returns line pointers 
-static const char **GetTextLines(const char *text, int *count)
+// Load text lines
+static char **LoadTextLines(const char *text, int *count)
 {
-    #define MAX_TEXT_LINE_PTRS   512
+    #define MAX_TEXT_LINES      512
+    #define MAX_TEXT_LINE_LEN   256
 
-    static const char *linePtrs[MAX_TEXT_LINE_PTRS] = { 0 };
-    for (int i = 0; i < MAX_TEXT_LINE_PTRS; i++) linePtrs[i] = NULL;    // Init NULL pointers to substrings
-
+    char **lines = (char **)RL_CALLOC(MAX_TEXT_LINES, sizeof(char *));
+    for (int i = 0; i < MAX_TEXT_LINES; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXT_LINE_LEN, 1);
     int textSize = (int)strlen(text);
+    int k = 0;
 
-    linePtrs[0] = text;
-    int len = 0;
-    *count = 1;
-
-    for (int i = 0, k = 0; (i < textSize) && (*count < MAX_TEXT_LINE_PTRS); i++)
+    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXT_LINES); i++)
     {
         if (text[i] == '\n')
         {
-            k++;
-            linePtrs[k] = &text[i + 1]; // WARNING: next value is valid?
+            strncpy(lines[k], &text[i - len], len);
             len = 0;
-            *count += 1;
+            k++;
         }
         else len++;
     }
 
-    return linePtrs;
+    *count += k;
+    return lines;
+}
+
+// Unload text lines
+static void UnloadTextLines(char **lines)
+{
+    for (int i = 0; i < MAX_TEXT_LINES; i++) RL_FREE(lines[i]);
+    RL_FREE(lines);
 }
 
 // raylib example line info parser
@@ -692,7 +695,7 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     #define MAX_EXAMPLE_INFO_LINE_LEN   512
     
     char temp[MAX_EXAMPLE_INFO_LINE_LEN] = { 0 };
-    strncpy(temp, line, MAX_EXAMPLE_INFO_LINE_LEN); // WARNING: Copy is needed because strtok() modifies string, adds '\0' 
+    strncpy(temp, line, MAX_EXAMPLE_INFO_LINE_LEN);
     temp[MAX_EXAMPLE_INFO_LINE_LEN - 1] = '\0'; // Ensure null termination
     
     int tokenCount = 0;
@@ -721,10 +724,10 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     entry->verCreated = strtof(tokens[3], NULL);
     entry->verUpdated = strtof(tokens[4], NULL);
 
-    // Get author and github
-    char *quote1 = strchr(tokens[5], '"');
-    char *quote2 = quote1? strchr(quote1 + 1, '"') : NULL;
-    if (quote1 && quote2) strcpy(entry->author, quote1 + 1);
+    // Get author and github   
+    if (tokens[5][0] == '"') tokens[5] += 1;
+    if (tokens[5][strlen(tokens[5]) - 1] == '"') tokens[5][strlen(tokens[5]) - 1] = '\0';
+    strcpy(entry->author, tokens[5]);
     strcpy(entry->authorGitHub, tokens[6]);
 
     return 1;
