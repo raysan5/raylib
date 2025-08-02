@@ -1,10 +1,10 @@
 ::@echo off
 :: .
-:: Compile your examples for web using:  build_example_web.bat <example_category>\<example_name>
+:: Compile your examples for web using:  build_example_web.bat <example_category>/<example_name>
 :: .
 set "INPUT_FILE=%1"
 :: Change delimiter for the FOR loop
-for /f "tokens=1-10 delims=\" %%a in ("%INPUT_FILE%") do (
+for /f "tokens=1-10 delims=/" %%a in ("%INPUT_FILE%") do (
     set CATEGORY=%%a
     set FILENAME=%%b
 )
