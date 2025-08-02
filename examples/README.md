@@ -20,7 +20,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 
 ### category: core
 
-Examples using raylib core platform functionality like window creation, inputs, drawing modes and system functionality.
+Examples using raylib [core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
@@ -63,7 +63,7 @@ Examples using raylib core platform functionality like window creation, inputs, 
 
 ### category: shapes
 
-Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/shapes.c) module.
+Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
@@ -87,9 +87,10 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | 53 | [shapes_splines_drawing](shapes/shapes_splines_drawing.c) | <img src="shapes/shapes_splines_drawing.png" alt="shapes_splines_drawing" width="80"> | ⭐️⭐️⭐️☆ | 5.0 | 5.0 | [Ray](https://github.com/raysan5) |
 | 54 | [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐️⭐️☆☆ | 5.5 | 5.5 | [Hamza RAHAL](https://github.com/rhmz-rhl) |
 | 55 | [shapes_double_pendulum](shapes/shapes_double_pendulum.c) | <img src="shapes/shapes_double_pendulum.png" alt="shapes_double_pendulum" width="80"> | ⭐️⭐️☆☆ | 5.5 | 5.5 | [JoeCheong](https://github.com/Joecheong2006) |
+
 ### category: textures
 
-Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/textures.c) modul
+Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
@@ -122,7 +123,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 
 ### category: text
 
-Examples using raylib text functionality, including sprite fonts loading/generation and text drawing, provided by raylib [text](../src/text.c) module.
+Examples using raylib text functionality, including sprite fonts loading/generation and text drawing, provided by raylib [text](../src/rtext.c) module.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
@@ -141,7 +142,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 
 ### category: models
 
-Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/models.c) module.
+Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
@@ -206,7 +207,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 
 ### category: audio
 
-Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib, check [raudio_standalone](others/raudio_standalone.c) example.
+Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
