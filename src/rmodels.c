@@ -4501,8 +4501,6 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_shapes_free(objShapes, objShapeCount);
     tinyobj_materials_free(objMaterials, objMaterialCount);
 
-    for (int i = 0; i < model.meshCount; i++) UploadMesh(model.meshes + i, true);
-
     // Restore current working directory
     if (CHDIR(currentDir) != 0)
     {
