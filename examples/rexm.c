@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
                 if (nextCatIndex == -1)
                 {
                     // Add example to the end of the list
-                    int endIndex = strlen(exColInfo);
+                    int endIndex = (int)strlen(exColInfo);
                     memcpy(exColInfoUpdated, exColInfo, endIndex);
                     sprintf(exColInfoUpdated + endIndex, TextFormat("\n%s/%s\n", exCategory, exName));
                 }
@@ -296,28 +296,25 @@ int main(int argc, char *argv[])
             int exListStartIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_START");
             int exListEndIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_END");
             
-            int mkIndex = exListStartIndex;
+            int mkIndex = 0;
             memcpy(mkTextUpdated, mkText, exListStartIndex);
-            TextAppend(mkTextUpdated + mkIndex, "#EXAMPLES_LIST_START\n", &mkIndex);
-            
-            for (int i = 0, exCount = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+            mkIndex = sprintf(mkTextUpdated + exListStartIndex, "#EXAMPLES_LIST_START\n");
+
+            for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
             {
-                TextAppend(mkTextUpdated + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])), &mkIndex);  // Category Makefile object ("CORE = \")
+                mkIndex += sprintf(mkTextUpdated + exListStartIndex + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
+
+                int exCount = 0;
+                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
                 
-                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount); 
-                
-                printf("loaded category: %s\n", exCategories[i]);
-                
-                for (int x = 0; x < exCount - 1; x++) 
-                    TextAppend(mkTextUpdated + mkIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name), &mkIndex);
-                
-                TextAppend(mkTextUpdated + mkIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name), &mkIndex);
+                for (int x = 0; x < exCount - 1; x++) mkIndex += sprintf(mkTextUpdated + exListStartIndex + mkIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name));
+                mkIndex += sprintf(mkTextUpdated + exListStartIndex + mkIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name));
                 
                 UnloadExamplesData(exCatList);
             }
 
             // Add the remaining part of the original file
-            TextAppend(mkTextUpdated + mkIndex, mkText + exListEndIndex, &mkIndex);
+            memcpy(mkTextUpdated + exListStartIndex + mkIndex, mkText + exListEndIndex, strlen(mkText) - exListEndIndex);
 
             // Save updated file
             SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdated);
@@ -351,12 +348,13 @@ int main(int argc, char *argv[])
                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exCategory));
             
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
-            system(TextFormat("dotnet solution raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
+            system(TextFormat("dotnet solution %s/../projects/VS2022/raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exBasePath, exName));
             //------------------------------------------------------------------------------------------------
             
             // Edit: raylib.com/common/examples.js --> Add new example
             // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
             //------------------------------------------------------------------------------------------------
+            /*
             char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
             char *jsTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
             
@@ -377,7 +375,7 @@ int main(int argc, char *argv[])
                     //char stars[16] = { 0 };
                     //for (int s = 0; s < 4; s++) strcpy(stars + 3)
                     
-                    TextAppend(jsTextUpdated + mkIndex, 
+                    TextAppend(jsTextUpdated + jsIndex, 
                         TextFormat("    exampleEntry('%s%s%s%s' , '%s'    , '%s'),\n", 
                             "⭐️", "☆", "☆", "☆", 
                             exCatList[x].category, 
@@ -392,9 +390,10 @@ int main(int argc, char *argv[])
             TextAppend(jsTextUpdated + jsIndex, jsText + exListEndIndex, &jsIndex);
             
             // Save updated file
-            SaveFileText(TextFormat("%s/Makefile", exBasePath), jsTextUpdated);
+            SaveFileText(TextFormat("%s/../common/examples.js", exWebPath), jsTextUpdated);
             UnloadFileText(jsText);
             RL_FREE(jsTextUpdated);
+            */
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -405,7 +404,7 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
             // TODO: WARNING: This .BAT is not portable and it does not consider RESOURCES for Web properly,
             // Makefile.Web should be used... but it requires proper editing first!
-            system(TextFormat("%s/../build_example_web.bat %s/%s", exBasePath, exCategory, exName));
+            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -527,6 +526,7 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
     
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(MAX_EXAMPLES_INFO, sizeof(rlExampleInfo));
     int exCounter = 0;
+    *exCount = 0;
     
     char *text = LoadFileText(fileName);
     
@@ -643,7 +643,7 @@ static int FileRemove(const char *fileName)
 // WARNING: It does not copy text data, just returns line pointers 
 static const char **GetTextLines(const char *text, int *count)
 {
-    #define MAX_TEXT_LINE_PTRS   128
+    #define MAX_TEXT_LINE_PTRS   512
 
     static const char *linePtrs[MAX_TEXT_LINE_PTRS] = { 0 };
     for (int i = 0; i < MAX_TEXT_LINE_PTRS; i++) linePtrs[i] = NULL;    // Init NULL pointers to substrings
