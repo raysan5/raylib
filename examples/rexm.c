@@ -290,6 +290,7 @@ int main(int argc, char *argv[])
 
             // Edit: raylib/examples/Makefile --> Add new example
             //------------------------------------------------------------------------------------------------
+            /*
             char *mkText = LoadFileText(TextFormat("%s/Makefile", exBasePath));
             char *mkTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
             
@@ -320,6 +321,7 @@ int main(int argc, char *argv[])
             SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdated);
             UnloadFileText(mkText);
             RL_FREE(mkTextUpdated);
+            */
             //------------------------------------------------------------------------------------------------
             
             // Edit: raylib/examples/Makefile.Web --> Add new example
@@ -354,46 +356,60 @@ int main(int argc, char *argv[])
             // Edit: raylib.com/common/examples.js --> Add new example
             // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
             //------------------------------------------------------------------------------------------------
-            /*
+            
             char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
             char *jsTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
             
-            exListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
-            exListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
+            int exListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
+            int exListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
             
-            int jsIndex = exListStartIndex;
+            int mkIndex = 0;
             memcpy(jsTextUpdated, jsText, exListStartIndex);
-            TextAppend(jsTextUpdated + jsIndex, "//EXAMPLE_DATA_LIST_START\n", &jsIndex);
-            TextAppend(jsTextUpdated + jsIndex, "var exampleData = [\n", &jsIndex);
+            mkIndex = sprintf(jsTextUpdated + exListStartIndex, "#EXAMPLES_LIST_START\n");
+            
+            int jsIndex = 0;
+            memcpy(jsTextUpdated, jsText, exListStartIndex);
+            jsIndex = sprintf(jsTextUpdated + exListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
+            jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex, "    var exampleData = [\n");
 
             // NOTE: We avoid "others" category
             for (int i = 0, exCount = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
             {
-                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount); 
+                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], false, &exCount); 
                 for (int x = 0; x < exCount; x++)
                 {
-                    //char stars[16] = { 0 };
-                    //for (int s = 0; s < 4; s++) strcpy(stars + 3)
-                    
-                    TextAppend(jsTextUpdated + jsIndex, 
-                        TextFormat("    exampleEntry('%s%s%s%s' , '%s'    , '%s'),\n", 
-                            "⭐️", "☆", "☆", "☆", 
-                            exCatList[x].category, 
-                            exCatList[x].name + strlen(exCatList[x].category) + 1), 
-                        &jsIndex);
+                    char stars[16] = { 0 };
+                    for (int s = 0; s < 4; s++)
+                    {
+                        if (s < exCatList[x].stars) strcpy(stars + 3*s, "⭐️");
+                        else strcpy(stars + 3*s, "☆");
+                    }
+
+                    if ((i == 6) && (x == (exCount - 1)))
+                    {
+                        // Last line to add, special case to consider
+                        jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex,
+                            TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
+                    }
+                    else
+                    {
+                        jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex,
+                            TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
+
+                    }
                 }
 
                 UnloadExamplesData(exCatList);
             }
             
             // Add the remaining part of the original file
-            TextAppend(jsTextUpdated + jsIndex, jsText + exListEndIndex, &jsIndex);
+            memcpy(jsTextUpdated + exListStartIndex + jsIndex, jsText + exListEndIndex, strlen(jsText) - exListEndIndex);
             
             // Save updated file
             SaveFileText(TextFormat("%s/../common/examples.js", exWebPath), jsTextUpdated);
             UnloadFileText(jsText);
             RL_FREE(jsTextUpdated);
-            */
+            
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
