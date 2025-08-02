@@ -14,6 +14,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "raymath.h"
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"     // Required for UI controls
@@ -21,6 +22,7 @@
 #include <stdlib.h>     // Required for: NULL
 
 #define MAX_SPLINE_POINTS      32
+#define SPLINE_THICK_COUNT      4
 
 // Cubic Bezier spline control points
 // NOTE: Every segment has two control points
@@ -60,6 +62,13 @@ int main(void)
         { 710.0f, 260.0f },
     };
 
+    float thicks[SPLINE_THICK_COUNT] = {
+        0.0f,
+        8.0f,
+        8.0f,
+        0.0f,
+    };
+
     // Array required for spline bezier-cubic,
     // including control points interleaved with start-end segment points
     Vector2 pointsInterleaved[3*(MAX_SPLINE_POINTS - 1) + 1] = { 0 };
@@ -71,7 +80,7 @@ int main(void)
     Vector2 *focusedControlPoint = NULL;
 
     // Cubic Bezier control points initialization
-    ControlPoint control[MAX_SPLINE_POINTS-1] = { 0 };
+    ControlPoint control[MAX_SPLINE_POINTS - 1] = { 0 };
     for (int i = 0; i < pointCount - 1; i++)
     {
         control[i].start = (Vector2){ points[i].x + 50, points[i].y };
@@ -230,28 +239,14 @@ int main(void)
             }
             else if (splineTypeActive == SPLINE_LINEAR_VAR)
             {
-                float thicks[] = {
-                    0.0f,
-                    splineThickness,
-                    -splineThickness,
-                    splineThickness,
-                };
-
                 // Draw spline: variable-width linear
                 for (int i = 0; i < pointCount - 1; ++i)
                 {
-                    DrawSplineSegmentLinearVar(points[i], points[i+1], thicks, 4, RED);
+                    DrawSplineSegmentLinearVar(points[i], points[i + 1], thicks, SPLINE_THICK_COUNT, RED);
                 }
             }
             else if (splineTypeActive == SPLINE_BEZIER_VAR)
             {
-                float thicks[] = {
-                    0.0f,
-                    splineThickness,
-                    splineThickness,
-                    0.0f,
-                };
-
                 // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be
                 // provided interleaved with the start and end point of every segment
                 for (int i = 0; i < (pointCount - 1); i++)
@@ -266,7 +261,7 @@ int main(void)
                 // Draw spline: variable-width cubic-bezier (with control points)
                 for (int i = 0; i < pointCount - 1; ++i)
                 {
-                    DrawSplineSegmentBezierCubicVar(points[i], control[i].start, control[i].end, points[i+1], thicks, 4, RED);
+                    DrawSplineSegmentBezierCubicVar(points[i], control[i].start, control[i].end, points[i + 1], thicks, SPLINE_THICK_COUNT, RED);
                 }
             }
 
@@ -304,16 +299,59 @@ int main(void)
 
                     DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), (int)points[i].x, (int)points[i].y + 10, 10, BLACK);
                 }
+
+                if (splineTypeActive == SPLINE_LINEAR_VAR)
+                {
+                    Vector2 thickAnchors[SPLINE_THICK_COUNT] = { 0 };
+                    Vector2 thickPoints[SPLINE_THICK_COUNT] = { 0 };
+
+                    // Draw spline thickness helpers
+                    for (int i = 0; i < pointCount - 1; i++)
+                    {
+                        Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
+                        Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+
+                        for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                        {
+                            Vector2 point = GetSplinePointLinear(points[i], points[i + 1], j/3.0f);
+                            thickAnchors[j] = point;
+                            thickPoints[j] = Vector2Add(point, Vector2Scale(perpendicular, thicks[j]));
+                        }
+
+                        DrawLineV(thickPoints[0], thickPoints[1], GRAY);
+                        DrawLineV(thickPoints[3], thickPoints[2], GRAY);
+
+                        for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                        {
+                            DrawCircleLinesV(thickPoints[j], 4.0f, PURPLE);
+                            DrawLineV(Vector2Add(thickAnchors[j], Vector2Scale(perpendicular, 4.0f)), Vector2Subtract(thickAnchors[j], Vector2Scale(perpendicular, 4.0f)), GRAY);
+                        }
+
+                        DrawLineV(points[i], points[i + 1], BROWN);
+                        DrawSplineBezierCubic(thickPoints, SPLINE_THICK_COUNT, 1.0f, ORANGE);
+                    }
+                }
             }
 
             // Check all possible UI states that require controls lock
             if (splineTypeEditMode || (selectedPoint != -1) || (selectedControlPoint != NULL)) GuiLock();
 
             // Draw spline config
-            GuiLabel((Rectangle){ 12, 62, 140, 24 }, TextFormat("Spline thickness: %i", (int)splineThickness));
-            GuiSliderBar((Rectangle){ 12, 60 + 24, 140, 16 }, NULL, NULL, &splineThickness, 1.0f, 40.0f);
+            if ((splineTypeActive == SPLINE_LINEAR_VAR) || (splineTypeActive == SPLINE_BEZIER_VAR))
+            {
+                GuiLabel((Rectangle){ 12, 68 + 24, 200, 24 }, TextFormat("Spline thickness: %i, %i, %i, %i", (int)thicks[0], (int)thicks[1], (int)thicks[2], (int)thicks[3]));
+                GuiSlider((Rectangle){ 12, 68 + 24 + 30, 140, 16 }, NULL, NULL, &thicks[0], -40.0, 40.0f);
+                GuiSlider((Rectangle){ 12, 68 + 24 + 50, 140, 16 }, NULL, NULL, &thicks[1], -40.0, 40.0f);
+                GuiSlider((Rectangle){ 12, 68 + 24 + 70, 140, 16 }, NULL, NULL, &thicks[2], -40.0, 40.0f);
+                GuiSlider((Rectangle){ 12, 68 + 24 + 90, 140, 16 }, NULL, NULL, &thicks[3], -40.0, 40.0f);
+            }
+            else
+            {
+                GuiLabel((Rectangle){ 12, 68 + 24, 140, 24 }, TextFormat("Spline thickness: %i", (int)splineThickness));
+                GuiSliderBar((Rectangle){ 12, 68 + 48, 140, 16 }, NULL, NULL, &splineThickness, 1.0f, 40.0f);
+            }
 
-            GuiCheckBox((Rectangle){ 12, 110, 20, 20 }, "Show point helpers", &splineHelpersActive);
+            GuiCheckBox((Rectangle){ 12, 68, 20, 20 }, "Show point helpers", &splineHelpersActive);
 
             if (splineTypeEditMode) GuiUnlock();
 
