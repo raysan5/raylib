@@ -6942,7 +6942,7 @@ return {
     },
     {
       name = "TextFindIndex",
-      description = "Find first text occurrence within a string",
+      description = "Find first text occurrence within a string, -1 if not found",
       returnType = "int",
       params = {
         {type = "const char *", name = "text"},

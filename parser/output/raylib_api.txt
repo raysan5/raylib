@@ -3742,7 +3742,7 @@ Function 434: TextAppend() (3 input parameters)
 Function 435: TextFindIndex() (2 input parameters)
   Name: TextFindIndex
   Return type: int
-  Description: Find first text occurrence within a string
+  Description: Find first text occurrence within a string, -1 if not found
   Param[1]: text (type: const char *)
   Param[2]: find (type: const char *)
 Function 436: TextToUpper() (1 input parameters)
