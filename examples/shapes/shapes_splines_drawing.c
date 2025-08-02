@@ -23,7 +23,7 @@
 #define MAX_SPLINE_POINTS      32
 
 // Cubic Bezier spline control points
-// NOTE: Every segment has two control points 
+// NOTE: Every segment has two control points
 typedef struct {
     Vector2 start;
     Vector2 end;
@@ -59,17 +59,17 @@ int main(void)
         { 520.0f, 60.0f },
         { 710.0f, 260.0f },
     };
-    
-    // Array required for spline bezier-cubic, 
+
+    // Array required for spline bezier-cubic,
     // including control points interleaved with start-end segment points
     Vector2 pointsInterleaved[3*(MAX_SPLINE_POINTS - 1) + 1] = { 0 };
-    
+
     int pointCount = 5;
     int selectedPoint = -1;
     int focusedPoint = -1;
     Vector2 *selectedControlPoint = NULL;
     Vector2 *focusedControlPoint = NULL;
-    
+
     // Cubic Bezier control points initialization
     ControlPoint control[MAX_SPLINE_POINTS-1] = { 0 };
     for (int i = 0; i < pointCount - 1; i++)
@@ -81,9 +81,9 @@ int main(void)
     // Spline config variables
     float splineThickness = 8.0f;
     int splineTypeActive = SPLINE_LINEAR; // 0-Linear, 1-BSpline, 2-CatmullRom, 3-Bezier, 4-LinearVar, 5-BezierVar
-    bool splineTypeEditMode = false; 
+    bool splineTypeEditMode = false;
     bool splineHelpersActive = true;
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -116,14 +116,14 @@ int main(void)
             }
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedPoint = focusedPoint;
         }
-        
+
         // Spline point movement logic
         if (selectedPoint >= 0)
         {
             points[selectedPoint] = GetMousePosition();
             if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedPoint = -1;
         }
-        
+
         // Cubic Bezier spline control points logic
         if (((splineTypeActive == SPLINE_BEZIER) || (splineTypeActive == SPLINE_BEZIER_VAR)) && (focusedPoint == -1))
         {
@@ -146,7 +146,7 @@ int main(void)
                 }
                 if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedControlPoint = focusedControlPoint;
             }
-            
+
             // Spline control point movement logic
             if (selectedControlPoint != NULL)
             {
@@ -154,14 +154,14 @@ int main(void)
                 if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedControlPoint = NULL;
             }
         }
-        
+
         // Spline selection logic
-        if (IsKeyPressed(KEY_ONE)) splineTypeActive = 0;
-        else if (IsKeyPressed(KEY_TWO)) splineTypeActive = 1;
-        else if (IsKeyPressed(KEY_THREE)) splineTypeActive = 2;
-        else if (IsKeyPressed(KEY_FOUR)) splineTypeActive = 3;
-        else if (IsKeyPressed(KEY_FIVE)) splineTypeActive = 4;
-        else if (IsKeyPressed(KEY_SIX)) splineTypeActive = 5;
+        if (IsKeyPressed(KEY_ONE)) splineTypeActive = SPLINE_LINEAR;
+        else if (IsKeyPressed(KEY_TWO)) splineTypeActive = SPLINE_BASIS;
+        else if (IsKeyPressed(KEY_THREE)) splineTypeActive = SPLINE_CATMULLROM;
+        else if (IsKeyPressed(KEY_FOUR)) splineTypeActive = SPLINE_BEZIER;
+        else if (IsKeyPressed(KEY_FIVE)) splineTypeActive = SPLINE_LINEAR_VAR;
+        else if (IsKeyPressed(KEY_SIX)) splineTypeActive = SPLINE_BEZIER_VAR;
 
         // Clear selection when changing to a spline without control points
         if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_THREE)) selectedControlPoint = NULL;
@@ -172,7 +172,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-        
+
             if (splineTypeActive == SPLINE_LINEAR)
             {
                 // Draw spline: linear
@@ -195,7 +195,7 @@ int main(void)
             {
                 // Draw spline: catmull-rom
                 DrawSplineCatmullRom(points, pointCount, splineThickness, RED); // Provide connected points array
-                
+
                 /*
                 for (int i = 0; i < (pointCount - 3); i++)
                 {
@@ -206,20 +206,20 @@ int main(void)
             }
             else if (splineTypeActive == SPLINE_BEZIER)
             {
-                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be 
+                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be
                 // provided interleaved with the start and end point of every segment
-                for (int i = 0; i < (pointCount - 1); i++) 
+                for (int i = 0; i < (pointCount - 1); i++)
                 {
                     pointsInterleaved[3*i] = points[i];
                     pointsInterleaved[3*i + 1] = control[i].start;
                     pointsInterleaved[3*i + 2] = control[i].end;
                 }
-                
+
                 pointsInterleaved[3*(pointCount - 1)] = points[pointCount - 1];
 
                 // Draw spline: cubic-bezier (with control points)
                 DrawSplineBezierCubic(pointsInterleaved, 3*(pointCount - 1) + 1, splineThickness, RED);
-                
+
                 /*
                 for (int i = 0; i < 3*(pointCount - 1); i += 3)
                 {
@@ -252,15 +252,15 @@ int main(void)
                     0.0f,
                 };
 
-                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be 
+                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be
                 // provided interleaved with the start and end point of every segment
-                for (int i = 0; i < (pointCount - 1); i++) 
+                for (int i = 0; i < (pointCount - 1); i++)
                 {
                     pointsInterleaved[3*i] = points[i];
                     pointsInterleaved[3*i + 1] = control[i].start;
                     pointsInterleaved[3*i + 2] = control[i].end;
                 }
-                
+
                 pointsInterleaved[3*(pointCount - 1)] = points[pointCount - 1];
 
                 // Draw spline: variable-width cubic-bezier (with control points)
@@ -282,7 +282,7 @@ int main(void)
                     else if (focusedControlPoint == &control[i].end) DrawCircleV(control[i].end, 8, GREEN);
                     DrawLineEx(points[i], control[i].start, 1.0f, LIGHTGRAY);
                     DrawLineEx(points[i + 1], control[i].end, 1.0f, LIGHTGRAY);
-                
+
                     // Draw spline control lines
                     DrawLineV(points[i], control[i].start, GRAY);
                     //DrawLineV(control[i].start, control[i].end, LIGHTGRAY);
@@ -308,7 +308,7 @@ int main(void)
 
             // Check all possible UI states that require controls lock
             if (splineTypeEditMode || (selectedPoint != -1) || (selectedControlPoint != NULL)) GuiLock();
-            
+
             // Draw spline config
             GuiLabel((Rectangle){ 12, 62, 140, 24 }, TextFormat("Spline thickness: %i", (int)splineThickness));
             GuiSliderBar((Rectangle){ 12, 60 + 24, 140, 16 }, NULL, NULL, &splineThickness, 1.0f, 40.0f);
