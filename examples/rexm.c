@@ -315,20 +315,14 @@ int main(int argc, char *argv[])
                 
                 UnloadExamplesData(exCatList);
             }
-            
-            printf("got1\n");
-            
+
             // Add the remaining part of the original file
             TextAppend(mkTextUpdated + mkIndex, mkText + exListEndIndex, &mkIndex);
-            
-            printf("got2\n");
-            
+
             // Save updated file
             SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdated);
             UnloadFileText(mkText);
             RL_FREE(mkTextUpdated);
-            
-            printf("got3\n");
             //------------------------------------------------------------------------------------------------
             
             // Edit: raylib/examples/Makefile.Web --> Add new example
