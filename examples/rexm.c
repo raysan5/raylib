@@ -334,11 +334,96 @@ int main(int argc, char *argv[])
             
             // Edit: raylib/examples/README.md --> Add new example
             //------------------------------------------------------------------------------------------------
-            // TODO: Use [examples_list.txt] to update/regen README.md
-            //Look for "| 01 | "
+            // NOTE: Using [examples_list.txt] to update/regen README.md
             // Lines format: | 01 | [core_basic_window](core/core_basic_window.c) | <img src="core/core_basic_window.png" alt="core_basic_window" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
-
+            char *mdText = LoadFileText(TextFormat("%s/README.md", exBasePath));
+            char *mdTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
             
+            int mdListStartIndex = TextFindIndex(mdText, "| 01 | ");
+            
+            int mdIndex = 0;
+            memcpy(mdTextUpdated, mdText, mdListStartIndex);
+
+            // NOTE: We keep a global examples counter
+            for (int i = 0, catCount = 0, gCount = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+            {
+                // Every category includes some introductory text, as it is quite short, just copying it here
+                // NOTE: "core" text already placed in the file
+                if (i == 1)         // "shapes"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: shapes\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.\n\n");
+                }
+                else if (i == 2)    // "textures"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: textures\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.\n\n");
+                }
+                else if (i == 3)    // "text"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: text\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples using raylib text functionality, including sprite fonts loading/generation and text drawing, provided by raylib [text](../src/rtext.c) module.\n\n");
+                }
+                else if (i == 4)    // "models"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: models\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.\n\n");
+                }
+                else if (i == 5)    // "shaders"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: shaders\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.\n\n");
+                }
+                else if (i == 6)    // "audio"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: audio\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.\n\n");
+                }
+                else if (i == 7)    // "others"
+                {
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: others\n\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        "Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.\n\n");
+                }
+
+                if (i > 0)
+                {
+                    // Table header required
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "| ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|\n");
+                }
+
+                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], false, &catCount); 
+                for (int x = 0; x < catCount; x++)
+                {
+                    char stars[16] = { 0 };
+                    for (int s = 0; s < 4; s++)
+                    {
+                        if (s < exCatList[x].stars) strcpy(stars + 3*s, "⭐️");
+                        else strcpy(stars + 3*s, "☆");
+                    }
+
+                    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                        TextFormat("| %02i | [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %.1f | %.1f | [%s](https://github.com/%s) |\n", 
+                            gCount + 1, exCatList[x].name, exCatList[x].category, exCatList[x].name, exCatList[x].category, exCatList[x].name, exCatList[x].name,
+                            stars, exCatList[x].verCreated, exCatList[x].verUpdated, exCatList[x].author, exCatList[x].authorGitHub + 1));
+                    
+                    gCount++;
+                }
+
+                UnloadExamplesData(exCatList);
+            }
+
+            // Save updated file
+            SaveFileText(TextFormat("%s/README.md", exBasePath), mdTextUpdated);
+            UnloadFileText(mdText);
+            RL_FREE(mdTextUpdated);
             //------------------------------------------------------------------------------------------------
             
             // Create: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
