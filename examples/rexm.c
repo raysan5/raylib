@@ -111,14 +111,15 @@ static void SortStringsByName(char **items, int count);
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    // Examples path for building
+    // Paths required for examples management
     // TODO: Avoid hardcoding path values...
     char *exBasePath = "C:/GitHub/raylib/examples";
     char *exWebPath = "C:/GitHub/raylib.com/examples";
     char *exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
+    char *exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
     char *exCollectionList = "C:/GitHub/raylib/examples/examples_list.txt";
 
-    char inFileName[1024] = { 0 };  // Example input filename
+    char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
     char exName[64] = { 0 };        // Example name, without extension: core_basic_window
     char exCategory[32] = { 0 };    // Example category: core
@@ -146,7 +147,8 @@ int main(int argc, char *argv[])
             {
                 // TODO: Additional security checks for file name?
 
-                strcpy(inFileName, argv[2]); // Register filename for creation
+                strcpy(exName, argv[2]); // Register filename for new example creation
+                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                 opCode = 1;
             }
         }
@@ -159,23 +161,28 @@ int main(int argc, char *argv[])
             {
                 if (IsFileExtension(argv[2], ".c")) // Check for valid file extension: input
                 {
-                    // TODO: Parse category name from filename provided!
-
-                    strcpy(inFileName, argv[2]); // Register filename for creation
-                    opCode = 2;
+                    if (FileExists(inFileName))
+                    {
+                        strcpy(inFileName, argv[2]); // Register filename for addition
+                        strcpy(exName, GetFileNameWithoutExt(argv[2])); // Register example name
+                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                        opCode = 2;
+                    }
+                    else LOG("WARNING: Input file not found, include path\n");
                 }
                 else LOG("WARNING: Input file extension not recognized (.c)\n");
             }
         }
         else if (strcmp(argv[1], "rename") == 0)
         {
-            if (argc == 2) LOG("WARNING: No filename provided to create\n");
-            else if (argc == 3) LOG("WARNING: No enough arguments provided\n");
+            if (argc == 2) LOG("WARNING: No filename provided to be renamed\n");
             else if (argc > 4) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                // TODO: Register exName, exCategory and exRename
-
+                strcpy(exName, argv[2]); // Register example name
+                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                strcpy(exRename, argv[3]);
+                // TODO: Consider rename with change of category
                 opCode = 3;
             }
         }
@@ -186,13 +193,13 @@ int main(int argc, char *argv[])
             else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                strcpy(inFileName, argv[2]); // Register filename for removal
+                strcpy(exName, argv[2]); // Register filename for removal
                 opCode = 4;
             }
         }
         else if (strcmp(argv[1], "validate") == 0)
         {
-             opCode = 5;
+            opCode = 5;
         }
     }
 
@@ -200,43 +207,65 @@ int main(int argc, char *argv[])
     {
         case 1:     // Create: New example from template
         {
-            // Copy template file as new example
+            // Create: raylib/examples/<category>/<category>_example_name.c
             FileCopy(exTemplateFilePath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
         }
         case 2:     // Add: Example from command-line input filename
         {
-            if ((opCode != 1) && FileExists(inFileName))
-            {
-                FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-            }
-
-            // Generate all required files
-            //--------------------------------------------------------------------------------
             // Create: raylib/examples/<category>/<category>_example_name.c
-            // Create: raylib/examples/<category>/<category>_example_name.png
-            FileCopy("C:/GitHub/raylib/examples/examples_template.png",
-                TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // To be updated manually!
+            if (opCode != 1) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
-            // Copy: raylib/examples/<category>/resources/*.*  ---> To be updated manually!
+            // Create: raylib/examples/<category>/<category>_example_name.png
+            FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
+
+            // Copy: raylib/examples/<category>/resources/...  // WARNING: To be updated manually!
+            
+            // Check if example is already listed
+            
+            // If not, add to the main examples_list
 
             // TODO: Update the required files to add new example in the required position (ordered by category and name),
             // it could require some logic to make it possible...
 
             // Edit: raylib/examples/Makefile --> Add new example
+            char *mkText = LoadFileText(TextFormat("%s/Makefile", exBasePath));
+            int exListStartIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_START");
+            int exListEndIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_END");
+            char *mkTextUpdate = (char *)RL_CALLOC(2*1024*1024, 1); // 2MB
+            memcpy(mkTextUpdate, mkText, exListStartIndex);
+            // TODO: Update required lines...
+            //SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdate);
+            UnloadFileText(mkText);
+            RL_FREE(mkTextUpdate);
+            
             // Edit: raylib/examples/Makefile.Web --> Add new example
+
             // Edit: raylib/examples/README.md --> Add new example
-
+            // TODO: Use [examples_list.txt] to update/regen README.md
+            
             // Create: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
-            // Edit: raylib/projects/VS2022/raylib.sln --> Add new example
+            FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
+                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
+            FileTextReplace(, "core_basic_window", exName);
+            FileTextReplace(, "..\..\examples\core", TextFormat("..\..\examples\%s", exCategory));
+            
+            // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
+            system(TextFormat("dotnet solution raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
+            
             // Edit: raylib.com/common/examples.js --> Add new example
+            //Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
+            char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
+            int exListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
+            int exListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
 
+            UnloadFileText(jsText);
+
+            // Recompile example (on raylib side)
+            // NOTE: Tools requirements: emscripten, w64devkit
             // Compile to: raylib.com/examples/<category>/<category>_example_name.html
             // Compile to: raylib.com/examples/<category>/<category>_example_name.data
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
-
-            // Recompile example (on raylib side)
-            // NOTE: Tools requirements: emscripten, w64devkit
             system(TextFormat("%s/../build_example_web.bat %s\%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
