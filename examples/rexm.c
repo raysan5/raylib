@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
             char *exTextUpdated[6] = { 0 };
             int exIndex = TextFindIndex(exText, "/****************");
             
+            // Update required info with some defaults
             exTextUpdated[0] = TextReplace(exText + exIndex, "<module>", exCategory);
             exTextUpdated[1] = TextReplace(exTextUpdated[0], "<name>", exName + strlen(exCategory) + 1);
             //TextReplace(newExample, "<user_name>", "Ray");
@@ -236,13 +237,21 @@ int main(int argc, char *argv[])
         }
         case 2:     // Add: Example from command-line input filename
         {
-            // Create: raylib/examples/<category>/<category>_example_name.c
+            // Add: raylib/examples/<category>/<category>_example_name.c
             if (opCode != 1) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+            // TODO: Example to be added could be provided as a .zip, containing resources!
 
             // Create: raylib/examples/<category>/<category>_example_name.png
             FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
 
             // Copy: raylib/examples/<category>/resources/...  // WARNING: To be updated manually!
+
+            // TODO: Copy provided resources to respective directories
+            // Possible strategy:
+            //  1. Scan code file for resources paths -> Resources list
+            //  2. Verify paths: resource files exist
+            //  3. Copy files to required resource dir
             
             // Add example to the main collection list, if not already there
             // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
@@ -291,45 +300,72 @@ int main(int argc, char *argv[])
 
             // Edit: raylib/examples/Makefile --> Add new example
             //------------------------------------------------------------------------------------------------
-            /*
             char *mkText = LoadFileText(TextFormat("%s/Makefile", exBasePath));
             char *mkTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
             
-            int exListStartIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_START");
-            int exListEndIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_END");
+            int mkListStartIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_START");
+            int mkListEndIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_END");
             
             int mkIndex = 0;
-            memcpy(mkTextUpdated, mkText, exListStartIndex);
-            mkIndex = sprintf(mkTextUpdated + exListStartIndex, "#EXAMPLES_LIST_START\n");
+            memcpy(mkTextUpdated, mkText, mkListStartIndex);
+            mkIndex = sprintf(mkTextUpdated + mkListStartIndex, "#EXAMPLES_LIST_START\n");
 
             for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
             {
-                mkIndex += sprintf(mkTextUpdated + exListStartIndex + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
+                mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
                 int exCount = 0;
                 rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
                 
-                for (int x = 0; x < exCount - 1; x++) mkIndex += sprintf(mkTextUpdated + exListStartIndex + mkIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name));
-                mkIndex += sprintf(mkTextUpdated + exListStartIndex + mkIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name));
+                for (int x = 0; x < exCount - 1; x++) mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name));
+                mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name));
                 
                 UnloadExamplesData(exCatList);
             }
 
             // Add the remaining part of the original file
-            memcpy(mkTextUpdated + exListStartIndex + mkIndex, mkText + exListEndIndex, strlen(mkText) - exListEndIndex);
+            memcpy(mkTextUpdated + mkListStartIndex + mkIndex, mkText + mkListEndIndex, strlen(mkText) - mkListEndIndex);
 
             // Save updated file
             SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdated);
             UnloadFileText(mkText);
             RL_FREE(mkTextUpdated);
-            */
             //------------------------------------------------------------------------------------------------
             
             // Edit: raylib/examples/Makefile.Web --> Add new example
             //------------------------------------------------------------------------------------------------
-            
-            // TODO.
-            
+            char *mkwText = LoadFileText(TextFormat("%s/Makefile.Web", exBasePath));
+            char *mkwTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
+
+            int mkwListStartIndex = TextFindIndex(mkwText, "#EXAMPLES_LIST_START");
+            int mkwListEndIndex = TextFindIndex(mkwText, "#EXAMPLES_LIST_END");
+
+            int mkwIndex = 0;
+            memcpy(mkwTextUpdated, mkwText, mkwListStartIndex);
+            mkwIndex = sprintf(mkwTextUpdated + mkwListStartIndex, "#EXAMPLES_LIST_START\n");
+
+            for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+            {
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
+
+                int exCount = 0;
+                rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
+
+                for (int x = 0; x < exCount - 1; x++) mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name));
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name));
+
+                UnloadExamplesData(exCatList);
+            }
+
+            // Add the remaining part of the original file
+            memcpy(mkwTextUpdated + mkwListStartIndex + mkwIndex, mkwText + mkwListEndIndex, strlen(mkwText) - mkwListEndIndex);
+
+            // TODO: Add new example target, considering resources            
+
+            // Save updated file
+            SaveFileText(TextFormat("%s/Makefile.Web", exBasePath), mkwTextUpdated);
+            UnloadFileText(mkwText);
+            RL_FREE(mkwTextUpdated);
             //------------------------------------------------------------------------------------------------
             
             // Edit: raylib/examples/README.md --> Add new example
@@ -442,21 +478,16 @@ int main(int argc, char *argv[])
             // Edit: raylib.com/common/examples.js --> Add new example
             // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
             //------------------------------------------------------------------------------------------------
-            /*
             char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
             char *jsTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
             
-            int exListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
-            int exListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
-            
-            int mkIndex = 0;
-            memcpy(jsTextUpdated, jsText, exListStartIndex);
-            mkIndex = sprintf(jsTextUpdated + exListStartIndex, "#EXAMPLES_LIST_START\n");
+            int jsListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
+            int jsListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
             
             int jsIndex = 0;
-            memcpy(jsTextUpdated, jsText, exListStartIndex);
-            jsIndex = sprintf(jsTextUpdated + exListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
-            jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex, "    var exampleData = [\n");
+            memcpy(jsTextUpdated, jsText, jsListStartIndex);
+            jsIndex = sprintf(jsTextUpdated + jsListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
+            jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
 
             // NOTE: We avoid "others" category
             for (int i = 0, exCount = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
@@ -474,12 +505,12 @@ int main(int argc, char *argv[])
                     if ((i == 6) && (x == (exCount - 1)))
                     {
                         // Last line to add, special case to consider
-                        jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex,
+                        jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
                             TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
                     }
                     else
                     {
-                        jsIndex += sprintf(jsTextUpdated + exListStartIndex + jsIndex,
+                        jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
                             TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
                     }
                 }
@@ -488,13 +519,12 @@ int main(int argc, char *argv[])
             }
             
             // Add the remaining part of the original file
-            memcpy(jsTextUpdated + exListStartIndex + jsIndex, jsText + exListEndIndex, strlen(jsText) - exListEndIndex);
+            memcpy(jsTextUpdated + jsListStartIndex + jsIndex, jsText + jsListEndIndex, strlen(jsText) - jsListEndIndex);
             
             // Save updated file
             SaveFileText(TextFormat("%s/../common/examples.js", exWebPath), jsTextUpdated);
             UnloadFileText(jsText);
             RL_FREE(jsTextUpdated);
-            */
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -542,7 +572,8 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // NOTE: Tools requirements: emscripten, w64devkit
-            system(TextFormat("%s/../build_example_web.bat %s/%s", exBasePath, exCategory, exName));
+            // TODO: Avoid platform-specific .BAT file
+            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
