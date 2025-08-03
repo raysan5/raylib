@@ -1310,6 +1310,10 @@ RLAPI Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vecto
 RLAPI Vector2 GetSplinePointBezierQuad(Vector2 p1, Vector2 c2, Vector2 p3, float t);                     // Get (evaluate) spline point: Quadratic Bezier
 RLAPI Vector2 GetSplinePointBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float t);        // Get (evaluate) spline point: Cubic Bezier
 
+// Spline inverse point functions, for evenly-spaced points on the curve
+RLAPI void GetSplineControlBezierQuad(Vector2 startPos, Vector2 midPos, Vector2 endPos, Vector2 *controlPos); // Get (evaluate) spline control point: Quadratic Bezier
+RLAPI void GetSplineControlBezierCubic(Vector2 startPos, Vector2 oneThirdsPos, Vector2 twoThirdsPos, Vector2 endPos, Vector2 *startControlPos, Vector2 *endControlPos); // Get (evaluate) spline control points: Cubic Bezier
+
 // Spline segment slope evaluation functions, for a given t [0.0f .. 1.0f]
 RLAPI Vector2 GetSplineVelocityLinear(Vector2 startPos, Vector2 endPos);                                 // Get (evaluate) spline velocity: Linear
 RLAPI Vector2 GetSplineVelocityBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t); // Get (evaluate) spline velocity: Quadratic Bezier

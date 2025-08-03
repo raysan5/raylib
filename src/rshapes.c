@@ -2358,6 +2358,14 @@ Vector2 GetSplinePointBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 e
     return point;
 }
 
+// Get spline control point given evenly-spaced points on that curve, Quadratic Bezier
+// NOTE: Assumes startPos has 0 entry velocity and endPos has 0 exit velocity
+void GetSplineControlBezierQuad(Vector2 startPos, Vector2 midPos, Vector2 endPos, Vector2 *controlPos)
+{
+    controlPos->y = 2.0f*midPos.y - 0.5f*(startPos.y + endPos.y);
+    controlPos->x = 2.0f*midPos.x - 0.5f*(startPos.x + endPos.x);
+}
+
 // Get spline point for a given t [0.0f .. 1.0f], Cubic Bezier
 Vector2 GetSplinePointBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t)
 {
@@ -2372,6 +2380,22 @@ Vector2 GetSplinePointBezierCubic(Vector2 startPos, Vector2 startControlPos, Vec
     point.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
     return point;
+}
+
+// Get spline control points given evenly-spaced points on that curve, Cubic Bezier
+// NOTE: Assumes startPos has 0 entry velocity and endPos has 0 exit velocity
+void GetSplineControlBezierCubic(Vector2 startPos, Vector2 oneThirdsPos, Vector2 twoThirdsPos, Vector2 endPos, Vector2 *startControlPos, Vector2 *endControlPos)
+{
+    const float a = -5.0f/6.0f;
+    const float b = 3.0f;
+    const float c = -3.0f/2.0f;
+    const float d = 1.0f/3.0f;
+
+    startControlPos->x = a*startPos.x + b*oneThirdsPos.x + c*twoThirdsPos.x + d*endPos.x;
+    startControlPos->y = a*startPos.y + b*oneThirdsPos.y + c*twoThirdsPos.y + d*endPos.y;
+
+    endControlPos->x = a*endPos.x + b*twoThirdsPos.x + c*oneThirdsPos.x + d*startPos.x;
+    endControlPos->y = a*endPos.y + b*twoThirdsPos.y + c*oneThirdsPos.y + d*startPos.y;
 }
 
 // Get spline direction and speed, Linear Bezier
