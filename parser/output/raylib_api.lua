@@ -5316,6 +5316,30 @@ return {
       }
     },
     {
+      name = "GetSplineControlBezierQuad",
+      description = "Get (evaluate) spline control point: Quadratic Bezier",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "midPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "Vector2 *", name = "controlPos"}
+      }
+    },
+    {
+      name = "GetSplineControlBezierCubic",
+      description = "Get (evaluate) spline control points: Cubic Bezier",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "oneThirdsPos"},
+        {type = "Vector2", name = "twoThirdsPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "Vector2 *", name = "startControlPos"},
+        {type = "Vector2 *", name = "endControlPos"}
+      }
+    },
+    {
       name = "GetSplineVelocityLinear",
       description = "Get (evaluate) spline velocity: Linear",
       returnType = "Vector2",
