@@ -152,11 +152,27 @@ int main(int argc, char *argv[])
             else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                // TODO: Additional security checks for file name?
+                // Security checks for file name to verify category is included
+                int catIndex = TextFindIndex(argv[2], "_");
+                if (catIndex > 3)
+                {
+                    char cat[12] = { 0 };
+                    strncpy(cat, argv[2], catIndex);
+                    bool catFound = false;
+                    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++) 
+                    { 
+                        if (TextIsEqual(cat, exCategories[i])) { catFound = true; break; }
+                    }
 
-                strcpy(exName, argv[2]); // Register filename for new example creation
-                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                opCode = 1;
+                    if (catFound)
+                    {
+                        strcpy(exName, argv[2]); // Register filename for new example creation
+                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                        opCode = OP_CREATE;
+                    }
+                    else LOG("WARNING: Example category is not valid\n");
+                }
+                else LOG("WARNING: Example name does not include category\n");
             }
         }
         else if (strcmp(argv[1], "add") == 0)
@@ -170,10 +186,28 @@ int main(int argc, char *argv[])
                 {
                     if (FileExists(inFileName))
                     {
-                        strcpy(inFileName, argv[2]); // Register filename for addition
-                        strcpy(exName, GetFileNameWithoutExt(argv[2])); // Register example name
-                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                        opCode = 2;
+                        // Security checks for file name to verify category is included
+                        int catIndex = TextFindIndex(argv[2], "_");
+                        if (catIndex > 3)
+                        {
+                            char cat[12] = { 0 };
+                            strncpy(cat, argv[2], catIndex);
+                            bool catFound = false;
+                            for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++) 
+                            { 
+                                if (TextIsEqual(cat, exCategories[i])) { catFound = true; break; }
+                            }
+
+                            if (catFound)
+                            {
+                                strcpy(inFileName, argv[2]); // Register filename for addition
+                                strcpy(exName, GetFileNameWithoutExt(argv[2])); // Register example name
+                                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                                opCode = OP_ADD;
+                            }
+                            else LOG("WARNING: Example category is not valid\n");
+                        }
+                        else LOG("WARNING: Example name does not include category\n");
                     }
                     else LOG("WARNING: Input file not found, include path\n");
                 }
@@ -186,11 +220,27 @@ int main(int argc, char *argv[])
             else if (argc > 4) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                strcpy(exName, argv[2]); // Register example name
-                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                strcpy(exRename, argv[3]);
-                // TODO: Consider rename with change of category
-                opCode = 3;
+                // Verify example exists in collection to be removed
+                char *exColInfo = LoadFileText(exCollectionListPath);
+                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                {
+                    strcpy(exName, argv[2]);    // Register example name
+                    strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                    strcpy(exRename, argv[3]);
+                    char exReCategory[32] = { 0 };
+                    strncpy(exReCategory, exRename, TextFindIndex(exRename, "_"));
+
+                    if (strcmp(exCategory, exReCategory) != 0)
+                    {
+                        // TODO: Consider rename with change of category
+                        // Remove previous one from collection
+                        // Add new one (copy) to collection
+                    }
+
+                    opCode = OP_RENAME;
+                }
+                else LOG("WARNING: RENAME: Example not available in the collection\n");
+                UnloadFileText(exColInfo);
             }
         }
         else if (strcmp(argv[1], "remove") == 0)
@@ -200,19 +250,25 @@ int main(int argc, char *argv[])
             else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                strcpy(exName, argv[2]); // Register filename for removal
-                opCode = 4;
+                // Verify example exists in collection to be removed
+                char *exColInfo = LoadFileText(exCollectionListPath);
+                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                {
+                    strcpy(exName, argv[2]); // Register filename for removal
+                    opCode = OP_REMOVE;
+                }
+                else LOG("WARNING: REMOVE: Example not available in the collection\n");
+                UnloadFileText(exColInfo);
             }
         }
         else if (strcmp(argv[1], "validate") == 0)
         {
-            opCode = 5;
+            // Validate examples in collection
+            // All examples in collection match all requirements on required files
+
+            opCode = OP_VALIDATE;
         }
     }
-
-    // Load examples collection information
-    //exInfo = LoadExamplesData(exCollectionListPath, "core", true, &exInfoCount);    
-    //for (int i = 0; i < exInfoCount; i++) printf("%i - %s [%i]\n", i + 1, exInfo[i].name, exInfo[i].stars);
 
     switch (opCode)
     {
@@ -240,16 +296,18 @@ int main(int argc, char *argv[])
             // Add: raylib/examples/<category>/<category>_example_name.c
             if (opCode != 1) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
-            // TODO: Example to be added could be provided as a .zip, containing resources!
-
             // Create: raylib/examples/<category>/<category>_example_name.png
             FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
 
             // Copy: raylib/examples/<category>/resources/...  // WARNING: To be updated manually!
+            // TODO: Example to be added could be provided as a .zip, containing resources!
 
             // TODO: Copy provided resources to respective directories
             // Possible strategy:
             //  1. Scan code file for resources paths -> Resources list
+            //    Look for specific text: '.png"'
+            //    Look for full path, previous '"'
+            //    Be careful with shaders: '.vs"', '.fs"' -> Reconstruct path manually?
             //  2. Verify paths: resource files exist
             //  3. Copy files to required resource dir
             
@@ -295,6 +353,8 @@ int main(int argc, char *argv[])
                 SaveFileText(exCollectionListPath, exColInfoUpdated);
                 RL_FREE(exColInfoUpdated);
             }
+            else LOG("WARNING: ADD: Example is already on the collection\n");
+
             UnloadFileText(exColInfo);
             //------------------------------------------------------------------------------------------------
 
@@ -374,7 +434,7 @@ int main(int argc, char *argv[])
             // Lines format: | 01 | [core_basic_window](core/core_basic_window.c) | <img src="core/core_basic_window.png" alt="core_basic_window" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
             char *mdText = LoadFileText(TextFormat("%s/README.md", exBasePath));
             char *mdTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
-            
+
             int mdListStartIndex = TextFindIndex(mdText, "| 01 | ");
             
             int mdIndex = 0;
@@ -504,7 +564,7 @@ int main(int argc, char *argv[])
 
                     if ((i == 6) && (x == (exCount - 1)))
                     {
-                        // Last line to add, special case to consider
+                        // NOTE: Last line to add, special case to consider
                         jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
                             TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
                     }
