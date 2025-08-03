@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
             FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
 
             // Copy: raylib/examples/<category>/resources/...  // WARNING: To be updated manually!
-            // TODO: Example to be added could be provided as a .zip, containing resources!
+            // IDEA: Example to be added could be provided as a .zip, containing resources!
 
             // TODO: Copy provided resources to respective directories
             // Possible strategy:
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
             //  2. Verify paths: resource files exist
             //  3. Copy files to required resource dir
             
-            // Add example to the main collection list, if not already there
+            // Add example to the collection list, if not already there
             // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
             //------------------------------------------------------------------------------------------------
             char *exColInfo = LoadFileText(exCollectionListPath);
@@ -328,19 +328,20 @@ int main(int argc, char *argv[])
                 else if (strcmp(exCategory, "shaders") == 0) nextCatIndex = 6;
                 else if (strcmp(exCategory, "audio") == 0) nextCatIndex = 7;
                 else if (strcmp(exCategory, "others") == 0) nextCatIndex = -1; // Add to EOF
+
+                // TODO: Get required example info from example file header (if provided)
+                // NOTE: If no example info is provided (other than category/name), just using some default values
                 
                 if (nextCatIndex == -1)
                 {
-                    // Add example to the end of the list
+                    // Add example to collection at the EOF
                     int endIndex = (int)strlen(exColInfo);
                     memcpy(exColInfoUpdated, exColInfo, endIndex);
-                    sprintf(exColInfoUpdated + endIndex, TextFormat("\n%s/%s\n", exCategory, exName));
+                    sprintf(exColInfoUpdated + endIndex, TextFormat("%s;%s;⭐️☆☆☆;6.0;6.0;\"Ray\";@raysan5\n", exCategory, exName));
                 }
                 else
                 {
-                    // Add example to the end of the category list
-                    // TODO: Get required example info from example file header (if provided)
-                    // NOTE: If no example info is provided (other than category/name), just using some default values
+                    // Add example to collection, at the end of the category list
                     int catIndex = TextFindIndex(exColInfo, exCategories[nextCatIndex]);
                     memcpy(exColInfoUpdated, exColInfo, catIndex);
                     int textWritenSize = sprintf(exColInfoUpdated + catIndex, TextFormat("%s;%s;⭐️☆☆☆;6.0;6.0;\"Ray\";@raysan5\n", exCategory, exName));
@@ -379,7 +380,7 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
             //------------------------------------------------------------------------------------------------
-            // TODO: WARNING: This .BAT is not portable and it does not consider RESOURCES for Web properly,
+            // TODO: Avoid platform-specific .BAT, not portable and it does not consider RESOURCES for Web properly,
             // Makefile.Web should be used... but it requires proper editing first!
             system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
@@ -492,6 +493,7 @@ int main(int argc, char *argv[])
             remove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
             
             // TODO: Remove: raylib/examples/<category>/resources/..
+            // Get list of resources from Makefile.Web or examples ResourcesScan()
             
             UpdateRequiredFiles();
             
@@ -890,9 +892,12 @@ static int FileCopy(const char *srcPath, const char *dstPath)
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
     
-    // TODO: Create required paths if they do not exist
+    // Create required paths if they do not exist
+    if (!DirectoryExists(GetDirectoryPath(dstPath)))
+        MakeDirectory(GetDirectoryPath(dstPath));
 
-    if ((srcFileData != NULL) && (srcDataSize > 0)) result = SaveFileData(dstPath, srcFileData, srcDataSize);
+    if ((srcFileData != NULL) && (srcDataSize > 0)) 
+        result = SaveFileData(dstPath, srcFileData, srcDataSize);
 
     UnloadFileData(srcFileData);
 
