@@ -251,6 +251,7 @@ int main(int argc, char *argv[])
                 if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
                     strcpy(exName, argv[2]); // Register filename for removal
+                    strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                     opCode = OP_REMOVE;
                 }
                 else LOG("WARNING: REMOVE: Example not available in the collection\n");
@@ -350,7 +351,6 @@ int main(int argc, char *argv[])
                 RL_FREE(exColInfoUpdated);
             }
             else LOG("WARNING: ADD: Example is already on the collection\n");
-
             UnloadFileText(exColInfo);
             //------------------------------------------------------------------------------------------------
 
@@ -465,7 +465,26 @@ int main(int argc, char *argv[])
         } break;
         case 4:     // Remove
         {
-            // TODO: Remove and update all required files...
+            // Remove example from collection for files update
+            //------------------------------------------------------------------------------------------------
+            char *exColInfo = LoadFileText(exCollectionListPath);
+            int exIndex = TextFindIndex(exColInfo, TextFormat("%s;%s", exCategory, exName));
+            if (exIndex > 0) // Example found
+            {
+                char *exColInfoUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
+
+                memcpy(exColInfoUpdated, exColInfo, exIndex);
+                int lineLen = 0;
+                for (int i = exIndex; (exColInfo[i] != '\n') && (exColInfo[i] != '\0'); i++) lineLen++;
+                // Remove line and copy the rest next
+                memcpy(exColInfoUpdated + exIndex, exColInfo + exIndex + lineLen + 1, strlen(exColInfo) - exIndex - lineLen);
+
+                SaveFileText(exCollectionListPath, exColInfoUpdated);
+                RL_FREE(exColInfoUpdated);
+            }
+            else LOG("WARNING: REMOVE: Example not found in the collection\n");
+            UnloadFileText(exColInfo);
+            //------------------------------------------------------------------------------------------------
 
             // Remove: raylib/examples/<category>/<category>_example_name.c
             // Remove: raylib/examples/<category>/<category>_example_name.png
@@ -474,37 +493,15 @@ int main(int argc, char *argv[])
             
             // TODO: Remove: raylib/examples/<category>/resources/..
             
-            // Edit: raylib/examples/Makefile
-            //---------------------------------------------------------------------------
-            // 
-            //
-            //---------------------------------------------------------------------------
-            
-            // Edit: raylib/examples/Makefile.Web
-            //---------------------------------------------------------------------------
-            // 
-            //
-            //---------------------------------------------------------------------------
-
-            // Edit: raylib/examples/README.md
-            //---------------------------------------------------------------------------
-            // 
-            //
-            //---------------------------------------------------------------------------
+            UpdateRequiredFiles();
             
             // Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             remove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
-            // Edit: raylib/projects/VS2022/raylib.sln
+            // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
             //---------------------------------------------------------------------------
-            // 
-            // 
-            //---------------------------------------------------------------------------
-            
-            // Edit: raylib.com/common/examples.js
-            //---------------------------------------------------------------------------
-            
-            
+            system(TextFormat("dotnet solution %s/../projects/VS2022/raylib.sln remove %s/../projects/VS2022/examples/%s.vcxproj", 
+                exBasePath, exBasePath, exName));
             //---------------------------------------------------------------------------
             
             // Remove: raylib.com/examples/<category>/<category>_example_name.html
@@ -610,7 +607,7 @@ static int UpdateRequiredFiles(void)
     }
 
     // Add the remaining part of the original file
-    memcpy(mkTextUpdated + mkListStartIndex + mkIndex, mkText + mkListEndIndex, strlen(mkText) - mkListEndIndex);
+    memcpy(mkTextUpdated + mkListStartIndex + mkIndex - 1, mkText + mkListEndIndex, strlen(mkText) - mkListEndIndex);
 
     // Save updated file
     SaveFileText(TextFormat("%s/Makefile", exBasePath), mkTextUpdated);
@@ -644,7 +641,7 @@ static int UpdateRequiredFiles(void)
     }
 
     // Add the remaining part of the original file
-    memcpy(mkwTextUpdated + mkwListStartIndex + mkwIndex, mkwText + mkwListEndIndex, strlen(mkwText) - mkwListEndIndex);
+    memcpy(mkwTextUpdated + mkwListStartIndex + mkwIndex - 1, mkwText + mkwListEndIndex, strlen(mkwText) - mkwListEndIndex);
 
     // TODO: Add new example target, considering resources            
 
@@ -802,7 +799,6 @@ static int UpdateRequiredFiles(void)
 
     return result;
 }
- 
 
 // Load examples collection information
 static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount)
