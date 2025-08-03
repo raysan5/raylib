@@ -76,6 +76,8 @@ int main(void)
     int pointCount = 5;
     int selectedPoint = -1;
     int focusedPoint = -1;
+    int selectedThickPoint = -1;
+    int focusedThickPoint = -1;
     Vector2 *selectedControlPoint = NULL;
     Vector2 *focusedControlPoint = NULL;
 
@@ -161,6 +163,44 @@ int main(void)
             {
                 *selectedControlPoint = GetMousePosition();
                 if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedControlPoint = NULL;
+            }
+        }
+
+        // Variable thickness control points logic
+        if ((splineTypeActive == SPLINE_LINEAR_VAR) && focusedPoint == -1)
+        {
+            // Spline thickness control point focus and selection logic
+            if (selectedThickPoint == -1)
+            {
+                focusedThickPoint = -1;
+                for (int i = 0; i < pointCount - 1; i++)
+                {
+                    Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
+                    Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+
+                    for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                    {
+                        Vector2 point = Vector2Add(GetSplinePointLinear(points[i], points[i + 1], (float)j/(SPLINE_THICK_COUNT - 1)), Vector2Scale(perpendicular, thicks[j]));
+                        if (CheckCollisionPointCircle(GetMousePosition(), point, 4.0f)) {
+                            focusedThickPoint = i*SPLINE_THICK_COUNT + j;
+                            break;
+                        }
+                    }
+                }
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedThickPoint = focusedThickPoint;
+            }
+
+            if (selectedThickPoint >= 0)
+            {
+                int i = selectedThickPoint/SPLINE_THICK_COUNT;
+                int j = selectedThickPoint%SPLINE_THICK_COUNT;
+                Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
+                Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+
+                thicks[j] = Vector2DotProduct(perpendicular, Vector2Subtract(GetMousePosition(), points[i]));
+                if (thicks[j] > 40.0f) thicks[j] = 40.0f;
+                if (thicks[j] < -40.0f) thicks[j] = -40.0f;
+                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedThickPoint = -1;
             }
         }
 
@@ -300,41 +340,44 @@ int main(void)
                     DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), (int)points[i].x, (int)points[i].y + 10, 10, BLACK);
                 }
 
+                // Draw spline thickness helpers
                 if (splineTypeActive == SPLINE_LINEAR_VAR)
                 {
-                    Vector2 thickAnchors[SPLINE_THICK_COUNT] = { 0 };
                     Vector2 thickPoints[SPLINE_THICK_COUNT] = { 0 };
 
-                    // Draw spline thickness helpers
                     for (int i = 0; i < pointCount - 1; i++)
                     {
                         Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
                         Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+                        DrawLineV(points[i], points[i + 1], BROWN);
 
                         for (int j = 0; j < SPLINE_THICK_COUNT; j++)
                         {
-                            Vector2 point = GetSplinePointLinear(points[i], points[i + 1], j/3.0f);
-                            thickAnchors[j] = point;
-                            thickPoints[j] = Vector2Add(point, Vector2Scale(perpendicular, thicks[j]));
+                            Vector2 anchor = GetSplinePointLinear(points[i], points[i + 1], (float)j/(SPLINE_THICK_COUNT - 1));
+                            thickPoints[j] = Vector2Add(anchor, Vector2Scale(perpendicular, thicks[j]));
+                            DrawLineV(
+                                Vector2Add(anchor, Vector2Scale(perpendicular, 4.0f)),
+                                Vector2Subtract(anchor, Vector2Scale(perpendicular, 4.0f)),
+                                GRAY);
+                            DrawCircleLinesV(thickPoints[j], (((focusedThickPoint % SPLINE_THICK_COUNT) == j)? 6.0f : 4.0f), (((focusedThickPoint % SPLINE_THICK_COUNT) == j)? VIOLET : PURPLE));
                         }
 
+                        DrawSplineBezierCubic(thickPoints, SPLINE_THICK_COUNT, 1.0f, ORANGE);
                         DrawLineV(thickPoints[0], thickPoints[1], GRAY);
                         DrawLineV(thickPoints[3], thickPoints[2], GRAY);
-
-                        for (int j = 0; j < SPLINE_THICK_COUNT; j++)
-                        {
-                            DrawCircleLinesV(thickPoints[j], 4.0f, PURPLE);
-                            DrawLineV(Vector2Add(thickAnchors[j], Vector2Scale(perpendicular, 4.0f)), Vector2Subtract(thickAnchors[j], Vector2Scale(perpendicular, 4.0f)), GRAY);
-                        }
-
-                        DrawLineV(points[i], points[i + 1], BROWN);
-                        DrawSplineBezierCubic(thickPoints, SPLINE_THICK_COUNT, 1.0f, ORANGE);
                     }
+                }
+                else if (splineTypeActive == SPLINE_BEZIER_VAR)
+                {
+                    // I tried and this isn't possible.
+                    // A variable-thickness Bezier curve can potentially have more detail than can
+                    // be expressed with another Bezier curve of the same degree.
+                    // Example: https://www.desmos.com/calculator/qh31vr4rbf
                 }
             }
 
             // Check all possible UI states that require controls lock
-            if (splineTypeEditMode || (selectedPoint != -1) || (selectedControlPoint != NULL)) GuiLock();
+            if (splineTypeEditMode || (selectedPoint != -1) || (selectedThickPoint != -1) || (selectedControlPoint != NULL)) GuiLock();
 
             // Draw spline config
             if ((splineTypeActive == SPLINE_LINEAR_VAR) || (splineTypeActive == SPLINE_BEZIER_VAR))
