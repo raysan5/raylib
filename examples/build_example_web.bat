@@ -33,11 +33,11 @@ cmd /c if exist %FILENAME%.data del /F %FILENAME%.data
 echo
 :: Setup emsdk environment
 :: --------------------------
-cmd /c %EMSDK_PATH%\emsdk_env.bat
-echo
+call %EMSDK_PATH%\emsdk_env.bat
+echo on
 :: Compile program
 :: -----------------------
-cmd /c %CC% --version
-cmd /c %CC% -o %FILENAME%.html %FILENAME%.c %CFLAGS% %LDFLAGS% %LDLIBS% %RESOURCES%
+C:
+%CC% -o %FILENAME%.html %FILENAME%.c %CFLAGS% %LDFLAGS% %LDLIBS% %RESOURCES%
 cd ..
 echo
