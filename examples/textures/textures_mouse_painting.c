@@ -210,7 +210,7 @@ int main(void)
         {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
             DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
-            DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
+            DrawText("IMAGE SAVED!", 150, 180, 20, RAYWHITE);
         }
 
         EndDrawing();
