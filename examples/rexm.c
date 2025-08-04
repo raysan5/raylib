@@ -1025,7 +1025,7 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
     if (text != NULL)
     {
         int lineCount = 0;
-        const char **lines = LoadTextLines(text, &lineCount);
+        char **lines = LoadTextLines(text, &lineCount);
         
         for (int i = 0; i < lineCount; i++)
         {
@@ -1058,6 +1058,7 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
             }
         }
     
+        UnloadTextLines(lines);
         UnloadFileText(text);
     }
     
