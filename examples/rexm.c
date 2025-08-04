@@ -705,10 +705,91 @@ static int UpdateRequiredFiles(void)
         UnloadExamplesData(exCatList);
     }
 
+    // Add examples individual targets, considering every example resources
+    // Some required makefile code...
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "# Default target entry\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)\n\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "core: $(CORE)\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "shapes: $(SHAPES)\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "textures: $(TEXTURES)\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "text: $(TEXT)\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "models: $(MODELS)\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "shaders: $(SHADERS)\n");
+    mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "audio: $(AUDIO)\n\n");
+
+    // NOTE: We avoid the "others" category on web building
+    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
+    {
+        mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("# Compile %s examples\n", TextToUpper(exCategories[i])));
+
+        int exCount = 0;
+        rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
+
+        for (int x = 0; x < exCount; x++)
+        {
+            // Scan resources used in example to list
+            int resPathCount = 0;
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCatList[x].category, exCatList[x].name), &resPathCount);
+
+            if (resPathCount > 0)
+            {
+                /*
+                // WARNING: Compilation line starts with [TAB]
+                shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
+                    $(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+                    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
+                    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.vs@resources/shaders/glsl330/vertex_displacement.vs \
+                    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs \
+                    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
+                */
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, 
+                    TextFormat("%s/%s: %s/%s.c\n", exCatList[x].category, exCatList[x].name, exCatList[x].category, exCatList[x].name));
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \\\n");
+
+                for (int r = 0; r < resPathCount; r++)
+                {
+                    // WARNING: Special case to consider: shaders, resource paths could use conditions: "glsl%i"
+                    // In this case, we focus on web building for: glsl100
+                    if (TextFindIndex(resPaths[r], "glsl%i") > -1)
+                    {
+                        char *resPathUpdated = TextReplace(resPaths[r], "glsl%i", "glsl100");
+                        memset(resPaths[r], 0, 256);
+                        strcpy(resPaths[r], resPathUpdated);
+                        RL_FREE(resPathUpdated);
+                    }
+
+                    if (r < (resPathCount - 1))
+                    {
+                        mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex,
+                            TextFormat("    --preload-file %s/%s@%s \\\n", exCatList[x].category, resPaths[r], resPaths[r]));
+                    }
+                    else
+                    {
+                        mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex,
+                            TextFormat("    --preload-file %s/%s@%s\n\n", exCatList[x].category, resPaths[r], resPaths[r]));
+                    }
+                }
+            }
+            else  // Example does not require resources
+            {
+                /*
+                // WARNING: Compilation line starts with [TAB]
+                core/core_2d_camera: core/core_2d_camera.c
+                    $(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+                */
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, 
+                    TextFormat("%s/%s: %s/%s.c\n", exCatList[x].category, exCatList[x].name, exCatList[x].category, exCatList[x].name));
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)\n\n");
+            }
+
+            ClearExampleResources(resPaths);
+        }
+
+        UnloadExamplesData(exCatList);
+    }
+
     // Add the remaining part of the original file
     memcpy(mkwTextUpdated + mkwListStartIndex + mkwIndex - 1, mkwText + mkwListEndIndex, strlen(mkwText) - mkwListEndIndex);
-
-    // TODO: Add new example target, considering resources            
 
     // Save updated file
     SaveFileText(TextFormat("%s/Makefile.Web", exBasePath), mkwTextUpdated);
