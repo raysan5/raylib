@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
             // -----------------------------------------------------------------------------------------
             // Scan resources used in example to copy
             int resPathCount = 0;
-            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName), &resPathCount);
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), &resPathCount);
 
             if (resPathCount > 0)
             {
@@ -467,39 +467,46 @@ int main(int argc, char *argv[])
                 FileTextReplace(exCollectionListPath, TextFormat("%s;%s", exCategory, exName), 
                     TextFormat("%s;%s", exRecategory, exRename));
 
-                // Rename all required files
+                // Edit: Rename example code and screenshot files .c and .png
                 rename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
                 rename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
 
-                // Rename example on required files
+                // NOTE: Example resource files do not need to be changed...
+                // unless the example is moved from one caegory to another
+
+                // Edit: Rename example on required files
                 FileTextReplace(TextFormat("%s/Makefile", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/Makefile.Web", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/README.md", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/../common/examples.js", exWebPath), exName, exRename);
 
-                // Rename example project and solution
+                // Edit: Rename example project and solution
                 rename(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
                     TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exRename));
                 FileTextReplace(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exName, exRename);
             }
             else
             {
-                // Rename with change of category
-                // TODO: Reorder collection as required
+                // WARNING: Rename with change of category
+                // TODO: Reorder collection to place renamed example at the end of category
                 FileTextReplace(exCollectionListPath, TextFormat("%s;%s", exCategory, exName), 
                     TextFormat("%s;%s", exRecategory, exRename));
 
-                // Rename all required files
+                // TODO: Move example resources from <src_category>/resources to <dst_category>/resources
+                // WARNING: Resources can be shared with other examples in the category
+
+                // Edit: Rename example code file (copy and remove)
                 FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
                 remove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-
+                // Edit: Rename example screenshot file (copy and remove)
                 FileCopy(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
                 remove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
 
+                // Edit: Update required files: Makefile, Makefile.Web, README.md, examples.js
                 UpdateRequiredFiles();
             }
 
@@ -547,15 +554,47 @@ int main(int argc, char *argv[])
             else LOG("WARNING: REMOVE: Example not found in the collection\n");
             UnloadFileText(exColInfo);
             //------------------------------------------------------------------------------------------------
+           
+            // Remove: raylib/examples/<category>/resources/..
+            // WARNING: Some of those resources could be used by other examples,
+            // just leave this process to manual update for now!
+            // -----------------------------------------------------------------------------------------
+            /*
+            // Scan resources used in example to be removed
+            int resPathCount = 0;
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), &resPathCount);
+
+            if (resPathCount > 0)
+            {
+                for (int r = 0; r < resPathCount; r++)
+                {
+                    // WARNING: Special case to consider: shaders, resource paths could use conditions: "glsl%i"
+                    // In this case, multiple resources are required: glsl100, glsl120, glsl330
+                    if (TextFindIndex(resPaths[r], "glsl%i") > -1)
+                    {
+                        int glslVer[3] = { 100, 120, 330 };
+
+                        for (int v = 0; v < 3; v++)
+                        {
+                            char *resPathUpdated = TextReplace(resPaths[r], "glsl%i", TextFormat("glsl%i", glslVer[v]));
+                            remove(TextFormat("%s/%s/%s", exBasePath, exCategory, resPathUpdated));
+                            RL_FREE(resPathUpdated);
+                        }
+                    }
+                    else remove(TextFormat("%s/%s/%s", exBasePath, exCategory, resPaths[r]));
+                }
+            }
+
+            ClearExampleResources(resPaths);
+            */
+            // -----------------------------------------------------------------------------------------
 
             // Remove: raylib/examples/<category>/<category>_example_name.c
             // Remove: raylib/examples/<category>/<category>_example_name.png
             remove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
             remove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
             
-            // TODO: Remove: raylib/examples/<category>/resources/..
-            // Get list of resources from Makefile.Web or examples ResourcesScan()
-            
+            // Edit: Update required files: Makefile, Makefile.Web, README.md, examples.js
             UpdateRequiredFiles();
             
             // Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
@@ -1065,6 +1104,20 @@ static int FileRemove(const char *fileName)
     int result = 0;
 
     if (FileExists(fileName)) remove(fileName);
+
+    return result;
+}
+
+// Move file from one directory to another
+static int FileMove(const char *srcPath, const char *dstPath)
+{
+    int result = 0;
+
+    if (FileExists(srcPath))
+    {
+        FileCopy(srcPath, dstPath);
+        remove(srcPath);
+    }
 
     return result;
 }
