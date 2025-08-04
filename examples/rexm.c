@@ -58,6 +58,10 @@
     #define LOG(...)
 #endif
 
+#define REXM_MAX_BUFFER_SIZE    (2*1024*1024)      // 2MB
+
+#define REXM_MAX_RESOURCE_PATHS 256
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -124,6 +128,12 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry);
 // Sort array of strings by name
 // WARNING: items[] pointers are reorganized
 static void SortExampleByName(rlExampleInfo *items, int count);
+
+// Scan resource paths in example file
+static char **ScanExampleResources(const char *filePath, int *resPathCount);
+
+// Clear resource paths scanned
+static void ClearExampleResources(char **resPaths);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -296,17 +306,68 @@ int main(int argc, char *argv[])
             // Create: raylib/examples/<category>/<category>_example_name.png
             FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
 
-            // Copy: raylib/examples/<category>/resources/...  // WARNING: To be updated manually!
-            // IDEA: Example to be added could be provided as a .zip, containing resources!
+            // Copy: raylib/examples/<category>/resources/...
+            // -----------------------------------------------------------------------------------------
+            // Scan resources used in example to copy
+            int resPathCount = 0;
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName), &resPathCount);
 
-            // TODO: Copy provided resources to respective directories
-            // Possible strategy:
-            //  1. Scan code file for resources paths -> Resources list
-            //    Look for specific text: '.png"'
-            //    Look for full path, previous '"'
-            //    Be careful with shaders: '.vs"', '.fs"' -> Reconstruct path manually?
-            //  2. Verify paths: resource files exist
-            //  3. Copy files to required resource dir
+            if (resPathCount > 0)
+            {
+                for (int r = 0; r < resPathCount; r++)
+                {
+                    // WARNING: Special case to consider: shaders, resource paths could use conditions: "glsl%i"
+                    // In this case, multiple resources are required: glsl100, glsl120, glsl330
+                    if (TextFindIndex(resPaths[r], "glsl%i") > -1)
+                    {
+                        int glslVer[3] = { 100, 120, 330 };
+
+                        for (int v = 0; v < 3; v++)
+                        {
+                            char *resPathUpdated = TextReplace(resPaths[r], "glsl%i", TextFormat("glsl%i", glslVer[v]));
+
+                            LOG("INFO: Example resource required: %s\n", resPathUpdated);
+
+                            if (FileExists(TextFormat("%s/%s", GetDirectoryPath(inFileName), resPathUpdated)))
+                            {
+                                // Verify the resources are placed in "resources" directory
+                                if (TextFindIndex(resPathUpdated, "resources/") > 0)
+                                {
+                                    // NOTE: Look for resources in the path of the provided .c to be added
+                                    // To be copied to <category>/resources directory, extra dirs are automatically created if required
+                                    FileCopy(TextFormat("%s/%s", GetDirectoryPath(inFileName), resPathUpdated),
+                                        TextFormat("%s/%s/%s", exBasePath, exCategory, resPathUpdated));
+                                }
+                                else LOG("WARNING: Example resource must be placed in 'resources' directory next to .c file\n");
+                            }
+                            else LOG("WARNING: Example resource can not be found in: %s\n", TextFormat("%s/%s", GetDirectoryPath(inFileName), resPathUpdated));
+
+                            RL_FREE(resPathUpdated);
+                        }
+                    }
+                    else
+                    {
+                        LOG("INFO: Example resource required: %s\n", resPaths[r]);
+
+                        if (FileExists(TextFormat("%s/%s", GetDirectoryPath(inFileName), resPaths[r])))
+                        {
+                            // Verify the resources are placed in "resources" directory
+                            if (TextFindIndex(resPaths[r], "resources/") > 0)
+                            {
+                                // NOTE: Look for resources in the path of the provided .c to be added
+                                // To be copied to <category>/resources directory, extra dirs are automatically created if required
+                                FileCopy(TextFormat("%s/%s", GetDirectoryPath(inFileName), resPaths[r]),
+                                    TextFormat("%s/%s/%s", exBasePath, exCategory, resPaths[r]));
+                            }
+                            else LOG("WARNING: Example resource must be placed in 'resources' directory next to .c file\n");
+                        }
+                        else LOG("WARNING: Example resource can not be found in: %s\n", TextFormat("%s/%s", GetDirectoryPath(inFileName), resPaths[r]));
+                    }
+                }
+            }
+
+            ClearExampleResources(resPaths);
+            // -----------------------------------------------------------------------------------------
             
             // Add example to the collection list, if not already there
             // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
@@ -618,6 +679,7 @@ static int UpdateRequiredFiles(void)
     //------------------------------------------------------------------------------------------------
 
     // Edit: raylib/examples/Makefile.Web --> Update from collection
+    // NOTE: We avoid the "others" category on web building
     //------------------------------------------------------------------------------------------------
     char *mkwText = LoadFileText(TextFormat("%s/Makefile.Web", exBasePath));
     char *mkwTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
@@ -629,7 +691,8 @@ static int UpdateRequiredFiles(void)
     memcpy(mkwTextUpdated, mkwText, mkwListStartIndex);
     mkwIndex = sprintf(mkwTextUpdated + mkwListStartIndex, "#EXAMPLES_LIST_START\n");
 
-    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+    // NOTE: We avoid the "others" category on web building
+    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
@@ -1017,4 +1080,76 @@ static int rlExampleInfoCompare(const void *a, const void *b)
 static void SortExampleByName(rlExampleInfo *items, int count)
 {
     qsort(items, count, sizeof(rlExampleInfo), rlExampleInfoCompare);
+}
+
+// Scan resource paths in example file
+static char **ScanExampleResources(const char *filePath, int *resPathCount)
+{
+    #define MAX_RES_PATH_LEN    256
+
+    char **paths = (char **)RL_CALLOC(REXM_MAX_RESOURCE_PATHS, sizeof(char **));
+    for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) paths[i] = (char *)RL_CALLOC(MAX_RES_PATH_LEN, sizeof(char));
+
+    int resCounter = 0;
+    char *code = LoadFileText(filePath);
+
+    if (code != NULL)
+    {
+        // Resources extensions to check
+        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs" };
+        const int extCount = sizeof(exts)/sizeof(exts[0]);
+
+        char *ptr = code;
+        while ((ptr = strchr(ptr, '"')) != NULL)
+        {
+            char *start = ptr + 1;
+            char *end = strchr(start, '"');
+            if (!end) break;
+
+            int len = end - start;
+            if ((len > 0) && (len < MAX_RES_PATH_LEN))
+            {
+                char buffer[MAX_RES_PATH_LEN] = { 0 };
+                strncpy(buffer, start, len);
+                buffer[len] = '\0';
+
+                // Check for known extensions
+                for (int i = 0; i < extCount; i++)
+                {
+                    if (IsFileExtension(buffer, exts[i]))
+                    {
+                        // Avoid duplicates
+                        bool found = false;
+                        for (int j = 0; j < resCounter; j++)
+                        {
+                            if (TextIsEqual(paths[j], buffer)) { found = true; break; }
+                        }
+
+                        if (!found && (resCounter < REXM_MAX_RESOURCE_PATHS))
+                        {
+                            strcpy(paths[resCounter], buffer);
+                            resCounter++;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            ptr = end + 1;
+        }
+
+        UnloadFileText(code);
+    }
+
+    *resPathCount = resCounter;
+    return paths;
+}
+
+// Clear resource paths scanned
+static void ClearExampleResources(char **resPaths)
+{
+    for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) RL_FREE(resPaths[i]);
+
+    RL_FREE(resPaths);
 }
