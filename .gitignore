@@ -111,5 +111,6 @@ build/
 build-*/
 docgen_tmp/
 
-# Parser stuff
-parser/raylib_parser
+# Tools stuff
+tools/parser/raylib_parser
+tools/rexm/VS2022
