@@ -2121,6 +2121,177 @@ void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4
     DrawTriangleStrip(points, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
 }
 
+// Draw spline segment with variable thickness: Linear, 2 points
+void DrawSplineSegmentLinearVar(Vector2 p1, Vector2 p2, const float* thicks, int thickCount, Color color)
+{
+    if (thickCount >= 4)
+    {
+        const float step = 1.0f/SPLINE_SEGMENT_DIVISIONS;
+
+        Vector2 previous[2] = { 0 };
+        Vector2 current[2] = { 0 };
+        float t = 0.0f;
+
+        // Linear velocity does not change across the curve
+        Vector2 tangent = { 0 };
+
+        tangent.x = p2.x - p1.x;
+        tangent.y = p2.y - p1.y;
+
+        float speedSqr = tangent.x*tangent.x + tangent.y*tangent.y;
+
+        if (speedSqr > 0)
+        {
+            float speedInv = 1.0f/sqrtf(speedSqr);
+            tangent.x *= speedInv;
+            tangent.y *= speedInv;
+
+            rlBegin(RL_TRIANGLES);
+                rlColor4ub(color.r, color.g, color.b, color.a);
+
+                for (int i = 0; i <= SPLINE_SEGMENT_DIVISIONS; i++)
+                {
+                    t = step*(float)i;
+
+                    Vector2 point = { 0 };
+
+                    point.x = p1.x*(1.0f - t) + p2.x*t;
+                    point.y = p1.y*(1.0f - t) + p2.y*t;
+
+                    float thick;
+                    {
+                        float tMajor = t*(float)thickCount/3.0f;
+                        int tIndex = (int)tMajor;
+                        float tMinor = tMajor - (float)tIndex;
+                        tIndex *= 3;
+                        if (tIndex >= thickCount - 3)
+                        {
+                            tIndex = thickCount - 4;
+                            tMinor = 1.0f;
+                        }
+                        float a = powf(1.0f - t, 3);
+                        float b = 3.0f*powf(1.0f - t, 2)*t;
+                        float c = 3.0f*(1.0f - t)*t*t;
+                        float d = t*t*t;
+
+                        thick = a*thicks[tIndex] + b*thicks[tIndex + 1] + c*thicks[tIndex + 2] + d*thicks[tIndex + 3];
+                    }
+
+                    current[0].x = point.x + thick*tangent.y;
+                    current[0].y = point.y - thick*tangent.x;
+
+                    current[1].x = point.x - thick*tangent.y;
+                    current[1].y = point.y + thick*tangent.x;
+
+                    if (i > 0)
+                    {
+                        rlVertex2f(current[0].x, current[0].y);
+                        rlVertex2f(previous[0].x, previous[0].y);
+                        rlVertex2f(previous[1].x, previous[1].y);
+
+                        rlVertex2f(current[1].x, current[1].y);
+                        rlVertex2f(current[0].x, current[0].y);
+                        rlVertex2f(previous[1].x, previous[1].y);
+                    }
+
+                    previous[0] = current[0];
+                    previous[1] = current[1];
+                }
+
+            rlEnd();
+        }
+    }
+}
+
+// Draw spline segment with variable thickness: Cubic Bezier, 2 points, 2 control points
+void DrawSplineSegmentBezierCubicVar(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, const float* thicks, int thickCount, Color color)
+{
+    if (thickCount >= 4)
+    {
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            const float step = 1.0f/SPLINE_SEGMENT_DIVISIONS;
+
+            Vector2 previous[2] = { 0 };
+            Vector2 current[2] = { 0 };
+            float t = 0.0f;
+
+            for (int i = 0; i <= SPLINE_SEGMENT_DIVISIONS; i++)
+            {
+                t = step*(float)i;
+
+                Vector2 tangent = { 0 };
+                {
+                    float a = 3.0f*powf(1.0f - t, 2);
+                    float b = 6.0f*(1.0f - t)*t;
+                    float c = 3.0f*t*t;
+
+                    tangent.x = a*(c2.x - p1.x) + b*(c3.x - c2.x) + c*(p4.x - c3.x);
+                    tangent.y = a*(c2.y - p1.y) + b*(c3.y - c2.y) + c*(p4.y - c3.y);
+                }
+
+                float speedSqr = (tangent.x*tangent.x + tangent.y*tangent.y);
+                if (speedSqr == 0) continue;
+                float speedInv = 1.0f/sqrtf(speedSqr);
+                tangent.x *= speedInv;
+                tangent.y *= speedInv;
+
+                Vector2 point = { 0 };
+                {
+                    float a = powf(1.0f - t, 3);
+                    float b = 3.0f*powf(1.0f - t, 2)*t;
+                    float c = 3.0f*(1.0f - t)*powf(t, 2);
+                    float d = powf(t, 3);
+
+                    point.y = a*p1.y + b*c2.y + c*c3.y + d*p4.y;
+                    point.x = a*p1.x + b*c2.x + c*c3.x + d*p4.x;
+                }
+
+                float thick;
+                {
+                    float tMajor = t*(float)thickCount/3.0f;
+                    int tIndex = (int)tMajor;
+                    float tMinor = tMajor - (float)tIndex;
+                    tIndex *= 3;
+                    if (tIndex >= thickCount - 3)
+                    {
+                        tIndex = thickCount - 4;
+                        tMinor = 1.0f;
+                    }
+                    float a = powf(1.0f - t, 3);
+                    float b = 3.0f*powf(1.0f - t, 2)*t;
+                    float c = 3.0f*(1.0f - t)*t*t;
+                    float d = t*t*t;
+
+                    thick = a*thicks[tIndex] + b*thicks[tIndex + 1] + c*thicks[tIndex + 2] + d*thicks[tIndex + 3];
+                }
+
+                current[0].x = point.x + thick*tangent.y;
+                current[0].y = point.y - thick*tangent.x;
+
+                current[1].x = point.x - thick*tangent.y;
+                current[1].y = point.y + thick*tangent.x;
+
+                if (i > 0) // TODO: `previous` may be unassigned in i=1 if i=0 had a `speedSqr` of 0
+                {
+                    rlVertex2f(current[0].x, current[0].y);
+                    rlVertex2f(previous[0].x, previous[0].y);
+                    rlVertex2f(previous[1].x, previous[1].y);
+
+                    rlVertex2f(current[1].x, current[1].y);
+                    rlVertex2f(current[0].x, current[0].y);
+                    rlVertex2f(previous[1].x, previous[1].y);
+                }
+
+                previous[0] = current[0];
+                previous[1] = current[1];
+            }
+
+        rlEnd();
+    }
+}
+
 // Get spline point for a given t [0.0f .. 1.0f], Linear
 Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t)
 {
@@ -2187,6 +2358,14 @@ Vector2 GetSplinePointBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 e
     return point;
 }
 
+// Get spline control point given evenly-spaced points on that curve, Quadratic Bezier
+// NOTE: Assumes startPos has 0 entry velocity and endPos has 0 exit velocity
+void GetSplineControlBezierQuad(Vector2 startPos, Vector2 midPos, Vector2 endPos, Vector2 *controlPos)
+{
+    controlPos->y = 2.0f*midPos.y - 0.5f*(startPos.y + endPos.y);
+    controlPos->x = 2.0f*midPos.x - 0.5f*(startPos.x + endPos.x);
+}
+
 // Get spline point for a given t [0.0f .. 1.0f], Cubic Bezier
 Vector2 GetSplinePointBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t)
 {
@@ -2201,6 +2380,370 @@ Vector2 GetSplinePointBezierCubic(Vector2 startPos, Vector2 startControlPos, Vec
     point.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
     return point;
+}
+
+// Get spline control points given evenly-spaced points on that curve, Cubic Bezier
+// NOTE: Assumes startPos has 0 entry velocity and endPos has 0 exit velocity
+void GetSplineControlBezierCubic(Vector2 startPos, Vector2 oneThirdsPos, Vector2 twoThirdsPos, Vector2 endPos, Vector2 *startControlPos, Vector2 *endControlPos)
+{
+    const float a = -5.0f/6.0f;
+    const float b = 3.0f;
+    const float c = -3.0f/2.0f;
+    const float d = 1.0f/3.0f;
+
+    startControlPos->x = a*startPos.x + b*oneThirdsPos.x + c*twoThirdsPos.x + d*endPos.x;
+    startControlPos->y = a*startPos.y + b*oneThirdsPos.y + c*twoThirdsPos.y + d*endPos.y;
+
+    endControlPos->x = a*endPos.x + b*twoThirdsPos.x + c*oneThirdsPos.x + d*startPos.x;
+    endControlPos->y = a*endPos.y + b*twoThirdsPos.y + c*oneThirdsPos.y + d*startPos.y;
+}
+
+// Get spline direction and speed, Linear Bezier
+//
+// Normalize to get the "forward" direction of the curve
+Vector2 GetSplineVelocityLinear(Vector2 startPos, Vector2 endPos)
+{
+    Vector2 velocity = { 0 };
+
+    velocity.x = endPos.x - startPos.x;
+    velocity.y = endPos.y - startPos.y;
+
+    return velocity;
+}
+
+// Get spline direction and speed for a given t [0.0f .. 1.0f], Quadratic Bezier
+//
+// Normalize to get the "forward" direction of the curve at t
+Vector2 GetSplineVelocityBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t)
+{
+    Vector2 velocity = { 0 };
+
+    float a = 2.0f*(1.0f - t);
+    float b = 2.0f*t;
+
+    velocity.x = a*(controlPos.x - startPos.x) + b*(endPos.x - controlPos.x);
+    velocity.y = a*(controlPos.y - startPos.y) + b*(endPos.y - controlPos.y);
+
+    return velocity;
+}
+
+// Get spline direction and speed for a given t [0.0f .. 1.0f], Cubic Bezier
+//
+// Normalize to get the "forward" direction of the curve at t
+Vector2 GetSplineVelocityBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t)
+{
+    Vector2 velocity = { 0 };
+
+    float a = 3.0f*powf(1.0f - t, 2);
+    float b = 6.0f*(1.0f - t)*t;
+    float c = 3.0f*t*t;
+
+    velocity.x = a*(startControlPos.x - startPos.x) + b*(endControlPos.x - startControlPos.x) + c*(endPos.x - endControlPos.x);
+    velocity.y = a*(startControlPos.y - startPos.y) + b*(endControlPos.y - startControlPos.y) + c*(endPos.y - endControlPos.y);
+
+    return velocity;
+}
+
+// Get spline rate of change, Quadratic Bezier
+Vector2 GetSplineAccelerationBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos)
+{
+    Vector2 acceleration = { 0 };
+
+    acceleration.x = 2.0f*(endPos.x - 2.0f*controlPos.x - startPos.x);
+    acceleration.y = 2.0f*(endPos.y - 2.0f*controlPos.y - startPos.y);
+
+    return acceleration;
+}
+
+// Get spline rate of change for a given t [0.0f .. 1.0f], Cubic Bezier
+Vector2 GetSplineAccelerationBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t)
+{
+    Vector2 acceleration = { 0 };
+
+    float a = 2.0f*(1.0f - t);
+    float b = 2.0f*t;
+
+    acceleration.x = a*(endControlPos.x - 2.0f*startControlPos.x + startPos.x) + b*(endPos.x - 2.0f*endControlPos.x + startControlPos.x);
+    acceleration.y = a*(endControlPos.y - 2.0f*startControlPos.y + startPos.y) + b*(endPos.y - 2.0f*endControlPos.y + startControlPos.y);
+
+    return acceleration;
+}
+
+// Get spline rate of acceleration, Cubic Bezier
+Vector2 GetSplineJoltBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos)
+{
+    Vector2 jolt = { 0 };
+
+    jolt.x = 6.0f*(endPos.x + 3.0f*(startControlPos.x - endControlPos.x) - startPos.x);
+    jolt.y = 6.0f*(endPos.y + 3.0f*(startControlPos.y - endControlPos.y) - startPos.y);
+
+    return jolt;
+}
+
+// Compute spline curve bounding rectangle, Linear Bezier
+Rectangle GetSplineBoundsBezierLinear(Vector2 startPos, Vector2 endPos)
+{
+    float xMin;
+    float yMin;
+    float xMax;
+    float yMax;
+
+    if (startPos.x < endPos.x)
+    {
+        xMin = startPos.x;
+        xMax = endPos.x;
+    }
+    else
+    {
+        xMin = endPos.x;
+        xMax = startPos.x;
+    }
+
+    if (startPos.y < endPos.y)
+    {
+        yMin = startPos.y;
+        yMax = endPos.y;
+    }
+    else
+    {
+        yMin = endPos.y;
+        yMax = startPos.y;
+    }
+
+    // straight line will never escape bounds
+
+    Rectangle bounds = { xMin, yMin, xMax - xMin, yMax - yMin };
+
+    return bounds;
+}
+
+// Compute spline curve bounding rectangle, Quadratic Bezier
+Rectangle GetSplineBoundsBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos)
+{
+    float xMin;
+    float yMin;
+    float xMax;
+    float yMax;
+
+    if (startPos.x < endPos.x)
+    {
+        xMin = startPos.x;
+        xMax = endPos.x;
+    }
+    else
+    {
+        xMin = endPos.x;
+        xMax = startPos.x;
+    }
+
+    if (startPos.y < endPos.y)
+    {
+        yMin = startPos.y;
+        yMax = endPos.y;
+    }
+    else
+    {
+        yMin = endPos.y;
+        yMax = startPos.y;
+    }
+
+    // curve velocity, rearranged to solve for t
+    // at^2 + bt + c
+    // local min/max occur where derivative (velocity) is zero,
+    // so we use quadratic formula to find values of t at zeros
+
+    float a = startPos.x - 2.0f*controlPos.x + endPos.x;
+    float b = 2.0f*(controlPos.x - startPos.x);
+    float c = startPos.x;
+
+    bool dejavu = false;
+    do
+    {
+        if (a != 0)
+        {
+            float bSqrMinus4ac = b*b - 4.0f*a*c;
+            float t[2] = { 0 };
+            int tCount = 0;
+            if (bSqrMinus4ac > 0)
+            {
+                float denominator = 1.0f/(2.0f*a);
+
+                float term0 = -b*denominator;
+                float term1 = sqrtf(bSqrMinus4ac)*denominator;
+
+                t[0] = term0 + term1;
+                if (0.0f < t[0] && t[0] < 1.0f) ++tCount;
+
+                t[tCount] = term0 - term1;
+                if (0.0f < t[tCount] && t[tCount] < 1.0f) ++tCount;
+            }
+            else if (bSqrMinus4ac == 0)
+            {
+                t[0] = -b/(2.0f*a);
+                if (0.0f < t[0] && t[0] < 1.0f) ++tCount;
+            }
+            // ignore imaginary solution
+
+            for (int i = 0; i < tCount; ++i)
+            {
+                Vector2 point = GetSplinePointBezierQuad(startPos, controlPos, endPos, t[i]);
+
+                if (point.x < xMin) xMin = point.x;
+                if (point.x > xMax) xMax = point.x;
+                if (point.y < yMin) yMin = point.y;
+                if (point.y > yMax) yMax = point.y;
+            }
+        }
+        // straight line will never escape bounds
+
+        if (dejavu) break;
+        dejavu = true;
+
+        a = startPos.y - 2.0f*controlPos.y + endPos.y;
+        b = 2.0f*(controlPos.y - startPos.y);
+        c = startPos.y;
+    }
+    while (true);
+
+    Rectangle bounds = { xMin, yMin, xMax - xMin, yMax - yMin };
+
+    return bounds;
+}
+
+// Compute spline curve bounding rectangle, Cubic Bezier
+Rectangle GetSplineBoundsBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos)
+{
+    float xMin;
+    float yMin;
+    float xMax;
+    float yMax;
+
+    if (startPos.x < endPos.x)
+    {
+        xMin = startPos.x;
+        xMax = endPos.x;
+    }
+    else
+    {
+        xMin = endPos.x;
+        xMax = startPos.x;
+    }
+
+    if (startPos.y < endPos.y)
+    {
+        yMin = startPos.y;
+        yMax = endPos.y;
+    }
+    else
+    {
+        yMin = endPos.y;
+        yMax = startPos.y;
+    }
+
+    // curve velocity, rearranged to solve for t
+    // at^2 + bt + c
+    // local min/max occur where derivative (velocity) is zero,
+    // so we use quadratic formula to find values of t at zeros
+
+    float a = -3.0f*startPos.x + 9.0f*startControlPos.x - 9.0f*endControlPos.x + 3.0f*endPos.x;
+    float b = 6.0f*startPos.x - 12.0f*startControlPos.x + 6.0f*endControlPos.x;
+    float c = -3.0f*startPos.x + 3.0f*startControlPos.x;
+
+    bool dejavu = false;
+    do
+    {
+        if (a != 0)
+        {
+            float bSqrMinus4ac = b*b - 4.0f*a*c;
+            float t[2] = { 0 };
+            int tCount = 0;
+            if (bSqrMinus4ac > 0)
+            {
+                float denominator = 1.0f/(2.0f*a);
+
+                float term0 = -b*denominator;
+                float term1 = sqrtf(bSqrMinus4ac)*denominator;
+
+                t[0] = term0 + term1;
+                if (0.0f < t[0] && t[0] < 1.0f) ++tCount;
+
+                t[tCount] = term0 - term1;
+                if (0.0f < t[tCount] && t[tCount] < 1.0f) ++tCount;
+            }
+            else if (bSqrMinus4ac == 0)
+            {
+                t[0] = -b/(2.0f*a);
+                if (0.0f < t[0] && t[0] < 1.0f) ++tCount;
+            }
+            // ignore imaginary solution
+
+            for (int i = 0; i < tCount; ++i)
+            {
+                Vector2 point = GetSplinePointBezierCubic(startPos, startControlPos, endControlPos, endPos, t[i]);
+
+                if (point.x < xMin) xMin = point.x;
+                if (point.x > xMax) xMax = point.x;
+                if (point.y < yMin) yMin = point.y;
+                if (point.y > yMax) yMax = point.y;
+            }
+        }
+        // straight line will never escape bounds
+
+        if (dejavu) break;
+        dejavu = true;
+
+        a = -3.0f*startPos.x + 9.0f*startControlPos.x - 9.0f*endControlPos.x + 3.0f*endPos.x;
+        b = 6.0f*startPos.x - 12.0f*startControlPos.x + 6.0f*endControlPos.x;
+        c = -3.0f*startPos.x + 3.0f*startControlPos.x;
+    }
+    while (true);
+
+    Rectangle bounds = { xMin, yMin, xMax - xMin, yMax - yMin };
+
+    return bounds;
+}
+
+// Reciprocal radius (or "radians per meter") for a given t [0.0f .. 1.0f], Cubic Bezier
+float GetSplineCurvatureBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t)
+{
+    float curvature = 0.0f;
+
+    float a = 3.0f*powf(1.0f - t, 2);
+    float b = 6.0f*(1.0f - t)*t;
+    float c = 3.0f*t*t;
+
+    Vector2 velocity = { 0 };
+
+    velocity.x = a*(startControlPos.x - startPos.x) + b*(endControlPos.x - startControlPos.x) + c*(endPos.x - endControlPos.x);
+    velocity.y = a*(startControlPos.y - startPos.y) + b*(endControlPos.y - startControlPos.y) + c*(endPos.y - endControlPos.y);
+
+    a = 2.0f*(1.0f - t);
+    b = 2.0f*t;
+
+    Vector2 acceleration = { 0 };
+
+    acceleration.x = a*(endControlPos.x - 2.0f*startControlPos.x + startPos.x) + b*(endPos.x - 2.0f*endControlPos.x + startControlPos.x);
+    acceleration.y = a*(endControlPos.y - 2.0f*startControlPos.y + startPos.y) + b*(endPos.y - 2.0f*endControlPos.y + startControlPos.y);
+
+    curvature = (velocity.x*acceleration.y - velocity.y*acceleration.x)/powf(sqrtf(velocity.x*velocity.x + velocity.y*velocity.y), 3);
+
+    return curvature;
+}
+
+// Get value of t (unbounded) for the point on the line closest to a given position
+float GetSplineNearestTLinear(Vector2 startPos, Vector2 endPos, Vector2 point)
+{
+    Vector2 edge = { 0 };
+    edge.x = endPos.x - startPos.x;
+    edge.y = endPos.y - startPos.y;
+
+    Vector2 diff = { 0 };
+    diff.x = point.x - startPos.x;
+    diff.y = point.y - startPos.y;
+
+    float t = (edge.x*diff.x + edge.y*diff.y)/(edge.x*edge.x + edge.y*edge.y);
+
+    return t;
 }
 
 //----------------------------------------------------------------------------------

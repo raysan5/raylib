@@ -14,6 +14,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "raymath.h"
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"     // Required for UI controls
@@ -21,9 +22,10 @@
 #include <stdlib.h>     // Required for: NULL
 
 #define MAX_SPLINE_POINTS      32
+#define SPLINE_THICK_COUNT      4
 
 // Cubic Bezier spline control points
-// NOTE: Every segment has two control points 
+// NOTE: Every segment has two control points
 typedef struct {
     Vector2 start;
     Vector2 end;
@@ -34,7 +36,9 @@ typedef enum {
     SPLINE_LINEAR = 0,      // Linear
     SPLINE_BASIS,           // B-Spline
     SPLINE_CATMULLROM,      // Catmull-Rom
-    SPLINE_BEZIER           // Cubic Bezier
+    SPLINE_BEZIER,          // Cubic Bezier
+    SPLINE_LINEAR_VAR,      // Linear, variable thickness
+    SPLINE_BEZIER_VAR       // Cubic Bezier, variable thickness
 } SplineType;
 
 //------------------------------------------------------------------------------------
@@ -57,19 +61,28 @@ int main(void)
         { 520.0f, 60.0f },
         { 710.0f, 260.0f },
     };
-    
-    // Array required for spline bezier-cubic, 
+
+    float thicks[SPLINE_THICK_COUNT] = {
+        0.0f,
+        8.0f,
+        8.0f,
+        0.0f,
+    };
+
+    // Array required for spline bezier-cubic,
     // including control points interleaved with start-end segment points
     Vector2 pointsInterleaved[3*(MAX_SPLINE_POINTS - 1) + 1] = { 0 };
-    
+
     int pointCount = 5;
     int selectedPoint = -1;
     int focusedPoint = -1;
+    int selectedThickPoint = -1;
+    int focusedThickPoint = -1;
     Vector2 *selectedControlPoint = NULL;
     Vector2 *focusedControlPoint = NULL;
-    
+
     // Cubic Bezier control points initialization
-    ControlPoint control[MAX_SPLINE_POINTS-1] = { 0 };
+    ControlPoint control[MAX_SPLINE_POINTS - 1] = { 0 };
     for (int i = 0; i < pointCount - 1; i++)
     {
         control[i].start = (Vector2){ points[i].x + 50, points[i].y };
@@ -78,10 +91,10 @@ int main(void)
 
     // Spline config variables
     float splineThickness = 8.0f;
-    int splineTypeActive = SPLINE_LINEAR; // 0-Linear, 1-BSpline, 2-CatmullRom, 3-Bezier
-    bool splineTypeEditMode = false; 
+    int splineTypeActive = SPLINE_LINEAR; // 0-Linear, 1-BSpline, 2-CatmullRom, 3-Bezier, 4-LinearVar, 5-BezierVar
+    bool splineTypeEditMode = false;
     bool splineHelpersActive = true;
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -100,10 +113,79 @@ int main(void)
             pointCount++;
         }
 
-        // Spline point focus and selection logic
-        if ((selectedPoint == -1) && ((splineTypeActive != SPLINE_BEZIER) || (selectedControlPoint == NULL)))
+        focusedPoint = selectedPoint;
+        focusedThickPoint = selectedThickPoint;
+        focusedControlPoint = selectedControlPoint;
+
+        // Variable thickness control points logic (thickness controls are smaller so they have higher priority)
+        if ((selectedThickPoint == -1) && (selectedPoint == -1) && (selectedControlPoint == NULL))
         {
-            focusedPoint = -1;
+            if (splineTypeActive == SPLINE_LINEAR_VAR)
+            {
+                for (int i = 0; i < pointCount - 1; i++)
+                {
+                    Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
+                    Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+
+                    for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                    {
+                        float t = (float)j/(SPLINE_THICK_COUNT - 1);
+                        Vector2 point = Vector2Add(GetSplinePointLinear(points[i], points[i + 1], t), Vector2Scale(perpendicular, thicks[j]));
+                        if (CheckCollisionPointCircle(GetMousePosition(), point, 4.0f)) {
+                            focusedThickPoint = i*SPLINE_THICK_COUNT + j;
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (splineTypeActive == SPLINE_BEZIER_VAR)
+            {
+                for (int i = 0; i < pointCount - 1; i++)
+                {
+                    for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                    {
+                        float t = (float)j/(SPLINE_THICK_COUNT - 1);
+                        Vector2 direction = Vector2Normalize(GetSplineVelocityBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], t));
+                        Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+                        Vector2 point = Vector2Add(GetSplinePointBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], t), Vector2Scale(perpendicular, thicks[j]));
+                        if (CheckCollisionPointCircle(GetMousePosition(), point, 4.0f)) {
+                            focusedThickPoint = i*SPLINE_THICK_COUNT + j;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedThickPoint = focusedThickPoint;
+        }
+
+        // Spline thickness movement logic
+        if (selectedThickPoint >= 0)
+        {
+            int i = selectedThickPoint/SPLINE_THICK_COUNT;
+            int j = selectedThickPoint%SPLINE_THICK_COUNT;
+            if (splineTypeActive == SPLINE_LINEAR_VAR)
+            {
+                Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
+                Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+
+                thicks[j] = Vector2DotProduct(perpendicular, Vector2Subtract(GetMousePosition(), points[i]));
+            }
+            else if (splineTypeActive == SPLINE_BEZIER_VAR)
+            {
+                float t = (float)j/(SPLINE_THICK_COUNT - 1);
+                Vector2 direction = Vector2Normalize(GetSplineVelocityBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], t));
+                Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+
+                thicks[j] = Vector2DotProduct(perpendicular, Vector2Subtract(GetMousePosition(), GetSplinePointBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], t)));
+            }
+            if (thicks[j] > 40.0f) thicks[j] = 40.0f;
+            if (thicks[j] < -40.0f) thicks[j] = -40.0f;
+            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedThickPoint = -1;
+        }
+
+        // Spline point focus and selection logic
+        if ((selectedPoint == -1) && (focusedThickPoint == -1) && (((splineTypeActive != SPLINE_BEZIER) && (splineTypeActive != SPLINE_BEZIER_VAR)) || (selectedControlPoint == NULL)))
+        {
             for (int i = 0; i < pointCount; i++)
             {
                 if (CheckCollisionPointCircle(GetMousePosition(), points[i], 8.0f))
@@ -114,53 +196,61 @@ int main(void)
             }
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedPoint = focusedPoint;
         }
-        
+
         // Spline point movement logic
         if (selectedPoint >= 0)
         {
             points[selectedPoint] = GetMousePosition();
+            if (points[selectedPoint].x < 0.0f) points[selectedPoint].x = 0.0f;
+            if (points[selectedPoint].x > screenWidth) points[selectedPoint].x = screenWidth;
+            if (points[selectedPoint].y < 0.0f) points[selectedPoint].y = 0.0f;
+            if (points[selectedPoint].y > screenHeight) points[selectedPoint].y = screenHeight;
             if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedPoint = -1;
         }
-        
-        // Cubic Bezier spline control points logic
-        if ((splineTypeActive == SPLINE_BEZIER) && (focusedPoint == -1))
-        {
-            // Spline control point focus and selection logic
-            if (selectedControlPoint == NULL)
-            {
-                focusedControlPoint = NULL;
-                for (int i = 0; i < pointCount - 1; i++)
-                {
-                    if (CheckCollisionPointCircle(GetMousePosition(), control[i].start, 6.0f))
-                    {
-                        focusedControlPoint = &control[i].start;
-                        break;
-                    }
-                    else if (CheckCollisionPointCircle(GetMousePosition(), control[i].end, 6.0f))
-                    {
-                        focusedControlPoint = &control[i].end;
-                        break;
-                    }
-                }
-                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedControlPoint = focusedControlPoint;
-            }
-            
-            // Spline control point movement logic
-            if (selectedControlPoint != NULL)
-            {
-                *selectedControlPoint = GetMousePosition();
-                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedControlPoint = NULL;
-            }
-        }
-        
-        // Spline selection logic
-        if (IsKeyPressed(KEY_ONE)) splineTypeActive = 0;
-        else if (IsKeyPressed(KEY_TWO)) splineTypeActive = 1;
-        else if (IsKeyPressed(KEY_THREE)) splineTypeActive = 2;
-        else if (IsKeyPressed(KEY_FOUR)) splineTypeActive = 3;
 
-        // Clear selection when changing to a spline without control points
-        if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_THREE)) selectedControlPoint = NULL;
+        // Cubic Bezier spline control points logic
+        if (((splineTypeActive == SPLINE_BEZIER) || (splineTypeActive == SPLINE_BEZIER_VAR)) && (selectedControlPoint == NULL) && (focusedPoint == -1) && (selectedThickPoint == -1))
+        {
+            for (int i = 0; i < pointCount - 1; i++)
+            {
+                if (CheckCollisionPointCircle(GetMousePosition(), control[i].start, 6.0f))
+                {
+                    focusedControlPoint = &control[i].start;
+                    break;
+                }
+                else if (CheckCollisionPointCircle(GetMousePosition(), control[i].end, 6.0f))
+                {
+                    focusedControlPoint = &control[i].end;
+                    break;
+                }
+            }
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selectedControlPoint = focusedControlPoint;
+        }
+
+        // Spline control point movement logic
+        if (selectedControlPoint != NULL)
+        {
+            *selectedControlPoint = GetMousePosition();
+            if (selectedControlPoint->x < 0.0f) selectedControlPoint->x = 0.0f;
+            if (selectedControlPoint->x > screenWidth) selectedControlPoint->x = screenWidth;
+            if (selectedControlPoint->y < 0.0f) selectedControlPoint->y = 0.0f;
+            if (selectedControlPoint->y > screenHeight) selectedControlPoint->y = screenHeight;
+            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) selectedControlPoint = NULL;
+        }
+
+        // Spline selection logic
+        if (IsKeyPressed(KEY_ONE)) splineTypeActive = SPLINE_LINEAR;
+        else if (IsKeyPressed(KEY_TWO)) splineTypeActive = SPLINE_BASIS;
+        else if (IsKeyPressed(KEY_THREE)) splineTypeActive = SPLINE_CATMULLROM;
+        else if (IsKeyPressed(KEY_FOUR)) splineTypeActive = SPLINE_BEZIER;
+        else if (IsKeyPressed(KEY_FIVE)) splineTypeActive = SPLINE_LINEAR_VAR;
+        else if (IsKeyPressed(KEY_SIX)) splineTypeActive = SPLINE_BEZIER_VAR;
+
+        // Clear control point selection when changing to a spline without control points
+        if ((splineTypeActive != SPLINE_BEZIER) && (splineTypeActive != SPLINE_BEZIER_VAR)) selectedControlPoint = NULL;
+
+        // Clear thickness selection when changing splines
+        if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_THREE) || IsKeyPressed(KEY_FOUR) || IsKeyPressed(KEY_FIVE) || IsKeyPressed(KEY_SIX)) selectedThickPoint = -1;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -168,7 +258,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-        
+
             if (splineTypeActive == SPLINE_LINEAR)
             {
                 // Draw spline: linear
@@ -191,7 +281,7 @@ int main(void)
             {
                 // Draw spline: catmull-rom
                 DrawSplineCatmullRom(points, pointCount, splineThickness, RED); // Provide connected points array
-                
+
                 /*
                 for (int i = 0; i < (pointCount - 3); i++)
                 {
@@ -202,20 +292,20 @@ int main(void)
             }
             else if (splineTypeActive == SPLINE_BEZIER)
             {
-                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be 
+                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be
                 // provided interleaved with the start and end point of every segment
-                for (int i = 0; i < (pointCount - 1); i++) 
+                for (int i = 0; i < (pointCount - 1); i++)
                 {
                     pointsInterleaved[3*i] = points[i];
                     pointsInterleaved[3*i + 1] = control[i].start;
                     pointsInterleaved[3*i + 2] = control[i].end;
                 }
-                
+
                 pointsInterleaved[3*(pointCount - 1)] = points[pointCount - 1];
 
                 // Draw spline: cubic-bezier (with control points)
                 DrawSplineBezierCubic(pointsInterleaved, 3*(pointCount - 1) + 1, splineThickness, RED);
-                
+
                 /*
                 for (int i = 0; i < 3*(pointCount - 1); i += 3)
                 {
@@ -223,7 +313,37 @@ int main(void)
                     DrawSplineSegmentBezierCubic(pointsInterleaved[i], pointsInterleaved[i + 1], pointsInterleaved[i + 2], pointsInterleaved[i + 3], splineThickness, MAROON);
                 }
                 */
+            }
+            else if (splineTypeActive == SPLINE_LINEAR_VAR)
+            {
+                // Draw spline: variable-width linear
+                for (int i = 0; i < pointCount - 1; ++i)
+                {
+                    DrawSplineSegmentLinearVar(points[i], points[i + 1], thicks, SPLINE_THICK_COUNT, RED);
+                }
+            }
+            else if (splineTypeActive == SPLINE_BEZIER_VAR)
+            {
+                // NOTE: Cubic-bezier spline requires the 2 control points of each segnment to be
+                // provided interleaved with the start and end point of every segment
+                for (int i = 0; i < (pointCount - 1); i++)
+                {
+                    pointsInterleaved[3*i] = points[i];
+                    pointsInterleaved[3*i + 1] = control[i].start;
+                    pointsInterleaved[3*i + 2] = control[i].end;
+                }
 
+                pointsInterleaved[3*(pointCount - 1)] = points[pointCount - 1];
+
+                // Draw spline: variable-width cubic-bezier (with control points)
+                for (int i = 0; i < pointCount - 1; ++i)
+                {
+                    DrawSplineSegmentBezierCubicVar(points[i], control[i].start, control[i].end, points[i + 1], thicks, SPLINE_THICK_COUNT, RED);
+                }
+            }
+
+            if ((splineTypeActive == SPLINE_BEZIER) || (splineTypeActive == SPLINE_BEZIER_VAR))
+            {
                 // Draw spline control points
                 for (int i = 0; i < pointCount - 1; i++)
                 {
@@ -234,7 +354,7 @@ int main(void)
                     else if (focusedControlPoint == &control[i].end) DrawCircleV(control[i].end, 8, GREEN);
                     DrawLineEx(points[i], control[i].start, 1.0f, LIGHTGRAY);
                     DrawLineEx(points[i + 1], control[i].end, 1.0f, LIGHTGRAY);
-                
+
                     // Draw spline control lines
                     DrawLineV(points[i], control[i].start, GRAY);
                     //DrawLineV(control[i].start, control[i].end, LIGHTGRAY);
@@ -249,27 +369,86 @@ int main(void)
                 {
                     DrawCircleLinesV(points[i], (focusedPoint == i)? 12.0f : 8.0f, (focusedPoint == i)? BLUE: DARKBLUE);
                     if ((splineTypeActive != SPLINE_LINEAR) &&
+                        (splineTypeActive != SPLINE_LINEAR_VAR) &&
                         (splineTypeActive != SPLINE_BEZIER) &&
+                        (splineTypeActive != SPLINE_BEZIER_VAR) &&
                         (i < pointCount - 1)) DrawLineV(points[i], points[i + 1], GRAY);
 
                     DrawText(TextFormat("[%.0f, %.0f]", points[i].x, points[i].y), (int)points[i].x, (int)points[i].y + 10, 10, BLACK);
                 }
+
+                // Draw spline thickness helpers
+                if (splineTypeActive == SPLINE_LINEAR_VAR)
+                {
+                    Vector2 thickPoints[SPLINE_THICK_COUNT] = { 0 };
+
+                    for (int i = 0; i < pointCount - 1; i++)
+                    {
+                        DrawLineV(points[i], points[i + 1], BROWN);
+
+                        Vector2 direction = Vector2Normalize(GetSplineVelocityLinear(points[i], points[i + 1]));
+                        Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+                        for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                        {
+                            float t = (float)j/(SPLINE_THICK_COUNT - 1);
+                            Vector2 anchor = GetSplinePointLinear(points[i], points[i + 1], t);
+                            thickPoints[j] = Vector2Add(anchor, Vector2Scale(perpendicular, thicks[j]));
+                            DrawLineV(anchor, thickPoints[j], SKYBLUE);
+                            DrawCircleV(thickPoints[j], (((focusedThickPoint%SPLINE_THICK_COUNT) == j)? 6.0f : 4.0f), (((focusedThickPoint%SPLINE_THICK_COUNT) == j)? VIOLET : PURPLE));
+                        }
+
+                        DrawSplineBezierCubic(thickPoints, SPLINE_THICK_COUNT, 1.0f, ORANGE);
+                    }
+                }
+                else if (splineTypeActive == SPLINE_BEZIER_VAR)
+                {
+                    for (int i = 0; i < pointCount - 1; i++)
+                    {
+                        DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], 1.0f, BROWN);
+
+                        for (int j = 0; j < SPLINE_THICK_COUNT; j++)
+                        {
+                            float t = (float)j/(SPLINE_THICK_COUNT - 1);
+                            Vector2 direction = Vector2Normalize(GetSplineVelocityBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], t));
+                            Vector2 perpendicular = (Vector2){ direction.y, -direction.x };
+                            Vector2 anchor = GetSplinePointBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], t);
+                            Vector2 thickPoint = Vector2Add(anchor, Vector2Scale(perpendicular, thicks[j]));
+                            DrawLineV(anchor, thickPoint, SKYBLUE);
+                            DrawCircleV(thickPoint, (((focusedThickPoint%SPLINE_THICK_COUNT) == j)? 6.0f : 4.0f), (((focusedThickPoint%SPLINE_THICK_COUNT) == j)? VIOLET : PURPLE));
+                        }
+
+                        // I tried: outlining the thickness isn't possible.
+                        // A variable-thickness Bezier curve can potentially have more detail than can
+                        // be expressed with another Bezier curve of the same degree.
+                        // Example: https://www.desmos.com/calculator/qh31vr4rbf
+                    }
+                }
             }
 
             // Check all possible UI states that require controls lock
-            if (splineTypeEditMode || (selectedPoint != -1) || (selectedControlPoint != NULL)) GuiLock();
-            
-            // Draw spline config
-            GuiLabel((Rectangle){ 12, 62, 140, 24 }, TextFormat("Spline thickness: %i", (int)splineThickness));
-            GuiSliderBar((Rectangle){ 12, 60 + 24, 140, 16 }, NULL, NULL, &splineThickness, 1.0f, 40.0f);
+            if (splineTypeEditMode || (selectedPoint != -1) || (selectedThickPoint != -1) || (selectedControlPoint != NULL)) GuiLock();
 
-            GuiCheckBox((Rectangle){ 12, 110, 20, 20 }, "Show point helpers", &splineHelpersActive);
+            // Draw spline config
+            if ((splineTypeActive == SPLINE_LINEAR_VAR) || (splineTypeActive == SPLINE_BEZIER_VAR))
+            {
+                GuiLabel((Rectangle){ 12, 68 + 24, 200, 24 }, TextFormat("Spline thickness: %i, %i, %i, %i", (int)thicks[0], (int)thicks[1], (int)thicks[2], (int)thicks[3]));
+                GuiSlider((Rectangle){ 12, 68 + 48, 140, 16 }, NULL, NULL, &thicks[0], -40.0, 40.0f);
+                GuiSlider((Rectangle){ 12, 68 + 48 + 20, 140, 16 }, NULL, NULL, &thicks[1], -40.0, 40.0f);
+                GuiSlider((Rectangle){ 12, 68 + 48 + 40, 140, 16 }, NULL, NULL, &thicks[2], -40.0, 40.0f);
+                GuiSlider((Rectangle){ 12, 68 + 48 + 60, 140, 16 }, NULL, NULL, &thicks[3], -40.0, 40.0f);
+            }
+            else
+            {
+                GuiLabel((Rectangle){ 12, 68 + 24, 140, 24 }, TextFormat("Spline thickness: %i", (int)splineThickness));
+                GuiSliderBar((Rectangle){ 12, 68 + 48, 140, 16 }, NULL, NULL, &splineThickness, 1.0f, 40.0f);
+            }
+
+            GuiCheckBox((Rectangle){ 12, 68, 20, 20 }, "Show point helpers", &splineHelpersActive);
 
             if (splineTypeEditMode) GuiUnlock();
 
             GuiLabel((Rectangle){ 12, 10, 140, 24 }, "Spline type:");
-            if (GuiDropdownBox((Rectangle){ 12, 8 + 24, 140, 28 }, "LINEAR;BSPLINE;CATMULLROM;BEZIER", &splineTypeActive, splineTypeEditMode)) splineTypeEditMode = !splineTypeEditMode;
-            
+            if (GuiDropdownBox((Rectangle){ 12, 8 + 24, 140, 28 }, "LINEAR;BSPLINE;CATMULLROM;BEZIER;LINEAR VARIABLE;BEZIER VARIABLE", &splineTypeActive, splineTypeEditMode)) splineTypeEditMode = !splineTypeEditMode;
             GuiUnlock();
 
         EndDrawing();
