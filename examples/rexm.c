@@ -622,21 +622,29 @@ int main(int argc, char *argv[])
         } break;
         case 5:     // Validate
         {
-            // TODO: Validate examples collection against [examples_list.txt]
-            
-            // Validate: raylib/examples/<category>/<category>_example_name.c
-            // Validate: raylib/examples/<category>/<category>_example_name.png
-            // Validate: raylib/examples/<category>/resources/.. -> Not possible for now...
-            // Validate: raylib/examples/Makefile
-            // Validate: raylib/examples/Makefile.Web
-            // Validate: raylib/examples/README.md
-            // Validate: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
-            // Validate: raylib/projects/VS2022/raylib.sln
-            // Validate: raylib.com/common/examples.js
-            // Validate: raylib.com/examples/<category>/<category>_example_name.html
-            // Validate: raylib.com/examples/<category>/<category>_example_name.data
-            // Validate: raylib.com/examples/<category>/<category>_example_name.wasm
-            // Validate: raylib.com/examples/<category>/<category>_example_name.js
+            // TODO: Validate examples in collection list [examples_list.txt] -> Source of truth!
+            // Validate: raylib/examples/<category>/<category>_example_name.c        -> File exists?
+            // Validate: raylib/examples/<category>/<category>_example_name.png      -> File exists?
+            // Validate: raylib/examples/<category>/resources/..                     -> Example resources available?
+            // Validate: raylib/examples/Makefile                                    -> Example listed?
+            // Validate: raylib/examples/Makefile.Web                                -> Example listed?
+            // Validate: raylib/examples/README.md                                   -> Example listed?
+            // Validate: raylib/projects/VS2022/examples/<category>_example_name.vcxproj -> File exists?
+            // Validate: raylib/projects/VS2022/raylib.sln                           -> Example listed?
+            // Validate: raylib.com/common/examples.js                               -> Example listed?
+            // Validate: raylib.com/examples/<category>/<category>_example_name.html -> File exists?
+            // Validate: raylib.com/examples/<category>/<category>_example_name.data -> File exists?
+            // Validate: raylib.com/examples/<category>/<category>_example_name.wasm -> File exists?
+            // Validate: raylib.com/examples/<category>/<category>_example_name.js   -> File exists?
+
+            // Additional validation elements
+            // Validate: Example naming conventions: <category>/<category>_example_name
+            // Validate: Duplicate entries in collection list
+            // Validate: Example info (stars, author, github) missmatches with example content
+
+            // After validation, update required files for consistency
+            // Update files: Makefile, Makefile.Web, README.md, examples.js
+            UpdateRequiredFiles();
             
         } break;
         default:    // Help
