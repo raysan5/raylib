@@ -96,7 +96,10 @@ static const char *exBasePath = "C:/GitHub/raylib/examples";
 static const char *exWebPath = "C:/GitHub/raylib.com/examples";
 static const char *exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
 static const char *exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
-static const char *exCollectionListPath = "C:/GitHub/raylib/examples/examples_list.txt";
+static const char *exCollectionFilePath = "C:/GitHub/raylib/examples/examples_list.txt";
+
+//const char *exBasePath = getenv("REXM_EXAMPLES_PATH");
+//if (!exBasePath) exBasePath = "default/path";
 
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
@@ -105,6 +108,7 @@ static int FileTextReplace(const char *fileName, const char *textLookUp, const c
 static int FileCopy(const char *srcPath, const char *dstPath);
 static int FileRename(const char *fileName, const char *fileRename);
 static int FileRemove(const char *fileName);
+static int FileMove(const char *srcPath, const char *dstPath);
 
 // Update required files from examples collection
 // UPDATES: Makefile, Makefile.Web, README.md, examples.js
@@ -236,7 +240,7 @@ int main(int argc, char *argv[])
             else
             {
                 // Verify example exists in collection to be removed
-                char *exColInfo = LoadFileText(exCollectionListPath);
+                char *exColInfo = LoadFileText(exCollectionFilePath);
                 if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
                     strcpy(exName, argv[2]);    // Register example name
@@ -257,7 +261,7 @@ int main(int argc, char *argv[])
             else
             {
                 // Verify example exists in collection to be removed
-                char *exColInfo = LoadFileText(exCollectionListPath);
+                char *exColInfo = LoadFileText(exCollectionFilePath);
                 if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
                     strcpy(exName, argv[2]); // Register filename for removal
@@ -372,7 +376,7 @@ int main(int argc, char *argv[])
             // Add example to the collection list, if not already there
             // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
             //------------------------------------------------------------------------------------------------
-            char *exColInfo = LoadFileText(exCollectionListPath);
+            char *exColInfo = LoadFileText(exCollectionFilePath);
             if (TextFindIndex(exColInfo, exName) == -1) // Example not found
             {
                 char *exColInfoUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
@@ -409,7 +413,7 @@ int main(int argc, char *argv[])
                     memcpy(exColInfoUpdated + catIndex + textWritenSize, exColInfo + catIndex, strlen(exColInfo) - catIndex);
                 }
                 
-                SaveFileText(exCollectionListPath, exColInfoUpdated);
+                SaveFileText(exCollectionFilePath, exColInfoUpdated);
                 RL_FREE(exColInfoUpdated);
             }
             else LOG("WARNING: ADD: Example is already on the collection\n");
@@ -464,7 +468,7 @@ int main(int argc, char *argv[])
             if (strcmp(exCategory, exRecategory) == 0)
             {
                 // Rename example on collection
-                FileTextReplace(exCollectionListPath, TextFormat("%s;%s", exCategory, exName), 
+                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName), 
                     TextFormat("%s;%s", exRecategory, exRename));
 
                 // Edit: Rename example code and screenshot files .c and .png
@@ -491,7 +495,7 @@ int main(int argc, char *argv[])
             {
                 // WARNING: Rename with change of category
                 // TODO: Reorder collection to place renamed example at the end of category
-                FileTextReplace(exCollectionListPath, TextFormat("%s;%s", exCategory, exName), 
+                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName), 
                     TextFormat("%s;%s", exRecategory, exRename));
 
                 // TODO: Move example resources from <src_category>/resources to <dst_category>/resources
@@ -536,7 +540,7 @@ int main(int argc, char *argv[])
         {
             // Remove example from collection for files update
             //------------------------------------------------------------------------------------------------
-            char *exColInfo = LoadFileText(exCollectionListPath);
+            char *exColInfo = LoadFileText(exCollectionFilePath);
             int exIndex = TextFindIndex(exColInfo, TextFormat("%s;%s", exCategory, exName));
             if (exIndex > 0) // Example found
             {
@@ -548,7 +552,7 @@ int main(int argc, char *argv[])
                 // Remove line and copy the rest next
                 memcpy(exColInfoUpdated + exIndex, exColInfo + exIndex + lineLen + 1, strlen(exColInfo) - exIndex - lineLen);
 
-                SaveFileText(exCollectionListPath, exColInfoUpdated);
+                SaveFileText(exCollectionFilePath, exColInfoUpdated);
                 RL_FREE(exColInfoUpdated);
             }
             else LOG("WARNING: REMOVE: Example not found in the collection\n");
@@ -699,13 +703,13 @@ static int UpdateRequiredFiles(void)
     {
         mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
-        int exCount = 0;
-        rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
+        int exCollectionCount = 0;
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], true, &exCollectionCount);
 
-        for (int x = 0; x < exCount - 1; x++) mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name));
-        mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name));
+        for (int x = 0; x < exCollectionCount - 1; x++) mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s \\\n", exCollection[x].category, exCollection[x].name));
+        mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s\n\n", exCollection[exCollectionCount - 1].category, exCollection[exCollectionCount - 1].name));
 
-        UnloadExamplesData(exCatList);
+        UnloadExamplesData(exCollection);
     }
 
     // Add the remaining part of the original file
@@ -735,13 +739,13 @@ static int UpdateRequiredFiles(void)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
-        int exCount = 0;
-        rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
+        int exCollectionCount = 0;
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], true, &exCollectionCount);
 
-        for (int x = 0; x < exCount - 1; x++) mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s \\\n", exCatList[x].category, exCatList[x].name));
-        mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s\n\n", exCatList[exCount - 1].category, exCatList[exCount - 1].name));
+        for (int x = 0; x < exCollectionCount - 1; x++) mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s \\\n", exCollection[x].category, exCollection[x].name));
+        mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s\n\n", exCollection[exCollectionCount - 1].category, exCollection[exCollectionCount - 1].name));
 
-        UnloadExamplesData(exCatList);
+        UnloadExamplesData(exCollection);
     }
 
     // Add examples individual targets, considering every example resources
@@ -761,14 +765,14 @@ static int UpdateRequiredFiles(void)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("# Compile %s examples\n", TextToUpper(exCategories[i])));
 
-        int exCount = 0;
-        rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], true, &exCount);
+        int exCollectionCount = 0;
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], true, &exCollectionCount);
 
-        for (int x = 0; x < exCount; x++)
+        for (int x = 0; x < exCollectionCount; x++)
         {
             // Scan resources used in example to list
             int resPathCount = 0;
-            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCatList[x].category, exCatList[x].name), &resPathCount);
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCollection[x].category, exCollection[x].name), &resPathCount);
 
             if (resPathCount > 0)
             {
@@ -782,7 +786,7 @@ static int UpdateRequiredFiles(void)
                     --preload-file shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
                 */
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, 
-                    TextFormat("%s/%s: %s/%s.c\n", exCatList[x].category, exCatList[x].name, exCatList[x].category, exCatList[x].name));
+                    TextFormat("%s/%s: %s/%s.c\n", exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name));
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \\\n");
 
                 for (int r = 0; r < resPathCount; r++)
@@ -800,12 +804,12 @@ static int UpdateRequiredFiles(void)
                     if (r < (resPathCount - 1))
                     {
                         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex,
-                            TextFormat("    --preload-file %s/%s@%s \\\n", exCatList[x].category, resPaths[r], resPaths[r]));
+                            TextFormat("    --preload-file %s/%s@%s \\\n", exCollection[x].category, resPaths[r], resPaths[r]));
                     }
                     else
                     {
                         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex,
-                            TextFormat("    --preload-file %s/%s@%s\n\n", exCatList[x].category, resPaths[r], resPaths[r]));
+                            TextFormat("    --preload-file %s/%s@%s\n\n", exCollection[x].category, resPaths[r], resPaths[r]));
                     }
                 }
             }
@@ -817,14 +821,14 @@ static int UpdateRequiredFiles(void)
                     $(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
                 */
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, 
-                    TextFormat("%s/%s: %s/%s.c\n", exCatList[x].category, exCatList[x].name, exCatList[x].category, exCatList[x].name));
+                    TextFormat("%s/%s: %s/%s.c\n", exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name));
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)\n\n");
             }
 
             ClearExampleResources(resPaths);
         }
 
-        UnloadExamplesData(exCatList);
+        UnloadExamplesData(exCollection);
     }
 
     // Add the remaining part of the original file
@@ -843,86 +847,99 @@ static int UpdateRequiredFiles(void)
     char *mdText = LoadFileText(TextFormat("%s/README.md", exBasePath));
     char *mdTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
 
-    int mdListStartIndex = TextFindIndex(mdText, "| 01 | ");
+    int mdListStartIndex = TextFindIndex(mdText, "## EXAMPLES COLLECTION");
 
     int mdIndex = 0;
     memcpy(mdTextUpdated, mdText, mdListStartIndex);
 
+    int exCollectionFullCount = 0;
+    rlExampleInfo *exCollectionFull = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionFullCount);
+    UnloadExamplesData(exCollectionFull);
+
+    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("## EXAMPLES COLLECTION [TOTAL: %i]\n\n", exCollectionFullCount));
+
     // NOTE: We keep a global examples counter
-    for (int i = 0, catCount = 0, gCount = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
     {
+        int exCollectionCount = 0;
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
+
         // Every category includes some introductory text, as it is quite short, just copying it here
-        // NOTE: "core" text already placed in the file
-        if (i == 1)         // "shapes"
+        if (i == 0)         // "core"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: shapes\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: core [%i]\n\n", exCollectionCount));
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+                "Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.\n\n");
+        }
+        else if (i == 1)    // "shapes"
+        {
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: shapes [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.\n\n");
         }
         else if (i == 2)    // "textures"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: textures\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: textures [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.\n\n");
         }
         else if (i == 3)    // "text"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: text\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: text [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib text functionality, including sprite fonts loading/generation and text drawing, provided by raylib [text](../src/rtext.c) module.\n\n");
         }
         else if (i == 4)    // "models"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: models\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: models [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.\n\n");
         }
         else if (i == 5)    // "shaders"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: shaders\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: shaders [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.\n\n");
         }
         else if (i == 6)    // "audio"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: audio\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: audio [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.\n\n");
         }
         else if (i == 7)    // "others"
         {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "\n### category: others\n\n");
+            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: others [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.\n\n");
         }
 
-        if (i > 0)
-        {
-            // Table header required
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "| ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|----|----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|\n");
-        }
+        // Table header required
+        mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
+        mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|\n");
 
-        rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], false, &catCount); 
-        for (int x = 0; x < catCount; x++)
+        for (int x = 0; x < exCollectionCount; x++)
         {
             char stars[16] = { 0 };
             for (int s = 0; s < 4; s++)
             {
-                if (s < exCatList[x].stars) strcpy(stars + 3*s, "⭐️");
+                if (s < exCollection[x].stars) strcpy(stars + 3*s, "⭐️");
                 else strcpy(stars + 3*s, "☆");
             }
 
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                TextFormat("| %02i | [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %.1f | %.1f | [%s](https://github.com/%s) |\n", 
-                    gCount + 1, exCatList[x].name, exCatList[x].category, exCatList[x].name, exCatList[x].category, exCatList[x].name, exCatList[x].name,
-                    stars, exCatList[x].verCreated, exCatList[x].verUpdated, exCatList[x].author, exCatList[x].authorGitHub + 1));
-
-            gCount++;
+                TextFormat("| [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %.1f | %.1f | [%s](https://github.com/%s) |\n", 
+                    exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].name,
+                    stars, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub + 1));
         }
 
-        UnloadExamplesData(exCatList);
+        UnloadExamplesData(exCollection);
     }
+
+    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+        "\nSome example missing? As always, contributions are welcome, feel free to send new examples!\n");
+    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
+        "Here is an[examples template](examples_template.c) with instructions to start with!\n");
 
     // Save updated file
     SaveFileText(TextFormat("%s/README.md", exBasePath), mdTextUpdated);
@@ -945,32 +962,33 @@ static int UpdateRequiredFiles(void)
     jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
 
     // NOTE: We avoid "others" category
-    for (int i = 0, exCount = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
+    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
-        rlExampleInfo *exCatList = LoadExamplesData(exCollectionListPath, exCategories[i], false, &exCount); 
-        for (int x = 0; x < exCount; x++)
+        int exCollectionCount = 0;
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
+        for (int x = 0; x < exCollectionCount; x++)
         {
             char stars[16] = { 0 };
             for (int s = 0; s < 4; s++)
             {
-                if (s < exCatList[x].stars) strcpy(stars + 3*s, "⭐️");
+                if (s < exCollection[x].stars) strcpy(stars + 3*s, "⭐️");
                 else strcpy(stars + 3*s, "☆");
             }
 
-            if ((i == 6) && (x == (exCount - 1)))
+            if ((i == 6) && (x == (exCollectionCount - 1)))
             {
                 // NOTE: Last line to add, special case to consider
                 jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
+                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
             }
             else
             {
                 jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCatList[x].category, exCatList[x].name + strlen(exCatList[x].category) + 1));
+                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
             }
         }
 
-        UnloadExamplesData(exCatList);
+        UnloadExamplesData(exCollection);
     }
 
     // Add the remaining part of the original file
@@ -1109,6 +1127,7 @@ static int FileRemove(const char *fileName)
 }
 
 // Move file from one directory to another
+// NOTE: If dst directories do not exists they are created
 static int FileMove(const char *srcPath, const char *dstPath)
 {
     int result = 0;
@@ -1217,12 +1236,15 @@ static void SortExampleByName(rlExampleInfo *items, int count)
 }
 
 // Scan resource paths in example file
+// WARNING: Supported resource file extensions is hardcoded by used file types
+// but new examples could require other file extensions to be added,
+// maybe it should look for '.xxx")' patterns instead
 static char **ScanExampleResources(const char *filePath, int *resPathCount)
 {
-    #define MAX_RES_PATH_LEN    256
+    #define REXM_MAX_RESOURCE_PATH_LEN    256
 
     char **paths = (char **)RL_CALLOC(REXM_MAX_RESOURCE_PATHS, sizeof(char **));
-    for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) paths[i] = (char *)RL_CALLOC(MAX_RES_PATH_LEN, sizeof(char));
+    for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) paths[i] = (char *)RL_CALLOC(REXM_MAX_RESOURCE_PATH_LEN, sizeof(char));
 
     int resCounter = 0;
     char *code = LoadFileText(filePath);
@@ -1230,8 +1252,8 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
     if (code != NULL)
     {
         // Resources extensions to check
-        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs" };
-        const int extCount = sizeof(exts)/sizeof(exts[0]);
+        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
+        const int extCount = sizeof(exts)/sizeof(char *);
 
         char *ptr = code;
         while ((ptr = strchr(ptr, '"')) != NULL)
@@ -1241,9 +1263,9 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             if (!end) break;
 
             int len = end - start;
-            if ((len > 0) && (len < MAX_RES_PATH_LEN))
+            if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
             {
-                char buffer[MAX_RES_PATH_LEN] = { 0 };
+                char buffer[REXM_MAX_RESOURCE_PATH_LEN] = { 0 };
                 strncpy(buffer, start, len);
                 buffer[len] = '\0';
 
