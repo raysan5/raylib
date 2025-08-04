@@ -16,7 +16,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES LIST
+## EXAMPLES COLLECTION [TOTAL: 158] 
 
 ### category: core
 
