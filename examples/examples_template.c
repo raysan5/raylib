@@ -58,9 +58,9 @@
 *
 *   raylib [<module>] example - <name>
 *
-*   Example complexity rating: [★☆??] ?/4
+*   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 5.5, last time updated with raylib 5.6
 *
 *   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
 *
