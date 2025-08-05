@@ -8,6 +8,7 @@
 *    - rename <old_examples_name> <new_example_name>
 *    - remove <example_name>
 *    - validate
+*    - update
 *
 *   Files involved in the processes:
 *    - raylib/examples/<category>/<category>_example_name.c
@@ -81,12 +82,13 @@ typedef struct {
 
 // Example management operations
 typedef enum {
-    OP_NONE     = 0,    // No process to do
-    OP_CREATE   = 1,    // Create new example, using default template
-    OP_ADD      = 2,    // Add existing examples (hopefully following template)
-    OP_RENAME   = 3,    // Rename existing example
-    OP_REMOVE   = 4,    // Remove existing example
-    OP_VALIDATE = 5,    // Validate examples, using [examples_list.txt] as main source by default
+    OP_NONE     = 0,        // No process to do
+    OP_CREATE   = 1,        // Create new example, using default template
+    OP_ADD      = 2,        // Add existing examples (hopefully following template)
+    OP_RENAME   = 3,        // Rename existing example
+    OP_REMOVE   = 4,        // Remove existing example
+    OP_VALIDATE = 5,        // Validate examples, using [examples_list.txt] as main source by default
+    OP_UPDATE   = 6,        // Validate and update required examples (as far as possible)
 } rlExampleOperation;
 
 #define MAX_EXAMPLE_CATEGORIES 8
@@ -281,6 +283,13 @@ int main(int argc, char *argv[])
             // All examples in collection match all files requirements
 
             opCode = OP_VALIDATE;
+        }
+        else if (strcmp(argv[1], "update") == 0)
+        {
+            // Validate and update examples in collection
+            // All examples in collection match all files requirements
+
+            opCode = OP_UPDATE;
         }
     }
 
@@ -694,6 +703,7 @@ int main(int argc, char *argv[])
 
         } break;
         case OP_VALIDATE:     // Validate: report and actions
+        case OP_UPDATE:
         {
             // TODO: Validate examples in collection list [examples_list.txt] -> Source of truth!
             // Validate: raylib/examples/<category>/<category>_example_name.c        -> File exists?
