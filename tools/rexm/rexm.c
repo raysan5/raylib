@@ -499,8 +499,24 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
             //------------------------------------------------------------------------------------------------
-            // TODO: Avoid platform-specific .BAT, not portable and it does not consider RESOURCES for Web properly,
-            // Makefile.Web should be used... but it requires proper editing first!
+            // TODO: Avoid platform-specific .BAT file
+            /*
+            SET RAYLIB_PATH=C:\GitHub\raylib
+            SET COMPILER_PATH=C:\raylib\w64devkit\bin
+            ENV_SET PATH=$(COMPILER_PATH)
+            SET MAKE=mingw32-make
+            $(MAKE) -f Makefile.Web shaders/shaders_deferred_render PLATFORM=$(PLATFORM) -B
+
+            //int putenv(char *string);   // putenv takes a string of the form NAME=VALUE
+            //int setenv(const char *envname, const char *envval, int overwrite);
+            //int unsetenv(const char *name); //unset variable
+            putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
+            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            setenv("RAYLIB_DIR", "C:\\GitHub\\raylib", 1);
+            unsetenv("RAYLIB_DIR");
+            getenv("RAYLIB_DIR");
+            system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
+            */
             system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
