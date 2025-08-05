@@ -58,9 +58,12 @@
     #define LOG(...)
 #endif
 
-#define REXM_MAX_BUFFER_SIZE    (2*1024*1024)      // 2MB
+#define REXM_MAX_EXAMPLES               512
+#define REXM_MAX_EXAMPLE_CATEGORIES     8
 
-#define REXM_MAX_RESOURCE_PATHS 256
+#define REXM_MAX_BUFFER_SIZE            (2*1024*1024)      // 2MB
+
+#define REXM_MAX_RESOURCE_PATHS         256
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -178,7 +181,7 @@ int main(int argc, char *argv[])
                     char cat[12] = { 0 };
                     strncpy(cat, argv[2], catIndex);
                     bool catFound = false;
-                    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++) 
+                    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
                     { 
                         if (TextIsEqual(cat, exCategories[i])) { catFound = true; break; }
                     }
@@ -212,7 +215,7 @@ int main(int argc, char *argv[])
                             char cat[12] = { 0 };
                             strncpy(cat, argv[2], catIndex);
                             bool catFound = false;
-                            for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++) 
+                            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
                             { 
                                 if (TextIsEqual(cat, exCategories[i])) { catFound = true; break; }
                             }
@@ -274,8 +277,8 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[1], "validate") == 0)
         {
-            // Validate examples in collection
-            // All examples in collection match all requirements on required files
+            // Validate examples in collection (report results)
+            // All examples in collection match all files requirements
 
             opCode = OP_VALIDATE;
         }
@@ -283,7 +286,7 @@ int main(int argc, char *argv[])
 
     switch (opCode)
     {
-        case 1:     // Create: New example from template
+        case OP_CREATE:     // Create: New example from template
         {
             // Create: raylib/examples/<category>/<category>_example_name.c
             char *exText = LoadFileText(exTemplateFilePath);
@@ -302,7 +305,7 @@ int main(int argc, char *argv[])
             for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
             UnloadFileText(exText);
         }
-        case 2:     // Add: Example from command-line input filename
+        case OP_ADD:     // Add: Example from command-line input filename
         {
             // Add: raylib/examples/<category>/<category>_example_name.c
             if (opCode != 1) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
@@ -531,7 +534,7 @@ int main(int argc, char *argv[])
             //------------------------------------------------------------------------------------------------
 
         } break;
-        case 3:     // Rename
+        case OP_RENAME:     // Rename
         {
             // NOTE: At this point provided values have been validated:
             // exName, exCategory, exRename, exRecategory
@@ -606,27 +609,27 @@ int main(int argc, char *argv[])
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
 
         } break;
-        case 4:     // Remove
+        case OP_REMOVE:     // Remove
         {
             // Remove example from collection for files update
             //------------------------------------------------------------------------------------------------
-            char *exColInfo = LoadFileText(exCollectionFilePath);
-            int exIndex = TextFindIndex(exColInfo, TextFormat("%s;%s", exCategory, exName));
+            char *exCollectionList = LoadFileText(exCollectionFilePath);
+            int exIndex = TextFindIndex(exCollectionList, TextFormat("%s;%s", exCategory, exName));
             if (exIndex > 0) // Example found
             {
-                char *exColInfoUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
+                char *exCollectionListUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
 
-                memcpy(exColInfoUpdated, exColInfo, exIndex);
+                memcpy(exCollectionListUpdated, exCollectionList, exIndex);
                 int lineLen = 0;
-                for (int i = exIndex; (exColInfo[i] != '\n') && (exColInfo[i] != '\0'); i++) lineLen++;
+                for (int i = exIndex; (exCollectionList[i] != '\n') && (exCollectionList[i] != '\0'); i++) lineLen++;
                 // Remove line and copy the rest next
-                memcpy(exColInfoUpdated + exIndex, exColInfo + exIndex + lineLen + 1, strlen(exColInfo) - exIndex - lineLen);
+                memcpy(exCollectionListUpdated + exIndex, exCollectionList + exIndex + lineLen + 1, strlen(exCollectionList) - exIndex - lineLen);
 
-                SaveFileText(exCollectionFilePath, exColInfoUpdated);
-                RL_FREE(exColInfoUpdated);
+                SaveFileText(exCollectionFilePath, exCollectionListUpdated);
+                RL_FREE(exCollectionListUpdated);
             }
             else LOG("WARNING: REMOVE: Example not found in the collection\n");
-            UnloadFileText(exColInfo);
+            UnloadFileText(exCollectionList);
             //------------------------------------------------------------------------------------------------
            
             // Remove: raylib/examples/<category>/resources/..
@@ -690,7 +693,7 @@ int main(int argc, char *argv[])
             remove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
 
         } break;
-        case 5:     // Validate
+        case OP_VALIDATE:     // Validate: report and actions
         {
             // TODO: Validate examples in collection list [examples_list.txt] -> Source of truth!
             // Validate: raylib/examples/<category>/<category>_example_name.c        -> File exists?
@@ -777,7 +780,7 @@ static int UpdateRequiredFiles(void)
     memcpy(mkTextUpdated, mkText, mkListStartIndex);
     mkIndex = sprintf(mkTextUpdated + mkListStartIndex, "#EXAMPLES_LIST_START\n");
 
-    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
     {
         mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
@@ -813,7 +816,7 @@ static int UpdateRequiredFiles(void)
     mkwIndex = sprintf(mkwTextUpdated + mkwListStartIndex, "#EXAMPLES_LIST_START\n");
 
     // NOTE: We avoid the "others" category on web building
-    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
@@ -839,7 +842,7 @@ static int UpdateRequiredFiles(void)
     mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "audio: $(AUDIO)\n\n");
 
     // NOTE: We avoid the "others" category on web building
-    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("# Compile %s examples\n", TextToUpper(exCategories[i])));
 
@@ -937,7 +940,7 @@ static int UpdateRequiredFiles(void)
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("## EXAMPLES COLLECTION [TOTAL: %i]\n\n", exCollectionFullCount));
 
     // NOTE: We keep a global examples counter
-    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
     {
         int exCollectionCount = 0;
         rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
@@ -1040,7 +1043,7 @@ static int UpdateRequiredFiles(void)
     jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
 
     // NOTE: We avoid "others" category
-    for (int i = 0; i < MAX_EXAMPLE_CATEGORIES - 1; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
         int exCollectionCount = 0;
         rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
