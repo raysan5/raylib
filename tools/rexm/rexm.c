@@ -376,48 +376,102 @@ int main(int argc, char *argv[])
             // Add example to the collection list, if not already there
             // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
             //------------------------------------------------------------------------------------------------
-            char *exColInfo = LoadFileText(exCollectionFilePath);
-            if (TextFindIndex(exColInfo, exName) == -1) // Example not found
+            char *exCollectionList = LoadFileText(exCollectionFilePath);
+            if (TextFindIndex(exCollectionList, exName) == -1) // Example not found
             {
-                char *exColInfoUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
+                char *exCollectionListUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
                 
                 // Add example to the main list, by category
                 // by default add it last in the category list
                 // NOTE: When populating to other files, lists are sorted by name
-                int nextCatIndex = 0;
-                if (strcmp(exCategory, "core") == 0) nextCatIndex = 1;
-                else if (strcmp(exCategory, "shapes") == 0) nextCatIndex = 2;
-                else if (strcmp(exCategory, "textures") == 0) nextCatIndex = 3;
-                else if (strcmp(exCategory, "text") == 0) nextCatIndex = 4;
-                else if (strcmp(exCategory, "models") == 0) nextCatIndex = 5;
-                else if (strcmp(exCategory, "shaders") == 0) nextCatIndex = 6;
-                else if (strcmp(exCategory, "audio") == 0) nextCatIndex = 7;
-                else if (strcmp(exCategory, "others") == 0) nextCatIndex = -1; // Add to EOF
+                int nextCategoryIndex = 0;
+                if (strcmp(exCategory, "core") == 0) nextCategoryIndex = 1;
+                else if (strcmp(exCategory, "shapes") == 0) nextCategoryIndex = 2;
+                else if (strcmp(exCategory, "textures") == 0) nextCategoryIndex = 3;
+                else if (strcmp(exCategory, "text") == 0) nextCategoryIndex = 4;
+                else if (strcmp(exCategory, "models") == 0) nextCategoryIndex = 5;
+                else if (strcmp(exCategory, "shaders") == 0) nextCategoryIndex = 6;
+                else if (strcmp(exCategory, "audio") == 0) nextCategoryIndex = 7;
+                else if (strcmp(exCategory, "others") == 0) nextCategoryIndex = -1; // Add to EOF
 
-                // TODO: Get required example info from example file header (if provided)
+                // Get required example info from example file header (if provided)
                 // NOTE: If no example info is provided (other than category/name), just using some default values
+                char *exText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+                rlExampleInfo exInfo = { 0 };
+                strcpy(exInfo.category, exCategory);
+                strcpy(exInfo.name, exName);
                 
-                if (nextCatIndex == -1)
+                // Get example difficulty stars
+                char starsText[16] = { 0 };
+                int starsIndex = TextFindIndex(exText, "★");
+                if (starsIndex > 0) strncpy(starsText, exText + starsIndex, 3*4); // NOTE: Every UTF-8 star are 3 bytes
+                else strcpy(starsText, "★☆☆☆");
+
+                // Get example create with raylib version
+                char verCreateText[4] = { 0 };
+                int verCreateIndex = TextFindIndex(exText, "created with raylib "); // Version = index + 20
+                if (verCreateIndex > 0) strncpy(verCreateText, exText + verCreateIndex + 20, 3);
+                else strncpy(verCreateText, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
+
+                // Get example update with raylib version
+                char verUpdateText[4] = { 0 };
+                int verUpdateIndex = TextFindIndex(exText, "updated with raylib "); // Version = index + 20
+                if (verUpdateIndex > 0) strncpy(verUpdateText, exText + verUpdateIndex + 20, 3);
+                else strncpy(verUpdateText, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
+
+                // Get example creator and github user
+                int authorIndex = TextFindIndex(exText, "Example contributed by "); // Author = index + 23
+                int authorGitIndex = TextFindIndex(exText, "(@"); // Author GitHub user = index + 2
+                if (authorIndex > 0)
+                {
+                    int authorNameLen = 0;
+                    if (authorGitIndex > 0) authorNameLen = (authorGitIndex - 1) - (authorIndex + 23);
+                    else
+                    {
+                        int authorNameEndIndex = TextFindIndex(exText + authorIndex, " and reviewed by Ramon Santamaria");
+                        if (authorNameEndIndex == -1) authorNameEndIndex = TextFindIndex(exText + authorIndex, "\n");
+
+                        authorNameLen = authorNameEndIndex - (authorIndex + 23);
+                    }
+                    strncpy(exInfo.author, exText + authorIndex + 23, authorNameLen);
+                }
+                else strcpy(exInfo.author, "<author_name>");
+                if (authorGitIndex > 0)
+                {
+                    int authorGitEndIndex = TextFindIndex(exText + authorGitIndex, ")");
+                    if (authorGitEndIndex > 0) strncpy(exInfo.authorGitHub, exText + authorGitIndex + 2, authorGitEndIndex - (authorGitIndex + 2));
+                }
+                else strcpy(exInfo.author, "<user_github>");
+              
+                // TODO: Verify copyright line
+                // Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
+
+                UnloadFileText(exText);
+                
+                if (nextCategoryIndex == -1)
                 {
                     // Add example to collection at the EOF
-                    int endIndex = (int)strlen(exColInfo);
-                    memcpy(exColInfoUpdated, exColInfo, endIndex);
-                    sprintf(exColInfoUpdated + endIndex, TextFormat("%s;%s;⭐️☆☆☆;6.0;6.0;\"Ray\";@raysan5\n", exCategory, exName));
+                    int endIndex = (int)strlen(exCollectionList);
+                    memcpy(exCollectionListUpdated, exCollectionList, endIndex);
+                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n", 
+                        exInfo.category, exInfo.name, starsText, verCreateText, verUpdateText, exInfo.author, exInfo.authorGitHub));
                 }
                 else
                 {
                     // Add example to collection, at the end of the category list
-                    int catIndex = TextFindIndex(exColInfo, exCategories[nextCatIndex]);
-                    memcpy(exColInfoUpdated, exColInfo, catIndex);
-                    int textWritenSize = sprintf(exColInfoUpdated + catIndex, TextFormat("%s;%s;⭐️☆☆☆;6.0;6.0;\"Ray\";@raysan5\n", exCategory, exName));
-                    memcpy(exColInfoUpdated + catIndex + textWritenSize, exColInfo + catIndex, strlen(exColInfo) - catIndex);
+                    int categoryIndex = TextFindIndex(exCollectionList, exCategories[nextCategoryIndex]);
+                    memcpy(exCollectionListUpdated, exCollectionList, categoryIndex);
+                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n",
+                        exInfo.category, exInfo.name, starsText, verCreateText, verUpdateText, exInfo.author, exInfo.authorGitHub));
+                    memcpy(exCollectionListUpdated + categoryIndex + textWritenSize, exCollectionList + categoryIndex, strlen(exCollectionList) - categoryIndex);
                 }
                 
-                SaveFileText(exCollectionFilePath, exColInfoUpdated);
-                RL_FREE(exColInfoUpdated);
+                SaveFileText(exCollectionFilePath, exCollectionListUpdated);
+                RL_FREE(exCollectionListUpdated);
             }
             else LOG("WARNING: ADD: Example is already on the collection\n");
-            UnloadFileText(exColInfo);
+            UnloadFileText(exCollectionList);
             //------------------------------------------------------------------------------------------------
 
             // Update: Makefile, Makefile.Web, README.md, examples.js
