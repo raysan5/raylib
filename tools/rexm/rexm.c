@@ -91,9 +91,7 @@ typedef enum {
     OP_UPDATE   = 6,        // Validate and update required examples (as far as possible)
 } rlExampleOperation;
 
-#define MAX_EXAMPLE_CATEGORIES 8
-
-static const char *exCategories[MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
+static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
 
 // Paths required for examples management
 // TODO: Avoid hardcoding path values...
