@@ -1246,7 +1246,7 @@ static int UpdateRequiredFiles(void)
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 TextFormat("| [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %.1f | %.1f | [%s](https://github.com/%s) |\n", 
                     exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].name,
-                    stars, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub + 1));
+                    stars, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub));
         }
 
         UnloadExamplesData(exCollection);
