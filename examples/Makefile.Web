@@ -665,14 +665,6 @@ AUDIO = \
     audio/audio_sound_positioning \
     audio/audio_stream_effects
 
-OTHERS = \
-    others/easings_testbed \
-    others/embedded_files_loading \
-    others/raylib_opengl_interop \
-    others/raymath_vector_angle \
-    others/rlgl_compute_shader \
-    others/rlgl_standalone
-
 # Default target entry
 all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)
 
@@ -712,16 +704,16 @@ core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
 core/core_3d_picking: core/core_3d_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_automation_events : core/core_automation_events.c
+core/core_automation_events: core/core_automation_events.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_basic_screen_manager: core/core_basic_screen_manager.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_basic_window: core/core_basic_window.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_basic_window_web: core/core_basic_window_web.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_basic_screen_manager: core/core_basic_screen_manager.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_custom_frame_control: core/core_custom_frame_control.c
@@ -731,6 +723,9 @@ core/core_custom_logging: core/core_custom_logging.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_drop_files: core/core_drop_files.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_high_dpi: core/core_high_dpi.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_gamepad: core/core_input_gamepad.c
@@ -759,12 +754,8 @@ core/core_input_multitouch: core/core_input_multitouch.c
 core/core_input_virtual_controls: core/core_input_virtual_controls.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-# NOTE: To use multi-threading raylib must be compiled with multi-theading support (-sUSE_PTHREADS=1)
-# WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
-# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any)
-# in its source were transformed to non-atomic operations and non-thread-local data
 core/core_loading_thread: core/core_loading_thread.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sUSE_PTHREADS=1
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_random_sequence: core/core_random_sequence.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -779,11 +770,11 @@ core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_storage_values: core/core_storage_values.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sFORCE_FILESYSTEM=1
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_vr_simulator: core/core_vr_simulator.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file core/resources/distortion100.fs@resources/distortion100.fs
+    --preload-file core/resources/shaders/glsl100/distortion.fs@resources/shaders/glsl100/distortion.fs
 
 core/core_window_flags: core/core_window_flags.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -808,6 +799,12 @@ shapes/shapes_collision_area: shapes/shapes_collision_area.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
@@ -840,6 +837,9 @@ shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -847,12 +847,6 @@ shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile TEXTURES examples
@@ -888,16 +882,16 @@ textures/textures_image_channel: textures/textures_image_channel.c
 
 textures/textures_image_drawing: textures/textures_image_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png \
+    --preload-file textures/resources/cat.png@resources/cat.png \
     --preload-file textures/resources/parrots.png@resources/parrots.png \
-    --preload-file textures/resources/cat.png@resources/cat.png
+    --preload-file textures/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png
 
 textures/textures_image_generation: textures/textures_image_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_image_kernel: textures/textures_image_kernel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-	--preload-file textures/resources/cat.png@resources/cat.png
+    --preload-file textures/resources/cat.png@resources/cat.png
 
 textures/textures_image_loading: textures/textures_image_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -909,7 +903,7 @@ textures/textures_image_processing: textures/textures_image_processing.c
 
 textures/textures_image_rotate: textures/textures_image_rotate.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png
+    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_image_text: textures/textures_image_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -921,7 +915,8 @@ textures/textures_logo_raylib: textures/textures_logo_raylib.c
     --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/my_amazing_texture_painting.png@my_amazing_texture_painting.png
 
 textures/textures_npatch_drawing: textures/textures_npatch_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -945,13 +940,13 @@ textures/textures_sprite_anim: textures/textures_sprite_anim.c
 
 textures/textures_sprite_button: textures/textures_sprite_button.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/button.png@resources/button.png \
-    --preload-file textures/resources/buttonfx.wav@resources/buttonfx.wav
+    --preload-file textures/resources/buttonfx.wav@resources/buttonfx.wav \
+    --preload-file textures/resources/button.png@resources/button.png
 
 textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/explosion.png@resources/explosion.png \
-    --preload-file textures/resources/boom.wav@resources/boom.wav
+    --preload-file textures/resources/boom.wav@resources/boom.wav \
+    --preload-file textures/resources/explosion.png@resources/explosion.png
 
 textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -979,10 +974,7 @@ text/text_font_filters: text/text_font_filters.c
     --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
 
 text/text_font_loading: text/text_font_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
-    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
-    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_font_sdf: text/text_font_sdf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1018,15 +1010,11 @@ text/text_rectangle_bounds: text/text_rectangle_bounds.c
 text/text_unicode: text/text_unicode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/dejavu.fnt@resources/dejavu.fnt \
-    --preload-file text/resources/dejavu.png@resources/dejavu.png \
     --preload-file text/resources/noto_cjk.fnt@resources/noto_cjk.fnt \
-    --preload-file text/resources/noto_cjk.png@resources/noto_cjk.png \
-    --preload-file text/resources/symbola.fnt@resources/symbola.fnt \
-    --preload-file text/resources/symbola.png@resources/symbola.png
+    --preload-file text/resources/symbola.fnt@resources/symbola.fnt
 
 text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
 
 # Compile MODELS examples
 models/models_animation: models/models_animation.c
@@ -1034,12 +1022,6 @@ models/models_animation: models/models_animation.c
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
     --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
-
-models/models_gpu_skinning: models/models_gpu_skinning.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
-    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
-    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
 models/models_billboard: models/models_billboard.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1072,6 +1054,12 @@ models/models_first_person_maze: models/models_first_person_maze.c
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+models/models_gpu_skinning: models/models_gpu_skinning.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
+
 models/models_heightmap: models/models_heightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/heightmap.png@resources/heightmap.png
@@ -1093,7 +1081,10 @@ models/models_loading_vox: models/models_loading_vox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/vox/chr_knight.vox@resources/models/vox/chr_knight.vox \
     --preload-file models/resources/models/vox/chr_sword.vox@resources/models/vox/chr_sword.vox \
-    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox
+    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox \
+    --preload-file models/resources/models/vox/fez.vox@resources/models/vox/fez.vox \
+    --preload-file models/resources/shaders/glsl100/voxel_lighting.vs@resources/shaders/glsl100/voxel_lighting.vs \
+    --preload-file models/resources/shaders/glsl100/voxel_lighting.fs@resources/shaders/glsl100/voxel_lighting.fs
 
 models/models_mesh_generation: models/models_mesh_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1114,12 +1105,12 @@ models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
 
 models/models_skybox: models/models_skybox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/dresden_square_2k.hdr@resources/dresden_square_2k.hdr \
-    --preload-file models/resources/skybox.png@resources/skybox.png \
     --preload-file models/resources/shaders/glsl100/skybox.vs@resources/shaders/glsl100/skybox.vs \
     --preload-file models/resources/shaders/glsl100/skybox.fs@resources/shaders/glsl100/skybox.fs \
     --preload-file models/resources/shaders/glsl100/cubemap.vs@resources/shaders/glsl100/cubemap.vs \
-    --preload-file models/resources/shaders/glsl100/cubemap.fs@resources/shaders/glsl100/cubemap.fs
+    --preload-file models/resources/shaders/glsl100/cubemap.fs@resources/shaders/glsl100/cubemap.fs \
+    --preload-file models/resources/dresden_square_2k.hdr@resources/dresden_square_2k.hdr \
+    --preload-file models/resources/skybox.png@resources/skybox.png
 
 models/models_tesseract_view: models/models_tesseract_view.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1132,21 +1123,16 @@ models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
     --preload-file models/resources/models/obj/plane.obj@resources/models/obj/plane.obj \
     --preload-file models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
 
-# Compile SHADER examples
+# Compile SHADERS examples
 shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
-    --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
-    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
+    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs \
+    --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs
 
 shaders/shaders_basic_pbr: shaders/shaders_basic_pbr.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/pbr.vs@resources/shaders/glsl100/pbr.vs \
-    --preload-file shaders/resources/shaders/glsl120/pbr.vs@resources/shaders/glsl120/pbr.vs \
-    --preload-file shaders/resources/shaders/glsl330/pbr.vs@resources/shaders/glsl330/pbr.vs \
     --preload-file shaders/resources/shaders/glsl100/pbr.fs@resources/shaders/glsl100/pbr.fs \
-    --preload-file shaders/resources/shaders/glsl120/pbr.fs@resources/shaders/glsl120/pbr.fs \
-    --preload-file shaders/resources/shaders/glsl330/pbr.fs@resources/shaders/glsl330/pbr.fs \
     --preload-file shaders/resources/models/old_car_new.glb@resources/models/old_car_new.glb \
     --preload-file shaders/resources/old_car_d.png@resources/old_car_d.png \
     --preload-file shaders/resources/old_car_mra.png@resources/old_car_mra.png \
@@ -1165,7 +1151,6 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 
 shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
     --preload-file shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
     --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
@@ -1178,11 +1163,11 @@ shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 shaders/shaders_fog: shaders/shaders_fog.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
-    --preload-file shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs \
-    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
+    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs \
+    --preload-file shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs
 
 shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sFORCE_FILESYSTEM=1 \
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
 
 shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
@@ -1195,7 +1180,7 @@ shaders/shaders_julia_set: shaders/shaders_julia_set.c
     --preload-file shaders/resources/shaders/glsl100/julia_set.fs@resources/shaders/glsl100/julia_set.fs
 
 shaders/shaders_lightmap: shaders/shaders_lightmap.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sFORCE_FILESYSTEM=1 \
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/lightmap.vs@resources/shaders/glsl100/lightmap.vs \
     --preload-file shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
     --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
@@ -1224,31 +1209,45 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/models/church.obj@resources/models/church.obj \
     --preload-file shaders/resources/models/church_diffuse.png@resources/models/church_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100@resources/shaders/glsl100
+    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs \
+    --preload-file shaders/resources/shaders/glsl100/posterization.fs@resources/shaders/glsl100/posterization.fs \
+    --preload-file shaders/resources/shaders/glsl100/dream_vision.fs@resources/shaders/glsl100/dream_vision.fs \
+    --preload-file shaders/resources/shaders/glsl100/pixelizer.fs@resources/shaders/glsl100/pixelizer.fs \
+    --preload-file shaders/resources/shaders/glsl100/cross_hatching.fs@resources/shaders/glsl100/cross_hatching.fs \
+    --preload-file shaders/resources/shaders/glsl100/cross_stitching.fs@resources/shaders/glsl100/cross_stitching.fs \
+    --preload-file shaders/resources/shaders/glsl100/predator.fs@resources/shaders/glsl100/predator.fs \
+    --preload-file shaders/resources/shaders/glsl100/scanlines.fs@resources/shaders/glsl100/scanlines.fs \
+    --preload-file shaders/resources/shaders/glsl100/fisheye.fs@resources/shaders/glsl100/fisheye.fs \
+    --preload-file shaders/resources/shaders/glsl100/sobel.fs@resources/shaders/glsl100/sobel.fs \
+    --preload-file shaders/resources/shaders/glsl100/bloom.fs@resources/shaders/glsl100/bloom.fs \
+    --preload-file shaders/resources/shaders/glsl100/blur.fs@resources/shaders/glsl100/blur.fs
 
 shaders/shaders_raymarching: shaders/shaders_raymarching.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
 
+shaders/shaders_rounded_rectangle: shaders/shaders_rounded_rectangle.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
+    --preload-file shaders/resources/shaders/glsl100/rounded_rectangle.fs@resources/shaders/glsl100/rounded_rectangle.fs
+
 shaders/shaders_shadowmap: shaders/shaders_shadowmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl120/shadowmap.vs@resources/shaders/glsl120/shadowmap.vs \
-    --preload-file shaders/resources/shaders/glsl330/shadowmap.vs@resources/shaders/glsl330/shadowmap.vs \
-    --preload-file shaders/resources/shaders/glsl120/shadowmap.fs@resources/shaders/glsl120/shadowmap.fs \
-    --preload-file shaders/resources/shaders/glsl330/shadowmap.fs@resources/shaders/glsl330/shadowmap.fs \
-    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb
+    --preload-file shaders/resources/shaders/glsl100/shadowmap.vs@resources/shaders/glsl100/shadowmap.vs \
+    --preload-file shaders/resources/shaders/glsl100/shadowmap.fs@resources/shaders/glsl100/shadowmap.fs \
+    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb \
+    --preload-file shaders/shaders_shadowmap.png@shaders_shadowmap.png
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
-    --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
     --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
 
 shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/mask.fs@resources/shaders/glsl100/mask.fs \
     --preload-file shaders/resources/plasma.png@resources/plasma.png \
-    --preload-file shaders/resources/mask.png@resources/mask.png \
-    --preload-file shaders/resources/shaders/glsl100/mask.fs@resources/shaders/glsl100/mask.fs
+    --preload-file shaders/resources/mask.png@resources/mask.png
 
 shaders/shaders_spotlight: shaders/shaders_spotlight.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1261,33 +1260,31 @@ shaders/shaders_texture_drawing: shaders/shaders_texture_drawing.c
 
 shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
-    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
+    --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs
 
 shaders/shaders_texture_tiling: shaders/shaders_texture_tiling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/tiling.fs@resources/shaders/glsl100/tiling.fs \
-    --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+    --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
+    --preload-file shaders/resources/shaders/glsl100/tiling.fs@resources/shaders/glsl100/tiling.fs
 
 shaders/shaders_texture_waves: shaders/shaders_texture_waves.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/space.png@resources/space.png \
     --preload-file shaders/resources/shaders/glsl100/wave.fs@resources/shaders/glsl100/wave.fs
 
+shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
+    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
+
 shaders/shaders_view_depth: shaders/shaders_view_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
+    --preload-file shaders/resources/shaders/glsl100/depth.fs@resources/shaders/glsl100/depth.fs
 
 shaders/shaders_write_depth: shaders/shaders_write_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
-
-shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
-    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.vs@resources/shaders/glsl330/vertex_displacement.vs \
-    --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs \
-    --preload-file shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
 
 # Compile AUDIO examples
 audio/audio_mixed_processor: audio/audio_mixed_processor.c
@@ -1296,15 +1293,14 @@ audio/audio_mixed_processor: audio/audio_mixed_processor.c
     --preload-file audio/resources/coin.wav@resources/coin.wav
 
 audio/audio_module_playing: audio/audio_module_playing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/mini1111.xm@resources/mini1111.xm
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 audio/audio_music_stream: audio/audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/country.mp3@resources/country.mp3
 
 audio/audio_raw_stream: audio/audio_raw_stream.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -sTOTAL_MEMORY=67108864
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 audio/audio_sound_loading: audio/audio_sound_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1315,29 +1311,13 @@ audio/audio_sound_multi: audio/audio_sound_multi.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/sound.wav@resources/sound.wav
 
+audio/audio_sound_positioning: audio/audio_sound_positioning.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file audio/resources/coin.wav@resources/coin.wav
+
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/country.mp3@resources/country.mp3
-
-# Compile OTHERS examples
-others/easings_testbed: others/easings_testbed.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-others/embedded_files_loading: others/embedded_files_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-others/raylib_opengl_interop:
-	$(info Skipping_others_raylib_opengl_interop)
-
-others/raymath_vector_angle: others/raymath_vector_angle.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-others/rlgl_compute_shader:
-	$(info Skipping_others_rlgl_compute_shader)
-
-others/rlgl_standalone:
-	$(info Skipping_others_rlgl_standalone)
-
 #EXAMPLES_LIST_END
 
 # Clean everything
