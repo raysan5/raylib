@@ -116,14 +116,11 @@ static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes
 
 // Paths required for examples management
 // TODO: Avoid hardcoding path values...
-static const char *exBasePath = "C:/GitHub/raylib/examples";
-static const char *exWebPath = "C:/GitHub/raylib.com/examples";
-static const char *exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
-static const char *exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
-static const char *exCollectionFilePath = "C:/GitHub/raylib/examples/examples_list.txt";
-
-//const char *exBasePath = getenv("REXM_EXAMPLES_PATH");
-//if (!exBasePath) exBasePath = "default/path";
+static const char *exBasePath = NULL; //"C:/GitHub/raylib/examples";
+static const char *exWebPath = NULL; //"C:/GitHub/raylib.com/examples";
+static const char *exTemplateFilePath = NULL; //"C:/GitHub/raylib/examples/examples_template.c";
+static const char *exTemplateScreenshot = NULL; //"C:/GitHub/raylib/examples/examples_template.png";
+static const char *exCollectionFilePath = NULL; //"C:/GitHub/raylib/examples/examples_list.txt";
 
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
@@ -172,6 +169,19 @@ static void ClearExampleResources(char **resPaths);
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    // Path values can be configured with environment variables
+    exBasePath = getenv("REXM_EXAMPLES_BASE_PATH");
+    exWebPath = getenv("REXM_EXAMPLES_WEB_PATH");
+    exTemplateFilePath = getenv("REXM_EXAMPLES_TEMPLATE_FILE_PATH");
+    exTemplateScreenshot = getenv("REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH");
+    exCollectionFilePath = getenv("REXM_EXAMPLES_COLLECTION_FILE_PATH");
+
+    if (!exBasePath) exBasePath = "C:/GitHub/raylib/examples";
+    if (!exWebPath) exWebPath = "C:/GitHub/raylib.com/examples";
+    if (!exTemplateFilePath) exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
+    if (!exTemplateScreenshot) exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
+    if (!exCollectionFilePath) exCollectionFilePath = "C:/GitHub/raylib/examples/examples_list.txt";
+
     char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
     char exName[64] = { 0 };        // Example name, without extension: core_basic_window
