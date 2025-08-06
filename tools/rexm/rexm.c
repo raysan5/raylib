@@ -718,7 +718,7 @@ int main(int argc, char *argv[])
 
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             int exCollectionCount = 0;
-            rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", true, &exCollectionCount);
+            rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
 
             // TODO: Validate: Duplicate entries in collection list?
 
@@ -857,6 +857,22 @@ int main(int argc, char *argv[])
 
             int repIndex = 0;
             repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION REPORT\n\n");
+
+            repIndex += sprintf(report + repIndex, "```\nExample elements validated:\n\n");
+            repIndex += sprintf(report + repIndex, " - [C]     : Missing .c source file\n");
+            repIndex += sprintf(report + repIndex, " - [CAT]   : Not a recognized category\n");
+            repIndex += sprintf(report + repIndex, " - [INFO]  : Inconsistent example header info (stars, author...)\n");
+            repIndex += sprintf(report + repIndex, " - [PNG]   : Missing screenshot .png\n");
+            repIndex += sprintf(report + repIndex, " - [WPNG]  : Invalid png screenshot (using default one)\n");
+            repIndex += sprintf(report + repIndex, " - [RES]   : Missing resources listed in the code\n");
+            repIndex += sprintf(report + repIndex, " - [MK]    : Not listed in Makefile\n");
+            repIndex += sprintf(report + repIndex, " - [MKWEB] : Not listed in Makefile.Web\n");
+            repIndex += sprintf(report + repIndex, " - [VCX]   : Missing Visual Studio project file\n");
+            repIndex += sprintf(report + repIndex, " - [SOL]   : Project not included in solution file\n");
+            repIndex += sprintf(report + repIndex, " - [RDME]  : Not listed in README.md\n");
+            repIndex += sprintf(report + repIndex, " - [JS]    : Not listed in Web (examples.js)\n");
+            repIndex += sprintf(report + repIndex, " - [WOUT]  : Missing Web build (.html/.data/.wasm/.js)\n```\n");
+
             repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|\n");
             repIndex += sprintf(report + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|\n");
 
