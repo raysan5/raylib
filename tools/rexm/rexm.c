@@ -115,18 +115,18 @@ typedef enum {
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
 
 // Paths required for examples management
-// TODO: Avoid hardcoding path values...
-static const char *exBasePath = NULL; //"C:/GitHub/raylib/examples";
-static const char *exWebPath = NULL; //"C:/GitHub/raylib.com/examples";
-static const char *exTemplateFilePath = NULL; //"C:/GitHub/raylib/examples/examples_template.c";
-static const char *exTemplateScreenshot = NULL; //"C:/GitHub/raylib/examples/examples_template.png";
-static const char *exCollectionFilePath = NULL; //"C:/GitHub/raylib/examples/examples_list.txt";
+// NOTE: Paths can be provided with environment variables
+static const char *exBasePath = NULL;           // Env: REXM_EXAMPLES_BASE_PATH
+static const char *exWebPath = NULL;            // Env: REXM_EXAMPLES_WEB_PATH
+static const char *exTemplateFilePath = NULL;   // Env: REXM_EXAMPLES_TEMPLATE_FILE_PATH
+static const char *exTemplateScreenshot = NULL; // Env: REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH
+static const char *exCollectionFilePath = NULL; // Env: REXM_EXAMPLES_COLLECTION_FILE_PATH
 
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
 //----------------------------------------------------------------------------------
 static int FileTextFind(const char *fileName, const char *find);
-static int FileTextReplace(const char *fileName, const char *textLookUp, const char *textReplace);
+static int FileTextReplace(const char *fileName, const char *find, const char *replace);
 static int FileCopy(const char *srcPath, const char *dstPath);
 static int FileRename(const char *fileName, const char *fileRename);
 static int FileMove(const char *srcPath, const char *dstPath);
@@ -449,8 +449,8 @@ int main(int argc, char *argv[])
                 for (int i = 0; i < 4; i++)
                 {
                     // NOTE: Every UTF-8 star are 3 bytes
-                    if (i < exInfo->stars) strncpy(starsText + 3*i, "★", 3);
-                    else strncpy(starsText + 3*i, "☆", 3);
+                    if (i < exInfo->stars) strcpy(starsText + 3*i, "★");
+                    else strcpy(starsText + 3*i, "☆");
                 }
 
                 if (nextCategoryIndex == -1)
@@ -856,7 +856,7 @@ int main(int argc, char *argv[])
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
             int repIndex = 0;
-            repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION REPORT\n\n");
+            repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION - VALIDATION REPORT\n\n");
 
             repIndex += sprintf(report + repIndex, "```\nExample elements validated:\n\n");
             repIndex += sprintf(report + repIndex, " - [C]     : Missing .c source file\n");
@@ -919,15 +919,29 @@ int main(int argc, char *argv[])
                         //if (exInfo->status & VALID_INCONSISTENT_INFO) LOG("WARNING: [%s] Inconsistent example header info\n", exInfo->name);
                         //if (exInfo->status & VALID_INVALID_CATEGORY) LOG("WARNING: [%s] Invalid example category\n", exInfo->name);
 
-                        // Review: Add/Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
-                        // Review: Add/remove: raylib/projects/VS2022/raylib.sln
+                        // Review: Add: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
+                        // Review: Add: raylib/projects/VS2022/raylib.sln
                         // Solves: VALID_MISSING_VCXPROJ, VALID_NOT_IN_VCXSOL
+                        if (exInfo->status & VALID_MISSING_VCXPROJ)
+                        {
+                            FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
+                                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name));
+                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                                "core_basic_window", exInfo->name);
+                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                                "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
+                        }
 
+                        if (exInfo->status & VALID_NOT_IN_VCXSOL)
+                            system(TextFormat("dotnet solution %s/../projects/VS2022/raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exBasePath, exInfo->name));
+                        
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.data
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
                         // Solves: VALID_MISSING_WEB_OUTPUT
+                        if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
+                            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
                     }
                 }
 
