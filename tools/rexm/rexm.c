@@ -147,8 +147,9 @@ static void UnloadExamplesData(rlExampleInfo *exInfo);
 static char **LoadTextLines(const char *text, int *count);
 static void UnloadTextLines(char **text);
 
-// Get example info from file header
-static rlExampleInfo *GetExampleInfo(const char *exFileName);
+// Load example info from file header
+static rlExampleInfo *LoadExampleInfo(const char *exFileName);
+static void UnloadExampleInfo(rlExampleInfo *exInfo);
 
 // raylib example line info parser
 // Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
@@ -441,7 +442,7 @@ int main(int argc, char *argv[])
 
                 // Get required example info from example file header (if provided)
                 // NOTE: If no example info is provided (other than category/name), just using some default values
-                rlExampleInfo *exInfo = GetExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                rlExampleInfo *exInfo = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
                 
                 // Get example difficulty stars
                 char starsText[16] = { 0 };
@@ -470,7 +471,7 @@ int main(int argc, char *argv[])
                     memcpy(exCollectionListUpdated + categoryIndex + textWritenSize, exCollectionList + categoryIndex, strlen(exCollectionList) - categoryIndex);
                 }
 
-                RL_FREE(exInfo);
+                UnloadExampleInfo(exInfo);
                 
                 SaveFileText(exCollectionFilePath, exCollectionListUpdated);
                 RL_FREE(exCollectionListUpdated);
@@ -721,7 +722,7 @@ int main(int argc, char *argv[])
 
             // TODO: Validate: Duplicate entries in collection list?
 
-            // Get status information for all examples, using "status" field in the struct
+            // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
             {
                 rlExampleInfo *exInfo = &exCollection[i];
@@ -736,7 +737,8 @@ int main(int argc, char *argv[])
                 // Validate: example screenshot is not the template default one
                 Image imScreenshot = LoadImage(TextFormat("%s/%s/%s.png", exBasePath, exInfo->category, exInfo->name));
                 Image imTemplate = LoadImage(TextFormat("%s/examples_template.png", exBasePath));
-                if (memcmp(imScreenshot.data, imTemplate.data, GetPixelDataSize(imScreenshot.width, imScreenshot.height, imScreenshot.format)) != 0) exInfo->status |= VALID_INVALID_PNG;
+                if (memcmp(imScreenshot.data, imTemplate.data, GetPixelDataSize(imScreenshot.width, imScreenshot.height, imScreenshot.format)) == 0) 
+                    exInfo->status |= VALID_INVALID_PNG;
                 UnloadImage(imTemplate);
                 UnloadImage(imScreenshot);
 
@@ -747,13 +749,13 @@ int main(int argc, char *argv[])
                 if (FileTextFind(TextFormat("%s/Makefile.Web", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE_WEB;
 
                 // Validate: raylib/examples/README.md                                  -> Example listed?
-                if (FileTextFind(TextFormat("%s/README.md", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_JS;
+                if (FileTextFind(TextFormat("%s/README.md", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_README;
                 
                 // Validate: raylib.com/common/examples.js                              -> Example listed?
-                if (FileTextFind(TextFormat("%s/common/examples.js", exWebPath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_README;
+                if (FileTextFind(TextFormat("%s/../common/examples.js", exWebPath), exInfo->name + TextFindIndex(exInfo->name, "_") + 1) == -1) exInfo->status |= VALID_NOT_IN_JS;
 
                 // Validate: raylib/projects/VS2022/examples/<category>_example_name.vcxproj -> File exists?
-                if (!FileExists(TextFormat("%s/../projects/VS2022/examples/%s.png", exBasePath, exInfo->name))) exInfo->status |= VALID_MISSING_VCXPROJ;
+                if (!FileExists(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name))) exInfo->status |= VALID_MISSING_VCXPROJ;
 
                 // Validate: raylib/projects/VS2022/raylib.sln                          -> Example listed?
                 if (FileTextFind(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_VCXSOL;
@@ -774,13 +776,22 @@ int main(int argc, char *argv[])
                             for (int v = 0; v < 3; v++)
                             {
                                 char *resPathUpdated = TextReplace(resPaths[r], "glsl%i", TextFormat("glsl%i", glslVer[v]));
-                                if (!FileExists(TextFormat("%s/%s/%s", exBasePath, exInfo->category, resPathUpdated))) exInfo->status |= VALID_MISSING_RESOURCES;
+                                if (!FileExists(TextFormat("%s/%s/%s", exBasePath, exInfo->category, resPathUpdated)))
+                                {
+                                    exInfo->status |= VALID_MISSING_RESOURCES;
+                                    // Logging missing resources for convenience
+                                    LOG("WARNING: [%s] Missing resource: %s\n", exInfo->name, resPathUpdated);
+                                }
                                 RL_FREE(resPathUpdated);
                             }
                         }
                         else
                         {
-                            if (!FileExists(TextFormat("%s/%s/%s", exBasePath, exInfo->category, resPaths[r]))) exInfo->status |= VALID_MISSING_RESOURCES;
+                            if (!FileExists(TextFormat("%s/%s/%s", exBasePath, exInfo->category, resPaths[r])))
+                            {
+                                exInfo->status |= VALID_MISSING_RESOURCES;
+                                LOG("WARNING: [%s] Missing resource: %s\n", exInfo->name, resPaths[r]);
+                            }
                         }
                     }
                 }
@@ -790,21 +801,22 @@ int main(int argc, char *argv[])
                 // Validate: raylib.com/examples/<category>/<category>_example_name.data -> File exists?
                 // Validate: raylib.com/examples/<category>/<category>_example_name.wasm -> File exists?
                 // Validate: raylib.com/examples/<category>/<category>_example_name.js   -> File exists?
-                if ((!FileExists(TextFormat("%s/examples/%s/%s.html", exWebPath, exInfo->category, exInfo->name))) ||
-                    ((exInfo->resCount > 0) && !FileExists(TextFormat("%s/examples/%s/%s.data", exWebPath, exInfo->category, exInfo->name))) ||
-                    (!FileExists(TextFormat("%s/examples/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name))) ||
-                    (!FileExists(TextFormat("%s/examples/%s/%s.js", exWebPath, exInfo->category, exInfo->name)))) exInfo->status |= VALID_MISSING_WEB_OUTPUT;
+                if (!FileExists(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name)) ||
+                    !FileExists(TextFormat("%s/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name)) ||
+                    !FileExists(TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name)) ||
+                    ((exInfo->resCount > 0) && !FileExists(TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name))))
+                     exInfo->status |= VALID_MISSING_WEB_OUTPUT;
 
                 // NOTE: Additional validation elements
                 // Validate: Example naming conventions: <category>/<category>_example_name, valid category
                 if ((TextFindIndex(exInfo->name, exInfo->category) == -1) || 
-                    (!TextIsEqual(exInfo->category, "core") || !TextIsEqual(exInfo->category, "shapes") || 
-                     !TextIsEqual(exInfo->category, "textures") || !TextIsEqual(exInfo->category, "text") || 
-                     !TextIsEqual(exInfo->category, "models") || !TextIsEqual(exInfo->category, "shaders") || 
-                     !TextIsEqual(exInfo->category, "audio") || !TextIsEqual(exInfo->category, "others"))) exInfo->status |= VALID_INVALID_CATEGORY;
+                    (!TextIsEqual(exInfo->category, "core") && !TextIsEqual(exInfo->category, "shapes") && 
+                     !TextIsEqual(exInfo->category, "textures") && !TextIsEqual(exInfo->category, "text") && 
+                     !TextIsEqual(exInfo->category, "models") && !TextIsEqual(exInfo->category, "shaders") && 
+                     !TextIsEqual(exInfo->category, "audio") && !TextIsEqual(exInfo->category, "others"))) exInfo->status |= VALID_INVALID_CATEGORY;
 
                 // Validate: Example info (stars, author, github) missmatches with example header content
-                rlExampleInfo *exInfoHeader = GetExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
+                rlExampleInfo *exInfoHeader = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
 
                 if ((strcmp(exInfo->name, exInfoHeader->name) != 0) ||     // NOTE: Get it from example, not file
                     (strcmp(exInfo->category, exInfoHeader->category) != 0) ||
@@ -814,62 +826,103 @@ int main(int argc, char *argv[])
                     (exInfo->verCreated != exInfoHeader->verCreated) ||
                     (exInfo->verUpdated != exInfoHeader->verUpdated)) exInfo->status |= VALID_INCONSISTENT_INFO;
 
-                RL_FREE(exInfoHeader);
+                UnloadExampleInfo(exInfoHeader);
+            }
 
-                // TODO: Generate validation report/table with results (.md)
-                /*
-                //Status	    Description
-                //OK	        Everything found
-                //MISSING	    One or more files are missing, some can be solved automatically
-                //ERROR	        Serious inconsistencies
+            // Generate validation report/table with results (.md)
+            /*
+            Columns:
+            [C]     VALID_MISSING_C             // Missing .c source file
+            [PNG]   VALID_MISSING_PNG           // Missing screenshot .png
+            [WPNG]  VALID_INVALID_PNG           // Invalid png screenshot (using template one)
+            [RES]   VALID_MISSING_RESOURCES     // Missing resources listed in the code
+            [VCX]   VALID_MISSING_VCXPROJ       // Missing Visual Studio .vcxproj file
+            [SOL]   VALID_NOT_IN_VCXSOL         // Project not included in solution file
+            [MK]    VALID_NOT_IN_MAKEFILE       // Not listed in Makefile
+            [MKWEB] VALID_NOT_IN_MAKEFILE_WEB   // Not listed in Makefile.Web
+            [RDME]  VALID_NOT_IN_README         // Not listed in README.md
+            [JS]    VALID_NOT_IN_JS             // Not listed in examples.js
+            [WOUT]  VALID_MISSING_WEB_OUTPUT    // Missing .html/.data/.wasm/.js
+            [INFO]  VALID_INCONSISTENT_INFO     // Inconsistent info between collection and example header (stars, author...)
+            [CAT]   VALID_INVALID_CATEGORY      // Not a recognized category
 
-                Columns:
-                [C]     VALID_MISSING_C             // Missing .c source file
-                [PNG]   VALID_MISSING_PNG           // Missing screenshot .png
-                [WPNG]  VALID_INVALID_PNG           // Invalid png screenshot (using template one)
-                [RES]   VALID_MISSING_RESOURCES     // Missing resources listed in the code
-                [VCX]   VALID_MISSING_VCXPROJ       // Missing Visual Studio .vcxproj file
-                [SOL]   VALID_NOT_IN_VCXSOL         // Project not included in solution file
-                [MK]    VALID_NOT_IN_MAKEFILE       // Not listed in Makefile
-                [MKWEB] VALID_NOT_IN_MAKEFILE_WEB   // Not listed in Makefile.Web
-                [RDME]  VALID_NOT_IN_README         // Not listed in README.md
-                [JS]    VALID_NOT_IN_JS             // Not listed in examples.js
-                [WOUT]  VALID_MISSING_WEB_OUTPUT    // Missing .html/.data/.wasm/.js
-                [INFO]  VALID_INCONSISTENT_INFO     // Inconsistent info between collection and example header (stars, author...)
-                [CAT]   VALID_INVALID_CATEGORY      // Not a recognized category
+            | [EXAMPLE NAME]               | [C] |[CAT]|[INFO]|[PNG]|[WPNG]|[RES]|[MK] |[MKWEB]|[VCX]|[SOL]|[RDME]|[JS] |[WOUT]|
+            |:-----------------------------|:---:|:---:|:----:|:---:|:----:|:---:|:---:|:-----:|:---:|:---:|:----:|:---:|:----:|
+            | core_basic_window            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |
+            | shapes_colors_palette        |  ✘ |  ✔  |  ✘  |  ✔ |  ✘  |  ✔  |  ✔ |   ✘  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |
+            | text_format_text             |  ✘ |  ✘  |  ✘  |  ✘ |  ✘  |  ✘  |  ✘ |   ✘  |  ✔  |  ✘ |  ✔  |  ✔ |   ✔  |
+            */
 
-                [STATUS]  [CATEGORY]   [NAME]          [C] [PNG] [WPNG] [RES] [VCX] [SOL] [MK] [MKWEB] [RDME] [JS] [WOUT] [INFO] [CAT]
-                -----------------------------------------------------------------------------------------------------------------------
-                OK          core      basic_window      ✔   ✔     ✔     ✔    ✔    ✔    ✔     ✔      ✔    ✔    ✔      ✔    ✔
-                MISSING     shapes    colorful_lines    ✘   ✔     ✘     ✔    ✘    ✔    ✔     ✘      ✔    ✔    ✔      ✔    ✔
-                ERROR       text      broken_shader     ✘   ✘     ✘     ✘    ✘    ✘    ✘     ✘      ✔    ✘    ✔      ✔    ✔
-                */
+            char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+            int repIndex = 0;
+            repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION REPORT\n\n");
+            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|\n");
+            repIndex += sprintf(report + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|\n");
+
+            for (int i = 0; i < exCollectionCount; i++)
+            {
+                repIndex += sprintf(report + repIndex, "| %-32s |  %s |  %s  |  %s  |  %s |  %s  |  %s  |  %s |   %s  |  %s  |  %s |  %s  |  %s |  %s  |\n",
+                    exCollection[i].name,
+                    (exCollection[i].status & VALID_MISSING_C)? "❌" : "✔",
+                    (exCollection[i].status & VALID_INVALID_CATEGORY)? "❌" : "✔",
+                    (exCollection[i].status & VALID_INCONSISTENT_INFO)? "❌" : "✔",
+                    (exCollection[i].status & VALID_MISSING_PNG)? "❌" : "✔",
+                    (exCollection[i].status & VALID_INVALID_PNG)? "❌" : "✔",
+                    (exCollection[i].status & VALID_MISSING_RESOURCES)? "❌" : "✔",
+                    (exCollection[i].status & VALID_NOT_IN_MAKEFILE)? "❌" : "✔",
+                    (exCollection[i].status & VALID_NOT_IN_MAKEFILE_WEB)? "❌" : "✔",
+                    (exCollection[i].status & VALID_MISSING_VCXPROJ)? "❌" : "✔",
+                    (exCollection[i].status & VALID_NOT_IN_VCXSOL)? "❌" : "✔",
+                    (exCollection[i].status & VALID_NOT_IN_README)? "❌" : "✔",
+                    (exCollection[i].status & VALID_NOT_IN_JS)? "❌" : "✔",
+                    (exCollection[i].status & VALID_MISSING_WEB_OUTPUT)? "❌" : "✔");
+            }
+
+            SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report.md"), report);
+            RL_FREE(report);
+
+            //UnloadExamplesData(exCollection); // Done at the end, it can be required for fixing
+
+            if (opCode == OP_UPDATE)
+            {
+                // Actions to fix/review anything possible from validation results
+                //------------------------------------------------------------------------------------------------
+                // Check examples "status" information
+                for (int i = 0; i < exCollectionCount; i++)
+                {
+                    rlExampleInfo *exInfo = &exCollection[i];
+
+                    if (exInfo->status & VALID_MISSING_C) LOG("WARNING: [%s] Missing code file\n", exInfo->name);
+                    else
+                    {
+                        // NOTE: Some issues can not be automatically fixed, only logged
+                        //if (exInfo->status & VALID_MISSING_PNG) LOG("WARNING: [%s] Missing screenshot file\n", exInfo->name);
+                        //if (exInfo->status & VALID_INVALID_PNG) LOG("WARNING: [%s] Invalid screenshot file (using template)\n", exInfo->name);
+                        //if (exInfo->status & VALID_MISSING_RESOURCES) LOG("WARNING: [%s] Missing resources detected\n", exInfo->name);
+                        //if (exInfo->status & VALID_INCONSISTENT_INFO) LOG("WARNING: [%s] Inconsistent example header info\n", exInfo->name);
+                        //if (exInfo->status & VALID_INVALID_CATEGORY) LOG("WARNING: [%s] Invalid example category\n", exInfo->name);
+
+                        // Review: Add/Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
+                        // Review: Add/remove: raylib/projects/VS2022/raylib.sln
+                        // Solves: VALID_MISSING_VCXPROJ, VALID_NOT_IN_VCXSOL
+
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.data
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
+                        // Solves: VALID_MISSING_WEB_OUTPUT
+                    }
+                }
+
+                // Update files: Makefile, Makefile.Web, README.md, examples.js
+                // Solves: VALID_NOT_IN_MAKEFILE, VALID_NOT_IN_MAKEFILE_WEB, VALID_NOT_IN_README, VALID_NOT_IN_JS
+                UpdateRequiredFiles();     
+                //------------------------------------------------------------------------------------------------
             }
 
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
-
-            if (opCode == OP_UPDATE)
-            {
-                // Actions to be performed to fix/review anything possible
-                //------------------------------------------------------------------------------------------------
-                
-                // TODO: Process validation results and take actions to 
-                // correct everything possible to make collection consistent
-
-                // Review: Add/Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
-                // Review: Add/remove: raylib/projects/VS2022/raylib.sln
-
-                // Update files: Makefile, Makefile.Web, README.md, examples.js
-                UpdateRequiredFiles();
-
-                // Review examples
-                // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
-                // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.data
-                // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
-                // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
-                //------------------------------------------------------------------------------------------------
-            }
             
         } break;
         default:    // Help
@@ -1424,7 +1477,7 @@ static void UnloadTextLines(char **lines)
 }
 
 // Get example info from file header
-rlExampleInfo *GetExampleInfo(const char *exFileName)
+rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
     
@@ -1437,6 +1490,7 @@ rlExampleInfo *GetExampleInfo(const char *exFileName)
 
         // Get example difficulty stars
         // NOTE: Counting the unicode char occurrences: ⭐️
+        // WARNING: The stars unicode in examples is not the same than in collection list!!!
         int starsIndex = TextFindIndex(exText, "★");
         if (starsIndex > 0)
         {
@@ -1444,8 +1498,8 @@ rlExampleInfo *GetExampleInfo(const char *exFileName)
             while (*starPtr)
             {
                 if (((unsigned char)starPtr[0] == 0xe2) &&
-                    ((unsigned char)starPtr[1] == 0xad) &&
-                    ((unsigned char)starPtr[2] == 0x90))
+                    ((unsigned char)starPtr[1] == 0x98) &&
+                    ((unsigned char)starPtr[2] == 0x85))
                 {
                     exInfo->stars++;
                     starPtr += 3; // Advance past multibyte character
@@ -1469,36 +1523,43 @@ rlExampleInfo *GetExampleInfo(const char *exFileName)
         exInfo->verUpdated = TextToFloat(verUpdateText);
 
         // Get example creator and github user
-        int authorIndex = TextFindIndex(exText, "Example contributed by "); // Author = index + 23
-        int authorGitIndex = TextFindIndex(exText, "(@"); // Author GitHub user = index + 2
-        if (authorIndex > 0)
+        // NOTE: Using copyright line instead of "Example contributed by " because
+        // most examples do not contain that line --> TODO: Review examples header formating?
+        // Expected format: Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
+        // Alternatives:  Copyright (c) <year_created> <author_name> (@<user_github>) and <contrib_name> (@<contrib_user>)
+        int copyrightIndex = TextFindIndex(exText, "Copyright (c) ");
+        int yearStartIndex = copyrightIndex + 14;
+        int yearEndIndex = TextFindIndex(exText + yearStartIndex, " ");
+        int authorStartIndex = yearStartIndex + yearEndIndex + 1;
+        int authorEndIndex = TextFindIndex(exText + authorStartIndex, " (@");
+        if (authorEndIndex != -1) // Github user also available
         {
-            int authorNameLen = 0;
-            if (authorGitIndex > 0) authorNameLen = (authorGitIndex - 1) - (authorIndex + 23);
-            else
-            {
-                int authorNameEndIndex = TextFindIndex(exText + authorIndex, " and reviewed by Ramon Santamaria");
-                if (authorNameEndIndex == -1) authorNameEndIndex = TextFindIndex(exText + authorIndex, "\n");
+            authorEndIndex += authorStartIndex;
+            strncpy(exInfo->author, exText + authorStartIndex, authorEndIndex - authorStartIndex);
 
-                authorNameLen = authorNameEndIndex - (authorIndex + 23);
-            }
-            strncpy(exInfo->author, exText + authorIndex + 23, authorNameLen);
+            // Get GitHub user
+            int userStartIndex = authorEndIndex + 3;
+            int userEndIndex = TextFindIndex(exText + userStartIndex, ")");
+            userEndIndex += userStartIndex;
+            strncpy(exInfo->authorGitHub, exText + userStartIndex, userEndIndex - userStartIndex);
         }
-        else strcpy(exInfo->author, "<author_name>");
-        if (authorGitIndex > 0)
+        else // GitHub user not found to set end, using '\n'
         {
-            int authorGitEndIndex = TextFindIndex(exText + authorGitIndex, ")");
-            if (authorGitEndIndex > 0) strncpy(exInfo->authorGitHub, exText + authorGitIndex + 2, authorGitEndIndex - (authorGitIndex + 2));
+            authorEndIndex = TextFindIndex(exText + authorStartIndex, "\n");
+            authorEndIndex += authorStartIndex;
+            strncpy(exInfo->author, exText + authorStartIndex, authorEndIndex - authorStartIndex);
         }
-        else strcpy(exInfo->authorGitHub, "<user_github>");
-
-        // TODO: Verify copyright line
-        // Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
 
         UnloadFileText(exText);
     }
 
     return exInfo;
+}
+
+// Unload example information
+static void UnloadExampleInfo(rlExampleInfo *exInfo)
+{
+    RL_FREE(exInfo);
 }
 
 // raylib example line info parser
@@ -1541,7 +1602,7 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     if (tokens[5][0] == '"') tokens[5] += 1;
     if (tokens[5][strlen(tokens[5]) - 1] == '"') tokens[5][strlen(tokens[5]) - 1] = '\0';
     strcpy(entry->author, tokens[5]);
-    strcpy(entry->authorGitHub, tokens[6]);
+    strcpy(entry->authorGitHub, tokens[6] + 1); // Skip '@'
 
     return 1;
 }
