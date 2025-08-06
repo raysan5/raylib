@@ -1172,7 +1172,7 @@ static int UpdateRequiredFiles(void)
     rlExampleInfo *exCollectionFull = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionFullCount);
     UnloadExamplesData(exCollectionFull);
 
-    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("## EXAMPLES COLLECTION [TOTAL: %i]\n\n", exCollectionFullCount));
+    mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("## EXAMPLES COLLECTION [TOTAL: %i]\n", exCollectionFullCount));
 
     // NOTE: We keep a global examples counter
     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
