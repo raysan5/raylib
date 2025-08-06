@@ -1516,7 +1516,7 @@ RLAPI char *TextInsert(const char *text, const char *insert, int position);     
 RLAPI char *TextJoin(char **textList, int count, const char *delimiter);                    // Join text strings with delimiter
 RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
-RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
+RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string, -1 if not found
 RLAPI char *TextToUpper(const char *text);                                                  // Get upper case version of provided string
 RLAPI char *TextToLower(const char *text);                                                  // Get lower case version of provided string
 RLAPI char *TextToPascal(const char *text);                                                 // Get Pascal case notation version of provided string

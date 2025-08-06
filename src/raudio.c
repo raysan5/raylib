@@ -2087,7 +2087,7 @@ float GetMusicTimePlayed(Music music)
             int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
             int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
             int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
-            if (framesInBuffers > music.frameCount) {
+            if ((unsigned int)framesInBuffers > music.frameCount) {
                 if (!music.looping) framesInBuffers = music.frameCount;
             }
             int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;

@@ -34,8 +34,11 @@
 #include <stddef.h>     // Required for: NULL
 #include <math.h>       // Required for: sinf()
 
-// To make it work with the older RLGL module just comment the line below
-#define RAYLIB_NEW_RLGL
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
 
 //--------------------------------------------------------------------------------------
 // Globals
@@ -50,7 +53,6 @@ bool SHOW_TEXT_BOUNDRY = false;
 //--------------------------------------------------------------------------------------
 // Data Types definition
 //--------------------------------------------------------------------------------------
-
 // Configuration structure for waving the text
 typedef struct WaveTextConfig {
     Vector3 waveRange;
@@ -66,7 +68,7 @@ static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, floa
 // Draw a 2D text in 3D space
 static void DrawText3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, Color tint);
 
-// Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`.
+// Draw a 2D text in 3D space and wave the parts that start with '~~' and end with '~~'
 // This is a modified version of the original code by @Nighten found here https://github.com/NightenDushi/Raylib_DrawTextStyle
 static void DrawTextWave3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, WaveTextConfig *config, float time, Color tint);
 // Measure a text in 3D ignoring the `~~` chars.
@@ -128,7 +130,7 @@ int main(void)
     Color dark = RED;
 
     // Load the alpha discard shader
-    Shader alphaDiscard = LoadShader(NULL, "resources/shaders/glsl330/alpha_discard.fs");
+    Shader alphaDiscard = LoadShader(NULL, TextFormat("resources/shaders/glsl%i/alpha_discard.fs", GLSL_VERSION));
 
     // Array filled with multiple random colors (when multicolor mode is set)
     Color multi[TEXT_MAX_LAYERS] = {0};

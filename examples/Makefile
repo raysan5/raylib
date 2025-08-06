@@ -493,6 +493,8 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.web.a
 endif
 
+CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
+
 # Define source code object files required
 #------------------------------------------------------------------------------------------------
 #EXAMPLES_LIST_START
@@ -672,8 +674,6 @@ OTHERS = \
     others/rlgl_standalone
 #EXAMPLES_LIST_END
 
-CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
-
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
@@ -686,7 +686,6 @@ text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
-
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!

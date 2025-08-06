@@ -827,6 +827,8 @@ int GetScreenHeight(void)
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+
     int width = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
@@ -840,6 +842,8 @@ int GetRenderWidth(void)
 // Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+
     int height = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
@@ -1526,7 +1530,7 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+        matProj = MatrixOrtho(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     // Unproject far/near points
