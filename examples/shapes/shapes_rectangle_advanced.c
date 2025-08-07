@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Rectangle advanced
+*   raylib [shapes] example - advanced rectangle drawing
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -33,9 +33,9 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle avanced");
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -195,7 +195,7 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
         }
 
         // Here we use the 'Diagram' to guide ourselves to which point receives what color
-        // By choosing the color correctly associated with a pointe the gradient effect 
+        // By choosing the color correctly associated with a pointe the gradient effect
         // will naturally come from OpenGL interpolation
 
         // [2] Upper Rectangle
@@ -266,7 +266,7 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
 #else
 
     // Here we use the 'Diagram' to guide ourselves to which point receives what color.
-    // By choosing the color correctly associated with a pointe the gradient effect 
+    // By choosing the color correctly associated with a pointe the gradient effect
     // will naturally come from OpenGL interpolation.
     // But this time instead of Quad, we think in triangles.
 
@@ -280,10 +280,10 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
             if (k == 1) color = right, radius = radiusRight;    // [3] Upper Right Corner
             if (k == 2) color = right, radius = radiusRight;    // [5] Lower Right Corner
             if (k == 3) color = left,  radius = radiusLeft;     // [7] Lower Left Corner
-            
+
             float angle = angles[k];
             const Vector2 center = centers[k];
-            
+
             for (int i = 0; i < segments; i++)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);

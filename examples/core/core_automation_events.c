@@ -54,7 +54,7 @@ int main(void)
     player.position = (Vector2){ 400, 280 };
     player.speed = 0;
     player.canJump = false;
-    
+
     // Define environment elements (platforms)
     EnvElement envElements[MAX_ENVIRONMENT_ELEMENTS] = {
         {{ 0, 0, 1000, 400 }, 0, LIGHTGRAY },
@@ -70,13 +70,13 @@ int main(void)
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
-    
+
     // Automation events
     AutomationEventList aelist = LoadAutomationEventList(0);  // Initialize list of automation events to record new events
     SetAutomationEventList(&aelist);
     bool eventRecording = false;
     bool eventPlaying = false;
-    
+
     unsigned int frameCounter = 0;
     unsigned int playFrameCounter = 0;
     unsigned int currentPlayFrame = 0;
@@ -90,7 +90,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         float deltaTime = 0.015f;//GetFrameTime();
-       
+
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
@@ -102,14 +102,14 @@ int main(void)
             {
                 UnloadAutomationEventList(aelist);
                 aelist = LoadAutomationEventList(droppedFiles.paths[0]);
-                
+
                 eventRecording = false;
-                
+
                 // Reset scene state to play
                 eventPlaying = true;
                 playFrameCounter = 0;
                 currentPlayFrame = 0;
-                
+
                 player.position = (Vector2){ 400, 280 };
                 player.speed = 0;
                 player.canJump = false;
@@ -174,7 +174,7 @@ int main(void)
         //----------------------------------------------------------------------------------
 
         // Events playing
-        // NOTE: Logic must be before Camera update because it depends on mouse-wheel value, 
+        // NOTE: Logic must be before Camera update because it depends on mouse-wheel value,
         // that can be set by the played event... but some other inputs could be affected
         //----------------------------------------------------------------------------------
         if (eventPlaying)
@@ -228,7 +228,7 @@ int main(void)
         if (min.x > 0) camera.offset.x = screenWidth/2 - min.x;
         if (min.y > 0) camera.offset.y = screenHeight/2 - min.y;
         //----------------------------------------------------------------------------------
-        
+
         // Events management
         if (IsKeyPressed(KEY_S))    // Toggle events recording
         {
@@ -238,12 +238,12 @@ int main(void)
                 {
                     StopAutomationEventRecording();
                     eventRecording = false;
-                    
+
                     ExportAutomationEventList(aelist, "automation.rae");
-                    
+
                     TraceLog(LOG_INFO, "RECORDED FRAMES: %i", aelist.count);
                 }
-                else 
+                else
                 {
                     SetAutomationEventBaseFrame(180);
                     StartAutomationEventRecording();
@@ -293,7 +293,7 @@ int main(void)
                 DrawRectangleRec((Rectangle){ player.position.x - 20, player.position.y - 40, 40, 40 }, RED);
 
             EndMode2D();
-            
+
             // Draw game controls
             DrawRectangle(10, 10, 290, 145, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(10, 10, 290, 145, Fade(BLUE, 0.8f));
@@ -323,7 +323,7 @@ int main(void)
 
                 if (((frameCounter/15)%2) == 1) DrawText(TextFormat("PLAYING RECORDED EVENTS... [%i]", currentPlayFrame), 50, 170, 10, DARKGREEN);
             }
-            
+
 
         EndDrawing();
         //----------------------------------------------------------------------------------

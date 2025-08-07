@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Hybrid Rendering
+*   raylib [shaders] example - hybrid rendering
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -69,7 +69,7 @@ int main(void)
     marchLocs.camDir = GetShaderLocation(shdrRaymarch, "camDir");
     marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
-    // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
+    // Transfer screenCenter position to shader. Which is used to calculate ray direction.
     Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
     SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
 
@@ -84,10 +84,10 @@ int main(void)
         .fovy = 45.0f,                                // Camera field-of-view Y
         .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
-    
+
     // Camera FOV is pre-calculated in the camera Distance.
     float camDist = 1.0f/(tanf(camera.fovy*0.5f*DEG2RAD));
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -100,12 +100,12 @@ int main(void)
 
         // Update Camera Postion in the ray march shader.
         SetShaderValue(shdrRaymarch, marchLocs.camPos, &(camera.position), RL_SHADER_UNIFORM_VEC3);
-        
+
         // Update Camera Looking Vector. Vector length determines FOV.
         Vector3 camDir = Vector3Scale( Vector3Normalize( Vector3Subtract(camera.target, camera.position)) , camDist);
         SetShaderValue(shdrRaymarch, marchLocs.camDir, &(camDir), RL_SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         // Draw into our custom render texture (framebuffer)
@@ -117,7 +117,7 @@ int main(void)
             BeginShaderMode(shdrRaymarch);
                 DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
             EndShaderMode();
-            
+
             // Rasterize Scene
             BeginMode3D(camera);
                 BeginShaderMode(shdrRaster);
@@ -130,10 +130,10 @@ int main(void)
             EndMode3D();
         EndTextureMode();
 
-        // Draw into screen our custom render texture 
+        // Draw into screen our custom render texture
         BeginDrawing();
             ClearBackground(RAYWHITE);
-        
+
             DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();

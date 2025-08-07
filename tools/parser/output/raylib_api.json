@@ -9739,7 +9739,7 @@
     },
     {
       "name": "TextSplit",
-      "description": "Split text into multiple strings",
+      "description": "Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings",
       "returnType": "char **",
       "params": [
         {
@@ -9777,7 +9777,7 @@
     },
     {
       "name": "TextFindIndex",
-      "description": "Find first text occurrence within a string",
+      "description": "Find first text occurrence within a string, -1 if not found",
       "returnType": "int",
       "params": [
         {

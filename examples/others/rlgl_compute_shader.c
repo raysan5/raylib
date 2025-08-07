@@ -51,9 +51,12 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(GOL_WIDTH, GOL_WIDTH, "raylib [rlgl] example - compute shader - game of life");
+    const int screenWidth = GOL_WIDTH;
+    const int screenHeight = GOL_WIDTH;
 
-    const Vector2 resolution = { GOL_WIDTH, GOL_WIDTH };
+    InitWindow(screenWidth, screenHeight, "raylib [rlgl] example - compute shader - game of life");
+
+    const Vector2 resolution = { screenWidth, screenHeight };
     unsigned int brushSize = 8;
 
     // Game of Life logic compute shader

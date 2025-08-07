@@ -2470,7 +2470,7 @@
             <Param type="int" name="count" desc="" />
             <Param type="const char *" name="delimiter" desc="" />
         </Function>
-        <Function name="TextSplit" retType="char **" paramCount="3" desc="Split text into multiple strings">
+        <Function name="TextSplit" retType="char **" paramCount="3" desc="Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings">
             <Param type="const char *" name="text" desc="" />
             <Param type="char" name="delimiter" desc="" />
             <Param type="int *" name="count" desc="" />
@@ -2480,7 +2480,7 @@
             <Param type="const char *" name="append" desc="" />
             <Param type="int *" name="position" desc="" />
         </Function>
-        <Function name="TextFindIndex" retType="int" paramCount="2" desc="Find first text occurrence within a string">
+        <Function name="TextFindIndex" retType="int" paramCount="2" desc="Find first text occurrence within a string, -1 if not found">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="find" desc="" />
         </Function>

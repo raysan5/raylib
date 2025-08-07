@@ -141,7 +141,7 @@ int main(void)
                 DrawGrid(10, 1.0f);     // Draw a grid
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
         EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
-        
+
         BeginDrawing();
             ClearBackground(RAYWHITE);  // Clear screen background
 

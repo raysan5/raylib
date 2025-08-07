@@ -41,7 +41,7 @@
 
      - raylib/examples/<category>/<category>_example_name.c
      - raylib/examples/<category>/<category>_example_name.png
-     - raylib/examples/<category>/resources/*.*
+     - raylib/examples/<category>/resources/..
      - raylib/examples/Makefile
      - raylib/examples/Makefile.Web
      - raylib/examples/README.md
@@ -56,18 +56,18 @@
 
 /*******************************************************************************************
 *
-*   raylib [<module>] example - <name>
+*   raylib [<module>] example - <name/short description>
 *
-*   Example complexity rating: [★☆??] ?/4
+*   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.5
+*   Example originally created with raylib 5.5, last time updated with raylib 5.6
 *
-*   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by <author_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
+*   Copyright (c) <year_created>-<year_updated> <author_name> (@<user_github>)
 *
 ********************************************************************************************/
 
@@ -104,9 +104,11 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // TODO: Draw everything that requires to be drawn at this point:
+            // TODO: Draw everything that requires to be drawn at this point
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);  // Example
+            DrawLineEx((Vector2){ 0, 0 }, (Vector2){ screenWidth, screenHeight }, 2.0f, RED);
+            DrawLineEx((Vector2){ 0, screenHeight }, (Vector2){ screenWidth, 0 }, 2.0f, RED);
+            DrawText("example base code template", 260, 400, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -153,18 +153,14 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         try raylib_flags_arr.appendSlice(&config_h_flags);
     }
 
-    const raylib = if (options.shared)
-        b.addSharedLibrary(.{
-            .name = "raylib",
+    const raylib = b.addLibrary(.{
+        .name = "raylib",
+        .linkage = if (options.shared) .dynamic else .static,
+        .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
-        })
-    else
-        b.addStaticLibrary(.{
-            .name = "raylib",
-            .target = target,
-            .optimize = optimize,
-        });
+        }),
+    });
     raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
@@ -550,10 +546,13 @@ fn addExamples(
         if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
 
         if (target.result.os.tag == .emscripten) {
-            const exe_lib = b.addStaticLibrary(.{
+            const exe_lib = b.addLibrary(.{
                 .name = name,
-                .target = target,
-                .optimize = optimize,
+                .linkage = .static,
+                .root_module = b.createModule(.{
+                    .target = target,
+                    .optimize = optimize,
+                }),
             });
             exe_lib.addCSourceFile(.{
                 .file = b.path(path),
@@ -633,8 +632,10 @@ fn addExamples(
         } else {
             const exe = b.addExecutable(.{
                 .name = name,
-                .target = target,
-                .optimize = optimize,
+                .root_module = b.createModule(.{
+                    .target = target,
+                    .optimize = optimize,
+                }),
             });
             exe.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
             exe.linkLibC();

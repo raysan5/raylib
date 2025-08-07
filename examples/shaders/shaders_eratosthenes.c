@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Sieve of Eratosthenes
+*   raylib [shaders] example - sieve of Eratosthenes
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -45,7 +45,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Sieve of Eratosthenes");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - sieve of Eratosthenes");
 
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 

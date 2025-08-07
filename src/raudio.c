@@ -81,7 +81,7 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-#if defined(SUPPORT_MODULE_RAUDIO)
+#if defined(SUPPORT_MODULE_RAUDIO) || defined(RAUDIO_STANDALONE)
 
 #if defined(_WIN32)
 // To avoid conflicting windows.h symbols with raylib, some flags are defined
@@ -450,7 +450,6 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
 void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
-
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
@@ -995,7 +994,6 @@ Sound LoadSoundAlias(Sound source)
 
     return sound;
 }
-
 
 // Checks if a sound is valid (data loaded and buffers initialized)
 bool IsSoundValid(Sound sound)
@@ -1547,7 +1545,8 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
-        else {
+        else
+        {
             drwav_uninit(ctxWav);
             RL_FREE(ctxWav);
         }
@@ -1871,6 +1870,7 @@ void SeekMusicStream(Music music, float position)
 void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
+    if (!music.stream.buffer->playing) return;
 
     ma_mutex_lock(&AUDIO.System.lock);
 
@@ -1890,13 +1890,27 @@ void UpdateMusicStream(Music music)
     // Check both sub-buffers to check if they require refilling
     for (int i = 0; i < 2; i++)
     {
-        if (!music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
-
         unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
         unsigned int framesToStream = 0;                 // Total frames to be streamed
 
         if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
         else framesToStream = framesLeft;
+
+        if (framesToStream == 0)
+        {
+            // Check if both buffers have been processed
+            if (music.stream.buffer->isSubBufferProcessed[0] && music.stream.buffer->isSubBufferProcessed[1])
+            {
+                ma_mutex_unlock(&AUDIO.System.lock);
+                StopMusicStream(music);
+                return;
+            }
+
+            ma_mutex_unlock(&AUDIO.System.lock);
+            return;
+        }
+
+        if (!music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
 
         int frameCountStillNeeded = framesToStream;
         int frameCountReadTotal = 0;
@@ -2010,19 +2024,6 @@ void UpdateMusicStream(Music music)
         }
 
         UpdateAudioStreamInLockedState(music.stream, AUDIO.System.pcmBuffer, framesToStream);
-
-        music.stream.buffer->framesProcessed = music.stream.buffer->framesProcessed%music.frameCount;
-
-        if (framesLeft <= subBufferSizeInFrames)
-        {
-            if (!music.looping)
-            {
-                ma_mutex_unlock(&AUDIO.System.lock);
-                // Streaming is ending, we filled latest frames from input
-                StopMusicStream(music);
-                return;
-            }
-        }
     }
 
     ma_mutex_unlock(&AUDIO.System.lock);
@@ -2085,8 +2086,12 @@ float GetMusicTimePlayed(Music music)
             int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
             int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
             int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+            int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
+            if ((unsigned int)framesInBuffers > music.frameCount) {
+                if (!music.looping) framesInBuffers = music.frameCount;
+            }
             int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
-            int framesPlayed = (framesProcessed - framesInFirstBuffer - framesInSecondBuffer + framesSentToMix)%(int)music.frameCount;
+            int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
             if (framesPlayed < 0) framesPlayed += music.frameCount;
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
             ma_mutex_unlock(&AUDIO.System.lock);
@@ -2341,7 +2346,6 @@ void DetachAudioMixedProcessor(AudioCallback process)
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
-
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -2683,8 +2687,7 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
             ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
             unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
-            // Total frames processed in buffer is always the complete size, filled with 0 if required
-            stream.buffer->framesProcessed += subBufferSizeInFrames;
+            stream.buffer->framesProcessed += frameCount;
 
             // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic

@@ -539,7 +539,7 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
         #pragma message ("WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
     #endif
 
-    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
+    // Not needed because 'rtexture.c' will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
     // #if !defined(STBI_REQUIRED)
     //     #pragma message ("WARNING: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
     // #endif
@@ -827,6 +827,8 @@ int GetScreenHeight(void)
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+
     int width = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
@@ -840,6 +842,8 @@ int GetRenderWidth(void)
 // Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+
     int height = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
@@ -1526,7 +1530,7 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+        matProj = MatrixOrtho(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     // Unproject far/near points
@@ -1889,7 +1893,7 @@ void TakeScreenshot(const char *fileName)
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
-    ExportImage(image, path);           // WARNING: Module required: rtextures
+    ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
     if (FileExists(path)) TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
@@ -1936,7 +1940,7 @@ bool FileExists(const char *fileName)
 }
 
 // Check file extension
-// NOTE: Extensions checking is not case-sensitive
+// TODO: Avoid [rtext] module dependency
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     #define MAX_FILE_EXTENSION_LENGTH  16

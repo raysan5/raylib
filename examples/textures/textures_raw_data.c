@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Load textures from raw data
+*   raylib [textures] example - load textures from raw data
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

@@ -35,7 +35,7 @@ int main()
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [models] example - point rendering");
 
     Camera camera = {
@@ -50,10 +50,10 @@ int main()
     bool useDrawModelPoints = true;
     bool numPointsChanged = false;
     int numPoints = 1000;
-    
+
     Mesh mesh = GenMeshPoints(numPoints);
     Model model = LoadModelFromMesh(mesh);
-    
+
     //SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -114,14 +114,14 @@ int main()
                             .b = mesh.colors[i*4 + 2],
                             .a = mesh.colors[i*4 + 3],
                         };
-                        
+
                         DrawPoint3D(pos, color);
                     }
                 }
 
                 // Draw a unit sphere for reference
                 DrawSphereWires(position, 1.0f, 10, 10, YELLOW);
-                
+
             EndMode3D();
 
             // Draw UI text
@@ -129,12 +129,12 @@ int main()
             DrawText("Up - increase points", 20, 70, 20, WHITE);
             DrawText("Down - decrease points", 20, 100, 20, WHITE);
             DrawText("Space - drawing function", 20, 130, 20, WHITE);
-            
+
             if (useDrawModelPoints) DrawText("Using: DrawModelPoints()", 20, 160, 20, GREEN);
             else DrawText("Using: DrawPoint3D()", 20, 160, 20, RED);
-            
+
             DrawFPS(10, 10);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -151,7 +151,7 @@ int main()
 // Generate a spherical point cloud
 static Mesh GenMeshPoints(int numPoints)
 {
-    Mesh mesh = { 
+    Mesh mesh = {
         .triangleCount = 1,
         .vertexCount = numPoints,
         .vertices = (float *)MemAlloc(numPoints*3*sizeof(float)),
@@ -164,13 +164,13 @@ static Mesh GenMeshPoints(int numPoints)
         float theta = ((float)PI*rand())/RAND_MAX;
         float phi = (2.0f*PI*rand())/RAND_MAX;
         float r = (10.0f*rand())/RAND_MAX;
-        
+
         mesh.vertices[i*3 + 0] = r*sinf(theta)*cosf(phi);
         mesh.vertices[i*3 + 1] = r*sinf(theta)*sinf(phi);
         mesh.vertices[i*3 + 2] = r*cosf(theta);
-        
+
         Color color = ColorFromHSV(r*360.0f, 1.0f, 1.0f);
-        
+
         mesh.colors[i*4 + 0] = color.r;
         mesh.colors[i*4 + 1] = color.g;
         mesh.colors[i*4 + 2] = color.b;
@@ -179,6 +179,6 @@ static Mesh GenMeshPoints(int numPoints)
 
     // Upload mesh data from CPU (RAM) to GPU (VRAM) memory
     UploadMesh(&mesh, false);
-    
+
     return mesh;
 }

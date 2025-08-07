@@ -52,13 +52,27 @@
 #ifndef SDL_ENABLE_OLD_NAMES
     #define SDL_ENABLE_OLD_NAMES    // Just in case we're on SDL3, we need some in-between compatibily
 #endif
-#include "SDL.h"                // SDL base library (window/rendered, input, timing... functionality)
+// SDL base library (window/rendered, input, timing... functionality)
+#ifdef USING_SDL3_PROJECT
+    #include "SDL3/SDL.h"
+#elif USING_SDL2_PROJECT
+    #include "SDL2/SDL.h"
+#else
+    #include "SDL.h"
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // It seems it does not need to be included to work
     //#include "SDL_opengles2.h"
 #else
-    #include "SDL_opengl.h"     // SDL OpenGL functionality (if required, instead of internal renderer)
+    // SDL OpenGL functionality (if required, instead of internal renderer)
+    #ifdef USING_SDL3_PROJECT
+        #include "SDL3/SDL_opengl.h"
+    #elif USING_SDL2_PROJECT
+        #include "SDL2/SDL_opengl.h"
+    #else
+        #include "SDL_opengl.h"
+    #endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -238,8 +252,7 @@ static const int CursorsLUT[] = {
     //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
-
-// SDL3 Migration Layer made to avoid `ifdefs` inside functions when we can.
+// SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can.
 #if defined(PLATFORM_DESKTOP_SDL3)
 
 // SDL3 Migration:
@@ -290,13 +303,13 @@ int SDL_GetNumVideoDisplays(void)
     int monitorCount = 0;
     SDL_DisplayID *displays = SDL_GetDisplays(&monitorCount);
 
-    // Safe because If `mem` is NULL, SDL_free does nothing
+    // Safe because If 'mem' is NULL, SDL_free does nothing
     SDL_free(displays);
 
     return monitorCount;
 }
 
-// SLD3 Migration: To emulate SDL2 this function should return `SDL_DISABLE` or `SDL_ENABLE`
+// SLD3 Migration: To emulate SDL2 this function should return 'SDL_DISABLE' or 'SDL_ENABLE'
 // representing the *processing state* of the event before this function makes any changes to it
 Uint8 SDL_EventState(Uint32 type, int state)
 {
@@ -567,7 +580,7 @@ void SetWindowState(unsigned int flags)
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
         // NOTE: To be able to implement this part it seems that we should
-        // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+        // do it ourselves, via 'windows.h', 'X11/Xlib.h' or even 'Cocoa.h'
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (flags & FLAG_WINDOW_TOPMOST)
@@ -1090,8 +1103,7 @@ Vector2 GetWindowScaleDPI(void)
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #else
     scale.x = SDL_GetWindowDisplayScale(platform.window);
-    scale.y = scale.x;
-    TRACELOG(LOG_INFO, "WindowScaleDPI is %f", scale.x);
+    scale.y = scale.x;    
 #endif
 
     return scale;
@@ -1155,13 +1167,13 @@ Image GetClipboardImage(void)
             image = LoadImageFromMemory(imageExtensions[i], fileData, dataSize);
             if (IsImageValid(image))
             {
-                TRACELOG(LOG_INFO, "Clipboard image: Got image from clipboard as a `%s` successfully", imageExtensions[i]);
+                TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
                 return image;
             }
         }
     }
 
-    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data. Error: %s", SDL_GetError());
+    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard: Couldn't get clipboard data. ERROR: %s", SDL_GetError());
 #endif
 
     return image;
@@ -1612,7 +1624,7 @@ void PollInputEvents(void)
                     unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, textLen);
                     #else
                     int codepointSize = 0;
-                    codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);
+                    int codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);
                     #endif
                     CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = codepoint;
                     CORE.Input.Keyboard.charPressedQueueCount++;

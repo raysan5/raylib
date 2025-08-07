@@ -52,7 +52,7 @@ int main(void)
                 isCursorHidden = 0;
             }
         }
-        
+
         ballPosition = GetMousePosition();
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) ballColor = MAROON;

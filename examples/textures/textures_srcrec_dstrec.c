@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Texture source and destination rectangles
+*   raylib [textures] example - texture source and destination rectangles
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

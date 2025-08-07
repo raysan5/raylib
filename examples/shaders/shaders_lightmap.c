@@ -70,7 +70,7 @@ int main(void)
     // Load a new texcoords2 attributes buffer
     mesh.vboId[SHADER_LOC_VERTEX_TEXCOORD02] = rlLoadVertexBuffer(mesh.texcoords2, mesh.vertexCount*2*sizeof(float), false);
     rlEnableVertexArray(mesh.vaoId);
-    
+
     // Index 5 is for texcoords2
     rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(5);
@@ -156,10 +156,10 @@ int main(void)
                 (Vector2){ 0.0, 0.0 },
                 0.0,
                 WHITE);
-                
+
             DrawText("lightmap", GetRenderWidth() - 66, 16 + MAP_SIZE*8, 10, GRAY);
             DrawText("10x10 pixels", GetRenderWidth() - 76, 30 + MAP_SIZE*8, 10, GRAY);
-                
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

@@ -173,7 +173,7 @@ int main(void)
 
             // Draw the same exact things as we drew in the shadowmap!
             DrawScene(cube, robot);
-        
+
         EndMode3D();
 
         DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 320, screenHeight - 20, 10, GRAY);

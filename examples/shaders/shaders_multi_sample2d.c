@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Multiple sample2D with default batch system
+*   raylib [shaders] example - multi sample2D
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -38,7 +38,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib - multiple sample2D");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - multi sample2D");
 
     Image imRed = GenImageColor(800, 450, (Color){ 255, 0, 0, 255 });
     Texture texRed = LoadTextureFromImage(imRed);
@@ -82,16 +82,18 @@ int main(void)
 
             BeginShaderMode(shader);
 
-                // WARNING: Additional samplers are enabled for all draw calls in the batch,
-                // EndShaderMode() forces batch drawing and consequently resets active textures
-                // to let other sampler2D to be activated on consequent drawings (if required)
+                // WARNING: Additional textures (sampler2D) are enabled for ALL draw calls in the batch,
+                // but EndShaderMode() forces batch drawing and resets active textures, this way
+                // other textures (sampler2D) can be activated on consequent drawings (if required)
+                // The downside of this approach is that SetShaderValue() must be called inside the loop,
+                // to be set again after every EndShaderMode() reset
                 SetShaderValueTexture(shader, texBlueLoc, texBlue);
 
-                // We are drawing texRed using default sampler2D texture0 but
-                // an additional texture units is enabled for texBlue (sampler2D texture1)
+                // We are drawing texRed using default [sampler2D texture0] but
+                // an additional texture units is enabled for texBlue [sampler2D texture1]
                 DrawTexture(texRed, 0, 0, WHITE);
 
-            EndShaderMode();
+            EndShaderMode(); // Texture sampler2D is reseted, needs to be set again for next frame
 
             DrawText("Use KEY_LEFT/KEY_RIGHT to move texture mixing in shader!", 80, GetScreenHeight() - 40, 20, RAYWHITE);
 
