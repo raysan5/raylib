@@ -219,10 +219,6 @@ RMAPI float Wrap(float value, float min, float max)
 // Check whether two given floats are almost equal
 RMAPI int FloatEquals(float x, float y)
 {
-#if !defined(EPSILON)
-    #define EPSILON 0.000001f
-#endif
-
     int result = (fabsf(x - y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
 
     return result;
@@ -548,10 +544,6 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 // Check whether two given vectors are almost equal
 RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
-#if !defined(EPSILON)
-    #define EPSILON 0.000001f
-#endif
-
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
@@ -1444,10 +1436,6 @@ RMAPI Vector4 Vector4Invert(Vector4 v)
 // Check whether two given vectors are almost equal
 RMAPI int Vector4Equals(Vector4 p, Vector4 q)
 {
-#if !defined(EPSILON)
-    #define EPSILON 0.000001f
-#endif
-
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
@@ -2196,10 +2184,6 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
-#if !defined(EPSILON)
-    #define EPSILON 0.000001f
-#endif
-
     float cosHalfTheta = q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
     if (cosHalfTheta < 0)
@@ -2532,10 +2516,6 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 // Check whether two given quaternions are almost equal
 RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 {
-#if !defined(EPSILON)
-    #define EPSILON 0.000001f
-#endif
-
     int result = (((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
