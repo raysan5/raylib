@@ -165,6 +165,9 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 // Clear resource paths scanned
 static void ClearExampleResources(char **resPaths);
 
+// Add VS project (.vcxproj) to existing VS solution (.sol)
+static int AddVSProjectToSolution(const char *projFile, const char *solFile);
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -487,6 +490,7 @@ int main(int argc, char *argv[])
             
             // Create: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             //------------------------------------------------------------------------------------------------
+            // WARNING: When adding new project a unique UUID should be assigned!
             FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
             FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
@@ -495,7 +499,8 @@ int main(int argc, char *argv[])
                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exCategory));
             
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
-            system(TextFormat("dotnet solution %s/../projects/VS2022/raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exBasePath, exName));
+            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+                TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -680,10 +685,10 @@ int main(int argc, char *argv[])
             // Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             remove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
-            // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
+            // TODO: Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
             //---------------------------------------------------------------------------
-            system(TextFormat("dotnet solution %s/../projects/VS2022/raylib.sln remove %s/../projects/VS2022/examples/%s.vcxproj", 
-                exBasePath, exBasePath, exName));
+            //RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+            //    TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
             //---------------------------------------------------------------------------
             
             // Remove: raylib.com/examples/<category>/<category>_example_name.html
@@ -932,16 +937,23 @@ int main(int argc, char *argv[])
                                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
                         }
 
+                        // WARNING: Adding a .vcxproj to .sln can not be automated with 
+                        // "dotnet" tool (C# projects only)
+                        // "devenv" tool (no adding support, only building)
+                        // It must be done manually editing the .sln file
                         if (exInfo->status & VALID_NOT_IN_VCXSOL)
-                            system(TextFormat("dotnet solution %s/../projects/VS2022/raylib.sln add %s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exBasePath, exInfo->name));
-                        
+                        {
+                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+                                TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
+                        }
+
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.data
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
                         // Solves: VALID_MISSING_WEB_OUTPUT
-                        if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
-                            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+                        //if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
+                        //    system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
                     }
                 }
 
@@ -1726,4 +1738,58 @@ static void ClearExampleResources(char **resPaths)
     for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) RL_FREE(resPaths[i]);
 
     RL_FREE(resPaths);
+}
+
+// TODO: Add VS project (.vcxproj) to existing VS solution (.sol)
+static int AddVSProjectToSolution(const char *projFile, const char *solFile)
+{
+    int result = 0;
+
+    // Generate unique UUID:
+    // C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\uuidgen.exe > saved_uuid.txt
+
+    // Add project to the list:
+    // Format: Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "<project_name>", "examples\<project_name>.vcxproj", "{<project_uuid>}"
+    /*
+    Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
+    EndProject
+    */
+
+    // Update project config: <project_uuid>
+    /*
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|ARM64.Build.0 = Debug|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x64.ActiveCfg = Debug|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x64.Build.0 = Debug|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x86.ActiveCfg = Debug|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x86.Build.0 = Debug|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|ARM64.ActiveCfg = Release|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|ARM64.Build.0 = Release|ARM64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x64.ActiveCfg = Release|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x64.Build.0 = Release|x64
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x86.ActiveCfg = Release|Win32
+		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x86.Build.0 = Release|Win32
+    */
+
+    // Update projects to folders:
+    // {project_uuid} = {solution_folder_uuid}
+    /*
+     	GlobalSection(NestedProjects) = preSolution
+    {0981CA98-E4A5-4DF1-987F-A41D09131EFC} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
+    */
+
+    return result;
 }
