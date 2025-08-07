@@ -286,11 +286,29 @@ int main(int argc, char *argv[])
                 char *exColInfo = LoadFileText(exCollectionFilePath);
                 if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
-                    strcpy(exName, argv[2]);    // Register example name
-                    strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                    strcpy(exRename, argv[3]);
-                    strncpy(exRecategory, exRename, TextFindIndex(exRename, "_"));
-                    opCode = OP_RENAME;
+                    // Security checks for new file name to verify category is included
+                    int newCatIndex = TextFindIndex(argv[3], "_");
+                    if (newCatIndex > 3)
+                    {
+                        char cat[12] = { 0 };
+                        strncpy(cat, argv[3], newCatIndex);
+                        bool newCatFound = false;
+                        for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
+                        { 
+                            if (TextIsEqual(cat, exCategories[i])) { newCatFound = true; break; }
+                        }
+
+                        if (newCatFound)
+                        {
+                            strcpy(exName, argv[2]);    // Register example name
+                            strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                            strcpy(exRename, argv[3]);
+                            strncpy(exRecategory, exRename, TextFindIndex(exRename, "_"));
+                            opCode = OP_RENAME;
+                        }
+                        else LOG("WARNING: Example new category is not valid\n");
+                    }
+                    else LOG("WARNING: Example new name does not include category\n");
                 }
                 else LOG("WARNING: RENAME: Example not available in the collection\n");
                 UnloadFileText(exColInfo);
