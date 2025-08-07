@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------------
 // Module functions declaration
 //------------------------------------------------------------------------------------
-void NormalizeKernel(float *kernel, int size);
+static void NormalizeKernel(float *kernel, int size);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
