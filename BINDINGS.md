@@ -145,7 +145,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [clj-raylib](https://github.com/lsevero/clj-raylib)                                | 3.0            | [Clojure](https://clojure.org)                                          |
 | [QuickJS-raylib](https://github.com/sntg-p/QuickJS-raylib)                         | 3.0            | [QuickJS](https://bellard.org/quickjs)                                  |
 | [raylib-duktape](https://github.com/RobLoach/raylib-duktape)                       | 2.6            | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript)        |
-| [raylib-v7](https://github.com/Rabios/raylib-v7)                                   | 3.5            | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)             |
 | [raylib-chaiscript](https://github.com/RobLoach/raylib-chaiscript)                 | 2.6            | [ChaiScript](http://chaiscript.com)                                     |
 | [raylib-squirrel](https://github.com/RobLoach/raylib-squirrel)                     | 2.5            | [Squirrel](http://www.squirrel-lang.org)                                |
 | [racket-raylib-2d](https://github.com/arvyy/racket-raylib-2d)                      | 2.5            | [Racket](https://racket-lang.org)                                       |
