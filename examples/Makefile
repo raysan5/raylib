@@ -639,6 +639,7 @@ SHADERS = \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
+    shaders/shaders_normalmap \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
