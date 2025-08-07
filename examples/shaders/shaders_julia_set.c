@@ -167,7 +167,7 @@ int main(void)
             // do not represent full screen coordinates (space where want to apply shader)
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
         EndTextureMode();
-            
+
         BeginDrawing();
             ClearBackground(BLACK);     // Clear screen background
 

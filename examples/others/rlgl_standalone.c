@@ -137,7 +137,7 @@ int main(void)
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
-    
+
     // WARNING: OpenGL 3.3 Core profile only
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);

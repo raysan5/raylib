@@ -59,10 +59,10 @@ int main(void)
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
     // Get some required shader locations
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-    // NOTE: "matModel" location name is automatically assigned on shader loading, 
+    // NOTE: "matModel" location name is automatically assigned on shader loading,
     // no need to get the location again if using that uniform name
     //shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-    
+
     // Ambient light level (some basic lighting)
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4);
@@ -87,13 +87,13 @@ int main(void)
         // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
-        
+
         // Check key inputs to enable/disable lights
         if (IsKeyPressed(KEY_Y)) { lights[0].enabled = !lights[0].enabled; }
         if (IsKeyPressed(KEY_R)) { lights[1].enabled = !lights[1].enabled; }
         if (IsKeyPressed(KEY_G)) { lights[2].enabled = !lights[2].enabled; }
         if (IsKeyPressed(KEY_B)) { lights[3].enabled = !lights[3].enabled; }
-        
+
         // Update light values (actually, only enable/disable them)
         for (int i = 0; i < MAX_LIGHTS; i++) UpdateLightValues(shader, lights[i]);
         //----------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Rectangle bounds
+*   raylib [text] example - rectangle bounds
 *
 *   Example complexity rating: [★★★★] 4/4
 *

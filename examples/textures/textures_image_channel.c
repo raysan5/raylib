@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Retrive image channel (mask)
+*   raylib [textures] example - extract image channel
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -79,7 +79,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         // TODO...
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -104,6 +104,7 @@ int main(void)
     UnloadTexture(textureGreen);
     UnloadTexture(textureBlue);
     UnloadTexture(textureAlpha);
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

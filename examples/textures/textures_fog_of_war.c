@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Fog of war
+*   raylib [textures] example - fog of war
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

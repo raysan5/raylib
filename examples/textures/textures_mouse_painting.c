@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Mouse painting
+*   raylib [textures] example - mouse painting
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

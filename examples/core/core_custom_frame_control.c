@@ -39,7 +39,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom frame control");
 
     // Custom timming variables
@@ -48,11 +48,11 @@ int main(void)
     double updateDrawTime = 0.0;        // Update + Draw time
     double waitTime = 0.0;              // Wait time (if target fps required)
     float deltaTime = 0.0f;             // Frame time (Update + Draw + Wait time)
-    
+
     float timeCounter = 0.0f;           // Accumulative time counter (seconds)
     float position = 0.0f;              // Circle position
     bool pause = false;                 // Pause control flag
-    
+
     int targetFPS = 60;                 // Our initial target fps
     //--------------------------------------------------------------------------------------
 
@@ -64,12 +64,12 @@ int main(void)
         #ifndef PLATFORM_WEB            // NOTE: On non web platforms the PollInputEvents just works before the inputs checks
             PollInputEvents();          // Poll input events (SUPPORT_CUSTOM_FRAME_CONTROL)
         #endif
-        
+
         if (IsKeyPressed(KEY_SPACE)) pause = !pause;
-        
+
         if (IsKeyPressed(KEY_UP)) targetFPS += 20;
         else if (IsKeyPressed(KEY_DOWN)) targetFPS -= 20;
-        
+
         if (targetFPS < 0) targetFPS = 0;
 
         if (!pause)
@@ -91,12 +91,12 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             for (int i = 0; i < GetScreenWidth()/200; i++) DrawRectangle(200*i, 0, 1, GetScreenHeight(), SKYBLUE);
-            
+
             DrawCircle((int)position, GetScreenHeight()/2 - 25, 50, RED);
-            
+
             DrawText(TextFormat("%03.0f ms", timeCounter*1000.0f), (int)position - 40, GetScreenHeight()/2 - 100, 20, MAROON);
             DrawText(TextFormat("PosX: %03.0f", position), (int)position - 50, GetScreenHeight()/2 + 40, 20, BLACK);
-            
+
             DrawText("Circle is moving at a constant 200 pixels/sec,\nindependently of the frame rate.", 10, 10, 20, DARKGRAY);
             DrawText("PRESS SPACE to PAUSE MOVEMENT", 10, GetScreenHeight() - 60, 20, GRAY);
             DrawText("PRESS UP | DOWN to CHANGE TARGET FPS", 10, GetScreenHeight() - 30, 20, GRAY);
@@ -108,18 +108,18 @@ int main(void)
 
         EndDrawing();
 
-        // NOTE: In case raylib is configured to SUPPORT_CUSTOM_FRAME_CONTROL, 
+        // NOTE: In case raylib is configured to SUPPORT_CUSTOM_FRAME_CONTROL,
         // Events polling, screen buffer swap and frame time control must be managed by the user
 
         SwapScreenBuffer();         // Flip the back buffer to screen (front buffer)
-        
+
         currentTime = GetTime();
         updateDrawTime = currentTime - previousTime;
-        
+
         if (targetFPS > 0)          // We want a fixed frame rate
         {
             waitTime = (1.0f/(float)targetFPS) - updateDrawTime;
-            if (waitTime > 0.0) 
+            if (waitTime > 0.0)
             {
                 WaitTime((float)waitTime);
                 currentTime = GetTime();

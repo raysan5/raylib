@@ -85,17 +85,17 @@ int main(void)
                 DrawGrid(10, 1.0f);        // Draw a grid
 
                 // Draw order matters!
-                if (distanceStatic > distanceRotating) 
+                if (distanceStatic > distanceRotating)
                 {
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                     DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
-                } 
+                }
                 else
                 {
                     DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                 }
-                
+
             EndMode3D();
 
             DrawFPS(10, 10);

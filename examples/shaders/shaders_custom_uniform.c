@@ -78,7 +78,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
-        
+
         Vector2 mousePosition = GetMousePosition();
 
         swirlCenter[0] = mousePosition.x;

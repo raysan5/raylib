@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Apply an shdrOutline to a texture
+*   raylib [shaders] example - texture outline
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -36,7 +36,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture outline");
 
     Texture2D texture = LoadTexture("resources/fudesumi.png");
 

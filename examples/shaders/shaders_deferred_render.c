@@ -42,7 +42,7 @@ typedef struct GBuffer {
     unsigned int positionTexture;
     unsigned int normalTexture;
     unsigned int albedoSpecTexture;
-    
+
     unsigned int depthRenderbuffer;
 } GBuffer;
 
@@ -94,14 +94,14 @@ int main(void)
         TraceLog(LOG_WARNING, "Failed to create framebuffer");
         exit(1);
     }
-    
+
     rlEnableFramebuffer(gBuffer.framebuffer);
 
     // NOTE: Vertex positions are stored in a texture for simplicity. A better approach would use a depth texture
-    // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position, 
+    // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position,
     // depth, and the inverse view/projection matrices.
 
-    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios. 
+    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios.
     // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
     // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`.
     gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
@@ -161,7 +161,7 @@ int main(void)
     const float CUBE_SCALE = 0.25;
     Vector3 cubePositions[MAX_CUBES] = { 0 };
     float cubeRotations[MAX_CUBES] = { 0 };
-    
+
     for (int i = 0; i < MAX_CUBES; i++)
     {
         cubePositions[i] = (Vector3){
@@ -169,7 +169,7 @@ int main(void)
             .y = (float)(rand()%5),
             .z = (float)(rand()%10) - 5,
         };
-        
+
         cubeRotations[i] = (float)(rand()%360);
     }
 
@@ -190,7 +190,7 @@ int main(void)
         // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(deferredShader, deferredShader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
-        
+
         // Check key inputs to enable/disable lights
         if (IsKeyPressed(KEY_Y)) { lights[0].enabled = !lights[0].enabled; }
         if (IsKeyPressed(KEY_R)) { lights[1].enabled = !lights[1].enabled; }
@@ -215,7 +215,7 @@ int main(void)
             rlEnableFramebuffer(gBuffer.framebuffer);
             rlClearColor(0, 0, 0, 0);
             rlClearScreenBuffers();  // Clear color and depth buffer
-            
+
             rlDisableColorBlend();
             BeginMode3D(camera);
                 // NOTE: We have to use rlEnableShader here. `BeginShaderMode` or thus `rlSetShader`
@@ -281,7 +281,7 @@ int main(void)
                             }
                         rlDisableShader();
                     EndMode3D();
-                    
+
                     DrawText("FINAL RESULT", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 case DEFERRED_POSITION:
@@ -291,7 +291,7 @@ int main(void)
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
-                    
+
                     DrawText("POSITION TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 case DEFERRED_NORMAL:
@@ -301,7 +301,7 @@ int main(void)
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
-                    
+
                     DrawText("NORMAL TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 case DEFERRED_ALBEDO:
@@ -311,7 +311,7 @@ int main(void)
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
-                    
+
                     DrawText("ALBEDO TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
                 default: break;
@@ -321,7 +321,7 @@ int main(void)
             DrawText("Switch G-buffer textures: [1][2][3][4]", 10, 70, 20, DARKGRAY);
 
             DrawFPS(10, 10);
-            
+
         EndDrawing();
         // -----------------------------------------------------------------------------
     }

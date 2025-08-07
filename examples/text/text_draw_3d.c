@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Draw 3d
+*   raylib [text] example - drawing 3d text
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -12,7 +12,7 @@
 *   map that texture to a plane and render that, or maybe a shader but my method allows more
 *   flexibility...for example to change position of each letter individually to make somethink
 *   like a wavy text effect.
-*    
+*
 *   Special thanks to:
 *        @Nighten for the DrawTextStyle() code https://github.com/NightenDushi/Raylib_DrawTextStyle
 *        Chris Camacho (codifies - http://bedroomcoders.co.uk/) for the alpha discard shader
@@ -146,7 +146,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, camera_mode);
-        
+
         // Handle font files dropped
         if (IsFileDropped())
         {
@@ -164,7 +164,7 @@ int main(void)
                 font = LoadFont(droppedFiles.paths[0]);
                 fontSize = (float)font.baseSize;
             }
-            
+
             UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
 

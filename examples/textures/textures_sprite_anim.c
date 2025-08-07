@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Sprite animation
+*   raylib [textures] example - sprite animation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

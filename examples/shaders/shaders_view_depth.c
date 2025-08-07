@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shader] example - render depth texture
+*   raylib [shaders] example - render depth texture
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -36,7 +36,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shader] example - render depth texture");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - render depth texture");
 
     // Init camera
     Camera camera = { 0 };
@@ -76,7 +76,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginTextureMode(target);
             ClearBackground(WHITE);
-            
+
             BeginMode3D(camera);
                 DrawModel(cube,  (Vector3){ 0.0f, 0.0f, 0.0f },  3.0f, YELLOW);
                 DrawModel(floor, (Vector3){ 10.0f, 0.0f, 2.0f }, 2.0f, RED);

@@ -48,7 +48,7 @@ int main(void)
     // Load a cube model
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model model = LoadModelFromMesh(cube);
-    
+
     // Load a texture and assign to cube model
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
@@ -77,17 +77,17 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
+
                 BeginShaderMode(shader);
                     DrawModel(model, (Vector3){ 0.0f, 0.0f, 0.0f }, 2.0f, WHITE);
                 EndShaderMode();
 
                 DrawGrid(10, 1.0f);
-                
+
             EndMode3D();
 
             DrawText("Use mouse to rotate the camera", 10, 10, 20, DARKGRAY);
@@ -104,6 +104,6 @@ int main(void)
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

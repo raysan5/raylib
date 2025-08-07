@@ -97,7 +97,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_FIRST_PERSON);
-        
+
         framesCounter++;
         rotation.x += 0.01f;
         rotation.y += 0.005f;

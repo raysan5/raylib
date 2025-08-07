@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Multiple sample2D with default batch system
+*   raylib [shaders] example - multi sample2D
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -38,7 +38,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib - multiple sample2D");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - multi sample2D");
 
     Image imRed = GenImageColor(800, 450, (Color){ 255, 0, 0, 255 });
     Texture texRed = LoadTextureFromImage(imRed);
@@ -93,7 +93,7 @@ int main(void)
                 // an additional texture units is enabled for texBlue [sampler2D texture1]
                 DrawTexture(texRed, 0, 0, WHITE);
 
-            EndShaderMode(); // Texture sampler2D is reseted, needs to be set again for next frame 
+            EndShaderMode(); // Texture sampler2D is reseted, needs to be set again for next frame
 
             DrawText("Use KEY_LEFT/KEY_RIGHT to move texture mixing in shader!", 80, GetScreenHeight() - 40, 20, RAYWHITE);
 

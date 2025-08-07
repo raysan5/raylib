@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Unicode
+*   raylib [text] example - unicode text drawing
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -284,7 +284,7 @@ int main(void)
                 int length = GetCodepointCount(messages[message].text);
                 const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, length, size);
                 sz = MeasureTextEx(GetFontDefault(), info, 10, 1.0f);
-                
+
                 DrawText(info, (int)(textRect.x + textRect.width - sz.x), (int)(msgRect.y + msgRect.height - sz.y - 2), 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------

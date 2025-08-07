@@ -65,7 +65,7 @@ int main(void)
             // Check minimum rec size
             if (rec.width < MOUSE_SCALE_MARK_SIZE) rec.width = MOUSE_SCALE_MARK_SIZE;
             if (rec.height < MOUSE_SCALE_MARK_SIZE) rec.height = MOUSE_SCALE_MARK_SIZE;
-            
+
             // Check maximum rec size
             if (rec.width > (GetScreenWidth() - rec.x)) rec.width = GetScreenWidth() - rec.x;
             if (rec.height > (GetScreenHeight() - rec.y)) rec.height = GetScreenHeight() - rec.y;

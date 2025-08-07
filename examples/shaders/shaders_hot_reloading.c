@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Hot reloading
+*   raylib [shaders] example - hot reloading
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
