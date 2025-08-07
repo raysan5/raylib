@@ -148,14 +148,14 @@ int main(void)
 
             Color textColor = (useNormalMap) ? DARKGREEN : RED;
             const char *toggleStr = (useNormalMap) ? "On" : "Off";
-            DrawText(TextFormat("Use key [N] to toggle normal map: %s", toggleStr), 10, 30, 10, textColor);
+            DrawText(TextFormat("Use key [N] to toggle normal map: %s", toggleStr), 10, 10, 10, textColor);
 
             int yOffset = 24;
-            DrawText("Use keys [W][A][S][D] to move the light", 10, 30 + yOffset*1, 10, BLACK);
-            DrawText("Use keys [Up][Down] to change specular exponent", 10, 30 + yOffset*2, 10, BLACK);
-            DrawText(TextFormat("Specular Exponent: %.2f", specularExponent), 10, 30 + yOffset*3, 10, BLUE);
+            DrawText("Use keys [W][A][S][D] to move the light", 10, 10 + yOffset*1, 10, BLACK);
+            DrawText("Use keys [Up][Down] to change specular exponent", 10, 10 + yOffset*2, 10, BLACK);
+            DrawText(TextFormat("Specular Exponent: %.2f", specularExponent), 10, 10 + yOffset*3, 10, BLUE);
 
-            DrawFPS(10, 10);
+            DrawFPS(screenWidth - 80, 10);
 
         EndDrawing();
         //--------------------------------------------------------------------------------------
