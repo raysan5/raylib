@@ -56,7 +56,7 @@
 
 /*******************************************************************************************
 *
-*   raylib [<module>] example - <name>
+*   raylib [<module>] example - <name/short description>
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
