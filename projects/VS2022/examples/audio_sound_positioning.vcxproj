@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{9CD8BCAD-F212-4BCC-BA98-899743CE3279}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>audio_sound_positioning</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

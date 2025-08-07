@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{2B140378-125F-4DE9-AC37-2CC1B73D7254}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shapes_double_pendulum</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

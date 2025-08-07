@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{6B8C5711-6AB4-4023-9FDD-E9D976E8D18F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>models_tesseract_view</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

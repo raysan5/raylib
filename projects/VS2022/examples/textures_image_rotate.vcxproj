@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{2AA91EED-2D32-4B09-84A3-53D41EED1005}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>textures_image_rotate</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
