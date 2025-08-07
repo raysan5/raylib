@@ -221,10 +221,12 @@ int main(void)
 }
 
 
-// NoEase function, used when "no easing" is selected for any axis. It just ignores all parameters besides b.
+// NoEase function, used when "no easing" is selected for any axis 
+// It just ignores all parameters besides b
 static float NoEase(float t, float b, float c, float d)
 {
-    float burn = t + b + c + d;  // Hack to avoid compiler warning (about unused variables)
+    // Hack to avoid compiler warning (about unused variables)
+    float burn = t + b + c + d;
     d += burn;
 
     return b;

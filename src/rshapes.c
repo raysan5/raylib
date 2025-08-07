@@ -3,17 +3,17 @@
 *   rshapes - Basic functions to draw 2d shapes and check collisions
 *
 *   ADDITIONAL NOTES:
-*       Shapes can be draw using 3 types of primitives: LINES, TRIANGLES and QUADS.
+*       Shapes can be draw using 3 types of primitives: LINES, TRIANGLES and QUADS
 *       Some functions implement two drawing options: TRIANGLES and QUADS, by default TRIANGLES
 *       are used but QUADS implementation can be selected with SUPPORT_QUADS_DRAW_MODE define
 *
 *       Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a
 *       user-provided texture with SetShapesTexture(), the pourpouse of this implementation
-*       is allowing to reduce draw calls when combined with a texture-atlas.
+*       is allowing to reduce draw calls when combined with a texture-atlas
 *
 *       By default, raylib sets the default texture and rectangle at InitWindow()[rcore] to one
 *       white character of default font [rtext], this way, raylib text and shapes can be draw with
-*       a single draw call and it also allows users to configure it the same way with their own fonts.
+*       a single draw call and it also allows users to configure it the same way with their own fonts
 *
 *   CONFIGURATION:
 *       #define SUPPORT_MODULE_RSHAPES

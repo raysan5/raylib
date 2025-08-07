@@ -6,12 +6,12 @@
 *
 *   NOTE: Draw a 2D text in 3D space, each letter is drawn in a quad (or 2 quads if backface is set)
 *   where the texture coodinates of each quad map to the texture coordinates of the glyphs
-*   inside the font texture.
+*   inside the font texture
 *
 *   A more efficient approach, i believe, would be to render the text in a render texture and
 *   map that texture to a plane and render that, or maybe a shader but my method allows more
 *   flexibility...for example to change position of each letter individually to make somethink
-*   like a wavy text effect.
+*   like a wavy text effect
 *
 *   Special thanks to:
 *        @Nighten for the DrawTextStyle() code https://github.com/NightenDushi/Raylib_DrawTextStyle
@@ -71,7 +71,7 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 // Draw a 2D text in 3D space and wave the parts that start with '~~' and end with '~~'
 // This is a modified version of the original code by @Nighten found here https://github.com/NightenDushi/Raylib_DrawTextStyle
 static void DrawTextWave3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, WaveTextConfig *config, float time, Color tint);
-// Measure a text in 3D ignoring the `~~` chars.
+// Measure a text in 3D ignoring the `~~` chars
 static Vector3 MeasureTextWave3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 // Generates a nice color with a random hue
 static Color GenerateRandomColor(float s, float v);
@@ -562,7 +562,7 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
     }
 }
 
-// Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`.
+// Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`
 // This is a modified version of the original code by @Nighten found here https://github.com/NightenDushi/Raylib_DrawTextStyle
 static void DrawTextWave3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, WaveTextConfig* config, float time, Color tint)
 {
@@ -625,7 +625,7 @@ static void DrawTextWave3D(Font font, const char *text, Vector3 position, float 
     }
 }
 
-// Measure a text in 3D ignoring the `~~` chars.
+// Measure a text in 3D ignoring the `~~` chars
 static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, float fontSpacing, float lineSpacing)
 {
     int len = TextLength(text);

@@ -99,44 +99,44 @@ int main(void)
 
     // NOTE: Vertex positions are stored in a texture for simplicity. A better approach would use a depth texture
     // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position,
-    // depth, and the inverse view/projection matrices.
+    // depth, and the inverse view/projection matrices
 
-    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios.
+    // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios
     // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
-    // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`.
+    // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`
     gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
 
-    // Similarly, 16-bit precision is used for normals ensures OpenGL ES 3 compatibility.
-    // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations.
+    // Similarly, 16-bit precision is used for normals ensures OpenGL ES 3 compatibility
+    // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations
     gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
 
-    // Albedo (diffuse color) and specular strength can be combined into one texture.
-    // The color in RGB, and the specular strength in the alpha channel.
+    // Albedo (diffuse color) and specular strength can be combined into one texture
+    // The color in RGB, and the specular strength in the alpha channel
     gBuffer.albedoSpecTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
 
     // Activate the draw buffers for our framebuffer
     rlActiveDrawBuffers(3);
 
-    // Now we attach our textures to the framebuffer.
+    // Now we attach our textures to the framebuffer
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.positionTexture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.normalTexture, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.albedoSpecTexture, RL_ATTACHMENT_COLOR_CHANNEL2, RL_ATTACHMENT_TEXTURE2D, 0);
 
-    // Finally we attach the depth buffer.
+    // Finally we attach the depth buffer
     gBuffer.depthRenderbuffer = rlLoadTextureDepth(screenWidth, screenHeight, true);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.depthRenderbuffer, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
 
-    // Make sure our framebuffer is complete.
+    // Make sure our framebuffer is complete
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
-    // to rlDisableFramebuffer() here.
+    // to rlDisableFramebuffer() here
     if (!rlFramebufferComplete(gBuffer.framebuffer))
     {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
     }
 
-    // Now we initialize the sampler2D uniform's in the deferred shader.
+    // Now we initialize the sampler2D uniform's in the deferred shader
     // We do this by setting the uniform's values to the texture units that
-    // we later bind our g-buffer textures to.
+    // we later bind our g-buffer textures to
     rlEnableShader(deferredShader.id);
         int texUnitPosition = 0;
         int texUnitNormal = 1;
@@ -219,7 +219,7 @@ int main(void)
             rlDisableColorBlend();
             BeginMode3D(camera);
                 // NOTE: We have to use rlEnableShader here. `BeginShaderMode` or thus `rlSetShader`
-                // will not work, as they won't immediately load the shader program.
+                // will not work, as they won't immediately load the shader program
                 rlEnableShader(gbufferShader.id);
                     // When drawing a model here, make sure that the material's shaders
                     // are set to the gbuffer shader!
@@ -236,7 +236,7 @@ int main(void)
             EndMode3D();
             rlEnableColorBlend();
 
-            // Go back to the default framebuffer (0) and draw our deferred shading.
+            // Go back to the default framebuffer (0) and draw our deferred shading
             rlDisableFramebuffer();
             rlClearScreenBuffers(); // Clear color & depth buffer
 
@@ -264,10 +264,10 @@ int main(void)
                         rlEnableColorBlend();
                     EndMode3D();
 
-                    // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer.
+                    // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer
                     rlBindFramebuffer(RL_READ_FRAMEBUFFER, gBuffer.framebuffer);
                     rlBindFramebuffer(RL_DRAW_FRAMEBUFFER, 0);
-                    rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
+                    rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100); // GL_DEPTH_BUFFER_BIT
                     rlDisableFramebuffer();
 
                     // Since our shader is now done and disabled, we can draw spheres

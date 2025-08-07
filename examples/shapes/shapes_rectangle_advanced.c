@@ -265,10 +265,10 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
     rlSetTexture(0);
 #else
 
-    // Here we use the 'Diagram' to guide ourselves to which point receives what color.
+    // Here we use the 'Diagram' to guide ourselves to which point receives what color
     // By choosing the color correctly associated with a pointe the gradient effect
-    // will naturally come from OpenGL interpolation.
-    // But this time instead of Quad, we think in triangles.
+    // will naturally come from OpenGL interpolation
+    // But this time instead of Quad, we think in triangles
 
     rlBegin(RL_TRIANGLES);
         // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner

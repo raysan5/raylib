@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example demonstrates how to tile a texture on a 3D model using raylib.
+*   Example demonstrates how to tile a texture on a 3D model using raylib
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *

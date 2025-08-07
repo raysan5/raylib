@@ -22,7 +22,7 @@
 #define MARGIN_SIZE       8       // Size for the margins
 #define COLOR_SIZE       16       // Size of the color select buttons
 
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest
 void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint);
 
 //------------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ int main(void)
     return 0;
 }
 
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest
 void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
 {
     if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!

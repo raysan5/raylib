@@ -16,13 +16,13 @@
 ********************************************************************************************
 *
 *   Mixes raylib and plain OpenGL code to draw a GL_POINTS based particle system. The
-*   primary point is to demonstrate raylib and OpenGL interop.
+*   primary point is to demonstrate raylib and OpenGL interop
 *
 *   rlgl batched draw operations internally so we have to flush the current batch before
-*   doing our own OpenGL work (rlDrawRenderBatchActive()).
+*   doing our own OpenGL work (rlDrawRenderBatchActive())
 *
 *   The example also demonstrates how to get the current model view projection matrix of
-*   raylib. That way raylib cameras and so on work as expected.
+*   raylib. That way raylib cameras and so on work as expected
 *
 ********************************************************************************************/
 
@@ -87,13 +87,13 @@ int main(void)
         particles[i].x = (float)GetRandomValue(20, screenWidth - 20);
         particles[i].y = (float)GetRandomValue(50, screenHeight - 20);
 
-        // Give each particle a slightly different period. But don't spread it to much.
-        // This way the particles line up every so often and you get a glimps of what is going on.
+        // Give each particle a slightly different period. But don't spread it to much
+        // This way the particles line up every so often and you get a glimps of what is going on
         particles[i].period = (float)GetRandomValue(10, 30)/10.0f;
     }
 
     // Create a plain OpenGL vertex buffer with the data and an vertex array object
-    // that feeds the data from the buffer into the vertexPosition shader attribute.
+    // that feeds the data from the buffer into the vertexPosition shader attribute
     GLuint vao = 0;
     GLuint vbo = 0;
     glGenVertexArrays(1, &vao);

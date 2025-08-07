@@ -5,9 +5,9 @@
 *   Example complexity rating: [★★★★] 4/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
-*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
+*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3)
 *
 *   Example originally created with raylib 3.0, last time updated with raylib 4.2
 *

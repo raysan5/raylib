@@ -61,15 +61,15 @@ int main(void)
     // You are required to write depth for all shaders if one shader does it
     Shader shdrRaster = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raster.fs", GLSL_VERSION));
 
-    // Declare Struct used to store camera locs.
+    // Declare Struct used to store camera locs
     RayLocs marchLocs = {0};
 
-    // Fill the struct with shader locs.
+    // Fill the struct with shader locs
     marchLocs.camPos = GetShaderLocation(shdrRaymarch, "camPos");
     marchLocs.camDir = GetShaderLocation(shdrRaymarch, "camDir");
     marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
-    // Transfer screenCenter position to shader. Which is used to calculate ray direction.
+    // Transfer screenCenter position to shader. Which is used to calculate ray direction
     Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
     SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
 
@@ -85,7 +85,7 @@ int main(void)
         .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
 
-    // Camera FOV is pre-calculated in the camera Distance.
+    // Camera FOV is pre-calculated in the camera distance
     float camDist = 1.0f/(tanf(camera.fovy*0.5f*DEG2RAD));
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -98,10 +98,10 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
-        // Update Camera Postion in the ray march shader.
+        // Update Camera Postion in the ray march shader
         SetShaderValue(shdrRaymarch, marchLocs.camPos, &(camera.position), RL_SHADER_UNIFORM_VEC3);
 
-        // Update Camera Looking Vector. Vector length determines FOV.
+        // Update Camera Looking Vector. Vector length determines FOV
         Vector3 camDir = Vector3Scale( Vector3Normalize( Vector3Subtract(camera.target, camera.position)) , camDist);
         SetShaderValue(shdrRaymarch, marchLocs.camDir, &(camDir), RL_SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ int main(void)
             ClearBackground(WHITE);
 
             // Raymarch Scene
-            rlEnableDepthTest(); //Manually enable Depth Test to handle multiple rendering methods.
+            rlEnableDepthTest(); // Manually enable Depth Test to handle multiple rendering methods
             BeginShaderMode(shdrRaymarch);
                 DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
             EndShaderMode();

@@ -9,7 +9,7 @@
 *
 *   Example originally created with raylib 1.6, last time updated with raylib 4.0
 *
-*   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile.
+*   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile
 *       It could work on other platforms if redesigned for those platforms (out-of-scope)
 *
 *   DEPENDENCIES:
@@ -48,7 +48,7 @@
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
 *     as being the original software.
 *
-*     3. This notice may not be removed or altered from any source distribution.
+*     3. This notice may not be removed or altered from any source distribution
 *
 ********************************************************************************************/
 

@@ -5,7 +5,7 @@
  *   Example complexity rating: [★★★★] 4/4
  *
  *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
- *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+ *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
  *
  *   Example originally created with raylib 5.6, last time updated with raylib 5.6
  *
@@ -79,7 +79,7 @@ int main(void)
     SetTextureFilter(plane.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture, TEXTURE_FILTER_TRILINEAR);
     SetTextureFilter(plane.materials[0].maps[MATERIAL_MAP_NORMAL].texture, TEXTURE_FILTER_TRILINEAR);
 
-    // Specular exponent AKA shininess of the material.
+    // Specular exponent AKA shininess of the material
     float specularExponent = 8.0f;
     int specularExponentLoc = GetShaderLocation(shader, "specularExponent");
 

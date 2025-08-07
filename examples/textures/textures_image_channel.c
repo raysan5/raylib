@@ -75,9 +75,9 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Draw
+        // Update
         //----------------------------------------------------------------------------------
-        // TODO...
+        // Nothing to update...
         //----------------------------------------------------------------------------------
 
         // Draw
