@@ -18,7 +18,6 @@ You may find it easier to use than other toolchains, especially when it comes to
 
 ## EXAMPLES COLLECTION [TOTAL: 159]
 
-
 ### category: core [36]
 
 Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
