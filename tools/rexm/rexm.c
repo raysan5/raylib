@@ -275,6 +275,7 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[1], "rename") == 0)
         {
             if (argc == 2) LOG("WARNING: No filename provided to be renamed\n");
+            else if (argc == 3) LOG("WARNING: No new filename provided to be renamed\n");
             else if (argc > 4) LOG("WARNING: Too many arguments provided\n");
             else
             {
