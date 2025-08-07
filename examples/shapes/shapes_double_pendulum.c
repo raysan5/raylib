@@ -22,12 +22,6 @@
 //----------------------------------------------------------------------------------
 // Macro Helpers
 //----------------------------------------------------------------------------------
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 450
-
-#define CENTER_X SCREEN_WIDTH * 0.5
-#define CENTER_Y SCREEN_HEIGHT * 0.5 - 100
-
 // Constant for Simulation
 #define SIMULATION_STEPS 30
 #define G 9.81
@@ -45,32 +39,32 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [shapes] example - Double Pendulum");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - double pendulum");
 
     // Simulation Paramters
-    //--------------------------------------------------------------------------------------
     float l1 = 15, m1 = 0.2, theta1 = DEG2RAD * 170, w1 = 0;
     float l2 = 15, m2 = 0.1, theta2 = DEG2RAD * 0, w2 = 0;
     float lengthScaler = 0.1;
     float totalM = m1 + m2;
 
     Vector2 previousPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-    previousPosition.x += CENTER_X;
-    previousPosition.y += CENTER_Y;
+    previousPosition.x += (screenWidth/2);
+    previousPosition.y += (screenHeight/2 - 100);
 
     // Scale length
     float L1 = l1 * lengthScaler;
     float L2 = l2 * lengthScaler;
 
-    // Draw Parameters
-    //--------------------------------------------------------------------------------------
+    // Draw parameters
     int lineThick = 20, trailThick = 2;
     float fateAlpha = 0.01;
-    
-    // Create Framebuffer
-    //--------------------------------------------------------------------------------------
-    RenderTexture2D target = LoadRenderTexture(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Create framebuffer
+    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
 
     SetTargetFPS(60);
@@ -80,60 +74,56 @@ int main(void)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
+        //----------------------------------------------------------------------------------
         float dt = GetFrameTime();
         float step = dt / SIMULATION_STEPS, step2 = step * step;
 
         // Update Physics - larger steps = better approximation
-        //----------------------------------------------------------------------------------
         for (int i = 0; i < SIMULATION_STEPS; ++i)
         {
             float delta = theta1 - theta2;
-            float sinD = sin(delta), cosD = cos(delta), cos2D = cos(2 * delta);
+            float sinD = sinf(delta), cosD = cosf(delta), cos2D = cosf(2*delta);
             float ww1 = w1 * w1, ww2 = w2 * w2;
 
             // Calculate a1
-            float a1 = (-G * (2 * m1 + m2) * sin(theta1) 
-                         - m2 * G * sin(theta1 - 2 * theta2) 
-                         - 2 * sinD * m2 * (ww2 * L2 + ww1 * L1 * cosD))
-                         / (L1 * (2 * m1 + m2 - m2 * cos2D));
+            float a1 = (-G*(2*m1 + m2)*sinf(theta1)
+                         - m2*G*sinf(theta1 - 2*theta2)
+                         - 2*sinD*m2*(ww2*L2 + ww1*L1*cosD))
+                         / (L1*(2*m1 + m2 - m2*cos2D));
 
             // Calculate a2
-            float a2 = (2 * sinD * (ww1 * L1 * totalM
-                         + G * totalM * cos(theta1) 
-                         + ww2 * L2 * m2 * cosD))
-                         / (L2 * (2 * m1 + m2 - m2 * cos2D));
+            float a2 = (2*sinD*(ww1*L1*totalM
+                         + G*totalM*cosf(theta1)
+                         + ww2*L2*m2*cosD))
+                         / (L2*(2*m1 + m2 - m2*cos2D));
 
             // Update thetas
-            theta1 += w1 * step + 0.5 * a1 * step2;
-            theta2 += w2 * step + 0.5 * a2 * step2;
+            theta1 += w1*step + 0.5f*a1*step2;
+            theta2 += w2*step + 0.5f*a2*step2;
 
             // Update omegas
-            w1 += a1 * step;
-            w2 += a2 * step;
+            w1 += a1*step;
+            w2 += a2*step;
         }
-        //----------------------------------------------------------------------------------
 
         // Calculate position
         Vector2 currentPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-        currentPosition.x += CENTER_X;
-        currentPosition.y += CENTER_Y;
+        currentPosition.x += screenWidth/2;
+        currentPosition.y += screenHeight/2 - 100;
 
-        // Draw to framebuffer
-        //----------------------------------------------------------------------------------
+        // Draw to render texture
         BeginTextureMode(target);
-
             // Draw a transparent rectangle - smaller alpha = longer trails
-            DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(BLACK, fateAlpha));
-            
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, fateAlpha));
+
             // Draw trail
             DrawCircleV(previousPosition, trailThick, RED);
             DrawLineEx(previousPosition, currentPosition, trailThick * 2, RED);
-
         EndTextureMode();
-        //----------------------------------------------------------------------------------
 
         // Update previous position
         previousPosition = currentPosition;
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -141,17 +131,16 @@ int main(void)
 
             ClearBackground(BLACK);
 
-            // Draw Trails Texture
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height },
-                             (Vector2){ 0, 0 }, WHITE);
+            // Draw trails texture
+            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
 
-            // Draw Double Pendulum
-            DrawRectanglePro((Rectangle){ CENTER_X, CENTER_Y, 10 * l1, lineThick },
-                             (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta1, RAYWHITE);
+            // Draw double pendulum
+            DrawRectanglePro((Rectangle){ screenWidth/2, screenHeight/2 - 100, 10 * l1, lineThick },
+                (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta1, RAYWHITE);
 
             Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);
-            DrawRectanglePro((Rectangle){ CENTER_X + endpoint1.x, CENTER_Y + endpoint1.y, 10 * l2, lineThick },
-                             (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
+            DrawRectanglePro((Rectangle){ screenWidth/2 + endpoint1.x, screenHeight/2 - 100 + endpoint1.y, 10 * l2, lineThick },
+                (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
