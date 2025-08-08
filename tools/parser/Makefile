@@ -6,7 +6,7 @@ FORMAT?=DEFAULT
 raylib_parser: raylib_parser.c
 	cc raylib_parser.c -o raylib_parser
 
-raylib_api: ../src/raylib.h raylib_parser
+raylib_api: ../../src/raylib.h raylib_parser
 	FORMAT=DEFAULT EXTENSION=txt $(MAKE) raylib_api.txt
 	FORMAT=JSON EXTENSION=json $(MAKE) raylib_api.json
 	FORMAT=XML EXTENSION=xml $(MAKE) raylib_api.xml
