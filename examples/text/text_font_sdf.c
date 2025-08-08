@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font SDF loading
+*   raylib [text] example - font SDF loading
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

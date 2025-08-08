@@ -127,7 +127,7 @@ int main(void)
         UpdateCameraPro(&camera,
             (Vector3){
                 (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f -      // Move forward-backward
-                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,    
+                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,
                 (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f -   // Move right-left
                 (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f,
                 0.0f                                                // Move up-down

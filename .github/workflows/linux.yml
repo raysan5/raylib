@@ -30,17 +30,17 @@ jobs:
         - bits: 32
           ARCH: "i386"
           ARCH_NAME: "i386"
-          COMPILER_PATH: "/user/bin"
+          COMPILER_PATH: "/usr/bin"
           runner: "ubuntu-latest"
         - bits: 64
           ARCH: "x86_64"
           ARCH_NAME: "amd64"
-          COMPILER_PATH: "/user/bin"
+          COMPILER_PATH: "/usr/bin"
           runner: "ubuntu-latest"
         - bits: 64
           ARCH: "aarch64"
           ARCH_NAME: "arm64"
-          COMPILER_PATH: "/user/bin"
+          COMPILER_PATH: "/usr/bin"
           runner: "ubuntu-24.04-arm"
           
     runs-on: ${{ matrix.runner }}

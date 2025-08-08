@@ -28,6 +28,10 @@ Some other conventions to follow:
  - **ALWAYS** initialize all defined variables.
  - **Do not use TABS**, use 4 spaces instead.
  - Avoid trailing spaces, please, avoid them
+ - Comments always start with space + capital letter and never end with a '.', place them **before** the line(s) they refer to
+```c
+// This is a comment in raylib or raylib examples
+```
  - Control flow statements always are followed **by a space**:
 ```c
 if (condition) value = 0;

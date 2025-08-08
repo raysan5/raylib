@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Text Writing Animation
+*   raylib [text] example - text writing animation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

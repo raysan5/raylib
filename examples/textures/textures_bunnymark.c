@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Bunnymark
+*   raylib [textures] example - bunnymark
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{F4C55B99-E1C5-496A-8AC2-40188C38F4F6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>textures_image_kernel</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

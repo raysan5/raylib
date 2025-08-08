@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font filters
+*   raylib [text] example - font texture filters
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -94,7 +94,7 @@ int main(void)
                 UnloadFont(font);
                 font = LoadFontEx(droppedFiles.paths[0], (int)fontSize, 0, 0);
             }
-            
+
             UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------

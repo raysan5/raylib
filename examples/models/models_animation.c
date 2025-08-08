@@ -15,9 +15,9 @@
 *
 ********************************************************************************************
 *
-*   NOTE: To export a model from blender, make sure it is not posed, the vertices need to be 
-*         in the same position as they would be in edit mode and the scale of your models is 
-*         set to 0. Scaling can be done from the export menu.
+*   NOTE: To export a model from blender, make sure it is not posed, the vertices need to be
+*         in the same position as they would be in edit mode and the scale of your models is
+*         set to 0. Scaling can be done from the export menu
 *
 ********************************************************************************************/
 

@@ -127,7 +127,7 @@ int main(void)
                 EndMode3D();
             EndVrStereoMode();
         EndTextureMode();
-        
+
         BeginDrawing();
             ClearBackground(RAYWHITE);
             BeginShaderMode(distortion);

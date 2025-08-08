@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{EC0910F6-8D66-4509-BF57-A5EE7AE9485F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>textures_image_channel</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

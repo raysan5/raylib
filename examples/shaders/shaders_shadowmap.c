@@ -44,7 +44,7 @@ int main(void)
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     // Shadows are a HUGE topic, and this example shows an extremely simple implementation of the shadowmapping algorithm,
     // which is the industry standard for shadows. This algorithm can be extended in a ridiculous number of ways to improve
-    // realism and also adapt it for different scenes. This is pretty much the simplest possible implementation.
+    // realism and also adapt it for different scenes. This is pretty much the simplest possible implementation
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shadowmap");
 
     Camera3D cam = (Camera3D){ 0 };
@@ -178,7 +178,7 @@ int main(void)
 
             // Draw the same exact things as we drew in the shadowmap!
             DrawScene(cube, robot);
-        
+
         EndMode3D();
 
         DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 320, screenHeight - 20, 10, GRAY);

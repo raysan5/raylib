@@ -40,7 +40,7 @@ int main(void)
 	int screenWidth = 800;
 	int screenHeight = 450;
 
-	const char* voxFileNames[] = {
+	const char *voxFileNames[] = {
 		"resources/models/vox/chr_knight.vox",
 		"resources/models/vox/chr_sword.vox",
 		"resources/models/vox/monu9.vox",
@@ -57,24 +57,23 @@ int main(void)
 	camera.fovy = 45.0f;                                // Camera field-of-view Y
 	camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-	//--------------------------------------------------------------------------------------
 	// Load MagicaVoxel files
 	Model models[MAX_VOX_FILES] = { 0 };
 
 	for (int i = 0; i < MAX_VOX_FILES; i++)
 	{
 		// Load VOX file and measure time
-		double t0 = GetTime() * 1000.0;
+		double t0 = GetTime()*1000.0;
 		models[i] = LoadModel(voxFileNames[i]);
-		double t1 = GetTime() * 1000.0;
+		double t1 = GetTime()*1000.0;
 
 		TraceLog(LOG_WARNING, TextFormat("[%s] File loaded in %.3f ms", voxFileNames[i], t1 - t0));
 
 		// Compute model translation matrix to center model on draw position (0, 0 , 0)
 		BoundingBox bb = GetModelBoundingBox(models[i]);
 		Vector3 center = { 0 };
-		center.x = bb.min.x + (((bb.max.x - bb.min.x) / 2));
-		center.z = bb.min.z + (((bb.max.z - bb.min.z) / 2));
+		center.x = bb.min.x + (((bb.max.x - bb.min.x)/2));
+		center.z = bb.min.z + (((bb.max.z - bb.min.z)/2));
 
 		Matrix matTranslate = MatrixTranslate(-center.x, 0, -center.z);
 		models[i].transform = matTranslate;
@@ -82,14 +81,13 @@ int main(void)
 
 	int currentModel = 0;
 
-	//--------------------------------------------------------------------------------------
 	// Load voxel shader
 	Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/voxel_lighting.vs", GLSL_VERSION),
 		TextFormat("resources/shaders/glsl%i/voxel_lighting.fs", GLSL_VERSION));
 
 	// Get some required shader locations
 	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-	// NOTE: "matModel" location name is automatically assigned on shader loading, 
+	// NOTE: "matModel" location name is automatically assigned on shader loading,
 	// no need to get the location again if using that uniform name
 	//shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
 

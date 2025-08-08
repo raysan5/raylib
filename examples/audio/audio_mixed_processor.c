@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Mixed audio processing
+*   raylib [audio] example - mixed audio processing
 *
 *   Example complexity rating: [★★★★] 4/4
 *

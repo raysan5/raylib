@@ -16,8 +16,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 159]
-
+## EXAMPLES COLLECTION [TOTAL: 160]
 
 ### category: core [36]
 
@@ -171,7 +170,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_bone_socket](models/models_bone_socket.c) | <img src="models/models_bone_socket.png" alt="models_bone_socket" width="80"> | ⭐⭐⭐⭐️ | 4.5 | 4.5 | [iP](https://github.com/ipzaur) |
 | [models_tesseract_view](models/models_tesseract_view.c) | <img src="models/models_tesseract_view.png" alt="models_tesseract_view" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Timothy van der Valk](https://github.com/arceryz) |
 
-### category: shaders [28]
+### category: shaders [29]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
@@ -194,6 +193,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_hot_reloading](shaders/shaders_hot_reloading.c) | <img src="shaders/shaders_hot_reloading.png" alt="shaders_hot_reloading" width="80"> | ⭐⭐⭐☆ | 3.0 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐⭐⭐⭐️ | 3.7 | 4.2 | [seanpringle](https://github.com/seanpringle) |
 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐⭐☆☆ | 3.5 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shaders_normalmap](shaders/shaders_normalmap.c) | <img src="shaders/shaders_normalmap.png" alt="shaders_normalmap" width="80"> | ⭐⭐⭐⭐️ | 5.6 | 5.6 | [Jeremy Montgomery](https://github.com/Sir_Irk) |
 | [shaders_spotlight](shaders/shaders_spotlight.c) | <img src="shaders/shaders_spotlight.png" alt="shaders_spotlight" width="80"> | ⭐⭐☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_deferred_render](shaders/shaders_deferred_render.c) | <img src="shaders/shaders_deferred_render.png" alt="shaders_deferred_render" width="80"> | ⭐⭐⭐⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
 | [shaders_hybrid_render](shaders/shaders_hybrid_render.c) | <img src="shaders/shaders_hybrid_render.png" alt="shaders_hybrid_render" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 4.2 | [Buğra Alptekin Sarı](https://github.com/BugraAlptekinSari) |

@@ -5,10 +5,10 @@
 *   DESCRIPTION:
 *
 *     Load GPU compressed image data from image files provided as memory data arrays,
-*     data is loaded compressed, ready to be loaded into GPU.
+*     data is loaded compressed, ready to be loaded into GPU
 *
 *     Note that some file formats (DDS, PVR, KTX) also support uncompressed data storage.
-*     In those cases data is loaded uncompressed and format is returned.
+*     In those cases data is loaded uncompressed and format is returned
 *
 *   FIXME: This library still depends on Raylib due to the following reasons:
 *     - rl_save_ktx_to_memory() requires rlGetGlTextureFormats() from rlgl.h
@@ -436,7 +436,7 @@ void *rl_load_pkm_from_memory(const unsigned char *file_data, unsigned int file_
     // version 10: format: 0=ETC1_RGB, [1=ETC1_RGBA, 2=ETC1_RGB_MIP, 3=ETC1_RGBA_MIP] (not used)
     // version 20: format: 0=ETC1_RGB, 1=ETC2_RGB, 2=ETC2_RGBA_OLD, 3=ETC2_RGBA, 4=ETC2_RGBA1, 5=ETC2_R, 6=ETC2_RG, 7=ETC2_SIGNED_R, 8=ETC2_SIGNED_R
 
-    // NOTE: The extended width and height are the widths rounded up to a multiple of 4.
+    // NOTE: The extended width and height are the widths rounded up to a multiple of 4
     // NOTE: ETC is always 4bit per pixel (64 bit for each 4x4 block of pixels)
 
     if (file_data_ptr != RL_GPUTEX_NULL)

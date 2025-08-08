@@ -724,7 +724,7 @@ void *GetWindowHandle(void)
     return glfwGetWin32Window(platform.handle);
 #endif
 #if defined(__linux__)
-    // Store the window handle localy and return a pointer to the variable instead.
+    // Store the window handle localy and return a pointer to the variable instead
     // Reasoning detailed in the declaration of X11WindowHandle
     X11WindowHandle = glfwGetX11Window(platform.handle);
     return &X11WindowHandle;
@@ -1066,9 +1066,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
+// NOTE: This function is only safe to use if you control the URL given
+// A user could craft a malicious string performing another action
+// Only call this function yourself not with user input or make sure to check the string yourself
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1130,7 +1130,7 @@ void SetMouseCursor(int cursor)
     }
 }
 
-// Get physical key name.
+// Get physical key name
 const char *GetKeyName(int key)
 {
     return glfwGetKeyName(key, glfwGetKeyScancode(key));
@@ -1306,8 +1306,8 @@ static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
 }
 
 // Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
-// We need to provide these because GLFWallocator expects function pointers with specific signatures.
-// Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch.
+// We need to provide these because GLFWallocator expects function pointers with specific signatures
+// Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch
 // https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
 static void *AllocateWrapper(size_t size, void *user)
 {
@@ -1394,15 +1394,15 @@ int InitPlatform(void)
     // HACK: Most of this was written before GLFW_SCALE_FRAMEBUFFER existed and
     // was enabled by default. Disabling it gets back the old behavior. A
     // complete fix will require removing a lot of CORE.Window.render
-    // manipulation code.
+    // manipulation code
     glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
-        // Resize window content area based on the monitor content scale.
-        // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11.
-        // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
-        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
+        // Resize window content area based on the monitor content scale
+        // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11
+        // On platforms like macOS the resolution of the framebuffer is changed independently of the window size
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Scale content area based on the monitor content scale where window is placed on
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
 #endif
@@ -1421,8 +1421,8 @@ int InitPlatform(void)
     }
 
     // NOTE: When asking for an OpenGL context version, most drivers provide the highest supported version
-    // with backward compatibility to older OpenGL versions.
-    // For example, if using OpenGL 1.1, driver can provide a 4.3 backwards compatible context.
+    // with backward compatibility to older OpenGL versions
+    // For example, if using OpenGL 1.1, driver can provide a 4.3 backwards compatible context
 
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21)
@@ -1468,9 +1468,9 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
     }
 
-    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions.
-    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn.
-    // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
+    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions
+    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn
+    // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
 
@@ -1478,7 +1478,7 @@ int InitPlatform(void)
     if (CORE.Window.fullscreen)
     {
         // According to glfwCreateWindow(), if the user does not have a choice, fullscreen applications
-        // should default to the primary monitor.
+        // should default to the primary monitor
 
         monitor = glfwGetPrimaryMonitor();
         if (!monitor)
@@ -1492,8 +1492,8 @@ int InitPlatform(void)
         // Remember center for switching from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
         {
-            // If screen width/height equal to the display, we can't calculate the window pos for toggling full-screened/windowed.
-            // Toggling full-screened/windowed with pos(0, 0) can cause problems in some platforms, such as X11.
+            // If screen width/height equal to the display, we can't calculate the window pos for toggling full-screened/windowed
+            // Toggling full-screened/windowed with pos(0, 0) can cause problems in some platforms, such as X11
             CORE.Window.position.x = CORE.Window.display.width/4;
             CORE.Window.position.y = CORE.Window.display.height/4;
         }
@@ -1554,7 +1554,7 @@ int InitPlatform(void)
         // No-fullscreen window creation
         bool requestWindowedFullscreen = (CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0);
 
-        // Default to at least one pixel in size, as creation with a zero dimension is not allowed.
+        // Default to at least one pixel in size, as creation with a zero dimension is not allowed
         int creationWidth = CORE.Window.screen.width != 0 ? CORE.Window.screen.width : 1;
         int creationHeight = CORE.Window.screen.height != 0 ? CORE.Window.screen.height : 1;
 
@@ -1566,8 +1566,8 @@ int InitPlatform(void)
             return -1;
         }
 
-        // After the window was created, determine the monitor that the window manager assigned.
-        // Derive display sizes, and, if possible, window size in case it was zero at beginning.
+        // After the window was created, determine the monitor that the window manager assigned
+        // Derive display sizes, and, if possible, window size in case it was zero at beginning
 
         int monitorCount = 0;
         int monitorIndex = GetCurrentMonitor();
@@ -1582,7 +1582,7 @@ int InitPlatform(void)
         }
         else
         {
-            // The monitor for the window-manager-created window can not be determined, so it can not be centered.
+            // The monitor for the window-manager-created window can not be determined, so it can not be centered
             glfwTerminate();
             TRACELOG(LOG_WARNING, "GLFW: Failed to determine Monitor to center Window");
             return -1;
@@ -1604,7 +1604,7 @@ int InitPlatform(void)
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
         // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
-        // to be activated on web platforms since VSync is enforced there.
+        // to be activated on web platforms since VSync is enforced there
         if (CORE.Window.flags & FLAG_VSYNC_HINT)
         {
             // WARNING: It seems to hit a critical render path in Intel HD Graphics
@@ -1617,7 +1617,7 @@ int InitPlatform(void)
 
         if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
         {
-            // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling.
+            // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
             // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
     #if !defined(__APPLE__)
             glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
@@ -1660,7 +1660,8 @@ int InitPlatform(void)
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-        // Here CORE.Window.render.width/height should be used instead of CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled.
+        // Here CORE.Window.render.width/height should be used instead of 
+        // CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled
         int posX = monitorX + (monitorWidth - (int)CORE.Window.render.width)/2;
         int posY = monitorY + (monitorHeight - (int)CORE.Window.render.height)/2;
         if (posX < monitorX) posX = monitorX;

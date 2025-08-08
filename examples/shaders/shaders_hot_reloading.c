@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Hot reloading
+*   raylib [shaders] example - hot reloading
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 for shaders support and only #version 330
-*         is currently supported. OpenGL ES 2.0 platforms are not supported at the moment.
+*         is currently supported. OpenGL ES 2.0 platforms are not supported at the moment
 *
 *   Example originally created with raylib 3.0, last time updated with raylib 3.5
 *

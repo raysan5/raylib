@@ -47,7 +47,7 @@ int main(void)
     models[6] = LoadModelFromMesh(GenMeshKnot(1.0f, 2.0f, 16, 128));
     models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
     models[8] = LoadModelFromMesh(GenMeshCustom());
-    
+
     // NOTE: Generated meshes could be exported using ExportMesh()
 
     // Set checked texture as default diffuse component for all models material

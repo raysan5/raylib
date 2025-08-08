@@ -639,6 +639,7 @@ SHADERS = \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
+    shaders/shaders_normalmap \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
@@ -1200,6 +1201,14 @@ shaders/shaders_model_shader: shaders/shaders_model_shader.c
 shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
+
+shaders/shaders_normalmap: shaders/shaders_normalmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/normalmap.vs@resources/shaders/glsl100/normalmap.vs \
+    --preload-file shaders/resources/shaders/glsl100/normalmap.fs@resources/shaders/glsl100/normalmap.fs \
+    --preload-file shaders/resources/models/plane.glb@resources/models/plane.glb \
+    --preload-file shaders/resources/tiles_diffuse.png@resources/tiles_diffuse.png \
+    --preload-file shaders/resources/tiles_normal.png@resources/tiles_normal.png
 
 shaders/shaders_palette_switch: shaders/shaders_palette_switch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

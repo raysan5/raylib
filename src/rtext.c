@@ -7,8 +7,8 @@
 *           rtext module is included in the build
 *
 *       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText()
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required
 *
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
@@ -19,7 +19,7 @@
 *       #define SUPPORT_FONT_ATLAS_WHITE_REC
 *           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
 *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-*           drawing text and shapes with a single draw call [SetShapesTexture()].
+*           drawing text and shapes with a single draw call [SetShapesTexture()]
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size

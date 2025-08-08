@@ -252,7 +252,7 @@ static const int CursorsLUT[] = {
     //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
-// SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can.
+// SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can
 #if defined(PLATFORM_DESKTOP_SDL3)
 
 // SDL3 Migration:
@@ -269,7 +269,7 @@ static const int CursorsLUT[] = {
 // SDL3 Migration: SDL_INIT_TIMER - no longer needed before calling SDL_AddTimer()
 #define SDL_INIT_TIMER 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
 
-// SDL3 Migration: The SDL_WINDOW_SHOWN flag has been removed. Windows are shown by default and can be created hidden by using the SDL_WINDOW_HIDDEN flag.
+// SDL3 Migration: The SDL_WINDOW_SHOWN flag has been removed. Windows are shown by default and can be created hidden by using the SDL_WINDOW_HIDDEN flag
 #define SDL_WINDOW_SHOWN 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
 
 // SDL3 Migration: Renamed
@@ -344,7 +344,7 @@ SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth
 // SDL3 Migration:
 //     SDL_GetDisplayDPI() -
 //     not reliable across platforms, approximately replaced by multiplying
-//     SDL_GetWindowDisplayScale() times 160 on iPhone and Android, and 96 on other platforms.
+//     SDL_GetWindowDisplayScale() times 160 on iPhone and Android, and 96 on other platforms
 // returns 0 on success or a negative error code on failure
 int SDL_GetDisplayDPI(int displayIndex, float *ddpi, float *hdpi, float *vdpi)
 {
@@ -382,7 +382,7 @@ int SDL_NumJoysticks(void)
 
 // SDL_SetRelativeMouseMode
 // returns 0 on success or a negative error code on failure
-// If relative mode is not supported, this returns -1.
+// If relative mode is not supported, this returns -1
 int SDL_SetRelativeMouseMode_Adapter(SDL_bool enabled)
 {
     // SDL_SetWindowRelativeMouseMode(SDL_Window *window, bool enabled)
@@ -841,7 +841,7 @@ void SetWindowMonitor(int monitor)
         // NOTE:
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
-        // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
+        // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again
         const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)? true : false;
 
         const int screenWidth = CORE.Window.screen.width;
@@ -854,7 +854,7 @@ void SetWindowMonitor(int monitor)
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
     #endif
         {
-            if (wasFullscreen == 1) ToggleFullscreen(); // Leave fullscreen.
+            if (wasFullscreen == 1) ToggleFullscreen(); // Leave fullscreen
 
             // If the screen size is larger than the monitor usable area, anchor it on the top left corner, otherwise, center it
             if ((screenWidth >= usableBounds.w) || (screenHeight >= usableBounds.h))
@@ -862,11 +862,11 @@ void SetWindowMonitor(int monitor)
                 // NOTE:
                 // 1. There's a known issue where if the window larger than the target display bounds,
                 //    when moving the windows to that display, the window could be clipped back
-                //    ending up positioned partly outside the target display.
+                //    ending up positioned partly outside the target display
                 // 2. The workaround for that is, previously to moving the window,
-                //    setting the window size to the target display size, so they match.
+                //    setting the window size to the target display size, so they match
                 // 3. It wasn't done here because we can't assume changing the window size automatically
-                //    is acceptable behavior by the user.
+                //    is acceptable behavior by the user
                 SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
                 CORE.Window.position.x = usableBounds.x;
                 CORE.Window.position.y = usableBounds.y;
@@ -1099,7 +1099,7 @@ Vector2 GetWindowScaleDPI(void)
 #ifndef PLATFORM_DESKTOP_SDL3
     // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
     //       see https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
-    // TODO: Implement the window scale factor calculation manually.
+    // TODO: Implement the window scale factor calculation manually
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #else
     scale.x = SDL_GetWindowDisplayScale(platform.window);
@@ -1245,9 +1245,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
+// NOTE: This function is only safe to use if you control the URL given
+// A user could craft a malicious string performing another action
+// Only call this function yourself not with user input or make sure to check the string yourself
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1299,7 +1299,7 @@ void SetMouseCursor(int cursor)
     CORE.Input.Mouse.cursor = cursor;
 }
 
-// Get physical key name.
+// Get physical key name
 const char *GetKeyName(int key)
 {
     return SDL_GetKeyName(key);
@@ -1466,10 +1466,9 @@ void PollInputEvents(void)
 
             #ifndef PLATFORM_DESKTOP_SDL3
             // SDL3 states:
-            //     The SDL_WINDOWEVENT_* events have been moved to top level events,
-            //     and SDL_WINDOWEVENT has been removed.
-            //     In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
-            //     and then checking for window events. You can compare the event >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST if you need to see whether it's a window event.
+            // The SDL_WINDOWEVENT_* events have been moved to top level events, and SDL_WINDOWEVENT has been removed
+            // In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
+            // and then checking for window events. You can compare the event >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST if you need to see whether it's a window event.
             case SDL_WINDOWEVENT:
             {
                 switch (event.window.event)

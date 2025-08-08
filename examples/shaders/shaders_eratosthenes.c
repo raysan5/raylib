@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Sieve of Eratosthenes
+*   raylib [shaders] example - sieve of Eratosthenes
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
-*   NOTE: Sieve of Eratosthenes, the earliest known (ancient Greek) prime number sieve.
+*   NOTE: Sieve of Eratosthenes, the earliest known (ancient Greek) prime number sieve
 *
 *       "Sift the twos and sift the threes,
 *        The Sieve of Eratosthenes.
@@ -12,9 +12,9 @@
 *        the numbers that are left are prime."
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
-*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
+*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3)
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
@@ -45,7 +45,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Sieve of Eratosthenes");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - sieve of Eratosthenes");
 
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 

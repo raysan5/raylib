@@ -6,30 +6,30 @@
 
     1. File naming: <module>_<description> - Lower case filename, words separated by underscore,
        no more than 3-4 words in total to describe the example. <module> referes to the primary
-       raylib module the example is more related with (code, shapes, textures, models, shaders, raudio).
+       raylib module the example is more related with (code, shapes, textures, models, shaders, raudio)
        i.e: core_input_multitouch, shapes_lines_bezier, shaders_palette_switch
 
     2. Follow below template structure, example info should list the module, the short description
-       and the author of the example, twitter or github info could be also provided for the author.
-       Short description should also be used on the title of the window.
+       and the author of the example, twitter or github info could be also provided for the author
+       Short description should also be used on the title of the window
 
     3. Code should be organized by sections:[Initialization]- [Update] - [Draw] - [De-Initialization]
        Place your code between the dotted lines for every section, please don't mix update logic with drawing
-       and remember to unload all loaded resources.
+       and remember to unload all loaded resources
 
     4. Code should follow raylib conventions: https://github.com/raysan5/raylib/wiki/raylib-coding-conventions
-       Try to be very organized, using line-breaks appropiately.
+       Try to be very organized, using line-breaks appropiately
 
-    5. Add comments to the specific parts of code the example is focus on.
-       Don't abuse with comments, try to be clear and impersonal on the comments.
+    5. Add comments to the specific parts of code the example is focus on
+       Don't abuse with comments, try to be clear and impersonal on the comments
 
-    6. Try to keep the example simple, under 300 code lines if possible. Try to avoid external dependencies.
-       Try to avoid defining functions outside the main(). Example should be as self-contained as possible.
+    6. Try to keep the example simple, under 300 code lines if possible. Try to avoid external dependencies
+       Try to avoid defining functions outside the main(). Example should be as self-contained as possible
 
     7. About external resources, they should be placed in a [resources] folder and those resources
-       should be open and free for use and distribution. Avoid propietary content.
+       should be open and free for use and distribution. Avoid propietary content
 
-    8. Try to keep the example simple but with a creative touch.
+    8. Try to keep the example simple but with a creative touch
        Simple but beautiful examples are more appealing to users!
 
     9. In case of additional information is required, just come to raylib Discord channel: example-contributions
@@ -37,7 +37,7 @@
     10. Have fun!
 
     The following files should be updated when adding a new example, it's planned to create some
-    script to automatize this process but not available yet.
+    script to automatize this process but not available yet
 
      - raylib/examples/<category>/<category>_example_name.c
      - raylib/examples/<category>/<category>_example_name.png
@@ -56,7 +56,7 @@
 
 /*******************************************************************************************
 *
-*   raylib [<module>] example - <name>
+*   raylib [<module>] example - <name/short description>
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

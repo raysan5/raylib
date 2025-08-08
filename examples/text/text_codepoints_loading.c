@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Codepoints loading
+*   raylib [text] example - text codepoints loading
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -39,7 +39,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [text] example - codepoints loading");
 
     // Convert each utf-8 character into its
-    // corresponding codepoint in the font file.
+    // corresponding codepoint in the font file
     int codepointCount = 0;
     int *codepoints = LoadCodepoints(text, &codepointCount);
 

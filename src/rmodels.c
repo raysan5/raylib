@@ -12,7 +12,7 @@
 *       #define SUPPORT_FILEFORMAT_GLTF
 *       #define SUPPORT_FILEFORMAT_VOX
 *       #define SUPPORT_FILEFORMAT_M3D
-*           Selected desired fileformats to be supported for model data loading.
+*           Selected desired fileformats to be supported for model data loading
 *
 *       #define SUPPORT_MESH_GENERATION
 *           Support procedural mesh generation functions, uses external par_shapes.h library
@@ -2298,7 +2298,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
 
         if (firstMeshWithBones != -1)
         {
-            // Update all bones and boneMatrices of first mesh with bones.
+            // Update all bones and boneMatrices of first mesh with bones
             for (int boneId = 0; boneId < anim.boneCount; boneId++)
             {
                 Transform *bindTransform = &model.bindPose[boneId];
@@ -5291,8 +5291,7 @@ static Model LoadGLTF(const char *fileName)
               > Texcoords: vec2: float
               > Colors: vec4: u8, u16, f32 (normalized)
               > Indices: u16, u32 (truncated to u16)
-          - Scenes defined in the glTF file are ignored. All nodes in the file
-            are used.
+          - Scenes defined in the glTF file are ignored. All nodes in the file are used
 
     ***********************************************************************************************/
 
@@ -5347,8 +5346,8 @@ static Model LoadGLTF(const char *fileName)
 
         int primitivesCount = 0;
 
-        // NOTE: We will load every primitive in the glTF as a separate raylib Mesh.
-        // Determine total number of meshes needed from the node hierarchy.
+        // NOTE: We will load every primitive in the glTF as a separate raylib Mesh
+        // Determine total number of meshes needed from the node hierarchy
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
             cgltf_node *node = &(data->nodes[i]);
@@ -5490,14 +5489,13 @@ static Model LoadGLTF(const char *fileName)
             // has_clearcoat, has_transmission, has_volume, has_ior, has specular, has_sheen
         }
 
-        // Visit each node in the hierarchy and process any mesh linked from it.
-        // Each primitive within a glTF node becomes a Raylib Mesh.
+        // Visit each node in the hierarchy and process any mesh linked from it
+        // Each primitive within a glTF node becomes a Raylib Mesh
         // The local-to-world transform of each node is used to transform the
-        // points/normals/tangents of the created Mesh(es).
+        // points/normals/tangents of the created Mesh(es)
         // Any glTF mesh linked from more than one Node (i.e. instancing)
-        // is turned into multiple Mesh's, as each Node will have its own
-        // transform applied.
-        // NOTE: The code below disregards the scenes defined in the file, all nodes are used.
+        // is turned into multiple Mesh's, as each Node will have its own transform applied
+        // NOTE: The code below disregards the scenes defined in the file, all nodes are used
         //----------------------------------------------------------------------------------------------------
         int meshIndex = 0;
         for (unsigned int i = 0; i < data->nodes_count; i++)
