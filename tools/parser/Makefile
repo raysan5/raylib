@@ -12,28 +12,22 @@ raylib_api: ../src/raylib.h raylib_parser
 	FORMAT=XML EXTENSION=xml $(MAKE) raylib_api.xml
 	FORMAT=LUA EXTENSION=lua $(MAKE) raylib_api.lua
 
-raylib_api.$(EXTENSION): ../src/raylib.h raylib_parser
-	./raylib_parser -i ../src/raylib.h -o raylib_api.$(EXTENSION) -f $(FORMAT) -d RLAPI
+raylib_api.$(EXTENSION): ../../src/raylib.h raylib_parser
+	./raylib_parser -i ../../src/raylib.h -o raylib_api.$(EXTENSION) -f $(FORMAT) -d RLAPI
 
-raymath_api.$(EXTENSION): ../src/raymath.h raylib_parser
-	./raylib_parser -i ../src/raymath.h -o raymath_api.$(EXTENSION) -f $(FORMAT) -d RMAPI
+raymath_api.$(EXTENSION): ../../src/raymath.h raylib_parser
+	./raylib_parser -i ../../src/raymath.h -o raymath_api.$(EXTENSION) -f $(FORMAT) -d RMAPI
 
-rlgl_api.$(EXTENSION): ../src/rlgl.h raylib_parser
-	./raylib_parser -i ../src/rlgl.h -o rlgl_api.$(EXTENSION) -f $(FORMAT) -d RLAPI -t "RLGL IMPLEMENTATION"
+rlgl_api.$(EXTENSION): ../../src/rlgl.h raylib_parser
+	./raylib_parser -i ../../src/rlgl.h -o rlgl_api.$(EXTENSION) -f $(FORMAT) -d RLAPI -t "RLGL IMPLEMENTATION"
 
-reasings_api.$(EXTENSION): ../examples/others/reasings.h raylib_parser
-	./raylib_parser -i ../examples/others/reasings.h -o reasings_api.$(EXTENSION) -f $(FORMAT) -d EASEDEF
-
-rmem_api.$(EXTENSION): ../rmem.h raylib_parser
-	./raylib_parser -i ../rmem.h -o rmem_api.$(EXTENSION) -f $(FORMAT) -d RMEMAPI -t "RMEM IMPLEMENTATION"
-
-physac_api.$(EXTENSION): ../physac.h raylib_parser
-	./raylib_parser -i ../physac.h -o physac_api.$(EXTENSION) -f $(FORMAT) -d PHYSACDEF -t "PHYSAC IMPLEMENTATION"
+reasings_api.$(EXTENSION): ../../examples/others/reasings.h raylib_parser
+	./raylib_parser -i ../../examples/others/reasings.h -o reasings_api.$(EXTENSION) -f $(FORMAT) -d EASEDEF
 
 raygui_api.$(EXTENSION): ../raygui.h raylib_parser
 	./raylib_parser -i ../raygui.h -o raygui_api.$(EXTENSION) -f $(FORMAT) -d RAYGUIAPI -t "RAYGUI IMPLEMENTATION"
 
-parse: raylib_api.$(EXTENSION) raymath_api.$(EXTENSION) rlgl_api.$(EXTENSION) rmem_api.$(EXTENSION) physac_api.$(EXTENSION) raygui_api.$(EXTENSION)
+parse: raylib_api.$(EXTENSION) raymath_api.$(EXTENSION) rlgl_api.$(EXTENSION) raygui_api.$(EXTENSION)
 
 
 # `make parse` (and therefore `make all) requires
