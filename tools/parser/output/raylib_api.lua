@@ -4027,7 +4027,7 @@ return {
     },
     {
       name = "IsFileExtension",
-      description = "Check file extension (including point: .png, .wav)",
+      description = "Check file extension (recommended include point: .png, .wav)",
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},

@@ -1670,7 +1670,7 @@ Function 125: DirectoryExists() (1 input parameters)
 Function 126: IsFileExtension() (2 input parameters)
   Name: IsFileExtension
   Return type: bool
-  Description: Check file extension (including point: .png, .wav)
+  Description: Check file extension (recommended include point: .png, .wav)
   Param[1]: fileName (type: const char *)
   Param[2]: ext (type: const char *)
 Function 127: GetFileLength() (1 input parameters)

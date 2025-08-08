@@ -1054,7 +1054,7 @@
         <Function name="DirectoryExists" retType="bool" paramCount="1" desc="Check if a directory path exists">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="IsFileExtension" retType="bool" paramCount="2" desc="Check file extension (including point: .png, .wav)">
+        <Function name="IsFileExtension" retType="bool" paramCount="2" desc="Check file extension (recommended include point: .png, .wav)">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="ext" desc="" />
         </Function>
