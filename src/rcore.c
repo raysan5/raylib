@@ -113,7 +113,7 @@
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
+#include <string.h>                 // Required for: strlen(), strcpy(), strcmp(), strrchr(), memset()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
@@ -1940,34 +1940,61 @@ bool FileExists(const char *fileName)
 }
 
 // Check file extension
-// TODO: Avoid [rtext] module dependency
 bool IsFileExtension(const char *fileName, const char *ext)
 {
-    #define MAX_FILE_EXTENSION_LENGTH  16
+    #define MAX_FILE_EXTENSIONS  32
 
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
 
     if (fileExt != NULL)
     {
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
-        int extCount = 0;
-        char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
-
-        char fileExtLower[MAX_FILE_EXTENSION_LENGTH + 1] = { 0 };
-        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_LENGTH); // WARNING: Module required: rtext
+        int fileExtLen = strlen(fileExt);
+        char fileExtLower[8] = { 0 };
+        char *fileExtLowerPtr = fileExtLower;
+        for (int i = 0; i < fileExtLen; i++)
+        {
+            // Copy and convert to lower-case
+            if ((fileExt[i] >= 'A') && (fileExt[i] <= 'Z')) fileExtLower[i] =  fileExt[i] + 32;
+            else fileExtLower[i] =  fileExt[i];
+        }
+        
+        int extCount = 1;
+        int extLen = strlen(ext);
+        char *extList = (char *)RL_CALLOC(extLen + 1, 1);
+        char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
+        strcpy(extList, ext);
+        extListPtrs[0] = extList;
+        
+        for (int i = 0; i < extLen; i++) 
+        {
+            // Convert to lower-case if extension is upper-case
+            if ((extList[i] >= 'A') && (extList[i] <= 'Z')) extList[i] += 32;
+            
+            // Get pointer to next extension and add null-terminator
+            if ((extList[i] == ';') && (extCount < (MAX_FILE_EXTENSIONS - 1)))
+            {
+                extList[i] = '\0'; 
+                extListPtrs[extCount] = extList + i + 1;
+                extCount++; 
+            }
+        }
 
         for (int i = 0; i < extCount; i++)
         {
-            if (strcmp(fileExtLower, TextToLower(checkExts[i])) == 0)
+            // Consider the case where extension provided
+            // does not start with the '.'
+            fileExtLowerPtr = fileExtLower;
+            if (extListPtrs[i][0] != '.') fileExtLowerPtr++;
+            
+            if (strcmp(fileExtLowerPtr, extListPtrs[i]) == 0)
             {
                 result = true;
                 break;
             }
         }
-#else
-        if (strcmp(fileExt, ext) == 0) result = true;
-#endif
+
+        RL_FREE(extList);
     }
 
     return result;
