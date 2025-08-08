@@ -740,6 +740,8 @@ int main(int argc, char *argv[])
             VALID_INVALID_CATEGORY
             */
 
+            // TODO: Log more details about the validation process
+
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
@@ -971,8 +973,20 @@ int main(int argc, char *argv[])
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
                         // Solves: VALID_MISSING_WEB_OUTPUT
-                        //if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
-                        //    system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+                        if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
+                        {
+                            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+
+                            // Copy results to web side
+                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name));
+                        }
                     }
                 }
 
