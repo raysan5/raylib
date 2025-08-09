@@ -507,6 +507,7 @@ CORE = \
     core/core_3d_camera_free \
     core/core_3d_camera_mode \
     core/core_3d_camera_split_screen \
+    core/core_3d_fps_controller \
     core/core_3d_picking \
     core/core_automation_events \
     core/core_basic_screen_manager \
@@ -700,6 +701,9 @@ core/core_3d_camera_mode: core/core_3d_camera_mode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_fps_controller: core/core_3d_fps_controller.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_picking: core/core_3d_picking.c
