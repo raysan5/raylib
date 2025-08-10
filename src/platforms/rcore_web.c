@@ -137,7 +137,7 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
 
 // Emscripten input callback events
-static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
+//static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
@@ -1369,8 +1369,8 @@ int InitPlatform(void)
 
     // Setup input events
     // NOTE: Keyboard callbacks only used to consume some events, libglfw.js takes care of the actual input
-    emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
-    emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
+    //emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback); // WRNING: Breaks input
+    //emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
     emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
     emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
     emscripten_set_mousemove_callback(GetCanvasId(), NULL, 1, EmscriptenMouseMoveCallback);
@@ -1620,13 +1620,15 @@ static void MouseEnterCallback(GLFWwindow *window, int enter)
 
 // Emscripten callback functions, called on specific browser events
 //-------------------------------------------------------------------------------------------------------
+/*
 // Emscripten: Called on key events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
 {
-    // NOTE: Only used to consume some keyboard events without triggering browser functions
-
+    // WARNING: Keyboard inputs already processed through GLFW callback
+    
     return 1; // The event was consumed by the callback handler
 }
+*/
 
 // Emscripten: Called on mouse input events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
