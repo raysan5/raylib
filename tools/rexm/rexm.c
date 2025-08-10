@@ -958,10 +958,7 @@ int main(int argc, char *argv[])
                                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
                         }
 
-                        // WARNING: Adding a .vcxproj to .sln can not be automated with 
-                        // "dotnet" tool (C# projects only)
-                        // "devenv" tool (no adding support, only building)
-                        // It must be done manually editing the .sln file
+                        // Add project (.vcxproj) to raylib solution (.sln)
                         if (exInfo->status & VALID_NOT_IN_VCXSOL)
                         {
                             AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
@@ -1774,11 +1771,16 @@ static void ClearExampleResources(char **resPaths)
 }
 
 // TODO: Add VS project (.vcxproj) to existing VS solution (.sol)
+// WARNING: Adding a .vcxproj to .sln can not be automated with: 
+//  - "dotnet" tool (C# projects only)
+//  - "devenv" tool (no adding support, only building)
+// It must be done manually editing the .sln file
 static int AddVSProjectToSolution(const char *projFile, const char *solFile)
 {
     int result = 0;
 
     // Generate unique UUID:
+    // Make sure the file is found and the UUID generated is valid
     // C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\uuidgen.exe > saved_uuid.txt
 
     // Add project to the list:
