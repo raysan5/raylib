@@ -13,12 +13,12 @@ uniform mat4 matProjection;
 
 void main()
 {
-    vec4 worldPos = matModel * vec4(vertexPosition, 1.0);
+    vec4 worldPos = matModel*vec4(vertexPosition, 1.0);
     fragPosition = worldPos.xyz; 
     fragTexCoord = vertexTexCoord;
 
     mat3 normalMatrix = transpose(inverse(mat3(matModel)));
-    fragNormal = normalMatrix * vertexNormal;
+    fragNormal = normalMatrix*vertexNormal;
 
-    gl_Position = matProjection * matView * worldPos;
+    gl_Position = matProjection*matView*worldPos;
 }

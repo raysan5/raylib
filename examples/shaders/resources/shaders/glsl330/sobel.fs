@@ -21,10 +21,10 @@ void main()
 
     vec4 horizEdge = vec4(0.0);
     horizEdge -= texture(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y - y))*1.0;
-    horizEdge -= texture(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y    ))*2.0;
+    horizEdge -= texture(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y   ))*2.0;
     horizEdge -= texture(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y + y))*1.0;
     horizEdge += texture(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y - y))*1.0;
-    horizEdge += texture(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y    ))*2.0;
+    horizEdge += texture(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y   ))*2.0;
     horizEdge += texture(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y + y))*1.0;
 
     vec4 vertEdge = vec4(0.0);

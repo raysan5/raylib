@@ -1,6 +1,4 @@
-#version 100
-
-precision mediump float;
+#version 120
 
 // Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;

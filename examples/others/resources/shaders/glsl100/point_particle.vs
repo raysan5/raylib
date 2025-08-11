@@ -16,9 +16,9 @@ void main()
     float period = vertexPosition.z;
 
     // Calculate final vertex position (jiggle it around a bit horizontally)
-    pos += vec2(100.0, 0.0) * sin(period * currentTime);
-    gl_Position = mvp * vec4(pos.x, pos.y, 0.0, 1.0);
+    pos += vec2(100.0, 0.0)*sin(period*currentTime);
+    gl_Position = mvp*vec4(pos.x, pos.y, 0.0, 1.0);
 
     // Calculate the screen space size of this particle (also vary it over time)
-    gl_PointSize = 10.0 - 5.0 * abs(sin(period * currentTime));
+    gl_PointSize = 10.0 - 5.0*abs(sin(period*currentTime));
 }

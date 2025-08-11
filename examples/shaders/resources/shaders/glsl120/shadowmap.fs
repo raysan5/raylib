@@ -52,7 +52,7 @@ void main()
     vec2 sampleCoords = fragPosLightSpace.xy;
     float curDepth = fragPosLightSpace.z;
 
-    // Slope-scale depth bias: depth biasing reduces "shadow acne" artifacts, where dark stripes appear all over the scene.
+    // Slope-scale depth bias: depth biasing reduces "shadow acne" artifacts, where dark stripes appear all over the scene
     // The solution is adding a small bias to the depth
     // In this case, the bias is proportional to the slope of the surface, relative to the light
     float bias = max(0.0008*(1.0 - dot(normal, l)), 0.00008);
@@ -61,8 +61,8 @@ void main()
     
     // PCF (percentage-closer filtering) algorithm:
     // Instead of testing if just one point is closer to the current point,
-    // we test the surrounding points as well.
-    // This blurs shadow edges, hiding aliasing artifacts.
+    // we test the surrounding points as well
+    // This blurs shadow edges, hiding aliasing artifacts
     vec2 texelSize = vec2(1.0/float(shadowMapResolution));
     for (int x = -1; x <= 1; x++)
     {
