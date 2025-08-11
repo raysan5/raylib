@@ -17,7 +17,7 @@ float angle = 0.0;
 vec2 VectorRotateTime(vec2 v, float speed)
 {
     float time = uTime*speed;
-    float localTime = fract(time);  // The time domain this works on is 1 sec.
+    float localTime = fract(time);  // The time domain this works on is 1 sec
 
     if ((localTime >= 0.0) && (localTime < 0.25)) angle = 0.0;
     else if ((localTime >= 0.25) && (localTime < 0.50)) angle = PI/4*sin(2*PI*localTime - PI/2);

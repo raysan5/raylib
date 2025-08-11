@@ -1,8 +1,8 @@
-// Note: SDF by Iñigo Quilez is licensed under MIT License
-
 #version 100
 
 precision mediump float;
+
+// NOTE: SDF by Iñigo Quilez, licensed under MIT License
 
 // Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
