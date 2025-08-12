@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Background scrolling
+*   raylib [textures] example - background scrolling
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

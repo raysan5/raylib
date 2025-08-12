@@ -119,7 +119,7 @@ int main(void)
                     // without a -1, we would always draw a cube at the origin
                     for (int i = 0; i < model.boneCount - 1; i++)
                     {
-                        // By default the model is loaded in bind-pose by LoadModel().
+                        // By default the model is loaded in bind-pose by LoadModel()
                         // But if UpdateModelAnimation() has been called at least once
                         // then the model is already in animation pose, so we need the animated skeleton
                         if (!animPlaying || !animsCount)

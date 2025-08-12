@@ -52,7 +52,7 @@ int main(void)
     Shader shader = LoadShader(
         TextFormat("resources/shaders/glsl%i/vertex_displacement.vs", GLSL_VERSION),
         TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION));
-    
+
     // Load perlin noise texture
     Image perlinNoiseImage = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
     Texture perlinNoiseMap = LoadTextureFromImage(perlinNoiseImage);
@@ -64,7 +64,7 @@ int main(void)
     rlActiveTextureSlot(1);
     rlEnableTexture(perlinNoiseMap.id);
     rlSetUniformSampler(perlinNoiseMapLoc, 1);
-    
+
     // Create a plane mesh and model
     Mesh planeMesh = GenMeshPlane(50, 50, 50, 50);
     Model planeModel = LoadModelFromMesh(planeMesh);

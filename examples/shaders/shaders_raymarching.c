@@ -5,7 +5,7 @@
 *   Example complexity rating: [★★★★] 4/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 for shaders support and only #version 330
-*         is currently supported. OpenGL ES 2.0 platforms are not supported at the moment.
+*         is currently supported. OpenGL ES 2.0 platforms are not supported at the moment
 *
 *   Example originally created with raylib 2.0, last time updated with raylib 4.2
 *

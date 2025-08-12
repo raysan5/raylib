@@ -32,7 +32,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - tesseract view");
-    
+
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
     camera.position = (Vector3){ 4.0f, 4.0f, 4.0f };    // Camera position
@@ -43,16 +43,16 @@ int main(void)
 
     // Find the coordinates by setting XYZW to +-1
     Vector4 tesseract[16] = {
-        {  1,  1,  1, 1 }, {  1,  1,  1, -1 }, 
+        {  1,  1,  1, 1 }, {  1,  1,  1, -1 },
         {  1,  1, -1, 1 }, {  1,  1, -1, -1 },
-        {  1, -1,  1, 1 }, {  1, -1,  1, -1 }, 
+        {  1, -1,  1, 1 }, {  1, -1,  1, -1 },
         {  1, -1, -1, 1 }, {  1, -1, -1, -1 },
-        { -1,  1,  1, 1 }, { -1,  1,  1, -1 }, 
+        { -1,  1,  1, 1 }, { -1,  1,  1, -1 },
         { -1,  1, -1, 1 }, { -1,  1, -1, -1 },
-        { -1, -1,  1, 1 }, { -1, -1,  1, -1 }, 
+        { -1, -1,  1, 1 }, { -1, -1,  1, -1 },
         { -1, -1, -1, 1 }, { -1, -1, -1, -1 },
     };
-    
+
     float rotation = 0.0f;
     Vector3 transformed[16] = { 0 };
     float wValues[16] = { 0 };
@@ -66,7 +66,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         rotation = DEG2RAD*45.0f*GetTime();
-        
+
         for (int i = 0; i < 16; i++)
         {
             Vector4 p = tesseract[i];
@@ -92,9 +92,9 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             BeginMode3D(camera);
                 for (int i = 0; i < 16; i++)
                 {
@@ -114,7 +114,7 @@ int main(void)
                     }
                 }
             EndMode3D();
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

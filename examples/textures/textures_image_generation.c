@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Procedural images generation
+*   raylib [textures] example - procedural images generation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

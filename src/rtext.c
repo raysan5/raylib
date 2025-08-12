@@ -7,8 +7,8 @@
 *           rtext module is included in the build
 *
 *       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText()
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required
 *
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
@@ -19,7 +19,7 @@
 *       #define SUPPORT_FONT_ATLAS_WHITE_REC
 *           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
 *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-*           drawing text and shapes with a single draw call [SetShapesTexture()].
+*           drawing text and shapes with a single draw call [SetShapesTexture()]
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
@@ -130,6 +130,7 @@ extern bool isGpuReady;
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
 #endif
+static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -145,7 +146,6 @@ static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode
 #if defined(SUPPORT_FILEFORMAT_BDF)
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
-static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
@@ -162,7 +162,7 @@ extern void LoadFontDefault(void)
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
     // check to see if we have allready allocated the font for an image, and if we don't need to upload, then just return
-    if (defaultFont.glyphs != NULL && !isGpuReady) 
+    if (defaultFont.glyphs != NULL && !isGpuReady)
         return;
 
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
@@ -253,18 +253,18 @@ extern void LoadFontDefault(void)
             }
             else
             {
-                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
+                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xff;
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
             }
         }
 
         counter++;
     }
-    
+
     if (isGpuReady)
     {
         defaultFont.texture = LoadTextureFromImage(imFont);
-        
+
         // we have already loaded the font glyph data an image, and the GPU is ready, we are done
         // if we don't do this, we will leak memory by reallocating the glyphs and rects
         if (defaultFont.glyphs != NULL)
@@ -391,7 +391,7 @@ Font LoadFont(const char *fileName)
         else
         {
             SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
-            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", FONT_TTF_DEFAULT_SIZE, FONT_TTF_DEFAULT_NUMCHARS);
+            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
         }
     }
 

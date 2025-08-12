@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Text formatting
+*   raylib [text] example - text formating
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

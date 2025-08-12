@@ -23,11 +23,11 @@
 
 #include <stdlib.h>
 
-// IMPORTANT: This must match gol*.glsl GOL_WIDTH constant.
-// This must be a multiple of 16 (check golLogic compute dispatch).
+// IMPORTANT: This must match gol*.glsl GOL_WIDTH constant
+// This must be a multiple of 16 (check golLogic compute dispatch)
 #define GOL_WIDTH 768
 
-// Maximum amount of queued draw commands (squares draw from mouse down events).
+// Maximum amount of queued draw commands (squares draw from mouse down events)
 #define MAX_BUFFERED_TRANSFERTS 48
 
 // Game Of Life Update Command
@@ -51,9 +51,12 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(GOL_WIDTH, GOL_WIDTH, "raylib [rlgl] example - compute shader - game of life");
+    const int screenWidth = GOL_WIDTH;
+    const int screenHeight = GOL_WIDTH;
 
-    const Vector2 resolution = { GOL_WIDTH, GOL_WIDTH };
+    InitWindow(screenWidth, screenHeight, "raylib [rlgl] example - compute shader - game of life");
+
+    const Vector2 resolution = { screenWidth, screenHeight };
     unsigned int brushSize = 8;
 
     // Game of Life logic compute shader
@@ -157,7 +160,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    // Unload shader buffers objects.
+    // Unload shader buffers objects
     rlUnloadShaderBuffer(ssboA);
     rlUnloadShaderBuffer(ssboB);
     rlUnloadShaderBuffer(ssboTransfert);

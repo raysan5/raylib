@@ -64,7 +64,7 @@ int main(void)
         Vector3 axis = Vector3Normalize((Vector3){ (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360) });
         float angle = (float)GetRandomValue(0, 180)*DEG2RAD;
         Matrix rotation = MatrixRotate(axis, angle);
-        
+
         transforms[i] = MatrixMultiply(rotation, translation);
     }
 

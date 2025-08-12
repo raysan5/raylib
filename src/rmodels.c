@@ -12,7 +12,7 @@
 *       #define SUPPORT_FILEFORMAT_GLTF
 *       #define SUPPORT_FILEFORMAT_VOX
 *       #define SUPPORT_FILEFORMAT_M3D
-*           Selected desired fileformats to be supported for model data loading.
+*           Selected desired fileformats to be supported for model data loading
 *
 *       #define SUPPORT_MESH_GENERATION
 *           Support procedural mesh generation functions, uses external par_shapes.h library
@@ -1433,7 +1433,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
     rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormalss);
+    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
@@ -2174,7 +2174,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
-        materials = RL_MALLOC(count*sizeof(Material));
+        materials = (Material *)RL_MALLOC(count*sizeof(Material));
         ProcessMaterialsOBJ(materials, mats, count);
 
         tinyobj_materials_free(mats, count);
@@ -2298,7 +2298,7 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
 
         if (firstMeshWithBones != -1)
         {
-            // Update all bones and boneMatrices of first mesh with bones.
+            // Update all bones and boneMatrices of first mesh with bones
             for (int boneId = 0; boneId < anim.boneCount; boneId++)
             {
                 Transform *bindTransform = &model.bindPose[boneId];
@@ -3713,7 +3713,7 @@ void GenMeshTangents(Mesh *mesh)
             // Create a tangent perpendicular to the normal
             if (fabsf(normal.z) > 0.707f) tangent = (Vector3){ 1.0f, 0.0f, 0.0f };
             else tangent = Vector3Normalize((Vector3){ -normal.y, normal.x, 0.0f });
-                
+
             mesh->tangents[i*4 + 0] = tangent.x;
             mesh->tangents[i*4 + 1] = tangent.y;
             mesh->tangents[i*4 + 2] = tangent.z;
@@ -3724,7 +3724,7 @@ void GenMeshTangents(Mesh *mesh)
         // Gram-Schmidt orthogonalization to make tangent orthogonal to normal
         // T_prime = T - N * dot(N, T)
         Vector3 orthogonalized = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
-        
+
         // Handle cases where orthogonalized vector is too small
         if (Vector3Length(orthogonalized) < 0.0001f)
         {
@@ -3742,7 +3742,7 @@ void GenMeshTangents(Mesh *mesh)
         mesh->tangents[i*4 + 0] = orthogonalized.x;
         mesh->tangents[i*4 + 1] = orthogonalized.y;
         mesh->tangents[i*4 + 2] = orthogonalized.z;
-        
+
         // Calculate the handedness (w component)
         mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, orthogonalized), tan2[i]) < 0.0f)? -1.0f : 1.0f;
     }
@@ -4292,7 +4292,7 @@ static Model LoadOBJ(const char *fileName)
 
     if (fileText == NULL)
     {
-        TRACELOG(LOG_ERROR, "MODEL: [%s] Unable to read obj file", fileName);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Unable to read obj file", fileName);
         return model;
     }
 
@@ -4308,7 +4308,7 @@ static Model LoadOBJ(const char *fileName)
 
     if (ret != TINYOBJ_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "MODEL: Unable to read obj data %s", fileName);
+        TRACELOG(LOG_WARNING, "MODEL: Unable to read obj data %s", fileName);
         return model;
     }
 
@@ -4473,9 +4473,17 @@ static Model LoadOBJ(const char *fileName)
 
             for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
 
-            for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
-
             for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
+            if (objAttributes.normals != NULL && normalIndex != TINYOBJ_INVALID_INDEX && normalIndex >= 0)
+            {
+                for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
+            }
+            else
+            {
+                model.meshes[meshIndex].normals[localMeshVertexCount*3 + 0] = 0.0f;
+                model.meshes[meshIndex].normals[localMeshVertexCount*3 + 1] = 1.0f;
+                model.meshes[meshIndex].normals[localMeshVertexCount*3 + 2] = 0.0f;
+            }
 
             model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
 
@@ -4492,8 +4500,6 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_attrib_free(&objAttributes);
     tinyobj_shapes_free(objShapes, objShapeCount);
     tinyobj_materials_free(objMaterials, objMaterialCount);
-
-    for (int i = 0; i < model.meshCount; i++) UploadMesh(model.meshes + i, true);
 
     // Restore current working directory
     if (CHDIR(currentDir) != 0)
@@ -4642,13 +4648,13 @@ static Model LoadIQM(const char *fileName)
     //fileDataPtr += sizeof(IQMHeader);       // Move file data pointer
 
     // Meshes data processing
-    imesh = RL_MALLOC(iqmHeader->num_meshes*sizeof(IQMMesh));
+    imesh = (IQMMesh *)RL_MALLOC(iqmHeader->num_meshes*sizeof(IQMMesh));
     //fseek(iqmFile, iqmHeader->ofs_meshes, SEEK_SET);
     //fread(imesh, sizeof(IQMMesh)*iqmHeader->num_meshes, 1, iqmFile);
     memcpy(imesh, fileDataPtr + iqmHeader->ofs_meshes, iqmHeader->num_meshes*sizeof(IQMMesh));
 
     model.meshCount = iqmHeader->num_meshes;
-    model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
+    model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 
     model.materialCount = model.meshCount;
     model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
@@ -4676,24 +4682,24 @@ static Model LoadIQM(const char *fileName)
 
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
-        model.meshes[i].vertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
-        model.meshes[i].normals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));        // Default vertex normals
-        model.meshes[i].texcoords = RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));      // Default vertex texcoords
+        model.meshes[i].vertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
+        model.meshes[i].normals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));        // Default vertex normals
+        model.meshes[i].texcoords = (float *)RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));      // Default vertex texcoords
 
-        model.meshes[i].boneIds = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(unsigned char));  // Up-to 4 bones supported!
-        model.meshes[i].boneWeights = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));      // Up-to 4 bones supported!
+        model.meshes[i].boneIds = (unsigned char *)RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(unsigned char));  // Up-to 4 bones supported!
+        model.meshes[i].boneWeights = (float *)RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));      // Up-to 4 bones supported!
 
         model.meshes[i].triangleCount = imesh[i].num_triangles;
-        model.meshes[i].indices = RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
+        model.meshes[i].indices = (unsigned short *)RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
         // Animated vertex data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
-        model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-        model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+        model.meshes[i].animVertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+        model.meshes[i].animNormals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
     }
 
     // Triangles data processing
-    tri = RL_MALLOC(iqmHeader->num_triangles*sizeof(IQMTriangle));
+    tri = (IQMTriangle *)RL_MALLOC(iqmHeader->num_triangles*sizeof(IQMTriangle));
     //fseek(iqmFile, iqmHeader->ofs_triangles, SEEK_SET);
     //fread(tri, sizeof(IQMTriangle), iqmHeader->num_triangles, iqmFile);
     memcpy(tri, fileDataPtr + iqmHeader->ofs_triangles, iqmHeader->num_triangles*sizeof(IQMTriangle));
@@ -4715,7 +4721,7 @@ static Model LoadIQM(const char *fileName)
     }
 
     // Vertex arrays data processing
-    va = RL_MALLOC(iqmHeader->num_vertexarrays*sizeof(IQMVertexArray));
+    va = (IQMVertexArray *)RL_MALLOC(iqmHeader->num_vertexarrays*sizeof(IQMVertexArray));
     //fseek(iqmFile, iqmHeader->ofs_vertexarrays, SEEK_SET);
     //fread(va, sizeof(IQMVertexArray), iqmHeader->num_vertexarrays, iqmFile);
     memcpy(va, fileDataPtr + iqmHeader->ofs_vertexarrays, iqmHeader->num_vertexarrays*sizeof(IQMVertexArray));
@@ -4726,7 +4732,7 @@ static Model LoadIQM(const char *fileName)
         {
             case IQM_POSITION:
             {
-                vertex = RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
+                vertex = (float *)RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(vertex, iqmHeader->num_vertexes*3*sizeof(float), 1, iqmFile);
                 memcpy(vertex, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*3*sizeof(float));
@@ -4744,7 +4750,7 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_NORMAL:
             {
-                normal = RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
+                normal = (float *)RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(normal, iqmHeader->num_vertexes*3*sizeof(float), 1, iqmFile);
                 memcpy(normal, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*3*sizeof(float));
@@ -4762,7 +4768,7 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_TEXCOORD:
             {
-                text = RL_MALLOC(iqmHeader->num_vertexes*2*sizeof(float));
+                text = (float *)RL_MALLOC(iqmHeader->num_vertexes*2*sizeof(float));
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(text, iqmHeader->num_vertexes*2*sizeof(float), 1, iqmFile);
                 memcpy(text, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*2*sizeof(float));
@@ -4779,7 +4785,7 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_BLENDINDEXES:
             {
-                blendi = RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(char));
+                blendi = (char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(char));
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(blendi, iqmHeader->num_vertexes*4*sizeof(char), 1, iqmFile);
                 memcpy(blendi, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(char));
@@ -4796,7 +4802,7 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_BLENDWEIGHTS:
             {
-                blendw = RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
+                blendw = (unsigned char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(blendw, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
@@ -4813,14 +4819,14 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_COLOR:
             {
-                color = RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
+                color = (unsigned char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(color, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
 
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
-                    model.meshes[m].colors = RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
+                    model.meshes[m].colors = (unsigned char *)RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
 
                     int vCounter = 0;
                     for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
@@ -4834,14 +4840,14 @@ static Model LoadIQM(const char *fileName)
     }
 
     // Bones (joints) data processing
-    ijoint = RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
+    ijoint = (IQMJoint *)RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
     //fseek(iqmFile, iqmHeader->ofs_joints, SEEK_SET);
     //fread(ijoint, sizeof(IQMJoint), iqmHeader->num_joints, iqmFile);
     memcpy(ijoint, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
 
     model.boneCount = iqmHeader->num_joints;
-    model.bones = RL_MALLOC(iqmHeader->num_joints*sizeof(BoneInfo));
-    model.bindPose = RL_MALLOC(iqmHeader->num_joints*sizeof(Transform));
+    model.bones = (BoneInfo *)RL_MALLOC(iqmHeader->num_joints*sizeof(BoneInfo));
+    model.bindPose = (Transform *)RL_MALLOC(iqmHeader->num_joints*sizeof(Transform));
 
     for (unsigned int i = 0; i < iqmHeader->num_joints; i++)
     {
@@ -4871,7 +4877,7 @@ static Model LoadIQM(const char *fileName)
     for (int i = 0; i < model.meshCount; i++)
     {
         model.meshes[i].boneCount = model.boneCount;
-        model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
+        model.meshes[i].boneMatrices = (Matrix *)RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
 
         for (int j = 0; j < model.meshes[i].boneCount; j++)
         {
@@ -4963,36 +4969,36 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
     }
 
     // Get bones data
-    IQMPose *poses = RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
+    IQMPose *poses = (IQMPose *)RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
     //fseek(iqmFile, iqmHeader->ofs_poses, SEEK_SET);
     //fread(poses, sizeof(IQMPose), iqmHeader->num_poses, iqmFile);
     memcpy(poses, fileDataPtr + iqmHeader->ofs_poses, iqmHeader->num_poses*sizeof(IQMPose));
 
     // Get animations data
     *animCount = iqmHeader->num_anims;
-    IQMAnim *anim = RL_MALLOC(iqmHeader->num_anims*sizeof(IQMAnim));
+    IQMAnim *anim = (IQMAnim *)RL_MALLOC(iqmHeader->num_anims*sizeof(IQMAnim));
     //fseek(iqmFile, iqmHeader->ofs_anims, SEEK_SET);
     //fread(anim, sizeof(IQMAnim), iqmHeader->num_anims, iqmFile);
     memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
 
-    ModelAnimation *animations = RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
+    ModelAnimation *animations = (ModelAnimation *)RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
 
     // frameposes
-    unsigned short *framedata = RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
+    unsigned short *framedata = (unsigned short *)RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
     //fseek(iqmFile, iqmHeader->ofs_frames, SEEK_SET);
     //fread(framedata, sizeof(unsigned short), iqmHeader->num_frames*iqmHeader->num_framechannels, iqmFile);
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
 
     // joints
-    IQMJoint *joints = RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
+    IQMJoint *joints = (IQMJoint *)RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
     memcpy(joints, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
 
     for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
     {
         animations[a].frameCount = anim[a].num_frames;
         animations[a].boneCount = iqmHeader->num_poses;
-        animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
-        animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
+        animations[a].bones = (BoneInfo *)RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
+        animations[a].framePoses = (Transform **)RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
         memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here
         TraceLog(LOG_INFO, "IQM Anim %s", animations[a].name);
         // animations[a].framerate = anim.framerate;     // TODO: Use animation framerate data?
@@ -5007,7 +5013,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
             animations[a].bones[j].parent = poses[j].parent;
         }
 
-        for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
+        for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = (Transform *)RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
 
         int dcounter = anim[a].first_frame*iqmHeader->num_framechannels;
 
@@ -5198,7 +5204,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
     }
     else if ((cgltfImage->buffer_view != NULL) && (cgltfImage->buffer_view->buffer->data != NULL))    // Check if image is provided as data buffer
     {
-        unsigned char *data = RL_MALLOC(cgltfImage->buffer_view->size);
+        unsigned char *data = (unsigned char *)RL_MALLOC(cgltfImage->buffer_view->size);
         int offset = (int)cgltfImage->buffer_view->offset;
         int stride = (int)cgltfImage->buffer_view->stride? (int)cgltfImage->buffer_view->stride : 1;
 
@@ -5231,16 +5237,12 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
 {
     *boneCount = (int)skin.joints_count;
-    BoneInfo *bones = RL_MALLOC(skin.joints_count*sizeof(BoneInfo));
+    BoneInfo *bones = (BoneInfo *)RL_CALLOC(skin.joints_count, sizeof(BoneInfo));
 
     for (unsigned int i = 0; i < skin.joints_count; i++)
     {
         cgltf_node node = *skin.joints[i];
-        if (node.name != NULL)
-        {
-            strncpy(bones[i].name, node.name, sizeof(bones[i].name));
-            bones[i].name[sizeof(bones[i].name) - 1] = '\0';
-        }
+        if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name) - 1);
 
         // Find parent bone index
         int parentIndex = -1;
@@ -5289,8 +5291,7 @@ static Model LoadGLTF(const char *fileName)
               > Texcoords: vec2: float
               > Colors: vec4: u8, u16, f32 (normalized)
               > Indices: u16, u32 (truncated to u16)
-          - Scenes defined in the glTF file are ignored. All nodes in the file
-            are used.
+          - Scenes defined in the glTF file are ignored. All nodes in the file are used
 
     ***********************************************************************************************/
 
@@ -5345,8 +5346,8 @@ static Model LoadGLTF(const char *fileName)
 
         int primitivesCount = 0;
 
-        // NOTE: We will load every primitive in the glTF as a separate raylib Mesh.
-        // Determine total number of meshes needed from the node hierarchy.
+        // NOTE: We will load every primitive in the glTF as a separate raylib Mesh
+        // Determine total number of meshes needed from the node hierarchy
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
             cgltf_node *node = &(data->nodes[i]);
@@ -5362,15 +5363,15 @@ static Model LoadGLTF(const char *fileName)
 
         // Load our model data: meshes and materials
         model.meshCount = primitivesCount;
-        model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
+        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 
         // NOTE: We keep an extra slot for default material, in case some mesh requires it
         model.materialCount = (int)data->materials_count + 1;
-        model.materials = RL_CALLOC(model.materialCount, sizeof(Material));
+        model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
         model.materials[0] = LoadMaterialDefault();     // Load default material (index: 0)
 
         // Load mesh-material indices, by default all meshes are mapped to material index: 0
-        model.meshMaterial = RL_CALLOC(model.meshCount, sizeof(int));
+        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         // Load materials data
         //----------------------------------------------------------------------------------------------------
@@ -5488,14 +5489,13 @@ static Model LoadGLTF(const char *fileName)
             // has_clearcoat, has_transmission, has_volume, has_ior, has specular, has_sheen
         }
 
-        // Visit each node in the hierarchy and process any mesh linked from it.
-        // Each primitive within a glTF node becomes a Raylib Mesh.
+        // Visit each node in the hierarchy and process any mesh linked from it
+        // Each primitive within a glTF node becomes a Raylib Mesh
         // The local-to-world transform of each node is used to transform the
-        // points/normals/tangents of the created Mesh(es).
+        // points/normals/tangents of the created Mesh(es)
         // Any glTF mesh linked from more than one Node (i.e. instancing)
-        // is turned into multiple Mesh's, as each Node will have its own
-        // transform applied.
-        // NOTE: The code below disregards the scenes defined in the file, all nodes are used.
+        // is turned into multiple Mesh's, as each Node will have its own transform applied
+        // NOTE: The code below disregards the scenes defined in the file, all nodes are used
         //----------------------------------------------------------------------------------------------------
         int meshIndex = 0;
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -5540,7 +5540,7 @@ static Model LoadGLTF(const char *fileName)
                         {
                             // Init raylib mesh vertices to copy glTF attribute data
                             model.meshes[meshIndex].vertexCount = (int)attribute->count;
-                            model.meshes[meshIndex].vertices = RL_MALLOC(attribute->count*3*sizeof(float));
+                            model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                             // Load 3 components of float data type into mesh.vertices
                             LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].vertices)
@@ -5564,7 +5564,7 @@ static Model LoadGLTF(const char *fileName)
                         if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
                             // Init raylib mesh normals to copy glTF attribute data
-                            model.meshes[meshIndex].normals = RL_MALLOC(attribute->count*3*sizeof(float));
+                            model.meshes[meshIndex].normals = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                             // Load 3 components of float data type into mesh.normals
                             LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].normals)
@@ -5581,14 +5581,14 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Normal attribute data format not supported, use vec3 float", fileName);
                     }
-                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec3, float
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec4, float, w is tangent basis sign
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         if ((attribute->type == cgltf_type_vec4) && (attribute->component_type == cgltf_component_type_r_32f))
                         {
                             // Init raylib mesh tangent to copy glTF attribute data
-                            model.meshes[meshIndex].tangents = RL_MALLOC(attribute->count*4*sizeof(float));
+                            model.meshes[meshIndex].tangents = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
 
                             // Load 4 components of float data type into mesh.tangents
                             LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].tangents)
@@ -5597,10 +5597,10 @@ static Model LoadGLTF(const char *fileName)
                             float *tangents = model.meshes[meshIndex].tangents;
                             for (unsigned int k = 0; k < attribute->count; k++)
                             {
-                                Vector3 tt = Vector3Transform((Vector3){ tangents[3*k], tangents[3*k+1], tangents[3*k+2] }, worldMatrix);
-                                tangents[3*k] = tt.x;
-                                tangents[3*k+1] = tt.y;
-                                tangents[3*k+2] = tt.z;
+                                Vector3 tt = Vector3Transform((Vector3){ tangents[4*k], tangents[4*k+1], tangents[4*k+2] }, worldMatrix);
+                                tangents[4*k] = tt.x;
+                                tangents[4*k+1] = tt.y;
+                                tangents[4*k+2] = tt.z;
                             }
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangent attribute data format not supported, use vec4 float", fileName);
@@ -5674,10 +5674,10 @@ static Model LoadGLTF(const char *fileName)
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
                                 // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned char *temp = RL_MALLOC(attribute->count*3*sizeof(unsigned char));
+                                unsigned char *temp = (unsigned char *)RL_MALLOC(attribute->count*3*sizeof(unsigned char));
                                 LOAD_ATTRIBUTE(attribute, 3, unsigned char, temp);
 
                                 // Convert data to raylib color data type (4 bytes)
@@ -5694,10 +5694,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_16u)
                             {
                                 // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = RL_MALLOC(attribute->count*3*sizeof(unsigned short));
+                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*3*sizeof(unsigned short));
                                 LOAD_ATTRIBUTE(attribute, 3, unsigned short, temp);
 
                                 // Convert data to raylib color data type (4 bytes)
@@ -5714,10 +5714,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_32f)
                             {
                                 // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                float *temp = RL_MALLOC(attribute->count*3*sizeof(float));
+                                float *temp = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
                                 LOAD_ATTRIBUTE(attribute, 3, float, temp);
 
                                 // Convert data to raylib color data type (4 bytes)
@@ -5738,7 +5738,7 @@ static Model LoadGLTF(const char *fileName)
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
                                 // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
                                 // Load 4 components of unsigned char data type into mesh.colors
                                 LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].colors)
@@ -5746,10 +5746,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_16u)
                             {
                                 // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = RL_MALLOC(attribute->count*4*sizeof(unsigned short));
+                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*4*sizeof(unsigned short));
                                 LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
 
                                 // Convert data to raylib color data type (4 bytes)
@@ -5760,10 +5760,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_32f)
                             {
                                 // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                float *temp = RL_MALLOC(attribute->count*4*sizeof(float));
+                                float *temp = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
                                 LOAD_ATTRIBUTE(attribute, 4, float, temp);
 
                                 // Convert data to raylib color data type (4 bytes), we expect the color data normalized
@@ -5789,7 +5789,7 @@ static Model LoadGLTF(const char *fileName)
                     if (attribute->component_type == cgltf_component_type_r_16u)
                     {
                         // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = RL_MALLOC(attribute->count*sizeof(unsigned short));
+                        model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
 
                         // Load unsigned short data type into mesh.indices
                         LOAD_ATTRIBUTE(attribute, 1, unsigned short, model.meshes[meshIndex].indices)
@@ -5797,14 +5797,14 @@ static Model LoadGLTF(const char *fileName)
                     else if (attribute->component_type == cgltf_component_type_r_8u)
                     {
                         // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = RL_MALLOC(attribute->count*sizeof(unsigned short));
+                        model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
                         LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned char, model.meshes[meshIndex].indices, unsigned short)
 
                     }
                     else if (attribute->component_type == cgltf_component_type_r_32u)
                     {
                         // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = RL_MALLOC(attribute->count*sizeof(unsigned short));
+                        model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
                         LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned int, model.meshes[meshIndex].indices, unsigned short);
 
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
@@ -5848,7 +5848,7 @@ static Model LoadGLTF(const char *fileName)
         {
             cgltf_skin skin = data->skins[0];
             model.bones = LoadBoneInfoGLTF(skin, &model.boneCount);
-            model.bindPose = RL_MALLOC(model.boneCount*sizeof(Transform));
+            model.bindPose = (Transform *)RL_MALLOC(model.boneCount*sizeof(Transform));
 
             for (int i = 0; i < model.boneCount; i++)
             {
@@ -5905,7 +5905,7 @@ static Model LoadGLTF(const char *fileName)
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
                                 // Init raylib mesh boneIds to copy glTF attribute data
-                                model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                                model.meshes[meshIndex].boneIds = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
 
                                 // Load attribute: vec4, u8 (unsigned char)
                                 LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].boneIds)
@@ -5913,10 +5913,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_16u)
                             {
                                 // Init raylib mesh boneIds to copy glTF attribute data
-                                model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                                model.meshes[meshIndex].boneIds = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned short));
+                                unsigned short *temp = (unsigned short *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned short));
                                 LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
 
                                 // Convert data to raylib color data type (4 bytes)
@@ -5948,10 +5948,10 @@ static Model LoadGLTF(const char *fileName)
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
                                 // Init raylib mesh bone weight to copy glTF attribute data
-                                model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
+                                model.meshes[meshIndex].boneWeights = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned char *temp = RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+                                unsigned char *temp = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
                                 LOAD_ATTRIBUTE(attribute, 4, unsigned char, temp);
 
                                 // Convert data to raylib bone weight data type (4 bytes)
@@ -5962,10 +5962,10 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_16u)
                             {
                                 // Init raylib mesh bone weight to copy glTF attribute data
-                                model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
+                                model.meshes[meshIndex].boneWeights = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = RL_MALLOC(attribute->count*4*sizeof(unsigned short));
+                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*4*sizeof(unsigned short));
                                 LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
 
                                 // Convert data to raylib bone weight data type
@@ -5976,7 +5976,7 @@ static Model LoadGLTF(const char *fileName)
                             else if (attribute->component_type == cgltf_component_type_r_32f)
                             {
                                 // Init raylib mesh bone weight to copy glTF attribute data
-                                model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
+                                model.meshes[meshIndex].boneWeights = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                                 // Load 4 components of float data type into mesh.boneWeights
                                 // for cgltf_attribute_type_weights we have:
@@ -6007,8 +6007,8 @@ static Model LoadGLTF(const char *fileName)
 
                     if (parentBoneId >= 0)
                     {
-                        model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
-                        model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
+                        model.meshes[meshIndex].boneIds = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                        model.meshes[meshIndex].boneWeights = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                         for (int vertexIndex = 0; vertexIndex < model.meshes[meshIndex].vertexCount*4; vertexIndex += 4)
                         {
@@ -6019,9 +6019,9 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Animated vertex data
-                model.meshes[meshIndex].animVertices = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
+                model.meshes[meshIndex].animVertices = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
                 memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
-                model.meshes[meshIndex].animNormals = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
+                model.meshes[meshIndex].animNormals = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
                 if (model.meshes[meshIndex].normals != NULL)
                 {
                     memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
@@ -6029,7 +6029,7 @@ static Model LoadGLTF(const char *fileName)
 
                 // Bone Transform Matrices
                 model.meshes[meshIndex].boneCount = model.boneCount;
-                model.meshes[meshIndex].boneMatrices = RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
+                model.meshes[meshIndex].boneMatrices = (Matrix *)RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
 
                 for (int j = 0; j < model.meshes[meshIndex].boneCount; j++)
                 {
@@ -6219,7 +6219,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
         {
             cgltf_skin skin = data->skins[0];
             *animCount = (int)data->animations_count;
-            animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
+            animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
 
             for (unsigned int i = 0; i < data->animations_count; i++)
             {
@@ -6234,7 +6234,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     cgltf_interpolation_type interpolationType;
                 };
 
-                struct Channels *boneChannels = RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
+                struct Channels *boneChannels = (struct Channels *)RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
                 float animDuration = 0.0f;
 
                 for (unsigned int j = 0; j < animData.channels_count; j++)
@@ -6292,18 +6292,14 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     animDuration = (t > animDuration)? t : animDuration;
                 }
 
-                if (animData.name != NULL)
-                {
-                    strncpy(animations[i].name, animData.name, sizeof(animations[i].name));
-                    animations[i].name[sizeof(animations[i].name) - 1] = '\0';
-                }
+                if (animData.name != NULL) strncpy(animations[i].name, animData.name, sizeof(animations[i].name) - 1);
 
                 animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY) + 1;
-                animations[i].framePoses = RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
+                animations[i].framePoses = (Transform **)RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
 
                 for (int j = 0; j < animations[i].frameCount; j++)
                 {
-                    animations[i].framePoses[j] = RL_MALLOC(animations[i].boneCount*sizeof(Transform));
+                    animations[i].framePoses[j] = (Transform *)RL_MALLOC(animations[i].boneCount*sizeof(Transform));
                     float time = ((float) j*GLTF_ANIMDELAY)/1000.0f;
 
                     for (int k = 0; k < animations[i].boneCount; k++)
@@ -6453,7 +6449,7 @@ static Model LoadVOX(const char *fileName)
 
         // Copy colors
         size = pmesh->vertexCount*sizeof(Color);
-        pmesh->colors = RL_MALLOC(size);
+        pmesh->colors = (unsigned char *)RL_MALLOC(size);
         memcpy(pmesh->colors, pcolors, size);
 
         // First material index
@@ -6589,7 +6585,7 @@ static Model LoadM3D(const char *fileName)
 
                 // If no map is provided, or we have colors defined, we allocate storage for vertex colors
                 // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
-                if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
 
                 // If no map is provided and we allocated vertex colors, set them to white
                 if ((mi == M3D_UNDEF) && (model.meshes[k].colors != NULL))
@@ -6623,11 +6619,11 @@ static Model LoadM3D(const char *fileName)
             // Without vertex color (full transparency), we use the default color
             if (model.meshes[k].colors != NULL)
             {
-                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
+                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xff000000)
                     memcpy(&model.meshes[k].colors[l*12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
-                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
+                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xff000000)
                     memcpy(&model.meshes[k].colors[l*12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
-                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
+                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xff000000)
                     memcpy(&model.meshes[k].colors[l*12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
             }
 
@@ -6756,13 +6752,13 @@ static Model LoadM3D(const char *fileName)
         if (m3d->numbone)
         {
             model.boneCount = m3d->numbone + 1;
-            model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
-            model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
+            model.bones = (BoneInfo *)RL_CALLOC(model.boneCount, sizeof(BoneInfo));
+            model.bindPose = (Transform *)RL_CALLOC(model.boneCount, sizeof(Transform));
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {
                 model.bones[i].parent = m3d->bone[i].parent;
-                strncpy(model.bones[i].name, m3d->bone[i].name, sizeof(model.bones[i].name));
+                strncpy(model.bones[i].name, m3d->bone[i].name, sizeof(model.bones[i].name) - 1);
                 model.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x*m3d->scale;
                 model.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y*m3d->scale;
                 model.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z*m3d->scale;
@@ -6808,7 +6804,7 @@ static Model LoadM3D(const char *fileName)
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
 
                 model.meshes[i].boneCount = model.boneCount;
-                model.meshes[i].boneMatrices = RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
+                model.meshes[i].boneMatrices = (Matrix *)RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
                 for (j = 0; j < model.meshes[i].boneCount; j++)
                 {
                     model.meshes[i].boneMatrices[j] = MatrixIdentity();
@@ -6858,24 +6854,23 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             return NULL;
         }
 
-        animations = RL_MALLOC(m3d->numaction*sizeof(ModelAnimation));
+        animations = (ModelAnimation *)RL_CALLOC(m3d->numaction, sizeof(ModelAnimation));
         *animCount = m3d->numaction;
 
         for (unsigned int a = 0; a < m3d->numaction; a++)
         {
             animations[a].frameCount = m3d->action[a].durationmsec/M3D_ANIMDELAY;
             animations[a].boneCount = m3d->numbone + 1;
-            animations[a].bones = RL_MALLOC((m3d->numbone + 1)*sizeof(BoneInfo));
-            animations[a].framePoses = RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
-            strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
-            animations[a].name[sizeof(animations[a].name) - 1] = '\0';
+            animations[a].bones = (BoneInfo *)RL_MALLOC((m3d->numbone + 1)*sizeof(BoneInfo));
+            animations[a].framePoses = (Transform **)RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
+            strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name) - 1);
 
             TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {
                 animations[a].bones[i].parent = m3d->bone[i].parent;
-                strncpy(animations[a].bones[i].name, m3d->bone[i].name, sizeof(animations[a].bones[i].name));
+                strncpy(animations[a].bones[i].name, m3d->bone[i].name, sizeof(animations[a].bones[i].name) - 1);
             }
 
             // A special, never transformed "no bone" bone, used for boneless vertices
@@ -6886,7 +6881,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             // regular intervals, so let the M3D SDK do the heavy lifting and calculate interpolated bones
             for (i = 0; i < animations[a].frameCount; i++)
             {
-                animations[a].framePoses[i] = RL_MALLOC((m3d->numbone + 1)*sizeof(Transform));
+                animations[a].framePoses[i] = (Transform *)RL_MALLOC((m3d->numbone + 1)*sizeof(Transform));
 
                 m3db_t *pose = m3d_pose(m3d, a, i*M3D_ANIMDELAY);
 

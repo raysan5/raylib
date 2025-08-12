@@ -22,22 +22,28 @@ jobs:
   build:
     permissions:
       contents: write  # for actions/upload-release-asset to upload release asset
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       max-parallel: 1
       matrix:
-        bits: [32, 64]
         include:
         - bits: 32
           ARCH: "i386"
           ARCH_NAME: "i386"
-          COMPILER_PATH: "/user/bin"
+          COMPILER_PATH: "/usr/bin"
+          runner: "ubuntu-latest"
         - bits: 64
           ARCH: "x86_64"
           ARCH_NAME: "amd64"
-          COMPILER_PATH: "/user/bin"
+          COMPILER_PATH: "/usr/bin"
+          runner: "ubuntu-latest"
+        - bits: 64
+          ARCH: "aarch64"
+          ARCH_NAME: "arm64"
+          COMPILER_PATH: "/usr/bin"
+          runner: "ubuntu-24.04-arm"
           
+    runs-on: ${{ matrix.runner }}
     env:
       RELEASE_NAME: raylib-dev_linux_${{ matrix.ARCH_NAME }}
     
@@ -54,7 +60,6 @@ jobs:
     - name: Setup Environment
       run: | 
         sudo apt-get update -qq
-        sudo apt-get install gcc-multilib
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-dev libxkbcommon-dev
         mkdir build
         cd build
@@ -64,9 +69,14 @@ jobs:
         mkdir lib
         cd ../../../raylib
         # ${{ matrix.ARCH }}-linux-gnu-gcc -v
+
+    - name: Setup Environment (x86)
+      run : |
+          sudo apt-get install gcc-multilib
+      if: matrix.bits == 32 && matrix.ARCH == 'i386'
       
     # TODO: Support 32bit (i386) static/shared library building
-    - name: Build Library
+    - name: Build Library (32-bit)
       run: |
         cd src
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CUSTOM_CFLAGS="-m32" -B
@@ -74,13 +84,21 @@ jobs:
         cd ..
       if: matrix.bits == 32
 
-    - name: Build Library
+    - name: Build Library (64-bit x86)
       run: |
         cd src
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
-      if: matrix.bits == 64
+      if: matrix.bits == 64 && matrix.ARCH == 'x86_64'
+    
+    - name: Build Library (64-bit ARM)
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        cd ..
+      if: matrix.bits == 64 && matrix.ARCH == 'aarch64'
     
     - name: Generate Artifacts
       run: |

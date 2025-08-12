@@ -54,7 +54,6 @@ jobs:
           - compiler: mingw-w64
             ziptarget: winarm64 # We don't build arm64 with mingw-w64 yet
 
-
     env:
       RELEASE_NAME: raylib-dev_${{ matrix.ziptarget }}_${{ matrix.compiler }}
       GNUTARGET: default

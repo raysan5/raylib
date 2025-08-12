@@ -5,7 +5,7 @@
 *   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 3.7, last time updated with raylib 4.0
-*   
+*
 *   Example contributed by Giancamillo Alessandroni (@NotManyIdeasDev) and
 *   reviewed by Ramon Santamaria (@raysan5)
 *
@@ -43,7 +43,8 @@ int main(void)
     Camera2D screenSpaceCamera = { 0 }; // Smoothing camera
     screenSpaceCamera.zoom = 1.0f;
 
-    RenderTexture2D target = LoadRenderTexture(virtualScreenWidth, virtualScreenHeight); // This is where we'll draw all our objects.
+    // Load render texture to draw all our objects
+    RenderTexture2D target = LoadRenderTexture(virtualScreenWidth, virtualScreenHeight);
 
     Rectangle rec01 = { 70.0f, 35.0f, 20.0f, 20.0f };
     Rectangle rec02 = { 90.0f, 55.0f, 30.0f, 10.0f };

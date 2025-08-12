@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Addapted from the core_3d_camera_split_screen example: 
+*   Addapted from the core_3d_camera_split_screen example:
 *       https://github.com/raysan5/raylib/blob/master/examples/core/core_3d_camera_split_screen.c
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
@@ -81,9 +81,9 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginTextureMode(screenCamera1);
             ClearBackground(RAYWHITE);
-            
+
             BeginMode2D(camera1);
-            
+
                 // Draw full scene with first camera
                 for (int i = 0; i < screenWidth/PLAYER_SIZE + 1; i++)
                 {
@@ -106,17 +106,17 @@ int main(void)
                 DrawRectangleRec(player1, RED);
                 DrawRectangleRec(player2, BLUE);
             EndMode2D();
-            
+
             DrawRectangle(0, 0, GetScreenWidth()/2, 30, Fade(RAYWHITE, 0.6f));
             DrawText("PLAYER1: W/S/A/D to move", 10, 10, 10, MAROON);
-            
+
         EndTextureMode();
 
         BeginTextureMode(screenCamera2);
             ClearBackground(RAYWHITE);
-            
+
             BeginMode2D(camera2);
-            
+
                 // Draw full scene with second camera
                 for (int i = 0; i < screenWidth/PLAYER_SIZE + 1; i++)
                 {
@@ -138,21 +138,21 @@ int main(void)
 
                 DrawRectangleRec(player1, RED);
                 DrawRectangleRec(player2, BLUE);
-                
+
             EndMode2D();
-            
+
             DrawRectangle(0, 0, GetScreenWidth()/2, 30, Fade(RAYWHITE, 0.6f));
             DrawText("PLAYER2: UP/DOWN/LEFT/RIGHT to move", 10, 10, 10, DARKBLUE);
-            
+
         EndTextureMode();
 
         // Draw both views render textures to the screen side by side
         BeginDrawing();
             ClearBackground(BLACK);
-            
+
             DrawTextureRec(screenCamera1.texture, splitScreenRect, (Vector2){ 0, 0 }, WHITE);
             DrawTextureRec(screenCamera2.texture, splitScreenRect, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
-            
+
             DrawRectangle(GetScreenWidth()/2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
         EndDrawing();
     }

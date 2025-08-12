@@ -3,7 +3,7 @@
 *   raylib [core] example - Doing skinning on the gpu using a vertex shader
 *
 *   Example complexity rating: [★★★☆] 3/4
-* 
+*
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example contributed by Daniel Holden (@orangeduck) and reviewed by Ramon Santamaria (@raysan5)
@@ -12,7 +12,7 @@
 *   BSD-like license that allows static linking with closed source software
 *
 *   Copyright (c) 2024-2025 Daniel Holden (@orangeduck)
-* 
+*
 *   Note: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
 *
 ********************************************************************************************/
@@ -49,13 +49,13 @@ int main(void)
 
     // Load gltf model
     Model characterModel = LoadModel("resources/models/gltf/greenman.glb"); // Load character model
-    
+
     // Load skinning shader
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
                                        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
-    
+
     characterModel.materials[1].shader = skinningShader;
-    
+
     // Load gltf model animations
     int animsCount = 0;
     unsigned int animIndex = 0;
@@ -75,7 +75,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_THIRD_PERSON);
-        
+
         // Select current animation
         if (IsKeyPressed(KEY_T)) animIndex = (animIndex + 1)%animsCount;
         else if (IsKeyPressed(KEY_G)) animIndex = (animIndex + animsCount - 1)%animsCount;
@@ -94,12 +94,12 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
+
                 // Draw character mesh, pose calculation is done in shader (GPU skinning)
                 DrawMesh(characterModel.meshes[0], characterModel.materials[1], characterModel.transform);
 
                 DrawGrid(10, 1.0f);
-                
+
             EndMode3D();
 
             DrawText("Use the T/G to switch animation", 10, 10, 20, GRAY);
@@ -113,7 +113,7 @@ int main(void)
     UnloadModelAnimations(modelAnimations, animsCount); // Unload model animation
     UnloadModel(characterModel);    // Unload model and meshes/material
     UnloadShader(skinningShader);   // Unload GPU skinning shader
-    
+
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

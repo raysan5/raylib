@@ -40,7 +40,7 @@ void main()
     vec3 viewD = normalize(viewPos - fragPosition);
     vec3 specular = vec3(0.0);
 
-    vec4 tint = colDiffuse * fragColor;
+    vec4 tint = colDiffuse*fragColor;
 
     // NOTE: Implement here your fragment shader code
 

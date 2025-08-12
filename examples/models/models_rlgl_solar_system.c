@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - rlgl module usage with push/pop matrix transformations
+*   raylib [models] example - rlgl solar system
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -41,7 +41,7 @@ int main(void)
     const float moonRadius = 0.16f;
     const float moonOrbitRadius = 1.5f;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - rlgl module usage with push/pop matrix transformations");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - rlgl solar system");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

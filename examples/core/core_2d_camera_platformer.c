@@ -137,7 +137,7 @@ int main(void)
 
                 Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40.0f, 40.0f };
                 DrawRectangleRec(playerRect, RED);
-                
+
                 DrawCircleV(player.position, 5.0f, GOLD);
 
             EndMode2D();

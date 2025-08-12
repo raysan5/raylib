@@ -42,7 +42,7 @@ int main(void)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
-    
+
     // Load texture to be applied to the cubes sides
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");
 
@@ -69,7 +69,7 @@ int main(void)
                 DrawCubeTexture(texture, (Vector3){ -2.0f, 2.0f, 0.0f }, 2.0f, 4.0f, 2.0f, WHITE);
 
                 // Draw cube with an applied texture, but only a defined rectangle piece of the texture
-                DrawCubeTextureRec(texture, (Rectangle){ 0.0f, texture.height/2.0f, texture.width/2.0f, texture.height/2.0f }, 
+                DrawCubeTextureRec(texture, (Rectangle){ 0.0f, texture.height/2.0f, texture.width/2.0f, texture.height/2.0f },
                     (Vector3){ 2.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, WHITE);
 
                 DrawGrid(10, 1.0f);        // Draw a grid
@@ -85,7 +85,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture); // Unload texture
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
@@ -171,7 +171,7 @@ void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, f
     rlSetTexture(texture.id);
 
     // We calculate the normalized texture coordinates for the desired texture-source-rectangle
-    // It means converting from (tex.width, tex.height) coordinates to [0.0f, 1.0f] equivalent 
+    // It means converting from (tex.width, tex.height) coordinates to [0.0f, 1.0f] equivalent
     rlBegin(RL_QUADS);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
