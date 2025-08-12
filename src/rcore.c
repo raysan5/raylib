@@ -333,9 +333,11 @@ typedef struct CoreData {
             Vector2 scale;                  // Mouse scaling
             Vector2 currentPosition;        // Mouse position on screen
             Vector2 previousPosition;       // Previous mouse position
+            Vector2 lockedPosition;         // Mouse position when locked
 
             int cursor;                     // Tracks current mouse cursor
             bool cursorHidden;              // Track if cursor is hidden
+            bool cursorLocked;              // Track if cursor is locked (disabled)
             bool cursorOnScreen;            // Tracks if cursor is inside client area
 
             char currentButtonState[MAX_MOUSE_BUTTONS];     // Registers current mouse button state

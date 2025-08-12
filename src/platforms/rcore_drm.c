@@ -556,7 +556,7 @@ void EnableCursor(void)
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     platform.cursorRelative = false;
-    CORE.Input.Mouse.cursorHidden = false;
+    CORE.Input.Mouse.cursorLocked = false;
 }
 
 // Disables cursor (lock cursor)
@@ -566,7 +566,7 @@ void DisableCursor(void)
     SetMousePosition(0, 0);
 
     platform.cursorRelative = true;
-    CORE.Input.Mouse.cursorHidden = true;
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 #if defined(SUPPORT_DRM_CACHE)
@@ -2060,7 +2060,7 @@ static void PollMouseEvents(void)
         }
 
         // Screen confinement
-        if (!CORE.Input.Mouse.cursorHidden)
+        if (!CORE.Input.Mouse.cursorLocked)
         {
             if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
             if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;

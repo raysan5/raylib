@@ -102,8 +102,6 @@ static const char cursorLUT[11][12] = {
     "not-allowed"  // 10 MOUSE_CURSOR_NOT_ALLOWED
 };
 
-Vector2 lockedMousePos = { 0 };
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -862,7 +860,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
+    // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
 }
 
 // Disables cursor (lock cursor)
@@ -874,7 +872,7 @@ void DisableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
+    // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -955,7 +953,7 @@ void SetMousePosition(int x, int y)
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
-    if (CORE.Input.Mouse.cursorHidden) lockedMousePos = CORE.Input.Mouse.currentPosition;
+    if (CORE.Input.Mouse.cursorLocked) CORE.Input.Mouse.lockedPosition = CORE.Input.Mouse.currentPosition;
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
@@ -966,7 +964,7 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+        if (!CORE.Input.Mouse.cursorLocked) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
 
         CORE.Input.Mouse.cursor = cursor;
     }
@@ -1573,7 +1571,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 static void MouseMoveCallback(GLFWwindow *window, double x, double y)
 {
     // If the pointer is not locked, follow the position
-    if (!CORE.Input.Mouse.cursorHidden)
+    if (!CORE.Input.Mouse.cursorLocked)
     {
         CORE.Input.Mouse.currentPosition.x = (float)x;
         CORE.Input.Mouse.currentPosition.y = (float)y;
@@ -1641,11 +1639,11 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Emscripten: Called on mouse move events
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
-    // To emulate the GLFW_RAW_MOUSE_MOTION property.
-    if (CORE.Input.Mouse.cursorHidden)
+    // To emulate the GLFW_RAW_MOUSE_MOTION property
+    if (CORE.Input.Mouse.cursorLocked)
     {
-        CORE.Input.Mouse.previousPosition.x = lockedMousePos.x - mouseEvent->movementX;
-        CORE.Input.Mouse.previousPosition.y = lockedMousePos.y - mouseEvent->movementY;
+        CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.lockedPosition.x - mouseEvent->movementX;
+        CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.lockedPosition.y - mouseEvent->movementY;
     }
 
     return 1; // The event was consumed by the callback handler
@@ -1654,12 +1652,12 @@ static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseE
 // Emscripten: Called on pointer lock events
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
 {
-    CORE.Input.Mouse.cursorHidden = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
+    CORE.Input.Mouse.cursorLocked = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
 
-    if (CORE.Input.Mouse.cursorHidden)
+    if (CORE.Input.Mouse.cursorLocked)
     {
-        lockedMousePos = CORE.Input.Mouse.currentPosition;
-        CORE.Input.Mouse.previousPosition = lockedMousePos;
+        CORE.Input.Mouse.lockedPosition = CORE.Input.Mouse.currentPosition;
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.lockedPosition;
     }
 
     return 1; // The event was consumed by the callback handler

@@ -1214,7 +1214,7 @@ void EnableCursor(void)
 #endif
 
     platform.cursorRelative = false;
-    CORE.Input.Mouse.cursorHidden = false;
+    CORE.Input.Mouse.cursorLocked = false;
 }
 
 // Disables cursor (lock cursor)
@@ -1223,7 +1223,7 @@ void DisableCursor(void)
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     platform.cursorRelative = true;
-    CORE.Input.Mouse.cursorHidden = true;
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 // Swap back buffer with front buffer (screen drawing)
