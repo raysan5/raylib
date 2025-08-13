@@ -1364,7 +1364,7 @@ int InitPlatform(void)
     glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
 
     // Window flags requested before initialization to be applied after initialization
-    unsigned int requetedWindowFlags = CORE.Window.flags;
+    unsigned int requestedWindowFlags = CORE.Window.flags;
     
     // Check window creation flags
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
@@ -1677,7 +1677,7 @@ int InitPlatform(void)
     }
     
     // Apply window flags requested previous to initialization
-    SetWindowState(requetedWindowFlags);
+    SetWindowState(requestedWindowFlags);
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
