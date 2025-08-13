@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shaders", "shaders", "{5317
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "audio", "audio", "{CC132A4D-D081-4C26-BFB9-AB11984054F8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "other", "other", "{E9D708A5-9C1F-4B84-A795-C5F191801762}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "others", "others", "{E9D708A5-9C1F-4B84-A795-C5F191801762}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
 EndProject
