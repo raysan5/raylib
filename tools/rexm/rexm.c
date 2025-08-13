@@ -862,6 +862,86 @@ int main(int argc, char *argv[])
                 UnloadExampleInfo(exInfoHeader);
             }
 
+            if (opCode == OP_UPDATE)
+            {
+                // Actions to fix/review anything possible from validation results
+                //------------------------------------------------------------------------------------------------
+                // Check examples "status" information
+                for (int i = 0; i < exCollectionCount; i++)
+                {
+                    rlExampleInfo *exInfo = &exCollection[i];
+
+                    if (exInfo->status & VALID_MISSING_C) LOG("WARNING: [%s] Missing code file\n", exInfo->name);
+                    else
+                    {
+                        // NOTE: Some issues can not be automatically fixed, only logged
+                        //if (exInfo->status & VALID_MISSING_PNG) LOG("WARNING: [%s] Missing screenshot file\n", exInfo->name);
+                        //if (exInfo->status & VALID_INVALID_PNG) LOG("WARNING: [%s] Invalid screenshot file (using template)\n", exInfo->name);
+                        //if (exInfo->status & VALID_MISSING_RESOURCES) LOG("WARNING: [%s] Missing resources detected\n", exInfo->name);
+                        //if (exInfo->status & VALID_INCONSISTENT_INFO) LOG("WARNING: [%s] Inconsistent example header info\n", exInfo->name);
+                        //if (exInfo->status & VALID_INVALID_CATEGORY) LOG("WARNING: [%s] Invalid example category\n", exInfo->name);
+
+                        // Review: Add: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
+                        // Review: Add: raylib/projects/VS2022/raylib.sln
+                        // Solves: VALID_MISSING_VCXPROJ, VALID_NOT_IN_VCXSOL
+                        if (exInfo->status & VALID_MISSING_VCXPROJ)
+                        {
+                            FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
+                                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name));
+                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                                "core_basic_window", exInfo->name);
+                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                                "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
+
+                            exInfo->status |= VALID_MISSING_VCXPROJ;
+                        }
+
+                        // Add project (.vcxproj) to raylib solution (.sln)
+                        if (exInfo->status & VALID_NOT_IN_VCXSOL)
+                        {
+                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                                exVSProjectSolutionFile, exInfo->category);
+
+                            exInfo->status |= VALID_NOT_IN_VCXSOL;
+                        }
+
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.data
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
+                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
+                        // Solves: VALID_MISSING_WEB_OUTPUT
+                        if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
+                        {
+                            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+
+                            // Copy results to web side
+                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name));
+
+                            exInfo->status |= VALID_MISSING_WEB_OUTPUT;
+                        }
+                    }
+                }
+
+                // Update files: Makefile, Makefile.Web, README.md, examples.js
+                // Solves: VALID_NOT_IN_MAKEFILE, VALID_NOT_IN_MAKEFILE_WEB, VALID_NOT_IN_README, VALID_NOT_IN_JS
+                UpdateRequiredFiles();
+                for (int i = 0; i < exCollectionCount; i++)
+                {
+                    exCollection[i].status |= VALID_NOT_IN_MAKEFILE;
+                    exCollection[i].status |= VALID_NOT_IN_MAKEFILE_WEB;
+                    exCollection[i].status |= VALID_NOT_IN_README;
+                    exCollection[i].status |= VALID_NOT_IN_JS;
+                }
+                //------------------------------------------------------------------------------------------------
+            }
+
             // Generate validation report/table with results (.md)
             /*
             Columns:
@@ -930,75 +1010,6 @@ int main(int argc, char *argv[])
 
             SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report.md"), report);
             RL_FREE(report);
-
-            //UnloadExamplesData(exCollection); // Done at the end, it can be required for fixing
-
-            if (opCode == OP_UPDATE)
-            {
-                // Actions to fix/review anything possible from validation results
-                //------------------------------------------------------------------------------------------------
-                // Check examples "status" information
-                for (int i = 0; i < exCollectionCount; i++)
-                {
-                    rlExampleInfo *exInfo = &exCollection[i];
-
-                    if (exInfo->status & VALID_MISSING_C) LOG("WARNING: [%s] Missing code file\n", exInfo->name);
-                    else
-                    {
-                        // NOTE: Some issues can not be automatically fixed, only logged
-                        //if (exInfo->status & VALID_MISSING_PNG) LOG("WARNING: [%s] Missing screenshot file\n", exInfo->name);
-                        //if (exInfo->status & VALID_INVALID_PNG) LOG("WARNING: [%s] Invalid screenshot file (using template)\n", exInfo->name);
-                        //if (exInfo->status & VALID_MISSING_RESOURCES) LOG("WARNING: [%s] Missing resources detected\n", exInfo->name);
-                        //if (exInfo->status & VALID_INCONSISTENT_INFO) LOG("WARNING: [%s] Inconsistent example header info\n", exInfo->name);
-                        //if (exInfo->status & VALID_INVALID_CATEGORY) LOG("WARNING: [%s] Invalid example category\n", exInfo->name);
-
-                        // Review: Add: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
-                        // Review: Add: raylib/projects/VS2022/raylib.sln
-                        // Solves: VALID_MISSING_VCXPROJ, VALID_NOT_IN_VCXSOL
-                        if (exInfo->status & VALID_MISSING_VCXPROJ)
-                        {
-                            FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
-                                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name));
-                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
-                                "core_basic_window", exInfo->name);
-                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
-                                "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
-                        }
-
-                        // Add project (.vcxproj) to raylib solution (.sln)
-                        if (exInfo->status & VALID_NOT_IN_VCXSOL)
-                        {
-                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
-                                exVSProjectSolutionFile, exInfo->category);
-                        }
-
-                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
-                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.data
-                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
-                        // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
-                        // Solves: VALID_MISSING_WEB_OUTPUT
-                        if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
-                        {
-                            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
-
-                            // Copy results to web side
-                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
-                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
-                            FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
-                                TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
-                            FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
-                                TextFormat("%s/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name));
-                            FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exInfo->category, exInfo->name),
-                                TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name));
-                        }
-                    }
-                }
-
-                // Update files: Makefile, Makefile.Web, README.md, examples.js
-                // Solves: VALID_NOT_IN_MAKEFILE, VALID_NOT_IN_MAKEFILE_WEB, VALID_NOT_IN_README, VALID_NOT_IN_JS
-                UpdateRequiredFiles();     
-                //------------------------------------------------------------------------------------------------
-            }
 
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
