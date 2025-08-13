@@ -1949,12 +1949,15 @@ bool IsFileExtension(const char *fileName, const char *ext)
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
 
+    // WARNING: fileExt points to last '.' on fileName string but it could happen
+    // that fileName is not correct: "myfile.png more text following\n"
+
     if (fileExt != NULL)
     {
-        int fileExtLen = strlen(fileExt);
-        char fileExtLower[8] = { 0 };
+        int fileExtLen = (int)strlen(fileExt);
+        char fileExtLower[16] = { 0 };
         char *fileExtLowerPtr = fileExtLower;
-        for (int i = 0; i < fileExtLen; i++)
+        for (int i = 0; (i < fileExtLen) && (i < 16); i++)
         {
             // Copy and convert to lower-case
             if ((fileExt[i] >= 'A') && (fileExt[i] <= 'Z')) fileExtLower[i] =  fileExt[i] + 32;
@@ -1962,7 +1965,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         }
         
         int extCount = 1;
-        int extLen = strlen(ext);
+        int extLen = (int)strlen(ext);
         char *extList = (char *)RL_CALLOC(extLen + 1, 1);
         char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
         strcpy(extList, ext);
@@ -2047,11 +2050,12 @@ int GetFileLength(const char *fileName)
 }
 
 // Get pointer to extension for a filename string (includes the dot: .png)
+// WARNING: We just get the ptr but not the extension as a separate string
 const char *GetFileExtension(const char *fileName)
 {
-    const char *dot = strrchr(fileName, '.');
+    const char *dot = strrchr(fileName, '.'); 
 
-    if (!dot || dot == fileName) return NULL;
+    if (!dot || (dot == fileName)) return NULL;
 
     return dot;
 }
