@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
             char *exCollectionList = LoadFileText(exCollectionFilePath);
             if (TextFindIndex(exCollectionList, exName) == -1) // Example not found
             {
-                char *exCollectionListUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
+                char *exCollectionListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated list copy, 2MB
                 
                 // Add example to the main list, by category
                 // by default add it last in the category list
@@ -1051,7 +1051,7 @@ static int UpdateRequiredFiles(void)
     // Edit: raylib/examples/Makefile --> Update from collection
     //------------------------------------------------------------------------------------------------
     char *mkText = LoadFileText(TextFormat("%s/Makefile", exBasePath));
-    char *mkTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
+    char *mkTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated Makefile copy, 2MB
 
     int mkListStartIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_START");
     int mkListEndIndex = TextFindIndex(mkText, "#EXAMPLES_LIST_END");
@@ -1086,7 +1086,7 @@ static int UpdateRequiredFiles(void)
     // NOTE: We avoid the "others" category on web building
     //------------------------------------------------------------------------------------------------
     char *mkwText = LoadFileText(TextFormat("%s/Makefile.Web", exBasePath));
-    char *mkwTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated Makefile copy, 2MB
+    char *mkwTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated Makefile copy, 2MB
 
     int mkwListStartIndex = TextFindIndex(mkwText, "#EXAMPLES_LIST_START");
     int mkwListEndIndex = TextFindIndex(mkwText, "#EXAMPLES_LIST_END");
@@ -1206,7 +1206,7 @@ static int UpdateRequiredFiles(void)
     // NOTE: Using [examples_list.txt] to update/regen README.md
     // Lines format: | 01 | [core_basic_window](core/core_basic_window.c) | <img src="core/core_basic_window.png" alt="core_basic_window" width="80"> | ⭐️☆☆☆ | 1.0 | 1.0 | [Ray](https://github.com/raysan5) |
     char *mdText = LoadFileText(TextFormat("%s/README.md", exBasePath));
-    char *mdTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
+    char *mdTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated examples.js copy, 2MB
 
     int mdListStartIndex = TextFindIndex(mdText, "## EXAMPLES COLLECTION");
 
@@ -1312,7 +1312,7 @@ static int UpdateRequiredFiles(void)
     // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
     //------------------------------------------------------------------------------------------------
     char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
-    char *jsTextUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated examples.js copy, 2MB
+    char *jsTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated examples.js copy, 2MB
 
     int jsListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
     int jsListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
