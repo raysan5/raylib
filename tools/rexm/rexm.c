@@ -169,6 +169,10 @@ static void ClearExampleResources(char **resPaths);
 // Add VS project (.vcxproj) to existing VS solution (.sol)
 static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
 
+// Generate unique UUID v4 string 
+// Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
+const char *GenerateUUIDv4(void);
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -1782,21 +1786,11 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, cha
 {
     int result = 0;
 
-    //WARNING: Function uses extensively TextFormat(), *projFile ptr will be overwriten after a while
+    // WARNING: Function uses extensively TextFormat(), 
+    // *projFile ptr will be overwriten after a while
 
     // Generate unique UUID
-    // WARNING: Make sure the file is found and the UUID generated is valid
-    const char *uuidGenPath = "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/uuidgen.exe";
-
-    char uuid[38] = { 0 };
-    if (FileExists(uuidGenPath))
-    {
-        system(TextFormat("\"%s\" > gen_uuid.txt", uuidGenPath));
-        char *uuidText = LoadFileText("gen_uuid.txt");
-        if (uuidText != NULL) strncpy(uuid, TextToUpper(uuidText), 36);
-        UnloadFileText(uuidText);
-    }
-    else LOG("WARNING: Tool not found: uuidgen.exe, UUID can not be generated\n");
+    char *uuid = GenerateUUIDv4();
 
     // Replace default UUID (core_basic_window) on project file by new one
     FileTextReplace(projFile, "0981CA98-E4A5-4DF1-987F-A41D09131EFC", uuid);
@@ -1900,4 +1894,30 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, cha
     RL_FREE(slnTextUpdated);
 
     return result;
+}
+
+// Generate unique UUID v4 string 
+// Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
+const char *GenerateUUIDv4(void)
+{
+    static char uuid[38] = { 0 };
+    memset(uuid, 0, 38);
+
+    unsigned char bytes[16] = { 0 };
+
+    for (int i = 0; i < 16; i++) bytes[i] = (unsigned char)GetRandomValue(0, 255);
+
+    // Set version (4) and variant (RFC 4122)
+    bytes[6] = (bytes[6] & 0x0F) | 0x40; // Version
+    bytes[8] = (bytes[8] & 0x3F) | 0x80; // Variant
+
+    snprintf(uuid, 38,
+        "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+        bytes[0], bytes[1], bytes[2], bytes[3],
+        bytes[4], bytes[5],
+        bytes[6], bytes[7],
+        bytes[8], bytes[9],
+        bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]);
+
+    return uuid;
 }
