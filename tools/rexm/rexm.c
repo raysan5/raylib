@@ -121,6 +121,7 @@ static const char *exWebPath = NULL;            // Env: REXM_EXAMPLES_WEB_PATH
 static const char *exTemplateFilePath = NULL;   // Env: REXM_EXAMPLES_TEMPLATE_FILE_PATH
 static const char *exTemplateScreenshot = NULL; // Env: REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH
 static const char *exCollectionFilePath = NULL; // Env: REXM_EXAMPLES_COLLECTION_FILE_PATH
+static const char *exVSProjectSolutionFile = "C:/GitHub/raylib/projects/VS2022/raylib.sln";
 
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
@@ -166,7 +167,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 static void ClearExampleResources(char **resPaths);
 
 // Add VS project (.vcxproj) to existing VS solution (.sol)
-static int AddVSProjectToSolution(const char *projFile, const char *solFile);
+static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -518,8 +519,10 @@ int main(int argc, char *argv[])
                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exCategory));
             
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
+            // WARNING: This function uses TextFormat() extensively inside,
+            // we must store provided file paths because pointers will be overwriten
             AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-                TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
+                exVSProjectSolutionFile, exCategory);
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -644,7 +647,7 @@ int main(int argc, char *argv[])
             int exIndex = TextFindIndex(exCollectionList, TextFormat("%s;%s", exCategory, exName));
             if (exIndex > 0) // Example found
             {
-                char *exCollectionListUpdated = (char *)RL_CALLOC(2*1024*1024, 1); // Updated list copy, 2MB
+                char *exCollectionListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated list copy, 2MB
 
                 memcpy(exCollectionListUpdated, exCollectionList, exIndex);
                 int lineLen = 0;
@@ -961,8 +964,8 @@ int main(int argc, char *argv[])
                         // Add project (.vcxproj) to raylib solution (.sln)
                         if (exInfo->status & VALID_NOT_IN_VCXSOL)
                         {
-                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-                                TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
+                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                                exVSProjectSolutionFile, exInfo->category);
                         }
 
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
@@ -1775,56 +1778,126 @@ static void ClearExampleResources(char **resPaths)
 //  - "dotnet" tool (C# projects only)
 //  - "devenv" tool (no adding support, only building)
 // It must be done manually editing the .sln file
-static int AddVSProjectToSolution(const char *projFile, const char *solFile)
+static int AddVSProjectToSolution(const char *projFile, const char *slnFile, char *category)
 {
     int result = 0;
 
-    // Generate unique UUID:
-    // Make sure the file is found and the UUID generated is valid
-    // C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\uuidgen.exe > saved_uuid.txt
+    //WARNING: Function uses extensively TextFormat(), *projFile ptr will be overwriten after a while
 
-    // Add project to the list:
+    // Generate unique UUID
+    // WARNING: Make sure the file is found and the UUID generated is valid
+    const char *uuidGenPath = "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/uuidgen.exe";
+
+    char uuid[38] = { 0 };
+    if (FileExists(uuidGenPath))
+    {
+        system(TextFormat("\"%s\" > gen_uuid.txt", uuidGenPath));
+        char *uuidText = LoadFileText("gen_uuid.txt");
+        if (uuidText != NULL) strncpy(uuid, TextToUpper(uuidText), 36);
+        UnloadFileText(uuidText);
+    }
+    else LOG("WARNING: Tool not found: uuidgen.exe, UUID can not be generated\n");
+
+    // Replace default UUID (core_basic_window) on project file by new one
+    FileTextReplace(projFile, "0981CA98-E4A5-4DF1-987F-A41D09131EFC", uuid);
+
+    char *slnText = LoadFileText(slnFile);
+    char *slnTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+    // Add project to solution
+    //----------------------------------------------------------------------------------------
     // Format: Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "<project_name>", "examples\<project_name>.vcxproj", "{<project_uuid>}"
-    /*
-    Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
-    EndProject
-    */
+    // NOTE: Find a position to insert new project: At the end of the projects list, same strategy as VS2022 "Add Project"
+    int prjStartIndex = TextFindIndex(slnText, "Global");
 
-    // Update project config: <project_uuid>
-    /*
-    GlobalSection(ProjectConfigurationPlatforms) = postSolution
-        {D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|ARM64.Build.0 = Debug|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x64.ActiveCfg = Debug|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x64.Build.0 = Debug|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x86.ActiveCfg = Debug|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Debug|x86.Build.0 = Debug|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x64.Build.0 = Release.DLL|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release.DLL|x86.Build.0 = Release.DLL|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|ARM64.ActiveCfg = Release|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|ARM64.Build.0 = Release|ARM64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x64.ActiveCfg = Release|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x64.Build.0 = Release|x64
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x86.ActiveCfg = Release|Win32
-		{D3493FFE-8873-4C53-8F6C-74DEF78EA3C4}.Release|x86.Build.0 = Release|Win32
-    */
+    // Add new project info
+    // WARNING: UUID can actually be duplicated and it still works...
+    strncpy(slnTextUpdated, slnText, prjStartIndex);
+    int offsetIndex = sprintf(slnTextUpdated + prjStartIndex,
+        TextFormat("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"%s\", \"examples\\%s\", \"{%s}\"\n",
+            GetFileNameWithoutExt(projFile), GetFileName(projFile), uuid));
+    offsetIndex += prjStartIndex;
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "EndProject\n");
+    //----------------------------------------------------------------------------------------
+    
+    // Update project config
+    //----------------------------------------------------------------------------------------
+    // Find position to add project config: At the end of global section, same strategy as VS2022 "Add Project"
+    int projConfStartIndex = TextFindIndex(slnText, "GlobalSection(ProjectConfigurationPlatforms) = postSolution");
+    strncpy(slnTextUpdated + offsetIndex, slnText + prjStartIndex, projConfStartIndex - prjStartIndex);
+    offsetIndex += (projConfStartIndex - prjStartIndex);
 
-    // Update projects to folders:
-    // {project_uuid} = {solution_folder_uuid}
-    /*
-     	GlobalSection(NestedProjects) = preSolution
-    {0981CA98-E4A5-4DF1-987F-A41D09131EFC} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
-    */
+    int projConfEndIndex = TextFindIndex(slnText + projConfStartIndex, "EndGlobalSection");
+    projConfEndIndex += projConfStartIndex;
+
+    strncpy(slnTextUpdated + offsetIndex, slnText + projConfStartIndex, projConfEndIndex - projConfStartIndex);
+    offsetIndex += (projConfEndIndex - projConfStartIndex);
+
+    // Add project config lines
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t{%s}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x64.Build.0 = Debug.DLL|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|ARM64.ActiveCfg = Debug|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|ARM64.Build.0 = Debug|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x64.ActiveCfg = Debug|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x64.Build.0 = Debug|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x86.ActiveCfg = Debug|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x86.Build.0 = Debug|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x64.ActiveCfg = Release.DLL|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x64.Build.0 = Release.DLL|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x86.Build.0 = Release.DLL|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|ARM64.ActiveCfg = Release|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|ARM64.Build.0 = Release|ARM64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x64.ActiveCfg = Release|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x64.Build.0 = Release|x64\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x86.ActiveCfg = Release|Win32\n", uuid));
+	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x86.Build.0 = Release|Win32\n", uuid));
+    // Write next section directly to avoid copy logic
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tEndGlobalSection\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tGlobalSection(SolutionProperties) = preSolution\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\t\tHideSolutionNode = FALSE\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tEndGlobalSection\n\t");
+    //----------------------------------------------------------------------------------------
+
+    // Place project to explorer folder
+    //----------------------------------------------------------------------------------------
+    // Find position to add project folder: At the end of global section, same strategy as VS2022 "Add Project"
+    int projFolderStartIndex = TextFindIndex(slnText, "GlobalSection(NestedProjects) = preSolution");
+    int projFolderEndIndex = TextFindIndex(slnText + projFolderStartIndex, "\tEndGlobalSection");
+    projFolderEndIndex += projFolderStartIndex;
+
+    strncpy(slnTextUpdated + offsetIndex, slnText + projFolderStartIndex, projFolderEndIndex - projFolderStartIndex);
+    offsetIndex += (projFolderEndIndex - projFolderStartIndex);
+
+    // Add project folder line
+    // NOTE: Folder uuid depends on category
+    if (strcmp(category, "core") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}\n", uuid));
+    else if (strcmp(category, "shapes") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {278D8859-20B1-428F-8448-064F46E1F021}\n", uuid));
+    else if (strcmp(category, "textures") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {DA049009-21FF-4AC0-84E4-830DD1BCD0CE}\n", uuid));
+    else if (strcmp(category, "text") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {8D3C83B7-F1E0-4C2E-9E34-EE5F6AB2502A}\n", uuid));
+    else if (strcmp(category, "models") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {AF5BEC5C-1F2B-4DA8-B12D-D09FE569237C}\n", uuid));
+    else if (strcmp(category, "shaders") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {5317807F-61D4-4E0F-B6DC-2D9F12621ED9}\n", uuid));
+    else if (strcmp(category, "audio") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {CC132A4D-D081-4C26-BFB9-AB11984054F8}\n", uuid));
+    else if (strcmp(category, "other") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s} = {E9D708A5-9C1F-4B84-A795-C5F191801762}\n", uuid));
+    else LOG("WARNING: Provided category is not valid: %s\n", category);
+    //----------------------------------------------------------------------------------------
+
+    // Write end of file, no need to copy from original file
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tEndGlobalSection\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tGlobalSection(ExtensibilityGlobals) = postSolution\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\t\tSolutionGuid = {E926C768-6307-4423-A1EC-57E95B1FAB29}\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tEndGlobalSection\n");
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, "EndGlobal\n");
+
+    SaveFileText(slnFile, slnTextUpdated);
+    UnloadFileText(slnText);
+    RL_FREE(slnTextUpdated);
 
     return result;
 }
