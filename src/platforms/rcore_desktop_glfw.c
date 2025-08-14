@@ -751,7 +751,7 @@ void *GetWindowHandle(void)
         #else
             return glfwGetWaylandWindow(platform.handle);
         #endif
-    #else if defined(_GLFW_X11)
+    #elif defined(_GLFW_X11)
         // Store the window handle localy and return a pointer to the variable instead
         // Reasoning detailed in the declaration of X11WindowHandle
         X11WindowHandle = glfwGetX11Window(platform.handle);
