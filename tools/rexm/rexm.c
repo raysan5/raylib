@@ -749,6 +749,53 @@ int main(int argc, char *argv[])
 
             // TODO: Log more details about the validation process
 
+            // Scan available example .c files and add to collection missing ones
+            // NOTE: Source of truth is what we have in the examples directories (on validation/update)
+            FilePathList list = LoadDirectoryFilesEx(exBasePath, ".c", true);
+
+            const char *exList = LoadFileText(exCollectionFilePath);
+            char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+            bool listUpdated = false;
+
+            int exListLen = strlen(exList);
+            strcpy(exListUpdated, exList);
+
+            for (int i = 0; i < list.count; i++)
+            {
+                if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&  // HACK: Skip "examples_template"
+                    (TextFindIndex(exList, GetFileNameWithoutExt(list.paths[i])) == -1))
+                {
+                    // Add example to the examples collection list
+                    // WARNING: Added to the end of the list, order must be set by users and
+                    // defines placement on raylib webpage
+                    rlExampleInfo *exInfo = LoadExampleInfo(list.paths[i]);
+
+                    // Get example difficulty stars
+                    char starsText[16] = { 0 };
+                    for (int i = 0; i < 4; i++)
+                    {
+                        // NOTE: Every UTF-8 star are 3 bytes
+                        if (i < exInfo->stars) strcpy(starsText + 3*i, "★");
+                        else strcpy(starsText + 3*i, "☆");
+                    }
+
+                    exListLen += sprintf(exListUpdated + exListLen,
+                        TextFormat("%s;%s;%s;%.2f;%.2f;\"%s\";@%s\n",
+                            exInfo->category, exInfo->name, starsText, exInfo->verCreated,
+                            exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
+
+                    listUpdated = true;
+                    UnloadExampleInfo(exInfo);
+                }
+            }
+
+            if (listUpdated) SaveFileText(exCollectionFilePath, exListUpdated);
+
+            UnloadFileText(exList);
+            RL_FREE(exListUpdated);
+
+            UnloadDirectoryFiles(list);
+
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
@@ -1566,12 +1613,13 @@ static void UnloadTextLines(char **lines)
     RL_FREE(lines);
 }
 
-// Get example info from file header
+// Get example info from example file header
+// NOTE: Expecting the example to follow raylib_example_template.c
 rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
     
-    if (IsFileExtension(exFileName, ".c"))
+    if (FileExists(exFileName) && IsFileExtension(exFileName, ".c"))
     {
         strcpy(exInfo->name, GetFileNameWithoutExt(exFileName));
         strncpy(exInfo->category, exInfo->name, TextFindIndex(exInfo->name, "_"));
@@ -1747,16 +1795,21 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
                 strncpy(buffer, start, len);
                 buffer[len] = '\0';
 
+                // TODO: Make sure buffer is a path (and not a Tracelog() text)
+
                 // Check for known extensions
                 for (int i = 0; i < extCount; i++)
                 {
+                    // TODO: WARNING: IsFileExtension() expects a NULL terminated fileName,
+                    // but in this case buffer can contain any kind of string, 
+                    // including not paths strings, for example TraceLog() string
                     if (IsFileExtension(buffer, exts[i]))
                     {
                         // Avoid duplicates
                         bool found = false;
                         for (int j = 0; j < resCounter; j++)
                         {
-                            if (TextIsEqual(paths[j], buffer)) { found = true; break; }
+                            if (strcmp(paths[j], buffer) == 0) { found = true; break; }
                         }
 
                         if (!found && (resCounter < REXM_MAX_RESOURCE_PATHS))
