@@ -11,7 +11,7 @@ Local variables | lowerCase | `Vector2 playerPosition = { 0 };`
 Global variables | lowerCase | `bool windowReady = false;`
 Constants | lowerCase | `const int maxValue = 8;`
 Pointers | MyType *pointer | `Texture2D *array = NULL;`
-float values | always x.xf | `float gravity = 10.0f`
+float values | always x.xf | `float gravity = 10.0f` (avoid `10.f`)
 Operators | value1*value2 | `int product = value*6;`
 Operators | value1/value2 | `int division = value/4;`
 Operators | value1 + value2 | `int sum = value + 10;`
@@ -72,19 +72,19 @@ void SomeFunction()
 **If proposing new functions, please try to use a clear naming for function-name and functions-parameters, in case of doubt, open an issue for discussion.**
 
 ## Files and Directories Naming Conventions
- 
+
   - Directories will be named using `snake_case`: `resources/models`, `resources/fonts`
-  
+
   - Files will be named using `snake_case`: `main_title.png`, `cubicmap.png`, `sound.wav`
-  
+
 _NOTE: Avoid any space or special character in the files/dir naming!_
-  
+
 ## Games/Examples Directories Organization Conventions
-  
+
  - Data files should be organized by context and usage in the game, think about the loading requirements for data and put all the resources that need to be loaded at the same time together.
  - Use descriptive names for the files, it would be perfect if just reading the name of the file, it was possible to know what is that file and where fits in the game.
  - Here is an example, note that some resources require to be loaded all at once while other require to be loaded only at initialization (gui, font).
-  
+
 ```
 resources/audio/fx/long_jump.wav
 resources/audio/music/main_theme.ogg
