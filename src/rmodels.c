@@ -3795,7 +3795,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
 
-    DrawModelProd(model, matTransform, tint)
+    DrawModelPro(model, matTransform, tint)
 }
 
 // Draw a model with pro parameters
