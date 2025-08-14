@@ -1,10 +1,10 @@
 ﻿/*******************************************************************************************
 *
-*   raylib [core] example - Input Gestures for Web
+*   raylib [core] example - 3d first-person camera controller
 *
 *   Example complexity rating: [★★★☆] 3/4
-* 
-*   Example originally created with raylib 5.5
+*
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
 *   Example contributed by Agnis Aldins (@nezvers) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -16,65 +16,60 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 #include "rcamera.h"
 
-#if defined(PLATFORM_WEB)
-#include <emscripten/emscripten.h>
-#endif
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+// Movement constants
+#define GRAVITY         32.0f
+#define MAX_SPEED       20.0f
+#define CROUCH_SPEED     5.0f
+#define JUMP_FORCE      12.0f
+#define MAX_ACCEL      150.0f
+// Grounded drag
+#define FRICTION         0.86f
+// Increasing air drag, increases strafing speed
+#define AIR_DRAG         0.98f
+// Responsiveness for turning movement direction to looked direction
+#define CONTROL         15.0f
+#define CROUCH_HEIGHT    0.0f
+#define STAND_HEIGHT     1.0f
+#define BOTTOM_HEIGHT    0.5f
 
-#if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION            330
-#else   // PLATFORM_ANDROID, PLATFORM_WEB
-#define GLSL_VERSION            100
-#endif
+#define NORMALIZE_INPUT  0
 
-
-/* Movement constants */
-#define GRAVITY 32.f
-#define MAX_SPEED 20.f
-#define CROUCH_SPEED 5.f
-#define JUMP_FORCE 12.f
-#define MAX_ACCEL 150.f
-/* Grounded drag */
-#define FRICTION 0.86f
-/* Increasing air drag, increases strafing speed */
-#define AIR_DRAG 0.98f
-/* Responsiveness for turning movement direction to looked direction */
-#define CONTROL 15.f
-#define CROUCH_HEIGHT 0.f
-#define STAND_HEIGHT 1.f
-#define BOTTOM_HEIGHT 0.5f
-
-#define NORMALIZE_INPUT 0
-
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Body structure
 typedef struct {
     Vector3 position;
     Vector3 velocity;
     Vector3 dir;
     bool isGrounded;
-    Sound soundJump;
-}Body;
+} Body;
 
-const int screenWidth = 800;
-const int screenHeight = 450;
-Vector2 sensitivity = { 0.001f, 0.001f };
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+static Vector2 sensitivity = { 0.001f, 0.001f };
 
-Body player;
-Camera camera;
-Vector2 lookRotation = { 0 };
-float headTimer;
-float walkLerp;
-float headLerp;
-Vector2 lean;
+static Body player = { 0 };
+static Vector2 lookRotation = { 0 };
+static float headTimer = 0.0f;
+static float walkLerp = 0.0f;
+static float headLerp = STAND_HEIGHT;
+static Vector2 lean = { 0 };
 
-void UpdateDrawFrame(void);     // Update and Draw one frame
-
-void DrawLevel();
-
-void UpdateCameraAngle();
-
-void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
+//----------------------------------------------------------------------------------
+// Module functions declaration
+//----------------------------------------------------------------------------------
+static void DrawLevel(void);
+static void UpdateCameraAngle(Camera *camera);
+static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -83,213 +78,186 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "Raylib Quake-like controller");
-    InitAudioDevice();
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
-    player = (Body){ Vector3Zero(), Vector3Zero(), Vector3Zero(), false, LoadSound("resources/huh_jump.wav")};
-    camera = (Camera){ 0 };
-    camera.fovy = 60.f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d first-person camera controller");
 
-    lookRotation = Vector2Zero();
-    headTimer = 0.f;
-    walkLerp = 0.f;
-    headLerp = STAND_HEIGHT;
-    lean = Vector2Zero();
-
-    camera.position = (Vector3){
-            player.position.x,
-            player.position.y + (BOTTOM_HEIGHT + headLerp),
-            player.position.z,
-    };
-    UpdateCameraAngle();
-    
-    DisableCursor();  // Limit cursor to relative movement inside the window
-
-#if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
-#else
-
-    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
-
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        UpdateDrawFrame();
-    }
-#endif
-
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    UnloadSound(player.soundJump);
-    CloseAudioDevice();
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
-
-    return 0;
-}
-
-void UpdateDrawFrame(void)
-{
-    // Update
-    //----------------------------------------------------------------------------------
-
-    Vector2 mouse_delta = GetMouseDelta();
-    lookRotation.x -= mouse_delta.x * sensitivity.x;
-    lookRotation.y += mouse_delta.y * sensitivity.y;
-
-    char sideway = (IsKeyDown(KEY_D) - IsKeyDown(KEY_A));
-    char forward = (IsKeyDown(KEY_W) - IsKeyDown(KEY_S));
-    bool crouching = IsKeyDown(KEY_LEFT_CONTROL);
-    UpdateBody(&player, lookRotation.x, sideway, forward, IsKeyPressed(KEY_SPACE), crouching);
-
-    float delta = GetFrameTime();
-    headLerp = Lerp(headLerp, (crouching ? CROUCH_HEIGHT : STAND_HEIGHT), 20.f * delta);
+    // Initialize camera variables
+    // NOTE: UpdateCameraAngle() takes care of the rest
+    Camera camera = { 0 };
+    camera.fovy = 60.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
     camera.position = (Vector3){
         player.position.x,
         player.position.y + (BOTTOM_HEIGHT + headLerp),
         player.position.z,
     };
 
-    if (player.isGrounded && (forward != 0 || sideway != 0)) {
-        headTimer += delta * 3.f;
-        walkLerp = Lerp(walkLerp, 1.f, 10.f * delta);
-        camera.fovy = Lerp(camera.fovy, 55.f, 5.f * delta);
+    UpdateCameraAngle(&camera); // Update camera parameters
+
+    DisableCursor();        // Limit cursor to relative movement inside the window
+
+    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        Vector2 mouse_delta = GetMouseDelta();
+        lookRotation.x -= mouse_delta.x*sensitivity.x;
+        lookRotation.y += mouse_delta.y*sensitivity.y;
+
+        char sideway = (IsKeyDown(KEY_D) - IsKeyDown(KEY_A));
+        char forward = (IsKeyDown(KEY_W) - IsKeyDown(KEY_S));
+        bool crouching = IsKeyDown(KEY_LEFT_CONTROL);
+        UpdateBody(&player, lookRotation.x, sideway, forward, IsKeyPressed(KEY_SPACE), crouching);
+
+        float delta = GetFrameTime();
+        headLerp = Lerp(headLerp, (crouching ? CROUCH_HEIGHT : STAND_HEIGHT), 20.0f*delta);
+        camera.position = (Vector3){
+            player.position.x,
+            player.position.y + (BOTTOM_HEIGHT + headLerp),
+            player.position.z,
+        };
+
+        if (player.isGrounded && ((forward != 0) || (sideway != 0)))
+        {
+            headTimer += delta*3.0f;
+            walkLerp = Lerp(walkLerp, 1.0f, 10.0f*delta);
+            camera.fovy = Lerp(camera.fovy, 55.0f, 5.0f*delta);
+        }
+        else
+        {
+            walkLerp = Lerp(walkLerp, 0.0f, 10.0f*delta);
+            camera.fovy = Lerp(camera.fovy, 60.0f, 5.0f*delta);
+        }
+
+        lean.x = Lerp(lean.x, sideway*0.02f, 10.0f*delta);
+        lean.y = Lerp(lean.y, forward*0.015f, 10.0f*delta);
+
+        UpdateCameraAngle(&camera);
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+            ClearBackground(RAYWHITE);
+
+            BeginMode3D(camera);
+                DrawLevel();
+            EndMode3D();
+
+            // Draw info box
+            DrawRectangle(5, 5, 330, 75, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(5, 5, 330, 75, BLUE);
+
+            DrawText("Camera controls:", 15, 15, 10, BLACK);
+            DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
+            DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
+            DrawText(TextFormat("- Velocity Len: (%06.3f)", Vector2Length((Vector2){ player.velocity.x, player.velocity.z })), 15, 60, 10, BLACK);
+
+        EndDrawing();
+        //----------------------------------------------------------------------------------
     }
-    else {
-        walkLerp = Lerp(walkLerp, 0.f, 10.f * delta);
-        camera.fovy = Lerp(camera.fovy, 60.f, 5.f * delta);
-    }
 
-    lean.x = Lerp(lean.x, sideway * 0.02f, 10.f * delta);
-    lean.y = Lerp(lean.y, forward * 0.015f, 10.f * delta);
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
 
-    UpdateCameraAngle();
-
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
-
-    ClearBackground(RAYWHITE);
-
-    BeginMode3D(camera);
-
-    DrawLevel();
-
-    EndMode3D();
-
-    // Draw info box
-    DrawRectangle(5, 5, 330, 100, Fade(SKYBLUE, 0.5f));
-    DrawRectangleLines(5, 5, 330, 100, BLUE);
-
-    DrawText("Camera controls:", 15, 15, 10, BLACK);
-    DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
-    DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
-    DrawText(TextFormat("- Velocity Len: (%06.3f)", Vector2Length((Vector2) { player.velocity.x, player.velocity.z })), 15, 60, 10, BLACK);
-
-
-    EndDrawing();
-    //----------------------------------------------------------------------------------
+    return 0;
 }
 
-void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed, bool crouchHold) 
+//----------------------------------------------------------------------------------
+// Module functions definition
+//----------------------------------------------------------------------------------
+void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed, bool crouchHold)
 {
     Vector2 input = (Vector2){ (float)side, (float)-forward };
+
 #if defined(NORMALIZE_INPUT)
     // Slow down diagonal movement
-    if (side != 0 & forward != 0) 
-    {
-        input = Vector2Normalize(input);
-    }
+    if ((side != 0) && (forward != 0)) input = Vector2Normalize(input);
 #endif
 
     float delta = GetFrameTime();
 
-    if (!body->isGrounded) 
-    {
-        body->velocity.y -= GRAVITY * delta;
-    }
-    if (body->isGrounded && jumpPressed) 
+    if (!body->isGrounded) body->velocity.y -= GRAVITY*delta;
+
+    if (body->isGrounded && jumpPressed)
     {
         body->velocity.y = JUMP_FORCE;
         body->isGrounded = false;
-        SetSoundPitch(body->soundJump, 1.f + (GetRandomValue(-100, 100) * 0.001));
-        PlaySound(body->soundJump);
+
+        // Sound can be played at this moment
+        //SetSoundPitch(fxJump, 1.0f + (GetRandomValue(-100, 100)*0.001));
+        //PlaySound(fxJump);
     }
 
-    Vector3 front_vec = (Vector3){ sin(rot), 0.f, cos(rot) };
-    Vector3 right_vec = (Vector3){ cos(-rot), 0.f, sin(-rot) };
+    Vector3 front = (Vector3){ sin(rot), 0.f, cos(rot) };
+    Vector3 right = (Vector3){ cos(-rot), 0.f, sin(-rot) };
 
-    Vector3 desired_dir = (Vector3){
-        input.x * right_vec.x + input.y * front_vec.x,
-        0.f,
-        input.x * right_vec.z + input.y * front_vec.z,
-    };
+    Vector3 desiredDir = (Vector3){ input.x*right.x + input.y*front.x, 0.0f, input.x*right.z + input.y*front.z, };
+    body->dir = Vector3Lerp(body->dir, desiredDir, CONTROL*delta);
 
-    body->dir = Vector3Lerp(body->dir, desired_dir, CONTROL * delta);
+    float decel = (body->isGrounded ? FRICTION : AIR_DRAG);
+    Vector3 hvel = (Vector3){ body->velocity.x*decel, 0.0f, body->velocity.z*decel };
 
-    float decel = body->isGrounded ? FRICTION : AIR_DRAG;
-    Vector3 hvel = (Vector3){
-        body->velocity.x * decel,
-        0.f,
-        body->velocity.z * decel
-    };
+    float hvelLength = Vector3Length(hvel); // Magnitude
+    if (hvelLength < (MAX_SPEED*0.01f)) hvel = (Vector3){ 0 };
 
-    float hvel_length = Vector3Length(hvel); // a.k.a. magnitude
-    if (hvel_length < MAX_SPEED * 0.01f) {
-        hvel = (Vector3){ 0 };
-    }
-
-    /* This is what creates strafing */
+    // This is what creates strafing
     float speed = Vector3DotProduct(hvel, body->dir);
 
-    /*
-    Whenever the amount of acceleration to add is clamped by the maximum acceleration constant,
-    a Player can make the speed faster by bringing the direction closer to horizontal velocity angle
-    More info here: https://youtu.be/v3zT3Z5apaM?t=165
-    */
-    float max_speed = crouchHold ? CROUCH_SPEED : MAX_SPEED;
-    float accel = Clamp(max_speed - speed, 0.f, MAX_ACCEL * delta);
-    hvel.x += body->dir.x * accel;
-    hvel.z += body->dir.z * accel;
+    // Whenever the amount of acceleration to add is clamped by the maximum acceleration constant,
+    // a Player can make the speed faster by bringing the direction closer to horizontal velocity angle
+    // More info here: https://youtu.be/v3zT3Z5apaM?t=165
+    float maxSpeed = (crouchHold? CROUCH_SPEED : MAX_SPEED);
+    float accel = Clamp(maxSpeed - speed, 0.f, MAX_ACCEL*delta);
+    hvel.x += body->dir.x*accel;
+    hvel.z += body->dir.z*accel;
 
     body->velocity.x = hvel.x;
     body->velocity.z = hvel.z;
 
-    body->position.x += body->velocity.x * delta;
-    body->position.y += body->velocity.y * delta;
-    body->position.z += body->velocity.z * delta;
+    body->position.x += body->velocity.x*delta;
+    body->position.y += body->velocity.y*delta;
+    body->position.z += body->velocity.z*delta;
 
-    /* Fancy collision system against "THE FLOOR" */
-    if (body->position.y <= 0.f) 
+    // Fancy collision system against the floor
+    if (body->position.y <= 0.0f)
     {
-        body->position.y = 0.f;
-        body->velocity.y = 0.f;
-        body->isGrounded = true; // <= enables jumping
+        body->position.y = 0.0f;
+        body->velocity.y = 0.0f;
+        body->isGrounded = true; // Enable jumping
     }
 }
 
-void UpdateCameraAngle()
+// Update camera
+static void UpdateCameraAngle(Camera *camera)
 {
-    const Vector3 up = (Vector3){ 0.f, 1.f, 0.f };
-    const Vector3 targetOffset = (Vector3){ 0.f, 0.f, -1.f };
+    const Vector3 up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    const Vector3 targetOffset = (Vector3){ 0.0f, 0.0f, -1.0f };
 
-    /* Left & Right */
+    // Left and right
     Vector3 yaw = Vector3RotateByAxisAngle(targetOffset, up, lookRotation.x);
 
     // Clamp view up
     float maxAngleUp = Vector3Angle(up, yaw);
-    maxAngleUp -= 0.001f; // avoid numerical errors
+    maxAngleUp -= 0.001f; // Avoid numerical errors
     if ( -(lookRotation.y) > maxAngleUp) { lookRotation.y = -maxAngleUp; }
 
     // Clamp view down
     float maxAngleDown = Vector3Angle(Vector3Negate(up), yaw);
-    maxAngleDown *= -1.0f; // downwards angle is negative
-    maxAngleDown += 0.001f; // avoid numerical errors
+    maxAngleDown *= -1.0f; // Downwards angle is negative
+    maxAngleDown += 0.001f; // Avoid numerical errors
     if ( -(lookRotation.y) < maxAngleDown) { lookRotation.y = -maxAngleDown; }
 
-    /* Up & Down */
+    // Up and down
     Vector3 right = Vector3Normalize(Vector3CrossProduct(yaw, up));
 
     // Rotate view vector around right axis
@@ -297,49 +265,48 @@ void UpdateCameraAngle()
 
     // Head animation
     // Rotate up direction around forward axis
-    float _sin = sin(headTimer * PI);
-    float _cos = cos(headTimer * PI);
+    float headSin = sin(headTimer*PI);
+    float headCos = cos(headTimer*PI);
     const float stepRotation = 0.01f;
-    camera.up = Vector3RotateByAxisAngle(up, pitch, _sin * stepRotation + lean.x);
+    camera->up = Vector3RotateByAxisAngle(up, pitch, headSin*stepRotation + lean.x);
 
-    /* BOB */
+    // Camera BOB
     const float bobSide = 0.1f;
     const float bobUp = 0.15f;
-    Vector3 bobbing = Vector3Scale(right, _sin * bobSide);
-    bobbing.y = fabsf(_cos * bobUp);
-    camera.position = Vector3Add(camera.position, Vector3Scale(bobbing, walkLerp));
+    Vector3 bobbing = Vector3Scale(right, headSin*bobSide);
+    bobbing.y = fabsf(headCos*bobUp);
 
-    camera.target = Vector3Add(camera.position, pitch);
+    camera->position = Vector3Add(camera->position, Vector3Scale(bobbing, walkLerp));
+    camera->target = Vector3Add(camera->position, pitch);
 }
 
-
-void DrawLevel() 
+// Draw game level
+static void DrawLevel(void)
 {
     const int floorExtent = 25;
-    const float tileSize = 5.f;
+    const float tileSize = 5.0f;
     const Color tileColor1 = (Color){ 150, 200, 200, 255 };
+
     // Floor tiles
-    for (int y = -floorExtent; y < floorExtent; y++) 
+    for (int y = -floorExtent; y < floorExtent; y++)
     {
-        for (int x = -floorExtent; x < floorExtent; x++) 
+        for (int x = -floorExtent; x < floorExtent; x++)
         {
-            if ((y & 1) && (x & 1)) 
+            if ((y & 1) && (x & 1))
             {
-                DrawPlane((Vector3) { x * tileSize, 0.f, y * tileSize}, 
-                (Vector2) {tileSize, tileSize}, tileColor1);
+                DrawPlane((Vector3){ x*tileSize, 0.0f, y*tileSize}, (Vector2){ tileSize, tileSize }, tileColor1);
             }
-            else if(!(y & 1) && !(x & 1)) 
+            else if (!(y & 1) && !(x & 1))
             {
-                DrawPlane((Vector3) { x * tileSize, 0.f, y * tileSize},
-                (Vector2) {tileSize, tileSize}, LIGHTGRAY);
+                DrawPlane((Vector3){ x*tileSize, 0.0f, y*tileSize}, (Vector2){ tileSize, tileSize }, LIGHTGRAY);
             }
         }
     }
-    
-    const Vector3 towerSize = (Vector3){ 16.f, 32.f, 16.f };
+
+    const Vector3 towerSize = (Vector3){ 16.0f, 32.0f, 16.0f };
     const Color towerColor = (Color){ 150, 200, 200, 255 };
 
-    Vector3 towerPos = (Vector3){ 16.f, 16.f, 16.f };
+    Vector3 towerPos = (Vector3){ 16.0f, 16.0f, 16.0f };
     DrawCubeV(towerPos, towerSize, towerColor);
     DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
 
@@ -356,5 +323,5 @@ void DrawLevel()
     DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
 
     // Red sun
-    DrawSphere((Vector3) { 300.f, 300.f, 0.f }, 100.f, (Color) { 255, 0, 0, 255 });
+    DrawSphere((Vector3){ 300.0f, 300.0f, 0.0f }, 100.0f, (Color){ 255, 0, 0, 255 });
 }
