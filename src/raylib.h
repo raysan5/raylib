@@ -1570,7 +1570,7 @@ RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, floa
 RLAPI void DrawModelPro(Model model, Matrix transform, Color tint); // Draw a model with pro parameters
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);          // Draw a model wires (with texture if set)
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
-RLAPI void DrawModelWiresPro(Model model, Matrix transform, Color tint); // Draw a model wires (with texture if set) with prod parameters
+RLAPI void DrawModelWiresPro(Model model, Matrix transform, Color tint); // Draw a model wires (with texture if set) with pro parameters
 RLAPI void DrawModelPoints(Model model, Vector3 position, float scale, Color tint); // Draw a model as points
 RLAPI void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model as points with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                   // Draw bounding box (wires)
