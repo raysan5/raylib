@@ -1365,7 +1365,7 @@ int InitPlatform(void)
 
     // Window flags requested before initialization to be applied after initialization
     unsigned int requestedWindowFlags = CORE.Window.flags;
-    
+
     // Check window creation flags
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
 
@@ -1663,7 +1663,7 @@ int InitPlatform(void)
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-        // Here CORE.Window.render.width/height should be used instead of 
+        // Here CORE.Window.render.width/height should be used instead of
         // CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled
         int posX = monitorX + (monitorWidth - (int)CORE.Window.render.width)/2;
         int posY = monitorY + (monitorHeight - (int)CORE.Window.render.height)/2;
@@ -1675,7 +1675,7 @@ int InitPlatform(void)
         CORE.Window.position.x = posX;
         CORE.Window.position.y = posY;
     }
-    
+
     // Apply window flags requested previous to initialization
     SetWindowState(requestedWindowFlags);
 

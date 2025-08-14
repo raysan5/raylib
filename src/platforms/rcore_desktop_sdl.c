@@ -1103,7 +1103,7 @@ Vector2 GetWindowScaleDPI(void)
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #else
     scale.x = SDL_GetWindowDisplayScale(platform.window);
-    scale.y = scale.x;    
+    scale.y = scale.x;
 #endif
 
     return scale;

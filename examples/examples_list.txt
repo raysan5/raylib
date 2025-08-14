@@ -3,7 +3,7 @@
 # examples must be provided as: <example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;"<example_author_name>";<author_github_user>
 #
 # This list is used as the main reference by [rexm] tool for examples collection validation and management
-# New examples must be added to this list and any possible rename must be made on this list first 
+# New examples must be added to this list and any possible rename must be made on this list first
 #
 # WARNING: List is not ordered by example name but by the display order on web
 #

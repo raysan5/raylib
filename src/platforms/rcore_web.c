@@ -1355,7 +1355,7 @@ int InitPlatform(void)
     emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
-    
+
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
     // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
     // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
@@ -1623,7 +1623,7 @@ static void MouseEnterCallback(GLFWwindow *window, int enter)
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
 {
     // WARNING: Keyboard inputs already processed through GLFW callback
-    
+
     return 1; // The event was consumed by the callback handler
 }
 */
