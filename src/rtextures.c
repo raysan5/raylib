@@ -2943,7 +2943,7 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
-// Load color data from image as a Color array (RGBA - 32bit)
+// Load color data from image as a Color array (RGBA - 32bit) with row-major order
 // NOTE: Memory allocated should be freed using UnloadImageColors();
 Color *LoadImageColors(Image image)
 {
