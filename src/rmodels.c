@@ -3840,6 +3840,16 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
     rlDisableWireMode();
 }
 
+// Draw a model wires (with texture if set) with pro parameters
+void DrawModelWiresPro(Model model, Matrix transform, Color tint)
+{
+    rlEnableWireMode();
+
+    DrawModelPro(model, transform, tint);
+
+    rlDisableWireMode();
+}
+
 // Draw a model points
 // WARNING: OpenGL ES 2.0 does not support point mode drawing
 void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
