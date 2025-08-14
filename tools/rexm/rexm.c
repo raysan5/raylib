@@ -964,8 +964,8 @@ int main(int argc, char *argv[])
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
                         // Solves: VALID_MISSING_WEB_OUTPUT
-                        /*
-                        if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
+                        if ((strcmp(exInfo->category, "others") != 0) && // Skipping "others" category
+                            exInfo->status & VALID_MISSING_WEB_OUTPUT)
                         {
                             system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
@@ -979,9 +979,8 @@ int main(int argc, char *argv[])
                             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exInfo->category, exInfo->name),
                                 TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name));
 
-                            exInfo->status |= VALID_MISSING_WEB_OUTPUT;
+                            exInfo->status &= ~VALID_MISSING_WEB_OUTPUT;
                         }
-                        */
                     }
                 }
 
