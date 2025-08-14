@@ -775,12 +775,12 @@ int main(int argc, char *argv[])
                     for (int i = 0; i < 4; i++)
                     {
                         // NOTE: Every UTF-8 star are 3 bytes
-                        if (i < exInfo->stars) strcpy(starsText + 3*i, "★");
+                        if (i < exInfo->stars) strcpy(starsText + 3*i, "⭐️");
                         else strcpy(starsText + 3*i, "☆");
                     }
 
                     exListLen += sprintf(exListUpdated + exListLen,
-                        TextFormat("%s;%s;%s;%.2f;%.2f;\"%s\";@%s\n",
+                        TextFormat("%s;%s;%s;%.1f;%.1f;\"%s\";@%s\n",
                             exInfo->category, exInfo->name, starsText, exInfo->verCreated,
                             exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
 
@@ -922,11 +922,18 @@ int main(int argc, char *argv[])
                     else
                     {
                         // NOTE: Some issues can not be automatically fixed, only logged
-                        //if (exInfo->status & VALID_MISSING_PNG) LOG("WARNING: [%s] Missing screenshot file\n", exInfo->name);
-                        //if (exInfo->status & VALID_INVALID_PNG) LOG("WARNING: [%s] Invalid screenshot file (using template)\n", exInfo->name);
-                        //if (exInfo->status & VALID_MISSING_RESOURCES) LOG("WARNING: [%s] Missing resources detected\n", exInfo->name);
-                        //if (exInfo->status & VALID_INCONSISTENT_INFO) LOG("WARNING: [%s] Inconsistent example header info\n", exInfo->name);
-                        //if (exInfo->status & VALID_INVALID_CATEGORY) LOG("WARNING: [%s] Invalid example category\n", exInfo->name);
+                        if (exInfo->status & VALID_MISSING_PNG) LOG("WARNING: [%s] Missing screenshot file\n", exInfo->name);
+                        if (exInfo->status & VALID_INVALID_PNG) LOG("WARNING: [%s] Invalid screenshot file (using template)\n", exInfo->name);
+                        if (exInfo->status & VALID_MISSING_RESOURCES) LOG("WARNING: [%s] Missing resources detected\n", exInfo->name);
+                        if (exInfo->status & VALID_INCONSISTENT_INFO) LOG("WARNING: [%s] Inconsistent example header info\n", exInfo->name);
+                        if (exInfo->status & VALID_INVALID_CATEGORY) LOG("WARNING: [%s] Invalid example category\n", exInfo->name);
+
+                        // NOTE: Some examples should be excluded from VS2022 solution because
+                        // they have specific platform/linkage requirements:
+                        if ((strcmp(exInfo->name, "core_basic_window_web") == 0) ||
+                            (strcmp(exInfo->name, "core_input_gestures_web") == 0) ||
+                            (strcmp(exInfo->name, "raylib_opengl_interop") == 0) ||
+                            (strcmp(exInfo->name, "raymath_vector_angle") == 0)) continue;
 
                         // Review: Add: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
                         // Review: Add: raylib/projects/VS2022/raylib.sln
@@ -940,7 +947,7 @@ int main(int argc, char *argv[])
                             FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
                                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
 
-                            exInfo->status |= VALID_MISSING_VCXPROJ;
+                            exInfo->status &= ~VALID_MISSING_VCXPROJ;
                         }
 
                         // Add project (.vcxproj) to raylib solution (.sln)
@@ -949,7 +956,7 @@ int main(int argc, char *argv[])
                             AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
                                 exVSProjectSolutionFile, exInfo->category);
 
-                            exInfo->status |= VALID_NOT_IN_VCXSOL;
+                            exInfo->status &= ~VALID_NOT_IN_VCXSOL;
                         }
 
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.html
@@ -957,6 +964,7 @@ int main(int argc, char *argv[])
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.wasm
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
                         // Solves: VALID_MISSING_WEB_OUTPUT
+                        /*
                         if (exInfo->status & VALID_MISSING_WEB_OUTPUT)
                         {
                             system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
@@ -973,6 +981,7 @@ int main(int argc, char *argv[])
 
                             exInfo->status |= VALID_MISSING_WEB_OUTPUT;
                         }
+                        */
                     }
                 }
 
@@ -981,10 +990,10 @@ int main(int argc, char *argv[])
                 UpdateRequiredFiles();
                 for (int i = 0; i < exCollectionCount; i++)
                 {
-                    exCollection[i].status |= VALID_NOT_IN_MAKEFILE;
-                    exCollection[i].status |= VALID_NOT_IN_MAKEFILE_WEB;
-                    exCollection[i].status |= VALID_NOT_IN_README;
-                    exCollection[i].status |= VALID_NOT_IN_JS;
+                    exCollection[i].status &= ~VALID_NOT_IN_MAKEFILE;
+                    exCollection[i].status &= ~VALID_NOT_IN_MAKEFILE_WEB;
+                    exCollection[i].status &= ~VALID_NOT_IN_README;
+                    exCollection[i].status &= ~VALID_NOT_IN_JS;
                 }
                 //------------------------------------------------------------------------------------------------
             }
