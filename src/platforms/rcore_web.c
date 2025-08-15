@@ -1822,6 +1822,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 
+    glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
+
     // NOTE: Postprocessing texture is not scaled to new size
 
     return 0;
