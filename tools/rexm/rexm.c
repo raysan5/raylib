@@ -1021,6 +1021,8 @@ int main(int argc, char *argv[])
             | text_format_text             |  ✘ |  ✘  |  ✘  |  ✘ |  ✘  |  ✘  |  ✘ |   ✘  |  ✔  |  ✘ |  ✔  |  ✔ |   ✔  |
             */
 
+            // TODO: Generate a report with only the examples missing some elements
+
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
             int repIndex = 0;
