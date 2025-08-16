@@ -514,11 +514,11 @@ static void RecordAutomationEvent(void); // Record frame events (to internal eve
 
 #if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
-__declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
+__declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout); // Required for: WaitTime()
 #endif
 
 #if !defined(SUPPORT_MODULE_RTEXT)
-const char *TextFormat(const char *text, ...);              // Formatting of text with variables to 'embed'
+const char *TextFormat(const char *text, ...); // Formatting of text with variables to 'embed'
 #endif // !SUPPORT_MODULE_RTEXT
 
 #if defined(PLATFORM_DESKTOP)
