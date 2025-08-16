@@ -585,6 +585,7 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
                                                                                             // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
         // KTX 2.0 defines additional header elements...
     } ktx_header;
+
     /*
     Byte[12] identifier
     UInt32 vkFormat
@@ -597,6 +598,7 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
     UInt32 levelCount
     UInt32 supercompressionScheme
     */
+
     // Calculate file data_size required
     int data_size = sizeof(ktx_header);
 
