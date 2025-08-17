@@ -842,6 +842,7 @@ int main(int argc, char *argv[])
 
                 // Validate: raylib/examples/<category>/resources/..                    -> Example resources available?
                 // Scan resources used in example to check for missing resource files
+                // WARNING: Some paths could be for files to save, not files to load, verify it
                 char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name), &exInfo->resCount);
                 if (exInfo->resCount > 0)
                 {
@@ -881,11 +882,14 @@ int main(int argc, char *argv[])
                 // Validate: raylib.com/examples/<category>/<category>_example_name.data -> File exists?
                 // Validate: raylib.com/examples/<category>/<category>_example_name.wasm -> File exists?
                 // Validate: raylib.com/examples/<category>/<category>_example_name.js   -> File exists?
-                if (!FileExists(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name)) ||
-                    !FileExists(TextFormat("%s/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name)) ||
-                    !FileExists(TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name)) ||
-                    ((exInfo->resCount > 0) && !FileExists(TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name))))
+                if (!TextIsEqual(exInfo->category, "others") &&
+                    (!FileExists(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name)) ||
+                     !FileExists(TextFormat("%s/%s/%s.wasm", exWebPath, exInfo->category, exInfo->name)) ||
+                     !FileExists(TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name)) ||
+                     ((exInfo->resCount > 0) && !FileExists(TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name)))))
+                {
                      exInfo->status |= VALID_MISSING_WEB_OUTPUT;
+                }
 
                 // NOTE: Additional validation elements
                 // Validate: Example naming conventions: <category>/<category>_example_name, valid category

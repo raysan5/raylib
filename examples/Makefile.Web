@@ -104,7 +104,7 @@ USE_WAYLAND_DISPLAY   ?= FALSE
 BUILD_WEB_ASYNCIFY    ?= TRUE
 BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/shell.html
 BUILD_WEB_HEAP_SIZE   ?= 134217728
-BUILD_WEB_RESOURCES   ?= TRUE
+BUILD_WEB_RESOURCES   ?= FALSE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 # Use WebGL2 backend (OpenGL 3.0)
 # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
@@ -920,8 +920,7 @@ textures/textures_logo_raylib: textures/textures_logo_raylib.c
     --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/my_amazing_texture_painting.png@my_amazing_texture_painting.png
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_npatch_drawing: textures/textures_npatch_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
