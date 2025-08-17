@@ -1802,37 +1802,43 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             char *end = strchr(start, '"');
             if (!end) break;
 
-            int len = (int)(end - start);
-            if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
+            // TODO: WARNING: Some paths could be for files to save, not files to load, verify it
+            // HACK: Just check previous position from pointer for function name including the string...
+            // This is a horrible solution, the good one would be getting the data loading function names...
+            if (TextFindIndex(ptr - 40, "ExportImage") == -1)
             {
-                char buffer[REXM_MAX_RESOURCE_PATH_LEN] = { 0 };
-                strncpy(buffer, start, len);
-                buffer[len] = '\0';
-
-                // TODO: Make sure buffer is a path (and not a Tracelog() text)
-
-                // Check for known extensions
-                for (int i = 0; i < extCount; i++)
+                int len = (int)(end - start);
+                if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
                 {
-                    // TODO: WARNING: IsFileExtension() expects a NULL terminated fileName,
-                    // but in this case buffer can contain any kind of string, 
-                    // including not paths strings, for example TraceLog() string
-                    if (IsFileExtension(buffer, exts[i]))
+                    char buffer[REXM_MAX_RESOURCE_PATH_LEN] = { 0 };
+                    strncpy(buffer, start, len);
+                    buffer[len] = '\0';
+
+                    // TODO: Make sure buffer is a path (and not a Tracelog() text)
+
+                    // Check for known extensions
+                    for (int i = 0; i < extCount; i++)
                     {
-                        // Avoid duplicates
-                        bool found = false;
-                        for (int j = 0; j < resCounter; j++)
+                        // TODO: WARNING: IsFileExtension() expects a NULL terminated fileName,
+                        // but in this case buffer can contain any kind of string, 
+                        // including not paths strings, for example TraceLog() string
+                        if (IsFileExtension(buffer, exts[i]))
                         {
-                            if (strcmp(paths[j], buffer) == 0) { found = true; break; }
-                        }
+                            // Avoid duplicates
+                            bool found = false;
+                            for (int j = 0; j < resCounter; j++)
+                            {
+                                if (strcmp(paths[j], buffer) == 0) { found = true; break; }
+                            }
 
-                        if (!found && (resCounter < REXM_MAX_RESOURCE_PATHS))
-                        {
-                            strcpy(paths[resCounter], buffer);
-                            resCounter++;
-                        }
+                            if (!found && (resCounter < REXM_MAX_RESOURCE_PATHS))
+                            {
+                                strcpy(paths[resCounter], buffer);
+                                resCounter++;
+                            }
 
-                        break;
+                            break;
+                        }
                     }
                 }
             }
