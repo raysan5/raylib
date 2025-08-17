@@ -48,7 +48,9 @@
 *
 **********************************************************************************************/
 
-
+#ifdef USING_SDL3_PACKAGE
+    #define USING_SDL3_PROJECT
+#endif
 #ifndef SDL_ENABLE_OLD_NAMES
     #define SDL_ENABLE_OLD_NAMES    // Just in case we're on SDL3, we need some in-between compatibily
 #endif
@@ -1620,7 +1622,7 @@ void PollInputEvents(void)
                     // Add character (codepoint) to the queue
                     #if defined(PLATFORM_DESKTOP_SDL3)
                     unsigned int textLen = strlen(event.text.text);
-                    unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, textLen);
+                    unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, &textLen);
                     #else
                     int codepointSize = 0;
                     int codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);
