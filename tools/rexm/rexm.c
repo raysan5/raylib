@@ -1002,6 +1002,7 @@ int main(int argc, char *argv[])
             }
 
             // Generate validation report/table with results (.md)
+            //-----------------------------------------------------------------------------------------------------
             /*
             Columns:
             [C]     VALID_MISSING_C             // Missing .c source file
@@ -1024,8 +1025,6 @@ int main(int argc, char *argv[])
             | shapes_colors_palette        |  ✘ |  ✔  |  ✘  |  ✔ |  ✘  |  ✔  |  ✔ |   ✘  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |
             | text_format_text             |  ✘ |  ✘  |  ✘  |  ✘ |  ✘  |  ✘  |  ✘ |   ✘  |  ✔  |  ✘ |  ✔  |  ✔ |   ✔  |
             */
-
-            // TODO: Generate a report with only the examples missing some elements
 
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
@@ -1071,6 +1070,58 @@ int main(int argc, char *argv[])
 
             SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report.md"), report);
             RL_FREE(report);
+            //-----------------------------------------------------------------------------------------------------
+
+            // Generate a report with only the examples missing some elements
+            //-----------------------------------------------------------------------------------------------------
+            char *reportIssues = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+            repIndex = 0;
+            repIndex += sprintf(reportIssues + repIndex, "# EXAMPLES COLLECTION - VALIDATION REPORT\n\n");
+
+            repIndex += sprintf(reportIssues + repIndex, "```\nExample elements validated:\n\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [C]     : Missing .c source file\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [CAT]   : Not a recognized category\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [INFO]  : Inconsistent example header info (stars, author...)\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [PNG]   : Missing screenshot .png\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [WPNG]  : Invalid png screenshot (using default one)\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [RES]   : Missing resources listed in the code\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [MK]    : Not listed in Makefile\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [MKWEB] : Not listed in Makefile.Web\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [VCX]   : Missing Visual Studio project file\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [SOL]   : Project not included in solution file\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [RDME]  : Not listed in README.md\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [JS]    : Not listed in Web (examples.js)\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [WOUT]  : Missing Web build (.html/.data/.wasm/.js)\n```\n");
+
+            repIndex += sprintf(reportIssues + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|\n");
+            repIndex += sprintf(reportIssues + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|\n");
+
+            for (int i = 0; i < exCollectionCount; i++)
+            {
+                if (exCollection[i].status > 0)
+                {
+                    repIndex += sprintf(reportIssues + repIndex, "| %-32s |  %s |  %s  |  %s  |  %s |  %s  |  %s  |  %s |   %s  |  %s  |  %s |  %s  |  %s |  %s  |\n",
+                        exCollection[i].name,
+                        (exCollection[i].status & VALID_MISSING_C)? "❌" : "✔",
+                        (exCollection[i].status & VALID_INVALID_CATEGORY)? "❌" : "✔",
+                        (exCollection[i].status & VALID_INCONSISTENT_INFO)? "❌" : "✔",
+                        (exCollection[i].status & VALID_MISSING_PNG)? "❌" : "✔",
+                        (exCollection[i].status & VALID_INVALID_PNG)? "❌" : "✔",
+                        (exCollection[i].status & VALID_MISSING_RESOURCES)? "❌" : "✔",
+                        (exCollection[i].status & VALID_NOT_IN_MAKEFILE)? "❌" : "✔",
+                        (exCollection[i].status & VALID_NOT_IN_MAKEFILE_WEB)? "❌" : "✔",
+                        (exCollection[i].status & VALID_MISSING_VCXPROJ)? "❌" : "✔",
+                        (exCollection[i].status & VALID_NOT_IN_VCXSOL)? "❌" : "✔",
+                        (exCollection[i].status & VALID_NOT_IN_README)? "❌" : "✔",
+                        (exCollection[i].status & VALID_NOT_IN_JS)? "❌" : "✔",
+                        (exCollection[i].status & VALID_MISSING_WEB_OUTPUT)? "❌" : "✔");
+                }
+            }
+
+            SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report_issues.md"), reportIssues);
+            RL_FREE(reportIssues);
+            //-----------------------------------------------------------------------------------------------------
 
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
