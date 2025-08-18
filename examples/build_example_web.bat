@@ -18,14 +18,10 @@ SET MAKE=mingw32-make
 echo
 :: SET required web compilation options
 :: -------------------------------------
-SET CC=%EMSDK_PATH%\upstream\emscripten\emcc
-SET CFLAGS=-Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -O3 -I. -Iexternal -I%RAYLIB_PATH%\src -I%RAYLIB_PATH%\external -DPLATFORM_WEB
-SET LDFLAGS=-L. -L$(RAYLIB_PATH)\src -sUSE_GLFW=3 -sEXPORTED_RUNTIME_METHODS=ccall -sASYNCIFY --shell-file %RAYLIB_PATH%\src\shell.html
-SET LDLIBS=%RAYLIB_PATH%\src\libraylib.web.a
-:: TODO: If using some resources/asSETs, SET the directory path as shown in the commented line!
-::SET RESOURCES=
-::SET RESOURCES=--preload-file $(RESOURCES_PATH)
-cd %RAYLIB_PATH%\examples\%CATEGORY%
+::SET CC=%EMSDK_PATH%\upstream\emscripten\emcc
+::SET CFLAGS=-Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -O3 -I. -Iexternal -I%RAYLIB_PATH%\src -I%RAYLIB_PATH%\external -DPLATFORM_WEB
+::SET LDFLAGS=-L. -L$(RAYLIB_PATH)\src -sUSE_GLFW=3 -sEXPORTED_RUNTIME_METHODS=ccall -sASYNCIFY --shell-file %RAYLIB_PATH%\src\shell.html
+::SET LDLIBS=%RAYLIB_PATH%\src\libraylib.web.a
 echo
 :: Clean latest build
 :: ------------------------
