@@ -335,7 +335,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_virtual_controls
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_3d_fps_controller", "examples\core_3d_fps_controller.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normalmap", "examples\shaders_normalmap.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normal_map", "examples\shaders_normal_map.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

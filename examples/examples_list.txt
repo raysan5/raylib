@@ -142,7 +142,7 @@ shaders;shaders_simple_mask;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscam
 shaders;shaders_hot_reloading;⭐️⭐️⭐️☆;3.0;3.5;"Ramon Santamaria";@raysan5
 shaders;shaders_mesh_instancing;⭐️⭐️⭐️⭐️;3.7;4.2;"seanpringle";@seanpringle
 shaders;shaders_multi_sample2d;⭐️⭐️☆☆;3.5;3.5;"Ramon Santamaria";@raysan5
-shaders;shaders_normalmap;⭐️⭐️⭐️⭐️;5.6;5.6;"Jeremy Montgomery";@Sir_Irk
+shaders;shaders_normal_map;⭐️⭐️⭐️⭐️;5.6;5.6;"Jeremy Montgomery";@Sir_Irk
 shaders;shaders_spotlight;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscamacho
 shaders;shaders_deferred_render;⭐️⭐️⭐️⭐️;4.5;4.5;"Justin Andreas Lacoste";@27justin
 shaders;shaders_hybrid_render;⭐️⭐️⭐️⭐️;4.2;4.2;"Buğra Alptekin Sarı";@BugraAlptekinSari

@@ -640,7 +640,7 @@ SHADERS = \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
-    shaders/shaders_normalmap \
+    shaders/shaders_normal_map \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
@@ -1205,7 +1205,7 @@ shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
 
-shaders/shaders_normalmap: shaders/shaders_normalmap.c
+shaders/shaders_normal_map: shaders/shaders_normal_map.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/normalmap.vs@resources/shaders/glsl100/normalmap.vs \
     --preload-file shaders/resources/shaders/glsl100/normalmap.fs@resources/shaders/glsl100/normalmap.fs \
