@@ -591,7 +591,8 @@ int main(int argc, char *argv[])
                 FileTextReplace(TextFormat("%s/Makefile", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/Makefile.Web", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/README.md", exBasePath), exName, exRename);
-                FileTextReplace(TextFormat("%s/../common/examples.js", exWebPath), exName, exRename);
+                FileTextReplace(TextFormat("%s/../common/examples.js", exWebPath), 
+                    exName + strlen(exCategory) + 1, exRename + strlen(exRecategory) + 1); // Skip category
 
                 // Edit: Rename example project and solution
                 rename(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
