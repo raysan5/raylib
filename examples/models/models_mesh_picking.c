@@ -84,7 +84,7 @@ int main(void)
 
         // Display information about closest hit
         RayCollision collision = { 0 };
-        char *hitObjectName = "None";
+        const char *hitObjectName = "None";
         collision.distance = FLT_MAX;
         collision.hit = false;
         Color cursorColor = WHITE;
