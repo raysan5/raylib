@@ -1621,7 +1621,7 @@ void PollInputEvents(void)
                 {
                     // Add character (codepoint) to the queue
                     #if defined(PLATFORM_DESKTOP_SDL3)
-                    unsigned int textLen = strlen(event.text.text);
+                    size_t textLen = strlen(event.text.text);
                     unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, &textLen);
                     #else
                     int codepointSize = 0;
