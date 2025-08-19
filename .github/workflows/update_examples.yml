@@ -32,7 +32,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/raysan5/raylib.com.git "${{ github.workspace }}/../raylib.com"
+        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/JohnnyCena123/raylib.com.git "${{ github.workspace }}/../raylib.com"
       shell: bash
         
     - name: Build and run rexm tool (GNU Makefile)
@@ -57,19 +57,38 @@ jobs:
       shell: bash
 
     - name: Commit changes to raylib repo
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        #git config user.name "github-actions[bot]"
-        #git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        #git add -A
-        #git commit -m "Update examples collection"
-        #git push
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "Update examples collection"
+        git push
+      shell: bash
 
+    - name: Build examples
+      run: |
+        cd "${{ github.workspace }}/src"
+        make clean
+        make PLATFORM=PLATFORM_WEB
+        cd ../examples
+        make PLATFORM=PLATFORM_WEB
+        for category in core shapes textures models shaders text audio; do
+          cd $category
+          target_dir="${{ github.workspace }}/../raylib.com/examples/$category/"
+          find . -type f -name "*.wasm" -exec cp {} "$target_dir" +
+          find . -type f -name "*.html" -exec cp {} "$target_dir" +
+          find . -type f -name "*.js" -exec cp {} "$target_dir" +
+          find . -type f -name "*.data" -exec cp {} "$target_dir" +
+          cd ..
+        done
     - name: Push changes to raylib.com repo
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        #git config --global user.name "github-actions[bot]"
-        #git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        #git add examples
-        #git commit -m "Update web examples"
-        #git push origin
+        cd "${{ github.workspace }}/../raylib.com"
+        git add examples
+        git commit -m "Update web examples"
+        git push origin
+      shell: bash
