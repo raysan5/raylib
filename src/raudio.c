@@ -982,8 +982,12 @@ Sound LoadSoundAlias(Sound source)
         }
 
         audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
-        audioBuffer->volume = source.stream.buffer->volume;
         audioBuffer->data = source.stream.buffer->data;
+
+        // initalize the buffer as if it was new
+        audioBuffer->volume = 1.0f;
+        audioBuffer->pitch = 1.0f;
+        audioBuffer->pan = 0.5f;
 
         sound.frameCount = source.frameCount;
         sound.stream.sampleRate = AUDIO.System.device.sampleRate;
