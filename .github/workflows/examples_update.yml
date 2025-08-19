@@ -58,10 +58,6 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add -A
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-          exit 0
-        fi
         git commit -m "Update examples collection"
         git push
 
@@ -72,9 +68,5 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add examples
-        if git diff --cached --quiet; then
-          echo "No changes to push"
-          exit 0
-        fi
         git commit -m "Update web examples"
         git push origin
