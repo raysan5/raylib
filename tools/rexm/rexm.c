@@ -2065,3 +2065,4 @@ const char *GenerateUUIDv4(void)
 
     return uuid;
 }
+
