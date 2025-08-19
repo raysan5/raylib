@@ -113,5 +113,6 @@ docgen_tmp/
 
 # Tools stuff
 tools/parser/raylib_parser
-tools/rexm/VS2022
+tools/rexm/rexm.exe
 tools/rexm/rexm
+
