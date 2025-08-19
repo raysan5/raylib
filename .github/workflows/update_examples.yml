@@ -32,7 +32,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/raysan5/raylib.com.git
+        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/raysan5/raylib.com.git "{{ github.workspace }}/../raylib.com"
       shell: cmd
         
     - name: Build and run rexm tool (VS2022 solution)
@@ -42,13 +42,13 @@ jobs:
         cd tools/rexm/VS2022
         msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
         cd ../../..
-        set REXM_EXAMPLES_BASE_PATH="examples"
-        set REXM_EXAMPLES_WEB_PATH="../raylib.com/examples"
-        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="examples/examples_template.c"
-        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="examples/examples_template.png"
-        set REXM_EXAMPLES_COLLECTION_FILE_PATH="examples/examples_list.txt"
-        set REXM_EXAMPLES_VS2022_SLN_FILE="projects/VS2022/raylib.sln"
-        set EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-main"
+        set REXM_EXAMPLES_BASE_PATH="{{ github.workspace }}/examples"
+        set REXM_EXAMPLES_WEB_PATH="{{ github.workspace }}/../raylib.com/examples"
+        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="{{ github.workspace }}examples/examples_template.c"
+        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="{{ github.workspace }}examples/examples_template.png"
+        set REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
+        set REXM_EXAMPLES_VS2022_SLN_FILE="{{ github.workspace }}/projects/VS2022/raylib.sln"
+        set EMSDK_PATH="{{ github.workspace }}/emsdk-cache/emsdk-main"
         .\tools\rexm\VS2022\build\rexm\bin\x64\Release\rexm.exe update
         cd ../..
       shell: cmd
