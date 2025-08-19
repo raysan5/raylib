@@ -41,6 +41,7 @@ jobs:
       # rexm should update all required files in raylib and even raylib.com repo,
       # but not sure if it can do that from an Action, maybe it requires manual copy 
       run: |
+        sh -c "ls -R ${{ github.workspace }}"
         cd tools/rexm/VS2022
         msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
         cd ../../..
