@@ -1,4 +1,4 @@
-name: Windows
+name: Build raylib - Windows
 
 on:
   workflow_dispatch:

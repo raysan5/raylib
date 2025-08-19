@@ -1,4 +1,4 @@
-name: macOS
+name: Build raylib - macOS
 
 on:
   workflow_dispatch:

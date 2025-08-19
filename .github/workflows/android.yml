@@ -1,4 +1,4 @@
-name: Android
+name: Build raylib - Android
 
 on:
   workflow_dispatch:

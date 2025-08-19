@@ -1,4 +1,4 @@
-name: CMakeBuilds
+name: Build raylib CMake - Windows+Linux
 
 on:
   workflow_dispatch:

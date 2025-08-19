@@ -1,4 +1,4 @@
-name: Linux
+name: Build raylib - Linux
 
 on:
   workflow_dispatch:
