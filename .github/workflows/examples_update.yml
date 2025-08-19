@@ -5,11 +5,9 @@ on:
   push:
     paths:
       - 'examples/**'
-      - '.github/workflows/examples_update.yml'
   pull_request:
     paths:
       - 'examples/**'
-      - '.github/workflows/examples_update.yml'
 
 jobs:
   build:
