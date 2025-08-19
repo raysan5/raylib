@@ -25,6 +25,9 @@ jobs:
         version: 'latest'
         actions-cache-folder: 'emsdk-cache'
         
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+        
     - name: Clone raylib.com repo to update files
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
