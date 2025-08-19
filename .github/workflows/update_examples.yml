@@ -33,7 +33,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git clone https://x-access-token:${GITHUB_TOKEN}@github.com/raysan5/raylib.com.git "${{ github.workspace }}/../raylib.com"
-      shell: cmd
+      shell: bash
         
     - name: Build and run rexm tool (GNU Makefile)
       # rexm should update all required files in raylib and even raylib.com repo,
