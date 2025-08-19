@@ -123,7 +123,7 @@ static const char *exWebPath = NULL;            // Env: REXM_EXAMPLES_WEB_PATH
 static const char *exTemplateFilePath = NULL;   // Env: REXM_EXAMPLES_TEMPLATE_FILE_PATH
 static const char *exTemplateScreenshot = NULL; // Env: REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH
 static const char *exCollectionFilePath = NULL; // Env: REXM_EXAMPLES_COLLECTION_FILE_PATH
-static const char *exVSProjectSolutionFile = "C:/GitHub/raylib/projects/VS2022/raylib.sln";
+static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_SLN_FILE
 
 //----------------------------------------------------------------------------------
 // Module specific functions declaration
@@ -186,12 +186,14 @@ int main(int argc, char *argv[])
     exTemplateFilePath = getenv("REXM_EXAMPLES_TEMPLATE_FILE_PATH");
     exTemplateScreenshot = getenv("REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH");
     exCollectionFilePath = getenv("REXM_EXAMPLES_COLLECTION_FILE_PATH");
+    exVSProjectSolutionFile = getenv("REXM_EXAMPLES_VS2022_SLN_FILE");
 
     if (!exBasePath) exBasePath = "C:/GitHub/raylib/examples";
     if (!exWebPath) exWebPath = "C:/GitHub/raylib.com/examples";
     if (!exTemplateFilePath) exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
     if (!exTemplateScreenshot) exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
     if (!exCollectionFilePath) exCollectionFilePath = "C:/GitHub/raylib/examples/examples_list.txt";
+    if (!exVSProjectSolutionFile) exVSProjectSolutionFile = "C:/GitHub/raylib/projects/VS2022/raylib.sln";
 
     char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
