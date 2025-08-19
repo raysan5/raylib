@@ -1,4 +1,4 @@
-name: WebAssembly
+name: Build raylib - WebAssembly
 
 on:
   workflow_dispatch:
