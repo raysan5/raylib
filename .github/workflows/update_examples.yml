@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.gitbub/workflows/update_examples.yml'
+      - '.github/workflows/update_examples.yml'
       - 'examples/**'
       - 'tools/rexm/**'
   pull_request:
     paths:
-      - '.gitbub/workflows/update_examples.yml'
+      - '.github/workflows/update_examples.yml'
       - 'examples/**'
       - 'tools/rexm/**'
 
