@@ -22,7 +22,6 @@ jobs:
       uses: actions/checkout@v4
   
     - name: Setup emsdk
-      if: false
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: 'latest'
