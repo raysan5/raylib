@@ -43,7 +43,7 @@ jobs:
       run: |
         dir/s "${{ github.workspace }}"
         cd tools\rexm\VS2022
-        msbuild.exe rexm.sln /target:rexm /property:Configuration=Release \property:Platform=x64
+        msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
         cd ..\..\..
         set REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}\examples"
         set REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}\..\raylib.com\examples"
