@@ -756,6 +756,7 @@ int main(int argc, char *argv[])
 
             // Scan available example .c files and add to collection missing ones
             // NOTE: Source of truth is what we have in the examples directories (on validation/update)
+            LOG("DEBUG: Examples directory exists: %i", DirectoryExists(exBasePath));
             FilePathList list = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
             char *exList = LoadFileText(exCollectionFilePath);
