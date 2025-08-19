@@ -40,16 +40,13 @@ jobs:
         cd tools/rexm/VS2022
         msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
         cd ../../..
-        # Set required environment properties to be used by rexm
         set REXM_EXAMPLES_BASE_PATH="examples"
         set REXM_EXAMPLES_WEB_PATH="../raylib.com/examples"
         set REXM_EXAMPLES_TEMPLATE_FILE_PATH="examples/examples_template.c"
         set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="examples/examples_template.png"
         set REXM_EXAMPLES_COLLECTION_FILE_PATH="examples/examples_list.txt"
         set REXM_EXAMPLES_VS2022_SLN_FILE="projects/VS2022/raylib.sln"
-        # Set emsdk path for Makefile.Web examples building
         set EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-main"
-        # Run rexm to update required files
         .\tools\rexm\VS2022\build\rexm\bin\x64\Release\rexm.exe update
         cd ../..
       shell: cmd
