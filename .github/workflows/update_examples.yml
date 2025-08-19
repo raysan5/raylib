@@ -3,6 +3,7 @@ name: Update examples collection
 on:
   workflow_dispatch:
   push:
+    branches: [ '**' ]
     paths:
       - 'examples/**'
   pull_request:
