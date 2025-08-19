@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout
@@ -28,9 +28,6 @@ jobs:
         version: 'latest'
         actions-cache-folder: 'emsdk-cache'
         
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-        
     - name: Clone raylib.com repo to update files
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,24 +35,26 @@ jobs:
         git clone https://x-access-token:${GITHUB_TOKEN}@github.com/raysan5/raylib.com.git "${{ github.workspace }}/../raylib.com"
       shell: cmd
         
-    - name: Build and run rexm tool (VS2022 solution)
+    - name: Build and run rexm tool (GNU Makefile)
       # rexm should update all required files in raylib and even raylib.com repo,
       # but not sure if it can do that from an Action, maybe it requires manual copy 
       run: |
-        cd tools\rexm\VS2022
-        msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
-        cd ..\..\..
-        set REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}\examples"
-        set REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}\..\raylib.com\examples"
-        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}examples\examples_template.c"
-        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}examples\examples_template.png"
-        set REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}\examples\examples_list.txt"
-        set REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}\projects\VS2022\raylib.sln"
-        set EMSDK_PATH="${{ github.workspace }}\emsdk-cache\emsdk-main"
-        .\tools\rexm\VS2022\build\rexm\bin\x64\Release\rexm.exe update
-        cd ..\..
-      shell: cmd
-  
+        cd "${{ github.workspace }}/src"
+        make
+        sudo make install
+        cd ../tools/rexm/
+        clang rexm.c -lraylib -o rexm
+        export REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
+        export REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/../raylib.com/examples"
+        export REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}examples/examples_template.c"
+        export REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}examples/examples_template.png"
+        export REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
+        export REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}/projects/VS2022/raylib.sln"
+        export EMSDK_PATH="${{ github.workspace }}/emsdk-cache/emsdk-main"
+        ./rexm update
+        cd ../..
+      shell: bash
+
     - name: Commit changes to raylib repo
       run: |
         #git config user.name "github-actions[bot]"
