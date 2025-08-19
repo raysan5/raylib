@@ -78,8 +78,10 @@ typedef struct {
     float verUpdated;       // Example raylib last update version
     char author[64];        // Example author
     char authorGitHub[64];  // Example author, GitHub user name
-    int resCount;           // Example resources counter
+
     int status;             // Example validation status info
+    int resCount;           // Example resources counter
+    char **resPaths;        // Example resources paths (MAX: 256)
 } rlExampleInfo;
 
 // Validation status for a single example
@@ -166,7 +168,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 // Clear resource paths scanned
 static void ClearExampleResources(char **resPaths);
 
-// Add VS project (.vcxproj) to existing VS solution (.sol)
+// Add VS project (.vcxproj) to existing VS solution (.sln)
 static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
 
 // Generate unique UUID v4 string 
@@ -630,7 +632,6 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // NOTE: Tools requirements: emscripten, w64devkit
-            // TODO: Avoid platform-specific .BAT file
             system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
 
             // Copy results to web side
@@ -712,8 +713,9 @@ int main(int argc, char *argv[])
             // Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             remove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
-            // TODO: Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
+            // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
             //---------------------------------------------------------------------------
+            // TODO: Remove project from solution
             //RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
             //    TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
             //---------------------------------------------------------------------------
@@ -754,7 +756,7 @@ int main(int argc, char *argv[])
             // NOTE: Source of truth is what we have in the examples directories (on validation/update)
             FilePathList list = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
-            const char *exList = LoadFileText(exCollectionFilePath);
+            char *exList = LoadFileText(exCollectionFilePath);
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
 
@@ -1755,6 +1757,8 @@ rlExampleInfo *LoadExampleInfo(const char *exFileName)
         }
 
         UnloadFileText(exText);
+
+        exInfo->resPaths = ScanExampleResources(exFileName, &exInfo->resCount);
     }
 
     return exInfo;
@@ -1763,6 +1767,7 @@ rlExampleInfo *LoadExampleInfo(const char *exFileName)
 // Unload example information
 static void UnloadExampleInfo(rlExampleInfo *exInfo)
 {
+    ClearExampleResources(exInfo->resPaths);
     RL_FREE(exInfo);
 }
 
@@ -1854,9 +1859,9 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             char *end = strchr(start, '"');
             if (!end) break;
 
-            // TODO: WARNING: Some paths could be for files to save, not files to load, verify it
+            // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
             // HACK: Just check previous position from pointer for function name including the string...
-            // This is a horrible solution, the good one would be getting the data loading function names...
+            // This is a dirty solution, the good one would be getting the data loading function names...
             if (TextFindIndex(ptr - 40, "ExportImage") == -1)
             {
                 int len = (int)(end - start);
@@ -1913,12 +1918,12 @@ static void ClearExampleResources(char **resPaths)
     RL_FREE(resPaths);
 }
 
-// TODO: Add VS project (.vcxproj) to existing VS solution (.sol)
+// Add VS project (.vcxproj) to existing VS solution (.sln)
 // WARNING: Adding a .vcxproj to .sln can not be automated with: 
 //  - "dotnet" tool (C# projects only)
 //  - "devenv" tool (no adding support, only building)
 // It must be done manually editing the .sln file
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, char *category)
+static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category)
 {
     int result = 0;
 
@@ -1926,7 +1931,7 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, cha
     // *projFile ptr will be overwriten after a while
 
     // Generate unique UUID
-    char *uuid = GenerateUUIDv4();
+    const char *uuid = GenerateUUIDv4();
 
     // Replace default UUID (core_basic_window) on project file by new one
     FileTextReplace(projFile, "0981CA98-E4A5-4DF1-987F-A41D09131EFC", uuid);
