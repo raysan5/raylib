@@ -758,6 +758,7 @@ int main(int argc, char *argv[])
             // NOTE: Source of truth is what we have in the examples directories (on validation/update)
             FilePathList list = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
+			TraceLog(LOG_INFO, "DEBUG: Working Directory: %s", GetWorkingDirectory());
             char *exList = LoadFileText(exCollectionFilePath);
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
