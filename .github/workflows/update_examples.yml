@@ -39,6 +39,7 @@ jobs:
       # rexm should update all required files in raylib and even raylib.com repo,
       # but not sure if it can do that from an Action, maybe it requires manual copy 
       run: |
+        sudo apt-get update && sudo apt-get install -y libopengl0 libglu1-mesa libx11-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev
         cd "${{ github.workspace }}/src"
         make
         sudo make install
