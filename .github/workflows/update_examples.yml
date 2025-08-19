@@ -42,18 +42,18 @@ jobs:
       # but not sure if it can do that from an Action, maybe it requires manual copy 
       run: |
         dir/s "${{ github.workspace }}"
-        cd tools/rexm/VS2022
-        msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
-        cd ../../..
-        set REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
-        set REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/../raylib.com/examples"
-        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}examples/examples_template.c"
-        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}examples/examples_template.png"
-        set REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
-        set REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}/projects/VS2022/raylib.sln"
-        set EMSDK_PATH="${{ github.workspace }}/emsdk-cache/emsdk-main"
+        cd tools\rexm\VS2022
+        msbuild.exe rexm.sln /target:rexm /property:Configuration=Release \property:Platform=x64
+        cd ..\..\..
+        set REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}\examples"
+        set REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}\..\raylib.com\examples"
+        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}examples\examples_template.c"
+        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}examples\examples_template.png"
+        set REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}\examples\examples_list.txt"
+        set REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}\projects\VS2022\raylib.sln"
+        set EMSDK_PATH="${{ github.workspace }}\emsdk-cache\emsdk-main"
         .\tools\rexm\VS2022\build\rexm\bin\x64\Release\rexm.exe update
-        cd ../..
+        cd ..\..
       shell: cmd
   
     - name: Commit changes to raylib repo
