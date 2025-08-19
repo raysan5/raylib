@@ -3,12 +3,13 @@ name: Update examples collection
 on:
   workflow_dispatch:
   push:
-    branches: [ '**' ]
     paths:
       - 'examples/**'
+      - 'tools/rexm/**'
   pull_request:
     paths:
       - 'examples/**'
+      - 'tools/rexm/**'
 
 jobs:
   build:
