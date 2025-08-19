@@ -16,7 +16,7 @@ SET COMPILER_PATH=C:\raylib\w64devkit\bin
 ENV_SET PATH=%COMPILER_PATH%
 SET MAKE=mingw32-make
 echo
-:: SET required web compilation options
+:: Set required web compilation options
 :: -------------------------------------
 ::SET CC=%EMSDK_PATH%\upstream\emscripten\emcc
 ::SET CFLAGS=-Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -O3 -I. -Iexternal -I%RAYLIB_PATH%\src -I%RAYLIB_PATH%\external -DPLATFORM_WEB
@@ -30,7 +30,7 @@ cmd /c if exist %FILENAME%.wasm del /F %FILENAME%.wasm
 cmd /c if exist %FILENAME%.js del /F %FILENAME%.js
 cmd /c if exist %FILENAME%.data del /F %FILENAME%.data
 echo
-:: SETup emsdk environment
+:: Setup emsdk environment
 :: --------------------------
 call %EMSDK_PATH%\emsdk_env.bat
 echo on
