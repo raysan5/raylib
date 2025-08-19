@@ -1,4 +1,4 @@
-name: Linux Examples
+name: Build raylib examples - Linux
 
 on:
   workflow_dispatch:
