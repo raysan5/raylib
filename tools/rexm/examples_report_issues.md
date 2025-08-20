@@ -27,7 +27,6 @@ Example elements validated:
 | text_font_sdf                    |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | text_draw_3d                     |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | text_codepoints_loading          |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
-| models_loading_vox               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | models_loading_m3d               |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | shaders_texture_outline          |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | audio_music_stream               |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
@@ -37,3 +36,4 @@ Example elements validated:
 | raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |
 | embedded_files_loading           |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | raymath_vector_angle             |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |
+| text_unicode_font                |  ✔ |  ✔  |  ✔  |  ❌ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
