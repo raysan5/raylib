@@ -26,14 +26,7 @@ jobs:
       with:
         version: 'latest'
         actions-cache-folder: 'emsdk-cache'
-        
-    - name: Clone raylib.com repo to update files
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git clone https://x-access-token:${{ secrets.RAYLIB_DOT_COM_REPO_TOKEN }}@github.com/$GITHUB_REPOSITORY_OWNER/raylib.com.git "${{ github.workspace }}/../raylib.com"
-      shell: bash
-        
+
     - name: Build and run rexm tool (GNU Makefile)
       # rexm should update all required files in raylib and even raylib.com repo,
       # but not sure if it can do that from an Action, maybe it requires manual copy 
@@ -83,11 +76,9 @@ jobs:
           cd ..
         done
     - name: Push changes to raylib.com repo
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        
-        cd "${{ github.workspace }}/../raylib.com"
+        git clone https://x-access-token:${{ secrets.RAYLIB_DOT_COM_REPO_TOKEN }}@github.com/$GITHUB_REPOSITORY_OWNER/raylib.com.git
+        cd raylib.com
         git add examples
         git commit -m "Update web examples"
         git push origin
