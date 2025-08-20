@@ -73,7 +73,7 @@ jobs:
         make PLATFORM=PLATFORM_WEB
         for category in core shapes textures models shaders text audio; do
           cd $category
-            target_dir="${{ github.workspace }}/../raylib.com/examples/$category/"
+            target_dir="${{ github.workspace }}/raylib.com/examples/$category/"
             find . -type f -name "*.wasm" -exec cp {} "$target_dir" \;
             find . -type f -name "*.html" -exec cp {} "$target_dir" \;
             find . -type f -name "*.js"   -exec cp {} "$target_dir" \;
@@ -83,7 +83,7 @@ jobs:
     - name: Push changes to raylib.com repo
       run: |
         cd raylib.com
-        git add examples
+        git add -A
         git commit -m "Update web examples" || echo "git exited with code 1, nothing changed"
         git push origin
       shell: bash
