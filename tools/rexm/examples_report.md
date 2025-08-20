@@ -180,4 +180,4 @@ Example elements validated:
 | raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |
 | embedded_files_loading           |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
 | raymath_vector_angle             |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |
-| text_unicode_font                |  ✔ |  ✔  |  ✔  |  ❌ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
+| text_unicode_ranges              |  ✔ |  ✔  |  ✔  |  ❌ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |
