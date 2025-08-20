@@ -1,3 +1,4 @@
+#version 120
 // Input vertex attributes
 attribute vec3 vertexPosition;
 attribute vec3 vertexNormal;
