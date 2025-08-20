@@ -76,10 +76,10 @@ jobs:
         for category in core shapes textures models shaders text audio; do
           cd $category
             target_dir="${{ github.workspace }}/../raylib.com/examples/$category/"
-            find . -type f -name "*.wasm" -exec cp {} "$target_dir" +
-            find . -type f -name "*.html" -exec cp {} "$target_dir" +
-            find . -type f -name "*.js" -exec cp {} "$target_dir" +
-            find . -type f -name "*.data" -exec cp {} "$target_dir" +
+            find . -type f -name "*.wasm" -exec cp {} "$target_dir" \;
+            find . -type f -name "*.html" -exec cp {} "$target_dir" \;
+            find . -type f -name "*.js"   -exec cp {} "$target_dir" \;
+            find . -type f -name "*.data" -exec cp {} "$target_dir" \;
           cd ..
         done
     - name: Push changes to raylib.com repo
