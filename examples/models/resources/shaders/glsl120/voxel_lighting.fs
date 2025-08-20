@@ -1,3 +1,4 @@
+#version 120
 // Input from vertex shader
 varying vec3 fragPosition;
 varying vec4 fragColor;

@@ -1,6 +1,6 @@
-#ifdef GL_ES
+#version 100
+
 precision mediump float;
-#endif
 
 // Input from vertex shader
 varying vec3 fragPosition;
