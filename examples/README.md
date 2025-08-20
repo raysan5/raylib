@@ -140,7 +140,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_unicode](text/text_unicode.c) | <img src="text/text_unicode.png" alt="text_unicode" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_draw_3d](text/text_draw_3d.c) | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="80"> | ⭐⭐⭐⭐️ | 3.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
-| [text_unicode_font](text/text_unicode_font.c) | <img src="text/text_unicode_font.png" alt="text_unicode_font" width="80"> | ☆☆☆☆ | 5.6 | 5.6 | [<raylib.h>](https://github.com/) |
+| [text_unicode_ranges](text/text_unicode_ranges.c) | <img src="text/text_unicode_ranges.png" alt="text_unicode_ranges" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 
 ### category: models [23]
 
