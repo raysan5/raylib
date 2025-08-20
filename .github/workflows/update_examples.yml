@@ -31,7 +31,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/JohnnyCena123/raylib.com.git "${{ github.workspace }}/../raylib.com"
+        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY_OWNER/raylib.com.git "${{ github.workspace }}/../raylib.com"
       shell: bash
         
     - name: Build and run rexm tool (GNU Makefile)
