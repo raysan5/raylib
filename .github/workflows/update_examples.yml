@@ -27,6 +27,11 @@ jobs:
         version: 'latest'
         actions-cache-folder: 'emsdk-cache'
 
+    - name: Clone raylib.com repo
+      run: |
+        git clone https://x-access-token:${{ secrets.RAYLIB_DOT_COM_REPO_TOKEN }}@github.com/$GITHUB_REPOSITORY_OWNER/raylib.com.git
+      shell: bash
+
     - name: Build and run rexm tool (GNU Makefile)
       # rexm should update all required files in raylib and even raylib.com repo,
       # but not sure if it can do that from an Action, maybe it requires manual copy 
@@ -38,9 +43,9 @@ jobs:
         cd ../tools/rexm/
         clang rexm.c -lraylib -lc -lm -o rexm
         export REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
-        export REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/../raylib.com/examples"
-        export REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}examples/examples_template.c"
-        export REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}examples/examples_template.png"
+        export REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/raylib/.com/examples"
+        export REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}/examples/examples_template.c"
+        export REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}/examples/examples_template.png"
         export REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
         export REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}/projects/VS2022/raylib.sln"
         export EMSDK_PATH="${{ github.workspace }}/emsdk-cache/emsdk-main"
@@ -77,9 +82,8 @@ jobs:
         done
     - name: Push changes to raylib.com repo
       run: |
-        git clone https://x-access-token:${{ secrets.RAYLIB_DOT_COM_REPO_TOKEN }}@github.com/$GITHUB_REPOSITORY_OWNER/raylib.com.git
         cd raylib.com
         git add examples
-        git commit -m "Update web examples"
+        git commit -m "Update web examples" || echo "git exited with code 1, nothing changed"
         git push origin
       shell: bash
