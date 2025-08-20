@@ -599,7 +599,7 @@ TEXT = \
     text/text_raylib_fonts \
     text/text_rectangle_bounds \
     text/text_unicode \
-    text/text_unicode_font \
+    text/text_unicode_ranges \
     text/text_writing_anim
 
 MODELS = \
@@ -1000,14 +1000,14 @@ text/text_input_box: text/text_input_box.c
 
 text/text_raylib_fonts: text/text_raylib_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/fonts/alagard.png@resources/fonts/alagard.png \
-    --preload-file text/resources/fonts/pixelplay.png@resources/fonts/pixelplay.png \
-    --preload-file text/resources/fonts/mecha.png@resources/fonts/mecha.png \
-    --preload-file text/resources/fonts/setback.png@resources/fonts/setback.png \
-    --preload-file text/resources/fonts/romulus.png@resources/fonts/romulus.png \
-    --preload-file text/resources/fonts/pixantiqua.png@resources/fonts/pixantiqua.png \
-    --preload-file text/resources/fonts/alpha_beta.png@resources/fonts/alpha_beta.png \
-    --preload-file text/resources/fonts/jupiter_crash.png@resources/fonts/jupiter_crash.png
+    --preload-file text/resources/sprite_fonts/alagard.png@resources/sprite_fonts/alagard.png \
+    --preload-file text/resources/sprite_fonts/pixelplay.png@resources/sprite_fonts/pixelplay.png \
+    --preload-file text/resources/sprite_fonts/mecha.png@resources/sprite_fonts/mecha.png \
+    --preload-file text/resources/sprite_fonts/setback.png@resources/sprite_fonts/setback.png \
+    --preload-file text/resources/sprite_fonts/romulus.png@resources/sprite_fonts/romulus.png \
+    --preload-file text/resources/sprite_fonts/pixantiqua.png@resources/sprite_fonts/pixantiqua.png \
+    --preload-file text/resources/sprite_fonts/alpha_beta.png@resources/sprite_fonts/alpha_beta.png \
+    --preload-file text/resources/sprite_fonts/jupiter_crash.png@resources/sprite_fonts/jupiter_crash.png
 
 text/text_rectangle_bounds: text/text_rectangle_bounds.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1018,7 +1018,7 @@ text/text_unicode: text/text_unicode.c
     --preload-file text/resources/noto_cjk.fnt@resources/noto_cjk.fnt \
     --preload-file text/resources/symbola.fnt@resources/symbola.fnt
 
-text/text_unicode_font: text/text_unicode_font.c
+text/text_unicode_ranges: text/text_unicode_ranges.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/NotoSansTC-Regular.ttf@resources/NotoSansTC-Regular.ttf
 
