@@ -125,7 +125,7 @@ int main(void)
                     DrawCubeV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, PURPLE);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, -1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, DARKGREEN);
                     DrawCubeV((Vector3) { 0.0f, 0.5f, -1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, YELLOW);
-                    DrawGrid(10, 1.0f);
+                    DrawGrid(10, 1.0f, GRAY);
                 EndShaderMode();
             EndMode3D();
         EndTextureMode();

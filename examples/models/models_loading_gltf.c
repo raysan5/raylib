@@ -80,7 +80,7 @@ int main(void)
 
             BeginMode3D(camera);
                 DrawModel(model, position, 1.0f, WHITE);    // Draw animated model
-                DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f, GRAY);
             EndMode3D();
 
             DrawText("Use the LEFT/RIGHT mouse buttons to switch animation", 10, 10, 20, GRAY);

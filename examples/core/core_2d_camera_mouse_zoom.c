@@ -116,7 +116,7 @@ int main ()
                 rlPushMatrix();
                     rlTranslatef(0, 25*50, 0);
                     rlRotatef(90, 1, 0, 0);
-                    DrawGrid(100, 50);
+                    DrawGrid(100, 50, GRAY);
                 rlPopMatrix();
 
                 // Draw a reference circle

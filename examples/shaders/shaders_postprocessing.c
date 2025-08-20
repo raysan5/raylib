@@ -138,7 +138,7 @@ int main(void)
 
             BeginMode3D(camera);        // Begin 3d mode drawing
                 DrawModel(model, position, 0.1f, WHITE);   // Draw 3d model with texture
-                DrawGrid(10, 1.0f);     // Draw a grid
+                DrawGrid(10, 1.0f, GRAY); // Draw a grid
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
         EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
 

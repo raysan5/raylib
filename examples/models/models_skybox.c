@@ -157,7 +157,7 @@ int main(void)
                 rlEnableBackfaceCulling();
                 rlEnableDepthMask();
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f, GRAY);
 
             EndMode3D();
 

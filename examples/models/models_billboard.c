@@ -82,7 +82,7 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawGrid(10, 1.0f);        // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);        // Draw a grid
 
                 // Draw order matters!
                 if (distanceStatic > distanceRotating)

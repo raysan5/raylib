@@ -69,7 +69,7 @@ int main()
 
             BeginMode3D(camera);
 
-                DrawGrid(10, 5.0f);
+                DrawGrid(10, 5.0f, GRAY);
 
                 for (int x = 0; x < numBlocks; x++)
                 {

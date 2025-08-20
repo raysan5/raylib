@@ -80,7 +80,7 @@ int main(void)
                 DrawCylinder((Vector3){1.0f, 0.0f, -4.0f}, 0.0f, 1.5f, 3.0f, 8, GOLD);
                 DrawCylinderWires((Vector3){1.0f, 0.0f, -4.0f}, 0.0f, 1.5f, 3.0f, 8, PINK);
 
-                DrawGrid(10, 1.0f);        // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);        // Draw a grid
 
             EndMode3D();
 

@@ -103,7 +103,7 @@ static void ErrorCallback(int error, const char *description);
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 // Drawing functions (uses rlgl functionality)
-static void DrawGrid(int slices, float spacing);
+static void DrawGrid(int slices, float spacing, Color color);
 static void DrawCube(Vector3 position, float width, float height, float length, Color color);
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
@@ -213,7 +213,7 @@ int main(void)
 
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
-            DrawGrid(10, 1.0f);
+            DrawGrid(10, 1.0f, DARKGRAY);
 
             // Draw internal render batch buffers (3D data)
             rlDrawRenderBatchActive();
@@ -295,28 +295,15 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 }
 
 // Draw a grid centered at (0, 0, 0)
-static void DrawGrid(int slices, float spacing)
+static void DrawGrid(int slices, float spacing, Color color)
 {
     int halfSlices = slices / 2;
 
     rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
-            if (i == 0)
-            {
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-            }
-            else
-            {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-            }
-
             rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
             rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
 

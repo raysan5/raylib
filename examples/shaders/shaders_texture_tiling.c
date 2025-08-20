@@ -86,7 +86,7 @@ int main(void)
                     DrawModel(model, (Vector3){ 0.0f, 0.0f, 0.0f }, 2.0f, WHITE);
                 EndShaderMode();
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f, GRAY);
 
             EndMode3D();
 

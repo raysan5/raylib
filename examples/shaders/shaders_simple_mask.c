@@ -121,7 +121,7 @@ int main(void)
                 DrawModel(model1, (Vector3){ 0.5f, 0.0f, 0.0f }, 1, WHITE);
                 DrawModelEx(model2, (Vector3){ -0.5f, 0.0f, 0.0f }, (Vector3){ 1.0f, 1.0f, 0.0f }, 50, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
                 DrawModel(model3,(Vector3){ 0.0f, 0.0f, -1.5f }, 1, WHITE);
-                DrawGrid(10, 1.0f);        // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);        // Draw a grid
 
             EndMode3D();
 

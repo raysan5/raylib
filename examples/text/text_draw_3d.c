@@ -285,7 +285,7 @@ int main(void)
                 DrawCubeV(cubePosition, cubeSize, dark);
                 DrawCubeWires(cubePosition, 2.1f, 2.1f, 2.1f, light);
 
-                DrawGrid(10, 2.0f);
+                DrawGrid(10, 2.0f, GRAY);
 
                 // Use a shader to handle the depth buffer issue with transparent textures
                 // NOTE: more info at https://bedroomcoders.co.uk/posts/198

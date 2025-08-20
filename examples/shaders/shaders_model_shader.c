@@ -84,7 +84,7 @@ int main(void)
 
                 DrawModel(model, position, 0.2f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10, 1.0f);     // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);     // Draw a grid
 
             EndMode3D();
 

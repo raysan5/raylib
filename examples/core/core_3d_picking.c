@@ -95,7 +95,7 @@ int main(void)
                 }
 
                 DrawRay(ray, MAROON);
-                DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f, GRAY);
 
             EndMode3D();
 

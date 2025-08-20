@@ -95,7 +95,7 @@ int main(void)
 
             BeginMode3D(camera);        // Begin 3d mode drawing
                 DrawModel(model, position, 0.5f, WHITE);   // Draw 3d model with texture
-                DrawGrid(10, 1.0f);     // Draw a grid
+                DrawGrid(10, 1.0f, GRAY); // Draw a grid
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
 
             DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RED);

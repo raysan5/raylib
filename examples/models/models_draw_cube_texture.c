@@ -72,7 +72,7 @@ int main(void)
                 DrawCubeTextureRec(texture, (Rectangle){ 0.0f, texture.height/2.0f, texture.width/2.0f, texture.height/2.0f },
                     (Vector3){ 2.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, WHITE);
 
-                DrawGrid(10, 1.0f);        // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);        // Draw a grid
 
             EndMode3D();
 

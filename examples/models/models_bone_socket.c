@@ -153,7 +153,7 @@ int main(void)
                     DrawMesh(equipModel[i].meshes[0], equipModel[i].materials[1], matrixTransform);
                 }
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f, GRAY);
             EndMode3D();
 
             DrawText("Use the T/G to switch animation", 10, 10, 20, GRAY);

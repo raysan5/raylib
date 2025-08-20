@@ -67,7 +67,7 @@ int main(void)
 
                 DrawModel(model, mapPosition, 1.0f, RED);
 
-                DrawGrid(20, 1.0f);
+                DrawGrid(20, 1.0f, GRAY);
 
             EndMode3D();
 

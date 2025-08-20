@@ -97,7 +97,7 @@ int main(void)
             BeginMode3D(camera);
 
                DrawModel(models[currentModel], position, 1.0f, WHITE);
-               DrawGrid(10, 1.0);
+               DrawGrid(10, 1.0, GRAY);
 
             EndMode3D();
 

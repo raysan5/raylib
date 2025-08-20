@@ -122,7 +122,7 @@ int main(void)
 
                     DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                     DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-                    DrawGrid(40, 1.0f);
+                    DrawGrid(40, 1.0f, GRAY);
 
                 EndMode3D();
             EndVrStereoMode();

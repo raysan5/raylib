@@ -120,7 +120,7 @@ int main(void)
                     else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
                 }
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f, GRAY);
 
             EndMode3D();
 

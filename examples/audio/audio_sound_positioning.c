@@ -77,7 +77,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-                DrawGrid(10, 2);
+                DrawGrid(10, 2, GRAY);
                 DrawSphere(spherePos, 0.5f, RED);
             EndMode3D();
 

@@ -108,7 +108,7 @@ int main(void)
 
                 // Some reference elements (not affected by previous matrix transformations)
                 DrawCircle3D((Vector3){ 0.0f, 0.0f, 0.0f }, earthOrbitRadius, (Vector3){ 1, 0, 0 }, 90.0f, Fade(RED, 0.5f));
-                DrawGrid(20, 1.0f);
+                DrawGrid(20, 1.0f, GRAY);
 
             EndMode3D();
 

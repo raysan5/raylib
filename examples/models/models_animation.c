@@ -89,7 +89,7 @@ int main(void)
                     DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
                 }
 
-                DrawGrid(10, 1.0f);         // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);         // Draw a grid
 
             EndMode3D();
 

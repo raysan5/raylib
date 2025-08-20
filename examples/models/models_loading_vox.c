@@ -168,7 +168,7 @@ int main(void)
 		BeginMode3D(camera);
 
 		DrawModel(models[currentModel], modelpos, 1.0f, WHITE);
-		DrawGrid(10, 1.0);
+		DrawGrid(10, 1.0, GRAY);
 
 		// Draw spheres to show where the lights are
 		for (int i = 0; i < MAX_LIGHTS; i++)

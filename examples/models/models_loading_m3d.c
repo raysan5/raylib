@@ -147,7 +147,7 @@ int main(void)
                     }
                 }
 
-                DrawGrid(10, 1.0f);         // Draw a grid
+                DrawGrid(10, 1.0f, GRAY);         // Draw a grid
 
             EndMode3D();
 

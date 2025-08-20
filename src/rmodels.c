@@ -1068,22 +1068,15 @@ void DrawRay(Ray ray, Color color)
 }
 
 // Draw a grid centered at (0, 0, 0)
-void DrawGrid(int slices, float spacing)
+void DrawGrid(int slices, float spacing, Color color)
 {
     int halfSlices = slices/2;
 
     rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
-            if (i == 0)
-            {
-                rlColor3f(0.5f, 0.5f, 0.5f);
-            }
-            else
-            {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-            }
-
             rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
             rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
 

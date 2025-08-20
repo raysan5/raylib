@@ -126,7 +126,7 @@ int main(void)
 
                 DrawModel(model, position, 1.0f, WHITE);        // Draw 3d model with texture
 
-                DrawGrid(20, 10.0f);         // Draw a grid
+                DrawGrid(20, 10.0f, GRAY);         // Draw a grid
 
                 if (selected) DrawBoundingBox(bounds, GREEN);   // Draw selection box
 

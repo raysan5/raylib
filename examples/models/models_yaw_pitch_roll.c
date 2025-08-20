@@ -96,7 +96,7 @@ int main(void)
             BeginMode3D(camera);
 
                 DrawModel(model, (Vector3){ 0.0f, -8.0f, 0.0f }, 1.0f, WHITE);   // Draw 3d model with texture
-                DrawGrid(10, 10.0f);
+                DrawGrid(10, 10.0f, GRAY);
 
             EndMode3D();
 

@@ -1551,7 +1551,7 @@ RLAPI void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slice
 RLAPI void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color); // Draw capsule wireframe with the center of its sphere caps at startPos and endPos
 RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
-RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
+RLAPI void DrawGrid(int slices, float spacing, Color color);                                             // Draw a grid (centered at (0, 0, 0))
 
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)
