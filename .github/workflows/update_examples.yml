@@ -62,7 +62,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add -A
-        git commit -m "Update examples collection"
+        git commit -m "Update examples collection" || echo "git exited with code 1, nothing changed"
         git push
       shell: bash
 
