@@ -117,3 +117,4 @@ tools/rexm/rexm.exe
 tools/rexm/rexm
 
 # emsdk cache for GitHub Actions runners
+emsdk-cache/
