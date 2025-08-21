@@ -583,9 +583,9 @@ int main(int argc, char *argv[])
                     TextFormat("%s;%s", exRecategory, exRename));
 
                 // Edit: Rename example code and screenshot files .c and .png
-                rename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
+                FileRename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
-                rename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
+                FileRename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
 
                 // NOTE: Example resource files do not need to be changed...
@@ -617,21 +617,21 @@ int main(int argc, char *argv[])
                 // Edit: Rename example code file (copy and remove)
                 FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
-                remove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                FileRemove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
                 // Edit: Rename example screenshot file (copy and remove)
                 FileCopy(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
-                remove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
+                FileRemove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
 
                 // Edit: Update required files: Makefile, Makefile.Web, README.md, examples.js
                 UpdateRequiredFiles();
             }
 
             // Remove old web compilation
-            remove(TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
 
             // Recompile example (on raylib side)
             // NOTE: Tools requirements: emscripten, w64devkit
@@ -693,11 +693,11 @@ int main(int argc, char *argv[])
                         for (int v = 0; v < 3; v++)
                         {
                             char *resPathUpdated = TextReplace(resPaths[r], "glsl%i", TextFormat("glsl%i", glslVer[v]));
-                            remove(TextFormat("%s/%s/%s", exBasePath, exCategory, resPathUpdated));
+                            FileRemove(TextFormat("%s/%s/%s", exBasePath, exCategory, resPathUpdated));
                             RL_FREE(resPathUpdated);
                         }
                     }
-                    else remove(TextFormat("%s/%s/%s", exBasePath, exCategory, resPaths[r]));
+                    else FileRemove(TextFormat("%s/%s/%s", exBasePath, exCategory, resPaths[r]));
                 }
             }
 
@@ -707,14 +707,14 @@ int main(int argc, char *argv[])
 
             // Remove: raylib/examples/<category>/<category>_example_name.c
             // Remove: raylib/examples/<category>/<category>_example_name.png
-            remove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
             
             // Edit: Update required files: Makefile, Makefile.Web, README.md, examples.js
             UpdateRequiredFiles();
             
             // Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
-            remove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
+            FileRemove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
             // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
             //---------------------------------------------------------------------------
@@ -727,10 +727,10 @@ int main(int argc, char *argv[])
             // Remove: raylib.com/examples/<category>/<category>_example_name.data
             // Remove: raylib.com/examples/<category>/<category>_example_name.wasm
             // Remove: raylib.com/examples/<category>/<category>_example_name.js
-            remove(TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
-            remove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
 
         } break;
         case OP_VALIDATE:     // Validate: report and actions
@@ -1621,7 +1621,11 @@ static int FileRename(const char *fileName, const char *fileRename)
 {
     int result = 0;
 
-    if (FileExists(fileName)) rename(fileName, TextFormat("%s/%s", GetDirectoryPath(fileName), fileRename));
+    if (FileExists(fileName))
+    {
+        result = rename(fileName, TextFormat("%s/%s", GetDirectoryPath(fileName), fileRename));
+    }
+    else result = -1;
 
     return result;
 }
@@ -1631,7 +1635,11 @@ static int FileRemove(const char *fileName)
 {
     int result = 0;
 
-    if (FileExists(fileName)) remove(fileName);
+    if (FileExists(fileName))
+    {
+        result = remove(fileName);
+    }
+    else result = -1;
 
     return result;
 }
@@ -1647,6 +1655,7 @@ static int FileMove(const char *srcPath, const char *dstPath)
         FileCopy(srcPath, dstPath);
         remove(srcPath);
     }
+    else result = -1;
 
     return result;
 }
