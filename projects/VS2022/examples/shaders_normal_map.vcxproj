@@ -51,11 +51,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shaders_normalmap</RootNamespace>
+    <RootNamespace>shaders_normal_map</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shaders_normalmap</ProjectName>
+    <ProjectName>shaders_normal_map</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shaders\shaders_normalmap.c" />
+    <ClCompile Include="..\..\..\examples\shaders\shaders_normal_map.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />
