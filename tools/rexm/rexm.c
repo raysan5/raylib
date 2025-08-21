@@ -599,7 +599,8 @@ int main(int argc, char *argv[])
                     exName + strlen(exCategory) + 1, exRename + strlen(exRecategory) + 1); // Skip category
 
                 // Edit: Rename example project and solution
-                rename(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
+                FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), exName, exRename);
+                FileRename(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
                     TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exRename));
                 FileTextReplace(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exName, exRename);
             }
