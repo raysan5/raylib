@@ -112,6 +112,7 @@ typedef enum {
     OP_REMOVE   = 4,        // Remove existing example
     OP_VALIDATE = 5,        // Validate examples, using [examples_list.txt] as main source by default
     OP_UPDATE   = 6,        // Validate and update required examples (as far as possible)
+    OP_BUILD    = 7,        // Build example for desktop and web, copy web output
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
@@ -356,6 +357,29 @@ int main(int argc, char *argv[])
 
             opCode = OP_UPDATE;
         }
+        else if (strcmp(argv[1], "build") == 0)
+        {
+            // Build example for PLATFORM_DESKTOP and PLATFORM_WEB
+            // NOTE: Build outputs to default directory, usually where the .c file is located,
+            // to avoid issues with copying resources (at least on Desktop)
+            // Web build files (.html, .wasm, .js, .data) are copied to raylib.com/examples repo
+            // Check for valid upcoming argument
+            if (argc == 2) LOG("WARNING: No example name provided to build\n");
+            else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
+            else
+            {
+                // Verify example exists in collection to be removed
+                char *exColInfo = LoadFileText(exCollectionFilePath);
+                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                {
+                    strcpy(exName, argv[2]); // Register example name for removal
+                    strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                    opCode = OP_BUILD;
+                }
+                else LOG("WARNING: REMOVE: Example not available in the collection\n");
+                UnloadFileText(exColInfo);
+            }
+        }
     }
 
     switch (opCode)
@@ -540,25 +564,11 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
             //------------------------------------------------------------------------------------------------
-            // TODO: Avoid platform-specific .BAT file
-            /*
-            SET RAYLIB_PATH=C:\GitHub\raylib
-            SET COMPILER_PATH=C:\raylib\w64devkit\bin
-            ENV_SET PATH=$(COMPILER_PATH)
-            SET MAKE=mingw32-make
-            $(MAKE) -f Makefile.Web shaders/shaders_deferred_render PLATFORM=$(PLATFORM) -B
-
-            //int putenv(char *string);   // putenv takes a string of the form NAME=VALUE
-            //int setenv(const char *envname, const char *envval, int overwrite);
-            //int unsetenv(const char *name); //unset variable
-            putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
-            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            setenv("RAYLIB_DIR", "C:\\GitHub\\raylib", 1);
-            unsetenv("RAYLIB_DIR");
-            getenv("RAYLIB_DIR");
+            //putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
+            //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
             system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
-            */
-            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
+            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -634,8 +644,9 @@ int main(int argc, char *argv[])
             FileRemove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
 
             // Recompile example (on raylib side)
-            // NOTE: Tools requirements: emscripten, w64devkit
-            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
+            // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
+            system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
@@ -1132,6 +1143,41 @@ int main(int argc, char *argv[])
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
             
+        } break;
+        case OP_BUILD:
+        {
+            // Build: raylib.com/examples/<category>/<category>_example_name.html
+            // Build: raylib.com/examples/<category>/<category>_example_name.data
+            // Build: raylib.com/examples/<category>/<category>_example_name.wasm
+            // Build: raylib.com/examples/<category>/<category>_example_name.js
+            if (strcmp(exCategory, "others") != 0) // Skipping "others" category
+            {
+                // Build example for PLATFORM_DESKTOP
+                putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
+                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                putenv("MAKE=mingw32-make");
+
+                ChangeDirectory(exBasePath);
+                system(TextFormat("%s %s/%s PLATFORM=PLATFORM_DESKTOP -B", getenv("MAKE"), exCategory, exName));
+
+                // Build example for PLATFORM_WEB
+                system(TextFormat("%s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", getenv("MAKE"), exCategory, exName));
+                //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+
+                // Update generated .html metadata
+                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+                // Copy results to web side
+                FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
+                FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
+                FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
+                FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+            }
         } break;
         default:    // Help
         {
