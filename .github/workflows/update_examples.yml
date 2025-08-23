@@ -49,7 +49,8 @@ jobs:
         set EMSDK_PATH=${{ github.workspace }}/emsdk-cache/emsdk-main
         dir
         rexm.exe build core_basic_window
-        cd ../..
+        cd ${{ github.workspace }}\..
+        dir
       shell: cmd
   
     - name: Commit changes to raylib repo
