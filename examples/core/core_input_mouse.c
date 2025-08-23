@@ -29,7 +29,6 @@ int main(void)
 
     Vector2 ballPosition = { -100.0f, -100.0f };
     Color ballColor = DARKBLUE;
-    int isCursorHidden = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -41,15 +40,13 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_H))
         {
-            if (isCursorHidden == 0)
+            if (IsCursorHidden())
             {
-                HideCursor();
-                isCursorHidden = 1;
+                ShowCursor();
             }
             else
             {
-                ShowCursor();
-                isCursorHidden = 0;
+                HideCursor();
             }
         }
 
@@ -75,7 +72,7 @@ int main(void)
             DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
             DrawText("Press 'H' to toggle cursor visibility", 10, 30, 20, DARKGRAY);
 
-            if (isCursorHidden == 1) DrawText("CURSOR HIDDEN", 20, 60, 20, RED);
+            if (!IsCursorHidden()) DrawText("CURSOR HIDDEN", 20, 60, 20, RED);
             else DrawText("CURSOR VISIBLE", 20, 60, 20, LIME);
 
         EndDrawing();
