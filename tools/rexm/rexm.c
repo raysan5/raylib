@@ -575,8 +575,9 @@ int main(int argc, char *argv[])
             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Update generated .html metadata
-            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            char exHtmlPath[512] = { 0 };
+            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -657,8 +658,9 @@ int main(int argc, char *argv[])
             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
 
             // Update generated .html metadata
-            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            char exHtmlPath[512] = { 0 };
+            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
@@ -1021,8 +1023,9 @@ int main(int argc, char *argv[])
                             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
                             // Update generated .html metadata
-                            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                            char exHtmlPath[512] = { 0 };
+                            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+                            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
                             // Copy results to web side
                             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
@@ -1192,20 +1195,20 @@ int main(int argc, char *argv[])
             if (strcmp(exCategory, "others") != 0) // Skipping "others" category
             {
                 // Build example for PLATFORM_DESKTOP
-                putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
-                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                putenv("MAKE=mingw32-make");
-
+                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+                //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                //putenv("MAKE=mingw32-make");
                 ChangeDirectory(exBasePath);
-                system(TextFormat("%s %s/%s PLATFORM=PLATFORM_DESKTOP -B", getenv("MAKE"), exCategory, exName));
+                system(TextFormat("make %s/%s PLATFORM=PLATFORM_DESKTOP -B", exCategory, exName));
 
                 // Build example for PLATFORM_WEB
-                system(TextFormat("%s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", getenv("MAKE"), exCategory, exName));
+                system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
                 //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
                 // Update generated .html metadata
-                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                char exHtmlPath[512] = { 0 };
+                strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+                UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
                 // Copy results to web side
                 FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -2171,7 +2174,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char *exText = NULL;                // Example code file, required to get description
         char **lines = NULL;                // Pointers to example code lines
         int lineCount = 0;                  // Example code line count
-        int lineLength = 0;                 // Description line length
 
         char exName[64] = { 0 };            // Example name: fileName without extension
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
@@ -2182,7 +2184,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         memset(exTitle, 0, 64);
         memset(exDescription, 0, 256);
         memset(exCategory, 0, 16);
-        lineLength = 0;
 
         // Get example name: replace underscore by spaces
         strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
@@ -2195,8 +2196,9 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         // Get example description: copy line #3 from example file
         exText = LoadFileText(exFilePath);
         lines = LoadTextLines(exText, &lineCount);
-        for (int i = 0; (lines[2][i] != '\n') && (lines[2][i] != '\r'); i++) lineLength++;
+        int lineLength = (int)strlen(lines[2]);
         strncpy(exDescription, lines[2] + 4, lineLength - 4);
+        UnloadTextLines(lines);
         UnloadFileText(exText);
 
         // Update example.html required text
@@ -2220,7 +2222,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
 
-        UnloadTextLines(lines);
         UnloadFileText(fileText);
     }
 }
