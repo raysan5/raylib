@@ -39,13 +39,13 @@ jobs:
       run: |
         cd tools/rexm/VS2022
         msbuild.exe rexm.sln /target:rexm /property:Configuration=Release /property:Platform=x64
-        cd ${{ github.workspace }}/tools/rexm/VS2022/build/rexm/bin/x64/Release
-        set REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
-        set REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/../raylib.com/examples"
-        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}/examples/examples_template.c"
-        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}/examples/examples_template.png"
-        set REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
-        set REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}/projects/VS2022/raylib.sln"
+        cd ${{ github.workspace }}\tools\rexm\VS2022\build\rexm\bin\x64\Release
+        set REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}\examples"
+        set REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}\..\raylib.com\examples"
+        set REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}\examples\examples_template.c"
+        set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}\examples\examples_template.png"
+        set REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}\examples\examples_list.txt"
+        set REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}\projects\VS2022\raylib.sln"
         rexm.exe build core_basic_window
         cd ../..
       shell: cmd
