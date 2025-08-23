@@ -93,6 +93,9 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
+    #define STBTT_malloc(x,u) ((void)(u),RL_MALLOC(x))
+    #define STBTT_free(x,u) ((void)(u),RL_FREE(x))
+
     #define STBTT_STATIC
     #define STB_TRUETYPE_IMPLEMENTATION
     #include "external/stb_truetype.h"      // Required for: ttf font data reading
