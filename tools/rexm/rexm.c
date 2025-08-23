@@ -99,8 +99,9 @@ typedef enum {
     VALID_NOT_IN_JS             = 1 << 9,   // Not listed in examples.js
     VALID_INCONSISTENT_INFO     = 1 << 10,  // Inconsistent info between collection and example header (stars, author...)
     VALID_MISSING_WEB_OUTPUT    = 1 << 11,  // Missing .html/.data/.wasm/.js
-    VALID_INVALID_CATEGORY      = 1 << 12,  // Not a recognized category
-    VALID_UNKNOWN_ERROR         = 1 << 13   // Unknown failure case (fallback)
+    VALID_MISSING_WEB_METADATA  = 1 << 12,  // Missing .html example metadata
+    VALID_INVALID_CATEGORY      = 1 << 13,  // Not a recognized category
+    VALID_UNKNOWN_ERROR         = 1 << 14   // Unknown failure case (fallback)
 } rlExampleValidationStatus;
 
 // Example management operations
@@ -174,7 +175,10 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
 
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
-const char *GenerateUUIDv4(void);
+static const char *GenerateUUIDv4(void);
+
+// Update generated Web example .html file metadata
+static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -570,6 +574,10 @@ int main(int argc, char *argv[])
             system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
+            // Update generated .html metadata
+            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
                 TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
@@ -647,6 +655,10 @@ int main(int argc, char *argv[])
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
             system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
+
+            // Update generated .html metadata
+            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
@@ -774,10 +786,10 @@ int main(int argc, char *argv[])
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
 
-            int exListLen = strlen(exList);
+            int exListLen = (int)strlen(exList);
             strcpy(exListUpdated, exList);
 
-            for (int i = 0; i < list.count; i++)
+            for (unsigned int i = 0; i < list.count; i++)
             {
                 if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&  // HACK: Skip "examples_template"
                     (TextFindIndex(exList, GetFileNameWithoutExt(list.paths[i])) == -1))
@@ -908,6 +920,23 @@ int main(int argc, char *argv[])
                      exInfo->status |= VALID_MISSING_WEB_OUTPUT;
                 }
 
+                // Validate: raylib.com/examples/<category>/<category>_example_name.html -> Metadata
+                if (FileExists(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name)))
+                {
+                    char *exHtmlText = LoadFileText(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+
+                    if ((TextFindIndex(exHtmlText, "raylib web game") > -1) ||     // title
+                        (TextFindIndex(exHtmlText, "New raylib web videogame, developed using raylib videogames library") > -1) || // description
+                        (TextFindIndex(exHtmlText, "https://www.raylib.com/common/raylib_logo.png") > -1) || // image
+                        (TextFindIndex(exHtmlText, "https://www.raylib.com/games.html") > -1) || // url
+                        (TextFindIndex(exHtmlText, "https://github.com/raysan5/raylib") > -1)) // source code button
+                    {
+                        exInfo->status |= VALID_MISSING_WEB_METADATA;
+                    }
+
+                    UnloadFileText(exHtmlText);
+                }
+
                 // NOTE: Additional validation elements
                 // Validate: Example naming conventions: <category>/<category>_example_name, valid category
                 if ((TextFindIndex(exInfo->name, exInfo->category) == -1) || 
@@ -986,9 +1015,14 @@ int main(int argc, char *argv[])
                         // Review: Add/Remove: raylib.com/examples/<category>/<category>_example_name.js
                         // Solves: VALID_MISSING_WEB_OUTPUT
                         if ((strcmp(exInfo->category, "others") != 0) && // Skipping "others" category
-                            exInfo->status & VALID_MISSING_WEB_OUTPUT)
+                            ((exInfo->status & VALID_MISSING_WEB_OUTPUT) || (exInfo->status & VALID_MISSING_WEB_METADATA)))
                         {
-                            system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+                            system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+
+                            // Update generated .html metadata
+                            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
+                                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
                             // Copy results to web side
                             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
@@ -1033,14 +1067,15 @@ int main(int argc, char *argv[])
             [RDME]  VALID_NOT_IN_README         // Not listed in README.md
             [JS]    VALID_NOT_IN_JS             // Not listed in examples.js
             [WOUT]  VALID_MISSING_WEB_OUTPUT    // Missing .html/.data/.wasm/.js
+            [WMETA] VALID_MISSING_WEB_METADATA  // Missing .html example metadata
             [INFO]  VALID_INCONSISTENT_INFO     // Inconsistent info between collection and example header (stars, author...)
             [CAT]   VALID_INVALID_CATEGORY      // Not a recognized category
 
-            | [EXAMPLE NAME]               | [C] |[CAT]|[INFO]|[PNG]|[WPNG]|[RES]|[MK] |[MKWEB]|[VCX]|[SOL]|[RDME]|[JS] |[WOUT]|
-            |:-----------------------------|:---:|:---:|:----:|:---:|:----:|:---:|:---:|:-----:|:---:|:---:|:----:|:---:|:----:|
-            | core_basic_window            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |
-            | shapes_colors_palette        |  ✘ |  ✔  |  ✘  |  ✔ |  ✘  |  ✔  |  ✔ |   ✘  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |
-            | text_format_text             |  ✘ |  ✘  |  ✘  |  ✘ |  ✘  |  ✘  |  ✘ |   ✘  |  ✔  |  ✘ |  ✔  |  ✔ |   ✔  |
+            | [EXAMPLE NAME]               | [C] |[CAT]|[INFO]|[PNG]|[WPNG]|[RES]|[MK] |[MKWEB]|[VCX]|[SOL]|[RDME]|[JS] |[WOUT]|[WMETA]|
+            |:-----------------------------|:---:|:---:|:----:|:---:|:----:|:---:|:---:|:-----:|:---:|:---:|:----:|:---:|:----:|:-----:|
+            | core_basic_window            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |   ✔  |
+            | shapes_colors_palette        |  ✘ |  ✔  |  ✘  |  ✔ |  ✘  |  ✔  |  ✔ |   ✘  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |   ✔  |
+            | text_format_text             |  ✘ |  ✘  |  ✘  |  ✘ |  ✘  |  ✘  |  ✘ |   ✘  |  ✔  |  ✘ |  ✔  |  ✔ |   ✔  |   ✔  |
             */
 
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
@@ -1061,14 +1096,15 @@ int main(int argc, char *argv[])
             repIndex += sprintf(report + repIndex, " - [SOL]   : Project not included in solution file\n");
             repIndex += sprintf(report + repIndex, " - [RDME]  : Not listed in README.md\n");
             repIndex += sprintf(report + repIndex, " - [JS]    : Not listed in Web (examples.js)\n");
-            repIndex += sprintf(report + repIndex, " - [WOUT]  : Missing Web build (.html/.data/.wasm/.js)\n```\n");
+            repIndex += sprintf(report + repIndex, " - [WOUT]  : Missing Web build (.html/.data/.wasm/.js)\n");
+            repIndex += sprintf(report + repIndex, " - [WMETA] : Missing Web .html example metadata\n```\n");
 
-            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|\n");
-            repIndex += sprintf(report + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|\n");
+            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|[WMETA]|\n");
+            repIndex += sprintf(report + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|:-----:|\n");
 
             for (int i = 0; i < exCollectionCount; i++)
             {
-                repIndex += sprintf(report + repIndex, "| %-32s |  %s |  %s  |  %s  |  %s |  %s  |  %s  |  %s |   %s  |  %s  |  %s |  %s  |  %s |  %s  |\n",
+                repIndex += sprintf(report + repIndex, "| %-32s |  %s |  %s  |  %s  |  %s |  %s  |  %s  |  %s |   %s  |  %s  |  %s |  %s  |  %s |  %s  |  %s  |\n",
                     exCollection[i].name,
                     (exCollection[i].status & VALID_MISSING_C)? "❌" : "✔",
                     (exCollection[i].status & VALID_INVALID_CATEGORY)? "❌" : "✔",
@@ -1082,7 +1118,8 @@ int main(int argc, char *argv[])
                     (exCollection[i].status & VALID_NOT_IN_VCXSOL)? "❌" : "✔",
                     (exCollection[i].status & VALID_NOT_IN_README)? "❌" : "✔",
                     (exCollection[i].status & VALID_NOT_IN_JS)? "❌" : "✔",
-                    (exCollection[i].status & VALID_MISSING_WEB_OUTPUT)? "❌" : "✔");
+                    (exCollection[i].status & VALID_MISSING_WEB_OUTPUT)? "❌" : "✔",
+                    (exCollection[i].status & VALID_MISSING_WEB_METADATA)? "❌" : "✔");
             }
 
             SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report.md"), report);
@@ -1109,16 +1146,17 @@ int main(int argc, char *argv[])
             repIndex += sprintf(reportIssues + repIndex, " - [SOL]   : Project not included in solution file\n");
             repIndex += sprintf(reportIssues + repIndex, " - [RDME]  : Not listed in README.md\n");
             repIndex += sprintf(reportIssues + repIndex, " - [JS]    : Not listed in Web (examples.js)\n");
-            repIndex += sprintf(reportIssues + repIndex, " - [WOUT]  : Missing Web build (.html/.data/.wasm/.js)\n```\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [WOUT]  : Missing Web build (.html/.data/.wasm/.js)\n");
+            repIndex += sprintf(reportIssues + repIndex, " - [WMETA] : Missing Web .html example metadata\n```\n");
 
-            repIndex += sprintf(reportIssues + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|\n");
-            repIndex += sprintf(reportIssues + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|\n");
+            repIndex += sprintf(reportIssues + repIndex, "| **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|[WMETA]|\n");
+            repIndex += sprintf(reportIssues + repIndex, "|:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|:-----:|\n");
 
             for (int i = 0; i < exCollectionCount; i++)
             {
                 if (exCollection[i].status > 0)
                 {
-                    repIndex += sprintf(reportIssues + repIndex, "| %-32s |  %s |  %s  |  %s  |  %s |  %s  |  %s  |  %s |   %s  |  %s  |  %s |  %s  |  %s |  %s  |\n",
+                    repIndex += sprintf(reportIssues + repIndex, "| %-32s |  %s |  %s  |  %s  |  %s |  %s  |  %s  |  %s |   %s  |  %s  |  %s |  %s  |  %s |  %s  |  %s  |\n",
                         exCollection[i].name,
                         (exCollection[i].status & VALID_MISSING_C)? "❌" : "✔",
                         (exCollection[i].status & VALID_INVALID_CATEGORY)? "❌" : "✔",
@@ -1132,7 +1170,8 @@ int main(int argc, char *argv[])
                         (exCollection[i].status & VALID_NOT_IN_VCXSOL)? "❌" : "✔",
                         (exCollection[i].status & VALID_NOT_IN_README)? "❌" : "✔",
                         (exCollection[i].status & VALID_NOT_IN_JS)? "❌" : "✔",
-                        (exCollection[i].status & VALID_MISSING_WEB_OUTPUT)? "❌" : "✔");
+                        (exCollection[i].status & VALID_MISSING_WEB_OUTPUT)? "❌" : "✔",
+                        (exCollection[i].status & VALID_MISSING_WEB_METADATA)? "❌" : "✔");
                 }
             }
 
@@ -2097,7 +2136,7 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
 
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
-const char *GenerateUUIDv4(void)
+static const char *GenerateUUIDv4(void)
 {
     static char uuid[38] = { 0 };
     memset(uuid, 0, 38);
@@ -2119,4 +2158,69 @@ const char *GenerateUUIDv4(void)
         bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]);
 
     return uuid;
+}
+
+// Update generated Web example .html file metadata
+static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
+{
+    if (FileExists(exHtmlPath) && IsFileExtension(exHtmlPath, ".html"))
+    {
+        char *fileText = LoadFileText(exHtmlPath);
+        char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
+
+        char *exText = NULL;                // Example code file, required to get description
+        char **lines = NULL;                // Pointers to example code lines
+        int lineCount = 0;                  // Example code line count
+        int lineLength = 0;                 // Description line length
+
+        char exName[64] = { 0 };            // Example name: fileName without extension
+        char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
+        char exDescription[256] = { 0 };    // Example description: example text line #3
+        char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
+
+        memset(exName, 0, 64);
+        memset(exTitle, 0, 64);
+        memset(exDescription, 0, 256);
+        memset(exCategory, 0, 16);
+        lineLength = 0;
+
+        // Get example name: replace underscore by spaces
+        strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
+        strcpy(exTitle, exName);
+        for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
+
+        // Get example category from exName: copy until first underscore
+        for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
+
+        // Get example description: copy line #3 from example file
+        exText = LoadFileText(exFilePath);
+        lines = LoadTextLines(exText, &lineCount);
+        for (int i = 0; (lines[2][i] != '\n') && (lines[2][i] != '\r'); i++) lineLength++;
+        strncpy(exDescription, lines[2] + 4, lineLength - 4);
+        UnloadFileText(exText);
+
+        // Update example.html required text
+        fileTextUpdated[0] = TextReplace(fileText, "raylib web game", exTitle);
+        fileTextUpdated[1] = TextReplace(fileTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
+        fileTextUpdated[2] = TextReplace(fileTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
+            TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
+        fileTextUpdated[3] = TextReplace(fileTextUpdated[2], "https://www.raylib.com/games.html",
+            TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
+        fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
+        fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
+            TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
+
+        SaveFileText(exHtmlPath, fileTextUpdated[5]);
+
+        //LOG("INFO: [%s] Updated successfully\n",files.paths[i]);
+        //LOG("      - Name / Title: %s / %s\n", exName, exTitle);
+        //LOG("      - Description:  %s\n", exDescription);
+        //LOG("      - URL:          %s\n", TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
+        //LOG("      - URL Source:   %s\n", TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
+
+        for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
+
+        UnloadTextLines(lines);
+        UnloadFileText(fileText);
+    }
 }
