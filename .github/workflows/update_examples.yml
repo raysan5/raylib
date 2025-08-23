@@ -46,8 +46,8 @@ jobs:
         set REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="examples/examples_template.png"
         set REXM_EXAMPLES_COLLECTION_FILE_PATH="examples/examples_list.txt"
         set REXM_EXAMPLES_VS2022_SLN_FILE="projects/VS2022/raylib.sln"
-        set EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-main"
-        .\tools\rexm\VS2022\build\rexm\bin\x64\Release\rexm.exe update
+        #set EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-main"
+        .\tools\rexm\VS2022\build\rexm\bin\x64\Release\rexm.exe build core_basic_window
         cd ../..
       shell: cmd
   
