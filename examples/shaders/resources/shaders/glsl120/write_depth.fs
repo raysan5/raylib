@@ -1,4 +1,4 @@
-#version 100
+#version 120
 
 #extension GL_EXT_frag_depth : enable          
 
