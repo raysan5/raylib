@@ -1202,7 +1202,7 @@ int main(int argc, char *argv[])
                 #if defined(__linux__) || defined(__APPLE__)
                     make = "/usr/bin/make";
                 #endif
-                TraceLog(LOG_INFO, "Using make: %s", make)
+                TraceLog(LOG_INFO, "Using make: %s", make);
                 ChangeDirectory(exBasePath);
                 system(TextFormat("%s %s/%s PLATFORM=PLATFORM_DESKTOP -B", make, exCategory, exName));
 
