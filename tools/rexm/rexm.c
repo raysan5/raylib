@@ -833,7 +833,7 @@ int main(int argc, char *argv[])
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
 
-            // TODO: Validate: Duplicate entries in collection list?
+            // TODO: Validate: Check duplicate entries in collection list?
 
             // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
@@ -1974,7 +1974,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
                     strncpy(buffer, start, len);
                     buffer[len] = '\0';
 
-                    // TODO: Make sure buffer is a path (and not a Tracelog() text)
+                    // TODO: Make sure buffer is a path (and not a TraceLog() string)
 
                     // Check for known extensions
                     for (int i = 0; i < extCount; i++)
