@@ -599,7 +599,6 @@ TEXT = \
     text/text_raylib_fonts \
     text/text_rectangle_bounds \
     text/text_unicode \
-    text/text_unicode_ranges \
     text/text_writing_anim
 
 MODELS = \
