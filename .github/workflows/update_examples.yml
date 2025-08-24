@@ -65,23 +65,6 @@ jobs:
         git push
       shell: bash
 
-    - name: Build examples
-      if: false
-      run: |
-        cd "${{ github.workspace }}/src"
-        make clean
-        make PLATFORM=PLATFORM_WEB
-        cd ../examples
-        make PLATFORM=PLATFORM_WEB
-        for category in core shapes textures models shaders text audio; do
-          cd $category
-            target_dir="${{ github.workspace }}/raylib.com/examples/$category/"
-            find . -type f -name "*.wasm" -exec cp {} "$target_dir" \;
-            find . -type f -name "*.html" -exec cp {} "$target_dir" \;
-            find . -type f -name "*.js"   -exec cp {} "$target_dir" \;
-            find . -type f -name "*.data" -exec cp {} "$target_dir" \;
-          cd ..
-        done
     - name: Push changes to raylib.com repo
       run: |
         cd raylib.com
