@@ -1198,11 +1198,15 @@ int main(int argc, char *argv[])
                 //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
                 //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                 //putenv("MAKE=mingw32-make");
+                char *make = "make";
+                #if defined(__linux__) || defined(__APPLE__)
+                    make = "/usr/bin/make";
+                #endif
                 ChangeDirectory(exBasePath);
-                system(TextFormat("make %s/%s PLATFORM=PLATFORM_DESKTOP -B", exCategory, exName));
+                system(TextFormat("%s %s/%s PLATFORM=PLATFORM_DESKTOP -B", make, exCategory, exName));
 
                 // Build example for PLATFORM_WEB
-                system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
+                system(TextFormat("%s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", make, exCategory, exName));
                 //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
                 // Update generated .html metadata
