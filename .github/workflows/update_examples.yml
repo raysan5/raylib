@@ -40,6 +40,8 @@ jobs:
         cd "${{ github.workspace }}/src"
         make
         sudo make install
+        make clean
+        make PLATFORM=PLATFORM_WEB
         cd ../tools/rexm/
         clang rexm.c -lraylib -lc -lm -o rexm
         export REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
