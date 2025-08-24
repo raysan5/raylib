@@ -55,6 +55,7 @@ jobs:
       shell: bash
 
     - name: Commit changes to raylib repo
+      if: github.event_name == 'push'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -66,6 +67,7 @@ jobs:
       shell: bash
 
     - name: Push changes to raylib.com repo
+      if: github.event_name == 'push'
       run: |
         cd raylib.com
         git add -A
