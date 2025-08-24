@@ -116,3 +116,6 @@ tools/parser/raylib_parser
 tools/rexm/rexm.exe
 tools/rexm/rexm
 
+# CI
+emsdk-cache/
+raylib.com/
