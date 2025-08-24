@@ -374,8 +374,10 @@ int main(int argc, char *argv[])
             {
                 // Verify example exists in collection to be removed
                 char *exColInfo = LoadFileText(exCollectionFilePath);
-                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                if ((TextFindIndex(exColInfo, argv[2]) != -1) && // Example in the collection
+                    (TextFindIndex(exName, "_") != -1)) // Valid example name
                 {
+
                     strcpy(exName, argv[2]); // Register example name for removal
                     strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                     opCode = OP_BUILD;
@@ -571,7 +573,7 @@ int main(int argc, char *argv[])
             //putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
             //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
+            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
 
             // Update generated .html metadata
@@ -654,7 +656,7 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
 
             // Update generated .html metadata
@@ -927,11 +929,11 @@ int main(int argc, char *argv[])
                 {
                     char *exHtmlText = LoadFileText(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
 
-                    if ((TextFindIndex(exHtmlText, "raylib web game") > -1) ||     // title
+                    if ((TextFindIndex(exHtmlText, "raylib web game") > -1) || // title
                         (TextFindIndex(exHtmlText, "New raylib web videogame, developed using raylib videogames library") > -1) || // description
                         (TextFindIndex(exHtmlText, "https://www.raylib.com/common/raylib_logo.png") > -1) || // image
                         (TextFindIndex(exHtmlText, "https://www.raylib.com/games.html") > -1) || // url
-                        (TextFindIndex(exHtmlText, "https://github.com/raysan5/raylib") > -1)) // source code button
+                        (TextFindIndex(exHtmlText, "https://github.com/raysan5/raylib';") > -1)) // source code button
                     {
                         exInfo->status |= VALID_MISSING_WEB_METADATA;
                     }
@@ -1019,17 +1021,17 @@ int main(int argc, char *argv[])
                         if ((strcmp(exInfo->category, "others") != 0) && // Skipping "others" category
                             ((exInfo->status & VALID_MISSING_WEB_OUTPUT) || (exInfo->status & VALID_MISSING_WEB_METADATA)))
                         {
-                            system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                            // Build example for PLATFORM_WEB
+                            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
                             // Update generated .html metadata
                             char exHtmlPath[512] = { 0 };
-                            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
-                            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name)); // WARNING: Cache path for saving
+                            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
 
                             // Copy results to web side
-                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
-                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(exHtmlPath, TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
                                 TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
@@ -1038,6 +1040,7 @@ int main(int argc, char *argv[])
                                 TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name));
 
                             exInfo->status &= ~VALID_MISSING_WEB_OUTPUT;
+                            exInfo->status &= ~VALID_MISSING_WEB_METADATA;
                         }
                     }
                 }
@@ -1198,11 +1201,11 @@ int main(int argc, char *argv[])
                 //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
                 //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                 //putenv("MAKE=mingw32-make");
-                ChangeDirectory(exBasePath);
-                system(TextFormat("make %s/%s PLATFORM=PLATFORM_DESKTOP -B", exCategory, exName));
+                //ChangeDirectory(exBasePath);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 
                 // Build example for PLATFORM_WEB
-                system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
+                system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
                 //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
                 // Update generated .html metadata
@@ -1752,7 +1755,7 @@ static int FileMove(const char *srcPath, const char *dstPath)
 static char **LoadTextLines(const char *text, int *count)
 {
     #define MAX_TEXT_LINES      512
-    #define MAX_TEXT_LINE_LEN   256
+    #define MAX_TEXT_LINE_LEN   512
 
     char **lines = (char **)RL_CALLOC(MAX_TEXT_LINES, sizeof(char *));
     for (int i = 0; i < MAX_TEXT_LINES; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXT_LINE_LEN, 1);
@@ -1761,7 +1764,7 @@ static char **LoadTextLines(const char *text, int *count)
 
     for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXT_LINES); i++)
     {
-        if (text[i] == '\n')
+        if ((text[i] == '\n') || (len == (MAX_TEXT_LINE_LEN - 1)))
         {
             strncpy(lines[k], &text[i - len], len);
             len = 0;
@@ -2171,10 +2174,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char *fileText = LoadFileText(exHtmlPath);
         char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
 
-        char *exText = NULL;                // Example code file, required to get description
-        char **lines = NULL;                // Pointers to example code lines
-        int lineCount = 0;                  // Example code line count
-
         char exName[64] = { 0 };            // Example name: fileName without extension
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
         char exDescription[256] = { 0 };    // Example description: example text line #3
@@ -2194,8 +2193,9 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
 
         // Get example description: copy line #3 from example file
-        exText = LoadFileText(exFilePath);
-        lines = LoadTextLines(exText, &lineCount);
+        char *exText = LoadFileText(exFilePath);
+        int lineCount = 0;
+        char **lines = LoadTextLines(exText, &lineCount);
         int lineLength = (int)strlen(lines[2]);
         strncpy(exDescription, lines[2] + 4, lineLength - 4);
         UnloadTextLines(lines);
