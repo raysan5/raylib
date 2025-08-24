@@ -1019,7 +1019,7 @@ int main(int argc, char *argv[])
                         if ((strcmp(exInfo->category, "others") != 0) && // Skipping "others" category
                             ((exInfo->status & VALID_MISSING_WEB_OUTPUT) || (exInfo->status & VALID_MISSING_WEB_METADATA)))
                         {
-                            system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exInfo->category, exInfo->name));
+                            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                             //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
 
                             // Update generated .html metadata
