@@ -99,7 +99,7 @@ const config_h_flags = outer: {
     break :outer flags[0..i].*;
 };
 
-fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
+pub fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     var raylib_flags_arr: std.ArrayList([]const u8) = .empty;
     defer raylib_flags_arr.deinit(b.allocator);
 
