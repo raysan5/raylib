@@ -43,7 +43,7 @@ jobs:
         make clean
         make PLATFORM=PLATFORM_WEB
         cd ../tools/rexm/
-        clang rexm.c -lraylib -lc -lm -o rexm
+        make
         export REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
         export REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/raylib.com/examples"
         export REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}/examples/examples_template.c"
