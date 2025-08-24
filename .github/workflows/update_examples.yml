@@ -4,14 +4,10 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/update_examples.yml'
       - 'examples/**'
-      - 'tools/rexm/**'
   pull_request:
     paths:
-      - '.github/workflows/update_examples.yml'
       - 'examples/**'
-      - 'tools/rexm/**'
 
 jobs:
   build:
@@ -27,18 +23,18 @@ jobs:
         version: 'latest'
         actions-cache-folder: 'emsdk-cache'
 
-    - name: Clone raylib.com repo
+    - name: Clone raylib.com repo to update files
       run: |
-        git clone https://x-access-token:${{ secrets.RAYLIB_DOT_COM_REPO_TOKEN }}@github.com/$GITHUB_REPOSITORY_OWNER/raylib.com.git
+        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/raysan5/raylib.com.git
       shell: bash
 
-    - name: Build and run rexm tool (GNU Makefile)
-      # rexm should update all required files in raylib and even raylib.com repo,
-      # but not sure if it can do that from an Action, maybe it requires manual copy 
+    - name: Build and run rexm tool (requires GNU Makefile)
+      # "rexm update" validates and updates all required examples in raylib and even raylib.com repos,
+      # note that it calls examples/Makefile.Web internally, so it requires [make] tool available
       run: |
         sudo apt-get update && sudo apt-get install -y libopengl0 libglu1-mesa libx11-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev
         cd "${{ github.workspace }}/src"
-        make
+        make PLATFORM=PLATFORM_DESKTOP
         sudo make install
         make clean
         make PLATFORM=PLATFORM_WEB
@@ -54,7 +50,7 @@ jobs:
         ./rexm update
       shell: bash
 
-    - name: Commit changes to raylib repo
+    - name: Commit changes to raylib repo (DISABLED)
       if: github.event_name == 'push' && false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,7 +62,7 @@ jobs:
         git push
       shell: bash
 
-    - name: Push changes to raylib.com repo
+    - name: Push changes to raylib.com repo (DISABLED)
       if: github.event_name == 'push' && false
       run: |
         cd raylib.com
