@@ -656,9 +656,12 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
-            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
-
+#if defined(_WIN32)
+            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+#else
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+#endif
             // Update generated .html metadata
             char exHtmlPath[512] = { 0 };
             strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
