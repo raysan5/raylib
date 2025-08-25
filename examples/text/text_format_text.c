@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - text formatting");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - text formating");
 
     int score = 100020;
     int hiscore = 200450;
