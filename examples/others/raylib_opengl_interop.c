@@ -71,7 +71,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - point particles");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - OpenGL interoperatibility");
 
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/point_particle.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/point_particle.fs", GLSL_VERSION));

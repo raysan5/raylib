@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - unicode emojis
+*   raylib [text] example - unicode emojis emojis
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -163,7 +163,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode emojis");
 
     // Load the font resources
     // NOTE: fontAsian is for asian languages,

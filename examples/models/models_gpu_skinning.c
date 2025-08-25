@@ -37,7 +37,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - GPU skinning");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - gpu skinning");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

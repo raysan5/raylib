@@ -29,7 +29,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - highdpi");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - high dpi");
     SetWindowMinSize(450, 450);
 
     int logicalGridDescY = 120;
