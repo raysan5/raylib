@@ -570,12 +570,15 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
             //------------------------------------------------------------------------------------------------
+            // WARNING 1: EMSDK_PATH must be set to proper location when calling from GitHub Actions
+            // WARNING 2: raylib.a and raylib.web.a must be available when compiling locally
+#if defined(_WIN32)
             //putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
-            //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
-
+            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#else
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#endif
             // Update generated .html metadata
             char exHtmlPath[512] = { 0 };
             strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
@@ -1025,8 +1028,12 @@ int main(int argc, char *argv[])
                             ((exInfo->status & VALID_MISSING_WEB_OUTPUT) || (exInfo->status & VALID_MISSING_WEB_METADATA)))
                         {
                             // Build example for PLATFORM_WEB
-                            system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
-                            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+                        #if defined(_WIN32)
+                            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                        #else
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                        #endif
 
                             // Update generated .html metadata
                             char exHtmlPath[512] = { 0 };
@@ -1201,15 +1208,23 @@ int main(int argc, char *argv[])
             if (strcmp(exCategory, "others") != 0) // Skipping "others" category
             {
                 // Build example for PLATFORM_DESKTOP
+            #if defined(_WIN32)
                 //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-                //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                 //putenv("MAKE=mingw32-make");
                 //ChangeDirectory(exBasePath);
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+            #else       
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+            #endif
 
                 // Build example for PLATFORM_WEB
-                system(TextFormat("make -C %s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-                //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+            #if defined(_WIN32)
+                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            #else
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            #endif 
 
                 // Update generated .html metadata
                 char exHtmlPath[512] = { 0 };
