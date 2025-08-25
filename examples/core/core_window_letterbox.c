@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - window scale letterbox (and virtual mouse)
+*   raylib [core] example - window scale letterbox
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

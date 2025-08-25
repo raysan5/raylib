@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Initialize 3d camera mode
+*   raylib [core] example - 3d camera mode
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

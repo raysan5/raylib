@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Show the difference between perspective and orthographic projection
+*   raylib [models] example - orthographic projection
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

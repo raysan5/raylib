@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Skybox loading and drawing
+*   raylib [models] example - skybox rendering
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

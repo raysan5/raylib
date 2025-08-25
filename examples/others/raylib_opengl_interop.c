@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - OpenGL point particle system
+*   raylib [others] example - OpenGL interoperatibility
 *
 *   Example complexity rating: [★★★★] 4/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - draw texture along segmented curve
+*   raylib [textures] example - textured curve
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

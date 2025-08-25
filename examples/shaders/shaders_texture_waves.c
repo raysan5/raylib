@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Texture Waves
+*   raylib [shaders] example - texture waves
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

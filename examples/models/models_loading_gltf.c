@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - loading gltf with animations
+*   raylib [models] example - loading gltf animations
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

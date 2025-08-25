@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load 3d model with animations and play them
+*   raylib [models] example - model animation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

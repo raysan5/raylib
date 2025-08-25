@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Mouse input
+*   raylib [core] example - mouse input
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

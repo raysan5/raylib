@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - HighDPI
+*   raylib [core] example - high dpi
 *
 *   Example complexity rating: [★☆☆☆] e/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - text formating
+*   raylib [text] example - text formatting
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - text formating");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - text formatting");
 
     int score = 100020;
     int hiscore = 200450;

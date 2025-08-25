@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [easings] example - Easings Testbed
+*   raylib [easings] example - easings testbed
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *

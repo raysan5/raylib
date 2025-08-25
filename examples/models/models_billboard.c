@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Drawing billboards
+*   raylib [models] example - billboard render
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

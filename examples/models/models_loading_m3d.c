@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load models M3D
+*   raylib [models] example - model loading m3d
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

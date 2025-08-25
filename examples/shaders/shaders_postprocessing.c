@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Apply a postprocessing shader to a scene
+*   raylib [shaders] example - postprocessing shader
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

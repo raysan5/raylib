@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw circle sector (with gui options)
+*   raylib [shapes] example - draw circle sector
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

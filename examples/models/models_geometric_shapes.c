@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Draw some basic geometric shapes (cube, sphere, cylinder...)
+*   raylib [models] example - geometric shapes
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Heightmap loading and drawing
+*   raylib [models] example - heightmap terrain
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

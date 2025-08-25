@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - drawing 3d text
+*   raylib [text] example - 3d text drawing
 *
 *   Example complexity rating: [★★★★] 4/4
 *

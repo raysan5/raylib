@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Gamepad input
+*   raylib [core] example - gamepad input
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

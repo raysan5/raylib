@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Custom logging
+*   raylib [core] example - custom logging
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

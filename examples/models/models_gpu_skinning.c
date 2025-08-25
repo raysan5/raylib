@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Doing skinning on the gpu using a vertex shader
+*   raylib [models] example - gpu skinning
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

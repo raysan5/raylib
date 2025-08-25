@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - texture tiled drawing
+*   raylib [textures] example - textures tiled drawing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

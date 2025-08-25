@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Vertex displacement
+*   raylib [shaders] example - vertex displacement
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

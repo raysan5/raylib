@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Cubicmap loading and drawing
+*   raylib [models] example - cubicmap loading and drawing
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
