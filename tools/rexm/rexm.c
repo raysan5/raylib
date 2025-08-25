@@ -1714,7 +1714,7 @@ static int FileRename(const char *fileName, const char *fileRename)
 
     if (FileExists(fileName))
     {
-        result = rename(fileName, TextFormat("%s/%s", GetDirectoryPath(fileName), fileRename));
+        result = rename(fileName, fileRename);
     }
     else result = -1;
 
