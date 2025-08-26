@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Texture source and destination rectangles
+*   raylib [textures] example - texture source and destination rectangles
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture source and destination rectangles");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 

@@ -7,8 +7,8 @@
 *           rtext module is included in the build
 *
 *       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText()
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required
 *
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
@@ -19,7 +19,7 @@
 *       #define SUPPORT_FONT_ATLAS_WHITE_REC
 *           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
 *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-*           drawing text and shapes with a single draw call [SetShapesTexture()].
+*           drawing text and shapes with a single draw call [SetShapesTexture()]
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
@@ -93,6 +93,9 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
+    #define STBTT_malloc(x,u) ((void)(u),RL_MALLOC(x))
+    #define STBTT_free(x,u) ((void)(u),RL_FREE(x))
+
     #define STBTT_STATIC
     #define STB_TRUETYPE_IMPLEMENTATION
     #include "external/stb_truetype.h"      // Required for: ttf font data reading
@@ -130,6 +133,7 @@ extern bool isGpuReady;
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
 #endif
+static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -145,7 +149,6 @@ static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode
 #if defined(SUPPORT_FILEFORMAT_BDF)
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
-static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
@@ -160,6 +163,10 @@ extern void UnloadFontDefault(void);
 extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
+
+    // check to see if we have allready allocated the font for an image, and if we don't need to upload, then just return
+    if (defaultFont.glyphs != NULL && !isGpuReady)
+        return;
 
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
@@ -249,7 +256,7 @@ extern void LoadFontDefault(void)
             }
             else
             {
-                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xFF;
+                ((unsigned char *)imFont.data)[(i + j)*sizeof(short)] = 0xff;
                 ((unsigned char *)imFont.data)[(i + j)*sizeof(short) + 1] = 0x00;
             }
         }
@@ -257,7 +264,18 @@ extern void LoadFontDefault(void)
         counter++;
     }
 
-    if (isGpuReady) defaultFont.texture = LoadTextureFromImage(imFont);
+    if (isGpuReady)
+    {
+        defaultFont.texture = LoadTextureFromImage(imFont);
+
+        // we have already loaded the font glyph data an image, and the GPU is ready, we are done
+        // if we don't do this, we will leak memory by reallocating the glyphs and rects
+        if (defaultFont.glyphs != NULL)
+        {
+            UnloadImage(imFont);
+            return;
+        }
+    }
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, glyphCount
     //------------------------------------------------------------------------------
@@ -282,7 +300,7 @@ extern void LoadFontDefault(void)
 
         testPosX += (int)(defaultFont.recs[i].width + (float)charsDivisor);
 
-        if (testPosX >= defaultFont.texture.width)
+        if (testPosX >= imFont.width)
         {
             currentLine++;
             currentPosX = 2*charsDivisor + charsWidth[i];
@@ -316,6 +334,9 @@ extern void UnloadFontDefault(void)
     if (isGpuReady) UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
     RL_FREE(defaultFont.recs);
+    defaultFont.glyphCount = 0;
+    defaultFont.glyphs = NULL;
+    defaultFont.recs = NULL;
 }
 #endif      // SUPPORT_DEFAULT_FONT
 
@@ -373,7 +394,7 @@ Font LoadFont(const char *fileName)
         else
         {
             SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
-            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", FONT_TTF_DEFAULT_SIZE, FONT_TTF_DEFAULT_NUMCHARS);
+            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
         }
     }
 
@@ -829,7 +850,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 {
                     for (int j = i + 1; j < glyphCount; j++)
                     {
-                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
+                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (0x%02x)", glyphs[j].value);
                         // Make sure remaining recs contain valid data
                         recs[j].x = 0;
                         recs[j].y = 0;
@@ -897,7 +918,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                     }
                 }
             }
-            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", i);
+            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (0x%02x)", glyphs[i].value);
         }
 
         RL_FREE(rects);
@@ -1075,7 +1096,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "    Image imFont = { fontImageData_%s, %i, %i, 1, %i };\n\n", styleName, image.width, image.height, image.format);
 #endif
     byteCount += sprintf(txtData + byteCount, "    // Load texture from image\n");
-    byteCount += sprintf(txtData + byteCount, "    if (isGpuReady) font.texture = LoadTextureFromImage(imFont);\n");
+    byteCount += sprintf(txtData + byteCount, "    font.texture = LoadTextureFromImage(imFont);\n");
 #if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
     byteCount += sprintf(txtData + byteCount, "    UnloadImage(imFont);  // Uncompressed data can be unloaded from memory\n\n");
 #endif
@@ -1560,7 +1581,7 @@ const char *TextSubtext(const char *text, int position, int length)
 }
 
 // Replace text string
-// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
+// REQUIRES: strstr(), strncpy(), strcpy()
 // WARNING: Allocated memory must be manually freed
 char *TextReplace(const char *text, const char *replace, const char *by)
 {

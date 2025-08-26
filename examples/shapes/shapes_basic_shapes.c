@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Draw basic shapes 2d (rectangle, circle, line...)
+*   raylib [shapes] example - basic shapes drawing
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -52,6 +52,8 @@ int main(void)
             DrawCircle(screenWidth/5, 120, 35, DARKBLUE);
             DrawCircleGradient(screenWidth/5, 220, 60, GREEN, SKYBLUE);
             DrawCircleLines(screenWidth/5, 340, 80, DARKBLUE);
+            DrawEllipse(screenWidth/5, 120, 25, 20, YELLOW);
+            DrawEllipseLines(screenWidth/5, 120, 30, 25, YELLOW);
 
             // Rectangle shapes and lines
             DrawRectangle(screenWidth/4*2 - 60, 100, 120, 60, RED);

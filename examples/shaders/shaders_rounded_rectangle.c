@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Rounded Rectangle
+*   raylib [shaders] example - rounded rectangle
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -24,9 +24,8 @@
 #endif
 
 //------------------------------------------------------------------------------------
-// Declare custom Structs
+// Structs definition
 //------------------------------------------------------------------------------------
-
 // Rounded rectangle data
 typedef struct {
     Vector4 cornerRadius; // Individual corner radius (top-left, top-right, bottom-left, bottom-right)
@@ -54,7 +53,6 @@ typedef struct {
 //------------------------------------------------------------------------------------
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
-
 // Create a rounded rectangle and set uniform locations
 static RoundedRectangle CreateRoundedRectangle(Vector4 cornerRadius, float shadowRadius, Vector2 shadowOffset, float shadowScale, float borderThickness, Shader shader);
 
@@ -71,11 +69,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    const Color rectangleColor = BLUE;
-    const Color shadowColor = DARKBLUE;
-    const Color borderColor = SKYBLUE;
-
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Rounded Rectangle");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rounded rectangle");
 
     // Load the shader
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base.vs", GLSL_VERSION),
@@ -94,6 +88,10 @@ int main(void)
     // Update shader uniforms
     UpdateRoundedRectangle(roundedRectangle, shader);
 
+    const Color rectangleColor = BLUE;
+    const Color shadowColor = DARKBLUE;
+    const Color borderColor = SKYBLUE;
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -108,8 +106,8 @@ int main(void)
 
             // Draw rectangle box with rounded corners using shader
             Rectangle rec = { 50, 70, 110, 60 };
-            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
-            DrawText("Rounded rectangle", rec.x - 20, rec.y - 35, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 20, (int)rec.y - 20, (int)rec.width + 40, (int)rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle", (int)rec.x - 20, (int)rec.y - 35, 10, DARKGRAY);
 
             // Flip Y axis to match shader coordinate system
             rec.y = screenHeight - rec.y - rec.height;
@@ -124,12 +122,10 @@ int main(void)
                 DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-
-
             // Draw rectangle shadow using shader
             rec = (Rectangle){ 50, 200, 110, 60 };
-            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
-            DrawText("Rounded rectangle shadow", rec.x - 20, rec.y - 35, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 20, (int)rec.y - 20, (int)rec.width + 40, (int)rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle shadow", (int)rec.x - 20, (int)rec.y - 35, 10, DARKGRAY);
 
             rec.y = screenHeight - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
@@ -143,12 +139,10 @@ int main(void)
                 DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-
-
             // Draw rectangle's border using shader
             rec = (Rectangle){ 50, 330, 110, 60 };
-            DrawRectangleLines(rec.x - 20, rec.y - 20, rec.width + 40, rec.height + 40, DARKGRAY);
-            DrawText("Rounded rectangle border", rec.x - 20, rec.y - 35, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 20, (int)rec.y - 20, (int)rec.width + 40, (int)rec.height + 40, DARKGRAY);
+            DrawText("Rounded rectangle border", (int)rec.x - 20, (int)rec.y - 35, 10, DARKGRAY);
 
             rec.y = screenHeight - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);
@@ -162,12 +156,10 @@ int main(void)
                 DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-
-
             // Draw one more rectangle with all three colors
             rec = (Rectangle){ 240, 80, 500, 300 };
-            DrawRectangleLines(rec.x - 30, rec.y - 30, rec.width + 60, rec.height + 60, DARKGRAY);
-            DrawText("Rectangle with all three combined", rec.x - 30, rec.y - 45, 10, DARKGRAY);
+            DrawRectangleLines((int)rec.x - 30, (int)rec.y - 30, (int)rec.width + 60, (int)rec.height + 60, DARKGRAY);
+            DrawText("Rectangle with all three combined", (int)rec.x - 30, (int)rec.y - 45, 10, DARKGRAY);
 
             rec.y = screenHeight - rec.y - rec.height;
             SetShaderValue(shader, roundedRectangle.rectangleLoc, (float[]){ rec.x, rec.y, rec.width, rec.height }, SHADER_UNIFORM_VEC4);

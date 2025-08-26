@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Raw audio streaming
+*   raylib [audio] example - raw audio streaming
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -108,8 +108,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
-        // Sample mouse input.
         mousePosition = GetMousePosition();
 
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
@@ -125,7 +123,7 @@ int main(void)
         // Compute two cycles to allow the buffer padding, simplifying any modulation, resampling, etc.
         if (frequency != oldFrequency)
         {
-            // Compute wavelength. Limit size in both directions.
+            // Compute wavelength. Limit size in both directions
             //int oldWavelength = waveLength;
             waveLength = (int)(22050/frequency);
             if (waveLength > MAX_SAMPLES/2) waveLength = MAX_SAMPLES/2;

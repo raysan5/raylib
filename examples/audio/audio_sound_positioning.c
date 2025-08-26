@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Playing spatialized 3D sound
+*   raylib [audio] example - 3d sound positioning
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -15,40 +15,12 @@
 *
 ********************************************************************************************/
 
-#include <raylib.h>
-#include <raymath.h>
+#include "raylib.h"
 
-//------------------------------------------------------------------------------------
+#include "raymath.h"
+
 // Sound positioning function
-//------------------------------------------------------------------------------------
-static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist)
-{
-    // Calculate direction vector and distance between listener and sound source
-    Vector3 direction = Vector3Subtract(position, listener.position);
-    float distance = Vector3Length(direction);
-    
-    // Apply logarithmic distance attenuation and clamp between 0-1
-    float attenuation = 1.0f / (1.0f + (distance / maxDist));
-    attenuation = Clamp(attenuation, 0.0f, 1.0f);
-    
-    // Calculate normalized vectors for spatial positioning
-    Vector3 normalizedDirection = Vector3Normalize(direction);
-    Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));
-    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, listener.up));
-    
-    // Reduce volume for sounds behind the listener
-    float dotProduct = Vector3DotProduct(forward, normalizedDirection);
-    if (dotProduct < 0.0f) {
-        attenuation *= (1.0f + dotProduct * 0.5f);
-    }
-    
-    // Set stereo panning based on sound position relative to listener
-    float pan = 0.5f + 0.5f * Vector3DotProduct(normalizedDirection, right);
-    
-    // Apply final sound properties
-    SetSoundVolume(sound, attenuation);
-    SetSoundPan(sound, pan);
-}
+static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -57,11 +29,12 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(800, 600, "Quick Spatial Sound");
-    InitAudioDevice();
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
-    SetTargetFPS(60);
-    DisableCursor();
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - 3d sound positioning");
+
+    InitAudioDevice();
 
     Sound sound = LoadSound("resources/coin.wav");
 
@@ -70,7 +43,12 @@ int main(void)
         .target = (Vector3) { 0, 0, 0 },
         .up = (Vector3) { 0, 1, 0 },
         .fovy = 60,
+        .projection = CAMERA_PERSPECTIVE
     };
+
+    DisableCursor();
+
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -83,9 +61,9 @@ int main(void)
         float th = GetTime();
 
         Vector3 spherePos = {
-            .x = 5.0f * cosf(th),
+            .x = 5.0f*cosf(th),
             .y = 0.0f,
-            .z = 5.0f * sinf(th)
+            .z = 5.0f*sinf(th)
         };
 
         SetSoundPosition(camera, sound, spherePos, 20.0f);
@@ -95,14 +73,14 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        {
-            ClearBackground(BLACK);
+
+            ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
                 DrawGrid(10, 2);
                 DrawSphere(spherePos, 0.5f, RED);
             EndMode3D();
-        }
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -110,6 +88,36 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadSound(sound);
-    CloseAudioDevice();
-    CloseWindow();
+    CloseAudioDevice();     // Close audio device
+
+    CloseWindow();          // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+}
+
+// Sound positioning function
+static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist)
+{
+    // Calculate direction vector and distance between listener and sound source
+    Vector3 direction = Vector3Subtract(position, listener.position);
+    float distance = Vector3Length(direction);
+
+    // Apply logarithmic distance attenuation and clamp between 0-1
+    float attenuation = 1.0f/(1.0f + (distance/maxDist));
+    attenuation = Clamp(attenuation, 0.0f, 1.0f);
+
+    // Calculate normalized vectors for spatial positioning
+    Vector3 normalizedDirection = Vector3Normalize(direction);
+    Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));
+    Vector3 right = Vector3Normalize(Vector3CrossProduct(listener.up, forward));
+
+    // Reduce volume for sounds behind the listener
+    float dotProduct = Vector3DotProduct(forward, normalizedDirection);
+    if (dotProduct < 0.0f) attenuation *= (1.0f + dotProduct*0.5f);
+
+    // Set stereo panning based on sound position relative to listener
+    float pan = 0.5f + 0.5f*Vector3DotProduct(normalizedDirection, right);
+
+    // Apply final sound properties
+    SetSoundVolume(sound, attenuation);
+    SetSoundPan(sound, pan);
 }

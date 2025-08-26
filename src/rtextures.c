@@ -36,7 +36,7 @@
 *
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
-*                          NOTE: stb_image has been slightly modified to support Android platform.
+*                          NOTE: stb_image has been slightly modified to support Android platform
 *       stb_image_resize - Multiple image resize algorithms
 *
 *
@@ -169,10 +169,13 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
+    #define RL_GPUTEX_MALLOC RL_MALLOC
+    #define RL_GPUTEX_FREE RL_FREE
+    #define RL_GPUTEX_LOG(...) TRACELOG(LOG_WARNING, "IMAGE: " __VA_ARGS__)
+    #define RL_GPUTEX_SHOW_LOG_INFO
     #define RL_GPUTEX_IMPLEMENTATION
     #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
                                             // NOTE: Used to read compressed textures data (multiple formats support)
-
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic pop
     #endif
@@ -832,10 +835,11 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
 
     // Calculate how far the top-left pixel is along the gradient direction from the center of said gradient
     float startingPos = 0.5f - (cosDir*width/2) - (sinDir*height/2);
+
     // With directions that lie in the first or third quadrant (i.e. from top-left to
     // bottom-right or vice-versa), pixel (0, 0) is the farthest point on the gradient
     // (i.e. the pixel which should become one of the gradient's ends color); while for
-    // directions that lie in the second or fourth quadrant, that point is pixel (width, 0).
+    // directions that lie in the second or fourth quadrant, that point is pixel (width, 0)
     float maxPosValue = ((signbit(sinDir) != 0) == (signbit(cosDir) != 0))? fabsf(startingPos) : fabsf(startingPos + width*cosDir);
     for (int i = 0; i < width; i++)
     {
@@ -2101,8 +2105,8 @@ void ImageBlurGaussian(Image *image, int blurSize)
     Color *pixels = LoadImageColors(*image);
 
     // Loop switches between pixelsCopy1 and pixelsCopy2
-    Vector4 *pixelsCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *pixelsCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *pixelsCopy1 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *pixelsCopy2 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
 
     for (int i = 0; i < (image->height*image->width); i++)
     {
@@ -2216,9 +2220,9 @@ void ImageBlurGaussian(Image *image, int blurSize)
         else if (pixelsCopy1[i].w <= 255.0f)
         {
             float alpha = (float)pixelsCopy1[i].w/255.0f;
-            pixels[i].r = (unsigned char)((float)pixelsCopy1[i].x/alpha);
-            pixels[i].g = (unsigned char)((float)pixelsCopy1[i].y/alpha);
-            pixels[i].b = (unsigned char)((float)pixelsCopy1[i].z/alpha);
+            pixels[i].r = (unsigned char)fminf((float)pixelsCopy1[i].x/alpha, 255.0);
+            pixels[i].g = (unsigned char)fminf((float)pixelsCopy1[i].y/alpha, 255.0);
+            pixels[i].b = (unsigned char)fminf((float)pixelsCopy1[i].z/alpha, 255.0);
             pixels[i].a = (unsigned char) pixelsCopy1[i].w;
         }
     }
@@ -2250,8 +2254,8 @@ void ImageKernelConvolution(Image *image, const float *kernel, int kernelSize)
 
     Color *pixels = LoadImageColors(*image);
 
-    Vector4 *imageCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *temp = RL_MALLOC(kernelSize*sizeof(Vector4));
+    Vector4 *imageCopy2 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *temp = (Vector4 *)RL_MALLOC(kernelSize*sizeof(Vector4));
 
     for (int i = 0; i < kernelSize; i++)
     {
@@ -2926,7 +2930,16 @@ void ImageColorReplace(Image *image, Color color, Color replace)
     image->data = pixels;
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-    ImageFormat(image, format);
+    // Only convert back to original format if it supported alpha
+    if ((format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_R5G6B5) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
+        (format == PIXELFORMAT_UNCOMPRESSED_R16G16B16) ||
+        (format == PIXELFORMAT_COMPRESSED_DXT1_RGB) ||
+        (format == PIXELFORMAT_COMPRESSED_ETC1_RGB) ||
+        (format == PIXELFORMAT_COMPRESSED_ETC2_RGB) ||
+        (format == PIXELFORMAT_COMPRESSED_PVRT_RGB)) ImageFormat(image, format);
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
@@ -3564,34 +3577,43 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     int dx = x2 - x1;
     int dy = y2 - y1;
 
-    // Draw the main line between (x1, y1) and (x2, y2)
-    ImageDrawLine(dst, x1, y1, x2, y2, color);
-
     // Determine if the line is more horizontal or vertical
     if ((dx != 0) && (abs(dy/dx) < 1))
     {
         // Line is more horizontal
-        // Calculate half the width of the line
-        int wy = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dx));
 
-        // Draw additional lines above and below the main line
-        for (int i = 1; i <= wy; i++)
+        // How many additional lines to draw
+        int wy = thick - 1;
+
+        // Draw the main line and lower half
+        for (int i = 0; i <= ((wy+1)/2); i++)
         {
-            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color); // Draw above the main line
-            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color); // Draw below the main line
+            ImageDrawLine(dst, x1, y1 + i, x2, y2 + i, color);
+        }
+
+        // Draw the upper half
+        for (int i = 1; i <= (wy/2); i++)
+        {
+            ImageDrawLine(dst, x1, y1 - i, x2, y2 - i, color);
         }
     }
     else if (dy != 0)
     {
         // Line is more vertical or perfectly horizontal
-        // Calculate half the width of the line
-        int wx = (thick - 1)*(int)sqrtf((float)(dx*dx + dy*dy))/(2*abs(dy));
 
-        // Draw additional lines to the left and right of the main line
-        for (int i = 1; i <= wx; i++)
+        // How many additional lines to draw
+        int wx = thick - 1;
+
+        //Draw the main line and right half
+        for (int i = 0; i <= ((wx+1)/2); i++)
         {
-            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color); // Draw left of the main line
-            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color); // Draw right of the main line
+            ImageDrawLine(dst, x1 + i, y1, x2 + i, y2, color);
+        }
+
+        // Draw the left half
+        for (int i = 1; i <= (wx/2); i++)
+        {
+            ImageDrawLine(dst, x1 - i, y1, x2 - i, y2, color);
         }
     }
 }
@@ -3835,7 +3857,7 @@ void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c
 
     // Calculate the inverse of the sum of the barycentric coordinates for normalization
     // NOTE 1: Here, we act as if we multiply by 255 the reciprocal, which avoids additional
-    //         calculations in the loop. This is acceptable because we are only interpolating colors.
+    //         calculations in the loop. This is acceptable because we are only interpolating colors
     // NOTE 2: This sum remains constant throughout the triangle
     float wInvSum = 255.0f/(w1Row + w2Row + w3Row);
 
@@ -3890,7 +3912,7 @@ void ImageDrawTriangleLines(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Colo
 }
 
 // Draw a triangle fan defined by points within an image (first vertex is the center)
-void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color color)
+void ImageDrawTriangleFan(Image *dst, const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
@@ -3902,7 +3924,7 @@ void ImageDrawTriangleFan(Image *dst, Vector2 *points, int pointCount, Color col
 }
 
 // Draw a triangle strip defined by points within an image
-void ImageDrawTriangleStrip(Image *dst, Vector2 *points, int pointCount, Color color)
+void ImageDrawTriangleStrip(Image *dst, const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
@@ -4337,14 +4359,17 @@ void UnloadRenderTexture(RenderTexture2D target)
 }
 
 // Update GPU texture with new data
-// NOTE: pixels data must match texture.format
+// NOTE 1: pixels data must match texture.format
+// NOTE 2: pixels data must contain at least as many pixels as texture
 void UpdateTexture(Texture2D texture, const void *pixels)
 {
     rlUpdateTexture(texture.id, 0, 0, texture.width, texture.height, texture.format, pixels);
 }
 
 // Update GPU texture rectangle with new data
-// NOTE: pixels data must match texture.format
+// NOTE 1: pixels data must match texture.format
+// NOTE 2: pixels data must contain as many pixels as rec contains
+// NOTE 3: rec must fit completely within texture's width and height
 void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels)
 {
     rlUpdateTexture(texture.id, (int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, texture.format, pixels);
@@ -5147,10 +5172,10 @@ Color GetColor(unsigned int hexValue)
 {
     Color color;
 
-    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
-    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
-    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
-    color.a = (unsigned char)hexValue & 0xFF;
+    color.r = (unsigned char)(hexValue >> 24) & 0xff;
+    color.g = (unsigned char)(hexValue >> 16) & 0xff;
+    color.b = (unsigned char)(hexValue >> 8) & 0xff;
+    color.a = (unsigned char)hexValue & 0xff;
 
     return color;
 }
@@ -5390,17 +5415,16 @@ static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
 
-    union
-    {
+    union {
         float fm;
         unsigned int ui;
     } uni;
 
-    const unsigned int e = (x & 0x7C00) >> 10; // Exponent
-    const unsigned int m = (x & 0x03FF) << 13; // Mantissa
+    const unsigned int e = (x & 0x7c00) >> 10; // Exponent
+    const unsigned int m = (x & 0x03ff) << 13; // Mantissa
     uni.fm = (float)m;
     const unsigned int v = uni.ui >> 23; // Evil log2 bit hack to count leading zeros in denormalized format
-    uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)); // sign : normalized : denormalized
+    uni.ui = (x & 0x8000) << 16 | (e != 0)*((e + 112) << 23 | m) | ((e == 0)&(m != 0))*((v - 37) << 23 | ((m << (150 - v)) & 0x007fe000)); // sign : normalized : denormalized
 
     result = uni.fm;
 
@@ -5412,18 +5436,17 @@ static unsigned short FloatToHalf(float x)
 {
     unsigned short result = 0;
 
-    union
-    {
+    union {
         float fm;
         unsigned int ui;
     } uni;
     uni.fm = x;
 
     const unsigned int b = uni.ui + 0x00001000; // Round-to-nearest-even: add last bit after truncated mantissa
-    const unsigned int e = (b & 0x7F800000) >> 23; // Exponent
-    const unsigned int m = b & 0x007FFFFF; // Mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
+    const unsigned int e = (b & 0x7f800000) >> 23; // Exponent
+    const unsigned int m = b & 0x007fffff; // Mantissa; in line below: 0x007ff000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
 
-    result = (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7FFF; // sign : normalized : denormalized : saturate
+    result = (b & 0x80000000) >> 16 | (e > 112)*((((e - 112) << 10) & 0x7c00) | m >> 13) | ((e < 113) & (e > 101))*((((0x007ff000 + m) >> (125 - e)) + 1) >> 1) | (e > 143)*0x7fff; // sign : normalized : denormalized : saturate
 
     return result;
 }

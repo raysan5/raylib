@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - VR Simulator (Oculus Rift CV1 parameters)
+*   raylib [core] example - vr simulator
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -61,7 +61,7 @@ int main(void)
     VrStereoConfig config = LoadVrStereoConfig(device);
 
     // Distortion shader (uses device lens distortion and chroma)
-    Shader distortion = LoadShader(0, TextFormat("resources/distortion%i.fs", GLSL_VERSION));
+    Shader distortion = LoadShader(0, TextFormat("resources/shaders/glsl%i/distortion.fs", GLSL_VERSION));
 
     // Update distortion shader with lens and distortion-scale parameters
     SetShaderValue(distortion, GetShaderLocation(distortion, "leftLensCenter"),
@@ -127,7 +127,7 @@ int main(void)
                 EndMode3D();
             EndVrStereoMode();
         EndTextureMode();
-        
+
         BeginDrawing();
             ClearBackground(RAYWHITE);
             BeginShaderMode(distortion);

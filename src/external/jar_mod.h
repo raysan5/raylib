@@ -1130,7 +1130,7 @@ static bool jar_mod_load( jar_mod_context_t * modctx, void * mod_data, int mod_d
     {
         if( modctx )
         {
-            memcopy(&(modctx->song.title),modmemory,1084);
+            memcopy(&(modctx->song), modmemory, 1084);
 
             i = 0;
             modctx->number_of_channels = 0;

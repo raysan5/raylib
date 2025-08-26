@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font loading
+*   raylib [text] example - font loading
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

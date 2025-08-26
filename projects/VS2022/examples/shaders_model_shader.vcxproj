@@ -556,7 +556,7 @@
     <ClCompile Include="..\..\..\examples\shaders\shaders_model_shader.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\..\src\raylib.rc" />
+    <ResourceCompile Include="..\..\..\examples\examples.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

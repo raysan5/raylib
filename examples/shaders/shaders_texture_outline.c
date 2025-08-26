@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Apply an shdrOutline to a texture
+*   raylib [shaders] example - texture outline
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
 *   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
@@ -36,7 +36,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture outline");
 
     Texture2D texture = LoadTexture("resources/fudesumi.png");
 

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Music stream processing effects
+*   raylib [audio] example - stream effects
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -53,7 +53,7 @@ int main(void)
 
     float timePlayed = 0.0f;        // Time played normalized [0.0f..1.0f]
     bool pause = false;             // Music playing paused
-    
+
     bool enableEffectLPF = false;   // Enable effect low-pass-filter
     bool enableEffectDelay = false; // Enable effect delay (1 second)
 
@@ -98,7 +98,7 @@ int main(void)
             if (enableEffectDelay) AttachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
             else DetachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
         }
-        
+
         // Get normalized time played for current music stream
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music);
 
@@ -119,7 +119,7 @@ int main(void)
 
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 230, 20, LIGHTGRAY);
             DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 260, 20, LIGHTGRAY);
-            
+
             DrawText(TextFormat("PRESS F TO TOGGLE LPF EFFECT: %s", enableEffectLPF? "ON" : "OFF"), 200, 320, 20, GRAY);
             DrawText(TextFormat("PRESS D TO TOGGLE DELAY EFFECT: %s", enableEffectDelay? "ON" : "OFF"), 180, 350, 20, GRAY);
 

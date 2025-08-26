@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Initialize 3d camera free
+*   raylib [core] example - 3d camera free
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Music playing (streaming)
+*   raylib [audio] example - music playing (streaming)
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -45,7 +45,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateMusicStream(music);   // Update music buffer with new stream data
-        
+
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))
         {

@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{70B35F59-AFC2-4D8F-8833-5314D2047A81}</ProjectGuid>
+    <ProjectGuid>{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shaders_view_depth</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -556,7 +556,7 @@
     <ClCompile Include="..\..\..\examples\shaders\shaders_view_depth.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\..\src\raylib.rc" />
+    <ResourceCompile Include="..\..\..\examples\examples.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

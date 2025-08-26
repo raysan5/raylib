@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window (adapted for HTML5 platform)
+*   raylib [core] example - basic window
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

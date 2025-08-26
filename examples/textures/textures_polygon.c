@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Draw Textured Polygon
+*   raylib [textures] example - textured polygon
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -34,7 +34,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - textured polygon");
 
     // Define texture coordinates to map our texture to poly
@@ -60,7 +60,7 @@ int main(void)
         points[i].x = (texcoords[i].x - 0.5f)*256.0f;
         points[i].y = (texcoords[i].y - 0.5f)*256.0f;
     }
-    
+
     // Define the vertices drawing position
     // NOTE: Initially same as points but updated every frame
     Vector2 positions[MAX_POINTS] = { 0 };
@@ -116,7 +116,7 @@ int main(void)
 void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
 {
     rlBegin(RL_TRIANGLES);
-    
+
     rlSetTexture(texture.id);
 
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);

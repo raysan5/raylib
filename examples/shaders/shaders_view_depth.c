@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shader] example - render depth texture
+*   raylib [shaders] example - render depth texture
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -34,11 +34,11 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
-    const int screenHeight = 600;
+    const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shader] example - render depth texture");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - render depth texture");
 
-    // Load camera
+    // Init camera
     Camera camera = { 0 };
     camera.position = (Vector3){ 4.0f, 1.0f, 5.0f };
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
@@ -56,7 +56,7 @@ int main(void)
     SetShaderValue(depthShader, flipTextureLoc, (int[]){ 1 }, SHADER_UNIFORM_INT); // Flip Y texture
 
     // Load models
-    Model cube  = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+    Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
     Model floor = LoadModelFromMesh(GenMeshPlane(20.0f, 20.0f, 1, 1));
 
     DisableCursor();  // Limit cursor to relative movement inside the window
@@ -75,25 +75,19 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginTextureMode(target);
-
             ClearBackground(WHITE);
 
             BeginMode3D(camera);
-
                 DrawModel(cube,  (Vector3){ 0.0f, 0.0f, 0.0f },  3.0f, YELLOW);
                 DrawModel(floor, (Vector3){ 10.0f, 0.0f, 2.0f }, 2.0f, RED);
-
             EndMode3D();
-
         EndTextureMode();
 
         BeginDrawing();
 
             BeginShaderMode(depthShader);
-
                 SetShaderValueTexture(depthShader, depthLoc, target.depth);
                 DrawTexture(target.depth, 0, 0, WHITE);
-
             EndShaderMode();
 
             DrawRectangle( 10, 10, 320, 93, Fade(SKYBLUE, 0.5f));

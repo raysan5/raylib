@@ -1,7 +1,7 @@
 .{
     .name = .raylib,
     .version = "5.5.0",
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.15.1",
 
     .fingerprint = 0x13035e5cb8bc1ac2, // Changing this has security and trust implications.
 
@@ -12,8 +12,8 @@
             .lazy = true,
         },
         .emsdk = .{
-            .url = "git+https://github.com/emscripten-core/emsdk#3.1.50",
-            .hash = "N-V-__8AALRTBQDo_pUJ8IQ-XiIyYwDKQVwnr7-7o5kvPDGE",
+            .url = "git+https://github.com/emscripten-core/emsdk#4.0.9",
+            .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
             .lazy = true,
         },
     },
@@ -23,5 +23,6 @@
         "build.zig.zon",
         "src",
         "examples",
+        "LICENSE",
     },
 }

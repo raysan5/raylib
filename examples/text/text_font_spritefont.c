@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Sprite font loading
+*   raylib [text] example - sprite font loading
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -12,7 +12,7 @@
 *     - Rectangles must be defined by a MAGENTA color background
 *
 *   Following those constraints, a font can be provided just by an image,
-*   this is quite handy to avoid additional font descriptor files (like BMFonts use).
+*   this is quite handy to avoid additional font descriptor files (like BMFonts use)
 *
 *   Example originally created with raylib 1.0, last time updated with raylib 1.0
 *

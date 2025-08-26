@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - procedural mesh generation
+*   raylib [models] example - mesh generation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -47,17 +47,8 @@ int main(void)
     models[6] = LoadModelFromMesh(GenMeshKnot(1.0f, 2.0f, 16, 128));
     models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
     models[8] = LoadModelFromMesh(GenMeshCustom());
-    
-    // Generated meshes could be exported as .obj files
-    //ExportMesh(models[0].meshes[0], "plane.obj");
-    //ExportMesh(models[1].meshes[0], "cube.obj");
-    //ExportMesh(models[2].meshes[0], "sphere.obj");
-    //ExportMesh(models[3].meshes[0], "hemisphere.obj");
-    //ExportMesh(models[4].meshes[0], "cylinder.obj");
-    //ExportMesh(models[5].meshes[0], "torus.obj");
-    //ExportMesh(models[6].meshes[0], "knot.obj");
-    //ExportMesh(models[7].meshes[0], "poly.obj");
-    //ExportMesh(models[8].meshes[0], "custom.obj");
+
+    // NOTE: Generated meshes could be exported using ExportMesh()
 
     // Set checked texture as default diffuse component for all models material
     for (int i = 0; i < NUM_MODELS; i++) models[i].materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;

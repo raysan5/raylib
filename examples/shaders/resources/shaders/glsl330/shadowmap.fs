@@ -49,13 +49,13 @@ void main()
     finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
 
     // Shadow calculations
-    vec4 fragPosLightSpace = lightVP * vec4(fragPosition, 1);
+    vec4 fragPosLightSpace = lightVP*vec4(fragPosition, 1);
     fragPosLightSpace.xyz /= fragPosLightSpace.w; // Perform the perspective division
     fragPosLightSpace.xyz = (fragPosLightSpace.xyz + 1.0)/2.0; // Transform from [-1, 1] range to [0, 1] range
     vec2 sampleCoords = fragPosLightSpace.xy;
     float curDepth = fragPosLightSpace.z;
 
-    // Slope-scale depth bias: depth biasing reduces "shadow acne" artifacts, where dark stripes appear all over the scene.
+    // Slope-scale depth bias: depth biasing reduces "shadow acne" artifacts, where dark stripes appear all over the scene
     // The solution is adding a small bias to the depth
     // In this case, the bias is proportional to the slope of the surface, relative to the light
     float bias = max(0.0002*(1.0 - dot(normal, l)), 0.00002) + 0.00001;
@@ -64,8 +64,8 @@ void main()
 
     // PCF (percentage-closer filtering) algorithm:
     // Instead of testing if just one point is closer to the current point,
-    // we test the surrounding points as well.
-    // This blurs shadow edges, hiding aliasing artifacts.
+    // we test the surrounding points as well
+    // This blurs shadow edges, hiding aliasing artifacts
     vec2 texelSize = vec2(1.0/float(shadowMapResolution));
     for (int x = -1; x <= 1; x++)
     {

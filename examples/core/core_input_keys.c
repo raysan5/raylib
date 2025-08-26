@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Keyboard input
+*   raylib [core] example - keyboard input
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

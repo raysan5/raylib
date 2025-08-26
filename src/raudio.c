@@ -15,8 +15,8 @@
 *           raudio module is included in the build
 *
 *       #define RAUDIO_STANDALONE
-*           Define to use the module as standalone library (independently of raylib).
-*           Required types and functions are defined in the same module.
+*           Define to use the module as standalone library (independently of raylib)
+*           Required types and functions are defined in the same module
 *
 *       #define SUPPORT_FILEFORMAT_WAV
 *       #define SUPPORT_FILEFORMAT_OGG
@@ -81,7 +81,7 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-#if defined(SUPPORT_MODULE_RAUDIO)
+#if defined(SUPPORT_MODULE_RAUDIO) || defined(RAUDIO_STANDALONE)
 
 #if defined(_WIN32)
 // To avoid conflicting windows.h symbols with raylib, some flags are defined
@@ -89,7 +89,7 @@
 // by user at some point and won't be included...
 //-------------------------------------------------------------------------------------
 
-// If defined, the following flags inhibit definition of the indicated items.
+// If defined, the following flags inhibit definition of the indicated items
 #define NOGDICAPMASKS     // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
 #define NOVIRTUALKEYCODES // VK_*
 #define NOWINMESSAGES     // WM_*, EM_*, LB_*, CB_*
@@ -124,9 +124,9 @@
 #define NOWH              // SetWindowsHook and WH_*
 #define NOWINOFFSETS      // GWL_*, GCL_*, associated routines
 #define NOCOMM            // COMM driver routines
-#define NOKANJI           // Kanji support stuff.
-#define NOHELP            // Help engine interface.
-#define NOPROFILER        // Profiler interface.
+#define NOKANJI           // Kanji support stuff
+#define NOHELP            // Help engine interface
+#define NOPROFILER        // Profiler interface
 #define NODEFERWINDOWPOS  // DeferWindowPos routines
 #define NOMCX             // Modem Configuration Extensions
 
@@ -451,7 +451,6 @@ void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
@@ -604,6 +603,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     audioBuffer->usage = usage;
     audioBuffer->frameCursorPos = 0;
+    audioBuffer->framesProcessed = 0;
     audioBuffer->sizeInFrames = sizeInFrames;
 
     // Buffers should be marked as processed by default so that a call to
@@ -650,6 +650,9 @@ void PlayAudioBuffer(AudioBuffer *buffer)
         buffer->playing = true;
         buffer->paused = false;
         buffer->frameCursorPos = 0;
+        buffer->framesProcessed = 0;
+        buffer->isSubBufferProcessed[0] = true;
+        buffer->isSubBufferProcessed[1] = true;
         ma_mutex_unlock(&AUDIO.System.lock);
     }
 }
@@ -979,8 +982,12 @@ Sound LoadSoundAlias(Sound source)
         }
 
         audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
-        audioBuffer->volume = source.stream.buffer->volume;
         audioBuffer->data = source.stream.buffer->data;
+
+        // initalize the buffer as if it was new
+        audioBuffer->volume = 1.0f;
+        audioBuffer->pitch = 1.0f;
+        audioBuffer->pan = 0.5f;
 
         sound.frameCount = source.frameCount;
         sound.stream.sampleRate = AUDIO.System.device.sampleRate;
@@ -991,7 +998,6 @@ Sound LoadSoundAlias(Sound source)
 
     return sound;
 }
-
 
 // Checks if a sound is valid (data loaded and buffers initialized)
 bool IsSoundValid(Sound sound)
@@ -1033,6 +1039,8 @@ void UnloadSoundAlias(Sound alias)
 }
 
 // Update sound buffer with new data
+// NOTE 1: data format must match sound.stream.sampleSize
+// NOTE 2: frameCount must not exceed sound.frameCount
 void UpdateSound(Sound sound, const void *data, int frameCount)
 {
     if (sound.stream.buffer != NULL)
@@ -1114,7 +1122,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 
     // NOTE: Text data buffer size is estimated considering wave data size in bytes
     // and requiring 12 char bytes for every byte; the actual size varies, but
-    // the longest possible char being appended is "%.4ff,\n    ", which is 12 bytes.
+    // the longest possible char being appended is "%.4ff,\n    ", which is 12 bytes
     char *txtData = (char *)RL_CALLOC(waveDataSize*12 + 2000, sizeof(char));
 
     int byteCount = 0;
@@ -1333,7 +1341,7 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if (IsFileExtension(fileName, ".wav"))
     {
-        drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
+        drwav *ctxWav = (drwav *)RL_CALLOC(1, sizeof(drwav));
         bool success = drwav_init_file(ctxWav, fileName, NULL);
 
         if (success)
@@ -1383,7 +1391,7 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (IsFileExtension(fileName, ".mp3"))
     {
-        drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
+        drmp3 *ctxMp3 = (drmp3 *)RL_CALLOC(1, sizeof(drmp3));
         int result = drmp3_init_file(ctxMp3, fileName, NULL);
 
         if (result > 0)
@@ -1474,7 +1482,7 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MOD)
     else if (IsFileExtension(fileName, ".mod"))
     {
-        jar_mod_context_t *ctxMod = RL_CALLOC(1, sizeof(jar_mod_context_t));
+        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_CALLOC(1, sizeof(jar_mod_context_t));
         jar_mod_init(ctxMod);
         int result = jar_mod_load_file(ctxMod, fileName);
 
@@ -1525,7 +1533,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if ((strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0))
     {
-        drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
+        drwav *ctxWav = (drwav *)RL_CALLOC(1, sizeof(drwav));
 
         bool success = drwav_init_memory(ctxWav, (const void *)data, dataSize, NULL);
 
@@ -1541,7 +1549,8 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
-        else {
+        else
+        {
             drwav_uninit(ctxWav);
             RL_FREE(ctxWav);
         }
@@ -1576,7 +1585,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
     {
-        drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
+        drmp3 *ctxMp3 = (drmp3 *)RL_CALLOC(1, sizeof(drmp3));
         int success = drmp3_init_memory(ctxMp3, (const void*)data, dataSize, NULL);
 
         if (success)
@@ -1758,7 +1767,7 @@ void UnloadMusicStream(Music music)
         else if (music.ctxType == MUSIC_AUDIO_QOA) qoaplay_close((qoaplay_desc *)music.ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) { drflac_close((drflac *)music.ctxData); drflac_free((drflac *)music.ctxData, NULL); }
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
@@ -1865,6 +1874,7 @@ void SeekMusicStream(Music music, float position)
 void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
+    if (!music.stream.buffer->playing) return;
 
     ma_mutex_lock(&AUDIO.System.lock);
 
@@ -1884,13 +1894,27 @@ void UpdateMusicStream(Music music)
     // Check both sub-buffers to check if they require refilling
     for (int i = 0; i < 2; i++)
     {
-        if (!music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
-
         unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
         unsigned int framesToStream = 0;                 // Total frames to be streamed
 
         if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
         else framesToStream = framesLeft;
+
+        if (framesToStream == 0)
+        {
+            // Check if both buffers have been processed
+            if (music.stream.buffer->isSubBufferProcessed[0] && music.stream.buffer->isSubBufferProcessed[1])
+            {
+                ma_mutex_unlock(&AUDIO.System.lock);
+                StopMusicStream(music);
+                return;
+            }
+
+            ma_mutex_unlock(&AUDIO.System.lock);
+            return;
+        }
+
+        if (!music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
 
         int frameCountStillNeeded = framesToStream;
         int frameCountReadTotal = 0;
@@ -2004,19 +2028,6 @@ void UpdateMusicStream(Music music)
         }
 
         UpdateAudioStreamInLockedState(music.stream, AUDIO.System.pcmBuffer, framesToStream);
-
-        music.stream.buffer->framesProcessed = music.stream.buffer->framesProcessed%music.frameCount;
-
-        if (framesLeft <= subBufferSizeInFrames)
-        {
-            if (!music.looping)
-            {
-                ma_mutex_unlock(&AUDIO.System.lock);
-                // Streaming is ending, we filled latest frames from input
-                StopMusicStream(music);
-                return;
-            }
-        }
     }
 
     ma_mutex_unlock(&AUDIO.System.lock);
@@ -2079,8 +2090,12 @@ float GetMusicTimePlayed(Music music)
             int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
             int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
             int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+            int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
+            if ((unsigned int)framesInBuffers > music.frameCount) {
+                if (!music.looping) framesInBuffers = music.frameCount;
+            }
             int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
-            int framesPlayed = (framesProcessed - framesInFirstBuffer - framesInSecondBuffer + framesSentToMix)%(int)music.frameCount;
+            int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
             if (framesPlayed < 0) framesPlayed += music.frameCount;
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
             ma_mutex_unlock(&AUDIO.System.lock);
@@ -2104,8 +2119,12 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
 
-    // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
-    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.System.device.sampleRate/30 : AUDIO.Buffer.defaultSize;
+    // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate at the device bit size/rate
+    int deviceBitsPerSample = AUDIO.System.device.playback.format;
+    if (deviceBitsPerSample > 4)  deviceBitsPerSample = 4;
+    deviceBitsPerSample *= AUDIO.System.device.playback.channels;
+
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0) ? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -2331,7 +2350,6 @@ void DetachAudioMixedProcessor(AudioCallback process)
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
-
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -2673,8 +2691,7 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
             ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
             unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
-            // Total frames processed in buffer is always the complete size, filled with 0 if required
-            stream.buffer->framesProcessed += subBufferSizeInFrames;
+            stream.buffer->framesProcessed += frameCount;
 
             // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic
