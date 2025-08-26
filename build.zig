@@ -606,6 +606,7 @@ fn addExamples(
                     emccOutputDirExampleWithFile,
                     "-sFULL-ES3=1",
                     "-sUSE_GLFW=3",
+                    "-fsanitize=address",
                     "-sSTACK_OVERFLOW_CHECK=1",
                     "-sEXPORTED_RUNTIME_METHODS=['requestFullscreen']",
                     "-sASYNCIFY",
