@@ -7,6 +7,7 @@
 *    - add <example_name>
 *    - rename <old_examples_name> <new_example_name>
 *    - remove <example_name>
+*    - build <example_name>
 *    - validate
 *    - update
 *
@@ -1261,20 +1262,25 @@ int main(int argc, char *argv[])
             printf("////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
             printf("USAGE:\n\n");
-            printf("    > rexm help|create|add|rename|remove <example_name> [<example_rename>]\n");
+            printf("    > rexm <command> <example_name> [<example_rename>]\n");
 
-            printf("\nOPTIONS:\n\n");
+            printf("\COMMANDS:\n\n");
             printf("    help                          : Provides command-line usage information\n");
             printf("    create <new_example_name>     : Creates an empty example, from internal template\n");
             printf("    add <example_name>            : Add existing example, category extracted from name\n");
             printf("                                    Supported categories: core, shapes, textures, text, models\n");
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
-            printf("    remove <example_name>         : Remove an existing example\n\n");
+            printf("    remove <example_name>         : Remove an existing example\n");
+            printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
+            printf("    validate                      : Validate examples collection, generates report\n");
+            printf("    update                        : Validate and update examples collection, generates report\n\n");
             printf("\nEXAMPLES:\n\n");
             printf("    > rexm add shapes_custom_stars\n");
             printf("        Add and updates new example provided <shapes_custom_stars>\n\n");
             printf("    > rexm rename core_basic_window core_cool_window\n");
             printf("        Renames and updates example <core_basic_window> to <core_cool_window>\n\n");
+            printf("    > rexm update\n");
+            printf("        Validates all examples in collection and updates missing elements\n\n");
         } break;
     }
 
