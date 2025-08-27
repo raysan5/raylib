@@ -26,7 +26,7 @@
 #define SCREEN_HEIGHT 450
 
 Vector2 screenSize = { SCREEN_WIDTH, SCREEN_HEIGHT };
-Vector2 screenCenter = CalculateCenter(screenSize);
+Vector2 screenCenter = { SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5 - 100 };
 
 // Constant for Simulation
 #define SIMULATION_STEPS 30
@@ -160,11 +160,11 @@ int main(void)
                              (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
 
             // Draw double pendulum
-            DrawRectanglePro((Rectangle){ screenWidth/2, screenHeight/2 - 100, 10 * l1, lineThick },
+            DrawRectanglePro((Rectangle){ screenSize.x * 0.5, screenSize.y * 0.5 - 100, 10 * l1, lineThick },
                 (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta1, RAYWHITE);
 
-            Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);
-            DrawRectanglePro((Rectangle){ screenWidth/2 + endpoint1.x, screenHeight/2 - 100 + endpoint1.y, 10 * l2, lineThick },
+            endpoint1 = CalculatePendulumEndPoint(l1, theta1);
+            DrawRectanglePro((Rectangle){ screenSize.x * 0.5 + endpoint1.x, screenSize.y * 0.5 - 100 + endpoint1.y, 10 * l2, lineThick },
                 (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
 
         EndDrawing();

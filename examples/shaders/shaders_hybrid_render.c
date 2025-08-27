@@ -51,7 +51,6 @@ int main(void)
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth buffer");
 
