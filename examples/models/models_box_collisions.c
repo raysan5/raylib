@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Detect basic 3d collisions (box vs sphere vs box)
+*   raylib [models] example - box collisions
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

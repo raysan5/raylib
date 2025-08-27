@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - depth buffer writing
+*   raylib [shaders] example - write depth buffer
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

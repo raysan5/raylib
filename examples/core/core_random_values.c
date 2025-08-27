@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Generate random values
+*   raylib [core] example - generate random values
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

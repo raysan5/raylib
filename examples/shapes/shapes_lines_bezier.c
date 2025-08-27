@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Cubic-bezier lines
+*   raylib [shapes] example - cubic-bezier lines
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

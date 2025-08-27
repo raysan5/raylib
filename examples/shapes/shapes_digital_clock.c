@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - fancy clock using basic shapes
+*   raylib [shapes] example - digital clock
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

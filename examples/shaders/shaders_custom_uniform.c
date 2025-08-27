@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Postprocessing with custom uniform variable
+*   raylib [shaders] example - custom uniform variable
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

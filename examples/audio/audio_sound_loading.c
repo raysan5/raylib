@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Sound loading and playing
+*   raylib [audio] example - sound loading and playing
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

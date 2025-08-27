@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Julia sets
+*   raylib [shaders] example - julia sets
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

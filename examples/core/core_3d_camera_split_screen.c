@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - 3d cmaera split screen
+*   raylib [core] example - 3d camera split screen
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

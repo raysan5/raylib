@@ -4027,7 +4027,7 @@ return {
     },
     {
       name = "IsFileExtension",
-      description = "Check file extension (including point: .png, .wav)",
+      description = "Check file extension (recommended include point: .png, .wav)",
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
@@ -6843,6 +6843,23 @@ return {
       params = {
         {type = "int", name = "codepoint"},
         {type = "int *", name = "utf8Size"}
+      }
+    },
+    {
+      name = "LoadTextLines",
+      description = "Load text as separate lines ('\\n')",
+      returnType = "char **",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "int *", name = "count"}
+      }
+    },
+    {
+      name = "UnloadTextLines",
+      description = "Unload text lines",
+      returnType = "void",
+      params = {
+        {type = "char **", name = "text"}
       }
     },
     {

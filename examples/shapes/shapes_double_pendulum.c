@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Double Pendulum
+*   raylib [shapes] example - double pendulum
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

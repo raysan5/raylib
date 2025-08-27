@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Heightmap loading and drawing
+*   raylib [models] example - heightmap terrain
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap loading and drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap terrain");
 
     // Define our custom camera to look into our 3d world
     Camera camera = { 0 };

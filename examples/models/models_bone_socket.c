@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Using bones as socket for calculating the positioning of something
+*   raylib [models] example - bone socket
 *
 *   Example complexity rating: [★★★★] 4/4
 *

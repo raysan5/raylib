@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - text writing anim");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - text writing animation");
 
     const char message[128] = "This sample illustrates a text writing\nanimation effect! Check it out! ;)";
 

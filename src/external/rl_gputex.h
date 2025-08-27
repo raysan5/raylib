@@ -586,6 +586,7 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
         // KTX 2.0 defines additional header elements...
     } ktx_header;
 
+    /*
     Byte[12] identifier
     UInt32 vkFormat
     UInt32 typeSize
@@ -596,6 +597,7 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
     UInt32 faceCount
     UInt32 levelCount
     UInt32 supercompressionScheme
+    */
 
     // Calculate file data_size required
     int data_size = sizeof(ktx_header);

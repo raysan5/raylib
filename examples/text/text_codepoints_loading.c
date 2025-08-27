@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - text codepoints loading
+*   raylib [text] example - codepoints loading
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

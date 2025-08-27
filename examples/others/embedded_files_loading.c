@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - Embedded files loading (Wave and Image)
+*   raylib [others] example - embedded files loading
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

@@ -102,8 +102,6 @@ static const char cursorLUT[11][12] = {
     "not-allowed"  // 10 MOUSE_CURSOR_NOT_ALLOWED
 };
 
-Vector2 lockedMousePos = { 0 };
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -137,7 +135,7 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
 
 // Emscripten input callback events
-static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
+//static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
@@ -862,7 +860,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
+    // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
 }
 
 // Disables cursor (lock cursor)
@@ -874,7 +872,7 @@ void DisableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
+    // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -955,7 +953,7 @@ void SetMousePosition(int x, int y)
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
-    if (CORE.Input.Mouse.cursorHidden) lockedMousePos = CORE.Input.Mouse.currentPosition;
+    if (CORE.Input.Mouse.cursorLocked) CORE.Input.Mouse.lockedPosition = CORE.Input.Mouse.currentPosition;
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
@@ -966,7 +964,7 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+        if (!CORE.Input.Mouse.cursorLocked) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
 
         CORE.Input.Mouse.cursor = cursor;
     }
@@ -1357,7 +1355,7 @@ int InitPlatform(void)
     emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
     emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
-    
+
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
     // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
     // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
@@ -1369,8 +1367,8 @@ int InitPlatform(void)
 
     // Setup input events
     // NOTE: Keyboard callbacks only used to consume some events, libglfw.js takes care of the actual input
-    emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
-    emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
+    //emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback); // WRNING: Breaks input
+    //emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
     emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
     emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
     emscripten_set_mousemove_callback(GetCanvasId(), NULL, 1, EmscriptenMouseMoveCallback);
@@ -1573,7 +1571,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 static void MouseMoveCallback(GLFWwindow *window, double x, double y)
 {
     // If the pointer is not locked, follow the position
-    if (!CORE.Input.Mouse.cursorHidden)
+    if (!CORE.Input.Mouse.cursorLocked)
     {
         CORE.Input.Mouse.currentPosition.x = (float)x;
         CORE.Input.Mouse.currentPosition.y = (float)y;
@@ -1620,13 +1618,15 @@ static void MouseEnterCallback(GLFWwindow *window, int enter)
 
 // Emscripten callback functions, called on specific browser events
 //-------------------------------------------------------------------------------------------------------
+/*
 // Emscripten: Called on key events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
 {
-    // NOTE: Only used to consume some keyboard events without triggering browser functions
+    // WARNING: Keyboard inputs already processed through GLFW callback
 
     return 1; // The event was consumed by the callback handler
 }
+*/
 
 // Emscripten: Called on mouse input events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
@@ -1639,11 +1639,11 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Emscripten: Called on mouse move events
 static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
-    // To emulate the GLFW_RAW_MOUSE_MOTION property.
-    if (CORE.Input.Mouse.cursorHidden)
+    // To emulate the GLFW_RAW_MOUSE_MOTION property
+    if (CORE.Input.Mouse.cursorLocked)
     {
-        CORE.Input.Mouse.previousPosition.x = lockedMousePos.x - mouseEvent->movementX;
-        CORE.Input.Mouse.previousPosition.y = lockedMousePos.y - mouseEvent->movementY;
+        CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.lockedPosition.x - mouseEvent->movementX;
+        CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.lockedPosition.y - mouseEvent->movementY;
     }
 
     return 1; // The event was consumed by the callback handler
@@ -1652,12 +1652,12 @@ static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseE
 // Emscripten: Called on pointer lock events
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
 {
-    CORE.Input.Mouse.cursorHidden = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
+    CORE.Input.Mouse.cursorLocked = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
 
-    if (CORE.Input.Mouse.cursorHidden)
+    if (CORE.Input.Mouse.cursorLocked)
     {
-        lockedMousePos = CORE.Input.Mouse.currentPosition;
-        CORE.Input.Mouse.previousPosition = lockedMousePos;
+        CORE.Input.Mouse.lockedPosition = CORE.Input.Mouse.currentPosition;
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.lockedPosition;
     }
 
     return 1; // The event was consumed by the callback handler
@@ -1821,6 +1821,8 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     // Set current screen size
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+
+    glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
 
     // NOTE: Postprocessing texture is not scaled to new size
 

@@ -48,7 +48,9 @@
 *
 **********************************************************************************************/
 
-
+#ifdef USING_SDL3_PACKAGE
+    #define USING_SDL3_PROJECT
+#endif
 #ifndef SDL_ENABLE_OLD_NAMES
     #define SDL_ENABLE_OLD_NAMES    // Just in case we're on SDL3, we need some in-between compatibily
 #endif
@@ -1103,7 +1105,7 @@ Vector2 GetWindowScaleDPI(void)
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #else
     scale.x = SDL_GetWindowDisplayScale(platform.window);
-    scale.y = scale.x;    
+    scale.y = scale.x;
 #endif
 
     return scale;
@@ -1214,7 +1216,7 @@ void EnableCursor(void)
 #endif
 
     platform.cursorRelative = false;
-    CORE.Input.Mouse.cursorHidden = false;
+    CORE.Input.Mouse.cursorLocked = false;
 }
 
 // Disables cursor (lock cursor)
@@ -1223,7 +1225,7 @@ void DisableCursor(void)
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     platform.cursorRelative = true;
-    CORE.Input.Mouse.cursorHidden = true;
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -1619,8 +1621,8 @@ void PollInputEvents(void)
                 {
                     // Add character (codepoint) to the queue
                     #if defined(PLATFORM_DESKTOP_SDL3)
-                    unsigned int textLen = strlen(event.text.text);
-                    unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, textLen);
+                    size_t textLen = strlen(event.text.text);
+                    unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, &textLen);
                     #else
                     int codepointSize = 0;
                     int codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);

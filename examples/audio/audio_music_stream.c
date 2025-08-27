@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Music playing (streaming)
+*   raylib [audio] example - music playing (streaming)
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

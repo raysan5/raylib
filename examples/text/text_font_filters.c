@@ -29,7 +29,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - font filters");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font texture filters");
 
     const char msg[50] = "Loaded Font";
 

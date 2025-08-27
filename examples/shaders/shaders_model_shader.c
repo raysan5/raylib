@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Model shader
+*   raylib [shaders] example - model shader
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

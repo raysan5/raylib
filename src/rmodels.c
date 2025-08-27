@@ -5488,14 +5488,16 @@ static Model LoadGLTF(const char *fileName)
             // Other possible materials not supported by raylib pipeline:
             // has_clearcoat, has_transmission, has_volume, has_ior, has specular, has_sheen
         }
+        //----------------------------------------------------------------------------------------------------
 
-        // Visit each node in the hierarchy and process any mesh linked from it
-        // Each primitive within a glTF node becomes a Raylib Mesh
-        // The local-to-world transform of each node is used to transform the
-        // points/normals/tangents of the created Mesh(es)
-        // Any glTF mesh linked from more than one Node (i.e. instancing)
-        // is turned into multiple Mesh's, as each Node will have its own transform applied
-        // NOTE: The code below disregards the scenes defined in the file, all nodes are used
+        // Load meshes data
+        //
+        // NOTE: Visit each node in the hierarchy and process any mesh linked from it
+        //  - Each primitive within a glTF node becomes a raylib Mesh
+        //  - The local-to-world transform of each node is used to transform the points/normals/tangents of the created Mesh(es)
+        //  - Any glTF mesh linked from more than one Node (i.e. instancing) is turned into multiple Mesh's, as each Node will have its own transform applied
+        //
+        // WARNING: The code below disregards the scenes defined in the file, all nodes are used
         //----------------------------------------------------------------------------------------------------
         int meshIndex = 0;
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -5503,8 +5505,7 @@ static Model LoadGLTF(const char *fileName)
             cgltf_node *node = &(data->nodes[i]);
 
             cgltf_mesh *mesh = node->mesh;
-            if (!mesh)
-                continue;
+            if (!mesh) continue;
 
             cgltf_float worldTransform[16];
             cgltf_node_transform_world(node, worldTransform);
@@ -5535,75 +5536,87 @@ static Model LoadGLTF(const char *fileName)
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined
-
-                        if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
+                        
+                        if (model.meshes[meshIndex].vertices != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data already loaded", fileName);
+                        else
                         {
-                            // Init raylib mesh vertices to copy glTF attribute data
-                            model.meshes[meshIndex].vertexCount = (int)attribute->count;
-                            model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
-
-                            // Load 3 components of float data type into mesh.vertices
-                            LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].vertices)
-
-                            // Transform the vertices
-                            float *vertices = model.meshes[meshIndex].vertices;
-                            for (unsigned int k = 0; k < attribute->count; k++)
+                            if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                             {
-                                Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k+1], vertices[3*k+2] }, worldMatrix);
-                                vertices[3*k] = vt.x;
-                                vertices[3*k+1] = vt.y;
-                                vertices[3*k+2] = vt.z;
+                                // Init raylib mesh vertices to copy glTF attribute data
+                                model.meshes[meshIndex].vertexCount = (int)attribute->count;
+                                model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
+
+                                // Load 3 components of float data type into mesh.vertices
+                                LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].vertices)
+
+                                // Transform the vertices
+                                float *vertices = model.meshes[meshIndex].vertices;
+                                for (unsigned int k = 0; k < attribute->count; k++)
+                                {
+                                    Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k+1], vertices[3*k+2] }, worldMatrix);
+                                    vertices[3*k] = vt.x;
+                                    vertices[3*k+1] = vt.y;
+                                    vertices[3*k+2] = vt.z;
+                                }
                             }
+                            else TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data format not supported, use vec3 float", fileName);
                         }
-                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data format not supported, use vec3 float", fileName);
                     }
                     else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_normal)   // NORMAL, vec3, float
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
-                        if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
+                        if (model.meshes[meshIndex].normals != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Normals attribute data already loaded", fileName);
+                        else
                         {
-                            // Init raylib mesh normals to copy glTF attribute data
-                            model.meshes[meshIndex].normals = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
-
-                            // Load 3 components of float data type into mesh.normals
-                            LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].normals)
-
-                            // Transform the normals
-                            float *normals = model.meshes[meshIndex].normals;
-                            for (unsigned int k = 0; k < attribute->count; k++)
+                            if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                             {
-                                Vector3 nt = Vector3Transform((Vector3){ normals[3*k], normals[3*k+1], normals[3*k+2] }, worldMatrixNormals);
-                                normals[3*k] = nt.x;
-                                normals[3*k+1] = nt.y;
-                                normals[3*k+2] = nt.z;
+                                // Init raylib mesh normals to copy glTF attribute data
+                                model.meshes[meshIndex].normals = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
+
+                                // Load 3 components of float data type into mesh.normals
+                                LOAD_ATTRIBUTE(attribute, 3, float, model.meshes[meshIndex].normals)
+
+                                // Transform the normals
+                                float *normals = model.meshes[meshIndex].normals;
+                                for (unsigned int k = 0; k < attribute->count; k++)
+                                {
+                                    Vector3 nt = Vector3Transform((Vector3){ normals[3*k], normals[3*k+1], normals[3*k+2] }, worldMatrixNormals);
+                                    normals[3*k] = nt.x;
+                                    normals[3*k+1] = nt.y;
+                                    normals[3*k+2] = nt.z;
+                                }
                             }
+                            else TRACELOG(LOG_WARNING, "MODEL: [%s] Normals attribute data format not supported, use vec3 float", fileName);
                         }
-                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Normal attribute data format not supported, use vec3 float", fileName);
                     }
                     else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec4, float, w is tangent basis sign
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
-                        if ((attribute->type == cgltf_type_vec4) && (attribute->component_type == cgltf_component_type_r_32f))
+                        if (model.meshes[meshIndex].tangents != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Tangents attribute data already loaded", fileName);
+                        else
                         {
-                            // Init raylib mesh tangent to copy glTF attribute data
-                            model.meshes[meshIndex].tangents = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
-
-                            // Load 4 components of float data type into mesh.tangents
-                            LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].tangents)
-
-                            // Transform the tangents
-                            float *tangents = model.meshes[meshIndex].tangents;
-                            for (unsigned int k = 0; k < attribute->count; k++)
+                            if ((attribute->type == cgltf_type_vec4) && (attribute->component_type == cgltf_component_type_r_32f))
                             {
-                                Vector3 tt = Vector3Transform((Vector3){ tangents[4*k], tangents[4*k+1], tangents[4*k+2] }, worldMatrix);
-                                tangents[4*k] = tt.x;
-                                tangents[4*k+1] = tt.y;
-                                tangents[4*k+2] = tt.z;
+                                // Init raylib mesh tangent to copy glTF attribute data
+                                model.meshes[meshIndex].tangents = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
+
+                                // Load 4 components of float data type into mesh.tangents
+                                LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].tangents)
+
+                                // Transform the tangents
+                                float *tangents = model.meshes[meshIndex].tangents;
+                                for (unsigned int k = 0; k < attribute->count; k++)
+                                {
+                                    Vector3 tt = Vector3Transform((Vector3){ tangents[4*k], tangents[4*k+1], tangents[4*k+2] }, worldMatrix);
+                                    tangents[4*k] = tt.x;
+                                    tangents[4*k+1] = tt.y;
+                                    tangents[4*k+2] = tt.z;
+                                }
                             }
+                            else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangents attribute data format not supported, use vec4 float", fileName);
                         }
-                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangent attribute data format not supported, use vec4 float", fileName);
                     }
                     else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_texcoord) // TEXCOORD_n, vec2, float/u8n/u16n
                     {
@@ -5669,114 +5682,118 @@ static Model LoadGLTF(const char *fileName)
 
                         // WARNING: SPECS: All components of each COLOR_n accessor element MUST be clamped to [0.0, 1.0] range
 
-                        if (attribute->type == cgltf_type_vec3)  // RGB
+                        if (model.meshes[meshIndex].colors != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Colors attribute data already loaded", fileName);
+                        else
                         {
-                            if (attribute->component_type == cgltf_component_type_r_8u)
+                            if (attribute->type == cgltf_type_vec3)  // RGB
                             {
-                                // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
-
-                                // Load data into a temp buffer to be converted to raylib data type
-                                unsigned char *temp = (unsigned char *)RL_MALLOC(attribute->count*3*sizeof(unsigned char));
-                                LOAD_ATTRIBUTE(attribute, 3, unsigned char, temp);
-
-                                // Convert data to raylib color data type (4 bytes)
-                                for (unsigned int c = 0, k = 0; c < (attribute->count*4 - 3); c += 4, k += 3)
+                                if (attribute->component_type == cgltf_component_type_r_8u)
                                 {
-                                    model.meshes[meshIndex].colors[c] = temp[k];
-                                    model.meshes[meshIndex].colors[c + 1] = temp[k + 1];
-                                    model.meshes[meshIndex].colors[c + 2] = temp[k + 2];
-                                    model.meshes[meshIndex].colors[c + 3] = 255;
-                                }
+                                    // Init raylib mesh color to copy glTF attribute data
+                                    model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
-                                RL_FREE(temp);
+                                    // Load data into a temp buffer to be converted to raylib data type
+                                    unsigned char *temp = (unsigned char *)RL_MALLOC(attribute->count*3*sizeof(unsigned char));
+                                    LOAD_ATTRIBUTE(attribute, 3, unsigned char, temp);
+
+                                    // Convert data to raylib color data type (4 bytes)
+                                    for (unsigned int c = 0, k = 0; c < (attribute->count*4 - 3); c += 4, k += 3)
+                                    {
+                                        model.meshes[meshIndex].colors[c] = temp[k];
+                                        model.meshes[meshIndex].colors[c + 1] = temp[k + 1];
+                                        model.meshes[meshIndex].colors[c + 2] = temp[k + 2];
+                                        model.meshes[meshIndex].colors[c + 3] = 255;
+                                    }
+
+                                    RL_FREE(temp);
+                                }
+                                else if (attribute->component_type == cgltf_component_type_r_16u)
+                                {
+                                    // Init raylib mesh color to copy glTF attribute data
+                                    model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+
+                                    // Load data into a temp buffer to be converted to raylib data type
+                                    unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*3*sizeof(unsigned short));
+                                    LOAD_ATTRIBUTE(attribute, 3, unsigned short, temp);
+
+                                    // Convert data to raylib color data type (4 bytes)
+                                    for (unsigned int c = 0, k = 0; c < (attribute->count*4 - 3); c += 4, k += 3)
+                                    {
+                                        model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[k]/65535.0f)*255.0f);
+                                        model.meshes[meshIndex].colors[c + 1] = (unsigned char)(((float)temp[k + 1]/65535.0f)*255.0f);
+                                        model.meshes[meshIndex].colors[c + 2] = (unsigned char)(((float)temp[k + 2]/65535.0f)*255.0f);
+                                        model.meshes[meshIndex].colors[c + 3] = 255;
+                                    }
+
+                                    RL_FREE(temp);
+                                }
+                                else if (attribute->component_type == cgltf_component_type_r_32f)
+                                {
+                                    // Init raylib mesh color to copy glTF attribute data
+                                    model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+
+                                    // Load data into a temp buffer to be converted to raylib data type
+                                    float *temp = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
+                                    LOAD_ATTRIBUTE(attribute, 3, float, temp);
+
+                                    // Convert data to raylib color data type (4 bytes)
+                                    for (unsigned int c = 0, k = 0; c < (attribute->count*4 - 3); c += 4, k += 3)
+                                    {
+                                        model.meshes[meshIndex].colors[c] = (unsigned char)(temp[k]*255.0f);
+                                        model.meshes[meshIndex].colors[c + 1] = (unsigned char)(temp[k + 1]*255.0f);
+                                        model.meshes[meshIndex].colors[c + 2] = (unsigned char)(temp[k + 2]*255.0f);
+                                        model.meshes[meshIndex].colors[c + 3] = 255;
+                                    }
+
+                                    RL_FREE(temp);
+                                }
+                                else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                             }
-                            else if (attribute->component_type == cgltf_component_type_r_16u)
+                            else if (attribute->type == cgltf_type_vec4) // RGBA
                             {
-                                // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
-
-                                // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*3*sizeof(unsigned short));
-                                LOAD_ATTRIBUTE(attribute, 3, unsigned short, temp);
-
-                                // Convert data to raylib color data type (4 bytes)
-                                for (unsigned int c = 0, k = 0; c < (attribute->count*4 - 3); c += 4, k += 3)
+                                if (attribute->component_type == cgltf_component_type_r_8u)
                                 {
-                                    model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[k]/65535.0f)*255.0f);
-                                    model.meshes[meshIndex].colors[c + 1] = (unsigned char)(((float)temp[k + 1]/65535.0f)*255.0f);
-                                    model.meshes[meshIndex].colors[c + 2] = (unsigned char)(((float)temp[k + 2]/65535.0f)*255.0f);
-                                    model.meshes[meshIndex].colors[c + 3] = 255;
+                                    // Init raylib mesh color to copy glTF attribute data
+                                    model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+
+                                    // Load 4 components of unsigned char data type into mesh.colors
+                                    LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].colors)
                                 }
-
-                                RL_FREE(temp);
-                            }
-                            else if (attribute->component_type == cgltf_component_type_r_32f)
-                            {
-                                // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
-
-                                // Load data into a temp buffer to be converted to raylib data type
-                                float *temp = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
-                                LOAD_ATTRIBUTE(attribute, 3, float, temp);
-
-                                // Convert data to raylib color data type (4 bytes)
-                                for (unsigned int c = 0, k = 0; c < (attribute->count*4 - 3); c += 4, k += 3)
+                                else if (attribute->component_type == cgltf_component_type_r_16u)
                                 {
-                                    model.meshes[meshIndex].colors[c] = (unsigned char)(temp[k]*255.0f);
-                                    model.meshes[meshIndex].colors[c + 1] = (unsigned char)(temp[k + 1]*255.0f);
-                                    model.meshes[meshIndex].colors[c + 2] = (unsigned char)(temp[k + 2]*255.0f);
-                                    model.meshes[meshIndex].colors[c + 3] = 255;
-                                }
+                                    // Init raylib mesh color to copy glTF attribute data
+                                    model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
 
-                                RL_FREE(temp);
+                                    // Load data into a temp buffer to be converted to raylib data type
+                                    unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*4*sizeof(unsigned short));
+                                    LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
+
+                                    // Convert data to raylib color data type (4 bytes)
+                                    for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[c]/65535.0f)*255.0f);
+
+                                    RL_FREE(temp);
+                                }
+                                else if (attribute->component_type == cgltf_component_type_r_32f)
+                                {
+                                    // Init raylib mesh color to copy glTF attribute data
+                                    model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
+
+                                    // Load data into a temp buffer to be converted to raylib data type
+                                    float *temp = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
+                                    LOAD_ATTRIBUTE(attribute, 4, float, temp);
+
+                                    // Convert data to raylib color data type (4 bytes), we expect the color data normalized
+                                    for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(temp[c]*255.0f);
+
+                                    RL_FREE(temp);
+                                }
+                                else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                             }
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                         }
-                        else if (attribute->type == cgltf_type_vec4) // RGBA
-                        {
-                            if (attribute->component_type == cgltf_component_type_r_8u)
-                            {
-                                // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
-
-                                // Load 4 components of unsigned char data type into mesh.colors
-                                LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].colors)
-                            }
-                            else if (attribute->component_type == cgltf_component_type_r_16u)
-                            {
-                                // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
-
-                                // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*4*sizeof(unsigned short));
-                                LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
-
-                                // Convert data to raylib color data type (4 bytes)
-                                for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[c]/65535.0f)*255.0f);
-
-                                RL_FREE(temp);
-                            }
-                            else if (attribute->component_type == cgltf_component_type_r_32f)
-                            {
-                                // Init raylib mesh color to copy glTF attribute data
-                                model.meshes[meshIndex].colors = (unsigned char *)RL_MALLOC(attribute->count*4*sizeof(unsigned char));
-
-                                // Load data into a temp buffer to be converted to raylib data type
-                                float *temp = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
-                                LOAD_ATTRIBUTE(attribute, 4, float, temp);
-
-                                // Convert data to raylib color data type (4 bytes), we expect the color data normalized
-                                for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(temp[c]*255.0f);
-
-                                RL_FREE(temp);
-                            }
-                            else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
-                        }
-                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                     }
 
-                    // NOTE: Attributes related to animations are processed separately
+                    // NOTE: Attributes related to animations data are processed after mesh data loading
                 }
 
                 // Load primitive indices data (if provided)
@@ -5786,32 +5803,33 @@ static Model LoadGLTF(const char *fileName)
 
                     model.meshes[meshIndex].triangleCount = (int)attribute->count/3;
 
-                    if (attribute->component_type == cgltf_component_type_r_16u)
-                    {
-                        // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
-
-                        // Load unsigned short data type into mesh.indices
-                        LOAD_ATTRIBUTE(attribute, 1, unsigned short, model.meshes[meshIndex].indices)
-                    }
-                    else if (attribute->component_type == cgltf_component_type_r_8u)
-                    {
-                        // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
-                        LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned char, model.meshes[meshIndex].indices, unsigned short)
-
-                    }
-                    else if (attribute->component_type == cgltf_component_type_r_32u)
-                    {
-                        // Init raylib mesh indices to copy glTF attribute data
-                        model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
-                        LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned int, model.meshes[meshIndex].indices, unsigned short);
-
-                        TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
-                    }
+                    if (model.meshes[meshIndex].indices != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Indices attribute data already loaded", fileName);
                     else
                     {
-                        TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data format not supported, use u16", fileName);
+                        if (attribute->component_type == cgltf_component_type_r_16u)
+                        {
+                            // Init raylib mesh indices to copy glTF attribute data
+                            model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
+
+                            // Load unsigned short data type into mesh.indices
+                            LOAD_ATTRIBUTE(attribute, 1, unsigned short, model.meshes[meshIndex].indices)
+                        }
+                        else if (attribute->component_type == cgltf_component_type_r_8u)
+                        {
+                            // Init raylib mesh indices to copy glTF attribute data
+                            model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
+                            LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned char, model.meshes[meshIndex].indices, unsigned short)
+
+                        }
+                        else if (attribute->component_type == cgltf_component_type_r_32u)
+                        {
+                            // Init raylib mesh indices to copy glTF attribute data
+                            model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
+                            LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned int, model.meshes[meshIndex].indices, unsigned short);
+
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
+                        }
+                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data format not supported, use u16", fileName);
                     }
                 }
                 else model.meshes[meshIndex].triangleCount = model.meshes[meshIndex].vertexCount/3;    // Unindexed mesh
@@ -5834,8 +5852,9 @@ static Model LoadGLTF(const char *fileName)
                 meshIndex++;       // Move to next mesh
             }
         }
+        //----------------------------------------------------------------------------------------------------
 
-        // Load glTF meshes animation data
+        // Load animation data
         // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
         // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
         //
@@ -5863,10 +5882,8 @@ static Model LoadGLTF(const char *fileName)
                 };
                 MatrixDecompose(worldMatrix, &(model.bindPose[i].translation), &(model.bindPose[i].rotation), &(model.bindPose[i].scale));
             }
-        }
-        if (data->skins_count > 1)
-        {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
+            
+            if (data->skins_count > 1) TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
 
         meshIndex = 0;
@@ -5875,8 +5892,7 @@ static Model LoadGLTF(const char *fileName)
             cgltf_node *node = &(data->nodes[i]);
 
             cgltf_mesh *mesh = node->mesh;
-            if (!mesh)
-                continue;
+            if (!mesh) continue;
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
@@ -6039,6 +6055,7 @@ static Model LoadGLTF(const char *fileName)
                 meshIndex++; // Move to next mesh
             }
         }
+        //----------------------------------------------------------------------------------------------------
 
         // Free all cgltf loaded data
         cgltf_free(data);

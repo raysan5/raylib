@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Shadowmap
+*   raylib [shaders] example - shadowmap
 *
 *   Example complexity rating: [★★★★] 4/4
 *

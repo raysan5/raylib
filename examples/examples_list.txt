@@ -3,7 +3,7 @@
 # examples must be provided as: <example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;"<example_author_name>";<author_github_user>
 #
 # This list is used as the main reference by [rexm] tool for examples collection validation and management
-# New examples must be added to this list and any possible rename must be made on this list first 
+# New examples must be added to this list and any possible rename must be made on this list first
 #
 # WARNING: List is not ordered by example name but by the display order on web
 #
@@ -23,6 +23,7 @@ core;core_3d_camera_mode;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
 core;core_3d_camera_free;⭐️☆☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
 core;core_3d_camera_first_person;⭐️⭐️☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
 core;core_3d_camera_split_screen;⭐️⭐️⭐️☆;3.7;4.0;"Jeffery Myers";@JeffM2501
+core;core_3d_camera_fps;⭐️⭐️⭐️☆;5.5;5.5;"Agnis Aldins";@nezvers
 core;core_3d_picking;⭐️⭐️☆☆;1.3;4.0;"Ramon Santamaria";@raysan5
 core;core_world_screen;⭐️⭐️☆☆;1.3;1.4;"Ramon Santamaria";@raysan5
 core;core_custom_logging;⭐️⭐️⭐️☆;2.5;2.5;"Pablo Marcos Oltra";@pamarcos
@@ -141,7 +142,7 @@ shaders;shaders_simple_mask;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscam
 shaders;shaders_hot_reloading;⭐️⭐️⭐️☆;3.0;3.5;"Ramon Santamaria";@raysan5
 shaders;shaders_mesh_instancing;⭐️⭐️⭐️⭐️;3.7;4.2;"seanpringle";@seanpringle
 shaders;shaders_multi_sample2d;⭐️⭐️☆☆;3.5;3.5;"Ramon Santamaria";@raysan5
-shaders;shaders_normalmap;⭐️⭐️⭐️⭐️;5.6;5.6;"Jeremy Montgomery";@Sir_Irk
+shaders;shaders_normal_map;⭐️⭐️⭐️⭐️;5.6;5.6;"Jeremy Montgomery";@Sir_Irk
 shaders;shaders_spotlight;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscamacho
 shaders;shaders_deferred_render;⭐️⭐️⭐️⭐️;4.5;4.5;"Justin Andreas Lacoste";@27justin
 shaders;shaders_hybrid_render;⭐️⭐️⭐️⭐️;4.2;4.2;"Buğra Alptekin Sarı";@BugraAlptekinSari
@@ -167,3 +168,4 @@ others;easings_testbed;⭐️⭐️⭐️☆;2.5;3.0;"Juan Miguel López";@flash
 others;raylib_opengl_interop;⭐️⭐️⭐️⭐️;3.8;4.0;"Stephan Soller";@arkanis
 others;embedded_files_loading;⭐️⭐️☆☆;3.0;3.5;"Kristian Holmgren";@defutura
 others;raymath_vector_angle;⭐️⭐️☆☆;1.0;4.6;"Ramon Santamaria";@raysan5
+text;text_unicode_ranges;⭐⭐⭐⭐️;2.5;4.0;"Vlad Adrian";@demizdor

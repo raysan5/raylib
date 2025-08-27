@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Mesh picking in 3d mode, ground plane, triangle, mesh
+*   raylib [models] example - mesh picking
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -89,7 +89,7 @@ int main(void)
 
         // Display information about closest hit
         RayCollision collision = { 0 };
-        char *hitObjectName = "None";
+        const char *hitObjectName = "None";
         collision.distance = FLT_MAX;
         collision.hit = false;
         Color cursorColor = WHITE;

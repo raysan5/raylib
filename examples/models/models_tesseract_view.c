@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Tesseract view
+*   raylib [models] example - tesseract view
 *
 *   NOTE: This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
 *

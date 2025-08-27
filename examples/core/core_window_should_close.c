@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Window should close
+*   raylib [core] example - window should close
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

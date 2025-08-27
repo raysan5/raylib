@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Plane rotations (yaw, pitch, roll)
+*   raylib [models] example - plane rotations (yaw, pitch, roll)
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

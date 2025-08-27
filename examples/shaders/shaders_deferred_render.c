@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - deferred rendering
+*   raylib [shaders] example - deferred render
 *
 *   Example complexity rating: [★★★★] 4/4
 *

@@ -93,6 +93,9 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
+    #define STBTT_malloc(x,u) ((void)(u),RL_MALLOC(x))
+    #define STBTT_free(x,u) ((void)(u),RL_FREE(x))
+
     #define STBTT_STATIC
     #define STB_TRUETYPE_IMPLEMENTATION
     #include "external/stb_truetype.h"      // Required for: ttf font data reading
@@ -847,7 +850,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 {
                     for (int j = i + 1; j < glyphCount; j++)
                     {
-                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
+                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (0x%02x)", glyphs[j].value);
                         // Make sure remaining recs contain valid data
                         recs[j].x = 0;
                         recs[j].y = 0;
@@ -915,7 +918,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                     }
                 }
             }
-            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", i);
+            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (0x%02x)", glyphs[i].value);
         }
 
         RL_FREE(rects);
@@ -1412,6 +1415,40 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 //----------------------------------------------------------------------------------
 // Text strings management functions
 //----------------------------------------------------------------------------------
+// Load text as separate lines ('\n')
+// WARNING: There is a limit set for number of lines and line-size
+char **LoadTextLines(const char *text, int *count)
+{
+    #define MAX_TEXTLINES_COUNT      512
+    #define MAX_TEXTLINES_LINE_LEN   512
+
+    char **lines = (char **)RL_CALLOC(MAX_TEXTLINES_COUNT, sizeof(char *));
+    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXTLINES_LINE_LEN, 1);
+    int textSize = (int)strlen(text);
+    int k = 0;
+
+    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXTLINES_COUNT); i++)
+    {
+        if ((text[i] == '\n') || (len == (MAX_TEXTLINES_LINE_LEN - 1)))
+        {
+            strncpy(lines[k], &text[i - len], len);
+            len = 0;
+            k++;
+        }
+        else len++;
+    }
+
+    *count += k;
+    return lines;
+}
+
+// Unload text lines
+void UnloadTextLines(char **lines)
+{
+    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) RL_FREE(lines[i]);
+    RL_FREE(lines);
+}
+
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {

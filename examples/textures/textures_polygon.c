@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - draw textured polygon
+*   raylib [textures] example - textured polygon
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

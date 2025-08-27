@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Raymarching shapes generation
+*   raylib [shaders] example - raymarching shapes
 *
 *   Example complexity rating: [★★★★] 4/4
 *

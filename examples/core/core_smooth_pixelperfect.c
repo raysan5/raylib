@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Smooth Pixel-perfect camera
+*   raylib [core] example - smooth pixel-perfect camera
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

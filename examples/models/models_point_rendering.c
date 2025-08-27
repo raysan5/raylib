@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib example - point rendering
+*   raylib [models] example - point rendering
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

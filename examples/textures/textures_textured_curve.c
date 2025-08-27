@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - draw texture along segmented curve
+*   raylib [textures] example - textured curve
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -57,7 +57,7 @@ int main()
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [textures] examples - textured curve");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - textured curve");
 
     // Load the road texture
     texRoad = LoadTexture("resources/road.png");

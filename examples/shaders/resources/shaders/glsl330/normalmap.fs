@@ -36,21 +36,21 @@ void main()
         normal = texture(normalMap, vec2(fragTexCoord.x, fragTexCoord.y)).rgb;
 
         //Transform normal values to the range -1.0 ... 1.0
-        normal = normalize(normal * 2.0 - 1.0);
+        normal = normalize(normal*2.0 - 1.0);
 
         //Transform the normal from tangent-space to world-space for lighting calculation
-        normal = normalize(normal * TBN);
+        normal = normalize(normal*TBN);
     }
     else
     {
         normal = normalize(fragNormal);
     }
 
-    vec4 tint = colDiffuse * fragColor;
+    vec4 tint = colDiffuse*fragColor;
 
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
     float NdotL = max(dot(normal, lightDir), 0.0);
-    vec3 lightDot = lightColor * NdotL;
+    vec3 lightDot = lightColor*NdotL;
 
     float specCo = 0.0;
 
@@ -58,10 +58,10 @@ void main()
 
     specular += specCo;
 
-    finalColor = (texelColor * ((tint + vec4(specular, 1.0)) * vec4(lightDot, 1.0)));
-    finalColor += texelColor * (vec4(1.0, 1.0, 1.0, 1.0) / 40.0) * tint;
+    finalColor = (texelColor*((tint + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
+    finalColor += texelColor*(vec4(1.0, 1.0, 1.0, 1.0)/40.0)*tint;
 
     // Gamma correction
-    finalColor = pow(finalColor, vec4(1.0 / 2.2));
+    finalColor = pow(finalColor, vec4(1.0/2.2));
     //finalColor = vec4(normal, 1.0);
 }

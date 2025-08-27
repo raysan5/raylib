@@ -74,14 +74,27 @@
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
-    //#define GLFW_EXPOSE_NATIVE_WAYLAND
-    #define GLFW_EXPOSE_NATIVE_X11
-    #define Font X11Font                // Hack to fix 'Font' name collision
+#if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
+                                        // Set appropriate expose macros based on available backends
+    #if defined(_GLFW_X11)
+        #define GLFW_EXPOSE_NATIVE_X11
+            #define Font X11Font        // Hack to fix 'Font' name collision
                                         // The definition and references to the X11 Font type will be replaced by 'X11Font'
                                         // Works as long as the current file consistently references any X11 Font as X11Font
                                         // Since it is never referenced (as of writting), this does not pose an issue
-    #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
-    #undef Font                         // Revert hack and allow normal raylib Font usage
+    #endif
+    
+    #if defined(_GLFW_WAYLAND)
+        #define GLFW_EXPOSE_NATIVE_WAYLAND
+    #endif
+                                        
+    #include "GLFW/glfw3native.h"       // Include native header only once, regardless of how many backends are defined
+                                        // Required for: glfwGetX11Window() and glfwGetWaylandWindow()
+    
+    #if defined(_GLFW_X11)              // Clean up X11-specific hacks
+        #undef Font                     // Revert hack and allow normal raylib Font usage
+    #endif
+#endif
 #endif
 #if defined(__APPLE__)
     #include <unistd.h>                 // Required for: usleep()
@@ -710,7 +723,7 @@ void SetWindowFocused(void)
     glfwFocusWindow(platform.handle);
 }
 
-#if defined(__linux__)
+#if defined(__linux__) && defined(_GLFW_X11)
 // Local storage for the window handle returned by glfwGetX11Window
 // This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
 // Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
@@ -724,10 +737,27 @@ void *GetWindowHandle(void)
     return glfwGetWin32Window(platform.handle);
 #endif
 #if defined(__linux__)
-    // Store the window handle localy and return a pointer to the variable instead
-    // Reasoning detailed in the declaration of X11WindowHandle
-    X11WindowHandle = glfwGetX11Window(platform.handle);
-    return &X11WindowHandle;
+    #if defined(_GLFW_WAYLAND)
+        #if defined(_GLFW_X11)
+            int platformID = glfwGetPlatform();
+            if (platformID == GLFW_PLATFORM_WAYLAND)
+            {
+                return glfwGetWaylandWindow(platform.handle);
+            }
+            else
+            {
+                X11WindowHandle = glfwGetX11Window(platform.handle);
+                return &X11WindowHandle;
+            }
+        #else
+            return glfwGetWaylandWindow(platform.handle);
+        #endif
+    #elif defined(_GLFW_X11)
+        // Store the window handle localy and return a pointer to the variable instead
+        // Reasoning detailed in the declaration of X11WindowHandle
+        X11WindowHandle = glfwGetX11Window(platform.handle);
+        return &X11WindowHandle;
+    #endif
 #endif
 #if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
@@ -1029,7 +1059,7 @@ void EnableCursor(void)
 
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 
-    CORE.Input.Mouse.cursorHidden = false;
+    CORE.Input.Mouse.cursorLocked = false;
 }
 
 // Disables cursor (lock cursor)
@@ -1045,7 +1075,7 @@ void DisableCursor(void)
 
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-    CORE.Input.Mouse.cursorHidden = true;
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -1363,6 +1393,9 @@ int InitPlatform(void)
     // additionally auto iconify restores the hardware resolution of the monitor if the window that loses focus is a fullscreen window
     glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
 
+    // Window flags requested before initialization to be applied after initialization
+    unsigned int requestedWindowFlags = CORE.Window.flags;
+
     // Check window creation flags
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
 
@@ -1660,7 +1693,7 @@ int InitPlatform(void)
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-        // Here CORE.Window.render.width/height should be used instead of 
+        // Here CORE.Window.render.width/height should be used instead of
         // CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled
         int posX = monitorX + (monitorWidth - (int)CORE.Window.render.width)/2;
         int posY = monitorY + (monitorHeight - (int)CORE.Window.render.height)/2;
@@ -1672,6 +1705,9 @@ int InitPlatform(void)
         CORE.Window.position.x = posX;
         CORE.Window.position.y = posY;
     }
+
+    // Apply window flags requested previous to initialization
+    SetWindowState(requestedWindowFlags);
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
@@ -1725,7 +1761,7 @@ int InitPlatform(void)
 
 #if defined(__NetBSD__)
     // Workaround for NetBSD
-    char *glfwPlatform = "X11";
+    char *glfwPlatform = "X11 (NetBSD)";
 #else
     char *glfwPlatform = "";
     switch (glfwGetPlatform())

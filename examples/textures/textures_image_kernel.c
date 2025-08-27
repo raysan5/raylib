@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - image kernel convolution
+*   raylib [textures] example - image convolution
 *
 *   Example complexity rating: [★★★★] 4/4
 *
