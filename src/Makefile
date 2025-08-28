@@ -325,7 +325,11 @@ endif
 #  -D_GNU_SOURCE            access to lots of nonstandard GNU/Linux extension functions
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
-CFLAGS = -Wall -D_GNU_SOURCE -D$(TARGET_PLATFORM) -D$(GRAPHICS) -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+CFLAGS      = -Wall -D_GNU_SOURCE -D$(TARGET_PLATFORM)
+ifdef GRAPHICS
+    CFLAGS += -D$(GRAPHICS)
+endif
+CFLAGS     += -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
 
 ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
     CFLAGS += -DEXTERNAL_CONFIG_FLAGS $(RAYLIB_CONFIG_FLAGS)

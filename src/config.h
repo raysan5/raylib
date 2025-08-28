@@ -27,56 +27,23 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-//------------------------------------------------------------------------------------
-// Module selection - Some modules could be avoided
-// Mandatory modules: rcore, rlgl, utils
-//------------------------------------------------------------------------------------
 #define SUPPORT_MODULE_RSHAPES          1
 #define SUPPORT_MODULE_RTEXTURES        1
-#define SUPPORT_MODULE_RTEXT            1       // WARNING: It requires SUPPORT_MODULE_RTEXTURES to load sprite font textures
+#define SUPPORT_MODULE_RTEXT            1
 #define SUPPORT_MODULE_RMODELS          1
 #define SUPPORT_MODULE_RAUDIO           1
-
-//------------------------------------------------------------------------------------
-// Module: rcore - Configuration Flags
-//------------------------------------------------------------------------------------
-// Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 #define SUPPORT_CAMERA_SYSTEM           1
-// Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 #define SUPPORT_GESTURES_SYSTEM         1
-// Include pseudo-random numbers generator (rprand.h), based on Xoshiro128** and SplitMix64
 #define SUPPORT_RPRAND_GENERATOR        1
-// Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES          1
-// Reconfigure standard input to receive key inputs, works with SSH connection.
 #define SUPPORT_SSH_KEYBOARD_RPI        1
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 #define SUPPORT_WINMM_HIGHRES_TIMER     1
-// Use busy wait loop for timing sync, if not defined, a high-resolution timer is set up and used
-//#define SUPPORT_BUSY_WAIT_LOOP          1
-// Use a partial-busy wait loop, in this case frame sleeps for most of the time, but then runs a busy loop at the end for accuracy
 #define SUPPORT_PARTIALBUSY_WAIT_LOOP    1
-// Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 #define SUPPORT_SCREEN_CAPTURE          1
-// Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 #define SUPPORT_GIF_RECORDING           1
-// Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API         1
-// Support automatic generated events, loading and recording of those events when required
 #define SUPPORT_AUTOMATION_EVENTS       1
-// Support custom frame control, only for advanced users
-// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
-// Enabling this flag allows manual control of the frame processes, use at your own risk
-//#define SUPPORT_CUSTOM_FRAME_CONTROL    1
-
-// Support for clipboard image loading
-// NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
 #define SUPPORT_CLIPBOARD_IMAGE    1
-
-// NOTE: Clipboard image loading requires support for some image file formats
-// TODO: Those defines should probably be removed from here, I prefer to let the user manage them
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #ifndef SUPPORT_MODULE_RTEXTURES
         #define SUPPORT_MODULE_RTEXTURES 1
@@ -84,61 +51,44 @@
     #ifndef STBI_REQUIRED
         #define STBI_REQUIRED
     #endif
-    #ifndef SUPPORT_FILEFORMAT_BMP // For clipboard image on Windows
+    #ifndef SUPPORT_FILEFORMAT_BMP
         #define SUPPORT_FILEFORMAT_BMP 1
     #endif
-    #ifndef SUPPORT_FILEFORMAT_PNG // Wayland uses png for prints, at least it was on 22 LTS ubuntu
+    #ifndef SUPPORT_FILEFORMAT_PNG
         #define SUPPORT_FILEFORMAT_PNG 1
     #endif
     #ifndef SUPPORT_FILEFORMAT_JPG
         #define SUPPORT_FILEFORMAT_JPG 1
     #endif
 #endif
+#define MAX_FILEPATH_CAPACITY        8192
+#define MAX_FILEPATH_LENGTH          4096
 
-// rcore: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_FILEPATH_CAPACITY        8192       // Maximum file paths capacity
-#define MAX_FILEPATH_LENGTH          4096       // Maximum length for filepaths (Linux PATH_MAX default value)
+#define MAX_KEYBOARD_KEYS             512
+#define MAX_MOUSE_BUTTONS               8
+#define MAX_GAMEPADS                    4
+#define MAX_GAMEPAD_AXES                8
+#define MAX_GAMEPAD_BUTTONS            32
+#define MAX_GAMEPAD_VIBRATION_TIME      2.0f
+#define MAX_TOUCH_POINTS                8
+#define MAX_KEY_PRESSED_QUEUE          16
+#define MAX_CHAR_PRESSED_QUEUE         16
 
-#define MAX_KEYBOARD_KEYS             512       // Maximum number of keyboard keys supported
-#define MAX_MOUSE_BUTTONS               8       // Maximum number of mouse buttons supported
-#define MAX_GAMEPADS                    4       // Maximum number of gamepads supported
-#define MAX_GAMEPAD_AXES                8       // Maximum number of axes supported (per gamepad)
-#define MAX_GAMEPAD_BUTTONS            32       // Maximum number of buttons supported (per gamepad)
-#define MAX_GAMEPAD_VIBRATION_TIME      2.0f    // Maximum vibration time in seconds
-#define MAX_TOUCH_POINTS                8       // Maximum number of touch points supported
-#define MAX_KEY_PRESSED_QUEUE          16       // Maximum number of keys in the key input queue
-#define MAX_CHAR_PRESSED_QUEUE         16       // Maximum number of characters in the char input queue
+#define MAX_DECOMPRESSION_SIZE         64
 
-#define MAX_DECOMPRESSION_SIZE         64       // Max size allocated for decompression in MB
+#define MAX_AUTOMATION_EVENTS       16384
 
-#define MAX_AUTOMATION_EVENTS       16384       // Maximum number of automation events to record
+#define RL_SUPPORT_MESH_GPU_SKINNING           1
+#define RL_DEFAULT_BATCH_BUFFERS               1
+#define RL_DEFAULT_BATCH_DRAWCALLS           256
+#define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS     4
 
-//------------------------------------------------------------------------------------
-// Module: rlgl - Configuration values
-//------------------------------------------------------------------------------------
+#define RL_MAX_MATRIX_STACK_SIZE              32
 
-// Enable OpenGL Debug Context (only available on OpenGL 4.3)
-//#define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT       1
+#define RL_MAX_SHADER_LOCATIONS               32
 
-// Show OpenGL extensions and capabilities detailed logs on init
-//#define RLGL_SHOW_GL_DETAILS_INFO              1
-
-#define RL_SUPPORT_MESH_GPU_SKINNING           1      // GPU skinning, comment if your GPU does not support more than 8 VBOs
-
-//#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
-#define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)
-#define RL_DEFAULT_BATCH_DRAWCALLS           256      // Default number of batch draw calls (by state changes: mode, texture)
-#define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS     4      // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
-
-#define RL_MAX_MATRIX_STACK_SIZE              32      // Maximum size of internal Matrix stack
-
-#define RL_MAX_SHADER_LOCATIONS               32      // Maximum number of shader locations supported
-
-#define RL_CULL_DISTANCE_NEAR              0.05       // Default projection matrix near cull distance
-#define RL_CULL_DISTANCE_FAR             4000.0       // Default projection matrix far cull distance
-
-// Default shader vertex attribute locations
+#define RL_CULL_DISTANCE_NEAR              0.05
+#define RL_CULL_DISTANCE_FAR             4000.0
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD    1
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL      2
@@ -151,146 +101,285 @@
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX 9
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"
 
-// Default shader vertex attribute names to set location points
-// NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
-#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
-
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView))
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
-#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
-#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
-#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
-
-//------------------------------------------------------------------------------------
-// Module: rshapes - Configuration Flags
-//------------------------------------------------------------------------------------
-// Use QUADS instead of TRIANGLES for drawing when possible
-// Some lines-based shapes could still use lines
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"
+#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"
+#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"
+#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"
 #define SUPPORT_QUADS_DRAW_MODE         1
-
-// rshapes: Configuration values
-//------------------------------------------------------------------------------------
-#define SPLINE_SEGMENT_DIVISIONS       24       // Spline segments subdivisions
-
-//------------------------------------------------------------------------------------
-// Module: rtextures - Configuration Flags
-//------------------------------------------------------------------------------------
-// Selected desired fileformats to be supported for image data loading
+#define SPLINE_SEGMENT_DIVISIONS       24
 #define SUPPORT_FILEFORMAT_PNG      1
-//#define SUPPORT_FILEFORMAT_BMP      1
-//#define SUPPORT_FILEFORMAT_TGA      1
-//#define SUPPORT_FILEFORMAT_JPG      1
 #define SUPPORT_FILEFORMAT_GIF      1
 #define SUPPORT_FILEFORMAT_QOI      1
-//#define SUPPORT_FILEFORMAT_PSD      1
 #define SUPPORT_FILEFORMAT_DDS      1
-//#define SUPPORT_FILEFORMAT_HDR      1
-//#define SUPPORT_FILEFORMAT_PIC          1
-//#define SUPPORT_FILEFORMAT_KTX      1
-//#define SUPPORT_FILEFORMAT_ASTC     1
-//#define SUPPORT_FILEFORMAT_PKM      1
-//#define SUPPORT_FILEFORMAT_PVR      1
-
-// Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
 #define SUPPORT_IMAGE_EXPORT            1
-// Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION        1
-// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-// If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
 #define SUPPORT_IMAGE_MANIPULATION      1
-
-//------------------------------------------------------------------------------------
-// Module: rtext - Configuration Flags
-//------------------------------------------------------------------------------------
-// Default font is loaded on window initialization to be available for the user to render simple text
-// NOTE: If enabled, uses external module functions to load default raylib font
 #define SUPPORT_DEFAULT_FONT            1
-// Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_TTF          1
 #define SUPPORT_FILEFORMAT_FNT          1
-//#define SUPPORT_FILEFORMAT_BDF          1
-
-// Support text management functions
-// If not defined, still some functions are supported: TextLength(), TextFormat()
 #define SUPPORT_TEXT_MANIPULATION       1
-
-// On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
-// at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-// drawing text and shapes with a single draw call [SetShapesTexture()].
 #define SUPPORT_FONT_ATLAS_WHITE_REC    1
-
-// rtext: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_TEXT_BUFFER_LENGTH       1024       // Size of internal static buffers used on some functions:
-                                                // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
-#define MAX_TEXTSPLIT_COUNT           128       // Maximum number of substrings to split: TextSplit()
-
-//------------------------------------------------------------------------------------
-// Module: rmodels - Configuration Flags
-//------------------------------------------------------------------------------------
-// Selected desired model fileformats to be supported for loading
+#define MAX_TEXT_BUFFER_LENGTH       1024
+#define MAX_TEXTSPLIT_COUNT           128
 #define SUPPORT_FILEFORMAT_OBJ          1
 #define SUPPORT_FILEFORMAT_MTL          1
 #define SUPPORT_FILEFORMAT_IQM          1
 #define SUPPORT_FILEFORMAT_GLTF         1
 #define SUPPORT_FILEFORMAT_VOX          1
 #define SUPPORT_FILEFORMAT_M3D          1
-// Support procedural mesh generation functions, uses external par_shapes.h library
-// NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION         1
-
-// rmodels: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
+#define MAX_MATERIAL_MAPS              12
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
-#define MAX_MESH_VERTEX_BUFFERS         9       // Maximum vertex buffers (VBO) per mesh
+#define MAX_MESH_VERTEX_BUFFERS         9
 #else
-#define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
+#define MAX_MESH_VERTEX_BUFFERS         7
 #endif
-
-//------------------------------------------------------------------------------------
-// Module: raudio - Configuration Flags
-//------------------------------------------------------------------------------------
-// Desired audio fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_WAV          1
 #define SUPPORT_FILEFORMAT_OGG          1
 #define SUPPORT_FILEFORMAT_MP3          1
 #define SUPPORT_FILEFORMAT_QOA          1
-//#define SUPPORT_FILEFORMAT_FLAC         1
 #define SUPPORT_FILEFORMAT_XM           1
 #define SUPPORT_FILEFORMAT_MOD          1
+#define AUDIO_DEVICE_FORMAT    ma_format_f32
+#define AUDIO_DEVICE_CHANNELS              2
+#define AUDIO_DEVICE_SAMPLE_RATE           0
 
-// raudio: Configuration values
-//------------------------------------------------------------------------------------
-#define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (miniaudio: float-32bit)
-#define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
-#define AUDIO_DEVICE_SAMPLE_RATE           0    // Device sample rate (device default)
-
-#define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Maximum number of audio pool channels
-
-//------------------------------------------------------------------------------------
-// Module: utils - Configuration Flags
-//------------------------------------------------------------------------------------
-// Standard file io library (stdio.h) included
+#define MAX_AUDIO_BUFFER_POOL_CHANNELS    16
 #define SUPPORT_STANDARD_FILEIO         1
-// Show TRACELOG() output messages
-// NOTE: By default LOG_DEBUG traces not shown
 #define SUPPORT_TRACELOG                1
-//#define SUPPORT_TRACELOG_DEBUG          1
+#define MAX_TRACELOG_MSG_LENGTH       256
 
-// utils: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
+#ifdef PLATFORM_HEADLESS
+    #undef SUPPORT_MODULE_RTEXTURES
+    #undef SUPPORT_MODULE_RMODELS
+    #undef SUPPORT_MODULE_RAUDIO
+    #undef SUPPORT_CAMERA_SYSTEM
+    #undef SUPPORT_GESTURES_SYSTEM
+    #undef SUPPORT_MOUSE_GESTURES
+    #undef SUPPORT_SSH_KEYBOARD_RPI
+    #undef SUPPORT_PARTIALBUSY_WAIT_LOOP
+    #undef SUPPORT_SCREEN_CAPTURE
+    #undef SUPPORT_GIF_RECORDING
+    #undef SUPPORT_AUTOMATION_EVENTS
+    #undef SUPPORT_CLIPBOARD_IMAGE
+    #undef SUPPORT_MODULE_RTEXTURES
+    #undef STBI_REQUIRED
+    #undef SUPPORT_FILEFORMAT_BMP
+    #undef SUPPORT_FILEFORMAT_PNG
+    #undef SUPPORT_FILEFORMAT_JPG
+    #undef SUPPORT_QUADS_DRAW_MODE
+    #undef SUPPORT_FILEFORMAT_PNG
+    #undef SUPPORT_FILEFORMAT_BMP
+    #undef SUPPORT_FILEFORMAT_TGA
+    #undef SUPPORT_FILEFORMAT_JPG
+    #undef SUPPORT_FILEFORMAT_GIF
+    #undef SUPPORT_FILEFORMAT_QOI
+    #undef SUPPORT_FILEFORMAT_PSD
+    #undef SUPPORT_FILEFORMAT_DDS
+    #undef SUPPORT_FILEFORMAT_HDR
+    #undef SUPPORT_FILEFORMAT_PIC
+    #undef SUPPORT_FILEFORMAT_KTX
+    #undef SUPPORT_FILEFORMAT_ASTC
+    #undef SUPPORT_FILEFORMAT_PKM
+    #undef SUPPORT_FILEFORMAT_PVR
+    #undef SUPPORT_IMAGE_EXPORT
+    #undef SUPPORT_IMAGE_GENERATION
+    #undef SUPPORT_IMAGE_MANIPULATION
+    #undef SUPPORT_DEFAULT_FONT
+    #undef SUPPORT_FILEFORMAT_TTF
+    #undef SUPPORT_FILEFORMAT_FNT
+    #undef SUPPORT_FONT_ATLAS_WHITE_REC
+    #undef SUPPORT_FILEFORMAT_OBJ
+    #undef SUPPORT_FILEFORMAT_MTL
+    #undef SUPPORT_FILEFORMAT_IQM
+    #undef SUPPORT_FILEFORMAT_GLTF
+    #undef SUPPORT_FILEFORMAT_VOX
+    #undef SUPPORT_FILEFORMAT_M3D
+    #undef SUPPORT_MESH_GENERATION
+    #undef SUPPORT_FILEFORMAT_WAV
+    #undef SUPPORT_FILEFORMAT_OGG
+    #undef SUPPORT_FILEFORMAT_MP3
+    #undef SUPPORT_FILEFORMAT_QOA
+    #undef SUPPORT_FILEFORMAT_XM
+    #undef SUPPORT_FILEFORMAT_MOD
 
-#endif // CONFIG_H
+
+    // Define all rlgl functions to be nothing
+    #define rlMatrixMode(mode) ((void)0)
+    #define rlPushMatrix() ((void)0)
+    #define rlPopMatrix() ((void)0)
+    #define rlLoadIdentity() ((void)0)
+    #define rlTranslatef(x, y, z) ((void)0)
+    #define rlRotatef(angle, x, y, z) ((void)0)
+    #define rlScalef(x, y, z) ((void)0)
+    #define rlMultMatrixf(matf) ((void)0)
+    #define rlFrustum(left, right, bottom, top, znear, zfar) ((void)0)
+    #define rlOrtho(left, right, bottom, top, znear, zfar) ((void)0)
+    #define rlViewport(x, y, width, height) ((void)0)
+    #define rlSetClipPlanes(nearPlane, farPlane) ((void)0)
+    #define rlGetCullDistanceNear() ((void)0)
+    #define rlGetCullDistanceFar() ((void)0)
+    #define rlBegin(mode) ((void)0)
+    #define rlEnd() ((void)0)
+    #define rlVertex2i(x, y) ((void)0)
+    #define rlVertex2f(x, y) ((void)0)
+    #define rlVertex3f(x, y, z) ((void)0)
+    #define rlTexCoord2f(x, y) ((void)0)
+    #define rlNormal3f(x, y, z) ((void)0)
+    #define rlColor4ub(r, g, b, a) ((void)0)
+    #define rlColor3f(x, y, z) ((void)0)
+    #define rlColor4f(x, y, z, w) ((void)0)
+    #define rlEnableVertexArray(vaoId) ((void)0)
+    #define rlDisableVertexArray() ((void)0)
+    #define rlEnableVertexBuffer(id) ((void)0)
+    #define rlDisableVertexBuffer() ((void)0)
+    #define rlEnableVertexBufferElement(id) ((void)0)
+    #define rlDisableVertexBufferElement() ((void)0)
+    #define rlEnableVertexAttribute(index) ((void)0)
+    #define rlDisableVertexAttribute(index) ((void)0)
+    #define rlEnableStatePointer(vertexAttribType, buffer) ((void)0)
+    #define rlDisableStatePointer(vertexAttribType) ((void)0)
+    #define rlActiveTextureSlot(slot) ((void)0)
+    #define rlEnableTexture(id) ((void)0)
+    #define rlDisableTexture() ((void)0)
+    #define rlEnableTextureCubemap(id) ((void)0)
+    #define rlDisableTextureCubemap() ((void)0)
+    #define rlTextureParameters(id, param, value) ((void)0)
+    #define rlCubemapParameters(id, param, value) ((void)0)
+    #define rlEnableShader(id) ((void)0)
+    #define rlDisableShader() ((void)0)
+    #define rlEnableFramebuffer(id) ((void)0)
+    #define rlDisableFramebuffer() ((void)0)
+    #define rlGetActiveFramebuffer() ((void)0)
+    #define rlActiveDrawBuffers(count) ((void)0)
+    #define rlBlitFramebuffer(srcX, srcY, srcWidth, srcHeight, dstX, dstY, dstWidth, dstHeight, bufferMask) ((void)0)
+    #define rlBindFramebuffer(target, framebuffer) ((void)0)
+    #define rlEnableColorBlend() ((void)0)
+    #define rlDisableColorBlend() ((void)0)
+    #define rlEnableDepthTest() ((void)0)
+    #define rlDisableDepthTest() ((void)0)
+    #define rlEnableDepthMask() ((void)0)
+    #define rlDisableDepthMask() ((void)0)
+    #define rlEnableBackfaceCulling() ((void)0)
+    #define rlDisableBackfaceCulling() ((void)0)
+    #define rlColorMask(r, g, b, a) ((void)0)
+    #define rlSetCullFace(mode) ((void)0)
+    #define rlEnableScissorTest() ((void)0)
+    #define rlDisableScissorTest() ((void)0)
+    #define rlScissor(x, y, width, height) ((void)0)
+    #define rlEnablePointMode() ((void)0)
+    #define rlDisablePointMode() ((void)0)
+    #define rlEnableWireMode() ((void)0)
+    #define rlDisableWireMode() ((void)0)
+    #define rlSetLineWidth(width) ((void)0)
+    #define rlGetLineWidth() ((void)0)
+    #define rlEnableSmoothLines() ((void)0)
+    #define rlDisableSmoothLines() ((void)0)
+    #define rlEnableStereoRender() ((void)0)
+    #define rlDisableStereoRender() ((void)0)
+    #define rlIsStereoRenderEnabled() ((void)0)
+    
+    #define rlClearColor(r, g, b, a) ((void)0)
+    #define rlClearScreenBuffers() ((void)0)
+    #define rlCheckErrors() ((void)0)
+    #define rlSetBlendMode(mode) ((void)0)
+    #define rlSetBlendFactors(glSrcFactor, glDstFactor, glEquation) ((void)0)
+    #define rlSetBlendFactorsSeparate(glSrcRGB, glDstRGB, glSrcAlpha, glDstAlpha, glEqRGB, glEqAlpha) ((void)0)
+    #define rlglInit(width, height) ((void)0)
+    #define rlglClose() ((void)0)
+    #define rlLoadExtensions(loader) ((void)0)
+    #define rlGetProcAddress(procName) ((void)0)
+    #define rlGetVersion() ((void)0)
+    #define rlSetFramebufferWidth(width) ((void)0)
+    #define rlGetFramebufferWidth() ((void)0)
+    #define rlSetFramebufferHeight(height) ((void)0)
+    #define rlGetFramebufferHeight() ((void)0)
+    
+    #define rlGetTextureIdDefault() ((void)0)
+    #define rlGetShaderIdDefault() ((void)0)
+    #define rlGetShaderLocsDefault() ((void)0)
+    #define rlLoadRenderBatch(numBuffers, bufferElements) ((void)0)
+    #define rlUnloadRenderBatch(batch) ((void)0)
+    #define rlDrawRenderBatch(batch) ((void)0)
+    #define rlSetRenderBatchActive(batch) ((void)0)
+    #define rlDrawRenderBatchActive() ((void)0)
+    #define rlCheckRenderBatchLimit(vCount) ((void)0)
+    
+    #define rlSetTexture(id) ((void)0)
+    #define rlLoadVertexArray() ((void)0)
+    #define rlLoadVertexBuffer(buffer, size, dynamic) ((void)0)
+    #define rlLoadVertexBufferElement(buffer, size, dynamic) ((void)0)
+    #define rlUpdateVertexBuffer(bufferId, data, dataSize, offset) ((void)0)
+    #define rlUpdateVertexBufferElements(id, data, dataSize, offset) ((void)0)
+    #define rlUnloadVertexArray(vaoId) ((void)0)
+    #define rlUnloadVertexBuffer(vboId) ((void)0)
+    #define rlSetVertexAttribute(index, compSize, type, normalized, stride, offset) ((void)0)
+    #define rlSetVertexAttributeDivisor(index, divisor) ((void)0)
+    #define rlSetVertexAttributeDefault(locIndex, value, attribType, count) ((void)0)
+    #define rlDrawVertexArray(offset, count) ((void)0)
+    #define rlDrawVertexArrayElements(offset, count, buffer) ((void)0)
+    #define rlDrawVertexArrayInstanced(offset, count, instances) ((void)0)
+    #define rlDrawVertexArrayElementsInstanced(offset, count, buffer, instances) ((void)0)
+    #define rlLoadTexture(data, width, height, format, mipmapCount) ((void)0)
+    #define rlLoadTextureDepth(width, height, useRenderBuffer) ((void)0)
+    #define rlLoadTextureCubemap(data, size, format, mipmapCount) ((void)0)
+    #define rlUpdateTexture(id, offsetX, offsetY, width, height, format, data) ((void)0)
+    #define rlGetGlTextureFormats(format, glInternalFormat, glFormat, glType) ((void)0)
+    #define rlGetPixelFormatName(format) ((void)0)
+    #define rlUnloadTexture(id) ((void)0)
+    #define rlGenTextureMipmaps(id, width, height, format, mipmaps) ((void)0)
+    #define rlReadTexturePixels(id, width, height, format) ((void)0)
+    #define rlReadScreenPixels(width, height) ((void)0)
+    #define rlLoadFramebuffer() ((void)0)
+    #define rlFramebufferAttach(fboId, texId, attachType, texType, mipLevel) ((void)0)
+    #define rlFramebufferComplete(id) ((void)0)
+    #define rlUnloadFramebuffer(id) ((void)0)
+    #define rlLoadShaderCode(vsCode, fsCode) ((void)0)
+    #define rlCompileShader(shaderCode, type) ((void)0)
+    #define rlLoadShaderProgram(vShaderId, fShaderId) ((void)0)
+    #define rlUnloadShaderProgram(id) ((void)0)
+    #define rlGetLocationUniform(shaderId, uniformName) ((void)0)
+    #define rlGetLocationAttrib(shaderId, attribName) ((void)0)
+    #define rlSetUniform(locIndex, value, uniformType, count) ((void)0)
+    #define rlSetUniformMatrix(locIndex, mat) ((void)0)
+    #define rlSetUniformMatrices(locIndex, mat, count) ((void)0)
+    #define rlSetUniformSampler(locIndex, textureId) ((void)0)
+    #define rlSetShader(id, locs) ((void)0)
+    #define rlLoadComputeShaderProgram(shaderId) ((void)0)
+    #define rlComputeShaderDispatch(groupX, groupY, groupZ) ((void)0)
+    #define rlLoadShaderBuffer(size, data, usageHint) ((void)0)
+    #define rlUnloadShaderBuffer(ssboId) ((void)0)
+    #define rlUpdateShaderBuffer(id, data, dataSize, offset) ((void)0)
+    #define rlBindShaderBuffer(id, index) ((void)0)
+    #define rlReadShaderBuffer(id, dest, count, offset) ((void)0)
+    #define rlCopyShaderBuffer(destId, srcId, destOffset, srcOffset, count) ((void)0)
+    #define rlGetShaderBufferSize(id) ((void)0)
+    #define rlBindImageTexture(id, index, format, readonly) ((void)0)
+    #define rlGetMatrixModelview() ((void)0)
+    #define rlGetMatrixProjection() ((void)0)
+    #define rlGetMatrixTransform() ((void)0)
+    #define rlGetMatrixProjectionStereo(eye) ((void)0)
+    #define rlGetMatrixViewOffsetStereo(eye) ((void)0)
+    #define rlSetMatrixProjection(proj) ((void)0)
+    #define rlSetMatrixModelview(view) ((void)0)
+    #define rlSetMatrixProjectionStereo(right, left) ((void)0)
+    #define rlSetMatrixViewOffsetStereo(right, left) ((void)0)
+    #define rlLoadDrawCube() ((void)0)
+    #define rlLoadDrawQuad() ((void)0)
+
+#endif
+
+#endif

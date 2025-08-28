@@ -310,6 +310,9 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl
 endif
+ifeq ($(PLATFORM),PLATFORM_HEADLESS)
+    LDLIBS = -lraylib
+endif
 
 
 # Define all object files from source files

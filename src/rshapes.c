@@ -53,7 +53,9 @@
 
 #if defined(SUPPORT_MODULE_RSHAPES)
 
-#include "rlgl.h"       // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
+#ifndef PLATFORM_HEADLESS
+    #include "rlgl.h"       // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
+#endif
 
 #include <math.h>       // Required for: sinf(), asinf(), cosf(), acosf(), sqrtf(), fabsf()
 #include <float.h>      // Required for: FLT_EPSILON
@@ -821,6 +823,7 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
+#ifndef PLATFORM_HEADLESS
     Matrix mat = rlGetMatrixTransform();
     float xOffset = 0.5f/mat.m0;
     float yOffset = 0.5f/mat.m5;
@@ -839,6 +842,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         rlVertex2f((float)posX + xOffset, (float)posY + (float)height - yOffset);
         rlVertex2f((float)posX + xOffset, (float)posY + yOffset);
     rlEnd();
+#endif
 
 /*
 // Previous implementation, it has issues... but it does not require view matrix...

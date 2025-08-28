@@ -26,6 +26,8 @@
 *           - Linux DRM subsystem (KMS mode)
 *       > PLATFORM_ANDROID:
 *           - Android (ARM, ARM64)
+*       > PLATFORM_HEADLESS:
+*           - All platforms, dummy implementations
 *
 *   CONFIGURATION:
 *       #define SUPPORT_DEFAULT_FONT (default)
@@ -117,8 +119,10 @@
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
-#define RLGL_IMPLEMENTATION
-#include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#ifndef PLATFORM_HEADLESS
+    #define RLGL_IMPLEMENTATION
+    #include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#endif
 
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"                // Vector2, Vector3, Quaternion and Matrix functionality
@@ -561,6 +565,8 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
     #include "platforms/rcore_android.c"
+#elif defined(PLATFORM_HEADLESS)
+    #include "platforms/rcore_headless.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
@@ -633,6 +639,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: NATIVE DRM");
 #elif defined(PLATFORM_ANDROID)
     TRACELOG(LOG_INFO, "Platform backend: ANDROID");
+#elif defined(PLATFORM_HEADLESS)
+    TRACELOG(LOG_INFO, "Platform backend: HEADLESS");
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
@@ -642,6 +650,7 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Supported raylib modules:");
     TRACELOG(LOG_INFO, "    > rcore:..... loaded (mandatory)");
     TRACELOG(LOG_INFO, "    > rlgl:...... loaded (mandatory)");
+
 #if defined(SUPPORT_MODULE_RSHAPES)
     TRACELOG(LOG_INFO, "    > rshapes:... loaded (optional)");
 #else
@@ -693,6 +702,7 @@ void InitWindow(int width, int height, const char *title)
     }
     //--------------------------------------------------------------
 
+#if !defined(PLATFORM_HEADLESS)
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -701,38 +711,39 @@ void InitWindow(int width, int height, const char *title)
     // Setup default viewport
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-#if defined(SUPPORT_MODULE_RTEXT)
-    #if defined(SUPPORT_DEFAULT_FONT)
-        // Load default font
-        // WARNING: External function: Module required: rtext
-        LoadFontDefault();
+    #if defined(SUPPORT_MODULE_RTEXT)
+        #if defined(SUPPORT_DEFAULT_FONT)
+            // Load default font
+            // WARNING: External function: Module required: rtext
+            LoadFontDefault();
+            #if defined(SUPPORT_MODULE_RSHAPES)
+                // Set font white rectangle for shapes drawing, so shapes and text can be batched together
+                // WARNING: rshapes module is required, if not available, default internal white rectangle is used
+                Rectangle rec = GetFontDefault().recs[95];
+                if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+                {
+                    // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
+                }
+                else
+                {
+                    // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
+                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+                }
+            #endif
+        #endif
+    #else
         #if defined(SUPPORT_MODULE_RSHAPES)
-        // Set font white rectangle for shapes drawing, so shapes and text can be batched together
-        // WARNING: rshapes module is required, if not available, default internal white rectangle is used
-        Rectangle rec = GetFontDefault().recs[95];
-        if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-        {
-            // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
-            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
-        }
-        else
-        {
-            // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
-            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
-        }
+            // Set default texture and rectangle to be used for shapes drawing
+            // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+            Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+            SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
         #endif
     #endif
-#else
-    #if defined(SUPPORT_MODULE_RSHAPES)
-    // Set default texture and rectangle to be used for shapes drawing
-    // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
-    Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-    SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
-    #endif
-#endif
 
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
+#endif
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
@@ -1028,27 +1039,32 @@ void EndDrawing(void)
 // Initialize 2D mode with custom camera (2D)
 void BeginMode2D(Camera2D camera)
 {
+#ifndef PLATFORM_HEADLESS
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlLoadIdentity();               // Reset current matrix (modelview)
 
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
+#endif
 }
 
 // Ends 2D mode with custom camera
 void EndMode2D(void)
 {
+#ifndef PLATFORM_HEADLESS
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlLoadIdentity();               // Reset current matrix (modelview)
 
     if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+#endif
 }
 
 // Initializes 3D mode with custom camera (3D)
 void BeginMode3D(Camera camera)
 {
+#ifndef PLATFORM_HEADLESS
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
@@ -1083,11 +1099,13 @@ void BeginMode3D(Camera camera)
     rlMultMatrixf(MatrixToFloat(matView));      // Multiply modelview matrix by view matrix (camera)
 
     rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
+#endif
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void EndMode3D(void)
 {
+#ifndef PLATFORM_HEADLESS
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
@@ -1099,6 +1117,7 @@ void EndMode3D(void)
     if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
     rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
+#endif
 }
 
 // Initializes render texture for drawing
@@ -1237,6 +1256,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
 
+#ifndef PLATFORM_HEADLESS
     if (rlGetVersion() != RL_OPENGL_11)
     {
         // Compute aspect ratio
@@ -1302,6 +1322,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
         */
     }
     else TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
+#endif
 
     return config;
 }
@@ -1343,6 +1364,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
 
+#ifndef PLATFORM_HEADLESS
     shader.id = rlLoadShaderCode(vsCode, fsCode);
 
     if (shader.id == rlGetShaderIdDefault()) shader.locs = rlGetShaderLocsDefault();
@@ -1391,6 +1413,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_MAP_SPECULAR] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1); // SHADER_LOC_MAP_METALNESS
         shader.locs[SHADER_LOC_MAP_NORMAL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2);
     }
+#endif
 
     return shader;
 }
@@ -1430,6 +1453,7 @@ bool IsShaderValid(Shader shader)
 // Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {
+#ifndef PLATFORM_HEADLESS
     if (shader.id != rlGetShaderIdDefault())
     {
         rlUnloadShaderProgram(shader.id);
@@ -1437,18 +1461,27 @@ void UnloadShader(Shader shader)
         // NOTE: If shader loading failed, it should be 0
         RL_FREE(shader.locs);
     }
+#endif
 }
 
 // Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
+#ifndef PLATFORM_HEADLESS
     return rlGetLocationUniform(shader.id, uniformName);
+#else
+    return 0;
+#endif
 }
 
 // Get shader attribute location
 int GetShaderLocationAttrib(Shader shader, const char *attribName)
 {
+#ifndef PLATFORM_HEADLESS
     return rlGetLocationAttrib(shader.id, attribName);
+#else
+    return 0;
+#endif
 }
 
 // Set shader uniform value
@@ -1507,6 +1540,7 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
 {
     Ray ray = { 0 };
 
+#ifndef PLATFORM_HEADLESS
     // Calculate normalized device coordinates
     // NOTE: y value is negative
     float x = (2.0f*position.x)/(float)width - 1.0f;
@@ -1554,6 +1588,7 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
 
     // Apply calculated vectors to ray
     ray.direction = direction;
+#endif
 
     return ray;
 }
@@ -1605,6 +1640,9 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 // Get size position for a 3d world space position (useful for texture drawing)
 Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height)
 {
+    Vector2 result = { 0 };
+
+#ifndef PLATFORM_HEADLESS
     // Calculate projection matrix (from perspective instead of frustum
     Matrix matProj = MatrixIdentity();
 
@@ -1643,7 +1681,10 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     // Calculate 2d screen position vector
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)width, (ndcPos.y + 1.0f)/2.0f*(float)height };
 
-    return screenPosition;
+    result = screenPosition;
+#endif
+
+    return result;
 }
 
 // Get the screen space position for a 2d camera world space position
