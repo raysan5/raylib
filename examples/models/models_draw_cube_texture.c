@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Draw textured cube
+*   raylib [models] example - draw cube texture
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

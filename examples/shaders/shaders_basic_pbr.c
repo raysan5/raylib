@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Basic PBR
+*   raylib [shaders] example - basic pbr
 *
 *   Example complexity rating: [★★★★] 4/4
 *

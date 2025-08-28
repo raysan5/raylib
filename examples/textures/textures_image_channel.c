@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - extract image channel
+*   raylib [textures] example - extract channel from image
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *

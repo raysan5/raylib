@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Input Gestures for Web
+*   raylib [core] example - input gestures web
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

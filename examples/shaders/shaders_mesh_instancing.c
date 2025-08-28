@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Mesh instancing
+*   raylib [shaders] example - mesh instancing
 *
 *   Example complexity rating: [★★★★] 4/4
 *

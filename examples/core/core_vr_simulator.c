@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - VR Simulator (Oculus Rift CV1 parameters)
+*   raylib [core] example - vr simulator
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

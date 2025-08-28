@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - hybrid rendering
+*   raylib [shaders] example - write depth buffer
 *
 *   Example complexity rating: [★★★★] 4/4
 *

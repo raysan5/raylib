@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Mesh picking in 3d mode, ground plane, triangle, mesh
+*   raylib [models] example - mesh picking
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

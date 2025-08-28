@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Models loading
+*   raylib [models] example - models loading
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

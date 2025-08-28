@@ -333,7 +333,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_positioning", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_virtual_controls", "examples\core_input_virtual_controls.vcxproj", "{0981CA28-E4A5-4DF1-987F-A41D09131EFC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_3d_fps_controller", "examples\core_3d_fps_controller.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_3d_camera_fps", "examples\core_3d_camera_fps.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normal_map", "examples\shaders_normal_map.vcxproj", "{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}"
 EndProject

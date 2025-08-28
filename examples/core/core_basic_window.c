@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window
+*   raylib [core] example - basic window
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

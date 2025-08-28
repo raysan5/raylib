@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Scissor test
+*   raylib [core] example - scissor test
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

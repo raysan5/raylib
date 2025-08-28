@@ -9606,6 +9606,32 @@
       ]
     },
     {
+      "name": "LoadTextLines",
+      "description": "Load text as separate lines ('\\n')",
+      "returnType": "char **",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "text"
+        },
+        {
+          "type": "int *",
+          "name": "count"
+        }
+      ]
+    },
+    {
+      "name": "UnloadTextLines",
+      "description": "Unload text lines",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "char **",
+          "name": "text"
+        }
+      ]
+    },
+    {
       "name": "TextCopy",
       "description": "Copy one string to another, returns bytes copied",
       "returnType": "int",

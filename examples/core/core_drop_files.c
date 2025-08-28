@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Windows drop files
+*   raylib [core] example - drop files
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

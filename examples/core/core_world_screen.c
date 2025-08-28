@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - World to screen
+*   raylib [core] example - core world screen
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

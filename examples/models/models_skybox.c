@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Skybox loading and drawing
+*   raylib [models] example - skybox rendering
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -37,7 +37,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - skybox loading and drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - skybox rendering");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

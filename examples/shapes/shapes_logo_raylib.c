@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw raylib logo using basic shapes
+*   raylib [shapes] example - raylib logo using shapes
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
  *
- *   raylib [shaders] example - normalmap
+ *  raylib [shaders] example - normal map
  *
  *   Example complexity rating: [★★★★] 4/4
  *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw rectangle rounded (with gui options)
+*   raylib [shapes] example - draw rectangle rounded
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
