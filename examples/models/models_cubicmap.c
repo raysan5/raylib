@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Cubicmap loading and drawing
+*   raylib [models] example - cubicmap loading and drawing
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - cubesmap loading and drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - cubicmap loading and drawing");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

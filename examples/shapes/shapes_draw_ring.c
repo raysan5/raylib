@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw ring (with gui options)
+*   raylib [shapes] example - draw ring
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

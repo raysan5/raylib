@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Input Gestures Detection
+*   raylib [core] example - input gestures
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

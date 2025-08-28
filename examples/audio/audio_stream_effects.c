@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Music stream processing effects
+*   raylib [audio] example - stream effects
 *
 *   Example complexity rating: [★★★★] 4/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - advanced rectangle drawing
+*   raylib [shapes] example - rectangle avanced
 *
 *   Example complexity rating: [★★★★] 4/4
 *

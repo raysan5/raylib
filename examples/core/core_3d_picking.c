@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Picking in 3d mode
+*   raylib [core] example - 3d picking
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

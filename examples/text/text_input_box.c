@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - text input box
+*   raylib [text] example - input box
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

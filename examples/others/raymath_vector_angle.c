@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Vector Angle
+*   raylib [math] example - vector angle
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - window scale letterbox (and virtual mouse)
+*   raylib [core] example - window scale letterbox
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -27,12 +27,12 @@
 //------------------------------------------------------------------------------------
 int main(void)
 {
-    const int windowWidth = 800;
-    const int windowHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     // Enable config flags for resizable window and vertical synchro
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(windowWidth, windowHeight, "raylib [core] example - window scale letterbox");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - window scale letterbox");
     SetWindowMinSize(320, 240);
 
     int gameScreenWidth = 640;

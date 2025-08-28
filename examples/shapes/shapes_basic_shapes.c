@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Draw basic shapes 2d (rectangle, circle, line...)
+*   raylib [shapes] example - basic shapes drawing
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

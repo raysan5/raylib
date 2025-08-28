@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Apply a shader to some shape or texture
+*   raylib [shaders] example - shapes and texture shaders
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - sprite fonts loading
+*   raylib [text] example - sprite fonts
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Storage save/load values
+*   raylib [core] example - storage save/load values
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

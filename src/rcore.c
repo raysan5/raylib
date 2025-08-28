@@ -564,6 +564,7 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
+    #pragma message ("WARNING: No [rcore] platform defined")
 #endif
 
 //----------------------------------------------------------------------------------

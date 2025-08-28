@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Waving cubes
+*   raylib [models] example - waving cubes
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

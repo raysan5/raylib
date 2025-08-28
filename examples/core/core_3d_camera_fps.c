@@ -106,9 +106,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        Vector2 mouse_delta = GetMouseDelta();
-        lookRotation.x -= mouse_delta.x*sensitivity.x;
-        lookRotation.y += mouse_delta.y*sensitivity.y;
+        Vector2 mouseDelta = GetMouseDelta();
+        lookRotation.x -= mouseDelta.x*sensitivity.x;
+        lookRotation.y += mouseDelta.y*sensitivity.y;
 
         char sideway = (IsKeyDown(KEY_D) - IsKeyDown(KEY_A));
         char forward = (IsKeyDown(KEY_W) - IsKeyDown(KEY_S));
@@ -261,7 +261,10 @@ static void UpdateCameraAngle(Camera *camera)
     Vector3 right = Vector3Normalize(Vector3CrossProduct(yaw, up));
 
     // Rotate view vector around right axis
-    Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, -lookRotation.y - lean.y);
+    float pitchAngle = -lookRotation.y - 
+    lean.y;
+    pitchAngle = Clamp(pitchAngle, -PI / 2 + 0.0001f, PI / 2 - 0.0001f); // Clamp angle so it doesn't go past straight up or straight down
+    Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, pitchAngle);
 
     // Head animation
     // Rotate up direction around forward axis

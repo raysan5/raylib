@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Raw audio streaming
+*   raylib [audio] example - raw audio streaming
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

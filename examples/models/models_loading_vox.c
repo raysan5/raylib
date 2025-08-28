@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load models vox (MagicaVoxel)
+*   raylib [models] example - magicavoxel loading
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

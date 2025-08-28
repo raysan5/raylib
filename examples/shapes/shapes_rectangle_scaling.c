@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - rectangle scaling by mouse
+*   raylib [shapes] example - rectangle scaling mouse
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

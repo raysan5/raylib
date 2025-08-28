@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Input multitouch
+*   raylib [core] example - input multitouch
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

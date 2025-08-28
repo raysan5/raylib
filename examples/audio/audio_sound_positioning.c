@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - spatialized 3D sound
+*   raylib [audio] example - 3d sound positioning
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -32,7 +32,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - spatialized 3D sound");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - 3d sound positioning");
 
     InitAudioDevice();
 

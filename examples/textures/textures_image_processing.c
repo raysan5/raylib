@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Image processing
+*   raylib [textures] example - image processing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

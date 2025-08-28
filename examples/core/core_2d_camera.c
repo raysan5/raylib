@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - 2D Camera system
+*   raylib [core] example - 2d camera
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

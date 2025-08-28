@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - procedural mesh generation
+*   raylib [models] example - mesh generation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

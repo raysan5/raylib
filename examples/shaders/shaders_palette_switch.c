@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Color palette switch
+*   raylib [shaders] example - color palette switch
 *
 *   Example complexity rating: [★★★☆] 3/4
 *

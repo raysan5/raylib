@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Simple shader mask
+*   raylib [shaders] example - shader spotlight
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

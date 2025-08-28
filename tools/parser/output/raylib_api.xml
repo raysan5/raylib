@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="584">
+    <Functions count="586">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2434,6 +2434,13 @@
         <Function name="CodepointToUTF8" retType="const char *" paramCount="2" desc="Encode one codepoint into UTF-8 byte array (array length returned as parameter)">
             <Param type="int" name="codepoint" desc="" />
             <Param type="int *" name="utf8Size" desc="" />
+        </Function>
+        <Function name="LoadTextLines" retType="char **" paramCount="2" desc="Load text as separate lines ('\n')">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="int *" name="count" desc="" />
+        </Function>
+        <Function name="UnloadTextLines" retType="void" paramCount="1" desc="Unload text lines">
+            <Param type="char **" name="text" desc="" />
         </Function>
         <Function name="TextCopy" retType="int" paramCount="2" desc="Copy one string to another, returns bytes copied">
             <Param type="char *" name="dst" desc="" />
