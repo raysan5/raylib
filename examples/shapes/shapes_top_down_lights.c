@@ -129,8 +129,8 @@ void SetupLight(int slot, float x, float y, float radius)
     lights[slot].mask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
     lights[slot].outerRadius = radius;
 
-    lights[slot].bounds.width = radius * 2;
-    lights[slot].bounds.height = radius * 2;
+    lights[slot].bounds.width = radius*2;
+    lights[slot].bounds.height = radius*2;
 
     MoveLight(slot, x, y);
 

@@ -91,7 +91,7 @@ int main(void)
                 int x = (int)(((float)i)/dpiScale.x);
                 if (odd) DrawRectangle(x, pixelGridTop, (int)cellSizePx, pixelGridBottom - pixelGridTop, CLITERAL(Color){ 0, 121, 241, 100 });
 
-                DrawLine(x, pixelGridTop, (int)(((float)i) / dpiScale.x), pixelGridLabelY - 10, GRAY);
+                DrawLine(x, pixelGridTop, (int)(((float)i)/dpiScale.x), pixelGridLabelY - 10, GRAY);
 
                 if ((x - lastTextX) >= minTextSpace)
                 {

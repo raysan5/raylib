@@ -18,8 +18,8 @@ int main() {
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        cam.position.x = sin(GetTime()) * 10.0f;
-        cam.position.z = cos(GetTime()) * 10.0f;
+        cam.position.x = sin(GetTime())*10.0f;
+        cam.position.z = cos(GetTime())*10.0f;
 
         BeginDrawing();
             ClearBackground(RAYWHITE);

@@ -79,9 +79,9 @@ int main(void)
             // Projection from XYZW to XYZ from perspective point (0, 0, 0, 3)
             // NOTE: Trace a ray from (0, 0, 0, 3) > p and continue until W = 0
             float c = 3.0f/(3.0f - p.w);
-            p.x = c * p.x;
-            p.y = c * p.y;
-            p.z = c * p.z;
+            p.x = c*p.x;
+            p.y = c*p.y;
+            p.z = c*p.z;
 
             // Split XYZ coordinate and W values later for drawing
             transformed[i] = (Vector3){ p.x, p.y, p.z };

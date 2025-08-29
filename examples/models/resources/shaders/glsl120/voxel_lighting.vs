@@ -16,9 +16,9 @@ varying vec3 fragNormal;
 
 void main()
 {
-    fragPosition = vec3(matModel * vec4(vertexPosition, 1.0));
+    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0));
     fragColor = vertexColor;
-    fragNormal = normalize(vec3(matNormal * vec4(vertexNormal, 1.0)));
+    fragNormal = normalize(vec3(matNormal*vec4(vertexNormal, 1.0)));
 
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
+    gl_Position = mvp*vec4(vertexPosition, 1.0);
 }

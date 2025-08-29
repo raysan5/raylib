@@ -1041,8 +1041,8 @@ void PollInputEvents(void)
                 // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
                 if (IsWindowState(FLAG_WINDOW_HIGHDPI))
                 {
-                    CORE.Window.screen.width = (int)(platform.window->r.w / GetWindowScaleDPI().x);
-                    CORE.Window.screen.height = (int)(platform.window->r.h / GetWindowScaleDPI().y);
+                    CORE.Window.screen.width = (int)(platform.window->r.w/GetWindowScaleDPI().x);
+                    CORE.Window.screen.height = (int)(platform.window->r.h/GetWindowScaleDPI().y);
                 }
                 else
                 {
@@ -1207,13 +1207,13 @@ void PollInputEvents(void)
                 {
                     case 0:
                     {
-                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x / 100.0f;
-                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y / 100.0f;
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_X] = event->axis[0].x/100.0f;
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_LEFT_Y] = event->axis[0].y/100.0f;
                     } break;
                     case 1:
                     {
-                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x / 100.0f;
-                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y / 100.0f;
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_X] = event->axis[1].x/100.0f;
+                        CORE.Input.Gamepad.axisState[event->gamepad][GAMEPAD_AXIS_RIGHT_Y] = event->axis[1].y/100.0f;
                     } break;
                     case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
                     case 3:

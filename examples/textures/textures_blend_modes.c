@@ -78,10 +78,10 @@ int main(void)
 
             switch (blendMode)
             {
-                case BLEND_ALPHA: DrawText("Current: BLEND_ALPHA", (screenWidth / 2) - 60, 370, 10, GRAY); break;
-                case BLEND_ADDITIVE: DrawText("Current: BLEND_ADDITIVE", (screenWidth / 2) - 60, 370, 10, GRAY); break;
-                case BLEND_MULTIPLIED: DrawText("Current: BLEND_MULTIPLIED", (screenWidth / 2) - 60, 370, 10, GRAY); break;
-                case BLEND_ADD_COLORS: DrawText("Current: BLEND_ADD_COLORS", (screenWidth / 2) - 60, 370, 10, GRAY); break;
+                case BLEND_ALPHA: DrawText("Current: BLEND_ALPHA", (screenWidth/2) - 60, 370, 10, GRAY); break;
+                case BLEND_ADDITIVE: DrawText("Current: BLEND_ADDITIVE", (screenWidth/2) - 60, 370, 10, GRAY); break;
+                case BLEND_MULTIPLIED: DrawText("Current: BLEND_MULTIPLIED", (screenWidth/2) - 60, 370, 10, GRAY); break;
+                case BLEND_ADD_COLORS: DrawText("Current: BLEND_ADD_COLORS", (screenWidth/2) - 60, 370, 10, GRAY); break;
                 default: break;
             }
 

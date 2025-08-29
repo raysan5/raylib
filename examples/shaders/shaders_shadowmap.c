@@ -115,22 +115,22 @@ int main(void)
         if (IsKeyDown(KEY_LEFT))
         {
             if (lightDir.x < 0.6f)
-                lightDir.x += cameraSpeed * 60.0f * dt;
+                lightDir.x += cameraSpeed*60.0f*dt;
         }
         if (IsKeyDown(KEY_RIGHT))
         {
             if (lightDir.x > -0.6f)
-                lightDir.x -= cameraSpeed * 60.0f * dt;
+                lightDir.x -= cameraSpeed*60.0f*dt;
         }
         if (IsKeyDown(KEY_UP))
         {
             if (lightDir.z < 0.6f)
-                lightDir.z += cameraSpeed * 60.0f * dt;
+                lightDir.z += cameraSpeed*60.0f*dt;
         }
         if (IsKeyDown(KEY_DOWN))
         {
             if (lightDir.z > -0.6f)
-                lightDir.z -= cameraSpeed * 60.0f * dt;
+                lightDir.z -= cameraSpeed*60.0f*dt;
         }
         lightDir = Vector3Normalize(lightDir);
         lightCam.position = Vector3Scale(lightDir, -15.0f);
