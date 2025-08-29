@@ -43,7 +43,7 @@ void main()
                 light = normalize(lights[i].position - fragPosition);
 
             float NdotL = max(dot(normal, light), 0.0);
-            lightDot += lights[i].color.rgb * NdotL;
+            lightDot += lights[i].color.rgb*NdotL;
 
             if (NdotL > 0.0)
             {
@@ -53,8 +53,8 @@ void main()
         }
     }
 
-    vec4 finalColor = (fragColor * ((colDiffuse + vec4(specular, 1.0)) * vec4(lightDot, 1.0)));
-    finalColor += fragColor * (ambient / 10.0) * colDiffuse;
+    vec4 finalColor = (fragColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
+    finalColor += fragColor*(ambient/10.0)*colDiffuse;
 
     finalColor = pow(finalColor, vec4(1.0/2.2)); // gamma correction
 

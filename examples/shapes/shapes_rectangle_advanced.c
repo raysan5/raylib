@@ -46,8 +46,8 @@ int main(void)
         //----------------------------------------------------------------------------------
         float width = GetScreenWidth()/2.0f, height = GetScreenHeight()/6.0f;
         Rectangle rec = {
-            GetScreenWidth() / 2.0f - width/2,
-            GetScreenHeight() / 2.0f - 5*(height/2),
+            GetScreenWidth()/2.0f - width/2,
+            GetScreenHeight()/2.0f - 5*(height/2),
             width, height
         };
         //--------------------------------------------------------------------------------------

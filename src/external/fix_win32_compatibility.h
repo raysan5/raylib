@@ -42,7 +42,7 @@
 #define DrawTextW DrawTextWin32
 #define DrawTextExA DrawTextExAWin32
 #define DrawTextExW DrawTextExWin32
-#define PlaySoundA PlaySoundAWin32\
+#define PlaySoundA PlaySoundAWin32
 // include windows
 #define WIN32_LEAN_AND_MEAN 
 #include <windows.h>

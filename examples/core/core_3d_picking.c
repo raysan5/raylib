@@ -101,7 +101,7 @@ int main(void)
 
             DrawText("Try clicking on the box with your mouse!", 240, 10, 20, DARKGRAY);
 
-            if (collision.hit) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, (int)(screenHeight * 0.1f), 30, GREEN);
+            if (collision.hit) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30))/2, (int)(screenHeight*0.1f), 30, GREEN);
 
             DrawText("Right click mouse to toggle camera controls", 10, 430, 10, GRAY);
 
