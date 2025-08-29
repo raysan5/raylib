@@ -24,7 +24,7 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - rglfw: Manage graphic device, OpenGL context and inputs (Windows, Linux, OSX, FreeBSD...)
+*       - rglfw: Manage graphic device, OpenGL context and inputs (Windows, Linux, OSX/macOS, FreeBSD...)
 *       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
