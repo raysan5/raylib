@@ -30,13 +30,13 @@ void ProcessAudio(void *buffer, unsigned int frames)
 
     for (unsigned int frame = 0; frame < frames; frame++)
     {
-        float *left = &samples[frame * 2 + 0], *right = &samples[frame * 2 + 1];
+        float *left = &samples[frame*2 + 0], *right = &samples[frame*2 + 1];
 
-        *left = powf(fabsf(*left), exponent) * ( (*left < 0.0f)? -1.0f : 1.0f );
-        *right = powf(fabsf(*right), exponent) * ( (*right < 0.0f)? -1.0f : 1.0f );
+        *left = powf(fabsf(*left), exponent)*( (*left < 0.0f)? -1.0f : 1.0f );
+        *right = powf(fabsf(*right), exponent)*( (*right < 0.0f)? -1.0f : 1.0f );
 
-        average += fabsf(*left) / frames;   // accumulating average volume
-        average += fabsf(*right) / frames;
+        average += fabsf(*left)/frames;   // accumulating average volume
+        average += fabsf(*right)/frames;
     }
 
     // Moving history to the left
@@ -99,7 +99,7 @@ int main(void)
             DrawRectangle(199, 199, 402, 34, LIGHTGRAY);
             for (int i = 0; i < 400; i++)
             {
-                DrawLine(201 + i, 232 - (int)(averageVolume[i] * 32), 201 + i, 232, MAROON);
+                DrawLine(201 + i, 232 - (int)(averageVolume[i]*32), 201 + i, 232, MAROON);
             }
             DrawRectangleLines(199, 199, 402, 34, GRAY);
 

@@ -297,7 +297,7 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 // Draw a grid centered at (0, 0, 0)
 static void DrawGrid(int slices, float spacing)
 {
-    int halfSlices = slices / 2;
+    int halfSlices = slices/2;
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
