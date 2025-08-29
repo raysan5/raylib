@@ -3243,6 +3243,7 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
     int mipWidth = width;
     int mipHeight = height;
     int mipOffset = 0;          // Mipmap data offset, only used for tracelog
+    (void)mipOffset;            // Used to avoid gcc warnings about unused variable
 
     // NOTE: Added pointer math separately from function to avoid UBSAN complaining
     unsigned char *dataPtr = NULL;
