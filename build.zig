@@ -14,6 +14,72 @@ comptime {
         @compileError("Raylib requires zig version " ++ min_ver);
 }
 
+pub const emsdk = struct {
+    const zemscripten = @import("zemscripten");
+
+    pub fn shell(b: *std.Build) std.Build.LazyPath {
+        return b.dependency("raylib", .{}).path("src/shell.html");
+    }
+
+    pub const FlagsOptions = struct {
+        optimize: std.builtin.OptimizeMode,
+        asyncify: bool = true,
+    };
+
+    pub fn emccDefaultFlags(allocator: std.mem.Allocator, options: FlagsOptions) zemscripten.EmccFlags {
+        var emcc_flags = zemscripten.emccDefaultFlags(allocator, .{
+            .optimize = options.optimize,
+            .fsanitize = true,
+        });
+
+        if (options.asyncify)
+            emcc_flags.put("-sASYNCIFY", {}) catch unreachable;
+
+        return emcc_flags;
+    }
+
+    pub const SettingsOptions = struct {
+        optimize: std.builtin.OptimizeMode,
+        es3: bool = true,
+        emsdk_allocator: zemscripten.EmsdkAllocator = .emmalloc,
+    };
+
+    pub fn emccDefaultSettings(allocator: std.mem.Allocator, options: SettingsOptions) zemscripten.EmccSettings {
+        var emcc_settings = zemscripten.emccDefaultSettings(allocator, .{
+            .optimize = options.optimize,
+            .emsdk_allocator = options.emsdk_allocator,
+        });
+
+        if (options.es3)
+            emcc_settings.put("FULL_ES3", "1") catch unreachable;
+        emcc_settings.put("USE_GLFW", "3") catch unreachable;
+        emcc_settings.put("EXPORTED_RUNTIME_METHODS", "['requestFullscreen']") catch unreachable;
+
+        return emcc_settings;
+    }
+
+    pub fn emccStep(b: *std.Build, raylib: *std.Build.Step.Compile, wasm: *std.Build.Step.Compile, options: zemscripten.StepOptions) *std.Build.Step {
+        const activate_emsdk_step = zemscripten.activateEmsdkStep(b);
+
+        const emsdk_dep = b.dependency("emsdk", .{});
+        raylib.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+        wasm.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+
+        const emcc_step = zemscripten.emccStep(b, wasm, options);
+        emcc_step.dependOn(activate_emsdk_step);
+
+        return emcc_step;
+    }
+
+    pub fn emrunStep(
+        b: *std.Build,
+        html_path: []const u8,
+        extra_args: []const []const u8,
+    ) *std.Build.Step {
+        return zemscripten.emrunStep(b, html_path, extra_args);
+    }
+};
+
 fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
     switch (platform) {
         .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", ""),
@@ -22,50 +88,6 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
         .android => raylib.root_module.addCMacro("PLATFORM_ANDROID", ""),
         else => {},
     }
-}
-
-fn createEmsdkStep(b: *std.Build, emsdk: *std.Build.Dependency) *std.Build.Step.Run {
-    if (builtin.os.tag == .windows) {
-        return b.addSystemCommand(&.{emsdk.path("emsdk.bat").getPath(b)});
-    } else {
-        return b.addSystemCommand(&.{emsdk.path("emsdk").getPath(b)});
-    }
-}
-
-fn emSdkSetupStep(b: *std.Build, emsdk: *std.Build.Dependency) !?*std.Build.Step.Run {
-    const dot_emsc_path = emsdk.path(".emscripten").getPath(b);
-    const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
-
-    if (!dot_emsc_exists) {
-        const emsdk_install = createEmsdkStep(b, emsdk);
-        emsdk_install.addArgs(&.{ "install", "latest" });
-        const emsdk_activate = createEmsdkStep(b, emsdk);
-        emsdk_activate.addArgs(&.{ "activate", "latest" });
-        emsdk_activate.step.dependOn(&emsdk_install.step);
-        return emsdk_activate;
-    } else {
-        return null;
-    }
-}
-
-// Adapted from Not-Nik/raylib-zig
-fn emscriptenRunStep(b: *std.Build, emsdk: *std.Build.Dependency, examplePath: []const u8) !*std.Build.Step.Run {
-    const dot_emsc_path = emsdk.path("upstream/emscripten/cache/sysroot/include").getPath(b);
-    // If compiling on windows , use emrun.bat.
-    const emrunExe = switch (builtin.os.tag) {
-        .windows => "emrun.bat",
-        else => "emrun",
-    };
-    var emrun_run_arg = try b.allocator.alloc(u8, dot_emsc_path.len + emrunExe.len + 1);
-    defer b.allocator.free(emrun_run_arg);
-
-    if (b.sysroot == null) {
-        emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}" ++ std.fs.path.sep_str ++ "{s}", .{ emsdk.path("upstream/emscripten").getPath(b), emrunExe });
-    } else {
-        emrun_run_arg = try std.fmt.bufPrint(emrun_run_arg, "{s}" ++ std.fs.path.sep_str ++ "{s}", .{ dot_emsc_path, emrunExe });
-    }
-    const run_cmd = b.addSystemCommand(&.{ emrun_run_arg, examplePath });
-    return run_cmd;
 }
 
 /// A list of all flags from `src/config.h` that one may override
@@ -99,9 +121,19 @@ const config_h_flags = outer: {
     break :outer flags[0..i].*;
 };
 
-pub fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
+fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     var raylib_flags_arr: std.ArrayList([]const u8) = .empty;
     defer raylib_flags_arr.deinit(b.allocator);
+
+    const raylib = b.addLibrary(.{
+        .name = "raylib",
+        .linkage = options.linkage,
+        .root_module = b.createModule(.{
+            .optimize = optimize,
+            .target = target,
+            .link_libc = true,
+        }),
+    });
 
     try raylib_flags_arr.appendSlice(
         b.allocator,
@@ -113,7 +145,7 @@ pub fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: 
         },
     );
 
-    if (options.shared) {
+    if (options.linkage == .dynamic) {
         try raylib_flags_arr.appendSlice(
             b.allocator,
             &[_][]const u8{
@@ -158,16 +190,6 @@ pub fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: 
         // Set default config if no custome config got set
         try raylib_flags_arr.appendSlice(b.allocator, &config_h_flags);
     }
-
-    const raylib = b.addLibrary(.{
-        .name = "raylib",
-        .linkage = if (options.shared) .dynamic else .static,
-        .root_module = b.createModule(.{
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-    raylib.linkLibC();
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
@@ -364,17 +386,9 @@ pub fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: 
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
-            if (b.lazyDependency("emsdk", .{})) |dep| {
-                if (try emSdkSetupStep(b, dep)) |emSdkStep| {
-                    raylib.step.dependOn(&emSdkStep.step);
-                }
-
-                raylib.addIncludePath(dep.path("upstream/emscripten/cache/sysroot/include"));
-            }
-
             raylib.root_module.addCMacro("PLATFORM_WEB", "");
             if (options.opengl_version == .auto) {
-                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES3", "");
             }
         },
         else => {
@@ -382,7 +396,7 @@ pub fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: 
         },
     }
 
-    raylib.root_module.addCSourceFiles(.{
+    raylib.addCSourceFiles(.{
         .files = c_source_files.items,
         .flags = raylib_flags_arr.items,
     });
@@ -410,7 +424,7 @@ pub const Options = struct {
     rtext: bool = true,
     rtextures: bool = true,
     platform: PlatformBackend = .glfw,
-    shared: bool = false,
+    linkage: std.builtin.LinkMode = .static,
     linux_display_backend: LinuxDisplayBackend = .Both,
     opengl_version: OpenglVersion = .auto,
     android_ndk: []const u8 = "",
@@ -428,7 +442,7 @@ pub const Options = struct {
             .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
             .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
             .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
-            .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
+            .linkage = b.option(std.builtin.LinkMode, "linkage", "Compile as shared or static library") orelse defaults.linkage,
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
             .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
@@ -475,14 +489,7 @@ pub const PlatformBackend = enum {
 };
 
 pub fn build(b: *std.Build) !void {
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
     const lib = try compileRaylib(b, target, optimize, Options.getOptions(b));
@@ -505,29 +512,6 @@ pub fn build(b: *std.Build) !void {
     examples.dependOn(try addExamples("textures", b, target, optimize, lib));
 }
 
-fn waylandGenerate(
-    b: *std.Build,
-    raylib: *std.Build.Step.Compile,
-    comptime protocol: []const u8,
-    comptime basename: []const u8,
-) void {
-    const waylandDir = "src/external/glfw/deps/wayland";
-    const protocolDir = b.pathJoin(&.{ waylandDir, protocol });
-    const clientHeader = basename ++ ".h";
-    const privateCode = basename ++ "-code.h";
-
-    const client_step = b.addSystemCommand(&.{ "wayland-scanner", "client-header" });
-    client_step.addFileArg(b.path(protocolDir));
-    raylib.addIncludePath(client_step.addOutputFileArg(clientHeader).dirname());
-
-    const private_step = b.addSystemCommand(&.{ "wayland-scanner", "private-code" });
-    private_step.addFileArg(b.path(protocolDir));
-    raylib.addIncludePath(private_step.addOutputFileArg(privateCode).dirname());
-
-    raylib.step.dependOn(&client_step.step);
-    raylib.step.dependOn(&private_step.step);
-}
-
 fn addExamples(
     comptime module: []const u8,
     b: *std.Build,
@@ -537,9 +521,8 @@ fn addExamples(
 ) !*std.Build.Step {
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
-    const module_resources = b.pathJoin(&.{ module_subpath, "resources@resources" });
     var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
-    defer if (comptime builtin.zig_version.minor >= 12) dir.close();
+    defer dir.close();
 
     var iter = dir.iterate();
     while (try iter.next()) |entry| {
@@ -551,8 +534,10 @@ fn addExamples(
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
 
+        const run_step = b.step(name, name);
+
         if (target.result.os.tag == .emscripten) {
-            const exe_lib = b.addLibrary(.{
+            const wasm = b.addLibrary(.{
                 .name = name,
                 .linkage = .static,
                 .root_module = b.createModule(.{
@@ -560,11 +545,8 @@ fn addExamples(
                     .optimize = optimize,
                 }),
             });
-            exe_lib.addCSourceFile(.{
-                .file = b.path(path),
-                .flags = &.{},
-            });
-            exe_lib.linkLibC();
+            wasm.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
+            wasm.linkLibrary(raylib);
 
             if (std.mem.eql(u8, name, "rlgl_standalone")) {
                 //TODO: Make rlgl_standalone example work
@@ -575,66 +557,34 @@ fn addExamples(
                 continue;
             }
 
-            exe_lib.linkLibrary(raylib);
+            const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
+            const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
 
-            // Include emscripten for cross compilation
-            if (b.lazyDependency("emsdk", .{})) |emsdk_dep| {
-                if (try emSdkSetupStep(b, emsdk_dep)) |emSdkStep| {
-                    exe_lib.step.dependOn(&emSdkStep.step);
-                }
+            const install_dir: std.Build.InstallDir = .{ .custom = "htmlout" };
+            const emcc_step = emsdk.emccStep(b, raylib, wasm, .{
+                .optimize = optimize,
+                .flags = emcc_flags,
+                .settings = emcc_settings,
+                .shell_file_path = b.path("src/shell.html"),
+                .embed_paths = &.{
+                    .{
+                        .src_path = b.pathJoin(&.{ module_subpath, "resources" }),
+                        .virtual_path = "resources",
+                    },
+                },
+                .install_dir = install_dir,
+            });
 
-                exe_lib.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+            const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
+            const emrun_step = emsdk.emrunStep(
+                b,
+                b.getInstallPath(install_dir, html_filename),
+                &.{"--no_browser"},
+            );
+            emrun_step.dependOn(emcc_step);
 
-                // Create the output directory because emcc can't do it.
-                const emccOutputDirExample = b.pathJoin(&.{ emccOutputDir, name, std.fs.path.sep_str });
-                const mkdir_command = switch (builtin.os.tag) {
-                    .windows => b.addSystemCommand(&.{ "cmd.exe", "/c", "if", "not", "exist", emccOutputDirExample, "mkdir", emccOutputDirExample }),
-                    else => b.addSystemCommand(&.{ "mkdir", "-p", emccOutputDirExample }),
-                };
-
-                const emcc_exe = switch (builtin.os.tag) {
-                    .windows => "emcc.bat",
-                    else => "emcc",
-                };
-
-                const emcc_exe_path = b.pathJoin(&.{ emsdk_dep.path("upstream/emscripten").getPath(b), emcc_exe });
-                const emcc_command = b.addSystemCommand(&[_][]const u8{emcc_exe_path});
-                emcc_command.step.dependOn(&mkdir_command.step);
-                const emccOutputDirExampleWithFile = b.pathJoin(&.{ emccOutputDir, name, std.fs.path.sep_str, emccOutputFile });
-                emcc_command.addArgs(&[_][]const u8{
-                    "-o",
-                    emccOutputDirExampleWithFile,
-                    "-sFULL-ES3=1",
-                    "-sUSE_GLFW=3",
-                    "-sSTACK_OVERFLOW_CHECK=1",
-                    "-sEXPORTED_RUNTIME_METHODS=['requestFullscreen']",
-                    "-sASYNCIFY",
-                    "-O0",
-                    "--emrun",
-                    "--preload-file",
-                    module_resources,
-                    "--shell-file",
-                    b.path("src/shell.html").getPath(b),
-                });
-
-                const link_items: []const *std.Build.Step.Compile = &.{
-                    raylib,
-                    exe_lib,
-                };
-                for (link_items) |item| {
-                    emcc_command.addFileArg(item.getEmittedBin());
-                    emcc_command.step.dependOn(&item.step);
-                }
-
-                const run_step = try emscriptenRunStep(b, emsdk_dep, emccOutputDirExampleWithFile);
-                run_step.step.dependOn(&emcc_command.step);
-                run_step.addArg("--no_browser");
-                const run_option = b.step(name, name);
-
-                run_option.dependOn(&run_step.step);
-
-                all.dependOn(&emcc_command.step);
-            }
+            run_step.dependOn(emrun_step);
+            all.dependOn(emcc_step);
         } else {
             const exe = b.addExecutable(.{
                 .name = name,
@@ -644,7 +594,7 @@ fn addExamples(
                 }),
             });
             exe.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
-            exe.linkLibC();
+            exe.linkLibrary(raylib);
 
             // special examples that test using these external dependencies directly
             // alongside raylib
@@ -658,8 +608,6 @@ fn addExamples(
             if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
                 exe.addIncludePath(b.path("src/external"));
             }
-
-            exe.linkLibrary(raylib);
 
             switch (target.result.os.tag) {
                 .windows => {
@@ -699,13 +647,34 @@ fn addExamples(
             run_cmd.cwd = b.path(module_subpath);
             run_cmd.step.dependOn(&install_cmd.step);
 
-            const run_step = b.step(name, name);
             run_step.dependOn(&run_cmd.step);
-
             all.dependOn(&install_cmd.step);
         }
     }
     return all;
+}
+
+fn waylandGenerate(
+    b: *std.Build,
+    raylib: *std.Build.Step.Compile,
+    comptime protocol: []const u8,
+    comptime basename: []const u8,
+) void {
+    const waylandDir = "src/external/glfw/deps/wayland";
+    const protocolDir = b.pathJoin(&.{ waylandDir, protocol });
+    const clientHeader = basename ++ ".h";
+    const privateCode = basename ++ "-code.h";
+
+    const client_step = b.addSystemCommand(&.{ "wayland-scanner", "client-header" });
+    client_step.addFileArg(b.path(protocolDir));
+    raylib.addIncludePath(client_step.addOutputFileArg(clientHeader).dirname());
+
+    const private_step = b.addSystemCommand(&.{ "wayland-scanner", "private-code" });
+    private_step.addFileArg(b.path(protocolDir));
+    raylib.addIncludePath(private_step.addOutputFileArg(privateCode).dirname());
+
+    raylib.step.dependOn(&client_step.step);
+    raylib.step.dependOn(&private_step.step);
 }
 
 fn hasCSource(module: *std.Build.Module, name: []const u8) bool {
