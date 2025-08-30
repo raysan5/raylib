@@ -708,20 +708,20 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
 		del *.o *.exe /s
     endif
     ifeq ($(PLATFORM_OS),BSD)
-		find . -type f -perm -ugo+x -delete
+		find . -type f ! -name *.wasm -perm -ugo+x -delete
 		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-		find . -type f -executable -delete
+		find . -type f ! -name *.wasm -executable -delete
 		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		find . -type f -perm +ugo+x -delete
+		find . -type f ! -name *.wasm -perm +ugo+x -delete
 		rm -f *.o
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
-	find . -type f -executable -delete
+	find . -type f ! -name *.wasm -executable -delete
 	rm -fv *.o
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
