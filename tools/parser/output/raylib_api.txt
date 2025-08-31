@@ -3468,7 +3468,7 @@ Function 395: LoadFontEx() (4 input parameters)
   Description: Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height
   Param[1]: fileName (type: const char *)
   Param[2]: fontSize (type: int)
-  Param[3]: codepoints (type: int *)
+  Param[3]: codepoints (type: const int *)
   Param[4]: codepointCount (type: int)
 Function 396: LoadFontFromImage() (3 input parameters)
   Name: LoadFontFromImage
@@ -3485,7 +3485,7 @@ Function 397: LoadFontFromMemory() (6 input parameters)
   Param[2]: fileData (type: const unsigned char *)
   Param[3]: dataSize (type: int)
   Param[4]: fontSize (type: int)
-  Param[5]: codepoints (type: int *)
+  Param[5]: codepoints (type: const int *)
   Param[6]: codepointCount (type: int)
 Function 398: IsFontValid() (1 input parameters)
   Name: IsFontValid
