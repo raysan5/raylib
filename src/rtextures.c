@@ -1713,7 +1713,7 @@ Image ImageFromChannel(Image image, int selectedChannel)
 }
 
 // Resize and image to new size using Nearest-Neighbor scaling algorithm
-void ImageResizeNN(Image *image,int newWidth,int newHeight)
+void ImageResizeNN(Image *image, int newWidth, int newHeight)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
