@@ -100,8 +100,8 @@ int main(void)
                 camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
                 camera.projection = CAMERA_ORTHOGRAPHIC;
                 camera.fovy = 20.0f; // near plane width in CAMERA_ORTHOGRAPHIC
-                CameraYaw(&camera, -135 * DEG2RAD, true);
-                CameraPitch(&camera, -45 * DEG2RAD, true, true, false);
+                CameraYaw(&camera, -135*DEG2RAD, true);
+                CameraPitch(&camera, -45*DEG2RAD, true, true, false);
             }
             else if (camera.projection == CAMERA_ORTHOGRAPHIC)
             {

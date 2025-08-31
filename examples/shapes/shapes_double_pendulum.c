@@ -51,8 +51,8 @@ int main(void)
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [shapes] example - Double Pendulum");
     
     // Simulation Paramters
-    float l1 = 15, m1 = 0.2, theta1 = DEG2RAD * 170, w1 = 0;
-    float l2 = 15, m2 = 0.1, theta2 = DEG2RAD * 0, w2 = 0;
+    float l1 = 15, m1 = 0.2, theta1 = DEG2RAD*170, w1 = 0;
+    float l2 = 15, m2 = 0.1, theta2 = DEG2RAD*0, w2 = 0;
     float lengthScaler = 0.1;
     float totalM = m1 + m2;
 
@@ -62,8 +62,8 @@ int main(void)
     previousPosition.y += screenCenter.y;
 
     // Scale length
-    float L1 = l1 * lengthScaler;
-    float L2 = l2 * lengthScaler;
+    float L1 = l1*lengthScaler;
+    float L2 = l2*lengthScaler;
 
     // Draw parameters
     int lineThick = 20, trailThick = 2;
@@ -83,6 +83,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         float dt = GetFrameTime();
+
         float step = dt / SIMULATION_STEPS, step2 = step * step;
 	if(IsWindowResized())
 	{
@@ -100,19 +101,19 @@ int main(void)
         {
             float delta = theta1 - theta2;
             float sinD = sinf(delta), cosD = cosf(delta), cos2D = cosf(2*delta);
-            float ww1 = w1 * w1, ww2 = w2 * w2;
+            float ww1 = w1*w1, ww2 = w2*w2;
 
             // Calculate a1
             float a1 = (-G*(2*m1 + m2)*sinf(theta1)
                          - m2*G*sinf(theta1 - 2*theta2)
                          - 2*sinD*m2*(ww2*L2 + ww1*L1*cosD))
-                         / (L1*(2*m1 + m2 - m2*cos2D));
+                        /(L1*(2*m1 + m2 - m2*cos2D));
 
             // Calculate a2
             float a2 = (2*sinD*(ww1*L1*totalM
                          + G*totalM*cosf(theta1)
                          + ww2*L2*m2*cosD))
-                         / (L2*(2*m1 + m2 - m2*cos2D));
+                        /(L2*(2*m1 + m2 - m2*cos2D));
 
             // Update thetas
             theta1 += w1*step + 0.5f*a1*step2;
@@ -135,7 +136,7 @@ int main(void)
  
             // Draw trail
             DrawCircleV(previousPosition, trailThick, RED);
-            DrawLineEx(previousPosition, currentPosition, trailThick * 2, RED);
+            DrawLineEx(previousPosition, currentPosition, trailThick*2, RED);
         EndTextureMode();
 
         // Update previous position
@@ -160,6 +161,7 @@ int main(void)
                              (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta2, RAYWHITE);
 
             // Draw double pendulum
+
             DrawRectanglePro((Rectangle){ screenSize.x * 0.5, screenSize.y * 0.5 - 100, 10 * l1, lineThick },
                 (Vector2){0, lineThick * 0.5}, 90 - RAD2DEG * theta1, RAYWHITE);
 
@@ -184,7 +186,7 @@ int main(void)
 // Calculate Pendulum End Point
 static Vector2 CalculatePendulumEndPoint(float l, float theta)
 {
-    return (Vector2){ 10 * l * sin(theta), 10 * l * cos(theta) };
+    return (Vector2){ 10*l*sin(theta), 10*l*cos(theta) };
 }
 
 // Calculate Double Pendulum End Point

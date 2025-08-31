@@ -128,12 +128,12 @@ int main(void)
 
         while ((fabs(spots[i].speed.x) + fabs(spots[i].speed.y)) < 2)
         {
-            spots[i].speed.x = GetRandomValue(-400, 40) / 10.0f;
-            spots[i].speed.y = GetRandomValue(-400, 40) / 10.0f;
+            spots[i].speed.x = GetRandomValue(-400, 40)/10.0f;
+            spots[i].speed.y = GetRandomValue(-400, 40)/10.0f;
         }
 
-        spots[i].inner = 28.0f * (i + 1);
-        spots[i].radius = 48.0f * (i + 1);
+        spots[i].inner = 28.0f*(i + 1);
+        spots[i].radius = 48.0f*(i + 1);
 
         SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position.x, SHADER_UNIFORM_VEC2);
         SetShaderValue(shdrSpot, spots[i].innerLoc, &spots[i].inner, SHADER_UNIFORM_FLOAT);

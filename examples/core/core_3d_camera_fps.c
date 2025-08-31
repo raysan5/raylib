@@ -263,7 +263,7 @@ static void UpdateCameraAngle(Camera *camera)
     // Rotate view vector around right axis
     float pitchAngle = -lookRotation.y - 
     lean.y;
-    pitchAngle = Clamp(pitchAngle, -PI / 2 + 0.0001f, PI / 2 - 0.0001f); // Clamp angle so it doesn't go past straight up or straight down
+    pitchAngle = Clamp(pitchAngle, -PI/2 + 0.0001f, PI/2 - 0.0001f); // Clamp angle so it doesn't go past straight up or straight down
     Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, pitchAngle);
 
     // Head animation

@@ -3722,7 +3722,7 @@ void GenMeshTangents(Mesh *mesh)
         }
 
         // Gram-Schmidt orthogonalization to make tangent orthogonal to normal
-        // T_prime = T - N * dot(N, T)
+        // T_prime = T - N*dot(N, T)
         Vector3 orthogonalized = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
 
         // Handle cases where orthogonalized vector is too small
