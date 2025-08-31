@@ -2999,8 +2999,9 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
             char buffer[256] = { 0 };
             char eventDesc[64] = { 0 };
 
-            fgets(buffer, 256, raeFile);
-
+            char *result = fgets(buffer, 256, raeFile);
+            if (result != buffer) TRACELOG(LOG_WARNING, "AUTOMATION: [%s] Issue reading line to buffer", fileName);
+            
             while (!feof(raeFile))
             {
                 switch (buffer[0])
@@ -3016,7 +3017,8 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
                     default: break;
                 }
 
-                fgets(buffer, 256, raeFile);
+                result = fgets(buffer, 256, raeFile);
+                if (result != buffer) TRACELOG(LOG_WARNING, "AUTOMATION: [%s] Issue reading line to buffer", fileName);
             }
 
             if (counter != list.count)
