@@ -147,7 +147,7 @@ static int textLineSpacing = 2;                 // Text vertical line spacing in
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
-static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, const int *codepoints, int codepointCount, int *outFontSize);
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -620,7 +620,7 @@ bool IsFontValid(Font font)
 
 // Load font data for further use
 // NOTE: Requires TTF font memory data and can generate SDF data
-GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount, int type)
+GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
@@ -2392,7 +2392,7 @@ static unsigned char HexToInt(char hex)
 
 // Load font data for further use
 // NOTE: Requires BDF font memory data
-static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, const int *codepoints, int codepointCount, int *outFontSize)
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize)
 {
     #define MAX_BUFFER_SIZE 256
 
