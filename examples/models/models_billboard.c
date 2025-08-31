@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Drawing billboards
+*   raylib [models] example - billboard render
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -26,7 +26,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - billboard render");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -40,7 +40,7 @@ int main(void)
     Vector3 billPositionStatic = { 0.0f, 2.0f, 0.0f };          // Position of static billboard
     Vector3 billPositionRotating = { 1.0f, 2.0f, 1.0f };        // Position of rotating billboard
 
-    // Entire billboard texture, source is used to take a segment from a larger texture.
+    // Entire billboard texture, source is used to take a segment from a larger texture
     Rectangle source = { 0.0f, 0.0f, (float)bill.width, (float)bill.height };
 
     // NOTE: Billboard locked on axis-Y
@@ -54,7 +54,7 @@ int main(void)
     Vector2 origin = Vector2Scale(size, 0.5f);
 
     // Distance is needed for the correct billboard draw order
-    // Larger distance (further away from the camera) should be drawn prior to smaller distance.
+    // Larger distance (further away from the camera) should be drawn prior to smaller distance
     float distanceStatic;
     float distanceRotating;
     float rotation = 0.0f;
@@ -85,17 +85,17 @@ int main(void)
                 DrawGrid(10, 1.0f);        // Draw a grid
 
                 // Draw order matters!
-                if (distanceStatic > distanceRotating) 
+                if (distanceStatic > distanceRotating)
                 {
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                     DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
-                } 
+                }
                 else
                 {
                     DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                 }
-                
+
             EndMode3D();
 
             DrawFPS(10, 10);

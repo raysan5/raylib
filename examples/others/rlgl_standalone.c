@@ -9,7 +9,7 @@
 *
 *   Example originally created with raylib 1.6, last time updated with raylib 4.0
 *
-*   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile.
+*   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile
 *       It could work on other platforms if redesigned for those platforms (out-of-scope)
 *
 *   DEPENDENCIES:
@@ -48,7 +48,7 @@
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
 *     as being the original software.
 *
-*     3. This notice may not be removed or altered from any source distribution.
+*     3. This notice may not be removed or altered from any source distribution
 *
 ********************************************************************************************/
 
@@ -137,7 +137,7 @@ int main(void)
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
-    
+
     // WARNING: OpenGL 3.3 Core profile only
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -297,7 +297,7 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 // Draw a grid centered at (0, 0, 0)
 static void DrawGrid(int slices, float spacing)
 {
-    int halfSlices = slices / 2;
+    int halfSlices = slices/2;
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)

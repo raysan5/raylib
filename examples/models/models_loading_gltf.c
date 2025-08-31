@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - loading gltf with animations
+*   raylib [models] example - loading gltf animations
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -45,7 +45,7 @@ int main(void)
     // Load gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model position
-    
+
     // Load gltf model animations
     int animsCount = 0;
     unsigned int animIndex = 0;

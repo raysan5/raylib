@@ -344,6 +344,10 @@ ifeq ($(PLATFORM_OS), LINUX)
     CFLAGS += -fPIC
 endif
 
+ifeq ($(PLATFORM_OS),WINDOWS)
+    CFLAGS += -DUNICODE
+endif
+
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
 endif
@@ -630,6 +634,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
         LDLIBS += -latomic
     endif
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
+    LDLIBS = -lgdi32 -lwinmm -lopengl32 -lshcore
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
@@ -870,7 +877,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
 clean_shell_sh:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
@@ -881,6 +888,7 @@ clean_shell_cmd:
 	del *.o /s
 	cd $(RAYLIB_RELEASE_PATH) & \
 	del lib$(RAYLIB_LIB_NAME).a /s & \
+        del lib$(RAYLIB_LIB_NAME).web.a /s & \
 	del lib$(RAYLIB_LIB_NAME)dll.a /s & \
 	del $(RAYLIB_LIB_NAME).dll /s & \
 	del raygui.c /s & \

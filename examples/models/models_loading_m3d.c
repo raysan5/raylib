@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load models M3D
+*   raylib [models] example - model loading m3d
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -31,7 +31,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - M3D model loading");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - model loading m3d");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -119,7 +119,7 @@ int main(void)
                     // without a -1, we would always draw a cube at the origin
                     for (int i = 0; i < model.boneCount - 1; i++)
                     {
-                        // By default the model is loaded in bind-pose by LoadModel().
+                        // By default the model is loaded in bind-pose by LoadModel()
                         // But if UpdateModelAnimation() has been called at least once
                         // then the model is already in animation pose, so we need the animated skeleton
                         if (!animPlaying || !animsCount)

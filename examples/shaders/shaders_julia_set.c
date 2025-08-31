@@ -1,13 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Julia sets
+*   raylib [shaders] example - julia sets
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
-*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
+*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3)
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
@@ -109,7 +109,7 @@ int main(void)
             SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
         }
 
-        // If "R" is pressed, reset zoom and offset.
+        // If "R" is pressed, reset zoom and offset
         if (IsKeyPressed(KEY_R))
         {
             zoom = startingZoom;
@@ -125,17 +125,16 @@ int main(void)
         if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
         else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
 
-        // If either left or right button is pressed, zoom in/out.
+        // If either left or right button is pressed, zoom in/out
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         {
-            // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out.
+            // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out
             zoom *= IsMouseButtonDown(MOUSE_BUTTON_LEFT)? zoomSpeed : 1.0f/zoomSpeed;
 
             const Vector2 mousePos = GetMousePosition();
             Vector2 offsetVelocity;
             // Find the velocity at which to change the camera. Take the distance of the mouse
-            // from the center of the screen as the direction, and adjust magnitude based on
-            // the current zoom.
+            // from the center of the screen as the direction, and adjust magnitude based on the current zoom
             offsetVelocity.x = (mousePos.x/(float)screenWidth - 0.5f)*offsetSpeedMul/zoom;
             offsetVelocity.y = (mousePos.y/(float)screenHeight - 0.5f)*offsetSpeedMul/zoom;
 
@@ -167,7 +166,7 @@ int main(void)
             // do not represent full screen coordinates (space where want to apply shader)
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
         EndTextureMode();
-            
+
         BeginDrawing();
             ClearBackground(BLACK);     // Clear screen background
 

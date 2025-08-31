@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Input Box
+*   raylib [text] example - input box
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -63,7 +63,7 @@ int main(void)
                 if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
                 {
                     name[letterCount] = (char)key;
-                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
+                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string
                     letterCount++;
                 }
 

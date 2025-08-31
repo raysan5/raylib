@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Waving cubes
+*   raylib [models] example - waving cubes
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -91,7 +91,7 @@ int main()
                             };
 
                             // Pick a color with a hue depending on cube position for the rainbow color effect
-                            // NOTE: This function is quite costly to be done per cube and frame, 
+                            // NOTE: This function is quite costly to be done per cube and frame,
                             // pre-catching the results into a separate array could improve performance
                             Color cubeColor = ColorFromHSV((float)(((x + y + z)*18)%360), 0.75f, 0.9f);
 

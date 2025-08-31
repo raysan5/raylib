@@ -7,7 +7,7 @@
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example create by GreenSnakeLinux (@GreenSnakeLinux),
-*   lighter by oblerion (@oblerion) and 
+*   lighter by oblerion (@oblerion) and
 *   reviewed by Ramon Santamaria (@raysan5) and
 *   improved by danilwhale (@danilwhale)
 *

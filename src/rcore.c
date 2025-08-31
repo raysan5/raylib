@@ -113,7 +113,7 @@
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
+#include <string.h>                 // Required for: strlen(), strcpy(), strcmp(), strrchr(), memset()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
@@ -333,9 +333,11 @@ typedef struct CoreData {
             Vector2 scale;                  // Mouse scaling
             Vector2 currentPosition;        // Mouse position on screen
             Vector2 previousPosition;       // Previous mouse position
+            Vector2 lockedPosition;         // Mouse position when locked
 
             int cursor;                     // Tracks current mouse cursor
             bool cursorHidden;              // Track if cursor is hidden
+            bool cursorLocked;              // Track if cursor is locked (disabled)
             bool cursorOnScreen;            // Tracks if cursor is inside client area
 
             char currentButtonState[MAX_MOUSE_BUTTONS];     // Registers current mouse button state
@@ -512,11 +514,11 @@ static void RecordAutomationEvent(void); // Record frame events (to internal eve
 
 #if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
-__declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
+__declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout); // Required for: WaitTime()
 #endif
 
 #if !defined(SUPPORT_MODULE_RTEXT)
-const char *TextFormat(const char *text, ...);              // Formatting of text with variables to 'embed'
+const char *TextFormat(const char *text, ...); // Formatting of text with variables to 'embed'
 #endif // !SUPPORT_MODULE_RTEXT
 
 #if defined(PLATFORM_DESKTOP)
@@ -539,7 +541,7 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
         #pragma message ("WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
     #endif
 
-    // Not needed because `rtexture.c` will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
+    // Not needed because 'rtexture.c' will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
     // #if !defined(STBI_REQUIRED)
     //     #pragma message ("WARNING: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
     // #endif
@@ -553,6 +555,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_desktop_sdl.c"
 #elif (defined(PLATFORM_DESKTOP_RGFW) || defined(PLATFORM_WEB_RGFW))
     #include "platforms/rcore_desktop_rgfw.c"
+#elif defined(PLATFORM_DESKTOP_WIN32)
+    #include "platforms/rcore_desktop_win32.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
@@ -562,6 +566,7 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
+    #pragma message ("WARNING: No [rcore] platform defined")
 #endif
 
 //----------------------------------------------------------------------------------
@@ -622,6 +627,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
 #elif defined(PLATFORM_DESKTOP_RGFW)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (RGFW)");
+#elif defined(PLATFORM_DESKTOP_WIN32)
+    TRACELOG(LOG_INFO, "Platform backend: DESKTOP (WIN32)");
 #elif defined(PLATFORM_WEB_RGFW)
     TRACELOG(LOG_INFO, "Platform backend: WEB (RGFW) (HTML5)");
 #elif defined(PLATFORM_WEB)
@@ -827,6 +834,8 @@ int GetScreenHeight(void)
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+
     int width = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
@@ -840,6 +849,8 @@ int GetRenderWidth(void)
 // Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+
     int height = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
@@ -1526,7 +1537,7 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+        matProj = MatrixOrtho(-right, right, -top, top, rlGetCullDistanceNear(), rlGetCullDistanceFar());
     }
 
     // Unproject far/near points
@@ -1889,7 +1900,7 @@ void TakeScreenshot(const char *fileName)
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
-    ExportImage(image, path);           // WARNING: Module required: rtextures
+    ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
     if (FileExists(path)) TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
@@ -1936,34 +1947,64 @@ bool FileExists(const char *fileName)
 }
 
 // Check file extension
-// NOTE: Extensions checking is not case-sensitive
 bool IsFileExtension(const char *fileName, const char *ext)
 {
-    #define MAX_FILE_EXTENSION_LENGTH  16
+    #define MAX_FILE_EXTENSIONS  32
 
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
 
+    // WARNING: fileExt points to last '.' on fileName string but it could happen
+    // that fileName is not correct: "myfile.png more text following\n"
+
     if (fileExt != NULL)
     {
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
-        int extCount = 0;
-        char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
+        int fileExtLen = (int)strlen(fileExt);
+        char fileExtLower[16] = { 0 };
+        char *fileExtLowerPtr = fileExtLower;
+        for (int i = 0; (i < fileExtLen) && (i < 16); i++)
+        {
+            // Copy and convert to lower-case
+            if ((fileExt[i] >= 'A') && (fileExt[i] <= 'Z')) fileExtLower[i] =  fileExt[i] + 32;
+            else fileExtLower[i] =  fileExt[i];
+        }
 
-        char fileExtLower[MAX_FILE_EXTENSION_LENGTH + 1] = { 0 };
-        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_LENGTH); // WARNING: Module required: rtext
+        int extCount = 1;
+        int extLen = (int)strlen(ext);
+        char *extList = (char *)RL_CALLOC(extLen + 1, 1);
+        char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
+        strcpy(extList, ext);
+        extListPtrs[0] = extList;
+
+        for (int i = 0; i < extLen; i++)
+        {
+            // Convert to lower-case if extension is upper-case
+            if ((extList[i] >= 'A') && (extList[i] <= 'Z')) extList[i] += 32;
+
+            // Get pointer to next extension and add null-terminator
+            if ((extList[i] == ';') && (extCount < (MAX_FILE_EXTENSIONS - 1)))
+            {
+                extList[i] = '\0';
+                extListPtrs[extCount] = extList + i + 1;
+                extCount++;
+            }
+        }
 
         for (int i = 0; i < extCount; i++)
         {
-            if (strcmp(fileExtLower, TextToLower(checkExts[i])) == 0)
+            // Consider the case where extension provided
+            // does not start with the '.'
+            fileExtLowerPtr = fileExtLower;
+            if (extListPtrs[i][0] != '.') fileExtLowerPtr++;
+
+            if (strcmp(fileExtLowerPtr, extListPtrs[i]) == 0)
             {
                 result = true;
                 break;
             }
         }
-#else
-        if (strcmp(fileExt, ext) == 0) result = true;
-#endif
+
+        RL_FREE(extList);
     }
 
     return result;
@@ -2014,11 +2055,12 @@ int GetFileLength(const char *fileName)
 }
 
 // Get pointer to extension for a filename string (includes the dot: .png)
+// WARNING: We just get the ptr but not the extension as a separate string
 const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
 
-    if (!dot || dot == fileName) return NULL;
+    if (!dot || (dot == fileName)) return NULL;
 
     return dot;
 }
@@ -2961,8 +3003,9 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
             char buffer[256] = { 0 };
             char eventDesc[64] = { 0 };
 
-            fgets(buffer, 256, raeFile);
-
+            char *result = fgets(buffer, 256, raeFile);
+            if (result != buffer) TRACELOG(LOG_WARNING, "AUTOMATION: [%s] Issue reading line to buffer", fileName);
+            
             while (!feof(raeFile))
             {
                 switch (buffer[0])
@@ -2978,7 +3021,8 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
                     default: break;
                 }
 
-                fgets(buffer, 256, raeFile);
+                result = fgets(buffer, 256, raeFile);
+                if (result != buffer) TRACELOG(LOG_WARNING, "AUTOMATION: [%s] Issue reading line to buffer", fileName);
             }
 
             if (counter != list.count)

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Retrive image channel (mask)
+*   raylib [textures] example - extract channel from image
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -64,10 +64,10 @@ int main(void)
     Rectangle fudesumiRec = {0, 0, fudesumiImage.width, fudesumiImage.height};
 
     Rectangle fudesumiPos = {50, 10, fudesumiImage.width*0.8f, fudesumiImage.height*0.8f};
-    Rectangle redPos = { 410, 10, fudesumiPos.width / 2, fudesumiPos.height / 2 };
-    Rectangle greenPos = { 600, 10, fudesumiPos.width / 2, fudesumiPos.height / 2 };
-    Rectangle bluePos = { 410, 230, fudesumiPos.width / 2, fudesumiPos.height / 2 };
-    Rectangle alphaPos = { 600, 230, fudesumiPos.width / 2, fudesumiPos.height / 2 };
+    Rectangle redPos = { 410, 10, fudesumiPos.width/2, fudesumiPos.height/2 };
+    Rectangle greenPos = { 600, 10, fudesumiPos.width/2, fudesumiPos.height/2 };
+    Rectangle bluePos = { 410, 230, fudesumiPos.width/2, fudesumiPos.height/2 };
+    Rectangle alphaPos = { 600, 230, fudesumiPos.width/2, fudesumiPos.height/2 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -75,11 +75,11 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Draw
+        // Update
         //----------------------------------------------------------------------------------
-        // TODO...
+        // Nothing to update...
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -104,6 +104,7 @@ int main(void)
     UnloadTexture(textureGreen);
     UnloadTexture(textureBlue);
     UnloadTexture(textureAlpha);
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

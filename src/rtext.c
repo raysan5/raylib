@@ -7,8 +7,8 @@
 *           rtext module is included in the build
 *
 *       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText()
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required
 *
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
@@ -19,7 +19,7 @@
 *       #define SUPPORT_FONT_ATLAS_WHITE_REC
 *           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
 *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-*           drawing text and shapes with a single draw call [SetShapesTexture()].
+*           drawing text and shapes with a single draw call [SetShapesTexture()]
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
@@ -93,6 +93,9 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
+    #define STBTT_malloc(x,u) ((void)(u),RL_MALLOC(x))
+    #define STBTT_free(x,u) ((void)(u),RL_FREE(x))
+
     #define STBTT_STATIC
     #define STB_TRUETYPE_IMPLEMENTATION
     #include "external/stb_truetype.h"      // Required for: ttf font data reading
@@ -130,6 +133,7 @@ extern bool isGpuReady;
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
 #endif
+static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -145,7 +149,6 @@ static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode
 #if defined(SUPPORT_FILEFORMAT_BDF)
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
-static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
@@ -391,7 +394,7 @@ Font LoadFont(const char *fileName)
         else
         {
             SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
-            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", FONT_TTF_DEFAULT_SIZE, FONT_TTF_DEFAULT_NUMCHARS);
+            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
         }
     }
 
@@ -401,7 +404,7 @@ Font LoadFont(const char *fileName)
 // Load Font from TTF or BDF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount)
+Font LoadFontEx(const char *fileName, int fontSize, const int *codepoints, int codepointCount)
 {
     Font font = { 0 };
 
@@ -546,7 +549,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 }
 
 // Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
-Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount)
+Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount)
 {
     Font font = { 0 };
 
@@ -847,7 +850,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 {
                     for (int j = i + 1; j < glyphCount; j++)
                     {
-                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
+                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (0x%02x)", glyphs[j].value);
                         // Make sure remaining recs contain valid data
                         recs[j].x = 0;
                         recs[j].y = 0;
@@ -915,7 +918,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                     }
                 }
             }
-            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", i);
+            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (0x%02x)", glyphs[i].value);
         }
 
         RL_FREE(rects);
@@ -1412,6 +1415,40 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 //----------------------------------------------------------------------------------
 // Text strings management functions
 //----------------------------------------------------------------------------------
+// Load text as separate lines ('\n')
+// WARNING: There is a limit set for number of lines and line-size
+char **LoadTextLines(const char *text, int *count)
+{
+    #define MAX_TEXTLINES_COUNT      512
+    #define MAX_TEXTLINES_LINE_LEN   512
+
+    char **lines = (char **)RL_CALLOC(MAX_TEXTLINES_COUNT, sizeof(char *));
+    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXTLINES_LINE_LEN, 1);
+    int textSize = (int)strlen(text);
+    int k = 0;
+
+    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXTLINES_COUNT); i++)
+    {
+        if ((text[i] == '\n') || (len == (MAX_TEXTLINES_LINE_LEN - 1)))
+        {
+            strncpy(lines[k], &text[i - len], len);
+            len = 0;
+            k++;
+        }
+        else len++;
+    }
+
+    *count += k;
+    return lines;
+}
+
+// Unload text lines
+void UnloadTextLines(char **lines)
+{
+    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) RL_FREE(lines[i]);
+    RL_FREE(lines);
+}
+
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {

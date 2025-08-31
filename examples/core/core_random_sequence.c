@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Generates a random sequence
+*   raylib [core] example - generate random sequence
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -43,7 +43,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - Generates a random sequence");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - generate random sequence");
 
     int rectCount = 20;
     float rectSize = (float)screenWidth/rectCount;
@@ -118,8 +118,8 @@ int main(void)
 //------------------------------------------------------------------------------------
 static Color GenerateRandomColor()
 {
-    Color color = { 
-        GetRandomValue(0, 255), 
+    Color color = {
+        GetRandomValue(0, 255),
         GetRandomValue(0, 255),
         GetRandomValue(0, 255),
         255
@@ -138,20 +138,20 @@ static ColorRect *GenerateRandomColorRectSequence(float rectCount, float rectWid
     for (int i = 0; i < rectCount; i++)
     {
         int rectHeight = (int)Remap((float)seq[i], 0, rectCount - 1, 0, screenHeight);
-        
+
         rectangles[i].c = GenerateRandomColor();
         rectangles[i].r = CLITERAL(Rectangle){ startX + i*rectWidth, screenHeight - rectHeight, rectWidth, (float)rectHeight };
     }
-    
+
     UnloadRandomSequence(seq);
-    
+
     return rectangles;
 }
 
 static void ShuffleColorRectSequence(ColorRect *rectangles, int rectCount)
 {
     int *seq = LoadRandomSequence(rectCount, 0, rectCount -  1);
-    
+
     for (int i1 = 0; i1 < rectCount; i1++)
     {
         ColorRect *r1 = &rectangles[i1];
@@ -166,16 +166,15 @@ static void ShuffleColorRectSequence(ColorRect *rectangles, int rectCount)
         r2->r.height = tmp.r.height;
         r2->r.y = tmp.r.y;
     }
-    
+
     UnloadRandomSequence(seq);
 }
 
 static void DrawTextCenterKeyHelp(const char *key, const char *text, int posX, int posY, int fontSize, Color color)
 {
-    int spaceSize = MeasureText(" ", fontSize); 
-    int pressSize = MeasureText("Press", fontSize); 
-    int keySize = MeasureText(key, fontSize); 
-    int textSize = MeasureText(text, fontSize); 
+    int spaceSize = MeasureText(" ", fontSize);
+    int pressSize = MeasureText("Press", fontSize);
+    int keySize = MeasureText(key, fontSize);
     int textSizeCurrent = 0;
 
     DrawText("Press", posX, posY, fontSize, color);

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - raylib fonts loading
+*   raylib [text] example - sprite fonts
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -30,19 +30,19 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - raylib fonts");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite fonts");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Font fonts[MAX_FONTS] = { 0 };
 
-    fonts[0] = LoadFont("resources/fonts/alagard.png");
-    fonts[1] = LoadFont("resources/fonts/pixelplay.png");
-    fonts[2] = LoadFont("resources/fonts/mecha.png");
-    fonts[3] = LoadFont("resources/fonts/setback.png");
-    fonts[4] = LoadFont("resources/fonts/romulus.png");
-    fonts[5] = LoadFont("resources/fonts/pixantiqua.png");
-    fonts[6] = LoadFont("resources/fonts/alpha_beta.png");
-    fonts[7] = LoadFont("resources/fonts/jupiter_crash.png");
+    fonts[0] = LoadFont("resources/sprite_fonts/alagard.png");
+    fonts[1] = LoadFont("resources/sprite_fonts/pixelplay.png");
+    fonts[2] = LoadFont("resources/sprite_fonts/mecha.png");
+    fonts[3] = LoadFont("resources/sprite_fonts/setback.png");
+    fonts[4] = LoadFont("resources/sprite_fonts/romulus.png");
+    fonts[5] = LoadFont("resources/sprite_fonts/pixantiqua.png");
+    fonts[6] = LoadFont("resources/sprite_fonts/alpha_beta.png");
+    fonts[7] = LoadFont("resources/sprite_fonts/jupiter_crash.png");
 
     const char *messages[MAX_FONTS] = { "ALAGARD FONT designed by Hewett Tsoi",
                                 "PIXELPLAY FONT designed by Aleksander Shevchuk",
@@ -87,8 +87,8 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("free fonts included with raylib", 250, 20, 20, DARKGRAY);
-            DrawLine(220, 50, 590, 50, DARKGRAY);
+            DrawText("free sprite fonts included with raylib", 220, 20, 20, DARKGRAY);
+            DrawLine(220, 50, 600, 50, DARKGRAY);
 
             for (int i = 0; i < MAX_FONTS; i++)
             {

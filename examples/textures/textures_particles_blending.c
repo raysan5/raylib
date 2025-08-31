@@ -71,7 +71,7 @@ int main(void)
         // Activate one particle every frame and Update active particles
         // NOTE: Particles initial position should be mouse position when activated
         // NOTE: Particles fall down with gravity and rotation... and disappear after 2 seconds (alpha = 0)
-        // NOTE: When a particle disappears, active = false and it can be reused.
+        // NOTE: When a particle disappears, active = false and it can be reused
         for (int i = 0; i < MAX_PARTICLES; i++)
         {
             if (!mouseTail[i].active)

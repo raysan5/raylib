@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Colors palette
+*   raylib [shapes] example - colors palette
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

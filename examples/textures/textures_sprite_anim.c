@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Sprite animation
+*   raylib [textures] example - sprite animation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [texture] example - sprite anim");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - sprite animation");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading

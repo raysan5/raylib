@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Vector Angle
+*   raylib [math] example - vector angle
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -12,7 +12,7 @@
 *   Copyright (c) 2023-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
- 
+
 #include "raylib.h"
 
 #include "raymath.h"
@@ -32,7 +32,7 @@ int main(void)
     Vector2 v0 = { screenWidth/2, screenHeight/2 };
     Vector2 v1 = Vector2Add(v0, (Vector2){ 100.0f, 80.0f });
     Vector2 v2 = { 0 };             // Updated with mouse position
-    
+
     float angle = 0.0f;             // Angle in degrees
     int angleMode = 0;              // 0-Vector2Angle(), 1-Vector2LineAngle()
 
@@ -47,12 +47,12 @@ int main(void)
         float startangle = 0.0f;
 
         if (angleMode == 0) startangle = -Vector2LineAngle(v0, v1)*RAD2DEG;
-        if (angleMode == 1) startangle = 0.0f; 
+        if (angleMode == 1) startangle = 0.0f;
 
         v2 = GetMousePosition();
 
         if (IsKeyPressed(KEY_SPACE)) angleMode = !angleMode;
-        
+
         if ((angleMode == 0) && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) v1 = GetMousePosition();
 
         if (angleMode == 0)
@@ -75,12 +75,12 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             if (angleMode == 0)
             {
                 DrawText("MODE 0: Angle between V1 and V2", 10, 10, 20, BLACK);
                 DrawText("Right Click to Move V2", 10, 30, 20, DARKGRAY);
-                
+
                 DrawLineEx(v0, v1, 2.0f, BLACK);
                 DrawLineEx(v0, v2, 2.0f, RED);
 
@@ -89,13 +89,13 @@ int main(void)
             else if (angleMode == 1)
             {
                 DrawText("MODE 1: Angle formed by line V1 to V2", 10, 10, 20, BLACK);
-                
+
                 DrawLine(0, screenHeight/2, screenWidth, screenHeight/2, LIGHTGRAY);
                 DrawLineEx(v0, v2, 2.0f, RED);
 
                 DrawCircleSector(v0, 40.0f, startangle, startangle - angle, 32, Fade(GREEN, 0.6f));
             }
-            
+
             DrawText("v0", v0.x, v0.y, 10, DARKGRAY);
 
             // If the line from v0 to v1 would overlap the text, move it's position up 10
@@ -110,7 +110,7 @@ int main(void)
 
             DrawText("Press SPACE to change MODE", 460, 10, 20, DARKGRAY);
             DrawText(TextFormat("ANGLE: %2.2f", angle), 10, 70, 20, LIME);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

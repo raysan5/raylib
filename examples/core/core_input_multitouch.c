@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Input multitouch
+*   raylib [core] example - input multitouch
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -54,7 +54,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             for (int i = 0; i < tCount; ++i)
             {
                 // Make sure point is not (0, 0) as this means there is no touch for it

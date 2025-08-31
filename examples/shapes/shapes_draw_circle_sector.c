@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw circle sector (with gui options)
+*   raylib [shapes] example - draw circle sector
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -72,7 +72,7 @@ int main(void)
             GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", TextFormat("%.2f", segments), &segments, 0, 100);
             //------------------------------------------------------------------------------
 
-            minSegments = truncf(ceilf((endAngle - startAngle) / 90));
+            minSegments = truncf(ceilf((endAngle - startAngle)/90));
             DrawText(TextFormat("MODE: %s", (segments >= minSegments)? "MANUAL" : "AUTO"), 600, 200, 10, (segments >= minSegments)? MAROON : DARKGRAY);
 
             DrawFPS(10, 10);

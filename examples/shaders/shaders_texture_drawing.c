@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Texture drawing
+*   raylib [shaders] example - texture drawing
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

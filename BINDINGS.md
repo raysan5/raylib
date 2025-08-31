@@ -7,6 +7,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | Name                                                                                     | raylib Version   | Language                                                             | License              |
 | :--------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------: | :------------------: |
 | [raylib](https://github.com/raysan5/raylib)                                              | **5.5**          | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))      | Zlib                 |
+| [raylib-ada](https://github.com/Fabien-Chouteau/raylib-ada)                                              | **5.5**          | [Ada](https://en.wikipedia.org/wiki/Ada_(programming_language))      | MIT                 |
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.5**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
 | [raybit](https://github.com/Alex-Velez/raybit)                                           | **5.0**          | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                 | MIT                  |
 | [raylib-c3](https://github.com/c3lang/vendor/tree/main/libraries/raylib55.c3l)           | **5.5**          | [C3](https://c3-lang.org)                                            | MIT                  |
@@ -82,7 +83,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib.v](https://github.com/irishgreencitrus/raylib.v)                                 | 4.2              | [V](https://vlang.io)                                                | Zlib                 |
 | [raylib-vapi](https://github.com/lxmcf/raylib-vapi)                                      | **5.0**          | [Vala](https://vala.dev)                                             | Zlib                 |
 | [raylib-wren](https://github.com/TSnake41/raylib-wren)                                   | 4.5              | [Wren](http://wren.io)                                               | ISC                  |
-| [raylib-zig](https://github.com/Not-Nik/raylib-zig)                                      | **5.5**          | [Zig](https://ziglang.org)                                           | MIT                  |
+| [raylib-zig](https://github.com/raylib-zig/raylib-zig)                                   | **5.6-dev**      | [Zig](https://ziglang.org)                                           | MIT                  |
 | [raylib.zig](https://github.com/ryupold/raylib.zig)                                      | **5.1-dev**      | [Zig](https://ziglang.org)                                           | MIT                  |
 | [raylib-zig-bindings](https://github.com/L-Briand/raylib-zig-bindings)                   | **5.0**          | [Zig](https://ziglang.org)                                           | Zlib                 |
 | [hare-raylib](https://git.sr.ht/~evantj/hare-raylib)                                     | **auto**         | [Hare](https://harelang.org)                                         | Zlib                 |
@@ -145,7 +146,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [clj-raylib](https://github.com/lsevero/clj-raylib)                                | 3.0            | [Clojure](https://clojure.org)                                          |
 | [QuickJS-raylib](https://github.com/sntg-p/QuickJS-raylib)                         | 3.0            | [QuickJS](https://bellard.org/quickjs)                                  |
 | [raylib-duktape](https://github.com/RobLoach/raylib-duktape)                       | 2.6            | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript)        |
-| [raylib-v7](https://github.com/Rabios/raylib-v7)                                   | 3.5            | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)             |
 | [raylib-chaiscript](https://github.com/RobLoach/raylib-chaiscript)                 | 2.6            | [ChaiScript](http://chaiscript.com)                                     |
 | [raylib-squirrel](https://github.com/RobLoach/raylib-squirrel)                     | 2.5            | [Squirrel](http://www.squirrel-lang.org)                                |
 | [racket-raylib-2d](https://github.com/arvyy/racket-raylib-2d)                      | 2.5            | [Racket](https://racket-lang.org)                                       |

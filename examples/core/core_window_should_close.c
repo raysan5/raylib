@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Window should close
+*   raylib [core] example - window should close
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -26,9 +26,9 @@ int main()
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - window should close");
-    
+
     SetExitKey(KEY_NULL);       // Disable KEY_ESCAPE to close window, X-button still works
-    
+
     bool exitWindowRequested = false;   // Flag to request window to exit
     bool exitWindow = false;    // Flag to set window to exit
 
@@ -42,12 +42,12 @@ int main()
         //----------------------------------------------------------------------------------
         // Detect if X-button or KEY_ESCAPE have been pressed to close window
         if (WindowShouldClose() || IsKeyPressed(KEY_ESCAPE)) exitWindowRequested = true;
-        
+
         if (exitWindowRequested)
         {
             // A request for close window has been issued, we can save data before closing
             // or just show a message asking for confirmation
-            
+
             if (IsKeyPressed(KEY_Y)) exitWindow = true;
             else if (IsKeyPressed(KEY_N)) exitWindowRequested = false;
         }

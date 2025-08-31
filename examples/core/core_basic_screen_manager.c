@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] examples - basic screen manager
+*   raylib [core] example - basic screen manager
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *

@@ -1,6 +1,7 @@
-#version 100             
+#version 100
+
 #extension GL_EXT_frag_depth : enable          
-precision mediump float;                // Precision required for OpenGL ES2 (WebGL)
+precision mediump float;
 
 varying vec2 fragTexCoord;
 varying vec4 fragColor;

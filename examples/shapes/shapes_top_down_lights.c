@@ -55,7 +55,7 @@ LightInfo lights[MAX_LIGHTS] = { 0 };
 void MoveLight(int slot, float x, float y)
 {
     lights[slot].dirty = true;
-    lights[slot].position.x = x; 
+    lights[slot].position.x = x;
     lights[slot].position.y = y;
 
     // update the cached bounds
@@ -99,7 +99,7 @@ void DrawLightMask(int slot)
 
         // If we are valid, then draw the light radius to the alpha mask
         if (lights[slot].valid) DrawCircleGradient((int)lights[slot].position.x, (int)lights[slot].position.y, lights[slot].outerRadius, ColorAlpha(WHITE, 0), WHITE);
-        
+
         rlDrawRenderBatchActive();
 
         // Cut out the shadows from the light radius by forcing the alpha to maximum
@@ -114,7 +114,7 @@ void DrawLightMask(int slot)
         }
 
         rlDrawRenderBatchActive();
-        
+
         // Go back to normal blend mode
         rlSetBlendMode(BLEND_ALPHA);
 
@@ -129,8 +129,8 @@ void SetupLight(int slot, float x, float y, float radius)
     lights[slot].mask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
     lights[slot].outerRadius = radius;
 
-    lights[slot].bounds.width = radius * 2;
-    lights[slot].bounds.height = radius * 2;
+    lights[slot].bounds.width = radius*2;
+    lights[slot].bounds.height = radius*2;
 
     MoveLight(slot, x, y);
 
@@ -156,7 +156,7 @@ bool UpdateLight(int slot, Rectangle* boxes, int count)
         if (!CheckCollisionRecs(lights[slot].bounds, boxes[i])) continue;
 
         // Check the edges that are on the same side we are, and cast shadow volumes out from them
-        
+
         // Top
         Vector2 sp = (Vector2){ boxes[i].x, boxes[i].y };
         Vector2 ep = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y };
@@ -219,7 +219,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - top down lights");
 
     // Initialize our 'world' of boxes
@@ -274,7 +274,7 @@ int main(void)
         {
             // Build up the light mask
             BeginTextureMode(lightMask);
-            
+
                 ClearBackground(BLACK);
 
                 // Force the blend mode to only set the alpha of the destination
@@ -300,10 +300,10 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(BLACK);
-            
+
             // Draw the tile background
             DrawTextureRec(backgroundTexture, (Rectangle){ 0, 0, (float)GetScreenWidth(), (float)GetScreenHeight() }, Vector2Zero(), WHITE);
-            
+
             // Overlay the shadows from all the lights
             DrawTextureRec(lightMask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), ColorAlpha(WHITE, showLines? 0.75f : 1.0f));
 

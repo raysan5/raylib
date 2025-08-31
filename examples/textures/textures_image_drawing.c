@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Image loading and drawing on it
+*   raylib [textures] example - image drawing
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *

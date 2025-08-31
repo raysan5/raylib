@@ -1,0 +1,72 @@
+name: Update examples collection
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'examples/**'
+  pull_request:
+    paths:
+      - 'examples/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+  
+    - name: Setup emsdk
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 'latest'
+        actions-cache-folder: 'emsdk-cache'
+
+    - name: Clone raylib.com repo to update files
+      run: |
+        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/raysan5/raylib.com.git
+      shell: bash
+
+    - name: Build and run rexm tool (requires GNU Makefile)
+      # "rexm update" validates and updates all required examples in raylib and even raylib.com repos,
+      # note that it calls examples/Makefile.Web internally, so it requires [make] tool available
+      run: |
+        sudo apt-get update && sudo apt-get install -y libopengl0 libglu1-mesa libx11-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev
+        cd "${{ github.workspace }}/src"
+        make PLATFORM=PLATFORM_DESKTOP
+        sudo make install
+        make clean
+        make PLATFORM=PLATFORM_WEB
+        cd ../tools/rexm/
+        make
+        export REXM_EXAMPLES_BASE_PATH="${{ github.workspace }}/examples"
+        export REXM_EXAMPLES_WEB_PATH="${{ github.workspace }}/raylib.com/examples"
+        export REXM_EXAMPLES_TEMPLATE_FILE_PATH="${{ github.workspace }}/examples/examples_template.c"
+        export REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH="${{ github.workspace }}/examples/examples_template.png"
+        export REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
+        export REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}/projects/VS2022/raylib.sln"
+        export EMSDK_PATH="${{ github.workspace }}/emsdk-cache/emsdk-main"
+        ./rexm update
+      shell: bash
+
+    - name: Commit changes to raylib repo (DISABLED)
+      if: github.event_name == 'push' && false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "Update examples collection" || echo "git exited with code 1, nothing changed"
+        git push
+      shell: bash
+
+    - name: Push changes to raylib.com repo (DISABLED)
+      if: github.event_name == 'push' && false
+      run: |
+        cd raylib.com
+        git add -A
+        git commit -m "Update web examples" || echo "git exited with code 1, nothing changed"
+        git push origin
+      shell: bash

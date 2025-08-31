@@ -52,7 +52,7 @@ mat3 transpose(mat3 m)
 void main()
 {
     // Compute binormal from vertex normal and tangent
-    vec3 vertexBinormal = cross(vertexNormal, vertexTangent.xyz) * vertexTangent.w;
+    vec3 vertexBinormal = cross(vertexNormal, vertexTangent.xyz)*vertexTangent.w;
 
     // Compute fragment normal based on normal transformations
     mat3 normalMatrix = transpose(inverse(mat3(matModel)));

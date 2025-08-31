@@ -1,0 +1,171 @@
+#
+# raylib examples list used to generate/update collection
+# examples must be provided as: <example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;"<example_author_name>";<author_github_user>
+#
+# This list is used as the main reference by [rexm] tool for examples collection validation and management
+# New examples must be added to this list and any possible rename must be made on this list first
+#
+# WARNING: List is not ordered by example name but by the display order on web
+#
+core;core_basic_window;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+core;core_input_keys;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+core;core_input_mouse;⭐️☆☆☆;1.0;5.5;"Ramon Santamaria";@raysan5
+core;core_input_mouse_wheel;⭐️☆☆☆;1.1;1.3;"Ramon Santamaria";@raysan5
+core;core_input_gamepad;⭐️☆☆☆;1.1;4.2;"Ramon Santamaria";@raysan5
+core;core_input_multitouch;⭐️☆☆☆;2.1;2.5;"Berni";@Berni8k
+core;core_input_gestures;⭐️⭐️☆☆;1.4;4.2;"Ramon Santamaria";@raysan5
+core;core_input_virtual_controls;⭐️⭐️☆☆;5.0;5.0;"oblerion";@oblerion
+core;core_2d_camera;⭐️⭐️☆☆;1.5;3.0;"Ramon Santamaria";@raysan5
+core;core_2d_camera_mouse_zoom;⭐️⭐️☆☆;4.2;4.2;"Jeffery Myers";@JeffM2501
+core;core_2d_camera_platformer;⭐️⭐️⭐️☆;2.5;3.0;"arvyy";@arvyy
+core;core_2d_camera_split_screen;⭐️⭐️⭐️⭐️;4.5;4.5;"Gabriel dos Santos Sanches";@gabrielssanches
+core;core_3d_camera_mode;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+core;core_3d_camera_free;⭐️☆☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
+core;core_3d_camera_first_person;⭐️⭐️☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
+core;core_3d_camera_split_screen;⭐️⭐️⭐️☆;3.7;4.0;"Jeffery Myers";@JeffM2501
+core;core_3d_camera_fps;⭐️⭐️⭐️☆;5.5;5.5;"Agnis Aldins";@nezvers
+core;core_3d_picking;⭐️⭐️☆☆;1.3;4.0;"Ramon Santamaria";@raysan5
+core;core_world_screen;⭐️⭐️☆☆;1.3;1.4;"Ramon Santamaria";@raysan5
+core;core_custom_logging;⭐️⭐️⭐️☆;2.5;2.5;"Pablo Marcos Oltra";@pamarcos
+core;core_window_flags;⭐️⭐️⭐️☆;3.5;3.5;"Ramon Santamaria";@raysan5
+core;core_window_letterbox;⭐️⭐️☆☆;2.5;4.0;"Anata";@anatagawa
+core;core_window_should_close;⭐️☆☆☆;4.2;4.2;"Ramon Santamaria";@raysan5
+core;core_drop_files;⭐️⭐️☆☆;1.3;4.2;"Ramon Santamaria";@raysan5
+core;core_random_values;⭐️☆☆☆;1.1;1.1;"Ramon Santamaria";@raysan5
+core;core_storage_values;⭐️⭐️☆☆;1.4;4.2;"Ramon Santamaria";@raysan5
+core;core_vr_simulator;⭐️⭐️⭐️☆;2.5;4.0;"Ramon Santamaria";@raysan5
+core;core_loading_thread;⭐️⭐️⭐️☆;2.5;3.0;"Ramon Santamaria";@raysan5
+core;core_scissor_test;⭐️☆☆☆;2.5;3.0;"Chris Dill";@MysteriousSpace
+core;core_basic_screen_manager;⭐️☆☆☆;4.0;4.0;"Ramon Santamaria";@raysan5
+core;core_custom_frame_control;⭐️⭐️⭐️⭐️;4.0;4.0;"Ramon Santamaria";@raysan5
+core;core_smooth_pixelperfect;⭐️⭐️⭐️☆;3.7;4.0;"Giancamillo Alessandroni";@NotManyIdeasDev
+core;core_random_sequence;⭐️☆☆☆;5.0;5.0;"Dalton Overmyer";@REDl3east
+core;core_basic_window_web;⭐️☆☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
+core;core_input_gestures_web;⭐️⭐️☆☆;4.6-dev;4.6-dev;"ubkp";@ubkp
+core;core_automation_events;⭐️⭐️⭐️☆;5.0;5.0;"Ramon Santamaria";@raysan5
+core;core_high_dpi;⭐️☆☆☆;5.0;5.0;"Jonathan Marler";@marler8997
+shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ramon Santamaria";@raysan5
+shapes;shapes_bouncing_ball;⭐️☆☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_colors_palette;⭐️⭐️☆☆;1.0;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_logo_raylib;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+shapes;shapes_logo_raylib_anim;⭐️⭐️☆☆;2.5;4.0;"Ramon Santamaria";@raysan5
+shapes;shapes_rectangle_scaling;⭐️⭐️☆☆;2.5;2.5;"Vlad Adrian";@demizdor
+shapes;shapes_lines_bezier;⭐️☆☆☆;1.7;1.7;"Ramon Santamaria";@raysan5
+shapes;shapes_collision_area;⭐️⭐️☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_following_eyes;⭐️⭐️☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_easings_ball_anim;⭐️⭐️☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_easings_box_anim;⭐️⭐️☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_easings_rectangle_array;⭐️⭐️⭐️☆;2.0;2.5;"Ramon Santamaria";@raysan5
+shapes;shapes_draw_ring;⭐️⭐️⭐️☆;2.5;2.5;"Vlad Adrian";@demizdor
+shapes;shapes_draw_circle_sector;⭐️⭐️⭐️☆;2.5;2.5;"Vlad Adrian";@demizdor
+shapes;shapes_draw_rectangle_rounded;⭐️⭐️⭐️☆;2.5;2.5;"Vlad Adrian";@demizdor
+shapes;shapes_top_down_lights;⭐️⭐️⭐️⭐️;4.2;4.2;"Jeffery Myers";@JeffM2501
+shapes;shapes_rectangle_advanced;⭐️⭐️⭐️⭐️;5.5;5.5;"Everton Jr.";@evertonse
+shapes;shapes_splines_drawing;⭐️⭐️⭐️☆;5.0;5.0;"Ramon Santamaria";@raysan5
+shapes;shapes_digital_clock;⭐️⭐️☆☆;5.5;5.5;"Hamza RAHAL";@rhmz-rhl
+shapes;shapes_double_pendulum;⭐️⭐️☆☆;5.5;5.5;"JoeCheong";@Joecheong2006
+textures;textures_logo_raylib;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+textures;textures_srcrec_dstrec;⭐️⭐️⭐️☆;1.3;1.3;"Ramon Santamaria";@raysan5
+textures;textures_image_drawing;⭐️⭐️☆☆;1.4;1.4;"Ramon Santamaria";@raysan5
+textures;textures_image_generation;⭐️⭐️☆☆;1.8;1.8;"Wilhem Barbier";@nounoursheureux
+textures;textures_image_loading;⭐️☆☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
+textures;textures_image_processing;⭐️⭐️⭐️☆;1.4;3.5;"Ramon Santamaria";@raysan5
+textures;textures_image_text;⭐️⭐️☆☆;1.8;4.0;"Ramon Santamaria";@raysan5
+textures;textures_to_image;⭐️☆☆☆;1.3;4.0;"Ramon Santamaria";@raysan5
+textures;textures_raw_data;⭐️⭐️⭐️☆;1.3;3.5;"Ramon Santamaria";@raysan5
+textures;textures_particles_blending;⭐️☆☆☆;1.7;3.5;"Ramon Santamaria";@raysan5
+textures;textures_npatch_drawing;⭐️⭐️⭐️☆;2.0;2.5;"Jorge A. Gomes";@overdev
+textures;textures_background_scrolling;⭐️☆☆☆;2.0;2.5;"Ramon Santamaria";@raysan5
+textures;textures_sprite_anim;⭐️⭐️☆☆;1.3;1.3;"Ramon Santamaria";@raysan5
+textures;textures_sprite_button;⭐️⭐️☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
+textures;textures_sprite_explosion;⭐️⭐️☆☆;2.5;3.5;"Ramon Santamaria";@raysan5
+textures;textures_bunnymark;⭐️⭐️⭐️☆;1.6;2.5;"Ramon Santamaria";@raysan5
+textures;textures_mouse_painting;⭐️⭐️⭐️☆;3.0;3.0;"Chris Dill";@MysteriousSpace
+textures;textures_blend_modes;⭐️☆☆☆;3.5;3.5;"Karlo Licudine";@accidentalrebel
+textures;textures_draw_tiled;⭐️⭐️⭐️☆;3.0;4.2;"Vlad Adrian";@demizdor
+textures;textures_polygon;⭐️☆☆☆;3.7;3.7;"Chris Camacho";@chriscamacho
+textures;textures_fog_of_war;⭐️⭐️⭐️☆;4.2;4.2;"Ramon Santamaria";@raysan5
+textures;textures_gif_player;⭐️⭐️⭐️☆;4.2;4.2;"Ramon Santamaria";@raysan5
+textures;textures_image_kernel;⭐️⭐️⭐️⭐️;1.3;1.3;"Karim Salem";@kimo-s
+textures;textures_image_channel;⭐️⭐️☆☆;5.1-dev;5.1-dev;"Bruno Cabral";@brccabral
+textures;textures_image_rotate;⭐️⭐️☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+textures;textures_textured_curve;⭐️⭐️⭐️☆;4.5;4.5;"Jeffery Myers";@JeffM2501
+text;text_raylib_fonts;⭐️☆☆☆;1.7;3.7;"Ramon Santamaria";@raysan5
+text;text_font_spritefont;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
+text;text_font_filters;⭐️⭐️☆☆;1.3;4.2;"Ramon Santamaria";@raysan5
+text;text_font_loading;⭐️☆☆☆;1.4;3.0;"Ramon Santamaria";@raysan5
+text;text_font_sdf;⭐️⭐️⭐️☆;1.3;4.0;"Ramon Santamaria";@raysan5
+text;text_format_text;⭐️☆☆☆;1.1;3.0;"Ramon Santamaria";@raysan5
+text;text_input_box;⭐️⭐️☆☆;1.7;3.5;"Ramon Santamaria";@raysan5
+text;text_writing_anim;⭐️⭐️☆☆;1.4;1.4;"Ramon Santamaria";@raysan5
+text;text_rectangle_bounds;⭐️⭐️⭐️⭐️;2.5;4.0;"Vlad Adrian";@demizdor
+text;text_unicode;⭐️⭐️⭐️⭐️;2.5;4.0;"Vlad Adrian";@demizdor
+text;text_draw_3d;⭐️⭐️⭐️⭐️;3.5;4.0;"Vlad Adrian";@demizdor
+text;text_codepoints_loading;⭐️⭐️⭐️☆;4.2;4.2;"Ramon Santamaria";@raysan5
+models;models_animation;⭐️⭐️☆☆;2.5;3.5;"Culacant";@culacant
+models;models_billboard;⭐️⭐️⭐️☆;1.3;3.5;"Ramon Santamaria";@raysan5
+models;models_box_collisions;⭐️☆☆☆;1.3;3.5;"Ramon Santamaria";@raysan5
+models;models_cubicmap;⭐️⭐️☆☆;1.8;3.5;"Ramon Santamaria";@raysan5
+models;models_first_person_maze;⭐️⭐️☆☆;2.5;3.5;"Ramon Santamaria";@raysan5
+models;models_geometric_shapes;⭐️☆☆☆;1.0;3.5;"Ramon Santamaria";@raysan5
+models;models_mesh_generation;⭐️⭐️☆☆;1.8;4.0;"Ramon Santamaria";@raysan5
+models;models_mesh_picking;⭐️⭐️⭐️☆;1.7;4.0;"Joel Davis";@joeld42
+models;models_loading;⭐️☆☆☆;2.0;4.2;"Ramon Santamaria";@raysan5
+models;models_loading_gltf;⭐️☆☆☆;3.7;4.2;"Ramon Santamaria";@raysan5
+models;models_loading_vox;⭐️☆☆☆;4.0;4.0;"Johann Nadalutti";@procfxgen
+models;models_loading_m3d;⭐️⭐️☆☆;4.5;4.5;"bzt";@model3d
+models;models_orthographic_projection;⭐️☆☆☆;2.0;3.7;"Max Danielsson";@autious
+models;models_point_rendering;⭐️⭐️⭐️☆;5.0;5.0;"Reese Gallagher";@satchelfrost
+models;models_rlgl_solar_system;⭐️⭐️⭐️⭐️;2.5;4.0;"Ramon Santamaria";@raysan5
+models;models_yaw_pitch_roll;⭐️⭐️☆☆;1.8;4.0;"Berni";@Berni8k
+models;models_waving_cubes;⭐️⭐️⭐️☆;2.5;3.7;"Codecat";@codecat
+models;models_heightmap;⭐️☆☆☆;1.8;3.5;"Ramon Santamaria";@raysan5
+models;models_skybox;⭐️⭐️☆☆;1.8;4.0;"Ramon Santamaria";@raysan5
+models;models_draw_cube_texture;⭐️⭐️☆☆;4.5;4.5;"Ramon Santamaria";@raysan5
+models;models_gpu_skinning;⭐️⭐️⭐️☆;4.5;4.5;"Daniel Holden";@orangeduck
+models;models_bone_socket;⭐️⭐️⭐️⭐️;4.5;4.5;"iP";@ipzaur
+models;models_tesseract_view;⭐️⭐️☆☆;5.6-dev;5.6-dev;"Timothy van der Valk";@arceryz
+shaders;shaders_basic_lighting;⭐️⭐️⭐️⭐️;3.0;4.2;"Chris Camacho";@chriscamacho
+shaders;shaders_model_shader;⭐️⭐️☆☆;1.3;3.7;"Ramon Santamaria";@raysan5
+shaders;shaders_shapes_textures;⭐️⭐️☆☆;1.7;3.7;"Ramon Santamaria";@raysan5
+shaders;shaders_custom_uniform;⭐️⭐️☆☆;1.3;4.0;"Ramon Santamaria";@raysan5
+shaders;shaders_postprocessing;⭐️⭐️⭐️☆;1.3;4.0;"Ramon Santamaria";@raysan5
+shaders;shaders_palette_switch;⭐️⭐️⭐️☆;2.5;3.7;"Marco Lizza";@MarcoLizza
+shaders;shaders_raymarching;⭐️⭐️⭐️⭐️;2.0;4.2;"Ramon Santamaria";@raysan5
+shaders;shaders_texture_drawing;⭐️⭐️☆☆;2.0;3.7;"Michał Ciesielski";@ciessielski
+shaders;shaders_texture_outline;⭐️⭐️⭐️☆;4.0;4.0;"Samuel Skiff";@GoldenThumbs
+shaders;shaders_texture_waves;⭐️⭐️☆☆;2.5;3.7;"Anata";@anatagawa
+shaders;shaders_julia_set;⭐️⭐️⭐️☆;2.5;4.0;"Josh Colclough";@joshcol9232
+shaders;shaders_eratosthenes;⭐️⭐️⭐️☆;2.5;4.0;"ProfJski";@ProfJski
+shaders;shaders_fog;⭐️⭐️⭐️☆;2.5;3.7;"Chris Camacho";@chriscamacho
+shaders;shaders_simple_mask;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscamacho
+shaders;shaders_hot_reloading;⭐️⭐️⭐️☆;3.0;3.5;"Ramon Santamaria";@raysan5
+shaders;shaders_mesh_instancing;⭐️⭐️⭐️⭐️;3.7;4.2;"seanpringle";@seanpringle
+shaders;shaders_multi_sample2d;⭐️⭐️☆☆;3.5;3.5;"Ramon Santamaria";@raysan5
+shaders;shaders_normal_map;⭐️⭐️⭐️⭐️;5.6;5.6;"Jeremy Montgomery";@Sir_Irk
+shaders;shaders_spotlight;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscamacho
+shaders;shaders_deferred_render;⭐️⭐️⭐️⭐️;4.5;4.5;"Justin Andreas Lacoste";@27justin
+shaders;shaders_hybrid_render;⭐️⭐️⭐️⭐️;4.2;4.2;"Buğra Alptekin Sarı";@BugraAlptekinSari
+shaders;shaders_texture_tiling;⭐️⭐️☆☆;4.5;4.5;"Luis Almeida";@luis605
+shaders;shaders_shadowmap;⭐️⭐️⭐️⭐️;5.0;5.0;"TheManTheMythTheGameDev";@TheManTheMythTheGameDev
+shaders;shaders_vertex_displacement;⭐️⭐️⭐️☆;5.0;4.5;"Alex ZH";@ZzzhHe
+shaders;shaders_write_depth;⭐️⭐️☆☆;4.2;4.2;"Buğra Alptekin Sarı";@BugraAlptekinSari
+shaders;shaders_basic_pbr;⭐️⭐️⭐️⭐️;5.0;5.1-dev;"Afan OLOVCIC";@_DevDad
+shaders;shaders_lightmap;⭐️⭐️⭐️☆;4.5;4.5;"Jussi Viitala";@nullstare
+shaders;shaders_rounded_rectangle;⭐️⭐️⭐️☆;5.5;5.5;"Anstro Pleuton";@anstropleuton
+shaders;shaders_view_depth;⭐️⭐️⭐️☆;5.6-dev;5.6-dev;"Luís Almeida";@luis605
+audio;audio_module_playing;⭐️☆☆☆;1.5;3.5;"Ramon Santamaria";@raysan5
+audio;audio_music_stream;⭐️☆☆☆;1.3;4.2;"Ramon Santamaria";@raysan5
+audio;audio_raw_stream;⭐️⭐️⭐️☆;1.6;4.2;"Ramon Santamaria";@raysan5
+audio;audio_sound_loading;⭐️☆☆☆;1.1;3.5;"Ramon Santamaria";@raysan5
+audio;audio_mixed_processor;⭐️⭐️⭐️⭐️;4.2;4.2;"hkc";@hatkidchan
+audio;audio_stream_effects;⭐️⭐️⭐️⭐️;4.2;5.0;"Ramon Santamaria";@raysan5
+audio;audio_sound_multi;⭐️⭐️☆☆;4.6;4.6;"Jeffery Myers";@JeffM2501
+audio;audio_sound_positioning;⭐️⭐️☆☆;5.5;5.5;"Le Juez Victor";@Bigfoot71
+others;rlgl_standalone;⭐️⭐️⭐️⭐️;1.6;4.0;"Ramon Santamaria";@raysan5
+others;rlgl_compute_shader;⭐️⭐️⭐️⭐️;4.0;4.0;"Teddy Astie";@tsnake41
+others;easings_testbed;⭐️⭐️⭐️☆;2.5;3.0;"Juan Miguel López";@flashback-fx
+others;raylib_opengl_interop;⭐️⭐️⭐️⭐️;3.8;4.0;"Stephan Soller";@arkanis
+others;embedded_files_loading;⭐️⭐️☆☆;3.0;3.5;"Kristian Holmgren";@defutura
+others;raymath_vector_angle;⭐️⭐️☆☆;1.0;4.6;"Ramon Santamaria";@raysan5
+text;text_unicode_ranges;⭐⭐⭐⭐️;2.5;4.0;"Vlad Adrian";@demizdor

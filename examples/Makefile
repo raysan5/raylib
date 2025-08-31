@@ -106,6 +106,9 @@ BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/minshell.html
 BUILD_WEB_HEAP_SIZE   ?= 134217728
 BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
+# Use WebGL2 backend (OpenGL 3.0)
+# WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
+BUILD_WEB_WEBGL2      ?= FALSE
 
 # Determine PLATFORM_OS when required
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW PLATFORM_WEB PLATFORM_WEB_RGFW))
@@ -186,7 +189,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     endif
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-	# HTML5 emscripten compiler
+    # HTML5 emscripten compiler
     # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
@@ -269,8 +272,8 @@ endif
 # NOTE: Some external/extras libraries could be required (stb, easings...)
 #------------------------------------------------------------------------------------------------
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external $(EXTRA_INCLUDE_PATHS)
-# Define additional directories containing required header files
 
+# Define additional directories containing required header files
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH) -I/usr/pkg/include -I/usr/X11R7/include
@@ -285,11 +288,6 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     INCLUDE_PATHS += -I/usr/include/libdrm
-endif
-
-# Include GLFW required for examples/others/rlgl_standalone.c
-ifeq ($(USE_EXTERNAL_GLFW),FALSE)
-all others: INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/glfw/include
 endif
 
 # Define library paths containing required libs: LDFLAGS
@@ -340,18 +338,24 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
     # --shell-file shell.html    # define a custom shell .html and output extension
-    LDFLAGS += -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sFORCE_FILESYSTEM=1 -sMINIFY_HTML=0
+    LDFLAGS += -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sFORCE_FILESYSTEM=1 -sEXPORTED_RUNTIME_METHODS=ccall -sMINIFY_HTML=0
 
     # Using GLFW3 library (instead of RGFW)
     ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
         LDFLAGS += -sUSE_GLFW=3
     endif
 
-	# Build using asyncify
+    # Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
         LDFLAGS += -sASYNCIFY
     endif
 
+    # NOTE: Flags required for WebGL 2.0 (OpenGL ES 3.0)
+    # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
+    ifeq ($(BUILD_WEB_WEBGL2),TRUE)
+        LDFLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
+    endif
+    
     # Add resources building if required
     ifeq ($(BUILD_WEB_RESOURCES),TRUE)
         LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
@@ -489,8 +493,11 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.web.a
 endif
 
+CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
+
 # Define source code object files required
 #------------------------------------------------------------------------------------------------
+#EXAMPLES_LIST_START
 CORE = \
     core/core_2d_camera \
     core/core_2d_camera_mouse_zoom \
@@ -500,6 +507,7 @@ CORE = \
     core/core_3d_camera_free \
     core/core_3d_camera_mode \
     core/core_3d_camera_split_screen \
+    core/core_3d_camera_fps \
     core/core_3d_picking \
     core/core_automation_events \
     core/core_basic_screen_manager \
@@ -534,6 +542,8 @@ SHAPES = \
     shapes/shapes_bouncing_ball \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
+    shapes/shapes_digital_clock \
+    shapes/shapes_double_pendulum \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
     shapes/shapes_draw_ring \
@@ -547,8 +557,7 @@ SHAPES = \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_splines_drawing \
-    shapes/shapes_top_down_lights \
-    shapes/shapes_digital_clock
+    shapes/shapes_top_down_lights
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -590,6 +599,7 @@ TEXT = \
     text/text_raylib_fonts \
     text/text_rectangle_bounds \
     text/text_unicode \
+    text/text_unicode_ranges \
     text/text_writing_anim
 
 MODELS = \
@@ -631,6 +641,7 @@ SHADERS = \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
+    shaders/shaders_normal_map \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
@@ -643,9 +654,9 @@ SHADERS = \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
+    shaders/shaders_vertex_displacement \
     shaders/shaders_view_depth \
-    shaders/shaders_write_depth \
-    shaders/shaders_vertex_displacement
+    shaders/shaders_write_depth
 
 AUDIO = \
     audio/audio_mixed_processor \
@@ -662,18 +673,14 @@ OTHERS = \
     others/embedded_files_loading \
     others/raylib_opengl_interop \
     others/raymath_vector_angle \
-    others/rlgl_compute_shader
-
-ifeq ($(TARGET_PLATFORM), PLATFORM_DESKTOP_GFLW)
-    OTHERS += others/rlgl_standalone
-endif
-
-CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
+    others/rlgl_compute_shader \
+    others/rlgl_standalone
+#EXAMPLES_LIST_END
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
-all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(OTHERS)
+all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)
 
 core: $(CORE)
 shapes: $(SHAPES)
@@ -682,7 +689,6 @@ text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
-others: $(OTHERS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!

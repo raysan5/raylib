@@ -1,18 +1,18 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Draw 3d
+*   raylib [text] example - 3d text drawing
 *
 *   Example complexity rating: [★★★★] 4/4
 *
 *   NOTE: Draw a 2D text in 3D space, each letter is drawn in a quad (or 2 quads if backface is set)
 *   where the texture coodinates of each quad map to the texture coordinates of the glyphs
-*   inside the font texture.
+*   inside the font texture
 *
 *   A more efficient approach, i believe, would be to render the text in a render texture and
 *   map that texture to a plane and render that, or maybe a shader but my method allows more
 *   flexibility...for example to change position of each letter individually to make somethink
-*   like a wavy text effect.
-*    
+*   like a wavy text effect
+*
 *   Special thanks to:
 *        @Nighten for the DrawTextStyle() code https://github.com/NightenDushi/Raylib_DrawTextStyle
 *        Chris Camacho (codifies - http://bedroomcoders.co.uk/) for the alpha discard shader
@@ -34,8 +34,11 @@
 #include <stddef.h>     // Required for: NULL
 #include <math.h>       // Required for: sinf()
 
-// To make it work with the older RLGL module just comment the line below
-#define RAYLIB_NEW_RLGL
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
 
 //--------------------------------------------------------------------------------------
 // Globals
@@ -50,7 +53,6 @@ bool SHOW_TEXT_BOUNDRY = false;
 //--------------------------------------------------------------------------------------
 // Data Types definition
 //--------------------------------------------------------------------------------------
-
 // Configuration structure for waving the text
 typedef struct WaveTextConfig {
     Vector3 waveRange;
@@ -66,10 +68,10 @@ static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, floa
 // Draw a 2D text in 3D space
 static void DrawText3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, Color tint);
 
-// Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`.
+// Draw a 2D text in 3D space and wave the parts that start with '~~' and end with '~~'
 // This is a modified version of the original code by @Nighten found here https://github.com/NightenDushi/Raylib_DrawTextStyle
 static void DrawTextWave3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, WaveTextConfig *config, float time, Color tint);
-// Measure a text in 3D ignoring the `~~` chars.
+// Measure a text in 3D ignoring the `~~` chars
 static Vector3 MeasureTextWave3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 // Generates a nice color with a random hue
 static Color GenerateRandomColor(float s, float v);
@@ -85,7 +87,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT|FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - draw 2D text in 3D");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - 3d text drawing");
 
     bool spin = true;        // Spin the camera?
     bool multicolor = false; // Multicolor mode
@@ -128,7 +130,7 @@ int main(void)
     Color dark = RED;
 
     // Load the alpha discard shader
-    Shader alphaDiscard = LoadShader(NULL, "resources/shaders/glsl330/alpha_discard.fs");
+    Shader alphaDiscard = LoadShader(NULL, TextFormat("resources/shaders/glsl%i/alpha_discard.fs", GLSL_VERSION));
 
     // Array filled with multiple random colors (when multicolor mode is set)
     Color multi[TEXT_MAX_LAYERS] = {0};
@@ -144,7 +146,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, camera_mode);
-        
+
         // Handle font files dropped
         if (IsFileDropped())
         {
@@ -162,7 +164,7 @@ int main(void)
                 font = LoadFont(droppedFiles.paths[0]);
                 fontSize = (float)font.baseSize;
             }
-            
+
             UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
 
@@ -560,7 +562,7 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
     }
 }
 
-// Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`.
+// Draw a 2D text in 3D space and wave the parts that start with `~~` and end with `~~`
 // This is a modified version of the original code by @Nighten found here https://github.com/NightenDushi/Raylib_DrawTextStyle
 static void DrawTextWave3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, WaveTextConfig* config, float time, Color tint)
 {
@@ -623,7 +625,7 @@ static void DrawTextWave3D(Font font, const char *text, Vector3 position, float 
     }
 }
 
-// Measure a text in 3D ignoring the `~~` chars.
+// Measure a text in 3D ignoring the `~~` chars
 static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, float fontSpacing, float lineSpacing)
 {
     int len = TextLength(text);

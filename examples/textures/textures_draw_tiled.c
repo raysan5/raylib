@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Draw part of the texture tiled
+*   raylib [textures] example - textures tiled drawing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -22,7 +22,7 @@
 #define MARGIN_SIZE       8       // Size for the margins
 #define COLOR_SIZE       16       // Size of the color select buttons
 
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest
 void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint);
 
 //------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE); // Make the window resizable
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - Draw part of a texture tiled");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - textures tiled drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture texPattern = LoadTexture("resources/patterns.png");
@@ -173,7 +173,7 @@ int main(void)
     return 0;
 }
 
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest
 void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
 {
     if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!

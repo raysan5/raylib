@@ -39,7 +39,7 @@ void main()
     fragColor = color;
 */
     // Scanlines method 2
-    float globalPos = (fragTexCoord.y + offset) * frequency;
+    float globalPos = (fragTexCoord.y + offset)*frequency;
     float wavePos = cos((fract(globalPos) - 0.5)*3.14);
 
     // Texel color fetching from texture sampler

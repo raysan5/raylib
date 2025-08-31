@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Retrieve image data from texture: LoadImageFromTexture()
+*   raylib [textures] example - texture to image
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
