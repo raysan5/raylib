@@ -227,10 +227,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     raylib.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
-            try raylib_flags_arr.append("-DUNICODE");
             switch (options.platform) {
                 .glfw => try c_source_files.append(b.allocator, "src/rglfw.c"),
-                .rgfw, .sdl, .drm, .android, .win32 => {},
+                .rgfw, .sdl, .drm, .android => {},
             }
             raylib.root_module.linkSystemLibrary("winmm", .{});
             raylib.root_module.linkSystemLibrary("gdi32", .{});
@@ -486,7 +485,6 @@ pub const PlatformBackend = enum {
     sdl,
     drm,
     android,
-    win32,
 };
 
 pub fn build(b: *std.Build) !void {
