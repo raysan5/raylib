@@ -248,7 +248,7 @@ int main(void)
                 if (sz.x > 300) { sz.y *= sz.x/300; sz.x = 300; }
                 else if (sz.x < 160) sz.x = 160;
 
-                Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y };
+                Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2*horizontalPadding + sz.x, 2*verticalPadding + sz.y };
                 msgRect.y -= msgRect.height;
 
                 // Coordinates for the chat bubble triangle

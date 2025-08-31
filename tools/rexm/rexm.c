@@ -148,11 +148,6 @@ static int UpdateRequiredFiles(void);
 static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount);
 static void UnloadExamplesData(rlExampleInfo *exInfo);
 
-// Get text lines (by line-breaks '\n')
-// WARNING: It does not copy text data, just returns line pointers 
-static char **LoadTextLines(const char *text, int *count);
-static void UnloadTextLines(char **text);
-
 // Load example info from file header
 static rlExampleInfo *LoadExampleInfo(const char *exFileName);
 static void UnloadExampleInfo(rlExampleInfo *exInfo);
@@ -1773,39 +1768,6 @@ static int FileMove(const char *srcPath, const char *dstPath)
     else result = -1;
 
     return result;
-}
-
-// Load text lines
-static char **LoadTextLines(const char *text, int *count)
-{
-    #define MAX_TEXT_LINES      512
-    #define MAX_TEXT_LINE_LEN   512
-
-    char **lines = (char **)RL_CALLOC(MAX_TEXT_LINES, sizeof(char *));
-    for (int i = 0; i < MAX_TEXT_LINES; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXT_LINE_LEN, 1);
-    int textSize = (int)strlen(text);
-    int k = 0;
-
-    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXT_LINES); i++)
-    {
-        if ((text[i] == '\n') || (len == (MAX_TEXT_LINE_LEN - 1)))
-        {
-            strncpy(lines[k], &text[i - len], len);
-            len = 0;
-            k++;
-        }
-        else len++;
-    }
-
-    *count += k;
-    return lines;
-}
-
-// Unload text lines
-static void UnloadTextLines(char **lines)
-{
-    for (int i = 0; i < MAX_TEXT_LINES; i++) RL_FREE(lines[i]);
-    RL_FREE(lines);
 }
 
 // Get example info from example file header

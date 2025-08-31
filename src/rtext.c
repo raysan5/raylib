@@ -147,7 +147,7 @@ static int textLineSpacing = 2;                 // Text vertical line spacing in
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
-static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, const int *codepoints, int codepointCount, int *outFontSize);
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -404,7 +404,7 @@ Font LoadFont(const char *fileName)
 // Load Font from TTF or BDF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount)
+Font LoadFontEx(const char *fileName, int fontSize, const int *codepoints, int codepointCount)
 {
     Font font = { 0 };
 
@@ -549,7 +549,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 }
 
 // Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
-Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount)
+Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount)
 {
     Font font = { 0 };
 
@@ -620,7 +620,7 @@ bool IsFontValid(Font font)
 
 // Load font data for further use
 // NOTE: Requires TTF font memory data and can generate SDF data
-GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type)
+GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount, int type)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
@@ -1415,6 +1415,40 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 //----------------------------------------------------------------------------------
 // Text strings management functions
 //----------------------------------------------------------------------------------
+// Load text as separate lines ('\n')
+// WARNING: There is a limit set for number of lines and line-size
+char **LoadTextLines(const char *text, int *count)
+{
+    #define MAX_TEXTLINES_COUNT      512
+    #define MAX_TEXTLINES_LINE_LEN   512
+
+    char **lines = (char **)RL_CALLOC(MAX_TEXTLINES_COUNT, sizeof(char *));
+    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXTLINES_LINE_LEN, 1);
+    int textSize = (int)strlen(text);
+    int k = 0;
+
+    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXTLINES_COUNT); i++)
+    {
+        if ((text[i] == '\n') || (len == (MAX_TEXTLINES_LINE_LEN - 1)))
+        {
+            strncpy(lines[k], &text[i - len], len);
+            len = 0;
+            k++;
+        }
+        else len++;
+    }
+
+    *count += k;
+    return lines;
+}
+
+// Unload text lines
+void UnloadTextLines(char **lines)
+{
+    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) RL_FREE(lines[i]);
+    RL_FREE(lines);
+}
+
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {
@@ -2358,7 +2392,7 @@ static unsigned char HexToInt(char hex)
 
 // Load font data for further use
 // NOTE: Requires BDF font memory data
-static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize)
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, const int *codepoints, int codepointCount, int *outFontSize)
 {
     #define MAX_BUFFER_SIZE 256
 

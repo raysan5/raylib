@@ -288,7 +288,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 if (header->ddspf.flags == 0x40)        // No alpha channel
                 {
                     int data_size = image_pixel_size*sizeof(unsigned short);
-                    if (header->mipmap_count > 1) data_size = data_size + data_size / 3;
+                    if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                     image_data = RL_GPUTEX_MALLOC(data_size);
 
                     RL_GPUTEX_MEMCPY(image_data, file_data_ptr, data_size);
@@ -300,7 +300,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     if (header->ddspf.a_bit_mask == 0x8000)     // 1bit alpha
                     {
                         int data_size = image_pixel_size*sizeof(unsigned short);
-                        if (header->mipmap_count > 1) data_size = data_size + data_size / 3;
+                        if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                         image_data = RL_GPUTEX_MALLOC(data_size);
 
                         RL_GPUTEX_MEMCPY(image_data, file_data_ptr, data_size);
@@ -320,7 +320,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     else if (header->ddspf.a_bit_mask == 0xf000)   // 4bit alpha
                     {
                         int data_size = image_pixel_size*sizeof(unsigned short);
-                        if (header->mipmap_count > 1) data_size = data_size + data_size / 3;
+                        if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                         image_data = RL_GPUTEX_MALLOC(data_size);
 
                         RL_GPUTEX_MEMCPY(image_data, file_data_ptr, data_size);
@@ -342,7 +342,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24))   // DDS_RGB, no compressed
             {
                 int data_size = image_pixel_size*3*sizeof(unsigned char);
-                if (header->mipmap_count > 1) data_size = data_size + data_size / 3;
+                if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                 image_data = RL_GPUTEX_MALLOC(data_size);
 
                 RL_GPUTEX_MEMCPY(image_data, file_data_ptr, data_size);
@@ -352,7 +352,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             else if ((header->ddspf.flags == 0x41) && (header->ddspf.rgb_bit_count == 32)) // DDS_RGBA, no compressed
             {
                 int data_size = image_pixel_size*4*sizeof(unsigned char);
-                if (header->mipmap_count > 1) data_size = data_size + data_size / 3;
+                if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                 image_data = RL_GPUTEX_MALLOC(data_size);
 
                 RL_GPUTEX_MEMCPY(image_data, file_data_ptr, data_size);
@@ -376,7 +376,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 int data_size = 0;
 
                 // Calculate data size, including all mipmaps
-                if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size / 3;
+                if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size/3;
                 else data_size = header->pitch_or_linear_size;
 
                 image_data = RL_GPUTEX_MALLOC(data_size*sizeof(unsigned char));

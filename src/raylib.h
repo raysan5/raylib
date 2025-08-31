@@ -1466,11 +1466,11 @@ RLAPI int GetPixelDataSize(int width, int height, int format);              // G
 // Font loading/unloading functions
 RLAPI Font GetFontDefault(void);                                                            // Get the default Font
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
-RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, const int *codepoints, int codepointCount); // Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height
 RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        // Load font from Image (XNA style)
-RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
+RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
 RLAPI bool IsFontValid(Font font);                                                          // Check if a font is valid (font data loaded, WARNING: GPU texture not checked)
-RLAPI GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type); // Load font data for further use
+RLAPI GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount, int type); // Load font data for further use
 RLAPI Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod); // Generate image font atlas using chars info
 RLAPI void UnloadFontData(GlyphInfo *glyphs, int glyphCount);                               // Unload font chars info data (RAM)
 RLAPI void UnloadFont(Font font);                                                           // Unload font from GPU memory (VRAM)
@@ -1506,6 +1506,8 @@ RLAPI const char *CodepointToUTF8(int codepoint, int *utf8Size);                
 // Text strings management functions (no UTF-8 strings, only byte chars)
 // WARNING 1: Most of these functions use internal static buffers, it's recommended to store returned data on user-side for re-use
 // WARNING 2: Some strings allocate memory internally for the returned strings, those strings must be free by user using MemFree()
+RLAPI char **LoadTextLines(const char *text, int *count);                                   // Load text as separate lines ('\n')
+RLAPI void UnloadTextLines(char **text);                                                    // Unload text lines
 RLAPI int TextCopy(char *dst, const char *src);                                             // Copy one string to another, returns bytes copied
 RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
 RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
@@ -1522,7 +1524,6 @@ RLAPI char *TextToLower(const char *text);                                      
 RLAPI char *TextToPascal(const char *text);                                                 // Get Pascal case notation version of provided string
 RLAPI char *TextToSnake(const char *text);                                                  // Get Snake case notation version of provided string
 RLAPI char *TextToCamel(const char *text);                                                  // Get Camel case notation version of provided string
-
 RLAPI int TextToInteger(const char *text);                                                  // Get integer value from text
 RLAPI float TextToFloat(const char *text);                                                  // Get float value from text
 

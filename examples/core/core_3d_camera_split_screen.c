@@ -47,7 +47,7 @@ int main(void)
     cameraPlayer2.position.x = -3.0f;
     cameraPlayer2.position.y = 3.0f;
 
-    RenderTexture screenPlayer2 = LoadRenderTexture(screenWidth / 2, screenHeight);
+    RenderTexture screenPlayer2 = LoadRenderTexture(screenWidth/2, screenHeight);
 
     // Build a flipped rectangle the size of the split view to use for drawing later
     Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenPlayer1.texture.width, (float)-screenPlayer1.texture.height };

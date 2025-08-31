@@ -6550,7 +6550,7 @@ return {
       params = {
         {type = "const char *", name = "fileName"},
         {type = "int", name = "fontSize"},
-        {type = "int *", name = "codepoints"},
+        {type = "const int *", name = "codepoints"},
         {type = "int", name = "codepointCount"}
       }
     },
@@ -6573,7 +6573,7 @@ return {
         {type = "const unsigned char *", name = "fileData"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "fontSize"},
-        {type = "int *", name = "codepoints"},
+        {type = "const int *", name = "codepoints"},
         {type = "int", name = "codepointCount"}
       }
     },
@@ -6593,7 +6593,7 @@ return {
         {type = "const unsigned char *", name = "fileData"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "fontSize"},
-        {type = "int *", name = "codepoints"},
+        {type = "const int *", name = "codepoints"},
         {type = "int", name = "codepointCount"},
         {type = "int", name = "type"}
       }
@@ -6843,6 +6843,23 @@ return {
       params = {
         {type = "int", name = "codepoint"},
         {type = "int *", name = "utf8Size"}
+      }
+    },
+    {
+      name = "LoadTextLines",
+      description = "Load text as separate lines ('\\n')",
+      returnType = "char **",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "int *", name = "count"}
+      }
+    },
+    {
+      name = "UnloadTextLines",
+      description = "Unload text lines",
+      returnType = "void",
+      params = {
+        {type = "char **", name = "text"}
       }
     },
     {
