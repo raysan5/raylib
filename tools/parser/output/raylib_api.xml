@@ -2309,7 +2309,7 @@
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="const int *" name="codepoints" desc="" />
+            <Param type="int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
             <Param type="int" name="type" desc="" />
         </Function>

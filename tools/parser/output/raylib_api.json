@@ -9129,7 +9129,7 @@
           "name": "fontSize"
         },
         {
-          "type": "const int *",
+          "type": "int *",
           "name": "codepoints"
         },
         {

@@ -6593,7 +6593,7 @@ return {
         {type = "const unsigned char *", name = "fileData"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "fontSize"},
-        {type = "const int *", name = "codepoints"},
+        {type = "int *", name = "codepoints"},
         {type = "int", name = "codepointCount"},
         {type = "int", name = "type"}
       }
