@@ -231,6 +231,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 .glfw => try c_source_files.append(b.allocator, "src/rglfw.c"),
                 .rgfw, .sdl, .drm, .android => {},
             }
+
             raylib.root_module.linkSystemLibrary("winmm", .{});
             raylib.root_module.linkSystemLibrary("gdi32", .{});
             raylib.root_module.linkSystemLibrary("opengl32", .{});
