@@ -9041,7 +9041,7 @@
           "name": "fontSize"
         },
         {
-          "type": "int *",
+          "type": "const int *",
           "name": "codepoints"
         },
         {
@@ -9091,7 +9091,7 @@
           "name": "fontSize"
         },
         {
-          "type": "int *",
+          "type": "const int *",
           "name": "codepoints"
         },
         {
@@ -9129,7 +9129,7 @@
           "name": "fontSize"
         },
         {
-          "type": "int *",
+          "type": "const int *",
           "name": "codepoints"
         },
         {
