@@ -422,7 +422,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 {
     Image image = { 0 };
 
-    // Security check for input data
+    // Security checks for input data
     if ((fileData == NULL) || (dataSize == 0))
     {
         TRACELOG(LOG_WARNING, "IMAGE: Invalid file data");
@@ -650,8 +650,9 @@ bool ExportImage(Image image, const char *fileName)
         allocatedData = true;
     }
 
+    if (false) { 0 } // Required to attach following 'else' cases
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if (IsFileExtension(fileName, ".png"))
+    else if (IsFileExtension(fileName, ".png"))
     {
         int dataSize = 0;
         unsigned char *fileData = stbi_write_png_to_mem((const unsigned char *)imgData, image.width*channels, image.width, image.height, channels, &dataSize);
@@ -701,7 +702,8 @@ bool ExportImage(Image image, const char *fileName)
         // NOTE: It's up to the user to track image parameters
         result = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
-
+    else TRACELOG(LOG_WARNING, "IMAGE: Export image format requested not supported");
+    
     if (allocatedData) RL_FREE(imgData);
 #endif      // SUPPORT_IMAGE_EXPORT
 
