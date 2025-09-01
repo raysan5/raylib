@@ -394,7 +394,7 @@ Struct 13: Camera3D (5 fields)
   Field[1]: Vector3 position // Camera position
   Field[2]: Vector3 target // Camera target it looks-at
   Field[3]: Vector3 up // Camera up vector (rotation over its axis)
-  Field[4]: float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
+  Field[4]: float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane height in world units in orthographic
   Field[5]: int projection // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 Struct 14: Camera2D (4 fields)
   Name: Camera2D

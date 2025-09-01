@@ -151,7 +151,7 @@
             <Field type="Vector3" name="position" desc="Camera position" />
             <Field type="Vector3" name="target" desc="Camera target it looks-at" />
             <Field type="Vector3" name="up" desc="Camera up vector (rotation over its axis)" />
-            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic" />
+            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane height in world units in orthographic" />
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
