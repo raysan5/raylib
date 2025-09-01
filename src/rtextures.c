@@ -2400,10 +2400,11 @@ void ImageMipmaps(Image *image)
 
     if (image->mipmaps < mipCount)
     {
-        void *temp = RL_REALLOC(image->data, mipSize);
-
-        if (temp != NULL) image->data = temp;      // Assign new pointer (new size) to store mipmaps data
-        else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps required memory could not be allocated");
+        // Create second buffer and copy data manually to it
+        void *temp = RL_CALLOC(mipSize, 1);
+        memcpy(temp, image->data, GetPixelDataSize(image->width, image->height, image->format));
+        RL_FREE(image->data);
+        image->data = temp;
 
         // Pointer to allocated memory point where store next mipmap level data
         unsigned char *nextmip = image->data;
@@ -2429,9 +2430,7 @@ void ImageMipmaps(Image *image)
             if (i < image->mipmaps) continue;
 
             TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
-
             ImageResize(&imCopy, mipWidth, mipHeight); // Uses internally Mitchell cubic downscale filter
-
             memcpy(nextmip, imCopy.data, mipSize);
         }
 

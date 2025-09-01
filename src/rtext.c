@@ -1920,10 +1920,11 @@ char *LoadUTF8(const int *codepoints, int length)
         size += bytes;
     }
 
-    // Resize memory to text length + string NULL terminator
-    void *ptr = RL_REALLOC(text, size + 1);
-
-    if (ptr != NULL) text = (char *)ptr;
+    // Create second buffer and copy data manually to it
+    char *temp = (char *)RL_CALLOC(size + 1, 1);
+    memcpy(temp, text, size);
+    RL_FREE(text);
+    text = temp;
 
     return text;
 }
@@ -1951,8 +1952,11 @@ int *LoadCodepoints(const char *text, int *count)
         i += codepointSize;
     }
 
-    // Re-allocate buffer to the actual number of codepoints loaded
-    codepoints = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
+    // Create second buffer and copy data manually to it
+    int *temp = (int *)RL_CALLOC(codepointCount, sizeof(int));
+    for (int i = 0; i < codepointCount; i++) temp[i] = codepoints[i];
+    RL_FREE(codepoints);
+    codepoints = temp;
 
     *count = codepointCount;
 

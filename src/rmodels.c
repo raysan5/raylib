@@ -6573,13 +6573,23 @@ static Model LoadM3D(const char *fileName)
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
-                // there should be only one material switch per material kind, but be bulletproof for non-optimal model files
+                // There should be only one material switch per material kind,
+                // but be bulletproof for non-optimal model files
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
-                    model.meshes = (Mesh *)RL_REALLOC(model.meshes, model.meshCount*sizeof(Mesh));
-                    memset(&model.meshes[model.meshCount - 1], 0, sizeof(Mesh));
-                    model.meshMaterial = (int *)RL_REALLOC(model.meshMaterial, model.meshCount*sizeof(int));
+                    
+                    // Create a second buffer for mesh re-allocation
+                    Mesh *tempMeshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
+                    memcpy(tempMeshes, model.meshes, (model.meshCount - 1)*sizeof(Mesh));
+                    RL_FREE(model.meshes);
+                    model.meshes = tempMeshes;
+
+                    // Create a second buffer for material re-allocation
+                    int *tempMeshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+                    memcpy(tempMeshMaterial, model.meshMaterial, (model.meshCount - 1)*sizeof(int));
+                    RL_FREE(model.meshMaterial);
+                    model.meshMaterial = tempMeshMaterial;
                 }
 
                 k++;
