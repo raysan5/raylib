@@ -650,7 +650,7 @@ bool ExportImage(Image image, const char *fileName)
         allocatedData = true;
     }
 
-    if (false) { 0 } // Required to attach following 'else' cases
+    if (false) { } // Required to attach following 'else' cases
 #if defined(SUPPORT_FILEFORMAT_PNG)
     else if (IsFileExtension(fileName, ".png"))
     {
