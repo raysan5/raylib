@@ -18,7 +18,7 @@
 #include "raylib.h"
 
 #include "raymath.h"
-#include "rcamera.h"
+//#include "rcamera.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -68,7 +68,7 @@ static Vector2 lean = { 0 };
 // Module functions declaration
 //----------------------------------------------------------------------------------
 static void DrawLevel(void);
-static void UpdateCameraAngle(Camera *camera);
+static void UpdateCameraFPS(Camera *camera);
 static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
 
 //------------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d first-person camera controller");
 
     // Initialize camera variables
-    // NOTE: UpdateCameraAngle() takes care of the rest
+    // NOTE: UpdateCameraFPS() takes care of the rest
     Camera camera = { 0 };
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
@@ -94,7 +94,7 @@ int main(void)
         player.position.z,
     };
 
-    UpdateCameraAngle(&camera); // Update camera parameters
+    UpdateCameraFPS(&camera); // Update camera parameters
 
     DisableCursor();        // Limit cursor to relative movement inside the window
 
@@ -138,7 +138,7 @@ int main(void)
         lean.x = Lerp(lean.x, sideway*0.02f, 10.0f*delta);
         lean.y = Lerp(lean.y, forward*0.015f, 10.0f*delta);
 
-        UpdateCameraAngle(&camera);
+        UpdateCameraFPS(&camera);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -238,7 +238,7 @@ void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed
 }
 
 // Update camera
-static void UpdateCameraAngle(Camera *camera)
+static void UpdateCameraFPS(Camera *camera)
 {
     const Vector3 up = (Vector3){ 0.0f, 1.0f, 0.0f };
     const Vector3 targetOffset = (Vector3){ 0.0f, 0.0f, -1.0f };
