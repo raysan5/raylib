@@ -109,7 +109,7 @@ void UpdateLightValues(Shader shader, Light light);         // Send light proper
 static int lightsCount = 0;    // Current amount of created lights
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 // ...
 

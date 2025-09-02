@@ -129,7 +129,7 @@ static const char *exCollectionFilePath = NULL; // Env: REXM_EXAMPLES_COLLECTION
 static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_SLN_FILE
 
 //----------------------------------------------------------------------------------
-// Module specific functions declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static int FileTextFind(const char *fileName, const char *find);
 static int FileTextReplace(const char *fileName, const char *find, const char *replace);
@@ -1283,9 +1283,8 @@ int main(int argc, char *argv[])
 }
 
 //----------------------------------------------------------------------------------
-// Module specific functions definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-
 // Update required files from examples collection
 static int UpdateRequiredFiles(void)
 {
@@ -1772,7 +1771,7 @@ static int FileMove(const char *srcPath, const char *dstPath)
 
 // Get example info from example file header
 // NOTE: Expecting the example to follow raylib_example_template.c
-rlExampleInfo *LoadExampleInfo(const char *exFileName)
+static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
     

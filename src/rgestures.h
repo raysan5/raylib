@@ -238,7 +238,7 @@ static GesturesData GESTURES = {
 };
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static float rgVector2Angle(Vector2 initialPosition, Vector2 finalPosition);
 static float rgVector2Distance(Vector2 v1, Vector2 v2);
@@ -481,7 +481,7 @@ float GetGesturePinchAngle(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Get angle from two-points vector with X-axis
 static float rgVector2Angle(Vector2 v1, Vector2 v2)
