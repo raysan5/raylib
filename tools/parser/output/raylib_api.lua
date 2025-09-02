@@ -6932,7 +6932,7 @@ return {
       description = "Join text strings with delimiter",
       returnType = "char *",
       params = {
-        {type = "char **", name = "textList"},
+        {type = "const char **", name = "textList"},
         {type = "int", name = "count"},
         {type = "const char *", name = "delimiter"}
       }

@@ -3733,7 +3733,7 @@ Function 434: TextJoin() (3 input parameters)
   Name: TextJoin
   Return type: char *
   Description: Join text strings with delimiter
-  Param[1]: textList (type: char **)
+  Param[1]: textList (type: const char **)
   Param[2]: count (type: int)
   Param[3]: delimiter (type: const char *)
 Function 435: TextSplit() (3 input parameters)

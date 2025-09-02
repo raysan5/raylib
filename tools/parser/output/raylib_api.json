@@ -9750,7 +9750,7 @@
       "returnType": "char *",
       "params": [
         {
-          "type": "char **",
+          "type": "const char **",
           "name": "textList"
         },
         {
