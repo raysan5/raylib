@@ -181,6 +181,8 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    SetTraceLogLevel(LOG_NONE);
+
     // Path values can be configured with environment variables
     exBasePath = getenv("REXM_EXAMPLES_BASE_PATH");
     exWebPath = getenv("REXM_EXAMPLES_WEB_PATH");
