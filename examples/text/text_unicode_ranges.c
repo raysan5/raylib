@@ -114,6 +114,7 @@ int main(void)
             }
 
             prevUnicodeRange = unicodeRange;
+            SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR); // Set font atlas scale filter
         }
 
         if (IsKeyPressed(KEY_ZERO)) unicodeRange = 0;
@@ -130,7 +131,7 @@ int main(void)
         
             ClearBackground(RAYWHITE);
 
-            DrawText("ADD CODEPOINTS: 1,2,3,4", 20, 20, 20, MAROON);
+            DrawText("ADD CODEPOINTS: [1][2][3][4]", 20, 20, 20, MAROON);
             
             // Render test strings in different languages
             DrawTextEx(font, "> English: Hello World!", (Vector2){ 50, 70 }, 32, 1, DARKGRAY); // English
@@ -142,11 +143,13 @@ int main(void)
             //DrawTextEx(font, "देवनागरी: होला मुंडो!", (Vector2){ 50, 350 }, 32, 1, DARKGRAY);     // Devanagari (glyphs not available in font)
             
             // Draw font texture scaled to screen
-            DrawRectangle(400, 16, 380, 400, BLACK);
+            float atlasScale = 380.0f/font.texture.width;
+            DrawRectangle(400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale, BLACK);
             DrawTexturePro(font.texture, (Rectangle){ 0, 0, font.texture.width, font.texture.height },
-                (Rectangle){ 400, 16, font.texture.width*0.5f, font.texture.height*0.5f }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+                (Rectangle){ 400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            DrawRectangleLines(400, 16, 380, 380, RED);
 
-            DrawText(TextFormat("ATLAS SIZE: %ix%i px", font.texture.width, font.texture.height), 20, 380, 20, BLUE);
+            DrawText(TextFormat("ATLAS SIZE: %ix%i px (x%02.1f)", font.texture.width, font.texture.height, atlasScale), 20, 380, 20, BLUE);
 
             // Display font attribution
             DrawText("Font: Noto Sans TC. License: SIL Open Font License 1.1", screenWidth - 300, screenHeight - 20, 10, GRAY);
