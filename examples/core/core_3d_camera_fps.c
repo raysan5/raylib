@@ -64,7 +64,7 @@ static float headLerp = STAND_HEIGHT;
 static Vector2 lean = { 0 };
 
 //----------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void DrawLevel(void);
 static void UpdateCameraFPS(Camera *camera);
@@ -172,9 +172,10 @@ int main(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //----------------------------------------------------------------------------------
-void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed, bool crouchHold)
+// Update body considering current world state
+void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold)
 {
     Vector2 input = (Vector2){ (float)side, (float)-forward };
 
@@ -236,7 +237,7 @@ void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed
     }
 }
 
-// Update camera
+// Update camera for FPS behaviour
 static void UpdateCameraFPS(Camera *camera)
 {
     const Vector3 up = (Vector3){ 0.0f, 1.0f, 0.0f };

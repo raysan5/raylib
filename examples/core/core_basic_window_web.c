@@ -32,7 +32,7 @@ const int screenWidth = 800;
 const int screenHeight = 450;
 
 //----------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 void UpdateDrawFrame(void);     // Update and Draw one frame
 

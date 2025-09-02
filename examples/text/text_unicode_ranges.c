@@ -19,17 +19,20 @@
 
 #include <stdlib.h>
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct {
-    int* data;
+    int *data;
     int count;
     int capacity;
 } CodepointsArray;
 
 //--------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //--------------------------------------------------------------------------------------
-static void AddRange(CodepointsArray* array, int start, int stop);
-static Font LoadUnicodeFont(const char* fileName, int fontSize);
+static void AddCodepointRange(CodepointsArray* array, int start, int stop);
+//static Font LoadUnicodeFont(const char* fileName, int fontSize);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -95,7 +98,7 @@ int main(void)
 }
 
 //--------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //--------------------------------------------------------------------------------------
 static void AddRange(CodepointsArray* array, int start, int stop)
 {

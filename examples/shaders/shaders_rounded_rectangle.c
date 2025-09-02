@@ -23,9 +23,9 @@
     #define GLSL_VERSION            100
 #endif
 
-//------------------------------------------------------------------------------------
-// Structs definition
-//------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Rounded rectangle data
 typedef struct {
     Vector4 cornerRadius; // Individual corner radius (top-left, top-right, bottom-left, bottom-right)

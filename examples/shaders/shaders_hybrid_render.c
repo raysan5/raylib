@@ -16,31 +16,34 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "rlgl.h"
-#include "math.h" // Used for tan()
-#include "raymath.h" // Used to calculate camera Direction
+#include "raymath.h"
+
+#include <math.h>   // Required for: tanf()
 
 #if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION            330
+    #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-#define GLSL_VERSION            100
+    #define GLSL_VERSION            100
 #endif
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+typedef struct {
+    unsigned int camPos;
+    unsigned int camDir;
+    unsigned int screenCenter;
+} RayLocs;
+
 //------------------------------------------------------------------------------------
-// Declare custom functions required for the example
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
 static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
 // Unload render texture from GPU memory (VRAM)
 static void UnloadRenderTextureDepthTex(RenderTexture2D target);
-
-//------------------------------------------------------------------------------------
-// Declare custom Structs
-//------------------------------------------------------------------------------------
-
-typedef struct {
-    unsigned int camPos, camDir, screenCenter;
-}RayLocs ;
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -153,10 +156,10 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Define custom functions required for the example
+// Module Functions Definition
 //------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
-RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
+static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 {
     RenderTexture2D target = { 0 };
 
@@ -195,7 +198,7 @@ RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 }
 
 // Unload render texture from GPU memory (VRAM)
-void UnloadRenderTextureDepthTex(RenderTexture2D target)
+static void UnloadRenderTextureDepthTex(RenderTexture2D target)
 {
     if (target.id > 0)
     {

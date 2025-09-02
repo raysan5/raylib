@@ -18,15 +18,18 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#include <stdlib.h> // Required for: malloc() and free()
+#include <stdlib.h>     // Required for: malloc(), free()
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct ColorRect {
     Color c;
     Rectangle r;
 } ColorRect;
 
 //------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
 static Color GenerateRandomColor();
 static ColorRect *GenerateRandomColorRectSequence(float rectCount, float rectWidth, float screenWidth, float screenHeight);
@@ -114,7 +117,7 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //------------------------------------------------------------------------------------
 static Color GenerateRandomColor()
 {

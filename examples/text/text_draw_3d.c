@@ -41,7 +41,7 @@
 #endif
 
 //--------------------------------------------------------------------------------------
-// Globals
+// Global variables
 //--------------------------------------------------------------------------------------
 #define LETTER_BOUNDRY_SIZE     0.25f
 #define TEXT_MAX_LAYERS         32
@@ -51,7 +51,7 @@ bool SHOW_LETTER_BOUNDRY = false;
 bool SHOW_TEXT_BOUNDRY = false;
 
 //--------------------------------------------------------------------------------------
-// Data Types definition
+// Types and Structures Definition
 //--------------------------------------------------------------------------------------
 // Configuration structure for waving the text
 typedef struct WaveTextConfig {

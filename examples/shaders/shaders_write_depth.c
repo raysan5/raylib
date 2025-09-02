@@ -25,9 +25,9 @@
 #define GLSL_VERSION            100
 #endif
 
-//------------------------------------------------------------------------------------
-// Declare custom functions required for the example
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+// Module Functions Declaration
+//--------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
 static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
 
@@ -109,9 +109,10 @@ int main(void)
     return 0;
 }
 
-//------------------------------------------------------------------------------------
-// Define custom functions required for the example
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+// Module Functions Definition
+//--------------------------------------------------------------------------------------
+
 // Load custom render texture, create a writable depth texture buffer
 RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 {

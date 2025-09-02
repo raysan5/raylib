@@ -77,7 +77,7 @@
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
 //----------------------------------------------------------------------------------
-// Structures Definition
+// Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
@@ -97,7 +97,7 @@ typedef struct Camera {
 } Camera;
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void ErrorCallback(int error, const char *description);
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -260,7 +260,7 @@ int main(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definitions
+// Module Functions Definitions
 //----------------------------------------------------------------------------------
 
 // GLFW3: Error callback
