@@ -18,7 +18,7 @@
 #include "raylib.h"
 
 //----------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 // Draw text using font inside rectangle limits
 static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);
@@ -135,7 +135,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 }
 
 //--------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //--------------------------------------------------------------------------------------
 
 // Draw text using font inside rectangle limits

@@ -82,7 +82,7 @@ static const char *internalDataPath = NULL;         // Android internal data pat
 #endif
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
@@ -482,7 +482,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
 #endif  // PLATFORM_ANDROID
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 static int android_read(void *cookie, char *data, int dataSize)

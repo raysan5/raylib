@@ -258,7 +258,7 @@
 extern void LoadFontDefault(void);          // [Module: text] Loads default font, required by ImageDrawText()
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static float HalfToFloat(unsigned short x);
 static unsigned short FloatToHalf(float x);
@@ -267,7 +267,6 @@ static Vector4 *LoadImageDataNormalized(Image image);       // Load pixel data f
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Load image from file into CPU memory (RAM)
 Image LoadImage(const char *fileName)
 {
@@ -422,7 +421,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 {
     Image image = { 0 };
 
-    // Security check for input data
+    // Security checks for input data
     if ((fileData == NULL) || (dataSize == 0))
     {
         TRACELOG(LOG_WARNING, "IMAGE: Invalid file data");
@@ -650,16 +649,15 @@ bool ExportImage(Image image, const char *fileName)
         allocatedData = true;
     }
 
+    if (false) { } // Required to attach following 'else' cases
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if (IsFileExtension(fileName, ".png"))
+    else if (IsFileExtension(fileName, ".png"))
     {
         int dataSize = 0;
         unsigned char *fileData = stbi_write_png_to_mem((const unsigned char *)imgData, image.width*channels, image.width, image.height, channels, &dataSize);
         result = SaveFileData(fileName, fileData, dataSize);
         RL_FREE(fileData);
     }
-#else
-    if (false) { }
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
     else if (IsFileExtension(fileName, ".bmp")) result = stbi_write_bmp(fileName, image.width, image.height, channels, imgData);
@@ -703,7 +701,8 @@ bool ExportImage(Image image, const char *fileName)
         // NOTE: It's up to the user to track image parameters
         result = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
-
+    else TRACELOG(LOG_WARNING, "IMAGE: Export image format requested not supported");
+    
     if (allocatedData) RL_FREE(imgData);
 #endif      // SUPPORT_IMAGE_EXPORT
 
@@ -2400,10 +2399,11 @@ void ImageMipmaps(Image *image)
 
     if (image->mipmaps < mipCount)
     {
-        void *temp = RL_REALLOC(image->data, mipSize);
-
-        if (temp != NULL) image->data = temp;      // Assign new pointer (new size) to store mipmaps data
-        else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps required memory could not be allocated");
+        // Create second buffer and copy data manually to it
+        void *temp = RL_CALLOC(mipSize, 1);
+        memcpy(temp, image->data, GetPixelDataSize(image->width, image->height, image->format));
+        RL_FREE(image->data);
+        image->data = temp;
 
         // Pointer to allocated memory point where store next mipmap level data
         unsigned char *nextmip = image->data;
@@ -2429,9 +2429,7 @@ void ImageMipmaps(Image *image)
             if (i < image->mipmaps) continue;
 
             TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
-
             ImageResize(&imCopy, mipWidth, mipHeight); // Uses internally Mitchell cubic downscale filter
-
             memcpy(nextmip, imCopy.data, mipSize);
         }
 
@@ -5407,7 +5405,7 @@ int GetPixelDataSize(int width, int height, int format)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Convert half-float (stored as unsigned short) to float
 // REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308

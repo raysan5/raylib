@@ -216,7 +216,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
 //...
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 //...
 

@@ -394,7 +394,7 @@ Struct 13: Camera3D (5 fields)
   Field[1]: Vector3 position // Camera position
   Field[2]: Vector3 target // Camera target it looks-at
   Field[3]: Vector3 up // Camera up vector (rotation over its axis)
-  Field[4]: float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
+  Field[4]: float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane height in world units in orthographic
   Field[5]: int projection // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 Struct 14: Camera2D (4 fields)
   Name: Camera2D
@@ -3492,16 +3492,17 @@ Function 398: IsFontValid() (1 input parameters)
   Return type: bool
   Description: Check if a font is valid (font data loaded, WARNING: GPU texture not checked)
   Param[1]: font (type: Font)
-Function 399: LoadFontData() (6 input parameters)
+Function 399: LoadFontData() (7 input parameters)
   Name: LoadFontData
   Return type: GlyphInfo *
   Description: Load font data for further use
   Param[1]: fileData (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: fontSize (type: int)
-  Param[4]: codepoints (type: int *)
+  Param[4]: codepoints (type: const int *)
   Param[5]: codepointCount (type: int)
   Param[6]: type (type: int)
+  Param[7]: glyphCount (type: int *)
 Function 400: GenImageFontAtlas() (6 input parameters)
   Name: GenImageFontAtlas
   Return type: Image

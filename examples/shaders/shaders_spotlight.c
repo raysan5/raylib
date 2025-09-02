@@ -43,6 +43,9 @@
 #define MAX_SPOTS         3        // NOTE: It must be the same as define in shader
 #define MAX_STARS       400
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Spot data
 typedef struct Spot {
     Vector2 position;
@@ -65,6 +68,9 @@ typedef struct Star {
 int screenWidth = 800;
 int screenHeight = 450;
 
+//--------------------------------------------------------------------------------------
+// Module Functions Declaration
+//--------------------------------------------------------------------------------------
 static void UpdateStar(Star *s);
 static void ResetStar(Star *s);
 

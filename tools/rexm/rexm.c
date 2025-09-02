@@ -129,7 +129,7 @@ static const char *exCollectionFilePath = NULL; // Env: REXM_EXAMPLES_COLLECTION
 static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_SLN_FILE
 
 //----------------------------------------------------------------------------------
-// Module specific functions declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static int FileTextFind(const char *fileName, const char *find);
 static int FileTextReplace(const char *fileName, const char *find, const char *replace);
@@ -181,6 +181,8 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    SetTraceLogLevel(LOG_NONE);
+
     // Path values can be configured with environment variables
     exBasePath = getenv("REXM_EXAMPLES_BASE_PATH");
     exWebPath = getenv("REXM_EXAMPLES_WEB_PATH");
@@ -370,15 +372,13 @@ int main(int argc, char *argv[])
             {
                 // Verify example exists in collection to be removed
                 char *exColInfo = LoadFileText(exCollectionFilePath);
-                if ((TextFindIndex(exColInfo, argv[2]) != -1) && // Example in the collection
-                    (TextFindIndex(exName, "_") != -1)) // Valid example name
+                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
-
                     strcpy(exName, argv[2]); // Register example name for removal
                     strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                     opCode = OP_BUILD;
                 }
-                else LOG("WARNING: REMOVE: Example not available in the collection\n");
+                else LOG("WARNING: BUILD: Example not available in the collection\n");
                 UnloadFileText(exColInfo);
             }
         }
@@ -1257,9 +1257,9 @@ int main(int argc, char *argv[])
             printf("////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
             printf("USAGE:\n\n");
-            printf("    > rexm <command> <example_name> [<example_rename>]\n");
+            printf("    > rexm <command> <example_name> [<example_rename>]\n\n");
 
-            printf("\COMMANDS:\n\n");
+            printf("COMMANDS:\n\n");
             printf("    help                          : Provides command-line usage information\n");
             printf("    create <new_example_name>     : Creates an empty example, from internal template\n");
             printf("    add <example_name>            : Add existing example, category extracted from name\n");
@@ -1283,9 +1283,8 @@ int main(int argc, char *argv[])
 }
 
 //----------------------------------------------------------------------------------
-// Module specific functions definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-
 // Update required files from examples collection
 static int UpdateRequiredFiles(void)
 {
@@ -1772,7 +1771,7 @@ static int FileMove(const char *srcPath, const char *dstPath)
 
 // Get example info from example file header
 // NOTE: Expecting the example to follow raylib_example_template.c
-rlExampleInfo *LoadExampleInfo(const char *exFileName)
+static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
     

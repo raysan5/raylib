@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2025 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2025 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -19,17 +19,11 @@
 
 #include <stdlib.h>
 
-typedef struct {
-    int* data;
-    int count;
-    int capacity;
-} CodepointsArray;
-
 //--------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //--------------------------------------------------------------------------------------
-static void AddRange(CodepointsArray* array, int start, int stop);
-static Font LoadUnicodeFont(const char* fileName, int fontSize);
+// Add codepoint range to existing font
+static void AddCodepointRange(Font *font, const char *fontPath, int start, int stop);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -43,9 +37,12 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode ranges");
 
-    // Load font with Unicode support
-    Font fontUni = LoadUnicodeFont("resources/NotoSansTC-Regular.ttf", 32);
-    SetTextureFilter(fontUni.texture, TEXTURE_FILTER_BILINEAR);
+    // Load font with default Unicode range: Basic ASCII [32-127]
+    Font font = LoadFont("resources/NotoSansTC-Regular.ttf");
+    SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+
+    int unicodeRange = 0;           // Track the ranges of codepoints added to font
+    int prevUnicodeRange = 0;       // Previous Unicode range to avoid reloading every frame
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -55,7 +52,77 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        //...
+        if (unicodeRange != prevUnicodeRange)
+        {
+            UnloadFont(font);
+
+            // Load font with default Unicode range: Basic ASCII [32-127]
+            font = LoadFont("resources/NotoSansTC-Regular.ttf");
+            
+            // Add required ranges to loaded font
+            switch (unicodeRange)
+            {
+                /*
+                case 5:
+                {
+                    // Unicode range: Devanari, Arabic, Hebrew
+                    // WARNING: Glyphs not available on provided font!
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x900, 0x97f);  // Devanagari
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x600, 0x6ff);  // Arabic
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x5d0, 0x5ea);  // Hebrew
+                }
+                */
+                case 4:
+                {
+                    // Unicode range: CJK (Japanese and Chinese)
+                    // WARNING: Loading thousands of codepoints requires lot of time!
+                    // A better strategy is prefilter the required codepoints for the text
+                    // in the game and just load the required ones
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x4e00, 0x9fff);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x3400, 0x4dbf);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x3000, 0x303f);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x3040, 0x309f);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x30A0, 0x30ff);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x31f0, 0x31ff);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0xff00, 0xffef);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0xac00, 0xd7af);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x1100, 0x11ff);
+                }
+                case 3:
+                {
+                    // Unicode range: Cyrillic
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x400, 0x4ff);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x500, 0x52f);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x2de0, 0x2Dff);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0xa640, 0xA69f);
+                }
+                case 2:
+                {
+                    // Unicode range: Greek
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x370, 0x3ff);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x1f00, 0x1fff);
+                }
+                case 1:
+                {
+                    // Unicode range: European Languages
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0xc0, 0x17f);
+                    AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x180, 0x24f);
+                    //AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x1e00, 0x1eff);
+                    //AddCodepointRange(&font, "resources/NotoSansTC-Regular.ttf", 0x2c60, 0x2c7f);
+                }
+                default: break;
+            }
+
+            prevUnicodeRange = unicodeRange;
+            SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR); // Set font atlas scale filter
+        }
+
+        if (IsKeyPressed(KEY_ZERO)) unicodeRange = 0;
+        else if (IsKeyPressed(KEY_ONE)) unicodeRange = 1;
+        else if (IsKeyPressed(KEY_TWO)) unicodeRange = 2;
+        else if (IsKeyPressed(KEY_THREE)) unicodeRange = 3;
+        else if (IsKeyPressed(KEY_FOUR)) unicodeRange = 4;
+        //else if (IsKeyPressed(KEY_FIVE)) unicodeRange = 5;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -63,22 +130,36 @@ int main(void)
         BeginDrawing();
         
             ClearBackground(RAYWHITE);
+
+            DrawText("ADD CODEPOINTS: [1][2][3][4]", 20, 20, 20, MAROON);
             
             // Render test strings in different languages
-            DrawTextEx(fontUni, "English: Hello World!", (Vector2){ 50, 50 }, 32, 1, DARKGRAY); // English
-            DrawTextEx(fontUni, "Español: Hola mundo!", (Vector2){ 50, 100 }, 32, 1, DARKGRAY); // Spanish
-            DrawTextEx(fontUni, "Ελληνικά: Γειά σου κόσμε!", (Vector2){ 50, 150 }, 32, 1, DARKGRAY); // Greek
-            DrawTextEx(fontUni, "Русский: Привет мир!", (Vector2){ 50, 200 }, 32, 0, DARKGRAY); // Russian
-            DrawTextEx(fontUni, "中文: 你好世界!", (Vector2){ 50, 250 }, 32, 1, DARKGRAY);        // Chinese
-            DrawTextEx(fontUni, "日本語: こんにちは世界!", (Vector2){ 50, 300 }, 32, 1, DARKGRAY);   // Japanese
-            DrawTextEx(fontUni, "देवनागरी: होला मुंडो!", (Vector2){ 50, 350 }, 32, 1, DARKGRAY);     // Devanagari
+            DrawTextEx(font, "> English: Hello World!", (Vector2){ 50, 70 }, 32, 1, DARKGRAY); // English
+            DrawTextEx(font, "> Español: Hola mundo!", (Vector2){ 50, 120 }, 32, 1, DARKGRAY); // Spanish
+            DrawTextEx(font, "> Ελληνικά: Γειά σου κόσμε!", (Vector2){ 50, 170 }, 32, 1, DARKGRAY); // Greek
+            DrawTextEx(font, "> Русский: Привет мир!", (Vector2){ 50, 220 }, 32, 0, DARKGRAY); // Russian
+            DrawTextEx(font, "> 中文: 你好世界!", (Vector2){ 50, 270 }, 32, 1, DARKGRAY);        // Chinese
+            DrawTextEx(font, "> 日本語: こんにちは世界!", (Vector2){ 50, 320 }, 32, 1, DARKGRAY); // Japanese
+            //DrawTextEx(font, "देवनागरी: होला मुंडो!", (Vector2){ 50, 350 }, 32, 1, DARKGRAY);     // Devanagari (glyphs not available in font)
             
-            DrawRectangle(400, 16, 380, 400, BLACK);
-            DrawTexturePro(fontUni.texture, (Rectangle){ 0, 0, fontUni.texture.width, fontUni.texture.height },
-                (Rectangle){ 400, 16, 380, 400 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            // Draw font texture scaled to screen
+            float atlasScale = 380.0f/font.texture.width;
+            DrawRectangle(400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale, BLACK);
+            DrawTexturePro(font.texture, (Rectangle){ 0, 0, font.texture.width, font.texture.height },
+                (Rectangle){ 400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            DrawRectangleLines(400, 16, 380, 380, RED);
+
+            DrawText(TextFormat("ATLAS SIZE: %ix%i px (x%02.1f)", font.texture.width, font.texture.height, atlasScale), 20, 380, 20, BLUE);
 
             // Display font attribution
             DrawText("Font: Noto Sans TC. License: SIL Open Font License 1.1", screenWidth - 300, screenHeight - 20, 10, GRAY);
+
+            if (prevUnicodeRange != unicodeRange)
+            {
+                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(WHITE, 0.8f));
+                DrawRectangle(0, 125, screenWidth, 200, GRAY);
+                DrawText("LOADING CODEPOINTS...", 150, 210, 40, BLACK);
+            }
             
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -86,7 +167,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadFont(fontUni);        // Unload font resource
+    UnloadFont(font);        // Unload font resource
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -95,89 +176,28 @@ int main(void)
 }
 
 //--------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //--------------------------------------------------------------------------------------
-static void AddRange(CodepointsArray* array, int start, int stop)
+// Add codepoint range to existing font
+static void AddCodepointRange(Font *font, const char *fontPath, int start, int stop)
 {
     int rangeSize = stop - start + 1;
+    int currentRangeSize = font->glyphCount;
     
-    if ((array->count + rangeSize) > array->capacity)
-    {
-        array->capacity = array->count + rangeSize + 1024;
-        array->data = (int *)MemRealloc(array->data, array->capacity*sizeof(int));
-        
-        if (!array->data)
-        {
-            TraceLog(LOG_ERROR, "FONTUTIL: Memory allocation failed");
-            exit(1);
-        }
-    }
+    // TODO: Load glyphs from provided vector font (if available),
+    // add them to existing font, regenerating font image and texture
     
-    for (int i = start; i <= stop; i++) array->data[array->count++] = i;
+    int updatedCodepointCount = currentRangeSize + rangeSize;
+    int *updatedCodepoints = (int *)RL_CALLOC(updatedCodepointCount, sizeof(int));
+
+    // Get current codepoint list
+    for (int i = 0; i < currentRangeSize; i++) updatedCodepoints[i] = font->glyphs[i].value;
+
+    // Add new codepoints to list (provided range)
+    for (int i = currentRangeSize; i < updatedCodepointCount; i++)
+        updatedCodepoints[i] = start + (i - currentRangeSize);
+
+    UnloadFont(*font);
+    *font = LoadFontEx(fontPath, 32, updatedCodepoints, updatedCodepointCount);
 }
 
-Font LoadUnicodeFont(const char *fileName, int fontSize)
-{
-    CodepointsArray cp = { 0 };
-    cp.capacity = 2048;
-    cp.data = (int *)MemAlloc(cp.capacity*sizeof(int));
-
-    if (!cp.data)
-    {
-        TraceLog(LOG_ERROR, "FONTUTIL: Initial allocation failed");
-        return GetFontDefault();
-    }
-
-    // Unicode range: Basic ASCII
-    AddRange(&cp, 32, 126);
-
-    // Unicode range: European Languages
-    AddRange(&cp, 0xC0, 0x17F);
-    AddRange(&cp, 0x180, 0x24F);
-    AddRange(&cp, 0x1E00, 0x1EFF);
-    AddRange(&cp, 0x2C60, 0x2C7F);
-
-    // Unicode range: Greek
-    AddRange(&cp, 0x370, 0x3FF);
-    AddRange(&cp, 0x1F00, 0x1FFF);
-
-    // Unicode range: Cyrillic
-    AddRange(&cp, 0x400, 0x4FF);
-    AddRange(&cp, 0x500, 0x52F);
-    AddRange(&cp, 0x2DE0, 0x2DFF);
-    AddRange(&cp, 0xA640, 0xA69F);
-
-    // Unicode range: CJK
-    AddRange(&cp, 0x4E00, 0x9FFF);
-    AddRange(&cp, 0x3400, 0x4DBF);
-    AddRange(&cp, 0x3000, 0x303F);
-    AddRange(&cp, 0x3040, 0x309F);
-    AddRange(&cp, 0x30A0, 0x30FF);
-    AddRange(&cp, 0x31F0, 0x31FF);
-    AddRange(&cp, 0xFF00, 0xFFEF);
-    AddRange(&cp, 0xAC00, 0xD7AF);
-    AddRange(&cp, 0x1100, 0x11FF);
-
-    // Unicode range: Other
-    // WARNING: Not available on provided font
-    AddRange(&cp, 0x900, 0x97F);  // Devanagari
-    AddRange(&cp, 0x600, 0x6FF);  // Arabic
-    AddRange(&cp, 0x5D0, 0x5EA);  // Hebrew
-
-    Font font = {0};
-    
-    if (FileExists(fileName))
-    {
-        font = LoadFontEx(fileName, fontSize, cp.data, cp.count);
-    }
-    
-    if (font.texture.id == 0)
-    {
-        font = GetFontDefault();
-        TraceLog(LOG_WARNING, "FONTUTIL: Using default font");
-    }
-
-    MemFree(cp.data);
-    
-    return font;
-}

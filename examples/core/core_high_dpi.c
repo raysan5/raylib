@@ -14,7 +14,7 @@
 #include "raylib.h"
 
 //------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
 static void DrawTextCenter(const char *text, int x, int y, int fontSize, Color color);
 
@@ -120,7 +120,7 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //------------------------------------------------------------------------------------
 static void DrawTextCenter(const char *text, int x, int y, int fontSize, Color color)
 {

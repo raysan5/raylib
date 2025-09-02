@@ -151,7 +151,7 @@
             <Field type="Vector3" name="position" desc="Camera position" />
             <Field type="Vector3" name="target" desc="Camera target it looks-at" />
             <Field type="Vector3" name="up" desc="Camera up vector (rotation over its axis)" />
-            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic" />
+            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane height in world units in orthographic" />
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
@@ -2305,13 +2305,14 @@
         <Function name="IsFontValid" retType="bool" paramCount="1" desc="Check if a font is valid (font data loaded, WARNING: GPU texture not checked)">
             <Param type="Font" name="font" desc="" />
         </Function>
-        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="6" desc="Load font data for further use">
+        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="7" desc="Load font data for further use">
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="codepoints" desc="" />
+            <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
             <Param type="int" name="type" desc="" />
+            <Param type="int *" name="glyphCount" desc="" />
         </Function>
         <Function name="GenImageFontAtlas" retType="Image" paramCount="6" desc="Generate image font atlas using chars info">
             <Param type="const GlyphInfo *" name="glyphs" desc="" />

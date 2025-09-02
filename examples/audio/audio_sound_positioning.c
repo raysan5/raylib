@@ -19,7 +19,9 @@
 
 #include "raymath.h"
 
-// Sound positioning function
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist);
 
 //------------------------------------------------------------------------------------
@@ -94,7 +96,10 @@ int main(void)
     //--------------------------------------------------------------------------------------
 }
 
-// Sound positioning function
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
+// Set sound 3d position
 static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist)
 {
     // Calculate direction vector and distance between listener and sound source

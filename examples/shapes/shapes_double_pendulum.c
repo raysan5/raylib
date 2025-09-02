@@ -183,13 +183,16 @@ int main(void)
     return 0;
 }
 
-// Calculate Pendulum End Point
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
+// Calculate pendulum end point
 static Vector2 CalculatePendulumEndPoint(float l, float theta)
 {
     return (Vector2){ 10*l*sin(theta), 10*l*cos(theta) };
 }
 
-// Calculate Double Pendulum End Point
+// Calculate double pendulum end point
 static Vector2 CalculateDoublePendulumEndPoint(float l1, float theta1, float l2, float theta2)
 {
     Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);

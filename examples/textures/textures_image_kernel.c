@@ -20,7 +20,7 @@
 #include "raylib.h"
 
 //------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
 static void NormalizeKernel(float *kernel, int size);
 
@@ -131,7 +131,7 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //------------------------------------------------------------------------------------
 static void NormalizeKernel(float *kernel, int size)
 {

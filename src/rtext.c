@@ -141,7 +141,7 @@ static int textLineSpacing = 2;                 // Text vertical line spacing in
 //...
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
@@ -171,7 +171,7 @@ extern void LoadFontDefault(void)
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
-    defaultFont.glyphCount = 224;   // Number of chars included in our default font
+    defaultFont.glyphCount = 224;   // Number of glyphs included in our default font
     defaultFont.glyphPadding = 0;   // Characters padding
 
     // Default font is directly defined here (data generated from a sprite font image)
@@ -365,7 +365,7 @@ Font LoadFont(const char *fileName)
     #define FONT_TTF_DEFAULT_FIRST_CHAR     32      // TTF font generation default first char for image sprite font (32-Space)
 #endif
 #ifndef FONT_TTF_DEFAULT_CHARS_PADDING
-    #define FONT_TTF_DEFAULT_CHARS_PADDING   4      // TTF font generation default chars padding
+    #define FONT_TTF_DEFAULT_CHARS_PADDING   4      // TTF font generation default glyphs padding
 #endif
 
     Font font = { 0 };
@@ -440,8 +440,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int x = 0;
     int y = 0;
 
-    // We allocate a temporal arrays for chars data measures,
-    // once we get the actual number of chars, we copy data to a sized arrays
+    // We allocate a temporal arrays for glyphs data measures,
+    // once we get the actual number of glyphs, we copy data to a sized arrays
     int tempCharValues[MAX_GLYPHS_FROM_IMAGE] = { 0 };
     Rectangle tempCharRecs[MAX_GLYPHS_FROM_IMAGE] = { 0 };
 
@@ -520,7 +520,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     font.glyphCount = index;
     font.glyphPadding = 0;
 
-    // We got tempCharValues and tempCharsRecs populated with chars data
+    // We got tempCharValues and tempCharsRecs populated with glyphs data
     // Now we move temp data to sized charValues and charRecs arrays
     font.glyphs = (GlyphInfo *)RL_MALLOC(font.glyphCount*sizeof(GlyphInfo));
     font.recs = (Rectangle *)RL_MALLOC(font.glyphCount*sizeof(Rectangle));
@@ -557,21 +557,21 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     strncpy(fileExtLower, TextToLower(fileType), 16 - 1);
 
     font.baseSize = fontSize;
-    font.glyphCount = (codepointCount > 0)? codepointCount : 95;
     font.glyphPadding = 0;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (TextIsEqual(fileExtLower, ".ttf") ||
         TextIsEqual(fileExtLower, ".otf"))
     {
-        font.glyphs = LoadFontData(fileData, dataSize, font.baseSize, codepoints, font.glyphCount, FONT_DEFAULT);
+        font.glyphs = LoadFontData(fileData, dataSize, font.baseSize, codepoints, (codepointCount > 0)? codepointCount : 95, FONT_DEFAULT, &font.glyphCount);
     }
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
     if (TextIsEqual(fileExtLower, ".bdf"))
     {
-        font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, font.glyphCount, &font.baseSize);
+        font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, (codepointCount > 0)? codepointCount : 95, &font.baseSize);
+        font.glyphCount = (codepointCount > 0)? codepointCount : 95;
     }
     else
 #endif
@@ -620,7 +620,7 @@ bool IsFontValid(Font font)
 
 // Load font data for further use
 // NOTE: Requires TTF font memory data and can generate SDF data
-GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type)
+GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount, int type, int *glyphCount)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
@@ -637,7 +637,8 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
     #define FONT_BITMAP_ALPHA_THRESHOLD     80      // Bitmap (B&W) font generation alpha threshold
 #endif
 
-    GlyphInfo *chars = NULL;
+    GlyphInfo *glyphs = NULL;
+    int glyphCounter = 0;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     // Load font data (including pixel data) from TTF memory file
@@ -646,6 +647,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
     {
         bool genFontChars = false;
         stbtt_fontinfo fontInfo = { 0 };
+        int *requiredCodepoints = (int *)codepoints;
 
         if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0))     // Initialize font for data reading
         {
@@ -662,21 +664,29 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
             // Fill fontChars in case not provided externally
             // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
-            if (codepoints == NULL)
+            if (requiredCodepoints == NULL)
             {
-                codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
-                for (int i = 0; i < codepointCount; i++) codepoints[i] = i + 32;
+                requiredCodepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
+                for (int i = 0; i < codepointCount; i++) requiredCodepoints[i] = i + 32;
                 genFontChars = true;
             }
 
-            chars = (GlyphInfo *)RL_CALLOC(codepointCount, sizeof(GlyphInfo));
+            // Check available glyphs on provided font before loading them
+            for (int i = 0, index; i < codepointCount; i++)
+            {
+                index = stbtt_FindGlyphIndex(&fontInfo, requiredCodepoints[i]);
+                if (index > 0) glyphCounter++;
+            }
 
-            // NOTE: Using simple packaging, one char after another
+            // WARNING: Allocating space for maximum number of codepoints
+            glyphs = (GlyphInfo *)RL_CALLOC(glyphCounter, sizeof(GlyphInfo));
+            glyphCounter = 0; // Reset to reuse
+
+            int k = 0;
             for (int i = 0; i < codepointCount; i++)
             {
-                int chw = 0, chh = 0;   // Character width and height (on generation)
-                int ch = codepoints[i];  // Character value to get info for
-                chars[i].value = ch;
+                int cpWidth = 0, cpHeight = 0;   // Codepoint width and height (on generation)
+                int cp = requiredCodepoints[i];  // Codepoint value to get info for
 
                 //  Render a unicode codepoint to a bitmap
                 //      stbtt_GetCodepointBitmap()           -- allocates and returns a bitmap
@@ -685,76 +695,96 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
                 // Check if a glyph is available in the font
                 // WARNING: if (index == 0), glyph not found, it could fallback to default .notdef glyph (if defined in font)
-                int index = stbtt_FindGlyphIndex(&fontInfo, ch);
+                int index = stbtt_FindGlyphIndex(&fontInfo, cp);
 
                 if (index > 0)
                 {
+                    // NOTE: Only storing glyphs for codepoints found in the font
+                    glyphs[k].value = cp;
+
                     switch (type)
                     {
                         case FONT_DEFAULT:
-                        case FONT_BITMAP: chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY); break;
-                        case FONT_SDF: if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY); break;
+                        case FONT_BITMAP: glyphs[k].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, cp, &cpWidth, &cpHeight, &glyphs[k].offsetX, &glyphs[k].offsetY); break;
+                        case FONT_SDF:
+                        {
+                            if (cp != 32)
+                            {
+                                glyphs[k].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, cp,
+                                    FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE,
+                                    &cpWidth, &cpHeight, &glyphs[k].offsetX, &glyphs[k].offsetY);
+                            }
+                        } break;
+                        //case FONT_MSDF:
                         default: break;
                     }
 
-                    if (chars[i].image.data != NULL)    // Glyph data has been found in the font
+                    if (glyphs[k].image.data != NULL)    // Glyph data has been found in the font
                     {
-                        stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-                        chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+                        stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
+                        glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
 
-                        if (chh > fontSize) TRACELOG(LOG_WARNING, "FONT: Character [0x%08x] size is bigger than expected font size", ch);
+                        if (cpHeight > fontSize) TRACELOG(LOG_WARNING, "FONT: [0x%04x] Glyph height is bigger than requested font size: %i > %i", cp, cpHeight, (int)fontSize);
 
-                        // Load characters images
-                        chars[i].image.width = chw;
-                        chars[i].image.height = chh;
-                        chars[i].image.mipmaps = 1;
-                        chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+                        // Load glyph image
+                        glyphs[k].image.width = cpWidth;
+                        glyphs[k].image.height = cpHeight;
+                        glyphs[k].image.mipmaps = 1;
+                        glyphs[k].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
 
-                        chars[i].offsetY += (int)((float)ascent*scaleFactor);
+                        glyphs[k].offsetY += (int)((float)ascent*scaleFactor);
                     }
+                    //else TRACELOG(LOG_WARNING, "FONT: Glyph [0x%08x] has no image data available", cp); // Only reported for 0x20 and 0x3000
 
-                    // NOTE: We create an empty image for space character,
-                    // it could be further required for atlas packing
-                    if (ch == 32)
+                    // We create an empty image for Space character (0x20), useful for sprite font generation
+                    // NOTE: Another space to consider: 0x3000 (CJK - Ideographic Space)
+                    if ((cp == 0x20) || (cp == 0x3000))
                     {
-                        stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-                        chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+                        stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
+                        glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
 
                         Image imSpace = {
-                            .data = RL_CALLOC(chars[i].advanceX*fontSize, 2),
-                            .width = chars[i].advanceX,
+                            .data = RL_CALLOC(glyphs[k].advanceX*fontSize, 2),
+                            .width = glyphs[k].advanceX,
                             .height = fontSize,
                             .mipmaps = 1,
                             .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
                         };
 
-                        chars[i].image = imSpace;
+                        glyphs[k].image = imSpace;
                     }
 
                     if (type == FONT_BITMAP)
                     {
                         // Aliased bitmap (black & white) font generation, avoiding anti-aliasing
                         // NOTE: For optimum results, bitmap font should be generated at base pixel size
-                        for (int p = 0; p < chw*chh; p++)
+                        for (int p = 0; p < cpWidth*cpHeight; p++)
                         {
-                            if (((unsigned char *)chars[i].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
-                            else ((unsigned char *)chars[i].image.data)[p] = 255;
+                            if (((unsigned char *)glyphs[k].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) 
+                                ((unsigned char *)glyphs[k].image.data)[p] = 0;
+                            else ((unsigned char *)glyphs[k].image.data)[p] = 255;
                         }
                     }
+
+                    k++;
+                    glyphCounter++;
                 }
                 else
                 {
-                    // TODO: Use some fallback glyph for codepoints not found in the font
+                    // WARNING: Glyph not found on font, optionally use a fallback glyph
                 }
             }
+        
+            if (glyphCounter < codepointCount) TRACELOG(LOG_WARNING, "FONT: Requested codepoints glyphs found: [%i/%i]", k, codepointCount);
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
 
-        if (genFontChars) RL_FREE(codepoints);
+        if (genFontChars) RL_FREE(requiredCodepoints);
     }
 #endif
 
-    return chars;
+    *glyphCount = glyphCounter;
+    return glyphs;
 }
 
 // Generate image font atlas using chars info
@@ -1239,7 +1269,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
                       (font.recs[index].height + 2.0f*font.glyphPadding)*scaleFactor };
 
     // Character source rectangle from font texture atlas
-    // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
+    // NOTE: We consider glyphs padding when drawing, it could be required for outline/glow shader effects
     Rectangle srcRec = { font.recs[index].x - (float)font.glyphPadding, font.recs[index].y - (float)font.glyphPadding,
                          font.recs[index].width + 2.0f*font.glyphPadding, font.recs[index].height + 2.0f*font.glyphPadding };
 
@@ -1292,7 +1322,7 @@ int MeasureText(const char *text, int fontSize)
     // Check if default font has been loaded
     if (GetFontDefault().texture.id != 0)
     {
-        int defaultFontSize = 10;   // Default Font chars height in pixel
+        int defaultFontSize = 10;   // Default Font glyphs height in pixel
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
@@ -1920,10 +1950,11 @@ char *LoadUTF8(const int *codepoints, int length)
         size += bytes;
     }
 
-    // Resize memory to text length + string NULL terminator
-    void *ptr = RL_REALLOC(text, size + 1);
-
-    if (ptr != NULL) text = (char *)ptr;
+    // Create second buffer and copy data manually to it
+    char *temp = (char *)RL_CALLOC(size + 1, 1);
+    memcpy(temp, text, size);
+    RL_FREE(text);
+    text = temp;
 
     return text;
 }
@@ -1951,8 +1982,11 @@ int *LoadCodepoints(const char *text, int *count)
         i += codepointSize;
     }
 
-    // Re-allocate buffer to the actual number of codepoints loaded
-    codepoints = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
+    // Create second buffer and copy data manually to it
+    int *temp = (int *)RL_CALLOC(codepointCount, sizeof(int));
+    for (int i = 0; i < codepointCount; i++) temp[i] = codepoints[i];
+    RL_FREE(codepoints);
+    codepoints = temp;
 
     *count = codepointCount;
 
@@ -2193,7 +2227,7 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT) || defined(SUPPORT_FILEFORMAT_BDF)
 // Read a line from memory
@@ -2376,11 +2410,9 @@ static Font LoadBMFont(const char *fileName)
 
     return font;
 }
-
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_BDF)
-
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)
 {
@@ -2392,7 +2424,7 @@ static unsigned char HexToInt(char hex)
 
 // Load font data for further use
 // NOTE: Requires BDF font memory data
-static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize)
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, const int *codepoints, int codepointCount, int *outFontSize)
 {
     #define MAX_BUFFER_SIZE 256
 
@@ -2426,7 +2458,9 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
     int charBByoff0 = 0;            // Character bounding box Y0 offset
     int charDWidthX = 0;            // Character advance X
     int charDWidthY = 0;            // Character advance Y (unused)
-    GlyphInfo *charGlyphInfo = NULL; // Pointer to output glyph info (NULL if not set)
+
+    GlyphInfo *glyphs = NULL;       // Pointer to output glyph info (NULL if not set)
+    int *requiredCodepoints = codepoints;
 
     if (fileData == NULL) return glyphs;
 
@@ -2435,10 +2469,10 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
 
     // Fill fontChars in case not provided externally
     // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
-    if (codepoints == NULL)
+    if (requiredCodepoints == NULL)
     {
-        codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
-        for (int i = 0; i < codepointCount; i++) codepoints[i] = i + 32;
+        requiredCodepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
+        for (int i = 0; i < codepointCount; i++) requiredCodepoints[i] = i + 32;
         genFontChars = true;
     }
 
@@ -2464,11 +2498,11 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
 
             if (charBitmapStarted)
             {
-                if (charGlyphInfo != NULL)
+                if (glyphs != NULL)
                 {
                     int pixelY = charBitmapNextRow++;
 
-                    if (pixelY >= charGlyphInfo->image.height) break;
+                    if (pixelY >= glyphs->image.height) break;
 
                     for (int x = 0; x < readBytes; x++)
                     {
@@ -2478,9 +2512,9 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
                         {
                             int pixelX = ((x*4) + bitX);
 
-                            if (pixelX >= charGlyphInfo->image.width) break;
+                            if (pixelX >= glyphs->image.width) break;
 
-                            if ((byte & (8 >> bitX)) > 0) ((unsigned char *)charGlyphInfo->image.data)[(pixelY*charGlyphInfo->image.width) + pixelX] = 255;
+                            if ((byte & (8 >> bitX)) > 0) ((unsigned char *)glyphs->image.data)[(pixelY*glyphs->image.width) + pixelX] = 255;
                         }
                     }
                 }
@@ -2512,30 +2546,30 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
             if (strstr(buffer, "BITMAP") != NULL)
             {
                 // Search for glyph index in codepoints
-                charGlyphInfo = NULL;
+                glyphs = NULL;
 
                 for (int codepointIndex = 0; codepointIndex < codepointCount; codepointIndex++)
                 {
                     if (codepoints[codepointIndex] == charEncoding)
                     {
-                        charGlyphInfo = &glyphs[codepointIndex];
+                        glyphs = &glyphs[codepointIndex];
                         break;
                     }
                 }
 
                 // Init glyph info
-                if (charGlyphInfo != NULL)
+                if (glyphs != NULL)
                 {
-                    charGlyphInfo->value = charEncoding;
-                    charGlyphInfo->offsetX = charBBxoff0 + fontBByoff0;
-                    charGlyphInfo->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
-                    charGlyphInfo->advanceX = charDWidthX;
+                    glyphs->value = charEncoding;
+                    glyphs->offsetX = charBBxoff0 + fontBByoff0;
+                    glyphs->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
+                    glyphs->advanceX = charDWidthX;
 
-                    charGlyphInfo->image.data = RL_CALLOC(charBBw*charBBh, 1);
-                    charGlyphInfo->image.width = charBBw;
-                    charGlyphInfo->image.height = charBBh;
-                    charGlyphInfo->image.mipmaps = 1;
-                    charGlyphInfo->image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+                    glyphs->image.data = RL_CALLOC(charBBw*charBBh, 1);
+                    glyphs->image.width = charBBw;
+                    glyphs->image.height = charBBh;
+                    glyphs->image.mipmaps = 1;
+                    glyphs->image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
                 }
 
                 charBitmapStarted = true;
@@ -2586,14 +2620,14 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
             {
                 charStarted = true;
                 charEncoding = -1;
-                charGlyphInfo = NULL;
+                glyphs = NULL;
                 charBBw = 0;
                 charBBh = 0;
                 charBBxoff0 = 0;
                 charBByoff0 = 0;
                 charDWidthX = 0;
                 charDWidthY = 0;
-                charGlyphInfo = NULL;
+                glyphs = NULL;
                 charBitmapStarted = false;
                 charBitmapNextRow = 0;
                 continue;

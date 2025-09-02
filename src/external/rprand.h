@@ -156,13 +156,13 @@ static uint32_t rprand_state[4] = {             // Xoshiro128** state, initializ
 };
 
 //----------------------------------------------------------------------------------
-// Module internal functions declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static uint32_t rprand_xoshiro(void);           // Xoshiro128** generator (uses global rprand_state)
 static uint64_t rprand_splitmix64(void);        // SplitMix64 generator (uses seed to generate rprand_state)
 
 //----------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //----------------------------------------------------------------------------------
 // Set rprand_state for Xoshiro128**
 // NOTE: We use a custom generation algorithm using SplitMix64
@@ -236,7 +236,7 @@ void rprand_unload_sequence(int *sequence)
 }
 
 //----------------------------------------------------------------------------------
-// Module internal functions definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 static inline uint32_t rprand_rotate_left(const uint32_t x, int k)
 {

@@ -133,9 +133,8 @@ int main(void)
 }
 
 //--------------------------------------------------------------------------------------------
-// Module Functions Definitions (local)
+// Module Functions Definition
 //--------------------------------------------------------------------------------------------
-
 // Draw sphere without any matrix transformation
 // NOTE: Sphere is drawn in world position ( 0, 0, 0 ) with radius 1.0f
 void DrawSphereBasic(Color color)

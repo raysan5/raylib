@@ -20,16 +20,18 @@
 // WARNING: This example does not build on Windows with MSVC compiler
 #include "pthread.h"                        // POSIX style threads management
 
-#include <stdatomic.h>                      // C11 atomic data types
-
+#include <stdatomic.h>                      // Required for: C11 atomic data types
 #include <time.h>                           // Required for: clock()
 
 // Using C11 atomics for synchronization
 // NOTE: A plain bool (or any plain data type for that matter) can't be used for inter-thread synchronization
-static atomic_bool dataLoaded = false; // Data Loaded completion indicator
-static void *LoadDataThread(void *arg);     // Loading data thread function declaration
+static atomic_bool dataLoaded = false;      // Data Loaded completion indicator
+static atomic_int dataProgress = 0;         // Data progress accumulator
 
-static atomic_int dataProgress = 0;                // Data progress accumulator
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
+static void *LoadDataThread(void *arg);     // Loading data thread function declaration
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -134,6 +136,9 @@ int main(void)
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
 // Loading data thread function definition
 static void *LoadDataThread(void *arg)
 {

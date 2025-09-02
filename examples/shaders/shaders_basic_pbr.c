@@ -34,7 +34,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 // Light type
 typedef enum {
     LIGHT_DIRECTIONAL = 0,
@@ -66,7 +65,7 @@ typedef struct {
 static int lightCount = 0;     // Current number of dynamic lights that have been created
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 // Create a light and get shader locations
 static Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader);
@@ -76,7 +75,7 @@ static Light CreateLight(int type, Vector3 position, Vector3 target, Color color
 static void UpdateLight(Shader shader, Light light);
 
 //----------------------------------------------------------------------------------
-// Main Entry Point
+// Program main entry point
 //----------------------------------------------------------------------------------
 int main()
 {
@@ -237,9 +236,9 @@ int main()
                 Vector4 floorEmissiveColor = ColorNormalize(floor.materials[0].maps[MATERIAL_MAP_EMISSION].color);
                 SetShaderValue(shader, emissiveColorLoc, &floorEmissiveColor, SHADER_UNIFORM_VEC4);
 
-		// Set floor metallic and roughness values
-		SetShaderValue(shader, metallicValueLoc, &floor.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
-		SetShaderValue(shader, roughnessValueLoc, &floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
+                // Set floor metallic and roughness values
+                SetShaderValue(shader, metallicValueLoc, &floor.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
+                SetShaderValue(shader, roughnessValueLoc, &floor.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
 
                 DrawModel(floor, (Vector3){ 0.0f, 0.0f, 0.0f }, 5.0f, WHITE);   // Draw floor model
 
@@ -250,9 +249,9 @@ int main()
                 float emissiveIntensity = 0.01f;
                 SetShaderValue(shader, emissiveIntensityLoc, &emissiveIntensity, SHADER_UNIFORM_FLOAT);
 		
-		// Set old car metallic and roughness values
-		SetShaderValue(shader, metallicValueLoc, &car.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
-		SetShaderValue(shader, roughnessValueLoc, &car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
+                // Set old car metallic and roughness values
+                SetShaderValue(shader, metallicValueLoc, &car.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
+                SetShaderValue(shader, roughnessValueLoc, &car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
 
                 DrawModel(car, (Vector3){ 0.0f, 0.0f, 0.0f }, 0.25f, WHITE);   // Draw car model
 
@@ -299,6 +298,9 @@ int main()
     return 0;
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
 // Create light with provided data
 // NOTE: It updated the global lightCount and it's limited to MAX_LIGHTS
 static Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader)
