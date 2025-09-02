@@ -86,7 +86,7 @@ extern CoreData CORE;                   // Global CORE state context
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
-// Local Variables Definition
+// Global Variables Definition
 //----------------------------------------------------------------------------------
 static const char cursorLUT[11][12] = {
     "default",     // 0  MOUSE_CURSOR_DEFAULT

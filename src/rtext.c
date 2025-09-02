@@ -141,7 +141,7 @@ static int textLineSpacing = 2;                 // Text vertical line spacing in
 //...
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
@@ -2197,7 +2197,7 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT) || defined(SUPPORT_FILEFORMAT_BDF)
 // Read a line from memory
@@ -2380,11 +2380,9 @@ static Font LoadBMFont(const char *fileName)
 
     return font;
 }
-
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_BDF)
-
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)
 {
