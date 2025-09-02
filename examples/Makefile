@@ -504,10 +504,10 @@ CORE = \
     core/core_2d_camera_platformer \
     core/core_2d_camera_split_screen \
     core/core_3d_camera_first_person \
+    core/core_3d_camera_fps \
     core/core_3d_camera_free \
     core/core_3d_camera_mode \
     core/core_3d_camera_split_screen \
-    core/core_3d_camera_fps \
     core/core_3d_picking \
     core/core_automation_events \
     core/core_basic_screen_manager \
