@@ -1714,7 +1714,7 @@ char *TextInsert(const char *text, const char *insert, int position)
 
 // Join text strings with delimiter
 // REQUIRES: memset(), memcpy()
-char *TextJoin(const char **textList, int count, const char *delimiter)
+char *TextJoin(char **textList, int count, const char *delimiter)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
