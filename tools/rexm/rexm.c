@@ -370,15 +370,13 @@ int main(int argc, char *argv[])
             {
                 // Verify example exists in collection to be removed
                 char *exColInfo = LoadFileText(exCollectionFilePath);
-                if ((TextFindIndex(exColInfo, argv[2]) != -1) && // Example in the collection
-                    (TextFindIndex(exName, "_") != -1)) // Valid example name
+                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
-
                     strcpy(exName, argv[2]); // Register example name for removal
                     strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                     opCode = OP_BUILD;
                 }
-                else LOG("WARNING: REMOVE: Example not available in the collection\n");
+                else LOG("WARNING: BUILD: Example not available in the collection\n");
                 UnloadFileText(exColInfo);
             }
         }
