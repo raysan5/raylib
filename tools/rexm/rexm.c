@@ -1257,9 +1257,9 @@ int main(int argc, char *argv[])
             printf("////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
             printf("USAGE:\n\n");
-            printf("    > rexm <command> <example_name> [<example_rename>]\n");
+            printf("    > rexm <command> <example_name> [<example_rename>]\n\n");
 
-            printf("\COMMANDS:\n\n");
+            printf("COMMANDS:\n\n");
             printf("    help                          : Provides command-line usage information\n");
             printf("    create <new_example_name>     : Creates an empty example, from internal template\n");
             printf("    add <example_name>            : Add existing example, category extracted from name\n");
