@@ -2286,7 +2286,7 @@
         <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="codepoints" desc="" />
+            <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
         </Function>
         <Function name="LoadFontFromImage" retType="Font" paramCount="3" desc="Load font from Image (XNA style)">
@@ -2299,19 +2299,20 @@
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="codepoints" desc="" />
+            <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
         </Function>
         <Function name="IsFontValid" retType="bool" paramCount="1" desc="Check if a font is valid (font data loaded, WARNING: GPU texture not checked)">
             <Param type="Font" name="font" desc="" />
         </Function>
-        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="6" desc="Load font data for further use">
+        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="7" desc="Load font data for further use">
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="codepoints" desc="" />
+            <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
             <Param type="int" name="type" desc="" />
+            <Param type="int *" name="glyphCount" desc="" />
         </Function>
         <Function name="GenImageFontAtlas" retType="Image" paramCount="6" desc="Generate image font atlas using chars info">
             <Param type="const GlyphInfo *" name="glyphs" desc="" />
