@@ -95,9 +95,8 @@ static int android_close(void *cookie);
 #endif
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition - Utilities
+// Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Set the current threshold (minimum) log level
 void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
 
