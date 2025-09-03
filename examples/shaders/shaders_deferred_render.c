@@ -35,6 +35,9 @@
 
 #define MAX_CUBES   30
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // GBuffer data
 typedef struct GBuffer {
     unsigned int framebuffer;

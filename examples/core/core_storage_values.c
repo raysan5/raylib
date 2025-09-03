@@ -25,7 +25,9 @@ typedef enum {
     STORAGE_POSITION_HISCORE    = 1
 } StorageData;
 
-// Persistent storage functions
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static bool SaveStorageValue(unsigned int position, int value);
 static int LoadStorageValue(unsigned int position);
 
@@ -101,6 +103,9 @@ int main(void)
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
 bool SaveStorageValue(unsigned int position, int value)

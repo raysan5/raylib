@@ -25,7 +25,7 @@
 #define EMOJI_PER_HEIGHT 4
 
 //--------------------------------------------------------------------------------------
-// Global variables
+// Global Variables Definition
 //--------------------------------------------------------------------------------------
 // Arrays that holds the random emojis
 struct {
@@ -34,7 +34,8 @@ struct {
     Color color;    // Emoji color
 } emoji[EMOJI_PER_WIDTH*EMOJI_PER_HEIGHT] = { 0 };
 
-static int hovered = -1, selected = -1;
+static int hovered = -1;
+static int selected = -1;
 
 // String containing 180 emoji codepoints separated by a '\0' char
 const char *const emojiCodepoints = "\xF0\x9F\x8C\x80\x00\xF0\x9F\x98\x80\x00\xF0\x9F\x98\x82\x00\xF0\x9F\xA4\xA3\x00\xF0\x9F\x98\x83\x00\xF0\x9F\x98\x86\x00\xF0\x9F\x98\x89\x00"

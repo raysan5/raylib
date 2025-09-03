@@ -149,7 +149,7 @@ int main(void)
                 (Rectangle){ 400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             DrawRectangleLines(400, 16, 380, 380, RED);
 
-            DrawText(TextFormat("ATLAS SIZE: %ix%i px (x%02.1f)", font.texture.width, font.texture.height, atlasScale), 20, 380, 20, BLUE);
+            DrawText(TextFormat("ATLAS SIZE: %ix%i px (x%02.2f)", font.texture.width, font.texture.height, atlasScale), 20, 380, 20, BLUE);
 
             // Display font attribution
             DrawText("Font: Noto Sans TC. License: SIL Open Font License 1.1", screenWidth - 300, screenHeight - 20, 10, GRAY);

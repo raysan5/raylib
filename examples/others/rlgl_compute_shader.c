@@ -30,6 +30,9 @@
 // Maximum amount of queued draw commands (squares draw from mouse down events)
 #define MAX_BUFFERED_TRANSFERTS 48
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Game Of Life Update Command
 typedef struct GolUpdateCmd {
     unsigned int x;         // x coordinate of the gol command

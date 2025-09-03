@@ -34,6 +34,9 @@
 #define COLORS_PER_PALETTE      8
 #define VALUES_PER_COLOR        3
 
+//------------------------------------------------------------------------------------
+// Global Variables Definition
+//------------------------------------------------------------------------------------
 static const int palettes[MAX_PALETTES][COLORS_PER_PALETTE*VALUES_PER_COLOR] = {
     {   // 3-BIT RGB
         0, 0, 0,

@@ -46,6 +46,9 @@ typedef enum {
     //FX_FXAA
 } PostproShader;
 
+//------------------------------------------------------------------------------------
+// Global Variables Definition
+//------------------------------------------------------------------------------------
 static const char *postproShaderText[] = {
     "GRAYSCALE",
     "POSTERIZATION",

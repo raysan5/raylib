@@ -31,7 +31,7 @@ typedef struct ColorRect {
 //------------------------------------------------------------------------------------
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
-static Color GenerateRandomColor();
+static Color GenerateRandomColor(void);
 static ColorRect *GenerateRandomColorRectSequence(float rectCount, float rectWidth, float screenWidth, float screenHeight);
 static void ShuffleColorRectSequence(ColorRect *rectangles, int rectCount);
 
@@ -122,7 +122,7 @@ int main(void)
 //------------------------------------------------------------------------------------
 // Module Functions Definition
 //------------------------------------------------------------------------------------
-static Color GenerateRandomColor()
+static Color GenerateRandomColor(void)
 {
     Color color = {
         GetRandomValue(0, 255),

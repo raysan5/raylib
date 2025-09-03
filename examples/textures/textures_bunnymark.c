@@ -23,6 +23,9 @@
 // NOTE: This value is defined in [rlgl] module and can be changed there
 #define MAX_BATCH_ELEMENTS  8192
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct Bunny {
     Vector2 position;
     Vector2 speed;

@@ -18,11 +18,14 @@
 #include "raylib.h"
 
 #include <stdlib.h>             // Required for: rand()
-#include <math.h>               // Required for: cos(), sin()
+#include <math.h>               // Required for: cosf(), sinf()
 
 #define MAX_POINTS 10000000     // 10 million
 #define MIN_POINTS 1000         // 1 thousand
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // Generate mesh using points
 static Mesh GenMeshPoints(int numPoints);
 
@@ -148,6 +151,9 @@ int main()
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
 // Generate a spherical point cloud
 static Mesh GenMeshPoints(int numPoints)
 {
@@ -158,7 +164,7 @@ static Mesh GenMeshPoints(int numPoints)
         .colors = (unsigned char*)MemAlloc(numPoints*4*sizeof(unsigned char)),
     };
 
-    // https://en.wikipedia.org/wiki/Spherical_coordinate_system
+    // REF: https://en.wikipedia.org/wiki/Spherical_coordinate_system
     for (int i = 0; i < numPoints; i++)
     {
         float theta = ((float)PI*rand())/((float)RAND_MAX);

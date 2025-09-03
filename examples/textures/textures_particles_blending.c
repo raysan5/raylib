@@ -17,7 +17,10 @@
 
 #define MAX_PARTICLES 200
 
-// Particle structure with basic data
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Particle structure
 typedef struct {
     Vector2 position;
     Color color;
