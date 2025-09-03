@@ -663,8 +663,8 @@ int main(int argc, char *argv[])
 #endif
             // Update generated .html metadata
             char exHtmlPath[512] = { 0 };
-            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
-            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename)); // WARNING: Cache path for saving
+            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
