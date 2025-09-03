@@ -90,7 +90,7 @@ textures;textures_image_kernel;⭐️⭐️⭐️⭐️;1.3;1.3;"Karim Salem";@k
 textures;textures_image_channel;⭐️⭐️☆☆;5.1-dev;5.1-dev;"Bruno Cabral";@brccabral
 textures;textures_image_rotate;⭐️⭐️☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
 textures;textures_textured_curve;⭐️⭐️⭐️☆;4.5;4.5;"Jeffery Myers";@JeffM2501
-text;text_raylib_fonts;⭐️☆☆☆;1.7;3.7;"Ramon Santamaria";@raysan5
+text;text_sprite_fonts;⭐️☆☆☆;1.7;3.7;"Ramon Santamaria";@raysan5
 text;text_font_spritefont;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
 text;text_font_filters;⭐️⭐️☆☆;1.3;4.2;"Ramon Santamaria";@raysan5
 text;text_font_loading;⭐️☆☆☆;1.4;3.0;"Ramon Santamaria";@raysan5

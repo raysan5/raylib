@@ -596,7 +596,7 @@ TEXT = \
     text/text_font_spritefont \
     text/text_format_text \
     text/text_input_box \
-    text/text_raylib_fonts \
+    text/text_sprite_fonts \
     text/text_rectangle_bounds \
     text/text_unicode_emojis \
     text/text_unicode_ranges \
