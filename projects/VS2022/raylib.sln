@@ -111,7 +111,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_orthographic_project
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_rlgl_solar_system", "examples\models_rlgl_solar_system.vcxproj", "{A53CCF42-A972-478F-9336-0F618B3EC06A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_skybox", "examples\models_skybox.vcxproj", "{0037A3CD-4F50-48B2-9AC3-5A0D1D16D2CA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_skybox_rendering", "examples\models_skybox_rendering.vcxproj", "{0037A3CD-4F50-48B2-9AC3-5A0D1D16D2CA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_waving_cubes", "examples\models_waving_cubes.vcxproj", "{870723DD-945A-4136-B65B-4AF3BF85369C}"
 EndProject

@@ -121,7 +121,7 @@ models;models_rlgl_solar_system;⭐️⭐️⭐️⭐️;2.5;4.0;"Ramon Santamar
 models;models_yaw_pitch_roll;⭐️⭐️☆☆;1.8;4.0;"Berni";@Berni8k
 models;models_waving_cubes;⭐️⭐️⭐️☆;2.5;3.7;"Codecat";@codecat
 models;models_heightmap;⭐️☆☆☆;1.8;3.5;"Ramon Santamaria";@raysan5
-models;models_skybox;⭐️⭐️☆☆;1.8;4.0;"Ramon Santamaria";@raysan5
+models;models_skybox_rendering;⭐️⭐️☆☆;1.8;4.0;"Ramon Santamaria";@raysan5
 models;models_draw_cube_texture;⭐️⭐️☆☆;4.5;4.5;"Ramon Santamaria";@raysan5
 models;models_gpu_skinning;⭐️⭐️⭐️☆;4.5;4.5;"Daniel Holden";@orangeduck
 models;models_bone_socket;⭐️⭐️⭐️⭐️;4.5;4.5;"iP";@ipzaur

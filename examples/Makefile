@@ -622,7 +622,7 @@ MODELS = \
     models/models_orthographic_projection \
     models/models_point_rendering \
     models/models_rlgl_solar_system \
-    models/models_skybox \
+    models/models_skybox_rendering \
     models/models_tesseract_view \
     models/models_waving_cubes \
     models/models_yaw_pitch_roll
