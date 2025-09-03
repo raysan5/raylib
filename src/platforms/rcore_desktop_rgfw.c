@@ -275,7 +275,7 @@ void ToggleFullscreen(void)
 
         platform.mon = RGFW_window_getMonitor(platform.window);
         CORE.Window.fullscreen = true;
-        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+        FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
         RGFW_monitor_scaleToWindow(platform.mon, platform.window);
         RGFW_window_setFullscreen(platform.window, 1);
@@ -283,7 +283,7 @@ void ToggleFullscreen(void)
     else
     {
         CORE.Window.fullscreen = false;
-        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
         if (platform.mon.mode.area.w)
         {
@@ -302,7 +302,7 @@ void ToggleFullscreen(void)
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration
-    if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_VSYNC_HINT) > 0) RGFW_window_swapInterval(platform.window, 1);
 }
 
 // Toggle borderless windowed mode
@@ -344,7 +344,7 @@ void MinimizeWindow(void)
 // Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
-    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
+    if (!FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
 
     RGFW_window_restore(platform.window);
 }
@@ -354,72 +354,68 @@ void SetWindowState(unsigned int flags)
 {
     if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
 
-    CORE.Window.flags |= flags;
+    FLAG_SET(CORE.Window.flags, flags);
 
-    if (flags & FLAG_VSYNC_HINT)
+    if (FLAG_CHECK(flags, FLAG_VSYNC_HINT))
     {
         RGFW_window_swapInterval(platform.window, 1);
     }
-    if (flags & FLAG_FULLSCREEN_MODE)
+    if (FLAG_CHECK(flags, FLAG_FULLSCREEN_MODE))
     {
         if (!CORE.Window.fullscreen) ToggleFullscreen();
     }
-    if (flags & FLAG_WINDOW_RESIZABLE)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_RESIZABLE))
     {
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(0, 0));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(0, 0));
     }
-    if (flags & FLAG_WINDOW_UNDECORATED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_UNDECORATED))
     {
         RGFW_window_setBorder(platform.window, 0);
     }
-    if (flags & FLAG_WINDOW_HIDDEN)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_HIDDEN))
     {
         RGFW_window_hide(platform.window);
     }
-    if (flags & FLAG_WINDOW_MINIMIZED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED))
     {
         RGFW_window_minimize(platform.window);
     }
-    if (flags & FLAG_WINDOW_MAXIMIZED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MAXIMIZED))
     {
         RGFW_window_maximize(platform.window);
     }
-    if (flags & FLAG_WINDOW_UNFOCUSED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_UNFOCUSED))
     {
-        CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
-        platform.window->_flags &= ~RGFW_windowFocusOnShow;
+        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
+        FLAG_CLEAR(platform.window->_flags, RGFW_windowFocusOnShow);
         RGFW_window_setFlags(platform.window, platform.window->_flags);
     }
-    if (flags & FLAG_WINDOW_TOPMOST)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_TOPMOST))
     {
         RGFW_window_setFloating(platform.window, RGFW_TRUE);
     }
-    if (flags & FLAG_WINDOW_ALWAYS_RUN)
-    {
-        CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
-    }
-    if (flags & FLAG_WINDOW_TRANSPARENT)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");
     }
-    if (flags & FLAG_WINDOW_HIGHDPI)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_HIGHDPI))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
-    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
         RGFW_window_setMousePassthrough(platform.window, 1);
     }
-    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    if (FLAG_CHECK(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         ToggleBorderlessWindowed();
     }
-    if (flags & FLAG_MSAA_4X_HINT)
+    if (FLAG_CHECK(flags, FLAG_MSAA_4X_HINT))
     {
         RGFW_setGLHint(RGFW_glSamples, 4);
     }
-    if (flags & FLAG_INTERLACED_HINT)
+    if (FLAG_CHECK(flags, FLAG_INTERLACED_HINT))
     {
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
     }
@@ -428,77 +424,72 @@ void SetWindowState(unsigned int flags)
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    CORE.Window.flags &= ~flags;
+    FLAG_CLEAR(CORE.Window.flags, flags);
 
-    if (flags & FLAG_VSYNC_HINT)
+    if (FLAG_CHECK(flags, FLAG_VSYNC_HINT))
     {
         RGFW_window_swapInterval(platform.window, 0);
     }
-    if (flags & FLAG_FULLSCREEN_MODE)
+    if (FLAG_CHECK(flags, FLAG_FULLSCREEN_MODE))
     {
         if (CORE.Window.fullscreen) ToggleFullscreen();
     }
-    if (flags & FLAG_WINDOW_RESIZABLE)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_RESIZABLE))
     {
         RGFW_window_setMaxSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
         RGFW_window_setMinSize(platform.window, RGFW_AREA(platform.window->r.w, platform.window->r.h));
     }
-    if (flags & FLAG_WINDOW_UNDECORATED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_UNDECORATED))
     {
         RGFW_window_setBorder(platform.window, 1);
     }
-    if (flags & FLAG_WINDOW_HIDDEN)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_HIDDEN))
     {
-        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
+        if (!FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
 
         RGFW_window_show(platform.window);
     }
-    if (flags & FLAG_WINDOW_MINIMIZED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED))
     {
-        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
+        if (!FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
 
         RGFW_window_restore(platform.window);
     }
-    if (flags & FLAG_WINDOW_MAXIMIZED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MAXIMIZED))
     {
-        if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
+        if (!FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) RGFW_window_focus(platform.window);
 
         RGFW_window_restore(platform.window);
     }
-    if (flags & FLAG_WINDOW_UNFOCUSED)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_UNFOCUSED))
     {
         RGFW_window_setFlags(platform.window, platform.window->_flags | RGFW_windowFocusOnShow);
-        CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
     }
-    if (flags & FLAG_WINDOW_TOPMOST)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_TOPMOST))
     {
         RGFW_window_setFloating(platform.window, RGFW_FALSE);
     }
-    if (flags & FLAG_WINDOW_ALWAYS_RUN)
-    {
-        CORE.Window.flags &= ~FLAG_WINDOW_ALWAYS_RUN;
-    }
-    if (flags & FLAG_WINDOW_TRANSPARENT)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");
     }
-    if (flags & FLAG_WINDOW_HIGHDPI)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_HIGHDPI))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
-    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
         RGFW_window_setMousePassthrough(platform.window, 0);
     }
-    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    if (FLAG_CHECK(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         if (CORE.Window.fullscreen) ToggleBorderlessWindowed();
     }
-    if (flags & FLAG_MSAA_4X_HINT)
+    if (FLAG_CHECK(flags, FLAG_MSAA_4X_HINT))
     {
         RGFW_setGLHint(RGFW_glSamples, 0);
     }
-    if (flags & FLAG_INTERLACED_HINT)
+    if (FLAG_CHECK(flags, FLAG_INTERLACED_HINT))
     {
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
     }
@@ -977,7 +968,7 @@ void PollInputEvents(void)
     CORE.Window.resizedLastFrame = false;
 
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-    if (platform.window->_flags & RGFW_HOLD_MOUSE)
+    if (FLAG_CHECK(platform.window->_flags, RGFW_HOLD_MOUSE))
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -1056,18 +1047,18 @@ void PollInputEvents(void)
             } break;
             case RGFW_windowMaximized:
             {
-                CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
+                FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);  // The window was maximized
             } break;
             case RGFW_windowMinimized:
             {
-                CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
+                FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);  // The window was iconified
             } break;
             case RGFW_windowRestored:
             {
                 if (RGFW_window_isMaximized(platform.window))
-                    CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
+                    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);           // The window was restored
                 if (RGFW_window_isMinimized(platform.window))
-                    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+                    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);           // The window was restored
             } break;
             case RGFW_windowMoved:
             {
@@ -1153,7 +1144,7 @@ void PollInputEvents(void)
             } break;
             case RGFW_mousePosChanged:
             {
-                if (platform.window->_flags & RGFW_HOLD_MOUSE)
+                if (FLAG_CHECK(platform.window->_flags, RGFW_HOLD_MOUSE))
                 {
                     CORE.Input.Mouse.currentPosition.x += (float)event->vector.x;
                     CORE.Input.Mouse.currentPosition.y += (float)event->vector.y;
@@ -1277,24 +1268,24 @@ int InitPlatform(void)
     unsigned int flags = RGFW_windowCenter | RGFW_windowAllowDND;
 
     // Check window creation flags
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
+    if ((FLAG_CHECK(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) > 0)
     {
         CORE.Window.fullscreen = true;
-        flags |= RGFW_windowFullscreen;
+        FLAG_SET(flags, RGFW_windowFullscreen);
     }
 
-    if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE) > 0)
     {
         CORE.Window.fullscreen = true;
-        flags |= RGFW_windowedFullscreen;
+        FLAG_SET(flags, RGFW_windowedFullscreen);
     }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= RGFW_windowNoBorder;
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) flags |= RGFW_windowNoResize;
-    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= RGFW_windowTransparent;
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) flags |= RGFW_windowFullscreen;
-    if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) flags |= RGFW_windowHide;
-    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) flags |= RGFW_windowMaximize;
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNDECORATED) > 0) FLAG_SET(flags, RGFW_windowNoBorder);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_RESIZABLE) == 0)  FLAG_SET(flags, RGFW_windowNoResize);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT) > 0) FLAG_SET(flags, RGFW_windowTransparent);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_FULLSCREEN_MODE) > 0)    FLAG_SET(flags, RGFW_windowFullscreen);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIDDEN) > 0)      FLAG_SET(flags, RGFW_windowHide);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED) > 0)   FLAG_SET(flags, RGFW_windowMaximize);
 
     // NOTE: Some OpenGL context attributes must be set before window creation
     // Check selection OpenGL version
@@ -1314,9 +1305,9 @@ int InitPlatform(void)
         RGFW_setGLHint(RGFW_glMinor, 3);
     }
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT) RGFW_setGLHint(RGFW_glSamples, 4);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_MSAA_4X_HINT) > 0) RGFW_setGLHint(RGFW_glSamples, 4);
 
-    if (!(CORE.Window.flags & FLAG_WINDOW_UNFOCUSED)) flags |= RGFW_windowFocusOnShow | RGFW_windowFocus;
+    if (!FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(flags, RGFW_windowFocusOnShow | RGFW_windowFocus);
 
     platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
@@ -1340,7 +1331,7 @@ int InitPlatform(void)
     // If so, rcore_desktop_sdl should be updated too
     //SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
     
-    if (CORE.Window.flags & FLAG_VSYNC_HINT) RGFW_window_swapInterval(platform.window, 1);
+    if (FLAG_CHECK(CORE.Window.flags, FLAG_VSYNC_HINT)) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 
     // Check surface and context activation
