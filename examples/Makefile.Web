@@ -598,7 +598,7 @@ TEXT = \
     text/text_input_box \
     text/text_raylib_fonts \
     text/text_rectangle_bounds \
-    text/text_unicode \
+    text/text_unicode_emojis \
     text/text_unicode_ranges \
     text/text_writing_anim
 
@@ -1012,7 +1012,7 @@ text/text_raylib_fonts: text/text_raylib_fonts.c
 text/text_rectangle_bounds: text/text_rectangle_bounds.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-text/text_unicode: text/text_unicode.c
+text/text_unicode_emojis: text/text_unicode_emojis.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/dejavu.fnt@resources/dejavu.fnt \
     --preload-file text/resources/noto_cjk.fnt@resources/noto_cjk.fnt \

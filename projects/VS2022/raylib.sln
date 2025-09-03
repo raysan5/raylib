@@ -151,7 +151,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_background_scrolli
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_writing_anim", "examples\text_writing_anim.vcxproj", "{F6FD9C75-AAA7-48C9-B19D-FD37C8FB9B7E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode", "examples\text_unicode.vcxproj", "{1FE8758D-7E8A-41F3-9B6D-FD50E9A2A03D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode_emojis", "examples\text_unicode_emojis.vcxproj", "{1FE8758D-7E8A-41F3-9B6D-FD50E9A2A03D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_rectangle_bounds", "examples\text_rectangle_bounds.vcxproj", "{25BCB876-B60A-499B-9046-E9801CFD7780}"
 EndProject

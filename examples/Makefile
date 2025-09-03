@@ -598,7 +598,7 @@ TEXT = \
     text/text_input_box \
     text/text_raylib_fonts \
     text/text_rectangle_bounds \
-    text/text_unicode \
+    text/text_unicode_emojis \
     text/text_unicode_ranges \
     text/text_writing_anim
 

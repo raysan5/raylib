@@ -137,7 +137,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_input_box](text/text_input_box.c) | <img src="text/text_input_box.png" alt="text_input_box" width="80"> | ⭐⭐☆☆ | 1.7 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_writing_anim](text/text_writing_anim.c) | <img src="text/text_writing_anim.png" alt="text_writing_anim" width="80"> | ⭐⭐☆☆ | 1.4 | 1.4 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_rectangle_bounds](text/text_rectangle_bounds.c) | <img src="text/text_rectangle_bounds.png" alt="text_rectangle_bounds" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
-| [text_unicode](text/text_unicode.c) | <img src="text/text_unicode.png" alt="text_unicode" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
+| [text_unicode_emojis](text/text_unicode_emojis.c) | <img src="text/text_unicode_emojis.png" alt="text_unicode_emojis" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_draw_3d](text/text_draw_3d.c) | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="80"> | ⭐⭐⭐⭐️ | 3.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_unicode_ranges](text/text_unicode_ranges.c) | <img src="text/text_unicode_ranges.png" alt="text_unicode_ranges" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |

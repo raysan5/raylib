@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - unicode emojis emojis
+*   raylib [text] example - unicode emojis
 *
 *   Example complexity rating: [★★★★] 4/4
 *
