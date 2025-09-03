@@ -229,6 +229,9 @@
 // drawing text and shapes with a single draw call [SetShapesTexture()].
 #define SUPPORT_FONT_ATLAS_WHITE_REC    1
 
+// Support conservative font atlas size estimation
+//#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE    1
+
 // rtext: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_TEXT_BUFFER_LENGTH       1024       // Size of internal static buffers used on some functions:
