@@ -578,7 +578,7 @@ TEXTURES = \
     textures/textures_mouse_painting \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
-    textures/textures_polygon \
+    textures/textures_polygon_drawing \
     textures/textures_raw_data \
     textures/textures_sprite_anim \
     textures/textures_sprite_button \
@@ -931,7 +931,7 @@ textures/textures_particles_blending: textures/textures_particles_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/spark_flame.png@resources/spark_flame.png
 
-textures/textures_polygon: textures/textures_polygon.c
+textures/textures_polygon_drawing: textures/textures_polygon_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/cat.png@resources/cat.png
 

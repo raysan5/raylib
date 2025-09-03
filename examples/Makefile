@@ -578,7 +578,7 @@ TEXTURES = \
     textures/textures_mouse_painting \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
-    textures/textures_polygon \
+    textures/textures_polygon_drawing \
     textures/textures_raw_data \
     textures/textures_sprite_anim \
     textures/textures_sprite_button \
