@@ -34,7 +34,6 @@ core;core_drop_files;⭐️⭐️☆☆;1.3;4.2;"Ramon Santamaria";@raysan5
 core;core_random_values;⭐️☆☆☆;1.1;1.1;"Ramon Santamaria";@raysan5
 core;core_storage_values;⭐️⭐️☆☆;1.4;4.2;"Ramon Santamaria";@raysan5
 core;core_vr_simulator;⭐️⭐️⭐️☆;2.5;4.0;"Ramon Santamaria";@raysan5
-core;core_loading_thread;⭐️⭐️⭐️☆;2.5;3.0;"Ramon Santamaria";@raysan5
 core;core_scissor_test;⭐️☆☆☆;2.5;3.0;"Chris Dill";@MysteriousSpace
 core;core_basic_screen_manager;⭐️☆☆☆;4.0;4.0;"Ramon Santamaria";@raysan5
 core;core_custom_frame_control;⭐️⭐️⭐️⭐️;4.0;4.0;"Ramon Santamaria";@raysan5
