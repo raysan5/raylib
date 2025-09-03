@@ -68,8 +68,8 @@ typedef struct Star {
 //--------------------------------------------------------------------------------------
 // Module Functions Declaration
 //--------------------------------------------------------------------------------------
-static void UpdateStar(Star *s);
-static void ResetStar(Star *s);
+static void UpdateStar(Star *star);
+static void ResetStar(Star *star);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -117,7 +117,6 @@ int main(void)
         spots[i].positionLoc = GetShaderLocation(shdrSpot, posName);
         spots[i].innerLoc = GetShaderLocation(shdrSpot, innerName);
         spots[i].radiusLoc = GetShaderLocation(shdrSpot, radiusName);
-
     }
 
     // Tell the shader how wide the screen is so we can have
@@ -136,8 +135,8 @@ int main(void)
 
         while ((fabs(spots[i].speed.x) + fabs(spots[i].speed.y)) < 2)
         {
-            spots[i].speed.x = GetRandomValue(-400, 40)/10.0f;
-            spots[i].speed.y = GetRandomValue(-400, 40)/10.0f;
+            spots[i].speed.x = GetRandomValue(-400, 40)/20.0f;
+            spots[i].speed.y = GetRandomValue(-400, 40)/20.0f;
         }
 
         spots[i].inner = 28.0f*(i + 1);
@@ -234,30 +233,29 @@ int main(void)
     return 0;
 }
 
-
-static void ResetStar(Star *s)
+//--------------------------------------------------------------------------------------
+// Module Functions Definition
+//--------------------------------------------------------------------------------------
+static void ResetStar(Star *star)
 {
-    s->position = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
+    star->position = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
+    
+    star->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
+    star->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
 
-    do
+    while (!(fabs(star->speed.x) + (fabs(star->speed.y) > 1)));
     {
-        s->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
-        s->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
+        star->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
+        star->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
+    } 
 
-    } while (!(fabs(s->speed.x) + (fabs(s->speed.y) > 1)));
-
-    s->position = Vector2Add(s->position, Vector2Multiply(s->speed, (Vector2){ 8.0f, 8.0f }));
+    star->position = Vector2Add(star->position, Vector2Multiply(star->speed, (Vector2){ 8.0f, 8.0f }));
 }
 
-static void UpdateStar(Star *s)
+static void UpdateStar(Star *star)
 {
-    s->position = Vector2Add(s->position, s->speed);
+    star->position = Vector2Add(star->position, star->speed);
 
-    if ((s->position.x < 0) || (s->position.x > GetScreenWidth()) ||
-        (s->position.y < 0) || (s->position.y > GetScreenHeight()))
-    {
-        ResetStar(s);
-    }
+    if ((star->position.x < 0) || (star->position.x > GetScreenWidth()) ||
+        (star->position.y < 0) || (star->position.y > GetScreenHeight())) ResetStar(star);
 }
-
-
