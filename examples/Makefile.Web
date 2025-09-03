@@ -589,7 +589,7 @@ TEXTURES = \
 
 TEXT = \
     text/text_codepoints_loading \
-    text/text_draw_3d \
+    text/text_3d_drawing \
     text/text_font_filters \
     text/text_font_loading \
     text/text_font_sdf \
@@ -970,7 +970,7 @@ text/text_codepoints_loading: text/text_codepoints_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
 
-text/text_draw_3d: text/text_draw_3d.c
+text/text_3d_drawing: text/text_3d_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
 

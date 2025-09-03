@@ -589,7 +589,7 @@ TEXTURES = \
 
 TEXT = \
     text/text_codepoints_loading \
-    text/text_draw_3d \
+    text/text_3d_drawing \
     text/text_font_filters \
     text/text_font_loading \
     text/text_font_sdf \

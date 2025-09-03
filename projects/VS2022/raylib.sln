@@ -259,7 +259,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_custom_frame_control",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_compute_shaders", "examples\rlgl_compute_shaders.vcxproj", "{07CA51AD-72AE-46A2-AAED-DC3E3F807976}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_draw_3d", "examples\text_draw_3d.vcxproj", "{27B110CC-43C0-400A-89D9-245E681647D7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_3d_drawing", "examples\text_3d_drawing.vcxproj", "{27B110CC-43C0-400A-89D9-245E681647D7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_polygon_drawing", "examples\textures_polygon_drawing.vcxproj", "{1DE84812-E143-4C4B-A61D-9267AAD55401}"
 EndProject

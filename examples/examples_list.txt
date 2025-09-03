@@ -101,7 +101,7 @@ text;text_writing_anim;⭐️⭐️☆☆;1.4;1.4;"Ramon Santamaria";@raysan5
 text;text_rectangle_bounds;⭐️⭐️⭐️⭐️;2.5;4.0;"Vlad Adrian";@demizdor
 text;text_unicode_emojis;⭐️⭐️⭐️⭐️;2.5;4.0;"Vlad Adrian";@demizdor
 text;text_unicode_ranges;⭐️⭐️⭐️⭐️;5.5;5.6;"Vlad Adrian";@demizdor
-text;text_draw_3d;⭐️⭐️⭐️⭐️;3.5;4.0;"Vlad Adrian";@demizdor
+text;text_3d_drawing;⭐️⭐️⭐️⭐️;3.5;4.0;"Vlad Adrian";@demizdor
 text;text_codepoints_loading;⭐️⭐️⭐️☆;4.2;4.2;"Ramon Santamaria";@raysan5
 models;models_animation;⭐️⭐️☆☆;2.5;3.5;"Culacant";@culacant
 models;models_billboard;⭐️⭐️⭐️☆;1.3;3.5;"Ramon Santamaria";@raysan5
