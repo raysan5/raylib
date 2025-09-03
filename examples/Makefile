@@ -563,7 +563,7 @@ TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
-    textures/textures_draw_tiled \
+    textures/textures_tiled_drawing \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
     textures/textures_image_channel \

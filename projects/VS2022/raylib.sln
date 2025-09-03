@@ -141,7 +141,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_image_loading", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_image_generation", "examples\textures_image_generation.vcxproj", "{B19DD336-538E-4091-A559-EAA717FEC899}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_draw_tiled", "examples\textures_draw_tiled.vcxproj", "{0BF60202-43F7-48E9-8717-D31E56FA5BE0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_tiled_drawing", "examples\textures_tiled_drawing.vcxproj", "{0BF60202-43F7-48E9-8717-D31E56FA5BE0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_bunnymark", "examples\textures_bunnymark.vcxproj", "{4E863E5B-0B95-43BE-8D4F-B9EB6C394FEC}"
 EndProject

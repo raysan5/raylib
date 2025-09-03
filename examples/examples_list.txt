@@ -82,7 +82,7 @@ textures;textures_sprite_explosion;⭐️⭐️☆☆;2.5;3.5;"Ramon Santamaria"
 textures;textures_bunnymark;⭐️⭐️⭐️☆;1.6;2.5;"Ramon Santamaria";@raysan5
 textures;textures_mouse_painting;⭐️⭐️⭐️☆;3.0;3.0;"Chris Dill";@MysteriousSpace
 textures;textures_blend_modes;⭐️☆☆☆;3.5;3.5;"Karlo Licudine";@accidentalrebel
-textures;textures_draw_tiled;⭐️⭐️⭐️☆;3.0;4.2;"Vlad Adrian";@demizdor
+textures;textures_tiled_drawing;⭐️⭐️⭐️☆;3.0;4.2;"Vlad Adrian";@demizdor
 textures;textures_polygon_drawing;⭐️☆☆☆;3.7;3.7;"Chris Camacho";@chriscamacho
 textures;textures_fog_of_war;⭐️⭐️⭐️☆;4.2;4.2;"Ramon Santamaria";@raysan5
 textures;textures_gif_player;⭐️⭐️⭐️☆;4.2;4.2;"Ramon Santamaria";@raysan5
