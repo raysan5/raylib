@@ -603,7 +603,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation \
-    models/models_billboard \
+    models/models_billboard_rendering_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap \
