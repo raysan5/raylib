@@ -168,7 +168,7 @@ static void ClearExampleResources(char **resPaths);
 
 // Add/remove VS project (.vcxproj) tofrom existing VS solution (.sln)
 static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
-//static int RemoveVSProjectFromSolution(const char *projFile, const char *slnFile, const char *category);
+static int RemoveVSProjectFromSolution(const char *projFile, const char *slnFile, const char *category);
 
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
@@ -770,11 +770,8 @@ int main(int argc, char *argv[])
             FileRemove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
             // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
-            //---------------------------------------------------------------------------
-            // TODO: Remove project from solution
-            //RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-            //    TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
-            //---------------------------------------------------------------------------
+            RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+                TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exCategory);
             
             // Remove: raylib.com/examples/<category>/<category>_example_name.html
             // Remove: raylib.com/examples/<category>/<category>_example_name.data
@@ -819,6 +816,22 @@ int main(int argc, char *argv[])
             int exListLen = (int)strlen(exList);
             strcpy(exListUpdated, exList);
 
+            // Copy examples list into an update list 
+            // NOTE: Checking and removing duplicate entries
+            int lineCount = 0;
+            char **exListLines = LoadTextLines(exList, &lineCount);
+            int exListUpdatedOffset = 0;
+            exListUpdatedOffset = sprintf(exListUpdated, "%s\n", exListLines[0]);
+
+            for (int i = 1; i < lineCount; i++)
+            {
+                if ((TextFindIndex(exListUpdated, exListLines[i]) == -1) ||  (exListLines[i][0] == '#'))
+                    exListUpdatedOffset += sprintf(exListUpdated + exListUpdatedOffset, "%s\n", exListLines[i]);
+                else listUpdated = true;
+            }
+
+            UnloadTextLines(exListLines);
+
             for (unsigned int i = 0; i < list.count; i++)
             {
                 if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&  // HACK: Skip "examples_template"
@@ -858,8 +871,6 @@ int main(int argc, char *argv[])
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
-
-            // TODO: Validate: Check duplicate entries in collection list?
 
             // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
@@ -2149,6 +2160,16 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
     return result;
 }
 
+// Remove VS project (.vcxproj) to existing VS solution (.sln)
+static int RemoveVSProjectFromSolution(const char *projFile, const char *slnFile, const char *category)
+{
+    int result = 0;
+
+    // TODO: Remove project from solution file
+
+    return result;
+}
+
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
 static const char *GenerateUUIDv4(void)
@@ -2187,6 +2208,8 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
         char exDescription[256] = { 0 };    // Example description: example text line #3
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
+
+        // TODO: Update source code metadata
 
         // Update example header title (line #3 - ALWAYS)
         // String: "*   raylib [shaders] example - texture drawing"
@@ -2305,12 +2328,11 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
     }
 }
 
-
 // Get text between two strings
 // NOTE: Using static string to return result, MAX: 1024 bytes
 static char *GetTextBetween(const char *text, const char *begin, const char *end)
 {
-#define MAX_TEXT_BETWEEN_SIZE   1024
+    #define MAX_TEXT_BETWEEN_SIZE   1024
 
     static char between[MAX_TEXT_BETWEEN_SIZE] = { 0 };
     memset(between, 0, MAX_TEXT_BETWEEN_SIZE);
