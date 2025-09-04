@@ -166,15 +166,23 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 // Clear resource paths scanned
 static void ClearExampleResources(char **resPaths);
 
-// Add VS project (.vcxproj) to existing VS solution (.sln)
+// Add/remove VS project (.vcxproj) tofrom existing VS solution (.sln)
 static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
+//static int RemoveVSProjectFromSolution(const char *projFile, const char *slnFile, const char *category);
 
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
 static const char *GenerateUUIDv4(void);
 
+// Update source code header and comments metadata
+static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info);
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
+
+// Get text between two strings
+static char *GetTextBetween(const char *text, const char *begin, const char *end);
+// Replace text between two specific strings
+static char *TextReplaceBetween(const char *text, const char *replace, const char *begin, const char *end);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -675,6 +683,13 @@ int main(int argc, char *argv[])
                 TextFormat("%s/%s/%s.wasm", exWebPath, exRecategory, exRename));
             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRecategory, exRename),
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
+
+            // Create commit with changes (local)
+            ChangeDirectory("C:/GitHub/raylib");
+            int result = system(TextFormat("git commit -am \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            if (result != 0) LOG("WARNING: Error committing changes\n");
+            //result = system("git push"); // Push to the remote (origin, current branch)
+            //if (result != 0) LOG("WARNING: Error pushing changes\n");
 
         } break;
         case OP_REMOVE:     // Remove
@@ -2151,6 +2166,81 @@ static const char *GenerateUUIDv4(void)
     return uuid;
 }
 
+// Update source code header and comments metadata
+static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info)
+{
+    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
+    {
+        char *fileText = LoadFileText(exSrcPath);
+        char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
+
+        char exName[64] = { 0 };            // Example name: fileName without extension
+        char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
+        char exDescription[256] = { 0 };    // Example description: example text line #3
+        char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
+
+        // Update example header title (line #3 - ALWAYS)
+        // String: "*   raylib [shaders] example - texture drawing"
+
+
+        // Update example complexity rating
+        // String: "*   Example complexity rating: [★★☆☆] 2/4"
+        fileTextUpdated[0] = TextReplaceBetween(exSrcPath, "★★☆☆] 2", "Example complexity rating: [", "/4\n");
+
+
+        // Update example creation/update raylib versions
+        // String: "*   Example originally created with raylib 2.0, last time updated with raylib 3.7
+        
+
+        // Update contributors names
+        // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
+        
+
+        // Update copyright message
+        // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
+        fileTextUpdated[0] = TextReplaceBetween(exSrcPath, "★★☆☆] 2", "Copyright (c) ", ")");
+
+        // Update window title
+        //"InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
+
+        /*
+        // Get example name: replace underscore by spaces
+        strcpy(exName, GetFileNameWithoutExt(exSrcPath));
+        strcpy(exTitle, exName);
+        for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
+
+        // Get example category from exName: copy until first underscore
+        for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
+
+        // Get example description: copy line #3 from example file
+        char *exText = LoadFileText(exFilePath);
+        int lineCount = 0;
+        char **lines = LoadTextLines(exText, &lineCount);
+        int lineLength = (int)strlen(lines[2]);
+        strncpy(exDescription, lines[2] + 4, lineLength - 4);
+        UnloadTextLines(lines);
+        UnloadFileText(exText);
+
+        // Update example.html required text
+        fileTextUpdated[0] = TextReplace(fileText, "raylib web game", exTitle);
+        fileTextUpdated[1] = TextReplace(fileTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
+        fileTextUpdated[2] = TextReplace(fileTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
+            TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
+        fileTextUpdated[3] = TextReplace(fileTextUpdated[2], "https://www.raylib.com/games.html",
+            TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
+        fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
+        fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
+            TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
+        */
+
+        SaveFileText(exSrcPath, fileTextUpdated[5]);
+
+        for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
+
+        UnloadFileText(fileText);
+    }
+}
+
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 {
@@ -2163,11 +2253,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
         char exDescription[256] = { 0 };    // Example description: example text line #3
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
-
-        memset(exName, 0, 64);
-        memset(exTitle, 0, 64);
-        memset(exDescription, 0, 256);
-        memset(exCategory, 0, 16);
 
         // Get example name: replace underscore by spaces
         strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
@@ -2209,4 +2294,61 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         UnloadFileText(fileText);
     }
+}
+
+
+// Get text between two strings
+// NOTE: Using static string to return result, MAX: 1024 bytes
+static char *GetTextBetween(const char *text, const char *begin, const char *end)
+{
+#define MAX_TEXT_BETWEEN_SIZE   1024
+
+    static char between[MAX_TEXT_BETWEEN_SIZE] = { 0 };
+    memset(between, 0, MAX_TEXT_BETWEEN_SIZE);
+
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int beginLen = strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
+
+        if (endIndex > -1)
+        {
+            endIndex += (beginIndex + beginLen);
+            int len = (endIndex - beginIndex - beginLen);
+            if (len < (MAX_TEXT_BETWEEN_SIZE - 1)) strncpy(between, text + beginIndex + beginLen, len);
+            else strncpy(between, text + beginIndex + beginLen, MAX_TEXT_BETWEEN_SIZE - 1);
+        }
+    }
+
+    return between;
+}
+
+// Replace text between two specific strings
+// WARNING: Returned string must be freed by user
+static char *TextReplaceBetween(const char *text, const char *replace, const char *begin, const char *end)
+{
+    char *result = NULL;
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int endIndex = TextFindIndex(text + beginIndex, end);
+
+        if (beginIndex > -1)
+        {
+            int textLen = strlen(text);
+            int replaceLen = strlen(replace);
+            int toreplaceLen = (endIndex + beginIndex) - (beginIndex + strlen(begin));
+            result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
+
+            int beginLen = strlen(begin);
+            strncpy(result, text, textLen - beginIndex + strlen(begin)); // Copy first text part
+            strncpy(result + textLen - beginIndex + beginLen, replace, replaceLen); // Copy replace
+            strncpy(result + textLen - beginIndex + beginLen + replaceLen, text + beginIndex + toreplaceLen, textLen - endIndex); // Copy end text part
+        }
+    }
+
+    return result;
 }
