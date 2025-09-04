@@ -454,6 +454,7 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
+
 // Initialize audio device
 void InitAudioDevice(void)
 {
