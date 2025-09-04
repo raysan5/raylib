@@ -649,7 +649,7 @@ SHADERS = \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
-    shaders/shaders_texture_drawing \
+    shaders/shaders_texture_rendering \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
@@ -1267,7 +1267,7 @@ shaders/shaders_spotlight: shaders/shaders_spotlight.c
     --preload-file shaders/resources/raysan.png@resources/raysan.png \
     --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
 
-shaders/shaders_texture_drawing: shaders/shaders_texture_drawing.c
+shaders/shaders_texture_rendering: shaders/shaders_texture_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
 

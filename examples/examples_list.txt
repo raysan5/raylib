@@ -132,7 +132,7 @@ shaders;shaders_custom_uniform;⭐️⭐️☆☆;1.3;4.0;"Ramon Santamaria";@ra
 shaders;shaders_postprocessing;⭐️⭐️⭐️☆;1.3;4.0;"Ramon Santamaria";@raysan5
 shaders;shaders_palette_switch;⭐️⭐️⭐️☆;2.5;3.7;"Marco Lizza";@MarcoLizza
 shaders;shaders_raymarching;⭐️⭐️⭐️⭐️;2.0;4.2;"Ramon Santamaria";@raysan5
-shaders;shaders_texture_drawing;⭐️⭐️☆☆;2.0;3.7;"Michał Ciesielski";@ciessielski
+shaders;shaders_texture_rendering;⭐️⭐️☆☆;2.0;3.7;"Michał Ciesielski";@ciessielski
 shaders;shaders_texture_outline;⭐️⭐️⭐️☆;4.0;4.0;"Samuel Skiff";@GoldenThumbs
 shaders;shaders_texture_waves;⭐️⭐️☆☆;2.5;3.7;"Anata";@anatagawa
 shaders;shaders_julia_set;⭐️⭐️⭐️☆;2.5;4.0;"Josh Colclough";@joshcol9232
