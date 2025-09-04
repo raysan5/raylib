@@ -686,12 +686,12 @@ int main(int argc, char *argv[])
 
             // Create commit with changes (local)
             ChangeDirectory("C:/GitHub/raylib");
-            int result = system(TextFormat("git commit -am \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            int result = system(TextFormat("cmd /c git commit -am \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
-            //result = system("git push"); // Push to the remote (origin, current branch)
+            //result = system("cmd /c git push"); // Push to the remote (origin, current branch)
             //if (result != 0) LOG("WARNING: Error pushing changes\n");
             ChangeDirectory("C:/GitHub/raylib.com");
-            result = system(TextFormat("git commit -am \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            result = system(TextFormat("cmd /c git commit -am \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
 
         } break;
