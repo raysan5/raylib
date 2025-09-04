@@ -518,7 +518,7 @@ CORE = \
     core/core_high_dpi \
     core/core_input_gamepad \
     core/core_input_gestures \
-    core/core_input_gestures_web \
+    core/core_input_gestures_testbed \
     core/core_input_keys \
     core/core_input_mouse \
     core/core_input_mouse_wheel \

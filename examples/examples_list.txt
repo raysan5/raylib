@@ -39,7 +39,7 @@ core;core_basic_screen_manager;⭐️☆☆☆;4.0;4.0;"Ramon Santamaria";@raysa
 core;core_custom_frame_control;⭐️⭐️⭐️⭐️;4.0;4.0;"Ramon Santamaria";@raysan5
 core;core_smooth_pixelperfect;⭐️⭐️⭐️☆;3.7;4.0;"Giancamillo Alessandroni";@NotManyIdeasDev
 core;core_random_sequence;⭐️☆☆☆;5.0;5.0;"Dalton Overmyer";@REDl3east
-core;core_input_gestures_web;⭐️⭐️☆☆;4.6-dev;4.6-dev;"ubkp";@ubkp
+core;core_input_gestures_testbed;⭐️⭐️☆☆;4.6-dev;4.6-dev;"ubkp";@ubkp
 core;core_automation_events;⭐️⭐️⭐️☆;5.0;5.0;"Ramon Santamaria";@raysan5
 core;core_high_dpi;⭐️☆☆☆;5.0;5.0;"Jonathan Marler";@marler8997
 shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ramon Santamaria";@raysan5

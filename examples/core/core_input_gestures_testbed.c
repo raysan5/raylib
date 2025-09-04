@@ -17,91 +17,97 @@
 
 #include "raylib.h"
 
-#include "math.h"       // Required for the protractor angle graphic drawing
+#include <math.h>       // Required for the protractor angle graphic drawing
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h> // Required for the Web/HTML5
 #endif
 
-//--------------------------------------------------------------------------------------
-// Global definitions and declarations
-//--------------------------------------------------------------------------------------
+#define GESTURE_LOG_SIZE    20
+#define MAX_TOUCH_COUNT     32
 
-// Common variables definitions
 //--------------------------------------------------------------------------------------
-int screenWidth = 800;                  // Update depending on web canvas
-const int screenHeight = 450;
-Vector2 messagePosition = { 160, 7 };
+// Global Variables Definition
+//--------------------------------------------------------------------------------------
+static int screenWidth = 800;              // Update depending on web canvas
+static const int screenHeight = 450;
+static Vector2 messagePosition = { 160, 7 };
 
 // Last gesture variables definitions
-//--------------------------------------------------------------------------------------
-int lastGesture = 0;
-Vector2 lastGesturePosition = { 165, 130 };
+static int lastGesture = 0;
+static Vector2 lastGesturePosition = { 165, 130 };
 
-// Gesture log variables definitions and functions declarations
-//--------------------------------------------------------------------------------------
-#define GESTURE_LOG_SIZE 20
-char gestureLog[GESTURE_LOG_SIZE][12] = { "" }; // The gesture log uses an array (as an inverted circular queue) to store the performed gestures
-int gestureLogIndex = GESTURE_LOG_SIZE;         // The index for the inverted circular queue (moving from last to first direction, then looping around)
-int previousGesture = 0;
+// Gesture log variables definitions
+// NOTE: The gesture log uses an array (as an inverted circular queue) to store the performed gestures
+static char gestureLog[GESTURE_LOG_SIZE][12] = { "" };
+// NOTE: The index for the inverted circular queue (moving from last to first direction, then looping around)
+static int gestureLogIndex = GESTURE_LOG_SIZE;
+static int previousGesture = 0;
 
-char const *GetGestureName(int i)
-{
-   switch (i)  {
-      case 0:   return "None";        break;
-      case 1:   return "Tap";         break;
-      case 2:   return "Double Tap";  break;
-      case 4:   return "Hold";        break;
-      case 8:   return "Drag";        break;
-      case 16:  return "Swipe Right"; break;
-      case 32:  return "Swipe Left";  break;
-      case 64:  return "Swipe Up";    break;
-      case 128: return "Swipe Down";  break;
-      case 256: return "Pinch In";    break;
-      case 512: return "Pinch Out";   break;
-      default:  return "Unknown";     break;
-   }
-}
+// Log mode values: 
+// - 0 shows repeated events
+// - 1 hides repeated events
+// - 2 shows repeated events but hide hold events
+// - 3 hides repeated events and hide hold events
+static int logMode = 1; 
 
-Color GetGestureColor(int i)
-{
-   switch (i)  {
-      case 0:   return BLACK;   break;
-      case 1:   return BLUE;    break;
-      case 2:   return SKYBLUE; break;
-      case 4:   return BLACK;   break;
-      case 8:   return LIME;    break;
-      case 16:  return RED;     break;
-      case 32:  return RED;     break;
-      case 64:  return RED;     break;
-      case 128: return RED;     break;
-      case 256: return VIOLET;  break;
-      case 512: return ORANGE;  break;
-      default:  return BLACK;   break;
-   }
-}
-
-int logMode = 1; // Log mode values: 0 shows repeated events; 1 hides repeated events; 2 shows repeated events but hide hold events; 3 hides repeated events and hide hold events
-
-Color gestureColor = { 0, 0, 0, 255 };
-Rectangle logButton1 = { 53, 7, 48, 26 };
-Rectangle logButton2 = { 108, 7, 36, 26 };
-Vector2 gestureLogPosition = { 10, 10 };
+static Color gestureColor = { 0, 0, 0, 255 };
+static Rectangle logButton1 = { 53, 7, 48, 26 };
+static Rectangle logButton2 = { 108, 7, 36, 26 };
+static Vector2 gestureLogPosition = { 10, 10 };
 
 // Protractor variables definitions
-//--------------------------------------------------------------------------------------
-float angleLength = 90.0f;
-float currentAngleDegrees = 0.0f;
-Vector2 finalVector = { 0.0f, 0.0f };
-char currentAngleStr[7] = "";
-Vector2 protractorPosition = { 266.0f, 315.0f };
+static float angleLength = 90.0f;
+static float currentAngleDegrees = 0.0f;
+static Vector2 finalVector = { 0.0f, 0.0f };
+static char currentAngleStr[7] = "";
+static Vector2 protractorPosition = { 266.0f, 315.0f };
 
-// Update
-//--------------------------------------------------------------------------------------
-void Update(void)
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+static void UpdateDrawFrame(void);     // Update and Draw one frame
+static char const *GetGestureName(int i);
+static Color GetGestureColor(int i);
+
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
-    // Handle common
+    // Initialization
     //--------------------------------------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input gestures testbed");
+
+#if defined(PLATFORM_WEB)
+    emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
+#else
+    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        UpdateDrawFrame();
+    }
+#endif
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+
+    return 0;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
+static void UpdateDrawFrame(void)
+{
+    // Update
+    //--------------------------------------------------------------------------------------
+    // Handle common gestures data
     int i, ii; // Iterators that will be reused by all for loops
     const int currentGesture = GetGestureDetected();
     const float currentDragDegrees = GetGestureDragAngle();
@@ -109,11 +115,10 @@ void Update(void)
     const int touchCount = GetTouchPointCount();
 
     // Handle last gesture
-    //--------------------------------------------------------------------------------------
-    if ((currentGesture != 0) && (currentGesture != 4) && (currentGesture != previousGesture)) lastGesture = currentGesture; // Filter the meaningful gestures (1, 2, 8 to 512) for the display
+    if ((currentGesture != 0) && (currentGesture != 4) && (currentGesture != previousGesture)) 
+        lastGesture = currentGesture; // Filter the meaningful gestures (1, 2, 8 to 512) for the display
 
     // Handle gesture log
-    //--------------------------------------------------------------------------------------
     if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
     {
         if (CheckCollisionPointRec(GetMousePosition(), logButton1))
@@ -171,7 +176,6 @@ void Update(void)
     }
 
     // Handle protractor
-    //--------------------------------------------------------------------------------------
     if (currentGesture > 255) // aka Pinch In and Pinch Out
     {
         currentAngleDegrees = currentPitchDegrees;
@@ -189,9 +193,6 @@ void Update(void)
     finalVector = (Vector2){ (angleLength*sinf(currentAngleRadians)) + protractorPosition.x, (angleLength*cosf(currentAngleRadians)) + protractorPosition.y }; // Calculate the final vector for display
 
     // Handle touch and mouse pointer points
-    //--------------------------------------------------------------------------------------
-    #define MAX_TOUCH_COUNT     32
-
     Vector2 touchPosition[MAX_TOUCH_COUNT] = { 0 };
     Vector2 mousePosition = {0, 0};
     if (currentGesture != GESTURE_NONE)
@@ -202,22 +203,20 @@ void Update(void)
         }
         else mousePosition = GetMousePosition();
     }
+    //--------------------------------------------------------------------------------------
 
     // Draw
     //--------------------------------------------------------------------------------------
     BeginDrawing();
-
         ClearBackground(RAYWHITE);
 
-        // Draw common
-        //--------------------------------------------------------------------------------------
+        // Draw common elements
         DrawText("*", messagePosition.x + 5, messagePosition.y + 5, 10, BLACK);
         DrawText("Example optimized for Web/HTML5\non Smartphones with Touch Screen.", messagePosition.x + 15, messagePosition.y + 5, 10, BLACK);
         DrawText("*", messagePosition.x + 5, messagePosition.y + 35, 10, BLACK);
         DrawText("While running on Desktop Web Browsers,\ninspect and turn on Touch Emulation.", messagePosition.x + 15,  messagePosition.y + 35, 10, BLACK);
 
         // Draw last gesture
-        //--------------------------------------------------------------------------------------
         DrawText("Last gesture", lastGesturePosition.x + 33, lastGesturePosition.y - 47, 20, BLACK);
         DrawText("Swipe         Tap       Pinch  Touch", lastGesturePosition.x + 17, lastGesturePosition.y - 18, 10, BLACK);
         DrawRectangle(lastGesturePosition.x + 20, lastGesturePosition.y, 20, 20, lastGesture == GESTURE_SWIPE_UP ? RED : LIGHTGRAY);
@@ -235,7 +234,6 @@ void Update(void)
         for (i = 0; i < 4; i++) DrawCircle(lastGesturePosition.x + 180, lastGesturePosition.y + 7 + i*15, 5, touchCount <= i? LIGHTGRAY : gestureColor);
 
         // Draw gesture log
-        //--------------------------------------------------------------------------------------
         DrawText("Log", gestureLogPosition.x, gestureLogPosition.y, 20, BLACK);
 
         // Loop in both directions to print the gesture log array in the inverted order (and looping around if the index started somewhere in the middle)
@@ -256,7 +254,6 @@ void Update(void)
         DrawText("Hold", logButton1.x + 62, logButton1.y + 13, 10, WHITE);
 
         // Draw protractor
-        //--------------------------------------------------------------------------------------
         DrawText("Angle", protractorPosition.x + 55, protractorPosition.y + 76, 10, BLACK);
         const char *angleString = TextFormat("%f", currentAngleDegrees);
         const int angleStringDot = TextFindIndex(angleString, ".");
@@ -278,7 +275,6 @@ void Update(void)
         if (currentAngleDegrees != 0.0f) DrawLineEx(protractorPosition, finalVector, 3.0f, gestureColor);
 
         // Draw touch and mouse pointer points
-        //--------------------------------------------------------------------------------------
         if (currentGesture != GESTURE_NONE)
         {
             if ( touchCount != 0 )
@@ -300,33 +296,42 @@ void Update(void)
 
     EndDrawing();
     //--------------------------------------------------------------------------------------
-
 }
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
-int main(void)
+static char const *GetGestureName(int i)
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - input gestures web");
-    //--------------------------------------------------------------------------------------
+    switch (i)
+    {
+        case 0:   return "None";        break;
+        case 1:   return "Tap";         break;
+        case 2:   return "Double Tap";  break;
+        case 4:   return "Hold";        break;
+        case 8:   return "Drag";        break;
+        case 16:  return "Swipe Right"; break;
+        case 32:  return "Swipe Left";  break;
+        case 64:  return "Swipe Up";    break;
+        case 128: return "Swipe Down";  break;
+        case 256: return "Pinch In";    break;
+        case 512: return "Pinch Out";   break;
+        default:  return "Unknown";     break;
+    }
+}
 
-    // Main game loop
-    //--------------------------------------------------------------------------------------
-    #if defined(PLATFORM_WEB)
-        emscripten_set_main_loop(Update, 0, 1);
-    #else
-        SetTargetFPS(60);
-        while (!WindowShouldClose()) Update(); // Detect window close button or ESC key
-    #endif
-    //--------------------------------------------------------------------------------------
-
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    CloseWindow(); // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
-
-    return 0;
+static Color GetGestureColor(int i)
+{
+    switch (i)
+    {
+        case 0:   return BLACK;   break;
+        case 1:   return BLUE;    break;
+        case 2:   return SKYBLUE; break;
+        case 4:   return BLACK;   break;
+        case 8:   return LIME;    break;
+        case 16:  return RED;     break;
+        case 32:  return RED;     break;
+        case 64:  return RED;     break;
+        case 128: return RED;     break;
+        case 256: return VIOLET;  break;
+        case 512: return ORANGE;  break;
+        default:  return BLACK;   break;
+    }
 }

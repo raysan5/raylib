@@ -56,7 +56,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_custom_frame_control](core/core_custom_frame_control.c) | <img src="core/core_custom_frame_control.png" alt="core_custom_frame_control" width="80"> | ⭐⭐⭐⭐️ | 4.0 | 4.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_smooth_pixelperfect](core/core_smooth_pixelperfect.c) | <img src="core/core_smooth_pixelperfect.png" alt="core_smooth_pixelperfect" width="80"> | ⭐⭐⭐☆ | 3.7 | 4.0 | [Giancamillo Alessandroni](https://github.com/NotManyIdeasDev) |
 | [core_random_sequence](core/core_random_sequence.c) | <img src="core/core_random_sequence.png" alt="core_random_sequence" width="80"> | ⭐☆☆☆ | 5.0 | 5.0 | [Dalton Overmyer](https://github.com/REDl3east) |
-| [core_input_gestures_web](core/core_input_gestures_web.c) | <img src="core/core_input_gestures_web.png" alt="core_input_gestures_web" width="80"> | ⭐⭐☆☆ | 4.6 | 4.6 | [ubkp](https://github.com/ubkp) |
+| [core_input_gestures_testbed](core/core_input_gestures_testbed.c) | <img src="core/core_input_gestures_testbed.png" alt="core_input_gestures_testbed" width="80"> | ⭐⭐☆☆ | 4.6 | 4.6 | [ubkp](https://github.com/ubkp) |
 | [core_automation_events](core/core_automation_events.c) | <img src="core/core_automation_events.png" alt="core_automation_events" width="80"> | ⭐⭐⭐☆ | 5.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐☆☆☆ | 5.0 | 5.0 | [Jonathan Marler](https://github.com/marler8997) |
 

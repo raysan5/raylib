@@ -518,7 +518,7 @@ CORE = \
     core/core_high_dpi \
     core/core_input_gamepad \
     core/core_input_gestures \
-    core/core_input_gestures_web \
+    core/core_input_gestures_testbed \
     core/core_input_keys \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
@@ -737,7 +737,7 @@ core/core_input_gamepad: core/core_input_gamepad.c
 core/core_input_gestures: core/core_input_gestures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_input_gestures_web: core/core_input_gestures_web.c
+core/core_input_gestures_testbed: core/core_input_gestures_testbed.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_keys: core/core_input_keys.c
