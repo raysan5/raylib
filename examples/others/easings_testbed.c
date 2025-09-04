@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [easings] example - easings testbed
+*   raylib [others] example - easings testbed
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
@@ -108,7 +108,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [easings] example - easings testbed");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - easings testbed");
 
     Vector2 ballPosition = { 100.0f, 100.0f };
 

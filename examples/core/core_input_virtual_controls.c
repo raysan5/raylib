@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - input virtual controls
 *
-*   Example complexity rating: [★★★☆] 3/4
+*   Example complexity rating: [★★☆☆] 3/4
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
