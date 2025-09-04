@@ -512,7 +512,6 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
-    core/core_basic_window_web \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
@@ -649,8 +648,8 @@ SHADERS = \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
-    shaders/shaders_texture_rendering \
     shaders/shaders_texture_outline \
+    shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \

@@ -512,7 +512,6 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
-    core/core_basic_window_web \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
@@ -649,8 +648,8 @@ SHADERS = \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
-    shaders/shaders_texture_rendering \
     shaders/shaders_texture_outline \
+    shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \
@@ -716,9 +715,6 @@ core/core_basic_screen_manager: core/core_basic_screen_manager.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_basic_window: core/core_basic_window.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_basic_window_web: core/core_basic_window_web.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_custom_frame_control: core/core_custom_frame_control.c
@@ -1267,14 +1263,14 @@ shaders/shaders_spotlight: shaders/shaders_spotlight.c
     --preload-file shaders/resources/raysan.png@resources/raysan.png \
     --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
 
-shaders/shaders_texture_rendering: shaders/shaders_texture_rendering.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
-
 shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
     --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs
+
+shaders/shaders_texture_rendering: shaders/shaders_texture_rendering.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
 
 shaders/shaders_texture_tiling: shaders/shaders_texture_tiling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
