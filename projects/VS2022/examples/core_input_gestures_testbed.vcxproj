@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>core_input_gestures_testbed</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
