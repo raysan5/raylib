@@ -632,7 +632,7 @@ SHADERS = \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_render \
     shaders/shaders_eratosthenes \
-    shaders/shaders_fog \
+    shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_render \
     shaders/shaders_julia_set \
@@ -1165,7 +1165,7 @@ shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/eratosthenes.fs@resources/shaders/glsl100/eratosthenes.fs
 
-shaders/shaders_fog: shaders/shaders_fog.c
+shaders/shaders_fog_rendering: shaders/shaders_fog_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
     --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs \

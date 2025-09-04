@@ -137,7 +137,7 @@ shaders;shaders_texture_outline;⭐️⭐️⭐️☆;4.0;4.0;"Samuel Skiff";@Go
 shaders;shaders_texture_waves;⭐️⭐️☆☆;2.5;3.7;"Anata";@anatagawa
 shaders;shaders_julia_set;⭐️⭐️⭐️☆;2.5;4.0;"Josh Colclough";@joshcol9232
 shaders;shaders_eratosthenes;⭐️⭐️⭐️☆;2.5;4.0;"ProfJski";@ProfJski
-shaders;shaders_fog;⭐️⭐️⭐️☆;2.5;3.7;"Chris Camacho";@chriscamacho
+shaders;shaders_fog_rendering;⭐️⭐️⭐️☆;2.5;3.7;"Chris Camacho";@chriscamacho
 shaders;shaders_simple_mask;⭐️⭐️☆☆;2.5;3.7;"Chris Camacho";@chriscamacho
 shaders;shaders_hot_reloading;⭐️⭐️⭐️☆;3.0;3.5;"Ramon Santamaria";@raysan5
 shaders;shaders_mesh_instancing;⭐️⭐️⭐️⭐️;3.7;4.2;"seanpringle";@seanpringle
