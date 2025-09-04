@@ -87,7 +87,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_world_screen", "exampl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation", "examples\models_animation.vcxproj", "{AFDDE100-2D36-4749-817D-12E54C56312F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_billboard_rendering_rendering", "examples\models_billboard_rendering_rendering.vcxproj", "{B7812167-50FB-4934-996F-DF6FE4CBBFDF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_billboard_rendering", "examples\models_billboard_rendering.vcxproj", "{B7812167-50FB-4934-996F-DF6FE4CBBFDF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_box_collisions", "examples\models_box_collisions.vcxproj", "{39DB56C7-05F8-492C-A8D4-F19E40FECB59}"
 EndProject

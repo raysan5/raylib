@@ -603,7 +603,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation \
-    models/models_billboard_rendering_rendering \
+    models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap \
@@ -1028,7 +1028,7 @@ models/models_animation: models/models_animation.c
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
     --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
 
-models/models_billboard_rendering_rendering: models/models_billboard_rendering_rendering.c
+models/models_billboard_rendering: models/models_billboard_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/billboard.png@resources/billboard.png
 
