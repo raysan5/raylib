@@ -1461,15 +1461,16 @@ char **LoadTextLines(const char *text, int *count)
     }
 
     char **lines = (char **)RL_CALLOC(lineCount, sizeof(char *));
-    for (int i = 0, l = 0, lineLen = 0; i <= textSize; i++, lineLen++)
+    for (int i = 0, l = 0, lineLen = 0; i <= textSize; i++)
     {
         if ((text[i] == '\n') || (text[i] == '\0'))
         {
             lines[l] = (char *)RL_CALLOC(lineLen + 1, 1);
-            strncpy(lines[l], &text[i - lineLen + 1], lineLen - 1);
+            strncpy(lines[l], &text[i - lineLen], lineLen);
             lineLen = 0;
             l++;
         }
+        else lineLen++;
     }
 
     *count = lineCount;
