@@ -6860,7 +6860,8 @@ return {
       description = "Unload text lines",
       returnType = "void",
       params = {
-        {type = "char **", name = "text"}
+        {type = "char **", name = "text"},
+        {type = "int", name = "lineCount"}
       }
     },
     {
