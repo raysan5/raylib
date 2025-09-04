@@ -1507,7 +1507,7 @@ RLAPI const char *CodepointToUTF8(int codepoint, int *utf8Size);                
 // WARNING 1: Most of these functions use internal static buffers, it's recommended to store returned data on user-side for re-use
 // WARNING 2: Some strings allocate memory internally for the returned strings, those strings must be free by user using MemFree()
 RLAPI char **LoadTextLines(const char *text, int *count);                                   // Load text as separate lines ('\n')
-RLAPI void UnloadTextLines(char **text);                                                    // Unload text lines
+RLAPI void UnloadTextLines(char **text, int lineCount);                                     // Unload text lines
 RLAPI int TextCopy(char *dst, const char *src);                                             // Copy one string to another, returns bytes copied
 RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
 RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
