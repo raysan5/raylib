@@ -135,8 +135,8 @@ int main(void)
 
         while ((fabs(spots[i].speed.x) + fabs(spots[i].speed.y)) < 2)
         {
-            spots[i].speed.x = GetRandomValue(-400, 40)/20.0f;
-            spots[i].speed.y = GetRandomValue(-400, 40)/20.0f;
+            spots[i].speed.x = GetRandomValue(-400, 40)/25.0f;
+            spots[i].speed.y = GetRandomValue(-400, 40)/25.0f;
         }
 
         spots[i].inner = 28.0f*(i + 1);
@@ -243,7 +243,7 @@ static void ResetStar(Star *star)
     star->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
     star->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
 
-    while (!(fabs(star->speed.x) + (fabs(star->speed.y) > 1)));
+    while (!(fabs(star->speed.x) + (fabs(star->speed.y) > 1)))
     {
         star->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
         star->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
