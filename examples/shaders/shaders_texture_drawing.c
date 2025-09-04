@@ -4,8 +4,6 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   NOTE: This example illustrates how to draw into a blank texture using a shader
-*
 *   Example originally created with raylib 2.0, last time updated with raylib 3.7
 *
 *   Example contributed by Michał Ciesielski (@ciessielski) and reviewed by Ramon Santamaria (@raysan5)
@@ -67,7 +65,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shader);    // Enable our custom shader for next shapes/textures drawings
-                DrawTexture(texture, 0, 0, WHITE);  // Drawing BLANK texture, all magic happens on shader
+                DrawTexture(texture, 0, 0, WHITE);  // Drawing BLANK texture, all rendering magic happens on shader
             EndShaderMode();            // Disable our custom shader, return to default shader
 
             DrawText("BACKGROUND is PAINTED and ANIMATED on SHADER!", 10, 10, 20, MAROON);
