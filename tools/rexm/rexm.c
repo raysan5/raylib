@@ -1975,7 +1975,8 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
     if (code != NULL)
     {
         // Resources extensions to check
-        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
+        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", 
+            ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
         const int extCount = sizeof(exts)/sizeof(char *);
 
         char *ptr = code;
@@ -1988,7 +1989,8 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
             // HACK: Just check previous position from pointer for function name including the string...
             // This is a dirty solution, the good one would be getting the data loading function names...
-            if (TextFindIndex(ptr - 40, "ExportImage") == -1)
+            if ((TextFindIndex(ptr - 40, "ExportImage") == -1) &&
+                (TextFindIndex(ptr - 10, "TraceLog") == -1)) // Avoid TraceLog() strings processing
             {
                 int len = (int)(end - start);
                 if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
@@ -1997,14 +1999,11 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
                     strncpy(buffer, start, len);
                     buffer[len] = '\0';
 
-                    // TODO: Make sure buffer is a path (and not a TraceLog() string)
-
                     // Check for known extensions
                     for (int i = 0; i < extCount; i++)
                     {
-                        // TODO: WARNING: IsFileExtension() expects a NULL terminated fileName,
-                        // but in this case buffer can contain any kind of string, 
-                        // including not paths strings, for example TraceLog() string
+                        // NOTE: IsFileExtension() expects a NULL terminated fileName string,
+                        // it looks for the last '.' and checks "extension" after that
                         if (IsFileExtension(buffer, exts[i]))
                         {
                             // Avoid duplicates
