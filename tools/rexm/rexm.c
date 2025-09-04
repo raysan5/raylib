@@ -167,8 +167,8 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 static void ClearExampleResources(char **resPaths);
 
 // Add/remove VS project (.vcxproj) tofrom existing VS solution (.sln)
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
-static int RemoveVSProjectFromSolution(const char *projFile, const char *slnFile, const char *category);
+static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category);
+static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName);
 
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
@@ -563,8 +563,8 @@ int main(int argc, char *argv[])
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
             // WARNING: This function uses TextFormat() extensively inside,
             // we must store provided file paths because pointers will be overwriten
-            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-                exVSProjectSolutionFile, exCategory);
+            AddVSProjectToSolution(exVSProjectSolutionFile, 
+                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), exCategory);
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -639,7 +639,7 @@ int main(int argc, char *argv[])
                 FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName), 
                     TextFormat("%s;%s", exRecategory, exRename));
 
-                // TODO: Move example resources from <src_category>/resources to <dst_category>/resources
+                // TODO: Move example resources from <exCategory>/resources to <exRecategory>/resources
                 // WARNING: Resources can be shared with other examples in the category
 
                 // Edit: Rename example code file (copy and remove)
@@ -684,7 +684,8 @@ int main(int argc, char *argv[])
             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRecategory, exRename),
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
 
-            // Create commit with changes (local)
+            /*
+            // Create GitHub commit with changes (local)
             putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
             ChangeDirectory("C:\\GitHub\\raylib");
             system("git --version");
@@ -696,9 +697,9 @@ int main(int argc, char *argv[])
             system("git add -A");
             result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
-
             //result = system("git push"); // Push to the remote (origin, current branch)
             //if (result != 0) LOG("WARNING: Error pushing changes\n");
+            */
 
         } break;
         case OP_REMOVE:     // Remove
@@ -770,8 +771,7 @@ int main(int argc, char *argv[])
             FileRemove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
             // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
-            RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-                TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exCategory);
+            RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exName);
             
             // Remove: raylib.com/examples/<category>/<category>_example_name.html
             // Remove: raylib.com/examples/<category>/<category>_example_name.data
@@ -830,7 +830,7 @@ int main(int argc, char *argv[])
                 else listUpdated = true;
             }
 
-            UnloadTextLines(exListLines);
+            UnloadTextLines(exListLines, lineCount);
 
             for (unsigned int i = 0; i < list.count; i++)
             {
@@ -1047,8 +1047,8 @@ int main(int argc, char *argv[])
                         // Add project (.vcxproj) to raylib solution (.sln)
                         if (exInfo->status & VALID_NOT_IN_VCXSOL)
                         {
-                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
-                                exVSProjectSolutionFile, exInfo->category);
+                            AddVSProjectToSolution(exVSProjectSolutionFile, 
+                                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), exInfo->category);
 
                             exInfo->status &= ~VALID_NOT_IN_VCXSOL;
                         }
@@ -1691,7 +1691,7 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
             }
         }
     
-        UnloadTextLines(lines);
+        UnloadTextLines(lines, lineCount);
         UnloadFileText(text);
     }
     
@@ -2049,7 +2049,7 @@ static void ClearExampleResources(char **resPaths)
 //  - "dotnet" tool (C# projects only)
 //  - "devenv" tool (no adding support, only building)
 // It must be done manually editing the .sln file
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category)
+static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category)
 {
     int result = 0;
 
@@ -2164,11 +2164,50 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
 }
 
 // Remove VS project (.vcxproj) to existing VS solution (.sln)
-static int RemoveVSProjectFromSolution(const char *projFile, const char *slnFile, const char *category)
+static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName)
 {
     int result = 0;
 
-    // TODO: Remove project from solution file
+    // Lines to be removed from solution file:
+    //Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_values", "examples\core_random_values.vcxproj", "{B332DCA8-3599-4A99-917A-82261BDC27AC}"
+    //EndProject
+    // All lines starting with:
+    //"\t\t{B332DCA8-3599-4A99-917A-82261BDC27AC}."
+
+    char *slnText = LoadFileText(slnFile);
+    char *slnTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+    int lineCount = 0;
+    char **lines = LoadTextLines(slnText, &lineCount); // WARNING: Max 512 lines, we need +4000!
+
+    char uuid[38] = { 0 };
+    strcpy(uuid, "ABCDEF00-0123-4567-89AB-000000000012"); // Temp value
+    int textUpdatedOfsset = 0;
+    int exNameLen = strlen(exName);
+
+    for (int i = 0, index = 0; i < lineCount; i++)
+    {
+        index = TextFindIndex(lines[i], exName);
+        if (index > 0)
+        {
+            // Found line with project --> get UUID
+            strncpy(uuid, lines[i] + index + exNameLen*2 + 26, 36);
+            
+            // Skip copying line and also next one
+            i++;
+        }
+        else
+        {
+            if (TextFindIndex(lines[i], uuid) == -1)
+                textUpdatedOfsset += sprintf(slnTextUpdated + textUpdatedOfsset, "%s\n", lines[i]);
+        }
+    }
+
+    SaveFileText(slnFile, slnTextUpdated);
+
+    UnloadTextLines(lines, lineCount);
+    UnloadFileText(slnText);
+    RL_FREE(slnTextUpdated);
 
     return result;
 }
@@ -2303,7 +2342,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char **lines = LoadTextLines(exText, &lineCount);
         int lineLength = (int)strlen(lines[2]);
         strncpy(exDescription, lines[2] + 4, lineLength - 4);
-        UnloadTextLines(lines);
+        UnloadTextLines(lines, lineCount);
         UnloadFileText(exText);
 
         // Update example.html required text
