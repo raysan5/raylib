@@ -995,7 +995,10 @@ int main(int argc, char *argv[])
                     (strcmp(exInfo->authorGitHub, exInfoHeader->authorGitHub) != 0) ||
                     (exInfo->stars != exInfoHeader->stars) ||
                     (exInfo->verCreated != exInfoHeader->verCreated) ||
-                    (exInfo->verUpdated != exInfoHeader->verUpdated)) exInfo->status |= VALID_INCONSISTENT_INFO;
+                    (exInfo->verUpdated != exInfoHeader->verUpdated))
+                {
+                    exInfo->status |= VALID_INCONSISTENT_INFO;
+                }
 
                 UnloadExampleInfo(exInfoHeader);
             }
