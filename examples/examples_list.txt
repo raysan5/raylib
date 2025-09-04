@@ -41,7 +41,7 @@ core;core_custom_frame_control;⭐️⭐️⭐️⭐️;4.0;4.0;"Ramon Santamari
 core;core_smooth_pixelperfect;⭐️⭐️⭐️☆;3.7;4.0;"Giancamillo Alessandroni";@NotManyIdeasDev
 core;core_random_sequence;⭐️☆☆☆;5.0;5.0;"Dalton Overmyer";@REDl3east
 core;core_automation_events;⭐️⭐️⭐️☆;5.0;5.0;"Ramon Santamaria";@raysan5
-core;core_high_dpi;⭐️☆☆☆;5.0;5.0;"Jonathan Marler";@marler8997
+core;core_high_dpi;⭐️⭐️☆☆;5.0;5.0;"Jonathan Marler";@marler8997
 shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;⭐️☆☆☆;2.5;2.5;"Ramon Santamaria";@raysan5
 shapes;shapes_colors_palette;⭐️⭐️☆☆;1.0;2.5;"Ramon Santamaria";@raysan5
@@ -60,7 +60,7 @@ shapes;shapes_draw_rectangle_rounded;⭐️⭐️⭐️☆;2.5;2.5;"Vlad Adrian"
 shapes;shapes_top_down_lights;⭐️⭐️⭐️⭐️;4.2;4.2;"Jeffery Myers";@JeffM2501
 shapes;shapes_rectangle_advanced;⭐️⭐️⭐️⭐️;5.5;5.5;"Everton Jr.";@evertonse
 shapes;shapes_splines_drawing;⭐️⭐️⭐️☆;5.0;5.0;"Ramon Santamaria";@raysan5
-shapes;shapes_digital_clock;⭐️⭐️☆☆;5.5;5.5;"Hamza RAHAL";@rhmz-rhl
+shapes;shapes_digital_clock;⭐️⭐️☆☆;5.5;5.6;"Hamza RAHAL";@rhmz-rhl
 shapes;shapes_double_pendulum;⭐️⭐️☆☆;5.5;5.5;"JoeCheong";@Joecheong2006
 textures;textures_logo_raylib;⭐️☆☆☆;1.0;1.0;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;⭐️⭐️⭐️☆;1.3;1.3;"Ramon Santamaria";@raysan5

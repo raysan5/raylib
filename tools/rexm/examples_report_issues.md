@@ -23,9 +23,7 @@ Example elements validated:
 | core_input_virtual_controls      |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_high_dpi                    |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_digital_clock             |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| text_font_sdf                    |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_unicode_ranges              |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| text_3d_drawing                  |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_codepoints_loading          |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | models_loading_m3d               |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shaders_texture_outline          |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |

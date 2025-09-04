@@ -17,7 +17,7 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // Required for: calloc(), free()
 
 //--------------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -199,5 +199,6 @@ static void AddCodepointRange(Font *font, const char *fontPath, int start, int s
 
     UnloadFont(*font);
     *font = LoadFontEx(fontPath, 32, updatedCodepoints, updatedCodepointCount);
+    RL_FREE(updatedCodepoints);
 }
 

@@ -58,7 +58,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_smooth_pixelperfect](core/core_smooth_pixelperfect.c) | <img src="core/core_smooth_pixelperfect.png" alt="core_smooth_pixelperfect" width="80"> | ⭐⭐⭐☆ | 3.7 | 4.0 | [Giancamillo Alessandroni](https://github.com/NotManyIdeasDev) |
 | [core_random_sequence](core/core_random_sequence.c) | <img src="core/core_random_sequence.png" alt="core_random_sequence" width="80"> | ⭐☆☆☆ | 5.0 | 5.0 | [Dalton Overmyer](https://github.com/REDl3east) |
 | [core_automation_events](core/core_automation_events.c) | <img src="core/core_automation_events.png" alt="core_automation_events" width="80"> | ⭐⭐⭐☆ | 5.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐☆☆☆ | 5.0 | 5.0 | [Jonathan Marler](https://github.com/marler8997) |
+| [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [Jonathan Marler](https://github.com/marler8997) |
 
 ### category: shapes [20]
 
@@ -84,7 +84,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_top_down_lights](shapes/shapes_top_down_lights.c) | <img src="shapes/shapes_top_down_lights.png" alt="shapes_top_down_lights" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 4.2 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [shapes_rectangle_advanced](shapes/shapes_rectangle_advanced.c) | <img src="shapes/shapes_rectangle_advanced.png" alt="shapes_rectangle_advanced" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.5 | [Everton Jr.](https://github.com/evertonse) |
 | [shapes_splines_drawing](shapes/shapes_splines_drawing.c) | <img src="shapes/shapes_splines_drawing.png" alt="shapes_splines_drawing" width="80"> | ⭐⭐⭐☆ | 5.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
-| [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Hamza RAHAL](https://github.com/rhmz-rhl) |
+| [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hamza RAHAL](https://github.com/rhmz-rhl) |
 | [shapes_double_pendulum](shapes/shapes_double_pendulum.c) | <img src="shapes/shapes_double_pendulum.png" alt="shapes_double_pendulum" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [JoeCheong](https://github.com/Joecheong2006) |
 
 ### category: textures [26]

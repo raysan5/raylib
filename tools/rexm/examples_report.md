@@ -105,14 +105,14 @@ Example elements validated:
 | text_font_spritefont             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_font_filters                |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_font_loading                |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| text_font_sdf                    |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| text_font_sdf                    |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_format_text                 |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_input_box                   |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_writing_anim                |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_rectangle_bounds            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_unicode_emojis              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_unicode_ranges              |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| text_3d_drawing                  |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| text_3d_drawing                  |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_codepoints_loading          |  ✔ |  ✔  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | models_animation                 |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | models_billboard_rendering       |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
