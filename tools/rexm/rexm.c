@@ -689,9 +689,11 @@ int main(int argc, char *argv[])
             ChangeDirectory("C:\\GitHub\\raylib");
             system("git --version");
             system("git status");
+            system("git add -A");
             int result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
             ChangeDirectory("C:/GitHub/raylib.com");
+            system("git add -A");
             result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
 
