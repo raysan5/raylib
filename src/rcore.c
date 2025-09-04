@@ -2563,19 +2563,19 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     unsigned char *data0 = (unsigned char *)RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
-    int length = sinflate(data, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
+    int size = sinflate(data0, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
 
     // WARNING: RL_REALLOC can make (and leave) data copies in memory, 
     // that can be a security concern in case of compression of sensitive data
     // So, we use a second buffer to copy data manually, wiping original buffer memory
-    data = (unsigned char *)RL_CALLOC(length, 1);
-    memcpy(data, data0, length);
+    data = (unsigned char *)RL_CALLOC(size, 1);
+    memcpy(data, data0, size);
     memset(data0, 0, MAX_DECOMPRESSION_SIZE*1024*1024); // Wipe memory, is memset() safe?
     RL_FREE(data0);
     
-    TRACELOG(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataSize, length);
+    TRACELOG(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataSize, size);
 
-    *dataSize = length;
+    *dataSize = size;
 #endif
 
     return data;
