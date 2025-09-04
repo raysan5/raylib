@@ -684,23 +684,19 @@ int main(int argc, char *argv[])
             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRecategory, exRename),
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
 
+            // Create commit with changes (local)
             putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
             ChangeDirectory("C:\\GitHub\\raylib");
             system("git --version");
             system("git status");
-
-            /*
-            // Create commit with changes (local)
-            putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
-            ChangeDirectory("C:/GitHub/raylib");
             int result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
-            //result = system("git push"); // Push to the remote (origin, current branch)
-            //if (result != 0) LOG("WARNING: Error pushing changes\n");
             ChangeDirectory("C:/GitHub/raylib.com");
             result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
-            */
+
+            //result = system("git push"); // Push to the remote (origin, current branch)
+            //if (result != 0) LOG("WARNING: Error pushing changes\n");
 
         } break;
         case OP_REMOVE:     // Remove
