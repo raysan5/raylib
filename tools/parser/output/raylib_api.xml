@@ -2440,8 +2440,9 @@
             <Param type="const char *" name="text" desc="" />
             <Param type="int *" name="count" desc="" />
         </Function>
-        <Function name="UnloadTextLines" retType="void" paramCount="1" desc="Unload text lines">
+        <Function name="UnloadTextLines" retType="void" paramCount="2" desc="Unload text lines">
             <Param type="char **" name="text" desc="" />
+            <Param type="int" name="lineCount" desc="" />
         </Function>
         <Function name="TextCopy" retType="int" paramCount="2" desc="Copy one string to another, returns bytes copied">
             <Param type="char *" name="dst" desc="" />

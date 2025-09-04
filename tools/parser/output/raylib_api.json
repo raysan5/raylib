@@ -9632,6 +9632,10 @@
         {
           "type": "char **",
           "name": "text"
+        },
+        {
+          "type": "int",
+          "name": "lineCount"
         }
       ]
     },

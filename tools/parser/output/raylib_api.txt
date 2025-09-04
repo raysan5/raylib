@@ -3681,11 +3681,12 @@ Function 425: LoadTextLines() (2 input parameters)
   Description: Load text as separate lines ('\n')
   Param[1]: text (type: const char *)
   Param[2]: count (type: int *)
-Function 426: UnloadTextLines() (1 input parameters)
+Function 426: UnloadTextLines() (2 input parameters)
   Name: UnloadTextLines
   Return type: void
   Description: Unload text lines
   Param[1]: text (type: char **)
+  Param[2]: lineCount (type: int)
 Function 427: TextCopy() (2 input parameters)
   Name: TextCopy
   Return type: int
