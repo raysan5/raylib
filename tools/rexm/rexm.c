@@ -690,6 +690,9 @@ int main(int argc, char *argv[])
             if (result != 0) LOG("WARNING: Error committing changes\n");
             //result = system("git push"); // Push to the remote (origin, current branch)
             //if (result != 0) LOG("WARNING: Error pushing changes\n");
+            ChangeDirectory("C:/GitHub/raylib.com");
+            result = system(TextFormat("git commit -am \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            if (result != 0) LOG("WARNING: Error committing changes\n");
 
         } break;
         case OP_REMOVE:     // Remove
