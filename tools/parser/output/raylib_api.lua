@@ -2688,88 +2688,93 @@ return {
           description = "32 bpp"
         },
         {
-          name = "PIXELFORMAT_UNCOMPRESSED_R32",
+          name = "PIXELFORMAT_UNCOMPRESSED_B8G8R8A8",
           value = 8,
+          description = "32 bpp"
+        },
+        {
+          name = "PIXELFORMAT_UNCOMPRESSED_R32",
+          value = 9,
           description = "32 bpp (1 channel - float)"
         },
         {
           name = "PIXELFORMAT_UNCOMPRESSED_R32G32B32",
-          value = 9,
+          value = 10,
           description = "32*3 bpp (3 channels - float)"
         },
         {
           name = "PIXELFORMAT_UNCOMPRESSED_R32G32B32A32",
-          value = 10,
+          value = 11,
           description = "32*4 bpp (4 channels - float)"
         },
         {
           name = "PIXELFORMAT_UNCOMPRESSED_R16",
-          value = 11,
+          value = 12,
           description = "16 bpp (1 channel - half float)"
         },
         {
           name = "PIXELFORMAT_UNCOMPRESSED_R16G16B16",
-          value = 12,
+          value = 13,
           description = "16*3 bpp (3 channels - half float)"
         },
         {
           name = "PIXELFORMAT_UNCOMPRESSED_R16G16B16A16",
-          value = 13,
+          value = 14,
           description = "16*4 bpp (4 channels - half float)"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_DXT1_RGB",
-          value = 14,
+          value = 15,
           description = "4 bpp (no alpha)"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_DXT1_RGBA",
-          value = 15,
+          value = 16,
           description = "4 bpp (1 bit alpha)"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_DXT3_RGBA",
-          value = 16,
-          description = "8 bpp"
-        },
-        {
-          name = "PIXELFORMAT_COMPRESSED_DXT5_RGBA",
           value = 17,
           description = "8 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_ETC1_RGB",
+          name = "PIXELFORMAT_COMPRESSED_DXT5_RGBA",
           value = 18,
-          description = "4 bpp"
+          description = "8 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_ETC2_RGB",
+          name = "PIXELFORMAT_COMPRESSED_ETC1_RGB",
           value = 19,
           description = "4 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA",
+          name = "PIXELFORMAT_COMPRESSED_ETC2_RGB",
           value = 20,
+          description = "4 bpp"
+        },
+        {
+          name = "PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA",
+          value = 21,
           description = "8 bpp"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_PVRT_RGB",
-          value = 21,
-          description = "4 bpp"
-        },
-        {
-          name = "PIXELFORMAT_COMPRESSED_PVRT_RGBA",
           value = 22,
           description = "4 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA",
+          name = "PIXELFORMAT_COMPRESSED_PVRT_RGBA",
           value = 23,
+          description = "4 bpp"
+        },
+        {
+          name = "PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA",
+          value = 24,
           description = "8 bpp"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA",
-          value = 24,
+          value = 25,
           description = "2 bpp"
         }
       }

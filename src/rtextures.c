@@ -1374,6 +1374,18 @@ void ImageFormat(Image *image, int newFormat)
                         ((unsigned char *)image->data)[i + 3] = (unsigned char)(pixels[k].w*255.0f);
                     }
                 } break;
+                case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+                {
+                    image->data = (unsigned char *)RL_MALLOC(image->width*image->height*4*sizeof(unsigned char));
+
+                    for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
+                    {
+                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[k].z*255.0f);
+                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].y*255.0f);
+                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[k].x*255.0f);
+                        ((unsigned char *)image->data)[i + 3] = (unsigned char)(pixels[k].w*255.0f);
+                    }
+                } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
                     // WARNING: Image is converted to GRAYSCALE equivalent 32bit
@@ -1775,6 +1787,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
             case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)2); break;
             case PIXELFORMAT_UNCOMPRESSED_R8G8B8: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)3); break;
             case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)4); break;
+            case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)4); break;
             default: break;
         }
 
@@ -1972,6 +1985,20 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
                         ((unsigned char *)image->data)[i - 3] = color.r;
                         ((unsigned char *)image->data)[i - 2] = color.g;
                         ((unsigned char *)image->data)[i - 1] = color.b;
+                        ((unsigned char *)image->data)[i] = color.a;
+                    }
+                }
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+            {
+                unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
+                for (int i = 3; i < image->width*image->height*4; i += 4)
+                {
+                    if (((unsigned char *)image->data)[i] <= thresholdValue)
+                    {
+                        ((unsigned char *)image->data)[i - 3] = color.b;
+                        ((unsigned char *)image->data)[i - 2] = color.g;
+                        ((unsigned char *)image->data)[i - 1] = color.r;
                         ((unsigned char *)image->data)[i] = color.a;
                     }
                 }
@@ -2464,7 +2491,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 
         RL_FREE(image->data);      // free old image data
 
-        if ((image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
+        if ((image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) && (image->format != PIXELFORMAT_UNCOMPRESSED_B8G8R8A8))
         {
             TRACELOG(LOG_WARNING, "IMAGE: Format is already 16bpp or lower, dithering could have no effect");
         }
@@ -3020,6 +3047,15 @@ Color *LoadImageColors(Image image)
 
                     k += 4;
                 } break;
+                case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+                {
+                    pixels[i].b = ((unsigned char *)image.data)[k];
+                    pixels[i].g = ((unsigned char *)image.data)[k + 1];
+                    pixels[i].r = ((unsigned char *)image.data)[k + 2];
+                    pixels[i].a = ((unsigned char *)image.data)[k + 3];
+
+                    k += 4;
+                } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
                     pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
@@ -3263,6 +3299,14 @@ Color GetImageColor(Image image, int x, int y)
                 color.a = ((unsigned char *)image.data)[(y*image.width + x)*4 + 3];
 
             } break;
+            case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+            {
+                color.b = ((unsigned char *)image.data)[(y*image.width + x)*4];
+                color.g = ((unsigned char *)image.data)[(y*image.width + x)*4 + 1];
+                color.r = ((unsigned char *)image.data)[(y*image.width + x)*4 + 2];
+                color.a = ((unsigned char *)image.data)[(y*image.width + x)*4 + 3];
+
+            } break;
             case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
             {
                 color.r = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3];
@@ -3427,6 +3471,14 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((unsigned char *)dst->data)[(y*dst->width + x)*4] = color.r;
             ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 1] = color.g;
             ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 2] = color.b;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 3] = color.a;
+
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+        {
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4] = color.b;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 1] = color.g;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 2] = color.r;
             ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 3] = color.a;
 
         } break;
@@ -5212,6 +5264,7 @@ Color GetPixelColor(void *srcPtr, int format)
 
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
+        case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8: color = (Color){ ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[3] }; break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
         case PIXELFORMAT_UNCOMPRESSED_R32:
         {
@@ -5350,6 +5403,14 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             ((unsigned char *)dstPtr)[3] = color.a;
 
         } break;
+        case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+        {
+            ((unsigned char *)dstPtr)[0] = color.b;
+            ((unsigned char *)dstPtr)[1] = color.g;
+            ((unsigned char *)dstPtr)[2] = color.r;
+            ((unsigned char *)dstPtr)[3] = color.a;
+
+        } break;
         default: break;
     }
 }
@@ -5369,6 +5430,7 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8: bpp = 32; break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
         case PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
@@ -5513,6 +5575,15 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
                     pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
                     pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                    pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
+
+                    k += 4;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:
+                {
+                    pixels[i].z = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                    pixels[i].x = (float)((unsigned char *)image.data)[k + 2]/255.0f;
                     pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
 
                     k += 4;

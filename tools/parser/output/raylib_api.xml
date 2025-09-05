@@ -560,7 +560,7 @@
             <Value name="SHADER_ATTRIB_VEC3" integer="2" desc="Shader attribute type: vec3 (3 float)" />
             <Value name="SHADER_ATTRIB_VEC4" integer="3" desc="Shader attribute type: vec4 (4 float)" />
         </Enum>
-        <Enum name="PixelFormat" valueCount="24" desc="Pixel formats">
+        <Enum name="PixelFormat" valueCount="25" desc="Pixel formats">
             <Value name="PIXELFORMAT_UNCOMPRESSED_GRAYSCALE" integer="1" desc="8 bit per pixel (no alpha)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA" integer="2" desc="8*2 bpp (2 channels)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_R5G6B5" integer="3" desc="16 bpp" />
@@ -568,23 +568,24 @@
             <Value name="PIXELFORMAT_UNCOMPRESSED_R5G5B5A1" integer="5" desc="16 bpp (1 bit alpha)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_R4G4B4A4" integer="6" desc="16 bpp (4 bit alpha)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_R8G8B8A8" integer="7" desc="32 bpp" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R32" integer="8" desc="32 bpp (1 channel - float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32" integer="9" desc="32*3 bpp (3 channels - float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32A32" integer="10" desc="32*4 bpp (4 channels - float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R16" integer="11" desc="16 bpp (1 channel - half float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16" integer="12" desc="16*3 bpp (3 channels - half float)" />
-            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16A16" integer="13" desc="16*4 bpp (4 channels - half float)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGB" integer="14" desc="4 bpp (no alpha)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGBA" integer="15" desc="4 bpp (1 bit alpha)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT3_RGBA" integer="16" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT5_RGBA" integer="17" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC1_RGB" integer="18" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC2_RGB" integer="19" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA" integer="20" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGB" integer="21" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGBA" integer="22" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA" integer="23" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="24" desc="2 bpp" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_B8G8R8A8" integer="8" desc="32 bpp" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R32" integer="9" desc="32 bpp (1 channel - float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32" integer="10" desc="32*3 bpp (3 channels - float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32A32" integer="11" desc="32*4 bpp (4 channels - float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R16" integer="12" desc="16 bpp (1 channel - half float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16" integer="13" desc="16*3 bpp (3 channels - half float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16A16" integer="14" desc="16*4 bpp (4 channels - half float)" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGB" integer="15" desc="4 bpp (no alpha)" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGBA" integer="16" desc="4 bpp (1 bit alpha)" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT3_RGBA" integer="17" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT5_RGBA" integer="18" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ETC1_RGB" integer="19" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ETC2_RGB" integer="20" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA" integer="21" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGB" integer="22" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGBA" integer="23" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA" integer="24" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="25" desc="2 bpp" />
         </Enum>
         <Enum name="TextureFilter" valueCount="6" desc="Texture parameters: filter mode">
             <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, just pixel approximation" />
