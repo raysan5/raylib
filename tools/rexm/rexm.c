@@ -216,6 +216,24 @@ int main(int argc, char *argv[])
     char exRename[64] = { 0 };      // Example re-name, without extension
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
+    
+    /*
+    // Testing code for UpdateSourceMetadata()
+    rlExampleInfo test = { 0 };
+    strcpy(test.category, "core");
+    strcpy(test.name, "core_boring_window");
+    test.stars = 4;
+    strcpy(test.verCreated, "2.9");
+    strcpy(test.verUpdated, "6.0");
+    test.yearCreated = 2010;
+    test.yearReviewed = 2026;
+    strcpy(test.author, "John W. Smith");
+    strcpy(test.authorGitHub, "littlejohnny");
+
+    char exSourcePath[512] = { 0 };
+    strcpy(exSourcePath, TextFormat("%s/core/core_basic_window.c", exBasePath)); // WARNING: Cache path for saving
+    UpdateSourceMetadata(exSourcePath, &test);
+    */
 
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
@@ -1940,8 +1958,8 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     strcpy(entry->verUpdated, tokens[4]);
 
     // Get year created and year reviewed
-    strcpy(entry->yearCreated, tokens[5]);
-    strcpy(entry->yearReviewed, tokens[6]);
+    entry->yearCreated = TextToInteger(tokens[5]);
+    entry->yearReviewed = TextToInteger(tokens[6]);
 
     // Get author and github   
     if (tokens[6][0] == '"') tokens[6] += 1;
@@ -2256,10 +2274,14 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
         char *exTextUpdated[6] = { 0 };     // Pointers to multiple updated text versions
 
         char exNameFormated[256] = { 0 };   // Example name without category and using spaces
+        int exNameIndex = TextFindIndex(info->name, "_");
+        strcpy(exNameFormated, info->name + exNameIndex + 1);
+        int exNameLen = strlen(exNameFormated);
+        for (int i = 0; i < exNameLen; i++) { if (exNameFormated[i] == '_') exNameFormated[i] = ' '; }
 
         // Update example header title (line #3 - ALWAYS)
         // String: "*   raylib [shaders] example - texture drawing"
-        exTextUpdated[0] = TextReplaceBetween(exSrcPath, 
+        exTextUpdated[0] = TextReplaceBetween(exText, 
             TextFormat("%s] example - %s", info->category, exNameFormated), "*   raylib [", "\n");
 
         // Update example complexity rating
@@ -2280,30 +2302,32 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
         exTextUpdated[2] = TextReplaceBetween(exTextUpdated[1], 
             TextFormat("%s, last time updated with raylib %s", info->verCreated, info->verUpdated), "*   Example originally created with raylib ", "\n");
 
-        // Update contributors names
-        // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
-        exTextUpdated[3] = TextReplaceBetween(exTextUpdated[2], 
-            TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
-
         // Update copyright message
         // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
         if (info->yearCreated == info->yearReviewed)
         {
-            exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3],
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdated[2],
                 TextFormat("%i %s (@%s", info->yearCreated, info->author, info->authorGitHub), "Copyright (c) ", ")");
         }
         else
         {
-            exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3],
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdated[2],
                 TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub), "Copyright (c) ", ")");
         }
 
         // Update window title
         // String: "InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
-        exTextUpdated[5] = TextReplaceBetween(exTextUpdated[4], 
+        exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], 
             TextFormat("raylib [%s] example - %s", info->category, exNameFormated), "InitWindow(screenWidth, screenHeight, \"", "\");");
 
-        SaveFileText(exSrcPath, exTextUpdated[5]);
+        // Update contributors names
+        // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
+        // WARNING: Not all examples are contributed by someone, so the result of this replace can be NULL (string not found)
+        exTextUpdated[5] = TextReplaceBetween(exTextUpdated[4], 
+            TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
+
+        if (exTextUpdated[5] != NULL) SaveFileText(exSrcPath, exTextUpdated[5]);
+        else SaveFileText(exSrcPath, exTextUpdated[4]);
 
         for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
 
@@ -2403,19 +2427,21 @@ static char *TextReplaceBetween(const char *text, const char *replace, const cha
 
     if (beginIndex > -1)
     {
-        int endIndex = TextFindIndex(text + beginIndex, end);
+        int beginLen = strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
 
-        if (beginIndex > -1)
+        if (endIndex > -1)
         {
+            endIndex += (beginIndex + beginLen);
+
             int textLen = strlen(text);
             int replaceLen = strlen(replace);
-            int toreplaceLen = (endIndex + beginIndex) - (beginIndex + strlen(begin));
+            int toreplaceLen = endIndex - beginIndex - beginLen;
             result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
 
-            int beginLen = strlen(begin);
-            strncpy(result, text, textLen - beginIndex + strlen(begin)); // Copy first text part
-            strncpy(result + textLen - beginIndex + beginLen, replace, replaceLen); // Copy replace
-            strncpy(result + textLen - beginIndex + beginLen + replaceLen, text + beginIndex + toreplaceLen, textLen - endIndex); // Copy end text part
+            strncpy(result, text, beginIndex + beginLen); // Copy first text part
+            strncpy(result + beginIndex + beginLen, replace, replaceLen); // Copy replace
+            strncpy(result + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
         }
     }
 
