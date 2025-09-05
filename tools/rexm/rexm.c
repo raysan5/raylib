@@ -75,8 +75,10 @@ typedef struct {
     char category[16];      // Example category: core, shapes, textures, text, models, shaders, audio, others
     char name[128];         // Example name: <category>_name_part
     int stars;              // Example stars count: ★☆☆☆
-    float verCreated;       // Example raylib creation version
-    float verUpdated;       // Example raylib last update version
+    char verCreated[12];    // Example raylib creation version
+    char verUpdated[12];    // Example raylib last update version
+    int yearCreated;        // Example year created
+    int yearReviewed;       // Example year reviewed
     char author[64];        // Example author
     char authorGitHub[64];  // Example author, GitHub user name
 
@@ -153,7 +155,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName);
 static void UnloadExampleInfo(rlExampleInfo *exInfo);
 
 // raylib example line info parser
-// Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
+// Parses following line format: core/core_basic_window;★☆☆☆;1.0;1.0;"Ray"/@raysan5
 static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry);
 
 // Sort array of strings by name
@@ -214,6 +216,35 @@ int main(int argc, char *argv[])
     char exRename[64] = { 0 };      // Example re-name, without extension
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
+
+    /*
+    // Code used to update examples list, to be removed
+    int exListCount = 0;
+    rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exListCount);
+    char *exColUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+    char starsText[16] = { 0 };
+    for (int i = 0, textOffset = 0; i < exListCount; i++)
+    {
+        rlExampleInfo *info = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCollection[i].category, exCollection[i].name));
+
+        // Get stars as text
+        for (int s = 0; s < 4; s++)
+        {
+            // NOTE: Every UTF-8 star are 3 bytes
+            if (s < exCollection[i].stars) strcpy(starsText + 3*s, "★");
+            else strcpy(starsText + 3*s, "☆");
+        }
+
+        //<example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;<year_created>;<year_reviewed>;"<example_author_name>";<author_github_user>
+        textOffset += sprintf(exColUpdated + textOffset, "%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
+            exCollection[i].category, exCollection[i].name, starsText, exCollection[i].verCreated, exCollection[i].verUpdated,
+            info->yearCreated, info->yearReviewed, exCollection[i].author, exCollection[i].authorGitHub);
+
+        UnloadExampleInfo(info);
+    }
+    UnloadExamplesData(exCollection);
+    SaveFileText(TextFormat("%s/examples_list_updated.txt", exBasePath), exColUpdated);
+    */
 
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
@@ -485,7 +516,7 @@ int main(int argc, char *argv[])
             // -----------------------------------------------------------------------------------------
             
             // Add example to the collection list, if not already there
-            // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
+            // NOTE: Required format: shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;"Ray";@raysan5
             //------------------------------------------------------------------------------------------------
             char *exCollectionList = LoadFileText(exCollectionFilePath);
             if (TextFindIndex(exCollectionList, exName) == -1) // Example not found
@@ -509,7 +540,7 @@ int main(int argc, char *argv[])
                 // NOTE: If no example info is provided (other than category/name), just using some default values
                 rlExampleInfo *exInfo = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
                 
-                // Get example difficulty stars
+                // Get example difficulty stars text
                 char starsText[16] = { 0 };
                 for (int i = 0; i < 4; i++)
                 {
@@ -523,15 +554,15 @@ int main(int argc, char *argv[])
                     // Add example to collection at the EOF
                     int endIndex = (int)strlen(exCollectionList);
                     memcpy(exCollectionListUpdated, exCollectionList, endIndex);
-                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%.2f;%.2f;\"%s\";@%s\n", 
-                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
+                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%s;%s;%s;%s;\"%s\";@%s\n", 
+                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
                 }
                 else
                 {
                     // Add example to collection, at the end of the category list
                     int categoryIndex = TextFindIndex(exCollectionList, exCategories[nextCategoryIndex]);
                     memcpy(exCollectionListUpdated, exCollectionList, categoryIndex);
-                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%.2f;%.2f;\"%s\";@%s\n",
+                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n",
                         exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
                     memcpy(exCollectionListUpdated + categoryIndex + textWritenSize, exCollectionList + categoryIndex, strlen(exCollectionList) - categoryIndex);
                 }
@@ -844,15 +875,15 @@ int main(int argc, char *argv[])
 
                     // Get example difficulty stars
                     char starsText[16] = { 0 };
-                    for (int i = 0; i < 4; i++)
+                    for (int s = 0; s < 4; s++)
                     {
                         // NOTE: Every UTF-8 star are 3 bytes
-                        if (i < exInfo->stars) strcpy(starsText + 3*i, "⭐️");
-                        else strcpy(starsText + 3*i, "☆");
+                        if (s < exInfo->stars) strcpy(starsText + 3*s, "★");
+                        else strcpy(starsText + 3*s, "☆");
                     }
 
                     exListLen += sprintf(exListUpdated + exListLen,
-                        TextFormat("%s;%s;%s;%.1f;%.1f;\"%s\";@%s\n",
+                        TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n",
                             exInfo->category, exInfo->name, starsText, exInfo->verCreated,
                             exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
 
@@ -994,8 +1025,8 @@ int main(int argc, char *argv[])
                     (strcmp(exInfo->author, exInfoHeader->author) != 0) ||
                     (strcmp(exInfo->authorGitHub, exInfoHeader->authorGitHub) != 0) ||
                     (exInfo->stars != exInfoHeader->stars) ||
-                    (exInfo->verCreated != exInfoHeader->verCreated) ||
-                    (exInfo->verUpdated != exInfoHeader->verUpdated))
+                    (strcmp(exInfo->verCreated, exInfoHeader->verCreated) != 0) ||
+                    (strcmp(exInfo->verUpdated, exInfoHeader->verUpdated) != 0))
                 {
                     exInfo->status |= VALID_INCONSISTENT_INFO;
                 }
@@ -1559,19 +1590,19 @@ static int UpdateRequiredFiles(void)
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|\n");
 
+        char starsTexts[16] = { 0 };
         for (int x = 0; x < exCollectionCount; x++)
         {
-            char stars[16] = { 0 };
             for (int s = 0; s < 4; s++)
             {
-                if (s < exCollection[x].stars) strcpy(stars + 3*s, "⭐️");
-                else strcpy(stars + 3*s, "☆");
+                if (s < exCollection[x].stars) strcpy(starsText + 3*s, "⭐️"); // WARNING: Different than '★', more visual
+                else strcpy(starsText + 3*s, "☆");
             }
 
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                TextFormat("| [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %.1f | %.1f | [%s](https://github.com/%s) |\n", 
+                TextFormat("| [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %s | %s | [%s](https://github.com/%s) |\n", 
                     exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].name,
-                    stars, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub));
+                    starsText, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub));
         }
 
         UnloadExamplesData(exCollection);
@@ -1602,6 +1633,8 @@ static int UpdateRequiredFiles(void)
     jsIndex = sprintf(jsTextUpdated + jsListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
     jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
 
+    char starsText[16] = { 0 };
+
     // NOTE: We avoid "others" category
     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
@@ -1609,18 +1642,17 @@ static int UpdateRequiredFiles(void)
         rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
         for (int x = 0; x < exCollectionCount; x++)
         {
-            char stars[16] = { 0 };
             for (int s = 0; s < 4; s++)
             {
-                if (s < exCollection[x].stars) strcpy(stars + 3*s, "⭐️");
-                else strcpy(stars + 3*s, "☆");
+                if (s < exCollection[x].stars) strcpy(starsText + 3*s, "⭐️"); // WARNING: Different than '★', more visual
+                else strcpy(starsText + 3*s, "☆");
             }
 
             if ((i == 6) && (x == (exCollectionCount - 1)))
             {
                 // NOTE: Last line to add, special case to consider
                 jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
+                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
             }
             else
             {
@@ -1808,7 +1840,7 @@ static int FileMove(const char *srcPath, const char *dstPath)
 }
 
 // Get example info from example file header
-// NOTE: Expecting the example to follow raylib_example_template.c
+// WARNING: Expecting the example to follow raylib_example_template.c
 static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
@@ -1821,8 +1853,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
         char *exText = LoadFileText(exFileName);
 
         // Get example difficulty stars
-        // NOTE: Counting the unicode char occurrences: ⭐️
-        // WARNING: The stars unicode in examples is not the same than in collection list!!!
+        // NOTE: Counting the unicode char occurrences: ★
         int starsIndex = TextFindIndex(exText, "★");
         if (starsIndex > 0)
         {
@@ -1841,26 +1872,28 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
         }
 
         // Get example create with raylib version
-        char verCreateText[4] = { 0 };
         int verCreateIndex = TextFindIndex(exText, "created with raylib "); // Version = index + 20
-        if (verCreateIndex > 0) strncpy(verCreateText, exText + verCreateIndex + 20, 3);
-        else strncpy(verCreateText, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
-        exInfo->verCreated = TextToFloat(verCreateText);
+        if (verCreateIndex > 0) strncpy(exInfo->verCreated, exText + verCreateIndex + 20, 3);
+        else strncpy(exInfo->verCreated, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
 
         // Get example update with raylib version
-        char verUpdateText[4] = { 0 };
         int verUpdateIndex = TextFindIndex(exText, "updated with raylib "); // Version = index + 20
-        if (verUpdateIndex > 0) strncpy(verUpdateText, exText + verUpdateIndex + 20, 3);
-        else strncpy(verUpdateText, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
-        exInfo->verUpdated = TextToFloat(verUpdateText);
+        if (verUpdateIndex > 0) strncpy(exInfo->verUpdated, exText + verUpdateIndex + 20, 3);
+        else strncpy(exInfo->verUpdated, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
 
-        // Get example creator and github user
+        // Get example years created/reviewed and creator and github user
         // NOTE: Using copyright line instead of "Example contributed by " because
         // most examples do not contain that line --> TODO: Review examples header formating?
         // Expected format: Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
         // Alternatives:  Copyright (c) <year_created> <author_name> (@<user_github>) and <contrib_name> (@<contrib_user>)
         int copyrightIndex = TextFindIndex(exText, "Copyright (c) ");
         int yearStartIndex = copyrightIndex + 14;
+        char yearText[5] = { 0 };
+        strncpy(yearText, exText + yearStartIndex, 4);
+        exInfo->yearCreated = TextToInteger(yearText);
+        // Check for review year included (or just use creation year)
+        if (exText[yearStartIndex + 4] == '-') strncpy(yearText, exText + yearStartIndex + 5, 4);
+        exInfo->yearReviewed = TextToInteger(yearText);
         int yearEndIndex = TextFindIndex(exText + yearStartIndex, " ");
         int authorStartIndex = yearStartIndex + yearEndIndex + 1;
         int authorEndIndex = TextFindIndex(exText + authorStartIndex, " (@");
@@ -1898,7 +1931,7 @@ static void UnloadExampleInfo(rlExampleInfo *exInfo)
 }
 
 // raylib example line info parser
-// Parses following line format: core;core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray";@raysan5
+// Parses following line format: core;core_basic_window;★☆☆☆;1.0;1.0;2013;2025;"Ray";@raysan5
 static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
 {
     #define MAX_EXAMPLE_INFO_LINE_LEN   512
@@ -1909,19 +1942,21 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     
     int tokenCount = 0;
     char **tokens = TextSplit(line, ';', &tokenCount);
+    
+    if (tokenCount != 7) LOG("REXM: WARNING: Example collection line contains invalid numbe of tokens: %i", tokenCount);
 
     // Get category and name
     strcpy(entry->category, tokens[0]);
     strcpy(entry->name, tokens[1]);
 
     // Parsing stars
-    // NOTE: Counting the unicode char occurrences: ⭐️
+    // NOTE: Counting the unicode char occurrences: ★
     const char *starPtr = tokens[2];
     while (*starPtr) 
     {
         if (((unsigned char)starPtr[0] == 0xe2) && 
-            ((unsigned char)starPtr[1] == 0xad) && 
-            ((unsigned char)starPtr[2] == 0x90))
+            ((unsigned char)starPtr[1] == 0x98) && 
+            ((unsigned char)starPtr[2] == 0x85))
         {
             entry->stars++;
             starPtr += 3; // Advance past multibyte character
@@ -1930,14 +1965,18 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     }
 
     // Get raylib creation/update versions
-    entry->verCreated = strtof(tokens[3], NULL);
-    entry->verUpdated = strtof(tokens[4], NULL);
+    strcpy(entry->verCreated, tokens[3]);
+    strcpy(entry->verUpdated, tokens[4]);
+
+    // Get year created and year reviewed
+    strcpy(entry->yearCreated, tokens[5]);
+    strcpy(entry->yearReviewed, tokens[6]);
 
     // Get author and github   
-    if (tokens[5][0] == '"') tokens[5] += 1;
-    if (tokens[5][strlen(tokens[5]) - 1] == '"') tokens[5][strlen(tokens[5]) - 1] = '\0';
-    strcpy(entry->author, tokens[5]);
-    strcpy(entry->authorGitHub, tokens[6] + 1); // Skip '@'
+    if (tokens[6][0] == '"') tokens[6] += 1;
+    if (tokens[6][strlen(tokens[6]) - 1] == '"') tokens[6][strlen(tokens[6]) - 1] = '\0';
+    strcpy(entry->author, tokens[6]);
+    strcpy(entry->authorGitHub, tokens[7] + 1); // Skip '@'
 
     return 1;
 }
@@ -1988,7 +2027,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
 
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
             // HACK: Just check previous position from pointer for function name including the string...
-            // This is a dirty solution, the good one would be getting the data loading function names...
+            // This is a quick solution, the good one would be getting the data loading function names...
             if ((TextFindIndex(ptr - 40, "ExportImage") == -1) &&
                 (TextFindIndex(ptr - 10, "TraceLog") == -1)) // Avoid TraceLog() strings processing
             {
@@ -2242,75 +2281,54 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 {
     if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
     {
-        char *fileText = LoadFileText(exSrcPath);
-        char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
+        char *exText = LoadFileText(exSrcPath);
+        char *exTextUpdated[6] = { 0 };     // Pointers to multiple updated text versions
 
-        char exName[64] = { 0 };            // Example name: fileName without extension
-        char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
-        char exDescription[256] = { 0 };    // Example description: example text line #3
-        char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
-
-        // TODO: Update source code metadata
+        char exNameFormated[256] = { 0 };   // Example name without category and using spaces
 
         // Update example header title (line #3 - ALWAYS)
         // String: "*   raylib [shaders] example - texture drawing"
-
+        exTextUpdated[0] = TextReplaceBetween(exSrcPath, 
+            TextFormat("%s] example - %s", info->category, exNameFormated), "*   raylib [", "\n");
 
         // Update example complexity rating
         // String: "*   Example complexity rating: [★★☆☆] 2/4"
-        fileTextUpdated[0] = TextReplaceBetween(exSrcPath, "★★☆☆] 2", "Example complexity rating: [", "/4\n");
-
+        // Get example difficulty stars text
+        char starsText[16] = { 0 };
+        for (int i = 0; i < 4; i++)
+        {
+            // NOTE: Every UTF-8 star are 3 bytes
+            if (i < info->stars) strcpy(starsText + 3*i, "★");
+            else strcpy(starsText + 3*i, "☆");
+        }
+        exTextUpdated[1] = TextReplaceBetween(exTextUpdated[0], 
+            TextFormat("%s] %i", starsText, info->stars), "*   Example complexity rating: [", "/4\n");
 
         // Update example creation/update raylib versions
         // String: "*   Example originally created with raylib 2.0, last time updated with raylib 3.7
-        
+        exTextUpdated[2] = TextReplaceBetween(exTextUpdated[1], 
+            TextFormat("%s, last time updated with raylib %s", info->verCreated, info->verUpdated), "*   Example originally created with raylib ", "\n");
 
         // Update contributors names
         // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
-        
+        exTextUpdated[3] = TextReplaceBetween(exTextUpdated[2], 
+            TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
 
         // Update copyright message
         // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
-        fileTextUpdated[0] = TextReplaceBetween(exSrcPath, "★★☆☆] 2", "Copyright (c) ", ")");
+        exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], 
+            TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub), "Copyright (c) ", ")");
 
         // Update window title
-        //"InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
+        // String: "InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
+        exTextUpdated[5] = TextReplaceBetween(exTextUpdated[4], 
+            TextFormat("raylib [%s] example - %s", info->category, exNameFormated), "InitWindow(screenWidth, screenHeight, \"", "\");");
 
-        /*
-        // Get example name: replace underscore by spaces
-        strcpy(exName, GetFileNameWithoutExt(exSrcPath));
-        strcpy(exTitle, exName);
-        for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
+        SaveFileText(exSrcPath, exTextUpdated[5]);
 
-        // Get example category from exName: copy until first underscore
-        for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
+        for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
 
-        // Get example description: copy line #3 from example file
-        char *exText = LoadFileText(exFilePath);
-        int lineCount = 0;
-        char **lines = LoadTextLines(exText, &lineCount);
-        int lineLength = (int)strlen(lines[2]);
-        strncpy(exDescription, lines[2] + 4, lineLength - 4);
-        UnloadTextLines(lines);
         UnloadFileText(exText);
-
-        // Update example.html required text
-        fileTextUpdated[0] = TextReplace(fileText, "raylib web game", exTitle);
-        fileTextUpdated[1] = TextReplace(fileTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
-        fileTextUpdated[2] = TextReplace(fileTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
-            TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
-        fileTextUpdated[3] = TextReplace(fileTextUpdated[2], "https://www.raylib.com/games.html",
-            TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
-        fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
-        fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
-            TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
-        */
-
-        SaveFileText(exSrcPath, fileTextUpdated[5]);
-
-        for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
-
-        UnloadFileText(fileText);
     }
 }
 
@@ -2319,8 +2337,8 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 {
     if (FileExists(exHtmlPath) && IsFileExtension(exHtmlPath, ".html"))
     {
-        char *fileText = LoadFileText(exHtmlPath);
-        char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
+        char *exHtmlText = LoadFileText(exHtmlPath);
+        char *exHtmlTextUpdated[6] = { 0 }; // Pointers to multiple updated text versions
 
         char exName[64] = { 0 };            // Example name: fileName without extension
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
@@ -2345,17 +2363,17 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         UnloadFileText(exText);
 
         // Update example.html required text
-        fileTextUpdated[0] = TextReplace(fileText, "raylib web game", exTitle);
-        fileTextUpdated[1] = TextReplace(fileTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
-        fileTextUpdated[2] = TextReplace(fileTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
+        exHtmlTextUpdated[0] = TextReplace(exHtmlText, "raylib web game", exTitle);
+        exHtmlTextUpdated[1] = TextReplace(exHtmlTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
+        exHtmlTextUpdated[2] = TextReplace(exHtmlTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
             TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
-        fileTextUpdated[3] = TextReplace(fileTextUpdated[2], "https://www.raylib.com/games.html",
+        exHtmlTextUpdated[3] = TextReplace(exHtmlTextUpdated[2], "https://www.raylib.com/games.html",
             TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
-        fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
-        fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
+        exHtmlTextUpdated[4] = TextReplace(exHtmlTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
+        exHtmlTextUpdated[5] = TextReplace(exHtmlTextUpdated[4], "https://github.com/raysan5/raylib",
             TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
-        SaveFileText(exHtmlPath, fileTextUpdated[5]);
+        SaveFileText(exHtmlPath, exHtmlTextUpdated[5]);
 
         //LOG("INFO: [%s] Updated successfully\n",files.paths[i]);
         //LOG("      - Name / Title: %s / %s\n", exName, exTitle);
@@ -2363,9 +2381,9 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         //LOG("      - URL:          %s\n", TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
         //LOG("      - URL Source:   %s\n", TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
-        for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
+        for (int i = 0; i < 6; i++) { MemFree(exHtmlTextUpdated[i]); exHtmlTextUpdated[i] = NULL; }
 
-        UnloadFileText(fileText);
+        UnloadFileText(exHtmlText);
     }
 }
 
