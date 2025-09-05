@@ -1561,7 +1561,7 @@ static int UpdateRequiredFiles(void)
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|\n");
 
-        char starsTexts[16] = { 0 };
+        char starsText[16] = { 0 };
         for (int x = 0; x < exCollectionCount; x++)
         {
             for (int s = 0; s < 4; s++)
@@ -1628,7 +1628,7 @@ static int UpdateRequiredFiles(void)
             else
             {
                 jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
+                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
             }
         }
 
