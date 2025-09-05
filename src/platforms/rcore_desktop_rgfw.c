@@ -518,6 +518,7 @@ int RGFW_formatToChannels(int format)
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:      // 16 bpp (1 bit alpha)
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:      // 16 bpp (4 bit alpha)
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:      // 32 bpp
+        case PIXELFORMAT_UNCOMPRESSED_B8G8R8A8:      // 32 bpp
             return 2;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:     // 32*3 bpp (3 channels - float)
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:     // 16*3 bpp (3 channels - half float)

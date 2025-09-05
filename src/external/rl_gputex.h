@@ -100,6 +100,7 @@ typedef enum {
     RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
     RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
     RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+    RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_B8G8R8A8,          // 32 bpp
     RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
     RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
     RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
@@ -810,6 +811,7 @@ void *rl_load_pvr_from_memory(const unsigned char *file_data, unsigned int file_
                     case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
                     case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
                     case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+                    case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_B8G8R8A8: bpp = 32; break;
                     case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
                     case RL_GPUTEX_PIXELFORMAT_COMPRESSED_PVRT_RGB:
                     case RL_GPUTEX_PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
@@ -913,6 +915,7 @@ static int get_pixel_data_size(int width, int height, int format)
         case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
         case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_B8G8R8A8: bpp = 32; break;
         case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
         case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
         case RL_GPUTEX_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
