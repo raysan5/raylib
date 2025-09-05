@@ -526,6 +526,7 @@ int main(int argc, char *argv[])
                 else if (strcmp(exCategory, "others") == 0) nextCategoryIndex = -1; // Add to EOF
 
                 // Get required example info from example file header (if provided)
+
                 // NOTE: If no example info is provided (other than category/name), just using some default values
                 rlExampleInfo *exInfo = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
                 
@@ -543,7 +544,7 @@ int main(int argc, char *argv[])
                     // Add example to collection at the EOF
                     int endIndex = (int)strlen(exCollectionList);
                     memcpy(exCollectionListUpdated, exCollectionList, endIndex);
-                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%s;%s;%s;%s;\"%s\";@%s\n", 
+                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n", 
                         exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
                 }
                 else
@@ -551,8 +552,8 @@ int main(int argc, char *argv[])
                     // Add example to collection, at the end of the category list
                     int categoryIndex = TextFindIndex(exCollectionList, exCategories[nextCategoryIndex]);
                     memcpy(exCollectionListUpdated, exCollectionList, categoryIndex);
-                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n",
-                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
+                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i\"%s\";@%s\n",
+                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
                     memcpy(exCollectionListUpdated + categoryIndex + textWritenSize, exCollectionList + categoryIndex, strlen(exCollectionList) - categoryIndex);
                 }
 
