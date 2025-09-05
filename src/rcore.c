@@ -2671,24 +2671,25 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     for (int i = 0; i < dataSize;)
     {
         // Every 4 sixtets must generate 3 octets
-        if (i + 2 >= dataSize)
+        if ((i + 2) >= dataSize)
         {
-            TRACELOG(LOG_WARNING, "BASE64 decoding error: Input data size is not valid");
+            TRACELOG(LOG_WARNING, "BASE64: Decoding error: Input data size is not valid");
             break;
         }
 
         unsigned int sixtetA = base64DecodeTable[(unsigned char)text[i]];
         unsigned int sixtetB = base64DecodeTable[(unsigned char)text[i + 1]];
-        unsigned int sixtetC = (i + 2 < dataSize && (unsigned char)text[i + 2] != '=')? base64DecodeTable[(unsigned char)text[i + 2]] : 0;
-        unsigned int sixtetD = (i + 3 < dataSize && (unsigned char)text[i + 3] != '=')? base64DecodeTable[(unsigned char)text[i + 3]] : 0;
+        unsigned int sixtetC = (((i + 2) < dataSize) && (unsigned char)text[i + 2] != '=')? base64DecodeTable[(unsigned char)text[i + 2]] : 0;
+        unsigned int sixtetD = (((i + 3) < dataSize) && (unsigned char)text[i + 3] != '=')? base64DecodeTable[(unsigned char)text[i + 3]] : 0;
 
         unsigned int octetPack = (sixtetA << 18) | (sixtetB << 12)  | (sixtetC << 6) | sixtetD;
 
-        if (outputCount + 3 > maxOutputSize)
+        if ((outputCount + 3) > maxOutputSize)
         {
-            TRACELOG(LOG_WARNING, "BASE64 decoding: Output data size is too small");
+            TRACELOG(LOG_WARNING, "BASE64: Decoding error: Output data size is too small");
             break;
         }
+        
         decodedData[outputCount + 0] = (octetPack >> 16) & 0xff;
         decodedData[outputCount + 1] = (octetPack >> 8) & 0xff;
         decodedData[outputCount + 2] = octetPack & 0xff;
