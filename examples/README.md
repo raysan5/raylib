@@ -6,6 +6,7 @@ The examples assume you have already built the `raylib` library in `../src`.
 
 - `make` builds all examples
 - `make [module]` builds all examples for a particular module (e.g `make core`)
+- `make [module]/[name]` builds one examples for a particular module (e.g `make core/core_basic_window`)
 
 ### With Zig
 
