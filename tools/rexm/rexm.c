@@ -2287,8 +2287,16 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 
         // Update copyright message
         // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
-        exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], 
-            TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub), "Copyright (c) ", ")");
+        if (info->yearCreated == info->yearReviewed)
+        {
+            exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3],
+                TextFormat("%i %s (@%s", info->yearCreated, info->author, info->authorGitHub), "Copyright (c) ", ")");
+        }
+        else
+        {
+            exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3],
+                TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub), "Copyright (c) ", ")");
+        }
 
         // Update window title
         // String: "InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
