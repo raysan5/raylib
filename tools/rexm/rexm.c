@@ -217,35 +217,6 @@ int main(int argc, char *argv[])
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
 
-    /*
-    // Code used to update examples list, to be removed
-    int exListCount = 0;
-    rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exListCount);
-    char *exColUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
-    char starsText[16] = { 0 };
-    for (int i = 0, textOffset = 0; i < exListCount; i++)
-    {
-        rlExampleInfo *info = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCollection[i].category, exCollection[i].name));
-
-        // Get stars as text
-        for (int s = 0; s < 4; s++)
-        {
-            // NOTE: Every UTF-8 star are 3 bytes
-            if (s < exCollection[i].stars) strcpy(starsText + 3*s, "★");
-            else strcpy(starsText + 3*s, "☆");
-        }
-
-        //<example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;<year_created>;<year_reviewed>;"<example_author_name>";<author_github_user>
-        textOffset += sprintf(exColUpdated + textOffset, "%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
-            exCollection[i].category, exCollection[i].name, starsText, exCollection[i].verCreated, exCollection[i].verUpdated,
-            info->yearCreated, info->yearReviewed, exCollection[i].author, exCollection[i].authorGitHub);
-
-        UnloadExampleInfo(info);
-    }
-    UnloadExamplesData(exCollection);
-    SaveFileText(TextFormat("%s/examples_list_updated.txt", exBasePath), exColUpdated);
-    */
-
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
     if (argc > 1)
