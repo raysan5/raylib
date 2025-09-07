@@ -32,7 +32,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_input_gamepad](core/core_input_gamepad.c) | <img src="core/core_input_gamepad.png" alt="core_input_gamepad" width="80"> | ⭐☆☆☆ | 1.1 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_multitouch](core/core_input_multitouch.c) | <img src="core/core_input_multitouch.png" alt="core_input_multitouch" width="80"> | ⭐☆☆☆ | 2.1 | 2.5 | [Berni](https://github.com/Berni8k) |
 | [core_input_gestures](core/core_input_gestures.c) | <img src="core/core_input_gestures.png" alt="core_input_gestures" width="80"> | ⭐⭐☆☆ | 1.4 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_input_gestures_testbed](core/core_input_gestures_testbed.c) | <img src="core/core_input_gestures_testbed.png" alt="core_input_gestures_testbed" width="80"> | ⭐⭐⭐☆ | 4.6 | 5.6 | [ubkp](https://github.com/ubkp) |
+| [core_input_gestures_testbed](core/core_input_gestures_testbed.c) | <img src="core/core_input_gestures_testbed.png" alt="core_input_gestures_testbed" width="80"> | ⭐⭐⭐☆ | 4.6-dev | 5.6-dev | [ubkp](https://github.com/ubkp) |
 | [core_input_virtual_controls](core/core_input_virtual_controls.c) | <img src="core/core_input_virtual_controls.png" alt="core_input_virtual_controls" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [oblerion](https://github.com/oblerion) |
 | [core_2d_camera](core/core_2d_camera.c) | <img src="core/core_2d_camera.png" alt="core_2d_camera" width="80"> | ⭐⭐☆☆ | 1.5 | 3.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_2d_camera_mouse_zoom](core/core_2d_camera_mouse_zoom.c) | <img src="core/core_2d_camera_mouse_zoom.png" alt="core_2d_camera_mouse_zoom" width="80"> | ⭐⭐☆☆ | 4.2 | 4.2 | [Jeffery Myers](https://github.com/JeffM2501) |
@@ -117,7 +117,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | [textures_fog_of_war](textures/textures_fog_of_war.c) | <img src="textures/textures_fog_of_war.png" alt="textures_fog_of_war" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [textures_gif_player](textures/textures_gif_player.c) | <img src="textures/textures_gif_player.png" alt="textures_gif_player" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [textures_image_kernel](textures/textures_image_kernel.c) | <img src="textures/textures_image_kernel.png" alt="textures_image_kernel" width="80"> | ⭐⭐⭐⭐️ | 1.3 | 1.3 | [Karim Salem](https://github.com/kimo-s) |
-| [textures_image_channel](textures/textures_image_channel.c) | <img src="textures/textures_image_channel.png" alt="textures_image_channel" width="80"> | ⭐⭐☆☆ | 5.1 | 5.1 | [Bruno Cabral](https://github.com/brccabral) |
+| [textures_image_channel](textures/textures_image_channel.c) | <img src="textures/textures_image_channel.png" alt="textures_image_channel" width="80"> | ⭐⭐☆☆ | 5.1-dev | 5.1-dev | [Bruno Cabral](https://github.com/brccabral) |
 | [textures_image_rotate](textures/textures_image_rotate.c) | <img src="textures/textures_image_rotate.png" alt="textures_image_rotate" width="80"> | ⭐⭐☆☆ | 1.0 | 1.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [textures_textured_curve](textures/textures_textured_curve.c) | <img src="textures/textures_textured_curve.png" alt="textures_textured_curve" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jeffery Myers](https://github.com/JeffM2501) |
 
@@ -169,7 +169,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_draw_cube_texture](models/models_draw_cube_texture.c) | <img src="models/models_draw_cube_texture.png" alt="models_draw_cube_texture" width="80"> | ⭐⭐☆☆ | 4.5 | 4.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [models_gpu_skinning](models/models_gpu_skinning.c) | <img src="models/models_gpu_skinning.png" alt="models_gpu_skinning" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Daniel Holden](https://github.com/orangeduck) |
 | [models_bone_socket](models/models_bone_socket.c) | <img src="models/models_bone_socket.png" alt="models_bone_socket" width="80"> | ⭐⭐⭐⭐️ | 4.5 | 4.5 | [iP](https://github.com/ipzaur) |
-| [models_tesseract_view](models/models_tesseract_view.c) | <img src="models/models_tesseract_view.png" alt="models_tesseract_view" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Timothy van der Valk](https://github.com/arceryz) |
+| [models_tesseract_view](models/models_tesseract_view.c) | <img src="models/models_tesseract_view.png" alt="models_tesseract_view" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Timothy van der Valk](https://github.com/arceryz) |
 
 ### category: shaders [29]
 
@@ -202,10 +202,10 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_shadowmap](shaders/shaders_shadowmap.c) | <img src="shaders/shaders_shadowmap.png" alt="shaders_shadowmap" width="80"> | ⭐⭐⭐⭐️ | 5.0 | 5.0 | [TheManTheMythTheGameDev](https://github.com/TheManTheMythTheGameDev) |
 | [shaders_vertex_displacement](shaders/shaders_vertex_displacement.c) | <img src="shaders/shaders_vertex_displacement.png" alt="shaders_vertex_displacement" width="80"> | ⭐⭐⭐☆ | 5.0 | 4.5 | [Alex ZH](https://github.com/ZzzhHe) |
 | [shaders_write_depth](shaders/shaders_write_depth.c) | <img src="shaders/shaders_write_depth.png" alt="shaders_write_depth" width="80"> | ⭐⭐☆☆ | 4.2 | 4.2 | [Buğra Alptekin Sarı](https://github.com/BugraAlptekinSari) |
-| [shaders_basic_pbr](shaders/shaders_basic_pbr.c) | <img src="shaders/shaders_basic_pbr.png" alt="shaders_basic_pbr" width="80"> | ⭐⭐⭐⭐️ | 5.0 | 5.1 | [Afan OLOVCIC](https://github.com/_DevDad) |
+| [shaders_basic_pbr](shaders/shaders_basic_pbr.c) | <img src="shaders/shaders_basic_pbr.png" alt="shaders_basic_pbr" width="80"> | ⭐⭐⭐⭐️ | 5.0 | 5.1-dev | [Afan OLOVCIC](https://github.com/_DevDad) |
 | [shaders_lightmap](shaders/shaders_lightmap.c) | <img src="shaders/shaders_lightmap.png" alt="shaders_lightmap" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
-| [shaders_view_depth](shaders/shaders_view_depth.c) | <img src="shaders/shaders_view_depth.png" alt="shaders_view_depth" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Luís Almeida](https://github.com/luis605) |
+| [shaders_view_depth](shaders/shaders_view_depth.c) | <img src="shaders/shaders_view_depth.png" alt="shaders_view_depth" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
 
 ### category: audio [8]
 

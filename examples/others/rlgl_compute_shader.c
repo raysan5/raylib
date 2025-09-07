@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - compute shader - game of life
+*   raylib [others] example - compute shader
 *
 *   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
 *         shaders used in this example are #version 430 (OpenGL 4.3)
@@ -57,7 +57,7 @@ int main(void)
     const int screenWidth = GOL_WIDTH;
     const int screenHeight = GOL_WIDTH;
 
-    InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader - game of life");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader");
 
     const Vector2 resolution = { screenWidth, screenHeight };
     unsigned int brushSize = 8;

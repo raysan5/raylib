@@ -605,9 +605,8 @@ int main(int argc, char *argv[])
             system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 #endif
             // Update generated .html metadata
-            char exHtmlPath[512] = { 0 };
-            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
-            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -691,9 +690,8 @@ int main(int argc, char *argv[])
             system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
 #endif
             // Update generated .html metadata
-            char exHtmlPath[512] = { 0 };
-            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename)); // WARNING: Cache path for saving
-            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
+            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename), 
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
@@ -1091,12 +1089,12 @@ int main(int argc, char *argv[])
                         #endif
 
                             // Update generated .html metadata
-                            char exHtmlPath[512] = { 0 };
-                            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name)); // WARNING: Cache path for saving
-                            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
+                            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name), 
+                                TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
 
                             // Copy results to web side
-                            FileCopy(exHtmlPath, TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name), 
+                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
                                 TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
@@ -1106,9 +1104,12 @@ int main(int argc, char *argv[])
 
                             exInfo->status &= ~VALID_MISSING_WEB_OUTPUT;
                             exInfo->status &= ~VALID_MISSING_WEB_METADATA;
+                        }
 
+                        if (exInfo->status & VALID_INCONSISTENT_INFO)
+                        {
                             // Update source code header info
-                            UpdateSourceMetadata(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name), exInfo);
+                            UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name), exInfo);
                         }
                     }
                 }
@@ -1285,9 +1286,8 @@ int main(int argc, char *argv[])
             #endif 
 
                 // Update generated .html metadata
-                char exHtmlPath[512] = { 0 };
-                strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
-                UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
                 // Copy results to web side
                 FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -1936,7 +1936,7 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     int tokenCount = 0;
     char **tokens = TextSplit(line, ';', &tokenCount);
     
-    if (tokenCount != 7) LOG("REXM: WARNING: Example collection line contains invalid numbe of tokens: %i", tokenCount);
+    if (tokenCount != 9) LOG("REXM: WARNING: Example collection line contains invalid number of tokens: %i\n", tokenCount);
 
     // Get category and name
     strcpy(entry->category, tokens[0]);
@@ -1966,10 +1966,10 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     entry->yearReviewed = TextToInteger(tokens[6]);
 
     // Get author and github   
-    if (tokens[6][0] == '"') tokens[6] += 1;
-    if (tokens[6][strlen(tokens[6]) - 1] == '"') tokens[6][strlen(tokens[6]) - 1] = '\0';
-    strcpy(entry->author, tokens[6]);
-    strcpy(entry->authorGitHub, tokens[7] + 1); // Skip '@'
+    if (tokens[7][0] == '"') tokens[7] += 1;
+    if (tokens[7][strlen(tokens[7]) - 1] == '"') tokens[7][strlen(tokens[7]) - 1] = '\0';
+    strcpy(entry->author, tokens[7]);
+    strcpy(entry->authorGitHub, tokens[8] + 1); // Skip '@'
 
     return 1;
 }
@@ -2274,8 +2274,13 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 {
     if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
     {
-        char *exText = LoadFileText(exSrcPath);
+        // WARNING: Cache a copy of exSrcPath to avoid modifications by TextFormat()
+        char exSourcePath[512] = { 0 };
+        strcpy(exSourcePath, exSrcPath);
+
+        char *exText = LoadFileText(exSourcePath);
         char *exTextUpdated[6] = { 0 };     // Pointers to multiple updated text versions
+        char *exTextUpdatedPtr = NULL;
 
         char exNameFormated[256] = { 0 };   // Example name without category and using spaces
         int exNameIndex = TextFindIndex(info->name, "_");
@@ -2327,11 +2332,16 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
         // Update contributors names
         // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
         // WARNING: Not all examples are contributed by someone, so the result of this replace can be NULL (string not found)
-        exTextUpdated[5] = TextReplaceBetween(exTextUpdated[4], 
-            TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
+        if (exTextUpdated[4] != NULL)
+        {
+            exTextUpdated[5] = TextReplaceBetween(exTextUpdated[4],
+                TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
+        }
+        else exTextUpdatedPtr = exTextUpdated[3];
 
-        if (exTextUpdated[5] != NULL) SaveFileText(exSrcPath, exTextUpdated[5]);
-        else SaveFileText(exSrcPath, exTextUpdated[4]);
+        if (exTextUpdated[5] != NULL) exTextUpdatedPtr = exTextUpdated[5];
+            
+        SaveFileText(exSourcePath, exTextUpdatedPtr);
 
         for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
 
@@ -2344,7 +2354,11 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 {
     if (FileExists(exHtmlPath) && IsFileExtension(exHtmlPath, ".html"))
     {
-        char *exHtmlText = LoadFileText(exHtmlPath);
+        // WARNING: Cache a copy of exHtmlPath to avoid modifications by TextFormat()
+        char exHtmlPathCopy[512] = { 0 };
+        strcpy(exHtmlPathCopy, exHtmlPath);
+
+        char *exHtmlText = LoadFileText(exHtmlPathCopy);
         char *exHtmlTextUpdated[6] = { 0 }; // Pointers to multiple updated text versions
 
         char exName[64] = { 0 };            // Example name: fileName without extension
@@ -2353,7 +2367,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
 
         // Get example name: replace underscore by spaces
-        strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
+        strcpy(exName, GetFileNameWithoutExt(exHtmlPathCopy));
         strcpy(exTitle, exName);
         for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
 
@@ -2380,7 +2394,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         exHtmlTextUpdated[5] = TextReplace(exHtmlTextUpdated[4], "https://github.com/raysan5/raylib",
             TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
-        SaveFileText(exHtmlPath, exHtmlTextUpdated[5]);
+        SaveFileText(exHtmlPathCopy, exHtmlTextUpdated[5]);
 
         //LOG("INFO: [%s] Updated successfully\n",files.paths[i]);
         //LOG("      - Name / Title: %s / %s\n", exName, exTitle);
