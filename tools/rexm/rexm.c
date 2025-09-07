@@ -2305,7 +2305,7 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 
         char *exText = LoadFileText(exSourcePath);
         char *exTextUpdated[6] = { 0 };     // Pointers to multiple updated text versions
-        char *exTextUpdatedPtr = NULL;
+        char *exTextUpdatedPtr = exText;    // Pointer to current valid text version
 
         char exNameFormated[256] = { 0 };   // Example name without category and using spaces
         int exNameIndex = TextFindIndex(info->name, "_");
@@ -2315,8 +2315,9 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 
         // Update example header title (line #3 - ALWAYS)
         // String: "*   raylib [shaders] example - texture drawing"
-        exTextUpdated[0] = TextReplaceBetween(exText, 
+        exTextUpdated[0] = TextReplaceBetween(exTextUpdatedPtr, 
             TextFormat("%s] example - %s", info->category, exNameFormated), "*   raylib [", "\n");
+        if (exTextUpdated[0] != NULL) exTextUpdatedPtr = exTextUpdated[0];
 
         // Update example complexity rating
         // String: "*   Example complexity rating: [★★☆☆] 2/4"
@@ -2328,45 +2329,45 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
             if (i < info->stars) strcpy(starsText + 3*i, "★");
             else strcpy(starsText + 3*i, "☆");
         }
-        exTextUpdated[1] = TextReplaceBetween(exTextUpdated[0], 
+        exTextUpdated[1] = TextReplaceBetween(exTextUpdatedPtr, 
             TextFormat("%s] %i", starsText, info->stars), "*   Example complexity rating: [", "/4\n");
+        if (exTextUpdated[1] != NULL) exTextUpdatedPtr = exTextUpdated[1];
 
         // Update example creation/update raylib versions
         // String: "*   Example originally created with raylib 2.0, last time updated with raylib 3.7
-        exTextUpdated[2] = TextReplaceBetween(exTextUpdated[1], 
+        exTextUpdated[2] = TextReplaceBetween(exTextUpdatedPtr, 
             TextFormat("%s, last time updated with raylib %s", info->verCreated, info->verUpdated), "*   Example originally created with raylib ", "\n");
+        if (exTextUpdated[2] != NULL) exTextUpdatedPtr = exTextUpdated[2];
 
         // Update copyright message
         // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
         if (info->yearCreated == info->yearReviewed)
         {
-            exTextUpdated[3] = TextReplaceBetween(exTextUpdated[2],
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr,
                 TextFormat("%i %s (@%s", info->yearCreated, info->author, info->authorGitHub), "Copyright (c) ", ")");
+            if (exTextUpdated[3] != NULL) exTextUpdatedPtr = exTextUpdated[3];
         }
         else
         {
-            exTextUpdated[3] = TextReplaceBetween(exTextUpdated[2],
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr,
                 TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub), "Copyright (c) ", ")");
+            if (exTextUpdated[3] != NULL) exTextUpdatedPtr = exTextUpdated[3];
         }
 
         // Update window title
         // String: "InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
         exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], 
             TextFormat("raylib [%s] example - %s", info->category, exNameFormated), "InitWindow(screenWidth, screenHeight, \"", "\");");
+        if (exTextUpdated[4] != NULL) exTextUpdatedPtr = exTextUpdated[4];
 
         // Update contributors names
         // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
         // WARNING: Not all examples are contributed by someone, so the result of this replace can be NULL (string not found)
-        if (exTextUpdated[4] != NULL)
-        {
-            exTextUpdated[5] = TextReplaceBetween(exTextUpdated[4],
+        exTextUpdated[5] = TextReplaceBetween(exTextUpdatedPtr,
                 TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
-        }
-        else exTextUpdatedPtr = exTextUpdated[3];
-
         if (exTextUpdated[5] != NULL) exTextUpdatedPtr = exTextUpdated[5];
             
-        SaveFileText(exSourcePath, exTextUpdatedPtr);
+        if (exTextUpdatedPtr != NULL) SaveFileText(exSourcePath, exTextUpdatedPtr);
 
         for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
 
