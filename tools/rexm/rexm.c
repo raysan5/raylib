@@ -1106,6 +1106,9 @@ int main(int argc, char *argv[])
 
                             exInfo->status &= ~VALID_MISSING_WEB_OUTPUT;
                             exInfo->status &= ~VALID_MISSING_WEB_METADATA;
+
+                            // Update source code header info
+                            UpdateSourceMetadata(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name), exInfo);
                         }
                     }
                 }
