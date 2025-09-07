@@ -1110,6 +1110,8 @@ int main(int argc, char *argv[])
                         {
                             // Update source code header info
                             UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name), exInfo);
+
+                            exInfo->status &= ~VALID_INCONSISTENT_INFO;
                         }
                     }
                 }
@@ -1866,12 +1868,16 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 
         // Get example create with raylib version
         int verCreateIndex = TextFindIndex(exText, "created with raylib "); // Version = index + 20
-        if (verCreateIndex > 0) strncpy(exInfo->verCreated, exText + verCreateIndex + 20, 3);
+        int verCreatedLen = 0;
+        for (int i = verCreateIndex + 20; (exText[i] != ' ') && (exText[i] != '\n') && (exText[i] != ','); i++) verCreatedLen++;
+        if (verCreateIndex > 0) strncpy(exInfo->verCreated, exText + verCreateIndex + 20, verCreatedLen);
         else strncpy(exInfo->verCreated, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
 
         // Get example update with raylib version
         int verUpdateIndex = TextFindIndex(exText, "updated with raylib "); // Version = index + 20
-        if (verUpdateIndex > 0) strncpy(exInfo->verUpdated, exText + verUpdateIndex + 20, 3);
+        int verUpdateLen = 0;
+        for (int i = verUpdateIndex + 20; (exText[i] != ' ') && (exText[i] != '\n') && (exText[i] != ','); i++) verUpdateLen++;
+        if (verUpdateIndex > 0) strncpy(exInfo->verUpdated, exText + verUpdateIndex + 20, verUpdateLen);
         else strncpy(exInfo->verUpdated, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
 
         // Get example years created/reviewed and creator and github user
@@ -2007,8 +2013,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
     if (code != NULL)
     {
         // Resources extensions to check
-        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", 
-            ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
+        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
         const int extCount = sizeof(exts)/sizeof(char *);
 
         char *ptr = code;
@@ -2021,8 +2026,9 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
             // HACK: Just check previous position from pointer for function name including the string...
             // This is a quick solution, the good one would be getting the data loading function names...
-            if ((TextFindIndex(ptr - 40, "ExportImage") == -1) &&
-                (TextFindIndex(ptr - 10, "TraceLog") == -1)) // Avoid TraceLog() strings processing
+            //if ((TextFindIndex(ptr - 40, "ExportImage") == -1) &&
+            //    (TextFindIndex(ptr - 10, "TraceLog") == -1)) // Avoid TraceLog() strings processing
+            if (TextFindIndex(ptr - 40, "ExportImage") == -1)
             {
                 int len = (int)(end - start);
                 if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
