@@ -67,7 +67,6 @@
 
 #define REXM_MAX_RESOURCE_PATHS         256
 
-
 // Create local commit with changes on example renaming
 #define RENAME_AUTO_COMMIT_CREATION
 
@@ -639,6 +638,10 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
                 FileRename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
+
+                // TODO: Edit: Update example source code metadata
+                //rlExampleInfo *info = LoadExamplesData(exCollectionFilePath, exRename, false, NULL); // TODO: Load one example from collection
+                //UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename), info);
 
                 // NOTE: Example resource files do not need to be changed...
                 // unless the example is moved from one caegory to another
@@ -1357,6 +1360,18 @@ int main(int argc, char *argv[])
 static int UpdateRequiredFiles(void)
 {
     int result = 0;
+
+    // Edit: Example source code metadata for consistency
+    //------------------------------------------------------------------------------------------------
+    int exListCount = 0;
+    rlExampleInfo *exList = LoadExamplesData(exCollectionFilePath, "ALL", true, &exListCount);
+    for (int i = 0; i < exListCount; i++) 
+    {
+        rlExampleInfo *info = &exList[i];
+        UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, info->category, info->name), info);
+    }
+    UnloadExamplesData(exList);
+    //------------------------------------------------------------------------------------------------
 
     // Edit: raylib/examples/Makefile --> Update from collection
     //------------------------------------------------------------------------------------------------
