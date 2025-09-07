@@ -544,7 +544,7 @@ SHAPES = \
     shapes/shapes_double_pendulum \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_draw_ring \
+    shapes/shapes_ring_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
     shapes/shapes_easings_rectangle_array \
@@ -811,7 +811,7 @@ shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
 shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_ring: shapes/shapes_draw_ring.c
+shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_ball_anim: shapes/shapes_easings_ball_anim.c

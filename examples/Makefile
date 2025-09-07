@@ -544,7 +544,7 @@ SHAPES = \
     shapes/shapes_double_pendulum \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_draw_ring \
+    shapes/shapes_ring_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
     shapes/shapes_easings_rectangle_array \

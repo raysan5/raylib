@@ -189,7 +189,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_circle_sector",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_rectangle_rounded", "examples\shapes_draw_rectangle_rounded.vcxproj", "{48871156-181A-475A-BD8D-200086A09675}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_ring", "examples\shapes_draw_ring.vcxproj", "{C4416DA1-9E62-46BA-9CD3-F8963C79E1A1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_ring_drawing", "examples\shapes_ring_drawing.vcxproj", "{C4416DA1-9E62-46BA-9CD3-F8963C79E1A1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_ball_anim", "examples\shapes_easings_ball_anim.vcxproj", "{1C49E35A-2838-49D9-9D5F-4B8134960EF6}"
 EndProject
