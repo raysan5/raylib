@@ -67,6 +67,10 @@
 
 #define REXM_MAX_RESOURCE_PATHS         256
 
+
+// Create local commit with changes on example renaming
+#define RENAME_AUTO_COMMIT_CREATION
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -703,7 +707,7 @@ int main(int argc, char *argv[])
             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRecategory, exRename),
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
 
-            /*
+#if defined(RENAME_AUTO_COMMIT_CREATION)
             // Create GitHub commit with changes (local)
             putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
             ChangeDirectory("C:\\GitHub\\raylib");
@@ -718,7 +722,7 @@ int main(int argc, char *argv[])
             if (result != 0) LOG("WARNING: Error committing changes\n");
             //result = system("git push"); // Push to the remote (origin, current branch)
             //if (result != 0) LOG("WARNING: Error pushing changes\n");
-            */
+#endif
 
         } break;
         case OP_REMOVE:     // Remove
@@ -1871,14 +1875,14 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
         int verCreatedLen = 0;
         for (int i = verCreateIndex + 20; (exText[i] != ' ') && (exText[i] != '\n') && (exText[i] != ','); i++) verCreatedLen++;
         if (verCreateIndex > 0) strncpy(exInfo->verCreated, exText + verCreateIndex + 20, verCreatedLen);
-        else strncpy(exInfo->verCreated, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
+        else strcpy(exInfo->verCreated, RAYLIB_VERSION); // Use current raylib version
 
         // Get example update with raylib version
         int verUpdateIndex = TextFindIndex(exText, "updated with raylib "); // Version = index + 20
         int verUpdateLen = 0;
         for (int i = verUpdateIndex + 20; (exText[i] != ' ') && (exText[i] != '\n') && (exText[i] != ','); i++) verUpdateLen++;
         if (verUpdateIndex > 0) strncpy(exInfo->verUpdated, exText + verUpdateIndex + 20, verUpdateLen);
-        else strncpy(exInfo->verUpdated, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
+        else strcpy(exInfo->verUpdated, RAYLIB_VERSION); // Use current raylib version
 
         // Get example years created/reviewed and creator and github user
         // NOTE: Using copyright line instead of "Example contributed by " because
