@@ -544,7 +544,6 @@ SHAPES = \
     shapes/shapes_double_pendulum \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_ring_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
     shapes/shapes_easings_rectangle_array \
@@ -554,6 +553,7 @@ SHAPES = \
     shapes/shapes_logo_raylib_anim \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_ring_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
