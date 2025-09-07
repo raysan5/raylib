@@ -25,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "others", "others", "{E9D708
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_anim", "examples\textures_sprite_anim.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_animation", "examples\textures_sprite_animation.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_srcrec_dstrec", "examples\textures_srcrec_dstrec.vcxproj", "{103B292B-049B-4B15-85A1-9F902840DB2C}"
 EndProject
