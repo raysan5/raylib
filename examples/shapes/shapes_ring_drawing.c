@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw ring
+*   raylib [shapes] example - ring drawing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -30,7 +30,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw ring");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - ring drawing");
 
     Vector2 center = {(GetScreenWidth() - 300)/2.0f, GetScreenHeight()/2.0f };
 

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - rectangle avanced
+*   raylib [shapes] example - rectangle advanced
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -37,7 +37,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle avanced");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle advanced");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

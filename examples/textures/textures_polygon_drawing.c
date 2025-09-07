@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - textured polygon
+*   raylib [textures] example - polygon drawing
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -35,7 +35,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - textured polygon");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - polygon drawing");
 
     // Define texture coordinates to map our texture to poly
     Vector2 texcoords[MAX_POINTS] = {

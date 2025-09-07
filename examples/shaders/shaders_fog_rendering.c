@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - fog
+*   raylib [shaders] example - fog rendering
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -44,7 +44,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - fog");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - fog rendering");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - gamepad input
+*   raylib [core] example - input gamepad
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -38,7 +38,7 @@ int main(void)
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Set MSAA 4X hint before windows creation
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - gamepad input");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input gamepad");
 
     Texture2D texPs3Pad = LoadTexture("resources/ps3.png");
     Texture2D texXboxPad = LoadTexture("resources/xbox.png");

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - sprite font loading
+*   raylib [text] example - font spritefont
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -35,7 +35,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite font loading");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font spritefont");
 
     const char msg1[50] = "THIS IS A custom SPRITE FONT...";
     const char msg2[50] = "...and this is ANOTHER CUSTOM font...";

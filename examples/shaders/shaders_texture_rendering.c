@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - texture drawing
+*   raylib [shaders] example - texture rendering
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -33,7 +33,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture rendering");
 
     Image imBlank = GenImageColor(1024, 1024, BLANK);
     Texture2D texture = LoadTextureFromImage(imBlank);  // Load blank texture to fill on shader

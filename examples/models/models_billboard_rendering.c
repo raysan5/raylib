@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - billboard render
+*   raylib [models] example - billboard rendering
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -26,7 +26,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - billboard render");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - billboard rendering");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

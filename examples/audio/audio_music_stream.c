@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - music streaming
+*   raylib [audio] example - music stream
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - music streaming");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - music stream");
 
     InitAudioDevice();              // Initialize audio device
 

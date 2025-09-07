@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - shader spotlight
+*   raylib [shaders] example - spotlight
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -81,7 +81,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shader spotlight");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - spotlight");
     HideCursor();
 
     Texture texRay = LoadTexture("resources/raysan.png");

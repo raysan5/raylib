@@ -1,6 +1,6 @@
 ﻿/*******************************************************************************************
 *
-*   raylib [core] example - 3d first-person camera controller
+*   raylib [core] example - 3d camera fps
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025-2025 Agnis Aldins (@nezvers)
+*   Copyright (c) 2025 Agnis Aldins (@nezvers)
 *
 ********************************************************************************************/
 
@@ -80,7 +80,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d first-person camera controller");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera fps");
 
     // Initialize camera variables
     // NOTE: UpdateCameraFPS() takes care of the rest

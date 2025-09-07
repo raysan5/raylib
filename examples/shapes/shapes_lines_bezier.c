@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - cubic-bezier lines
+*   raylib [shapes] example - lines bezier
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -26,7 +26,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - cubic-bezier lines");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - lines bezier");
 
     Vector2 startPoint = { 30, 30 };
     Vector2 endPoint = { (float)screenWidth - 30, (float)screenHeight - 30 };

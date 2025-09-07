@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - magicavoxel loading
+*   raylib [models] example - loading vox
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -47,7 +47,7 @@ int main(void)
 		"resources/models/vox/fez.vox"
 	};
 
-	InitWindow(screenWidth, screenHeight, "raylib [models] example - magicavoxel loading");
+	InitWindow(screenWidth, screenHeight, "raylib [models] example - loading vox");
 
 	// Define the camera to look into our 3d world
 	Camera camera = { 0 };

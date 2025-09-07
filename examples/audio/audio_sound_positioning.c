@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - 3d sound positioning
+*   raylib [audio] example - sound positioning
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025 Le Juez Victor (@Bigfoot71)
+*   Copyright (c) 2025-0 Le Juez Victor (@Bigfoot71)
 *
 ********************************************************************************************/
 
@@ -34,7 +34,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - 3d sound positioning");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound positioning");
 
     InitAudioDevice();
 

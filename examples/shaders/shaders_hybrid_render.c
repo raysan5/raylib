@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - write depth buffer
+*   raylib [shaders] example - hybrid render
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -55,7 +55,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth buffer");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - hybrid render");
 
     // This Shader calculates pixel depth and color using raymarch
     Shader shdrRaymarch = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raymarch.fs", GLSL_VERSION));

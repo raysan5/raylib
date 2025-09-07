@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - image convolution
+*   raylib [textures] example - image kernel
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -34,7 +34,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image convolution");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image kernel");
 
     Image image = LoadImage("resources/cat.png"); // Loaded in CPU memory (RAM)
 

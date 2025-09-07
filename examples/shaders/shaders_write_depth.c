@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - write depth buffer
+*   raylib [shaders] example - write depth
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -44,7 +44,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth buffer");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth");
 
     // The shader inverts the depth buffer by writing into it by `gl_FragDepth = 1 - gl_FragCoord.z;`
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/write_depth.fs", GLSL_VERSION));

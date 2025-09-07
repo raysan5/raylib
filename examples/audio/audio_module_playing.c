@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - module playing (streaming)
+*   raylib [audio] example - module playing
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -37,7 +37,7 @@ int main(void)
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // NOTE: Try to enable MSAA 4X
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - module playing (streaming)");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - module playing");
 
     InitAudioDevice();                  // Initialize audio device
 

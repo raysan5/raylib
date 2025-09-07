@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - heightmap terrain
+*   raylib [models] example - heightmap
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap terrain");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap");
 
     // Define our custom camera to look into our 3d world
     Camera camera = { 0 };

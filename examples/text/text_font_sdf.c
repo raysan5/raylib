@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - font SDF loading
+*   raylib [text] example - font sdf
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -33,7 +33,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - font SDF loading");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font sdf");
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
