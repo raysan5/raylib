@@ -15,7 +15,7 @@ core;core_input_gamepad;★☆☆☆;1.1;4.2;2013;2025;"Ramon Santamaria";@raysa
 core;core_input_multitouch;★☆☆☆;2.1;2.5;2019;2025;"Berni";@Berni8k
 core;core_input_gestures;★★☆☆;1.4;4.2;2016;2025;"Ramon Santamaria";@raysan5
 core;core_input_gestures_testbed;★★★☆;5.0;5.6-dev;2023;2025;"ubkp";@ubkp
-core;core_input_virtual_controls;★★☆☆;5.0;5.0;2024;2025;"oblerion";@oblerion
+core;core_input_virtual_controls;★★☆☆;5.0;5.0;2024;2025;"GreenSnakeLinux";@GreenSnakeLinux
 core;core_2d_camera;★★☆☆;1.5;3.0;2016;2025;"Ramon Santamaria";@raysan5
 core;core_2d_camera_mouse_zoom;★★☆☆;4.2;4.2;2022;2025;"Jeffery Myers";@JeffM2501
 core;core_2d_camera_platformer;★★★☆;2.5;3.0;2019;2025;"arvyy";@arvyy
