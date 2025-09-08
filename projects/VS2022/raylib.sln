@@ -217,7 +217,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_palette_switch", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_postprocessing", "examples\shaders_postprocessing.vcxproj", "{7381D91E-5C72-48F0-AAB4-95C9B10D7484}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_raymarching", "examples\shaders_raymarching.vcxproj", "{D36EC43E-B31F-4CF4-8285-93A7A9D90189}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_raymarching_rendering", "examples\shaders_raymarching_rendering.vcxproj", "{D36EC43E-B31F-4CF4-8285-93A7A9D90189}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_mesh_instancing", "examples\shaders_mesh_instancing.vcxproj", "{274C0319-7E1E-4188-936B-8DF3331230B3}"
 EndProject

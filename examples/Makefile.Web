@@ -642,7 +642,7 @@ SHADERS = \
     shaders/shaders_normalmap_rendering \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
-    shaders/shaders_raymarching \
+    shaders/shaders_raymarching_rendering \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
@@ -1231,7 +1231,7 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
     --preload-file shaders/resources/shaders/glsl100/bloom.fs@resources/shaders/glsl100/bloom.fs \
     --preload-file shaders/resources/shaders/glsl100/blur.fs@resources/shaders/glsl100/blur.fs
 
-shaders/shaders_raymarching: shaders/shaders_raymarching.c
+shaders/shaders_raymarching_rendering: shaders/shaders_raymarching_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
 

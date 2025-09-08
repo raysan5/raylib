@@ -642,7 +642,7 @@ SHADERS = \
     shaders/shaders_normalmap_rendering \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
-    shaders/shaders_raymarching \
+    shaders/shaders_raymarching_rendering \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
