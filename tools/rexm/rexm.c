@@ -187,7 +187,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 // Get text between two strings
 static char *GetTextBetween(const char *text, const char *begin, const char *end);
 // Replace text between two specific strings
-static char *TextReplaceBetween(const char *text, const char *replace, const char *begin, const char *end);
+static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -2320,8 +2320,8 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 
         // Update example header title (line #3 - ALWAYS)
         // String: "*   raylib [shaders] example - texture drawing"
-        exTextUpdated[0] = TextReplaceBetween(exTextUpdatedPtr, 
-            TextFormat("%s] example - %s", info->category, exNameFormated), "*   raylib [", "\n");
+        exTextUpdated[0] = TextReplaceBetween(exTextUpdatedPtr, "*   raylib [", "\n", 
+            TextFormat("%s] example - %s", info->category, exNameFormated));
         if (exTextUpdated[0] != NULL) exTextUpdatedPtr = exTextUpdated[0];
 
         // Update example complexity rating
@@ -2334,42 +2334,42 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
             if (i < info->stars) strcpy(starsText + 3*i, "★");
             else strcpy(starsText + 3*i, "☆");
         }
-        exTextUpdated[1] = TextReplaceBetween(exTextUpdatedPtr, 
-            TextFormat("%s] %i", starsText, info->stars), "*   Example complexity rating: [", "/4\n");
+        exTextUpdated[1] = TextReplaceBetween(exTextUpdatedPtr, "*   Example complexity rating: [", "/4\n",
+            TextFormat("%s] %i", starsText, info->stars));
         if (exTextUpdated[1] != NULL) exTextUpdatedPtr = exTextUpdated[1];
 
         // Update example creation/update raylib versions
         // String: "*   Example originally created with raylib 2.0, last time updated with raylib 3.7
-        exTextUpdated[2] = TextReplaceBetween(exTextUpdatedPtr, 
-            TextFormat("%s, last time updated with raylib %s", info->verCreated, info->verUpdated), "*   Example originally created with raylib ", "\n");
+        exTextUpdated[2] = TextReplaceBetween(exTextUpdatedPtr, "*   Example originally created with raylib ", "\n", 
+            TextFormat("%s, last time updated with raylib %s", info->verCreated, info->verUpdated));
         if (exTextUpdated[2] != NULL) exTextUpdatedPtr = exTextUpdated[2];
 
         // Update copyright message
         // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
         if (info->yearCreated == info->yearReviewed)
         {
-            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr,
-                TextFormat("%i %s (@%s", info->yearCreated, info->author, info->authorGitHub), "Copyright (c) ", ")");
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr, "Copyright (c) ", ")", 
+                TextFormat("%i %s (@%s", info->yearCreated, info->author, info->authorGitHub));
             if (exTextUpdated[3] != NULL) exTextUpdatedPtr = exTextUpdated[3];
         }
         else
         {
-            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr,
-                TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub), "Copyright (c) ", ")");
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr, "Copyright (c) ", ")", 
+                TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub));
             if (exTextUpdated[3] != NULL) exTextUpdatedPtr = exTextUpdated[3];
         }
 
         // Update window title
         // String: "InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
-        exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], 
-            TextFormat("raylib [%s] example - %s", info->category, exNameFormated), "InitWindow(screenWidth, screenHeight, \"", "\");");
+        exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], "InitWindow(screenWidth, screenHeight, \"", "\");",
+            TextFormat("raylib [%s] example - %s", info->category, exNameFormated));
         if (exTextUpdated[4] != NULL) exTextUpdatedPtr = exTextUpdated[4];
 
         // Update contributors names
         // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
         // WARNING: Not all examples are contributed by someone, so the result of this replace can be NULL (string not found)
-        exTextUpdated[5] = TextReplaceBetween(exTextUpdatedPtr,
-                TextFormat("%s (@%s", info->author, info->authorGitHub), "*   Example contributed by ", ")");
+        exTextUpdated[5] = TextReplaceBetween(exTextUpdatedPtr, "*   Example contributed by ", ")", 
+            TextFormat("%s (@%s", info->author, info->authorGitHub));
         if (exTextUpdated[5] != NULL) exTextUpdatedPtr = exTextUpdated[5];
             
         if (exTextUpdatedPtr != NULL) SaveFileText(exSourcePath, exTextUpdatedPtr);
@@ -2469,7 +2469,7 @@ static char *GetTextBetween(const char *text, const char *begin, const char *end
 
 // Replace text between two specific strings
 // WARNING: Returned string must be freed by user
-static char *TextReplaceBetween(const char *text, const char *replace, const char *begin, const char *end)
+static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace)
 {
     char *result = NULL;
     int beginIndex = TextFindIndex(text, begin);
