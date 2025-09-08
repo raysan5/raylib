@@ -610,7 +610,7 @@ MODELS = \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
-    models/models_heightmap \
+    models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
     models/models_loading_m3d \
@@ -1061,7 +1061,7 @@ models/models_gpu_skinning: models/models_gpu_skinning.c
     --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
     --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
-models/models_heightmap: models/models_heightmap.c
+models/models_heightmap_rendering: models/models_heightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/heightmap.png@resources/heightmap.png
 

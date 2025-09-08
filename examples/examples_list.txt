@@ -118,7 +118,7 @@ models;models_point_rendering;★★★☆;5.0;5.0;2024;2025;"Reese Gallagher";@
 models;models_rlgl_solar_system;★★★★;2.5;4.0;2018;2025;"Ramon Santamaria";@raysan5
 models;models_yaw_pitch_roll;★★☆☆;1.8;4.0;2017;2025;"Berni";@Berni8k
 models;models_waving_cubes;★★★☆;2.5;3.7;2019;2025;"Codecat";@codecat
-models;models_heightmap;★☆☆☆;1.8;3.5;2015;2025;"Ramon Santamaria";@raysan5
+models;models_heightmap_rendering;★☆☆☆;1.8;3.5;2015;2025;"Ramon Santamaria";@raysan5
 models;models_skybox_rendering;★★☆☆;1.8;4.0;2017;2025;"Ramon Santamaria";@raysan5
 models;models_draw_cube_texture;★★☆☆;4.5;4.5;2022;2025;"Ramon Santamaria";@raysan5
 models;models_gpu_skinning;★★★☆;4.5;4.5;2024;2025;"Daniel Holden";@orangeduck

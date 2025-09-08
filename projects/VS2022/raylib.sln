@@ -97,7 +97,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_first_person_maze", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_geometric_shapes", "examples\models_geometric_shapes.vcxproj", "{14BA7F98-02CC-4648-9236-676BFF9458AF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_heightmap", "examples\models_heightmap.vcxproj", "{0859A973-E4FE-4688-8D16-0253163FDE24}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_heightmap_rendering", "examples\models_heightmap_rendering.vcxproj", "{0859A973-E4FE-4688-8D16-0253163FDE24}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading", "examples\models_loading.vcxproj", "{F3412853-2B6A-4334-8CF2-B796CDAE0850}"
 EndProject
