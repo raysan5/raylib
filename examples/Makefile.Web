@@ -1248,8 +1248,7 @@ shaders/shaders_shadowmap_rendering: shaders/shaders_shadowmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.vs@resources/shaders/glsl100/shadowmap.vs \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.fs@resources/shaders/glsl100/shadowmap.fs \
-    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb \
-    --preload-file shaders/shaders_shadowmap.png@shaders_shadowmap.png
+    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
