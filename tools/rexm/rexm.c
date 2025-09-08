@@ -2045,9 +2045,14 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
             // HACK: Just check previous position from pointer for function name including the string...
             // This is a quick solution, the good one would be getting the data loading function names...
-            //if ((TextFindIndex(ptr - 40, "ExportImage") == -1) &&
-            //    (TextFindIndex(ptr - 10, "TraceLog") == -1)) // Avoid TraceLog() strings processing
-            if (TextFindIndex(ptr - 40, "ExportImage") == -1)
+            int functionIndex01 = TextFindIndex(ptr - 40, "ExportImage");       // Check ExportImage()
+            int functionIndex02 = TextFindIndex(ptr - 10, "TraceLog");          // Check TraceLog()
+            int functionIndex03 = TextFindIndex(ptr - 40, "TakeScreenshot");    // Check TakeScreenshot()
+
+
+            if (!((functionIndex01 != -1) && (functionIndex01 < 40)) &&  // Not found ExportImage() before ""
+                !((functionIndex02 != -1) && (functionIndex02 < 10)) &&  // Not found TraceLog() before ""
+                !((functionIndex03 != -1) && (functionIndex03 < 40)))    // Not found TakeScreenshot() before ""
             {
                 int len = (int)(end - start);
                 if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
