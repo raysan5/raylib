@@ -104,7 +104,7 @@ text;text_codepoints_loading;★★★☆;4.2;4.2;2022;2025;"Ramon Santamaria";@
 models;models_animation;★★☆☆;2.5;3.5;2019;2025;"Culacant";@culacant
 models;models_billboard_rendering;★★★☆;1.3;3.5;2015;2025;"Ramon Santamaria";@raysan5
 models;models_box_collisions;★☆☆☆;1.3;3.5;2015;2025;"Ramon Santamaria";@raysan5
-models;models_cubicmap;★★☆☆;1.8;3.5;2015;2025;"Ramon Santamaria";@raysan5
+models;models_cubicmap_rendering;★★☆☆;1.8;3.5;2015;2025;"Ramon Santamaria";@raysan5
 models;models_first_person_maze;★★☆☆;2.5;3.5;2019;2025;"Ramon Santamaria";@raysan5
 models;models_geometric_shapes;★☆☆☆;1.0;3.5;2014;2025;"Ramon Santamaria";@raysan5
 models;models_mesh_generation;★★☆☆;1.8;4.0;2017;2025;"Ramon Santamaria";@raysan5

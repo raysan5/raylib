@@ -605,7 +605,7 @@ MODELS = \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
-    models/models_cubicmap \
+    models/models_cubicmap_rendering \
     models/models_draw_cube_texture \
     models/models_first_person_maze \
     models/models_geometric_shapes \

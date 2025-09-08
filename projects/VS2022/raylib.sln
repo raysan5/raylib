@@ -91,7 +91,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_billboard_rendering"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_box_collisions", "examples\models_box_collisions.vcxproj", "{39DB56C7-05F8-492C-A8D4-F19E40FECB59}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_cubicmap", "examples\models_cubicmap.vcxproj", "{82F3D34B-8DB2-4C6A-98B1-132245DD9D99}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_cubicmap_rendering", "examples\models_cubicmap_rendering.vcxproj", "{82F3D34B-8DB2-4C6A-98B1-132245DD9D99}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_first_person_maze", "examples\models_first_person_maze.vcxproj", "{CBD6C0F8-8200-4E9A-9D7C-6505A2AA4A62}"
 EndProject
