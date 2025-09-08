@@ -53,9 +53,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C54703BF-D68A-480D-BE27-49B62E45D582}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shaders_lightmap</RootNamespace>
+    <RootNamespace>shaders_lightmap_rendering</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shaders_lightmap</ProjectName>
+    <ProjectName>shaders_lightmap_rendering</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shaders\shaders_lightmap.c" />
+    <ClCompile Include="..\..\..\examples\shaders\shaders_lightmap_rendering.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />

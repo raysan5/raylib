@@ -325,7 +325,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_tesseract_view", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_basic_pbr", "examples\shaders_basic_pbr.vcxproj", "{4DF6D5E4-6796-4257-B466-BCD62DEBBCF8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_lightmap", "examples\shaders_lightmap.vcxproj", "{C54703BF-D68A-480D-BE27-49B62E45D582}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_lightmap_rendering", "examples\shaders_lightmap_rendering.vcxproj", "{C54703BF-D68A-480D-BE27-49B62E45D582}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_positioning", "examples\audio_sound_positioning.vcxproj", "{9CD8BCAD-F212-4BCC-BA98-899743CE3279}"
 EndProject
