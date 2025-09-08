@@ -633,7 +633,7 @@ SHADERS = \
     shaders/shaders_eratosthenes \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
-    shaders/shaders_hybrid_render \
+    shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \

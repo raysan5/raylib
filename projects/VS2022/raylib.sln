@@ -271,7 +271,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_write_depth", "exam
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_view_depth", "examples\shaders_view_depth.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_render", "examples\shaders_hybrid_render.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_rendering", "examples\shaders_hybrid_rendering.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_multi", "examples\audio_sound_multi.vcxproj", "{F81C5819-85B4-4D2E-B6DC-104A7634461B}"
 EndProject
