@@ -287,7 +287,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_smooth_pixelperfect", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_draw_cube_texture", "examples\models_draw_cube_texture.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_render", "examples\shaders_deferred_render.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_rendering", "examples\shaders_deferred_rendering.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_outline", "examples\shaders_texture_outline.vcxproj", "{A546E75A-5242-46E6-9A9E-6C91554EAB84}"
 EndProject

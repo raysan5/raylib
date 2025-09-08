@@ -629,7 +629,7 @@ SHADERS = \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
-    shaders/shaders_deferred_render \
+    shaders/shaders_deferred_rendering \
     shaders/shaders_eratosthenes \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
@@ -1150,7 +1150,7 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
     --preload-file shaders/resources/models/barracks_diffuse.png@resources/models/barracks_diffuse.png \
     --preload-file shaders/resources/shaders/glsl100/swirl.fs@resources/shaders/glsl100/swirl.fs
 
-shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
+shaders/shaders_deferred_rendering: shaders/shaders_deferred_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
     --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
