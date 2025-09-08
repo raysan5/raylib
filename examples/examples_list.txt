@@ -146,7 +146,7 @@ shaders;shaders_spotlight;★★☆☆;2.5;3.7;2019;2025;"Chris Camacho";@chrisc
 shaders;shaders_deferred_rendering;★★★★;4.5;4.5;2023;2025;"Justin Andreas Lacoste";@27justin
 shaders;shaders_hybrid_rendering;★★★★;4.2;4.2;2022;2025;"Buğra Alptekin Sarı";@BugraAlptekinSari
 shaders;shaders_texture_tiling;★★☆☆;4.5;4.5;2023;2025;"Luis Almeida";@luis605
-shaders;shaders_shadowmap;★★★★;5.0;5.0;2023;2025;"TheManTheMythTheGameDev";@TheManTheMythTheGameDev
+shaders;shaders_shadowmap_rendering;★★★★;5.0;5.0;2023;2025;"TheManTheMythTheGameDev";@TheManTheMythTheGameDev
 shaders;shaders_vertex_displacement;★★★☆;5.0;4.5;2023;2025;"Alex ZH";@ZzzhHe
 shaders;shaders_write_depth;★★☆☆;4.2;4.2;2022;2025;"Buğra Alptekin Sarı";@BugraAlptekinSari
 shaders;shaders_basic_pbr;★★★★;5.0;5.5;2023;2025;"Afan OLOVCIC";@_DevDad

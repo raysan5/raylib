@@ -644,7 +644,7 @@ SHADERS = \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
     shaders/shaders_rounded_rectangle \
-    shaders/shaders_shadowmap \
+    shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
@@ -1240,12 +1240,12 @@ shaders/shaders_rounded_rectangle: shaders/shaders_rounded_rectangle.c
     --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
     --preload-file shaders/resources/shaders/glsl100/rounded_rectangle.fs@resources/shaders/glsl100/rounded_rectangle.fs
 
-shaders/shaders_shadowmap: shaders/shaders_shadowmap.c
+shaders/shaders_shadowmap_rendering: shaders/shaders_shadowmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.vs@resources/shaders/glsl100/shadowmap.vs \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.fs@resources/shaders/glsl100/shadowmap.fs \
     --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb \
-    --preload-file shaders/shaders_shadowmap.png@shaders_shadowmap.png
+    --preload-file shaders/shaders_shadowmap_rendering.png@shaders_shadowmap_rendering.png
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

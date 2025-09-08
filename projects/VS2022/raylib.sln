@@ -301,7 +301,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rectangle_advanced",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_gpu_skinning", "examples\models_gpu_skinning.vcxproj", "{8245DAD9-D402-4D5C-8F45-32229CD3B263}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap", "examples\shaders_shadowmap.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap_rendering", "examples\shaders_shadowmap_rendering.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_bone_socket", "examples\models_bone_socket.vcxproj", "{3A7FE53D-35F7-49DC-9C9A-A5204A53523F}"
 EndProject

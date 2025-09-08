@@ -644,7 +644,7 @@ SHADERS = \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
     shaders/shaders_rounded_rectangle \
-    shaders/shaders_shadowmap \
+    shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
