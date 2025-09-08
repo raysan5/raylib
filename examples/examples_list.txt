@@ -135,7 +135,7 @@ shaders;shaders_texture_rendering;★★☆☆;2.0;3.7;2019;2025;"Michał Ciesie
 shaders;shaders_texture_outline;★★★☆;4.0;4.0;2021;2025;"Serenity Skiff";@GoldenThumbs
 shaders;shaders_texture_waves;★★☆☆;2.5;3.7;2019;2025;"Anata";@anatagawa
 shaders;shaders_julia_set;★★★☆;2.5;4.0;2019;2025;"Josh Colclough";@joshcol9232
-shaders;shaders_eratosthenes;★★★☆;2.5;4.0;2019;2025;"ProfJski";@ProfJski
+shaders;shaders_eratosthenes_sieve;★★★☆;2.5;4.0;2019;2025;"ProfJski";@ProfJski
 shaders;shaders_fog_rendering;★★★☆;2.5;3.7;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_simple_mask;★★☆☆;2.5;3.7;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_hot_reloading;★★★☆;3.0;3.5;2020;2025;"Ramon Santamaria";@raysan5

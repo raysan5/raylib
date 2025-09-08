@@ -201,7 +201,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_basic_lighting", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_custom_uniform", "examples\shaders_custom_uniform.vcxproj", "{B176BB4A-CA31-4E2A-B790-3EA0ED2EE870}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_eratosthenes", "examples\shaders_eratosthenes.vcxproj", "{D08AA2A0-2F94-4BF5-B42D-E92450F03FD1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_eratosthenes_sieve", "examples\shaders_eratosthenes_sieve.vcxproj", "{D08AA2A0-2F94-4BF5-B42D-E92450F03FD1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_fog_rendering", "examples\shaders_fog_rendering.vcxproj", "{4A7D0ECA-D7CC-4E66-B741-C92E9C1B42FF}"
 EndProject

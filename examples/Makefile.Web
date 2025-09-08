@@ -630,7 +630,7 @@ SHADERS = \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
-    shaders/shaders_eratosthenes \
+    shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_rendering \
@@ -1157,7 +1157,7 @@ shaders/shaders_deferred_rendering: shaders/shaders_deferred_rendering.c
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
 
-shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
+shaders/shaders_eratosthenes_sieve: shaders/shaders_eratosthenes_sieve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/eratosthenes.fs@resources/shaders/glsl100/eratosthenes.fs
 

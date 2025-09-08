@@ -630,7 +630,7 @@ SHADERS = \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
-    shaders/shaders_eratosthenes \
+    shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_rendering \
