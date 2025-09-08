@@ -647,7 +647,7 @@ SHADERS = \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
-    shaders/shaders_spotlight \
+    shaders/shaders_spotlight_rendering \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
@@ -1258,7 +1258,7 @@ shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
     --preload-file shaders/resources/plasma.png@resources/plasma.png \
     --preload-file shaders/resources/mask.png@resources/mask.png
 
-shaders/shaders_spotlight: shaders/shaders_spotlight.c
+shaders/shaders_spotlight_rendering: shaders/shaders_spotlight_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/raysan.png@resources/raysan.png \
     --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs

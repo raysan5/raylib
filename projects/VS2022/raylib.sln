@@ -225,7 +225,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shapes_textures", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_simple_mask", "examples\shaders_simple_mask.vcxproj", "{600C3D4F-0670-4DB4-B30F-520A729053B5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_spotlight", "examples\shaders_spotlight.vcxproj", "{11F33A39-74B7-4018-B5F9-CC285A673A8F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_spotlight_rendering", "examples\shaders_spotlight_rendering.vcxproj", "{11F33A39-74B7-4018-B5F9-CC285A673A8F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_rendering", "examples\shaders_texture_rendering.vcxproj", "{A6F5E35E-B4A7-41B3-853A-75558E6E0715}"
 EndProject
