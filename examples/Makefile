@@ -538,12 +538,11 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_circle_sector_drawing \
-    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
@@ -554,6 +553,7 @@ SHAPES = \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_ring_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -606,7 +606,6 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
-    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
@@ -622,6 +621,7 @@ MODELS = \
     models/models_rlgl_solar_system \
     models/models_skybox_rendering \
     models/models_tesseract_view \
+    models/models_textured_cube \
     models/models_waving_cubes \
     models/models_yaw_pitch_roll
 
@@ -630,6 +630,7 @@ SHADERS = \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
+    shaders/shaders_depth_rendering \
     shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
@@ -653,7 +654,6 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \
-    shaders/shaders_depth_rendering \
     shaders/shaders_write_depth
 
 AUDIO = \

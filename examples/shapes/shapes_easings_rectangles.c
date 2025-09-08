@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - easings rectangle array
+*   raylib [shapes] example - easings rectangles
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -38,7 +38,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings rectangle array");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings rectangles");
 
     Rectangle recs[MAX_RECS_X*MAX_RECS_Y] = { 0 };
 

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - deferred render
+*   raylib [shaders] example - deferred rendering
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -67,7 +67,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - deferred render");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - deferred rendering");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 4.0f, 5.0f };    // Camera position

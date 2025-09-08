@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - easings ball anim
+*   raylib [shapes] example - easings ball
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -27,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings ball anim");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings ball");
 
     // Ball variable value to be animated with easings
     int ballPositionX = -100;

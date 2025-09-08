@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - easings box anim
+*   raylib [shapes] example - easings box
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -27,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings box anim");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings box");
 
     // Box variables to be animated with easings
     Rectangle rec = { GetScreenWidth()/2.0f, -100, 100, 100 };

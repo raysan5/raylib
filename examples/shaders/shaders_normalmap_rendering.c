@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - normal map
+*   raylib [shaders] example - normalmap rendering
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -39,7 +39,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - normal map");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - normalmap rendering");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 0.0f, 2.0f, -4.0f };

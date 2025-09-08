@@ -538,12 +538,11 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_circle_sector_drawing \
-    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
@@ -554,6 +553,7 @@ SHAPES = \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_ring_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -606,7 +606,6 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
-    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
@@ -622,6 +621,7 @@ MODELS = \
     models/models_rlgl_solar_system \
     models/models_skybox_rendering \
     models/models_tesseract_view \
+    models/models_textured_cube \
     models/models_waving_cubes \
     models/models_yaw_pitch_roll
 
@@ -630,6 +630,7 @@ SHADERS = \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
+    shaders/shaders_depth_rendering \
     shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
@@ -653,7 +654,6 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \
-    shaders/shaders_depth_rendering \
     shaders/shaders_write_depth
 
 AUDIO = \
@@ -793,6 +793,9 @@ shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
 shapes/shapes_bouncing_ball: shapes/shapes_bouncing_ball.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_collision_area: shapes/shapes_collision_area.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -803,12 +806,6 @@ shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_ball: shapes/shapes_easings_ball.c
@@ -839,6 +836,9 @@ shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
@@ -1043,10 +1043,6 @@ models/models_cubicmap_rendering: models/models_cubicmap_rendering.c
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
-models/models_textured_cube: models/models_textured_cube.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
-
 models/models_first_person_maze: models/models_first_person_maze.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
@@ -1116,6 +1112,10 @@ models/models_skybox_rendering: models/models_skybox_rendering.c
 models/models_tesseract_view: models/models_tesseract_view.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+models/models_textured_cube: models/models_textured_cube.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+
 models/models_waving_cubes: models/models_waving_cubes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -1156,6 +1156,10 @@ shaders/shaders_deferred_rendering: shaders/shaders_deferred_rendering.c
     --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
+
+shaders/shaders_depth_rendering: shaders/shaders_depth_rendering.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/depth.fs@resources/shaders/glsl100/depth.fs
 
 shaders/shaders_eratosthenes_sieve: shaders/shaders_eratosthenes_sieve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1245,7 +1249,7 @@ shaders/shaders_shadowmap_rendering: shaders/shaders_shadowmap_rendering.c
     --preload-file shaders/resources/shaders/glsl100/shadowmap.vs@resources/shaders/glsl100/shadowmap.vs \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.fs@resources/shaders/glsl100/shadowmap.fs \
     --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb \
-    --preload-file shaders/shaders_shadowmap_rendering.png@shaders_shadowmap_rendering.png
+    --preload-file shaders/shaders_shadowmap.png@shaders_shadowmap.png
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1286,10 +1290,6 @@ shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
-
-shaders/shaders_depth_rendering: shaders/shaders_depth_rendering.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/depth.fs@resources/shaders/glsl100/depth.fs
 
 shaders/shaders_write_depth: shaders/shaders_write_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - draw rectangle rounded
+*   raylib [shapes] example - rounded rectangle drawing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -30,7 +30,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw rectangle rounded");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rounded rectangle drawing");
 
     float roundness = 0.2f;
     float width = 200.0f;

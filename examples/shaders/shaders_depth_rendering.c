@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - view depth
+*   raylib [shaders] example - depth rendering
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -36,7 +36,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - view depth");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - depth rendering");
 
     // Init camera
     Camera camera = { 0 };

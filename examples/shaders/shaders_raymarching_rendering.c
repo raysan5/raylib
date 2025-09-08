@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - raymarching
+*   raylib [shaders] example - raymarching rendering
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -35,7 +35,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching rendering");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 2.5f, 2.5f, 3.0f };    // Camera position
