@@ -42,10 +42,11 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT);
     // Shadows are a HUGE topic, and this example shows an extremely simple implementation of the shadowmapping algorithm,
     // which is the industry standard for shadows. This algorithm can be extended in a ridiculous number of ways to improve
     // realism and also adapt it for different scenes. This is pretty much the simplest possible implementation
+    
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shadowmap rendering");
 
     Camera3D camera = (Camera3D){ 0 };
@@ -143,8 +144,8 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        // First, render all objects into the shadowmap
-        // The idea is, we record all the objects' depths (as rendered from the light source's point of view) in a buffer
+        // PASS 01: Render all objects into the shadowmap render texture
+        // We record all the objects' depths (as rendered from the light source's point of view) in a buffer
         // Anything that is "visible" to the light is in light, anything that isn't is in shadow
         // We can later use the depth buffer when rendering everything from the player's point of view
         // to determine whether a given point is "visible" to the light
@@ -160,7 +161,7 @@ int main(void)
         EndTextureMode();
         lightViewProj = MatrixMultiply(lightView, lightProj);
 
-        // Draw the scene using the generated shadowmap
+        // PASS 02: Draw the scene into main framebuffer, using the generated shadowmap
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
@@ -199,7 +200,7 @@ int main(void)
 }
 
 // Load render texture for shadowmap projection
-// NOTE: Load frmaebuffer with only a texture depth attachment, 
+// NOTE: Load framebuffer with only a texture depth attachment, 
 // no color attachment required for shadowmap
 static RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
 {
@@ -214,11 +215,11 @@ static RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
         rlEnableFramebuffer(target.id);
 
         // Create depth texture
-        // We don't need a color texture for the shadowmap
+        // NOTE: No need a color texture attachment for the shadowmap
         target.depth.id = rlLoadTextureDepth(width, height, false);
         target.depth.width = width;
         target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+        target.depth.format = 19; // DEPTH_COMPONENT_24BIT?
         target.depth.mipmaps = 1;
 
         // Attach depth texture to FBO
@@ -245,8 +246,8 @@ static void UnloadShadowmapRenderTexture(RenderTexture2D target)
     }
 }
 
-// Draw scene
-// NOTE: Required several calls to generate shadowmap
+// Draw full scene projecting shadows
+// NOTE: Required  to be called several time to generate shadowmap
 static void DrawScene(Model cube, Model robot)
 {
     DrawModelEx(cube, Vector3Zero(), (Vector3) { 0.0f, 1.0f, 0.0f }, 0.0f, (Vector3) { 10.0f, 1.0f, 10.0f }, BLUE);
