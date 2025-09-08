@@ -601,7 +601,7 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
-    models/models_animation \
+    models/models_animation_playing \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
@@ -1018,7 +1018,7 @@ text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile MODELS examples
-models/models_animation: models/models_animation.c
+models/models_animation_playing: models/models_animation_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \

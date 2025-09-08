@@ -147,7 +147,7 @@ Examples using raylib models functionality, including models loading/generation 
 
 |  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
-| [models_animation](models/models_animation.c) | <img src="models/models_animation.png" alt="models_animation" width="80"> | ⭐⭐☆☆ | 2.5 | 3.5 | [Culacant](https://github.com/culacant) |
+| [models_animation_playing](models/models_animation_playing.c) | <img src="models/models_animation_playing.png" alt="models_animation_playing" width="80"> | ⭐⭐☆☆ | 2.5 | 3.5 | [Culacant](https://github.com/culacant) |
 | [models_billboard_rendering](models/models_billboard_rendering.c) | <img src="models/models_billboard_rendering.png" alt="models_billboard_rendering" width="80"> | ⭐⭐⭐☆ | 1.3 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [models_box_collisions](models/models_box_collisions.c) | <img src="models/models_box_collisions.png" alt="models_box_collisions" width="80"> | ⭐☆☆☆ | 1.3 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [models_cubicmap_rendering](models/models_cubicmap_rendering.c) | <img src="models/models_cubicmap_rendering.png" alt="models_cubicmap_rendering" width="80"> | ⭐⭐☆☆ | 1.8 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
