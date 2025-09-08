@@ -51,7 +51,7 @@ shapes;shapes_rectangle_scaling;★★☆☆;2.5;2.5;2018;2025;"Vlad Adrian";@de
 shapes;shapes_lines_bezier;★☆☆☆;1.7;1.7;2017;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_collision_area;★★☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_following_eyes;★★☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
-shapes;shapes_easings_ball_anim;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
+shapes;shapes_easings_ball;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_box_anim;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_rectangle_array;★★★☆;2.0;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_ring_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
