@@ -1485,6 +1485,7 @@ RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float f
 RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple character (codepoint)
 
 // Text font info functions
+RLAPI float GetDefaultFontSpacing(int fontSize);                                            // Get the text spacing of the default font (only used in DrawText)
 RLAPI void SetTextLineSpacing(int spacing);                                                 // Set vertical line spacing when drawing with line-breaks
 RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font

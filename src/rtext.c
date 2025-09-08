@@ -1192,11 +1192,9 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
     {
         Vector2 position = { (float)posX, (float)posY };
 
-        int defaultFontSize = 10;   // Default Font chars height in pixel
-        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-        int spacing = fontSize/defaultFontSize;
+        float spacing = GetDefaultFontSpacing(fontSize);
 
-        DrawTextEx(GetFontDefault(), text, position, (float)fontSize, (float)spacing, color);
+        DrawTextEx(GetFontDefault(), text, position, (float)fontSize, spacing, color);
     }
 }
 
@@ -1308,6 +1306,16 @@ void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Ve
             else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
         }
     }
+}
+
+// Get the text spacing of the default font (only used in DrawText)
+RLAPI float GetDefaultFontSpacing(int fontSize)
+{
+    int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    int spacing = fontSize/defaultFontSize;
+
+    return (float)spacing;
 }
 
 // Set vertical line spacing when drawing with line-breaks
