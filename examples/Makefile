@@ -653,7 +653,7 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \
-    shaders/shaders_view_depth \
+    shaders/shaders_depth_rendering \
     shaders/shaders_write_depth
 
 AUDIO = \

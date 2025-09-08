@@ -205,7 +205,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_basic_pbr](shaders/shaders_basic_pbr.c) | <img src="shaders/shaders_basic_pbr.png" alt="shaders_basic_pbr" width="80"> | ⭐⭐⭐⭐️ | 5.0 | 5.5 | [Afan OLOVCIC](https://github.com/_DevDad) |
 | [shaders_lightmap_rendering](shaders/shaders_lightmap_rendering.c) | <img src="shaders/shaders_lightmap_rendering.png" alt="shaders_lightmap_rendering" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
-| [shaders_view_depth](shaders/shaders_view_depth.c) | <img src="shaders/shaders_view_depth.png" alt="shaders_view_depth" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
+| [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
 
 ### category: audio [8]
 

@@ -152,7 +152,7 @@ shaders;shaders_write_depth;★★☆☆;4.2;4.2;2022;2025;"Buğra Alptekin Sar�
 shaders;shaders_basic_pbr;★★★★;5.0;5.5;2023;2025;"Afan OLOVCIC";@_DevDad
 shaders;shaders_lightmap_rendering;★★★☆;4.5;4.5;2019;2025;"Jussi Viitala";@nullstare
 shaders;shaders_rounded_rectangle;★★★☆;5.5;5.5;2025;2025;"Anstro Pleuton";@anstropleuton
-shaders;shaders_view_depth;★★★☆;5.6-dev;5.6-dev;2025;2025;"Luís Almeida";@luis605
+shaders;shaders_depth_rendering;★★★☆;5.6-dev;5.6-dev;2025;2025;"Luís Almeida";@luis605
 audio;audio_module_playing;★☆☆☆;1.5;3.5;2016;2025;"Ramon Santamaria";@raysan5
 audio;audio_music_stream;★☆☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
 audio;audio_raw_stream;★★★☆;1.6;4.2;2015;2025;"Ramon Santamaria";@raysan5

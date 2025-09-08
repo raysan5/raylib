@@ -269,7 +269,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading_m3d", "examp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_write_depth", "examples\shaders_write_depth.vcxproj", "{70B35F59-AFC2-4D8F-8833-5314D2047A81}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_view_depth", "examples\shaders_view_depth.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_depth_rendering", "examples\shaders_depth_rendering.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_rendering", "examples\shaders_hybrid_rendering.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
 EndProject
