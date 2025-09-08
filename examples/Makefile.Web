@@ -545,7 +545,7 @@ SHAPES = \
     shapes/shapes_circle_sector_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball \
-    shapes/shapes_easings_box_anim \
+    shapes/shapes_easings_box \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_following_eyes \
     shapes/shapes_lines_bezier \
@@ -814,7 +814,7 @@ shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing
 shapes/shapes_easings_ball: shapes/shapes_easings_ball.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_easings_box_anim: shapes/shapes_easings_box_anim.c
+shapes/shapes_easings_box: shapes/shapes_easings_box.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_rectangle_array: shapes/shapes_easings_rectangle_array.c

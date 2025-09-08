@@ -193,7 +193,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_ring_drawing", "exam
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_ball", "examples\shapes_easings_ball.vcxproj", "{1C49E35A-2838-49D9-9D5F-4B8134960EF6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_box_anim", "examples\shapes_easings_box_anim.vcxproj", "{F91142E2-A999-47F0-9E74-38C1E2930EBE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_box", "examples\shapes_easings_box.vcxproj", "{F91142E2-A999-47F0-9E74-38C1E2930EBE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_rectangle_array", "examples\shapes_easings_rectangle_array.vcxproj", "{1EDD4BCF-345C-4065-8CBD-7285224293C3}"
 EndProject
