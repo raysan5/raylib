@@ -639,9 +639,15 @@ int main(int argc, char *argv[])
                 FileRename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
 
-                // TODO: Edit: Update example source code metadata
-                //rlExampleInfo *info = LoadExamplesData(exCollectionFilePath, exRename, false, NULL); // TODO: Load one example from collection
-                //UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename), info);
+                // Edit: Update example source code metadata
+                int exListCount = 0;
+                rlExampleInfo *exList = LoadExamplesData(exCollectionFilePath, exCategory, false, &exListCount);
+                for (int i = 0; i < exListCount; i++)
+                {
+                    if (strcmp(exList[i].name, exRename) == 0) 
+                        UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename), &exList[i]);
+                }
+                UnloadExamplesData(exList);
 
                 // NOTE: Example resource files do not need to be changed...
                 // unless the example is moved from one caegory to another
@@ -860,7 +866,8 @@ int main(int argc, char *argv[])
 
             for (unsigned int i = 0; i < list.count; i++)
             {
-                if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&  // HACK: Skip "examples_template"
+                // NOTE: Skipping "examples_template" from checks
+                if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&
                     (TextFindIndex(exList, GetFileNameWithoutExt(list.paths[i])) == -1))
                 {
                     // Add example to the examples collection list
@@ -2043,7 +2050,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             if (!end) break;
 
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
-            // HACK: Just check previous position from pointer for function name including the string...
+            // HACK: Just check previous position from pointer for function name including the string and the index "distance"
             // This is a quick solution, the good one would be getting the data loading function names...
             int functionIndex01 = TextFindIndex(ptr - 40, "ExportImage");       // Check ExportImage()
             int functionIndex02 = TextFindIndex(ptr - 10, "TraceLog");          // Check TraceLog()
