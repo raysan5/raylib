@@ -285,7 +285,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_mouse_wheel", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_smooth_pixelperfect", "examples\core_smooth_pixelperfect.vcxproj", "{71DB4284-5B1C-4E86-9AF5-B91542D44A6F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_draw_cube_texture", "examples\models_draw_cube_texture.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_textured_cube", "examples\models_textured_cube.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_rendering", "examples\shaders_deferred_rendering.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
 EndProject

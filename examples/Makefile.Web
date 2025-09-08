@@ -606,7 +606,7 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
-    models/models_draw_cube_texture \
+    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
@@ -1043,7 +1043,7 @@ models/models_cubicmap_rendering: models/models_cubicmap_rendering.c
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
-models/models_draw_cube_texture: models/models_draw_cube_texture.c
+models/models_textured_cube: models/models_textured_cube.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
