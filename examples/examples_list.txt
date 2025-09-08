@@ -55,7 +55,7 @@ shapes;shapes_easings_ball_anim;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria
 shapes;shapes_easings_box_anim;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_rectangle_array;★★★☆;2.0;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_ring_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
-shapes;shapes_draw_circle_sector;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
+shapes;shapes_circle_sector_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
 shapes;shapes_rounded_rectangle_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
 shapes;shapes_top_down_lights;★★★★;4.2;4.2;2022;2025;"Jeffery Myers";@JeffM2501
 shapes;shapes_rectangle_advanced;★★★★;5.5;5.5;2024;2025;"Everton Jr.";@evertonse

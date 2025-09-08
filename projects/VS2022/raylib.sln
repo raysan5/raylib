@@ -185,7 +185,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_collision_area", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_colors_palette", "examples\shapes_colors_palette.vcxproj", "{D91367C2-2189-4859-A7FE-D2CAB84FA15C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_circle_sector", "examples\shapes_draw_circle_sector.vcxproj", "{33459B4E-1839-4856-BF6B-22480D11FE31}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_circle_sector_drawing", "examples\shapes_circle_sector_drawing.vcxproj", "{33459B4E-1839-4856-BF6B-22480D11FE31}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rounded_rectangle_drawing", "examples\shapes_rounded_rectangle_drawing.vcxproj", "{48871156-181A-475A-BD8D-200086A09675}"
 EndProject

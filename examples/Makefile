@@ -542,7 +542,7 @@ SHAPES = \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_draw_circle_sector \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \

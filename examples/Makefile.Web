@@ -542,7 +542,7 @@ SHAPES = \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_draw_circle_sector \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
@@ -805,7 +805,7 @@ shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
+shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
