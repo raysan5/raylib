@@ -1425,6 +1425,9 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     #define GL_NORMAL_ARRAY         0x8075
     #define GL_COLOR_ARRAY          0x8076
     #define GL_TEXTURE_COORD_ARRAY  0x8078
+    #define GL_POLYGON_MODE         0x0B40
+    #define GL_POINT                0x1B00
+    #define GL_LINE                 0x1B01
 
     rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
@@ -1436,7 +1439,13 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
-    rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+    extern void glGetIntegerv(unsigned int pname, int *data);
+    int polygonMode[2] = { 0, 0 };
+    glGetIntegerv(GL_POLYGON_MODE, polygonMode);
+    bool pointMode = (polygonMode[0] == GL_POINT) || (polygonMode[1] == GL_POINT);
+    bool wireMode = (polygonMode[0] == GL_LINE) || (polygonMode[1] == GL_LINE);
+
+    if (!pointMode && !wireMode) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
