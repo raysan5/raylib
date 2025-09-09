@@ -104,7 +104,7 @@ elseif ("${PLATFORM}" MATCHES "SDL")
 	# First, check if SDL is included as a subdirectory
 	if(TARGET SDL3::SDL3)
 		message(STATUS "Using SDL3 from subdirectory")
-		set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+		set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL3")
 		set(LIBS_PRIVATE SDL3::SDL3)
 		add_compile_definitions(USING_SDL3_PROJECT)
 	elseif(TARGET SDL2::SDL2)
