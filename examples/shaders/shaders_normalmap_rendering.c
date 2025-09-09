@@ -18,9 +18,9 @@
 *
 ********************************************************************************************/
 
-#include <raylib.h>
+#include "raylib.h"
 
-#include <raymath.h>
+#include "raymath.h"
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
@@ -155,7 +155,7 @@ int main(void)
             DrawText("Use keys [Up][Down] to change specular exponent", 10, 10 + yOffset*2, 10, BLACK);
             DrawText(TextFormat("Specular Exponent: %.2f", specularExponent), 10, 10 + yOffset*3, 10, BLUE);
 
-            DrawFPS(screenWidth - 80, 10);
+            DrawFPS(screenWidth - 90, 10);
 
         EndDrawing();
         //--------------------------------------------------------------------------------------
