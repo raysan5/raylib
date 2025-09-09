@@ -1439,13 +1439,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
-    extern void glGetIntegerv(unsigned int pname, int *data);
-    int polygonMode[2] = { 0, 0 };
-    glGetIntegerv(GL_POLYGON_MODE, polygonMode);
-    bool pointMode = (polygonMode[0] == GL_POINT) || (polygonMode[1] == GL_POINT);
-    bool wireMode = (polygonMode[0] == GL_LINE) || (polygonMode[1] == GL_LINE);
-
-    if (!pointMode && !wireMode) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+    if (mesh.colors) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
