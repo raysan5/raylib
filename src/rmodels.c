@@ -1425,9 +1425,6 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     #define GL_NORMAL_ARRAY         0x8075
     #define GL_COLOR_ARRAY          0x8076
     #define GL_TEXTURE_COORD_ARRAY  0x8078
-    #define GL_POLYGON_MODE         0x0B40
-    #define GL_POINT                0x1B00
-    #define GL_LINE                 0x1B01
 
     rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
