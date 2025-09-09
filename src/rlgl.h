@@ -2011,9 +2011,12 @@ float rlGetLineWidth(void)
     return width;
 }
 
+// Set the point drawing size
 void rlSetPointSize(float size) { glPointSize(size); }
 
-float rlGetPointSize(void) {
+// Get the point drawing size
+float rlGetPointSize(void)
+{
     float size = 0;
     glGetFloatv(GL_POINT_SIZE, &size);
     return size;
