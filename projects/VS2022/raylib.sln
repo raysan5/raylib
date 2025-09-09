@@ -255,7 +255,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_screen_manager",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_custom_frame_control", "examples\core_custom_frame_control.vcxproj", "{658A1B85-554E-4A5D-973A-FFE592CDD5F2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_compute_shaders", "examples\rlgl_compute_shaders.vcxproj", "{07CA51AD-72AE-46A2-AAED-DC3E3F807976}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_compute_shader", "examples\rlgl_compute_shader.vcxproj", "{07CA51AD-72AE-46A2-AAED-DC3E3F807976}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_3d_drawing", "examples\text_3d_drawing.vcxproj", "{27B110CC-43C0-400A-89D9-245E681647D7}"
 EndProject
