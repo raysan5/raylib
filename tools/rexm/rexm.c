@@ -288,14 +288,14 @@ int main(int argc, char *argv[])
             {
                 if (IsFileExtension(argv[2], ".c")) // Check for valid file extension: input
                 {
-                    if (FileExists(inFileName))
+                    if (FileExists(argv[2]))
                     {
                         // Security checks for file name to verify category is included
-                        int catIndex = TextFindIndex(argv[2], "_");
+                        int catIndex = TextFindIndex(GetFileName(argv[2]), "_");
                         if (catIndex > 3)
                         {
                             char cat[12] = { 0 };
-                            strncpy(cat, argv[2], catIndex);
+                            strncpy(cat, GetFileName(argv[2]), catIndex);
                             bool catFound = false;
                             for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
                             { 
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
                             if (catFound)
                             {
                                 strcpy(inFileName, argv[2]); // Register filename for addition
-                                strcpy(exName, GetFileNameWithoutExt(argv[2])); // Register example name
+                                strcpy(exName, GetFileNameWithoutExt(inFileName)); // Register example name
                                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                                 opCode = OP_ADD;
                             }
@@ -439,16 +439,26 @@ int main(int argc, char *argv[])
         case OP_ADD:     // Add: Example from command-line input filename
         {
             // Add: raylib/examples/<category>/<category>_example_name.c
-            if (opCode != 1) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            if (opCode != OP_CREATE) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Create: raylib/examples/<category>/<category>_example_name.png
-            FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
+            if (FileExists(TextFormat("%s/%s.png", GetDirectoryPath(inFileName), exName)))
+            {
+                FileCopy(TextFormat("%s/%s.png", GetDirectoryPath(inFileName), exName), 
+                    TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
+            }
+            else // No screenshot available next to source file 
+            {
+                // Copy screenshot template
+                FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
+            }
 
             // Copy: raylib/examples/<category>/resources/...
             // -----------------------------------------------------------------------------------------
             // Scan resources used in example to copy
+            // NOTE: resources path will be relative to example source file directory 
             int resPathCount = 0;
-            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), &resPathCount);
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s.c", GetDirectoryPath(inFileName), exName), &resPathCount);
 
             if (resPathCount > 0)
             {
@@ -508,7 +518,7 @@ int main(int argc, char *argv[])
             // -----------------------------------------------------------------------------------------
             
             // Add example to the collection list, if not already there
-            // NOTE: Required format: shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;"Ray";@raysan5
+            // NOTE: Required format: shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ray";@raysan5
             //------------------------------------------------------------------------------------------------
             char *exCollectionList = LoadFileText(exCollectionFilePath);
             if (TextFindIndex(exCollectionList, exName) == -1) // Example not found
@@ -555,7 +565,7 @@ int main(int argc, char *argv[])
                     // Add example to collection, at the end of the category list
                     int categoryIndex = TextFindIndex(exCollectionList, exCategories[nextCategoryIndex]);
                     memcpy(exCollectionListUpdated, exCollectionList, categoryIndex);
-                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i\"%s\";@%s\n",
+                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
                         exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
                     memcpy(exCollectionListUpdated + categoryIndex + textWritenSize, exCollectionList + categoryIndex, strlen(exCollectionList) - categoryIndex);
                 }
