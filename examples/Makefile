@@ -526,6 +526,7 @@ CORE = \
     core/core_input_virtual_controls \
     core/core_random_sequence \
     core/core_random_values \
+    core/core_render_texture \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
