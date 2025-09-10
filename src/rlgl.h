@@ -889,7 +889,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #endif
 #endif
 
-#include <stdlib.h>                     // Required for: malloc(), free()
+#include <stdlib.h>                     // Required for: calloc(), free()
 #include <string.h>                     // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
 #include <math.h>                       // Required for: sqrtf(), sinf(), cosf(), floor(), log()
 
@@ -2429,7 +2429,7 @@ void rlLoadExtensions(void *loader)
 
     // Get supported extensions list
     GLint numExt = 0;
-    const char **extList = (const char **)RL_MALLOC(512*sizeof(const char *)); // Allocate 512 strings pointers (2 KB)
+    const char **extList = (const char **)RL_CALLOC(512, sizeof(const char *)); // Allocate 512 strings pointers (2 KB)
     const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
 
     // NOTE: We have to duplicate string because glGetString() returns a const string
@@ -2741,21 +2741,21 @@ rlRenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Initialize CPU (RAM) vertex buffers (position, texcoord, color data and indexes)
     //--------------------------------------------------------------------------------------------
-    batch.vertexBuffer = (rlVertexBuffer *)RL_MALLOC(numBuffers*sizeof(rlVertexBuffer));
+    batch.vertexBuffer = (rlVertexBuffer *)RL_CALLOC(numBuffers, sizeof(rlVertexBuffer));
 
     for (int i = 0; i < numBuffers; i++)
     {
         batch.vertexBuffer[i].elementCount = bufferElements;
 
-        batch.vertexBuffer[i].vertices = (float *)RL_MALLOC(bufferElements*3*4*sizeof(float));        // 3 float by vertex, 4 vertex by quad
-        batch.vertexBuffer[i].texcoords = (float *)RL_MALLOC(bufferElements*2*4*sizeof(float));       // 2 float by texcoord, 4 texcoord by quad
-        batch.vertexBuffer[i].normals = (float *)RL_MALLOC(bufferElements*3*4*sizeof(float));        // 3 float by vertex, 4 vertex by quad
-        batch.vertexBuffer[i].colors = (unsigned char *)RL_MALLOC(bufferElements*4*4*sizeof(unsigned char));   // 4 float by color, 4 colors by quad
+        batch.vertexBuffer[i].vertices = (float *)RL_CALLOC(bufferElements*3*4, sizeof(float));     // 3 float by vertex, 4 vertex by quad
+        batch.vertexBuffer[i].texcoords = (float *)RL_CALLOC(bufferElements*2*4, sizeof(float));    // 2 float by texcoord, 4 texcoord by quad
+        batch.vertexBuffer[i].normals = (float *)RL_CALLOC(bufferElements*3*4, sizeof(float));      // 3 float by vertex, 4 vertex by quad
+        batch.vertexBuffer[i].colors = (unsigned char *)RL_CALLOC(bufferElements*4*4, sizeof(unsigned char));   // 4 float by color, 4 colors by quad
 #if defined(GRAPHICS_API_OPENGL_33)
-        batch.vertexBuffer[i].indices = (unsigned int *)RL_MALLOC(bufferElements*6*sizeof(unsigned int));      // 6 int by quad (indices)
+        batch.vertexBuffer[i].indices = (unsigned int *)RL_CALLOC(bufferElements*6, sizeof(unsigned int));      // 6 int by quad (indices)
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
-        batch.vertexBuffer[i].indices = (unsigned short *)RL_MALLOC(bufferElements*6*sizeof(unsigned short));  // 6 int by quad (indices)
+        batch.vertexBuffer[i].indices = (unsigned short *)RL_CALLOC(bufferElements*6, sizeof(unsigned short));  // 6 int by quad (indices)
 #endif
 
         for (int j = 0; j < (3*4*bufferElements); j++) batch.vertexBuffer[i].vertices[j] = 0.0f;
@@ -2843,7 +2843,7 @@ rlRenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 
     // Init draw calls tracking system
     //--------------------------------------------------------------------------------------------
-    batch.draws = (rlDrawCall *)RL_MALLOC(RL_DEFAULT_BATCH_DRAWCALLS*sizeof(rlDrawCall));
+    batch.draws = (rlDrawCall *)RL_CALLOC(RL_DEFAULT_BATCH_DRAWCALLS, sizeof(rlDrawCall));
 
     for (int i = 0; i < RL_DEFAULT_BATCH_DRAWCALLS; i++)
     {
@@ -3649,7 +3649,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 
     if ((glInternalFormat != 0) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
-        pixels = RL_MALLOC(size);
+        pixels = RL_CALLOC(size, 1);
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     }
     else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Data retrieval not suported for pixel format (%i)", id, format);
@@ -3674,7 +3674,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
 
     // We read data as RGBA because FBO texture is configured as RGBA, despite binding another texture format
-    pixels = (unsigned char *)RL_MALLOC(rlGetPixelDataSize(width, height, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8));
+    pixels = RL_CALLOC(rlGetPixelDataSize(width, height, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8), 1);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

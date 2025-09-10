@@ -2318,8 +2318,8 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 
         // Memory allocation for dirFileCount
         files.capacity = fileCounter;
-        files.paths = (char **)RL_MALLOC(files.capacity*sizeof(char *));
-        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
+        files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
+        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
         closedir(dir);
 
