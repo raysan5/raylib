@@ -594,6 +594,7 @@ TEXT = \
     text/text_font_sdf \
     text/text_font_spritefont \
     text/text_format_text \
+    text/text_inline_styling \
     text/text_input_box \
     text/text_rectangle_bounds \
     text/text_sprite_fonts \

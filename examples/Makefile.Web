@@ -594,6 +594,7 @@ TEXT = \
     text/text_font_sdf \
     text/text_font_spritefont \
     text/text_format_text \
+    text/text_inline_styling \
     text/text_input_box \
     text/text_rectangle_bounds \
     text/text_sprite_fonts \
@@ -989,6 +990,9 @@ text/text_font_spritefont: text/text_font_spritefont.c
     --preload-file text/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png
 
 text/text_format_text: text/text_format_text.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+text/text_inline_styling: text/text_inline_styling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_input_box: text/text_input_box.c
