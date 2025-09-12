@@ -69,7 +69,7 @@ else()
 endif()
 
 if (${PLATFORM} MATCHES "Web")
-    target_link_options(raylib PUBLIC "-sUSE_GLFW=3")
+    target_link_options(raylib PUBLIC "-sUSE_GLFW=3" -sEXPORTED_RUNTIME_METHODS=ccall -sASYNCIFY)
     if(${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_ES3")
         target_link_options(raylib PUBLIC "-sMIN_WEBGL_VERSION=2")
         target_link_options(raylib PUBLIC "-sMAX_WEBGL_VERSION=2")
