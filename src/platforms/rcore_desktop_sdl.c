@@ -85,8 +85,8 @@
 #endif
 
 #if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
-    #ifndef PLATFORM_DESKTOP_SDL3
-        #define PLATFORM_DESKTOP_SDL3
+    #ifndef USING_VERSION_SDL3
+        #define USING_VERSION_SDL3
     #endif
 #endif
 
@@ -255,7 +255,7 @@ static const int CursorsLUT[] = {
 };
 
 // SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
 
 // SDL3 Migration:
 //     SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
@@ -429,7 +429,7 @@ void *SDL_GetClipboardData(const char *mime_type, size_t *size)
     return NULL;
 }
 
-#endif // PLATFORM_DESKTOP_SDL3
+#endif // USING_VERSION_SDL3
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -463,7 +463,7 @@ void ToggleFullscreen(void)
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
 
-#if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if ((monitor > 0) && (monitor <= monitorCount))
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
@@ -491,7 +491,7 @@ void ToggleBorderlessWindowed(void)
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
 
-#if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if ((monitor > 0) && (monitor <= monitorCount))
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
@@ -548,7 +548,7 @@ void SetWindowState(unsigned int flags)
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
 
-    #if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
         if ((monitor > 0) && (monitor <= monitorCount))
     #else
         if ((monitor >= 0) && (monitor < monitorCount))
@@ -612,7 +612,7 @@ void SetWindowState(unsigned int flags)
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
 
-    #if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
         if ((monitor > 0) && (monitor <= monitorCount))
     #else
         if ((monitor >= 0) && (monitor < monitorCount))
@@ -850,7 +850,7 @@ void SetWindowMonitor(int monitor)
         const int screenHeight = CORE.Window.screen.height;
         SDL_Rect usableBounds;
 
-    #if defined(PLATFORM_DESKTOP_SDL3) // Different style for success checking
+    #if defined(USING_VERSION_SDL3) // Different style for success checking
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds))
     #else
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
@@ -966,7 +966,7 @@ Vector2 GetMonitorPosition(int monitor)
     {
         SDL_Rect displayBounds;
 
-    #if defined(PLATFORM_DESKTOP_SDL3)
+    #if defined(USING_VERSION_SDL3)
         if (SDL_GetDisplayUsableBounds(monitor, &displayBounds))
     #else
         if (SDL_GetDisplayUsableBounds(monitor, &displayBounds) == 0)
@@ -1098,7 +1098,7 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
 
-#ifndef PLATFORM_DESKTOP_SDL3
+#ifndef USING_VERSION_SDL3
     // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
     //       see https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
     // TODO: Implement the window scale factor calculation manually
@@ -1184,7 +1184,7 @@ Image GetClipboardImage(void)
 // Show mouse cursor
 void ShowCursor(void)
 {
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     SDL_ShowCursor();
 #else
     SDL_ShowCursor(SDL_ENABLE);
@@ -1195,7 +1195,7 @@ void ShowCursor(void)
 // Hides mouse cursor
 void HideCursor(void)
 {
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     SDL_HideCursor();
 #else
     SDL_ShowCursor(SDL_DISABLE);
@@ -1208,7 +1208,7 @@ void EnableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     // SDL_ShowCursor() has been split into three functions: SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
     SDL_ShowCursor();
 #else
@@ -1309,7 +1309,7 @@ const char *GetKeyName(int key)
 
 static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
 {
-#if defined(PLATFORM_DESKTOP_SDL3) // SDL3
+#if defined(USING_VERSION_SDL3) // SDL3
     int count = 0;
     SDL_Finger **fingers = SDL_GetTouchFingers(event.touchID, &count);
     CORE.Input.Touch.pointCount = count;
@@ -1436,7 +1436,7 @@ void PollInputEvents(void)
 
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-                #if defined(PLATFORM_DESKTOP_SDL3)
+                #if defined(USING_VERSION_SDL3)
                     // const char *data;   /**< The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events */
                     // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed.
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
@@ -1451,7 +1451,7 @@ void PollInputEvents(void)
                 {
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-                #if defined(PLATFORM_DESKTOP_SDL3)
+                #if defined(USING_VERSION_SDL3)
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
                 #else
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
@@ -1466,7 +1466,7 @@ void PollInputEvents(void)
 
             // Window events are also polled (Minimized, maximized, close...)
 
-            #ifndef PLATFORM_DESKTOP_SDL3
+            #ifndef USING_VERSION_SDL3
             // SDL3 states:
             // The SDL_WINDOWEVENT_* events have been moved to top level events, and SDL_WINDOWEVENT has been removed
             // In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
@@ -1497,7 +1497,7 @@ void PollInputEvents(void)
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;
 
-                        #ifndef PLATFORM_DESKTOP_SDL3
+                        #ifndef USING_VERSION_SDL3
                         // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
                         if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0)
                         {
@@ -1538,7 +1538,7 @@ void PollInputEvents(void)
                             if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
                         }
 
-                        #ifdef PLATFORM_DESKTOP_SDL3
+                        #ifdef USING_VERSION_SDL3
                         if ((SDL_GetWindowFlags(platform.window) & SDL_WINDOW_MAXIMIZED) == 0)
                         {
                             if ((CORE.Window.flags & SDL_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~SDL_WINDOW_MAXIMIZED;
@@ -1564,7 +1564,7 @@ void PollInputEvents(void)
                         if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
                     } break;
 
-            #ifndef PLATFORM_DESKTOP_SDL3
+            #ifndef USING_VERSION_SDL3
                     default: break;
                 }
             } break;
@@ -1573,7 +1573,7 @@ void PollInputEvents(void)
             // Keyboard events
             case SDL_KEYDOWN:
             {
-            #if defined(PLATFORM_DESKTOP_SDL3)
+            #if defined(USING_VERSION_SDL3)
                 // SDL3 Migration: The following structures have been removed: * SDL_Keysym
                 KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
             #else
@@ -1604,7 +1604,7 @@ void PollInputEvents(void)
             case SDL_KEYUP:
             {
 
-            #if defined(PLATFORM_DESKTOP_SDL3)
+            #if defined(USING_VERSION_SDL3)
                 KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
             #else
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
@@ -1620,7 +1620,7 @@ void PollInputEvents(void)
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
                     // Add character (codepoint) to the queue
-                    #if defined(PLATFORM_DESKTOP_SDL3)
+                    #if defined(USING_VERSION_SDL3)
                     size_t textLen = strlen(event.text.text);
                     unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, &textLen);
                     #else
@@ -1991,7 +1991,7 @@ int InitPlatform(void)
     }
 
     // Init window
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     platform.window = SDL_CreateWindow(CORE.Window.title, CORE.Window.screen.width, CORE.Window.screen.height, flags);
 #else
     platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
@@ -2085,7 +2085,7 @@ int InitPlatform(void)
     CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL3): Initialized successfully");
 #else
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL2): Initialized successfully");
