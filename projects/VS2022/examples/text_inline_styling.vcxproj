@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{D496308F-3C3C-40B3-A3ED-EA327D244B3E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>text_inline_styling</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
