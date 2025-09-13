@@ -58,7 +58,7 @@ int main(void)
     RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
 
     // Load depth shader and get depth texture shader location
-    Shader depthShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/depth.fs", GLSL_VERSION));
+    Shader depthShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/depth_render.fs", GLSL_VERSION));
     int depthLoc = GetShaderLocation(depthShader, "depthTexture");
     int flipTextureLoc = GetShaderLocation(depthShader, "flipY");
     SetShaderValue(depthShader, flipTextureLoc, (int[]){ 1 }, SHADER_UNIFORM_INT); // Flip Y texture
