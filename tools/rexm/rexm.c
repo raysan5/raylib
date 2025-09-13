@@ -597,6 +597,8 @@ int main(int argc, char *argv[])
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
             // WARNING: This function uses TextFormat() extensively inside,
             // we must store provided file paths because pointers will be overwriten
+            // TODO: It seems projects are added to solution BUT not to required solution folder,
+            // that process still requires to be done manually
             AddVSProjectToSolution(exVSProjectSolutionFile, 
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), exCategory);
             //------------------------------------------------------------------------------------------------
