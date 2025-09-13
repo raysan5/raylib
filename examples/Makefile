@@ -633,6 +633,7 @@ SHADERS = \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
+    shaders/shaders_depth_writing \
     shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
@@ -655,8 +656,7 @@ SHADERS = \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_vertex_displacement \
-    shaders/shaders_depth_writing
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \

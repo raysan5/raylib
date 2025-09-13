@@ -633,6 +633,7 @@ SHADERS = \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
+    shaders/shaders_depth_writing \
     shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
@@ -655,8 +656,7 @@ SHADERS = \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_vertex_displacement \
-    shaders/shaders_depth_writing
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \
@@ -1167,7 +1167,11 @@ shaders/shaders_deferred_rendering: shaders/shaders_deferred_rendering.c
 
 shaders/shaders_depth_rendering: shaders/shaders_depth_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/depth.fs@resources/shaders/glsl100/depth.fs
+    --preload-file shaders/resources/shaders/glsl100/depth_render.fs@resources/shaders/glsl100/depth_render.fs
+
+shaders/shaders_depth_writing: shaders/shaders_depth_writing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/depth_write.fs@resources/shaders/glsl100/depth_write.fs
 
 shaders/shaders_eratosthenes_sieve: shaders/shaders_eratosthenes_sieve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1297,10 +1301,6 @@ shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
-
-shaders/shaders_depth_writing: shaders/shaders_depth_writing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
 
 # Compile AUDIO examples
 audio/audio_mixed_processor: audio/audio_mixed_processor.c
