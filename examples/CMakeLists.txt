@@ -97,17 +97,9 @@ if (${PLATFORM} MATCHES "Android")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_basic_lighting.c)
 
 elseif (${PLATFORM} MATCHES "Web")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os")
-    # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s WASM=1 -s ASYNCIFY -s ALLOW_MEMORY_GROWTH=1 --shell-file ${CMAKE_SOURCE_DIR}/src/shell.html")
-    set(CMAKE_EXECUTABLE_SUFFIX ".html")
-
-    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
-
-    # Remove the -rdynamic flag because otherwise emscripten
-    # does not generate HTML+JS+WASM files, only a non-working
-    # and fat HTML
-    string(REPLACE "-rdynamic" "" CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS}")
+    set(example_sources) # clear example_sources
+    list(APPEND example_sources others/web_basic_window.c)
+    list(APPEND example_sources core/core_input_gestures_testbed.c)
 
 elseif ("${PLATFORM}" STREQUAL "DRM")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
@@ -165,10 +157,34 @@ foreach (example_source ${example_sources})
     string(REGEX MATCH ".*/.*/" resources_dir ${example_source})
     string(APPEND resources_dir "resources")
 
-    if (${PLATFORM} MATCHES "Web" AND EXISTS ${resources_dir})
-        # The local resources path needs to be mapped to /resources virtual path
-        string(APPEND resources_dir "@resources")
-        set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
+    if (${PLATFORM} MATCHES "Web")
+        target_compile_options(${example_name} PRIVATE -Os)
+        target_link_options(${example_name} PRIVATE
+            -sALLOW_MEMORY_GROWTH=1
+            -sEXPORTED_RUNTIME_METHODS=[requestFullscreen]
+            -sUSE_GLFW=3
+            --shell-file "${CMAKE_SOURCE_DIR}/src/shell.html"
+        )
+        set_target_properties(${example_name} PROPERTIES SUFFIX ".html")
+
+        if (EXISTS ${resources_dir})
+            # The local resources path needs to be mapped to /resources virtual path
+            string(APPEND resources_dir "@resources")
+            set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
+        endif ()
+
+        if(${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_ES3")
+            target_link_options(${example_name} PUBLIC "-sMIN_WEBGL_VERSION=2")
+            target_link_options(${example_name} PUBLIC "-sMAX_WEBGL_VERSION=2")
+        endif()
+
+        # Checks if OSX and links appropriate frameworks (Only required on MacOS)
+        if (APPLE)
+            target_link_libraries(${example_name} "-framework IOKit")
+            target_link_libraries(${example_name} "-framework Cocoa")
+            target_link_libraries(${example_name} "-framework OpenGL")
+        endif()
+
     endif ()
 endforeach ()
 
