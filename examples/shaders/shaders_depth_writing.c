@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - write depth
+*   raylib [shaders] example - depth writing
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -20,9 +20,9 @@
 #include "rlgl.h"
 
 #if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION            330
+    #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-#define GLSL_VERSION            100
+    #define GLSL_VERSION            100
 #endif
 
 //--------------------------------------------------------------------------------------
@@ -44,13 +44,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth");
-
-    // The shader inverts the depth buffer by writing into it by `gl_FragDepth = 1 - gl_FragCoord.z;`
-    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/write_depth.fs", GLSL_VERSION));
-
-    // Use Customized function to create writable depth texture buffer
-    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - depth writing");
 
     // Define the camera to look into our 3d world
     Camera camera = {
@@ -61,6 +55,12 @@ int main(void)
         .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
 
+    // Load custom render texture with writable depth texture buffer
+    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+
+    // Load depth writing shader
+    // NOTE: The shader inverts the depth buffer by writing into it by `gl_FragDepth = 1 - gl_FragCoord.z;`
+    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/depth_write.fs", GLSL_VERSION));
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        // Draw into our custom render texture (framebuffer)
+        // Draw into our custom render texture
         BeginTextureMode(target);
             ClearBackground(WHITE);
 
@@ -92,7 +92,9 @@ int main(void)
         // Draw into screen our custom render texture
         BeginDrawing();
             ClearBackground(RAYWHITE);
+
             DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
+
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -112,9 +114,8 @@ int main(void)
 //--------------------------------------------------------------------------------------
 // Module Functions Definition
 //--------------------------------------------------------------------------------------
-
 // Load custom render texture, create a writable depth texture buffer
-RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
+static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 {
     RenderTexture2D target = { 0 };
 
@@ -135,7 +136,7 @@ RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
         target.depth.id = rlLoadTextureDepth(width, height, false);
         target.depth.width = width;
         target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+        target.depth.format = 19;       // DEPTH_COMPONENT_24BIT: Not defined in raylib
         target.depth.mipmaps = 1;
 
         // Attach color texture and depth texture to FBO

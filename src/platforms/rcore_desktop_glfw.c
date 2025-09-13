@@ -81,7 +81,7 @@
             #define Font X11Font        // Hack to fix 'Font' name collision
                                         // The definition and references to the X11 Font type will be replaced by 'X11Font'
                                         // Works as long as the current file consistently references any X11 Font as X11Font
-                                        // Since it is never referenced (as of writting), this does not pose an issue
+                                        // Since it is never referenced (as of writing), this does not pose an issue
     #endif
     
     #if defined(_GLFW_WAYLAND)

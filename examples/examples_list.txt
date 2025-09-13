@@ -150,7 +150,7 @@ shaders;shaders_hybrid_rendering;★★★★;4.2;4.2;2022;2025;"Buğra Alptekin
 shaders;shaders_texture_tiling;★★☆☆;4.5;4.5;2023;2025;"Luis Almeida";@luis605
 shaders;shaders_shadowmap_rendering;★★★★;5.0;5.0;2023;2025;"TheManTheMythTheGameDev";@TheManTheMythTheGameDev
 shaders;shaders_vertex_displacement;★★★☆;5.0;4.5;2023;2025;"Alex ZH";@ZzzhHe
-shaders;shaders_write_depth;★★☆☆;4.2;4.2;2022;2025;"Buğra Alptekin Sarı";@BugraAlptekinSari
+shaders;shaders_depth_writing;★★☆☆;4.2;4.2;2022;2025;"Buğra Alptekin Sarı";@BugraAlptekinSari
 shaders;shaders_basic_pbr;★★★★;5.0;5.5;2023;2025;"Afan OLOVCIC";@_DevDad
 shaders;shaders_lightmap_rendering;★★★☆;4.5;4.5;2019;2025;"Jussi Viitala";@nullstare
 shaders;shaders_rounded_rectangle;★★★☆;5.5;5.5;2025;2025;"Anstro Pleuton";@anstropleuton

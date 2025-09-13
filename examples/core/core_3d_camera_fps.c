@@ -261,8 +261,7 @@ static void UpdateCameraFPS(Camera *camera)
     Vector3 right = Vector3Normalize(Vector3CrossProduct(yaw, up));
 
     // Rotate view vector around right axis
-    float pitchAngle = -lookRotation.y - 
-    lean.y;
+    float pitchAngle = -lookRotation.y - lean.y;
     pitchAngle = Clamp(pitchAngle, -PI/2 + 0.0001f, PI/2 - 0.0001f); // Clamp angle so it doesn't go past straight up or straight down
     Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, pitchAngle);
 

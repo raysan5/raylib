@@ -267,7 +267,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_textured_curve", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading_m3d", "examples\models_loading_m3d.vcxproj", "{6D9E00D8-2893-45E4-9363-3F7F61D416BD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_write_depth", "examples\shaders_write_depth.vcxproj", "{70B35F59-AFC2-4D8F-8833-5314D2047A81}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_depth_writing", "examples\shaders_depth_writing.vcxproj", "{70B35F59-AFC2-4D8F-8833-5314D2047A81}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_depth_rendering", "examples\shaders_depth_rendering.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
 EndProject
