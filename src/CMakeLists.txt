@@ -92,6 +92,7 @@ if (BUILD_SHARED_LIBS)
 endif ()
 
 target_link_libraries(raylib PRIVATE $<BUILD_INTERFACE:${LIBS_PRIVATE}>)
+target_link_libraries(raylib PUBLIC ${LIBS_PUBLIC})
 
 # Sets some compile time definitions for the pre-processor
 # If CUSTOMIZE_BUILD option is on you will not use config.h by default
