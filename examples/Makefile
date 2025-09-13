@@ -656,7 +656,7 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \
-    shaders/shaders_write_depth
+    shaders/shaders_depth_writing
 
 AUDIO = \
     audio/audio_mixed_processor \

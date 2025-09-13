@@ -656,7 +656,7 @@ SHADERS = \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
     shaders/shaders_vertex_displacement \
-    shaders/shaders_write_depth
+    shaders/shaders_depth_writing
 
 AUDIO = \
     audio/audio_mixed_processor \
@@ -1298,7 +1298,7 @@ shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
 
-shaders/shaders_write_depth: shaders/shaders_write_depth.c
+shaders/shaders_depth_writing: shaders/shaders_depth_writing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
 
