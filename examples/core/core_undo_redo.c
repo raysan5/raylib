@@ -116,7 +116,7 @@ int main(void)
             player.color.b = (unsigned char)GetRandomValue(20, 240);
         }
 
-        // Undo layout change logic
+        // Undo state change logic
         undoFrameCounter++;
 
         // Waiting a number of frames before checking if we should store a new state snapshot
@@ -176,7 +176,6 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
             ClearBackground(RAYWHITE);
 
             // Draw controls info
