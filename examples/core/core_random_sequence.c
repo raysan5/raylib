@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
 #include <stdlib.h>     // Required for: malloc(), free()
