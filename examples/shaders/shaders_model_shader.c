@@ -1,9 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Model shader
+*   raylib [shaders] example - model shader
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3), to test this example
 *         on OpenGL ES 2.0 platforms (Android, Raspberry Pi, HTML5), use #version 100 shaders
@@ -14,7 +16,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -55,7 +57,7 @@ int main(void)
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
 
-    model.materials[0].shader = shader;                     // Set shader effect to 3d model
+    model.materials[0].shader = shader;                 // Set shader effect to 3d model
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture; // Bind texture to model
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position

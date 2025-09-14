@@ -32,7 +32,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -329,7 +329,7 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 }
 
 // Calculate the signed angle from v1 to v2, relative to the origin (0, 0)
-// NOTE: Coordinate system convention: positive X right, positive Y down,
+// NOTE: Coordinate system convention: positive X right, positive Y down
 // positive angles appear clockwise, and negative angles appear counterclockwise
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
@@ -1468,19 +1468,35 @@ RMAPI int Vector4Equals(Vector4 p, Vector4 q)
 RMAPI float MatrixDeterminant(Matrix mat)
 {
     float result = 0.0f;
-
+/*
     // Cache the matrix values (speed optimization)
     float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
     float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
     float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
     float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
 
+    // NOTE: It takes 72 multiplication to calculate 4x4 matrix determinant
     result = a30*a21*a12*a03 - a20*a31*a12*a03 - a30*a11*a22*a03 + a10*a31*a22*a03 +
              a20*a11*a32*a03 - a10*a21*a32*a03 - a30*a21*a02*a13 + a20*a31*a02*a13 +
              a30*a01*a22*a13 - a00*a31*a22*a13 - a20*a01*a32*a13 + a00*a21*a32*a13 +
              a30*a11*a02*a23 - a10*a31*a02*a23 - a30*a01*a12*a23 + a00*a31*a12*a23 +
              a10*a01*a32*a23 - a00*a11*a32*a23 - a20*a11*a02*a33 + a10*a21*a02*a33 +
              a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
+*/
+    // Using Laplace expansion (https://en.wikipedia.org/wiki/Laplace_expansion),
+    // previous operation can be simplified to 40 multiplications, decreasing matrix 
+    // size from 4x4 to 2x2 using minors
+
+    // Cache the matrix values (speed optimization)
+    float m0 = mat.m0, m1 = mat.m1, m2 = mat.m2, m3 = mat.m3;
+    float m4 = mat.m4, m5 = mat.m5, m6 = mat.m6, m7 = mat.m7;
+    float m8 = mat.m8, m9 = mat.m9, m10 = mat.m10, m11 = mat.m11;
+    float m12 = mat.m12, m13 = mat.m13, m14 = mat.m14, m15 = mat.m15;
+
+    result = (m0*((m5*(m10*m15 - m11*m14) - m9*(m6*m15 - m7*m14) + m13*(m6*m11 - m7*m10))) -
+        m4*((m1*(m10*m15 - m11*m14) - m9*(m2*m15 - m3*m14) + m13*(m2*m11 - m3*m10))) +
+        m8*((m1*(m6*m15 - m7*m14) - m5*(m2*m15 - m3*m14) + m13*(m2*m7 - m3*m6))) -
+        m12*((m1*(m6*m11 - m7*m10) - m5*(m2*m11 - m3*m10) + m9*(m2*m7 - m3*m6))));
 
     return result;
 }

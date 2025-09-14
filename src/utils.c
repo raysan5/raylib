@@ -10,7 +10,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -82,7 +82,7 @@ static const char *internalDataPath = NULL;         // Android internal data pat
 #endif
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
@@ -95,9 +95,8 @@ static int android_close(void *cookie);
 #endif
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition - Utilities
+// Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Set the current threshold (minimum) log level
 void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
 
@@ -204,7 +203,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
             if (size > 0)
             {
-                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+                data = (unsigned char *)RL_CALLOC(size, sizeof(unsigned char));
 
                 if (data != NULL)
                 {
@@ -308,7 +307,7 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2024 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2025 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -367,7 +366,7 @@ char *LoadFileText(const char *fileName)
 
             if (size > 0)
             {
-                text = (char *)RL_MALLOC((size + 1)*sizeof(char));
+                text = (char *)RL_CALLOC(size + 1, sizeof(char));
 
                 if (text != NULL)
                 {
@@ -405,7 +404,7 @@ void UnloadFileText(char *text)
 }
 
 // Save text data to file (write), string must be '\0' terminated
-bool SaveFileText(const char *fileName, char *text)
+bool SaveFileText(const char *fileName, const char *text)
 {
     bool success = false;
 
@@ -482,7 +481,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
 #endif  // PLATFORM_ANDROID
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 static int android_read(void *cookie, char *data, int dataSize)

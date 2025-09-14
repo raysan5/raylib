@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Mouse painting
+*   raylib [textures] example - mouse painting
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 3.0, last time updated with raylib 3.0
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2024 Chris Dill (@MysteriousSpace) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2025 Chris Dill (@MysteriousSpace) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -208,7 +210,7 @@ int main(void)
         {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
             DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
-            DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
+            DrawText("IMAGE SAVED!", 150, 180, 20, RAYWHITE);
         }
 
         EndDrawing();

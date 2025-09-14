@@ -1,15 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Draw a texture along a segmented curve
+*   raylib [textures] example - textured curve
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
-*   Example contributed by Jeffery Myers and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2024 Jeffery Myers and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2025 Jeffery Myers (@JeffM2501) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -55,7 +57,7 @@ int main()
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [textures] examples - textured curve");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - textured curve");
 
     // Load the road texture
     texRoad = LoadTexture("resources/road.png");
@@ -110,7 +112,7 @@ int main()
             ClearBackground(RAYWHITE);
 
             DrawTexturedCurve();    // Draw a textured Spline Cubic Bezier
-            
+
             // Draw spline for reference
             if (showCurve) DrawSplineSegmentBezierCubic(curveStartPosition, curveEndPosition, curveStartPositionTangent, curveEndPositionTangent, 2, BLUE);
 
@@ -118,7 +120,7 @@ int main()
             DrawLineV(curveStartPosition, curveStartPositionTangent, SKYBLUE);
             DrawLineV(curveStartPositionTangent, curveEndPositionTangent, Fade(LIGHTGRAY, 0.4f));
             DrawLineV(curveEndPosition, curveEndPositionTangent, PURPLE);
-            
+
             if (CheckCollisionPointCircle(mouse, curveStartPosition, 6)) DrawCircleV(curveStartPosition, 7, YELLOW);
             DrawCircleV(curveStartPosition, 5, RED);
 
@@ -135,7 +137,7 @@ int main()
             DrawText("Drag points to move curve, press SPACE to show/hide base curve", 10, 10, 10, DARKGRAY);
             DrawText(TextFormat("Curve width: %2.0f (Use + and - to adjust)", curveWidth), 10, 30, 10, DARKGRAY);
             DrawText(TextFormat("Curve segments: %d (Use LEFT and RIGHT to adjust)", curveSegments), 10, 50, 10, DARKGRAY);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -143,7 +145,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(texRoad);
-    
+
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
@@ -153,7 +155,6 @@ int main()
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Draw textured curve using Spline Cubic Bezier
 static void DrawTexturedCurve(void)
 {

@@ -11,12 +11,12 @@ uniform vec4 colDiffuse;
 // Output fragment color
 //out vec4 finalColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
     
     gl_FragColor = texelColor*colDiffuse*fragColor;
-	gl_FragDepth = gl_FragCoord.z;
+    gl_FragDepth = gl_FragCoord.z;
 }

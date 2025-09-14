@@ -11,7 +11,7 @@ uniform vec4 colDiffuse;
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 float hatchOffsetY = 5.0;
 float lumThreshold01 = 0.9;

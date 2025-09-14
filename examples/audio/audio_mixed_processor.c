@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Mixed audio processing
+*   raylib [audio] example - mixed processor
+*
+*   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 hkc (@hatkidchan)
+*   Copyright (c) 2023-2025 hkc (@hatkidchan)
 *
 ********************************************************************************************/
 #include "raylib.h"
@@ -28,13 +30,13 @@ void ProcessAudio(void *buffer, unsigned int frames)
 
     for (unsigned int frame = 0; frame < frames; frame++)
     {
-        float *left = &samples[frame * 2 + 0], *right = &samples[frame * 2 + 1];
+        float *left = &samples[frame*2 + 0], *right = &samples[frame*2 + 1];
 
-        *left = powf(fabsf(*left), exponent) * ( (*left < 0.0f)? -1.0f : 1.0f );
-        *right = powf(fabsf(*right), exponent) * ( (*right < 0.0f)? -1.0f : 1.0f );
+        *left = powf(fabsf(*left), exponent)*( (*left < 0.0f)? -1.0f : 1.0f );
+        *right = powf(fabsf(*right), exponent)*( (*right < 0.0f)? -1.0f : 1.0f );
 
-        average += fabsf(*left) / frames;   // accumulating average volume
-        average += fabsf(*right) / frames;
+        average += fabsf(*left)/frames;   // accumulating average volume
+        average += fabsf(*right)/frames;
     }
 
     // Moving history to the left
@@ -53,7 +55,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - processing mixed output");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - mixed processor");
 
     InitAudioDevice();              // Initialize audio device
 
@@ -97,7 +99,7 @@ int main(void)
             DrawRectangle(199, 199, 402, 34, LIGHTGRAY);
             for (int i = 0; i < 400; i++)
             {
-                DrawLine(201 + i, 232 - (int)(averageVolume[i] * 32), 201 + i, 232, MAROON);
+                DrawLine(201 + i, 232 - (int)(averageVolume[i]*32), 201 + i, 232, MAROON);
             }
             DrawRectangleLines(199, 199, 402, 34, GRAY);
 

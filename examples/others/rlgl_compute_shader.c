@@ -1,18 +1,20 @@
 /*******************************************************************************************
 *
-*   raylib [rlgl] example - compute shader - Conway's Game of Life
+*   raylib [others] example - compute shader
 *
 *   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
 *         shaders used in this example are #version 430 (OpenGL 4.3)
 *
-*   Example originally created with raylib 4.0, last time updated with raylib 2.5
+*   Example complexity rating: [★★★★] 4/4
+*
+*   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
 *   Example contributed by Teddy Astie (@tsnake41) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Teddy Astie (@tsnake41)
+*   Copyright (c) 2021-2025 Teddy Astie (@tsnake41)
 *
 ********************************************************************************************/
 
@@ -21,13 +23,16 @@
 
 #include <stdlib.h>
 
-// IMPORTANT: This must match gol*.glsl GOL_WIDTH constant.
-// This must be a multiple of 16 (check golLogic compute dispatch).
+// IMPORTANT: This must match gol*.glsl GOL_WIDTH constant
+// This must be a multiple of 16 (check golLogic compute dispatch)
 #define GOL_WIDTH 768
 
-// Maximum amount of queued draw commands (squares draw from mouse down events).
+// Maximum amount of queued draw commands (squares draw from mouse down events)
 #define MAX_BUFFERED_TRANSFERTS 48
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Game Of Life Update Command
 typedef struct GolUpdateCmd {
     unsigned int x;         // x coordinate of the gol command
@@ -49,9 +54,12 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(GOL_WIDTH, GOL_WIDTH, "raylib [rlgl] example - compute shader - game of life");
+    const int screenWidth = GOL_WIDTH;
+    const int screenHeight = GOL_WIDTH;
 
-    const Vector2 resolution = { GOL_WIDTH, GOL_WIDTH };
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader");
+
+    const Vector2 resolution = { screenWidth, screenHeight };
     unsigned int brushSize = 8;
 
     // Game of Life logic compute shader
@@ -155,7 +163,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    // Unload shader buffers objects.
+    // Unload shader buffers objects
     rlUnloadShaderBuffer(ssboA);
     rlUnloadShaderBuffer(ssboB);
     rlUnloadShaderBuffer(ssboTransfert);

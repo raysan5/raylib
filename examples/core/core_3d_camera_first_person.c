@@ -2,12 +2,14 @@
 *
 *   raylib [core] example - 3d camera first person
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 1.3, last time updated with raylib 1.3
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -98,8 +100,8 @@ int main(void)
                 camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
                 camera.projection = CAMERA_ORTHOGRAPHIC;
                 camera.fovy = 20.0f; // near plane width in CAMERA_ORTHOGRAPHIC
-                CameraYaw(&camera, -135 * DEG2RAD, true);
-                CameraPitch(&camera, -45 * DEG2RAD, true, true, false);
+                CameraYaw(&camera, -135*DEG2RAD, true);
+                CameraPitch(&camera, -45*DEG2RAD, true, true, false);
             }
             else if (camera.projection == CAMERA_ORTHOGRAPHIC)
             {
@@ -125,7 +127,7 @@ int main(void)
         UpdateCameraPro(&camera,
             (Vector3){
                 (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f -      // Move forward-backward
-                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,    
+                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,
                 (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f -   // Move right-left
                 (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f,
                 0.0f                                                // Move up-down

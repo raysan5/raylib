@@ -8,7 +8,7 @@ varying vec4 fragColor;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 vec2 resolution = vec2(800.0, 450.0);
 
 void main()
@@ -18,10 +18,10 @@ void main()
 
     vec4 horizEdge = vec4(0.0);
     horizEdge -= texture2D(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y - y))*1.0;
-    horizEdge -= texture2D(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y    ))*2.0;
+    horizEdge -= texture2D(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y   ))*2.0;
     horizEdge -= texture2D(texture0, vec2(fragTexCoord.x - x, fragTexCoord.y + y))*1.0;
     horizEdge += texture2D(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y - y))*1.0;
-    horizEdge += texture2D(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y    ))*2.0;
+    horizEdge += texture2D(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y   ))*2.0;
     horizEdge += texture2D(texture0, vec2(fragTexCoord.x + x, fragTexCoord.y + y))*1.0;
 
     vec4 vertEdge = vec4(0.0);

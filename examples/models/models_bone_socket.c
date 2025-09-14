@@ -1,7 +1,9 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Using bones as socket for calculating the positioning of something
-* 
+*   raylib [models] example - bone socket
+*
+*   Example complexity rating: [★★★★] 4/4
+*
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example contributed by iP (@ipzaur) and reviewed by Ramon Santamaria (@raysan5)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 iP (@ipzaur)
+*   Copyright (c) 2024-2025 iP (@ipzaur)
 *
 ********************************************************************************************/
 
@@ -49,7 +51,7 @@ int main(void)
         LoadModel("resources/models/gltf/greenman_sword.glb"),  // Index for the sword model is the same as BONE_SOCKET_HAND_R
         LoadModel("resources/models/gltf/greenman_shield.glb")  // Index for the shield model is the same as BONE_SOCKET_HAND_L
     };
-    
+
     bool showEquip[3] = { true, true, true };   // Toggle on/off equip
 
     // Load gltf model animations
@@ -61,7 +63,7 @@ int main(void)
     // indices of bones for sockets
     int boneSocketIndex[BONE_SOCKETS] = { -1, -1, -1 };
 
-    // search bones for sockets 
+    // search bones for sockets
     for (int i = 0; i < characterModel.boneCount; i++)
     {
         if (TextIsEqual(characterModel.bones[i].name, "socket_hat"))
@@ -69,13 +71,13 @@ int main(void)
             boneSocketIndex[BONE_SOCKET_HAT] = i;
             continue;
         }
-        
+
         if (TextIsEqual(characterModel.bones[i].name, "socket_hand_R"))
         {
             boneSocketIndex[BONE_SOCKET_HAND_R] = i;
             continue;
         }
-        
+
         if (TextIsEqual(characterModel.bones[i].name, "socket_hand_L"))
         {
             boneSocketIndex[BONE_SOCKET_HAND_L] = i;
@@ -97,7 +99,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_THIRD_PERSON);
-        
+
         // Rotate character
         if (IsKeyDown(KEY_F)) angle = (angle + 1)%360;
         else if (IsKeyDown(KEY_H)) angle = (360 + angle - 1)%360;
@@ -110,7 +112,7 @@ int main(void)
         if (IsKeyPressed(KEY_ONE)) showEquip[BONE_SOCKET_HAT] = !showEquip[BONE_SOCKET_HAT];
         if (IsKeyPressed(KEY_TWO)) showEquip[BONE_SOCKET_HAND_R] = !showEquip[BONE_SOCKET_HAND_R];
         if (IsKeyPressed(KEY_THREE)) showEquip[BONE_SOCKET_HAND_L] = !showEquip[BONE_SOCKET_HAND_L];
-        
+
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
@@ -138,7 +140,7 @@ int main(void)
                     Transform *transform = &anim.framePoses[animCurrentFrame][boneSocketIndex[i]];
                     Quaternion inRotation = characterModel.bindPose[boneSocketIndex[i]].rotation;
                     Quaternion outRotation = transform->rotation;
-                    
+
                     // Calculate socket rotation (angle between bone in initial pose and same bone in current animation frame)
                     Quaternion rotate = QuaternionMultiply(outRotation, QuaternionInvert(inRotation));
                     Matrix matrixTransform = QuaternionToMatrix(rotate);
@@ -146,7 +148,7 @@ int main(void)
                     matrixTransform = MatrixMultiply(matrixTransform, MatrixTranslate(transform->translation.x, transform->translation.y, transform->translation.z));
                     // Transform the socket using the transform of the character (angle and translate)
                     matrixTransform = MatrixMultiply(matrixTransform, characterModel.transform);
-                    
+
                     // Draw mesh at socket position with socket angle rotation
                     DrawMesh(equipModel[i].meshes[0], equipModel[i].materials[1], matrixTransform);
                 }
@@ -166,7 +168,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModelAnimations(modelAnimations, animsCount);
     UnloadModel(characterModel);         // Unload character model and meshes/material
-    
+
     // Unload equipment model and meshes/material
     for (int i = 0; i < BONE_SOCKETS; i++) UnloadModel(equipModel[i]);
 

@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Text Writing Animation
+*   raylib [text] example - writing anim
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.4, last time updated with raylib 1.4
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -23,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - text writing anim");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - writing anim");
 
     const char message[128] = "This sample illustrates a text writing\nanimation effect! Check it out! ;)";
 

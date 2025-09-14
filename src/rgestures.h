@@ -21,7 +21,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -238,7 +238,7 @@ static GesturesData GESTURES = {
 };
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static float rgVector2Angle(Vector2 initialPosition, Vector2 finalPosition);
 static float rgVector2Distance(Vector2 v1, Vector2 v2);
@@ -481,7 +481,7 @@ float GetGesturePinchAngle(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Get angle from two-points vector with X-axis
 static float rgVector2Angle(Vector2 v1, Vector2 v2)

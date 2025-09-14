@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font SDF loading
+*   raylib [text] example - font sdf
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 1.3, last time updated with raylib 4.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -31,7 +33,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - SDF fonts");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font sdf");
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
@@ -48,7 +50,7 @@ int main(void)
 
     // Loading font data from memory data
     // Parameters > font size: 16, no glyphs array provided (0), glyphs count: 95 (autogenerate chars array)
-    fontDefault.glyphs = LoadFontData(fileData, fileSize, 16, 0, 95, FONT_DEFAULT);
+    fontDefault.glyphs = LoadFontData(fileData, fileSize, 16, 0, 95, FONT_DEFAULT, &fontDefault.glyphCount);
     // Parameters > glyphs count: 95, font size: 16, glyphs padding in image: 4 px, pack method: 0 (default)
     Image atlas = GenImageFontAtlas(fontDefault.glyphs, &fontDefault.recs, 95, 16, 4, 0);
     fontDefault.texture = LoadTextureFromImage(atlas);
@@ -59,7 +61,8 @@ int main(void)
     fontSDF.baseSize = 16;
     fontSDF.glyphCount = 95;
     // Parameters > font size: 16, no glyphs array provided (0), glyphs count: 0 (defaults to 95)
-    fontSDF.glyphs = LoadFontData(fileData, fileSize, 16, 0, 0, FONT_SDF);
+    fontSDF.glyphs = LoadFontData(fileData, fileSize, 16, 0, 0, FONT_SDF, &
+    fontSDF.glyphCount);
     // Parameters > glyphs count: 95, font size: 16, glyphs padding in image: 0 px, pack method: 1 (Skyline algorythm)
     atlas = GenImageFontAtlas(fontSDF.glyphs, &fontSDF.recs, 95, 16, 0, 1);
     fontSDF.texture = LoadTextureFromImage(atlas);

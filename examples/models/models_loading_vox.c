@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load models vox (MagicaVoxel)
+*   raylib [models] example - loading vox
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Johann Nadalutti (@procfxgen) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2025 Johann Nadalutti (@procfxgen) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -38,14 +40,14 @@ int main(void)
 	const int screenWidth = 800;
 	const int screenHeight = 450;
 
-	const char* voxFileNames[] = {
+	const char *voxFileNames[] = {
 		"resources/models/vox/chr_knight.vox",
 		"resources/models/vox/chr_sword.vox",
 		"resources/models/vox/monu9.vox",
 		"resources/models/vox/fez.vox"
 	};
 
-	InitWindow(screenWidth, screenHeight, "raylib [models] example - magicavoxel loading");
+	InitWindow(screenWidth, screenHeight, "raylib [models] example - loading vox");
 
 	// Define the camera to look into our 3d world
 	Camera camera = { 0 };
@@ -55,24 +57,23 @@ int main(void)
 	camera.fovy = 45.0f;                                // Camera field-of-view Y
 	camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-	//--------------------------------------------------------------------------------------
 	// Load MagicaVoxel files
 	Model models[MAX_VOX_FILES] = { 0 };
 
 	for (int i = 0; i < MAX_VOX_FILES; i++)
 	{
 		// Load VOX file and measure time
-		double t0 = GetTime() * 1000.0;
+		double t0 = GetTime()*1000.0;
 		models[i] = LoadModel(voxFileNames[i]);
-		double t1 = GetTime() * 1000.0;
+		double t1 = GetTime()*1000.0;
 
 		TraceLog(LOG_WARNING, TextFormat("[%s] File loaded in %.3f ms", voxFileNames[i], t1 - t0));
 
 		// Compute model translation matrix to center model on draw position (0, 0 , 0)
 		BoundingBox bb = GetModelBoundingBox(models[i]);
 		Vector3 center = { 0 };
-		center.x = bb.min.x + (((bb.max.x - bb.min.x) / 2));
-		center.z = bb.min.z + (((bb.max.z - bb.min.z) / 2));
+		center.x = bb.min.x + (((bb.max.x - bb.min.x)/2));
+		center.z = bb.min.z + (((bb.max.z - bb.min.z)/2));
 
 		Matrix matTranslate = MatrixTranslate(-center.x, 0, -center.z);
 		models[i].transform = matTranslate;
@@ -80,14 +81,13 @@ int main(void)
 
 	int currentModel = 0;
 
-	//--------------------------------------------------------------------------------------
 	// Load voxel shader
 	Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/voxel_lighting.vs", GLSL_VERSION),
 		TextFormat("resources/shaders/glsl%i/voxel_lighting.fs", GLSL_VERSION));
 
 	// Get some required shader locations
 	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-	// NOTE: "matModel" location name is automatically assigned on shader loading, 
+	// NOTE: "matModel" location name is automatically assigned on shader loading,
 	// no need to get the location again if using that uniform name
 	//shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
 
@@ -127,8 +127,8 @@ int main(void)
 		if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE))
 		{
 			const Vector2 mouseDelta = GetMouseDelta();
-			camerarot.x = mouseDelta.x * 0.05f;
-			camerarot.y = mouseDelta.y * 0.05f;
+			camerarot.x = mouseDelta.x*0.05f;
+			camerarot.y = mouseDelta.y*0.05f;
 		}
 		else
 		{
@@ -138,14 +138,14 @@ int main(void)
 
 		UpdateCameraPro(&camera,
 			(Vector3) {
-			(IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) * 0.1f -      // Move forward-backward
-				(IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) * 0.1f,
-				(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) * 0.1f -   // Move right-left
-				(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) * 0.1f,
+			(IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f -      // Move forward-backward
+				(IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,
+				(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f -   // Move right-left
+				(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f,
 				0.0f                                                // Move up-down
 		},
 			camerarot,
-			GetMouseWheelMove() * -2.0f);                              // Move to target (zoom)
+			GetMouseWheelMove()*-2.0f);                              // Move to target (zoom)
 
 		// Cycle between models on mouse click
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1) % MAX_VOX_FILES;

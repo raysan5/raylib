@@ -1,18 +1,23 @@
 .{
-    .name = "raylib",
-    .version = "5.5.0",
-    .minimum_zig_version = "0.13.0",
+    .name = .raylib,
+    .version = "5.6.0-dev",
+    .minimum_zig_version = "0.15.1",
+
+    .fingerprint = 0x13035e5cb8bc1ac2, // Changing this has security and trust implications.
 
     .dependencies = .{
         .xcode_frameworks = .{
-            .url = "git+https://github.com/hexops/xcode-frameworks#a6bf82e032d4d9923ad5c222d466710fcc05f249",
-            .hash = "12208da4dfcd9b53fb367375fb612ec73f38e53015f1ce6ae6d6e8437a637078e170",
+            .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
+            .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
             .lazy = true,
         },
         .emsdk = .{
-            .url = "git+https://github.com/emscripten-core/emsdk#3.1.50",
-            .hash = "1220e8fe9509f0843e5e22326300ca415c27afbfbba3992f3c3184d71613540b5564",
-            .lazy = true,
+            .url = "git+https://github.com/emscripten-core/emsdk#4.0.9",
+            .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
+        },
+        .zemscripten = .{
+            .url = "git+https://github.com/zig-gamedev/zemscripten#3fa4b778852226c7346bdcc3c1486e875a9a6d02",
+            .hash = "zemscripten-0.2.0-dev-sRlDqApRAACspTbAZnuNKWIzfWzSYgYkb2nWAXZ-tqqt",
         },
     },
 
@@ -20,5 +25,7 @@
         "build.zig",
         "build.zig.zon",
         "src",
+        "examples",
+        "LICENSE",
     },
 }

@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Mouse input
+*   raylib [core] example - input mouse
 *
-*   Example originally created with raylib 1.0, last time updated with raylib 4.0
+*   Example complexity rating: [★☆☆☆] 1/4
+*
+*   Example originally created with raylib 1.0, last time updated with raylib 5.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -23,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - mouse input");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input mouse");
 
     Vector2 ballPosition = { -100.0f, -100.0f };
     Color ballColor = DARKBLUE;
@@ -36,6 +38,18 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        if (IsKeyPressed(KEY_H))
+        {
+            if (IsCursorHidden())
+            {
+                ShowCursor();
+            }
+            else
+            {
+                HideCursor();
+            }
+        }
+
         ballPosition = GetMousePosition();
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) ballColor = MAROON;
@@ -56,6 +70,10 @@ int main(void)
             DrawCircleV(ballPosition, 40, ballColor);
 
             DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
+            DrawText("Press 'H' to toggle cursor visibility", 10, 30, 20, DARKGRAY);
+
+            if (!IsCursorHidden()) DrawText("CURSOR HIDDEN", 20, 60, 20, RED);
+            else DrawText("CURSOR VISIBLE", 20, 60, 20, LIME);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

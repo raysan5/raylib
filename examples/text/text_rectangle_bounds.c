@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Rectangle bounds
+*   raylib [text] example - rectangle bounds
+*
+*   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
@@ -9,14 +11,19 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2024 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+// Draw text using font inside rectangle limits
+static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);
+// Draw text using font inside rectangle limits with support for text selection
+static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -28,7 +35,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - draw text inside a rectangle");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - rectangle bounds");
 
     const char text[] = "Text cannot escape\tthis container\t...word wrap also works when active so here's \
 a long text for testing.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
@@ -128,7 +135,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 }
 
 //--------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //--------------------------------------------------------------------------------------
 
 // Draw text using font inside rectangle limits
@@ -177,9 +184,9 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
 
         // NOTE: When wordWrap is ON we first measure how much of the text we can draw before going outside of the rec container
         // We store this info in startLine and endLine, then we change states, draw the text between those two variables
-        // and change states again and again recursively until the end of the text (or until we get outside of the container).
+        // and change states again and again recursively until the end of the text (or until we get outside of the container)
         // When wordWrap is OFF we don't need the measure state so we go to the drawing state immediately
-        // and begin drawing on the next line before we can get outside the container.
+        // and begin drawing on the next line before we can get outside the container
         if (state == MEASURE_STATE)
         {
             // TODO: There are multiple types of spaces in UNICODE, maybe it's a good idea to add support for more

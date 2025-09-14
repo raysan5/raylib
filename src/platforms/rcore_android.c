@@ -27,7 +27,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -69,6 +69,16 @@ typedef struct {
     EGLContext context;                 // Graphic context, mode in which drawing can be done
     EGLConfig config;                   // Graphic config
 } PlatformData;
+
+typedef struct {
+    // Store data for both Hover and Touch events
+    // Used to ignore Hover events which are interpreted as Touch events
+    int32_t pointCount;                             // Number of touch points active
+    int32_t pointId[MAX_TOUCH_POINTS];              // Point identifiers
+    Vector2 position[MAX_TOUCH_POINTS];             // Touch position on screen
+
+    int32_t hoverPoints[MAX_TOUCH_POINTS];          // Hover Points
+} TouchRaw;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -246,6 +256,8 @@ static const KeyboardKey mapKeycode[KEYCODE_MAP_SIZE] = {
     KEY_KP_EQUAL        // AKEYCODE_NUMPAD_EQUALS
 };
 
+static TouchRaw touchRaw = { 0 };
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -337,7 +349,7 @@ void MinimizeWindow(void)
     TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
@@ -431,7 +443,7 @@ int GetMonitorCount(void)
     return 1;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
@@ -460,17 +472,21 @@ int GetMonitorHeight(int monitor)
 }
 
 // Get selected monitor physical width in millimetres
+// NOTE: It seems to return a slightly underestimated value on some devices
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
-    return 0;
+    int widthPixels = ANativeWindow_getWidth(platform.app->window);
+    float dpi = AConfiguration_getDensity(platform.app->config);
+    return (widthPixels/dpi)*25.4f;
 }
 
 // Get selected monitor physical height in millimetres
+// NOTE: It seems to return a slightly underestimated value on some devices
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
-    return 0;
+    int heightPixels = ANativeWindow_getHeight(platform.app->window);
+    float dpi = AConfiguration_getDensity(platform.app->config);
+    return (heightPixels/dpi)*25.4f;
 }
 
 // Get selected monitor refresh rate
@@ -497,8 +513,9 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-    return (Vector2){ 1.0f, 1.0f };
+    int density = AConfiguration_getDensity(platform.app->config);
+    float scale = (float)density/160;
+    return (Vector2){ scale, scale };
 }
 
 // Set clipboard text content
@@ -543,7 +560,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    CORE.Input.Mouse.cursorHidden = false;
+    CORE.Input.Mouse.cursorLocked = false;
 }
 
 // Disables cursor (lock cursor)
@@ -552,7 +569,7 @@ void DisableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    CORE.Input.Mouse.cursorHidden = true;
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -627,7 +644,7 @@ int SetGamepadMappings(const char *mappings)
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
-    TRACELOG(LOG_WARNING, "GamepadSetVibration() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "SetGamepadVibration() not implemented on target platform");
 }
 
 // Set mouse position XY
@@ -699,7 +716,7 @@ void PollInputEvents(void)
 
     // Poll Events (registered events) until we reach TIMEOUT which indicates there are no events left to poll
     // NOTE: Activity is paused if not enabled (platform.appEnabled)
-    while ((pollResult = ALooper_pollOnce(platform.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&platform.source)) > ALOOPER_POLL_TIMEOUT)
+    while ((pollResult = ALooper_pollOnce(platform.appEnabled? 0 : -1, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
     {
         // Process this event
         if (platform.source != NULL) platform.source->process(platform.app, platform.source);
@@ -786,7 +803,7 @@ int InitPlatform(void)
     while (!CORE.Window.ready)
     {
         // Process events until we reach TIMEOUT, which indicates no more events queued.
-        while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, (void**)&platform.source)) > ALOOPER_POLL_TIMEOUT)
+        while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
         {
             // Process this event
             if (platform.source != NULL) platform.source->process(platform.app, platform.source);
@@ -795,6 +812,8 @@ int InitPlatform(void)
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
+
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) touchRaw.hoverPoints[i] = -1;
 
     return 0;
 }
@@ -848,22 +867,20 @@ static int InitGraphicsDevice(void)
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
     }
 
-    const EGLint framebufferAttribs[] =
-    {
-        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
+    const EGLint framebufferAttribs[] = {
+        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT, // Type of context support
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
+        EGL_DEPTH_SIZE, 24,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLE_BUFFERS, sampleBuffer, // Activate MSAA
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
         EGL_NONE
     };
 
-    const EGLint contextAttribs[] =
-    {
+    const EGLint contextAttribs[] = {
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
@@ -1226,7 +1243,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             return 1; // Handled gamepad button
         }
 
-        KeyboardKey key = (keycode > 0 && keycode < KEYCODE_MAP_SIZE)? mapKeycode[keycode] : KEY_NULL;
+        KeyboardKey key = ((keycode > 0) && (keycode < KEYCODE_MAP_SIZE))? mapKeycode[keycode] : KEY_NULL;
         if (key != KEY_NULL)
         {
             // Save current key and its state
@@ -1266,25 +1283,85 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     }
 
     // Register touch points count
-    CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
+    touchRaw.pointCount = AMotionEvent_getPointerCount(event);
 
-    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    for (int i = 0; (i < touchRaw.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
         // Register touch points id
-        CORE.Input.Touch.pointId[i] = AMotionEvent_getPointerId(event, i);
+        touchRaw.pointId[i] = AMotionEvent_getPointerId(event, i);
 
         // Register touch points position
-        CORE.Input.Touch.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
+        touchRaw.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
 
         // Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
         float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x)/(float)CORE.Window.display.width;
         float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y)/(float)CORE.Window.display.height;
-        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x*widthRatio - (float)CORE.Window.renderOffset.x/2;
-        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y*heightRatio - (float)CORE.Window.renderOffset.y/2;
+        touchRaw.position[i].x = touchRaw.position[i].x*widthRatio - (float)CORE.Window.renderOffset.x/2;
+        touchRaw.position[i].y = touchRaw.position[i].y*heightRatio - (float)CORE.Window.renderOffset.y/2;
     }
 
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+    int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+    if (flags == AMOTION_EVENT_ACTION_HOVER_ENTER)
+    {
+        // The new pointer is hover
+        // So add it to hoverPoints
+        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+        {
+            if (touchRaw.hoverPoints[i] == -1)
+            {
+                touchRaw.hoverPoints[i] = touchRaw.pointId[pointerIndex];
+                break;
+            }
+        }
+    }
+
+    if ((flags == AMOTION_EVENT_ACTION_POINTER_UP) || (flags == AMOTION_EVENT_ACTION_UP) || (flags == AMOTION_EVENT_ACTION_HOVER_EXIT))
+    {
+        // One of the touchpoints is released, remove it from touch point arrays
+        if (flags == AMOTION_EVENT_ACTION_HOVER_EXIT)
+        {
+            // If the touchPoint is hover, remove it from hoverPoints
+            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+            {
+                if (touchRaw.hoverPoints[i] == touchRaw.pointId[pointerIndex])
+                {
+                    touchRaw.hoverPoints[i] = -1;
+                    break;
+                }
+            }
+        }
+        for (int i = pointerIndex; (i < touchRaw.pointCount - 1) && (i < MAX_TOUCH_POINTS - 1); i++)
+        {
+            touchRaw.pointId[i] = touchRaw.pointId[i+1];
+            touchRaw.position[i] = touchRaw.position[i+1];
+        }
+        touchRaw.pointCount--;
+    }
+
+    int pointCount = 0;
+    for (int i = 0; (i < touchRaw.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        // If the touchPoint is hover, Ignore it
+        bool hover = false;
+        for (int j = 0; j < MAX_TOUCH_POINTS; j++)
+        {
+            // Check if the touchPoint is in hoverPointers
+            if (touchRaw.hoverPoints[j] == touchRaw.pointId[i])
+            {
+                hover = true;
+                break;
+            }
+        }
+        if (hover) continue;
+
+        CORE.Input.Touch.pointId[pointCount] = touchRaw.pointId[i];
+        CORE.Input.Touch.position[pointCount] = touchRaw.position[i];
+        pointCount++;
+    }
+    CORE.Input.Touch.pointCount = pointCount;
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
@@ -1308,20 +1385,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
-
-    int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-
-    if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
-    {
-        // One of the touchpoints is released, remove it from touch point arrays
-        for (int i = pointerIndex; (i < CORE.Input.Touch.pointCount - 1) && (i < MAX_TOUCH_POINTS); i++)
-        {
-            CORE.Input.Touch.pointId[i] = CORE.Input.Touch.pointId[i+1];
-            CORE.Input.Touch.position[i] = CORE.Input.Touch.position[i+1];
-        }
-
-        CORE.Input.Touch.pointCount--;
-    }
 
     // When all touchpoints are tapped and released really quickly, this event is generated
     if (flags == AMOTION_EVENT_ACTION_CANCEL) CORE.Input.Touch.pointCount = 0;

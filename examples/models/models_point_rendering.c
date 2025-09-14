@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib example - point rendering
+*   raylib [models] example - point rendering
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
@@ -9,20 +11,23 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 Reese Gallagher (@satchelfrost)
+*   Copyright (c) 2024-2025 Reese Gallagher (@satchelfrost)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
 #include <stdlib.h>             // Required for: rand()
-#include <math.h>               // Required for: cos(), sin()
+#include <math.h>               // Required for: cosf(), sinf()
 
 #define MAX_POINTS 10000000     // 10 million
 #define MIN_POINTS 1000         // 1 thousand
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // Generate mesh using points
-Mesh GenMeshPoints(int numPoints);
+static Mesh GenMeshPoints(int numPoints);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -33,7 +38,7 @@ int main()
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [models] example - point rendering");
 
     Camera camera = {
@@ -48,15 +53,15 @@ int main()
     bool useDrawModelPoints = true;
     bool numPointsChanged = false;
     int numPoints = 1000;
-    
+
     Mesh mesh = GenMeshPoints(numPoints);
     Model model = LoadModelFromMesh(mesh);
-    
+
     //SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while(!WindowShouldClose())
+    while (!WindowShouldClose())
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -112,14 +117,14 @@ int main()
                             .b = mesh.colors[i*4 + 2],
                             .a = mesh.colors[i*4 + 3],
                         };
-                        
+
                         DrawPoint3D(pos, color);
                     }
                 }
 
                 // Draw a unit sphere for reference
                 DrawSphereWires(position, 1.0f, 10, 10, YELLOW);
-                
+
             EndMode3D();
 
             // Draw UI text
@@ -127,12 +132,12 @@ int main()
             DrawText("Up - increase points", 20, 70, 20, WHITE);
             DrawText("Down - decrease points", 20, 100, 20, WHITE);
             DrawText("Space - drawing function", 20, 130, 20, WHITE);
-            
+
             if (useDrawModelPoints) DrawText("Using: DrawModelPoints()", 20, 160, 20, GREEN);
             else DrawText("Using: DrawPoint3D()", 20, 160, 20, RED);
-            
+
             DrawFPS(10, 10);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -146,29 +151,32 @@ int main()
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
 // Generate a spherical point cloud
-Mesh GenMeshPoints(int numPoints)
+static Mesh GenMeshPoints(int numPoints)
 {
-    Mesh mesh = { 
+    Mesh mesh = {
         .triangleCount = 1,
         .vertexCount = numPoints,
         .vertices = (float *)MemAlloc(numPoints*3*sizeof(float)),
         .colors = (unsigned char*)MemAlloc(numPoints*4*sizeof(unsigned char)),
     };
 
-    // https://en.wikipedia.org/wiki/Spherical_coordinate_system
+    // REF: https://en.wikipedia.org/wiki/Spherical_coordinate_system
     for (int i = 0; i < numPoints; i++)
     {
-        float theta = PI*rand()/RAND_MAX;
-        float phi = 2.0f*PI*rand()/RAND_MAX;
-        float r = 10.0f*rand()/RAND_MAX;
-        
-        mesh.vertices[i*3 + 0] = r*sin(theta)*cos(phi);
-        mesh.vertices[i*3 + 1] = r*sin(theta)*sin(phi);
-        mesh.vertices[i*3 + 2] = r*cos(theta);
-        
+        float theta = ((float)PI*rand())/((float)RAND_MAX);
+        float phi = (2.0f*PI*rand())/((float)RAND_MAX);
+        float r = (10.0f*rand())/((float)RAND_MAX);
+
+        mesh.vertices[i*3 + 0] = r*sinf(theta)*cosf(phi);
+        mesh.vertices[i*3 + 1] = r*sinf(theta)*sinf(phi);
+        mesh.vertices[i*3 + 2] = r*cosf(theta);
+
         Color color = ColorFromHSV(r*360.0f, 1.0f, 1.0f);
-        
+
         mesh.colors[i*4 + 0] = color.r;
         mesh.colors[i*4 + 1] = color.g;
         mesh.colors[i*4 + 2] = color.b;
@@ -177,6 +185,6 @@ Mesh GenMeshPoints(int numPoints)
 
     // Upload mesh data from CPU (RAM) to GPU (VRAM) memory
     UploadMesh(&mesh, false);
-    
+
     return mesh;
 }

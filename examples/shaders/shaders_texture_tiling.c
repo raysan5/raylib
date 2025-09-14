@@ -2,14 +2,18 @@
 *
 *   raylib [shaders] example - texture tiling
 *
-*   Example demonstrates how to tile a texture on a 3D model using raylib.
+*   Example complexity rating: [★★☆☆] 2/4
+*
+*   Example demonstrates how to tile a texture on a 3D model using raylib
+*
+*   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example contributed by Luis Almeida (@luis605) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Luis Almeida (@luis605)
+*   Copyright (c) 2023-2025 Luis Almeida (@luis605)
 *
 ********************************************************************************************/
 
@@ -44,7 +48,7 @@ int main(void)
     // Load a cube model
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model model = LoadModelFromMesh(cube);
-    
+
     // Load a texture and assign to cube model
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
@@ -73,17 +77,17 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
+
                 BeginShaderMode(shader);
                     DrawModel(model, (Vector3){ 0.0f, 0.0f, 0.0f }, 2.0f, WHITE);
                 EndShaderMode();
 
                 DrawGrid(10, 1.0f);
-                
+
             EndMode3D();
 
             DrawText("Use mouse to rotate the camera", 10, 10, 20, DARKGRAY);
@@ -100,6 +104,6 @@ int main(void)
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

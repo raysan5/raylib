@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Mesh picking in 3d mode, ground plane, triangle, mesh
+*   raylib [models] example - mesh picking
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 1.7, last time updated with raylib 4.0
 *
@@ -9,13 +11,14 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2024 Joel Davis (@joeld42) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2025 Joel Davis (@joeld42) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 #include "raymath.h"
 
+#undef FLT_MAX
 #define FLT_MAX     340282346638528859811704183484516925440.0f     // Maximum value of a float, from bit pattern 01111111011111111111111111111111
 
 //------------------------------------------------------------------------------------
@@ -82,7 +85,7 @@ int main(void)
 
         // Display information about closest hit
         RayCollision collision = { 0 };
-        char *hitObjectName = "None";
+        const char *hitObjectName = "None";
         collision.distance = FLT_MAX;
         collision.hit = false;
         Color cursorColor = WHITE;
@@ -135,7 +138,7 @@ int main(void)
             RayCollision meshHitInfo = { 0 };
             for (int m = 0; m < tower.meshCount; m++)
             {
-                // NOTE: We consider the model.transform for the collision check but 
+                // NOTE: We consider the model.transform for the collision check but
                 // it can be checked against any transform Matrix, used when checking against same
                 // model drawn multiple times with multiple transforms
                 meshHitInfo = GetRayCollisionMesh(ray, tower.meshes[m], tower.transform);
@@ -143,7 +146,7 @@ int main(void)
                 {
                     // Save the closest hit mesh
                     if ((!collision.hit) || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
-                    
+
                     break;  // Stop once one mesh collision is detected, the colliding mesh is m
                 }
             }

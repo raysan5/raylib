@@ -1,15 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Vertex displacement
+*   raylib [shaders] example - vertex displacement
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 4.5
 *
-*   Example contributed by <Alex ZH> (@ZzzhHe) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Alex ZH (@ZzzhHe) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 <Alex ZH> (@ZzzhHe)
+*   Copyright (c) 2023-2025 Alex ZH (@ZzzhHe)
 *
 ********************************************************************************************/
 
@@ -50,7 +52,7 @@ int main(void)
     Shader shader = LoadShader(
         TextFormat("resources/shaders/glsl%i/vertex_displacement.vs", GLSL_VERSION),
         TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION));
-    
+
     // Load perlin noise texture
     Image perlinNoiseImage = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
     Texture perlinNoiseMap = LoadTextureFromImage(perlinNoiseImage);
@@ -62,7 +64,7 @@ int main(void)
     rlActiveTextureSlot(1);
     rlEnableTexture(perlinNoiseMap.id);
     rlSetUniformSampler(perlinNoiseMapLoc, 1);
-    
+
     // Create a plane mesh and model
     Mesh planeMesh = GenMeshPlane(50, 50, 50, 50);
     Model planeModel = LoadModelFromMesh(planeMesh);
