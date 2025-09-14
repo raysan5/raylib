@@ -36,8 +36,9 @@
 
     10. Have fun!
 
-    The following files should be updated when adding a new example, it's planned to create some
-    script to automatize this process but not available yet
+    The following files must be updated when adding a new example, 
+    but it can be automatically done using the raylib provided tool: rexm
+    So, no worries if just the .c/.png are provided when adding the example.
 
      - raylib/examples/<category>/<category>_example_name.c
      - raylib/examples/<category>/<category>_example_name.png
