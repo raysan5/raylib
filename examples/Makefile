@@ -611,7 +611,7 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_gpu_skinning \
+    models/models_animation_gpu_skinning \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
