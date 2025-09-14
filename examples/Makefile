@@ -605,6 +605,7 @@ TEXT = \
 
 MODELS = \
     models/models_animation_playing \
+    models/models_animation_blending \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
