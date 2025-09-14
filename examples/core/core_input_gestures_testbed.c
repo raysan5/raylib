@@ -39,7 +39,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input gestures testbed");
-    
+
     Vector2 messagePosition = { 160, 7 };
 
     // Last gesture variables definitions
@@ -53,12 +53,12 @@ int main(void)
     int gestureLogIndex = GESTURE_LOG_SIZE;
     int previousGesture = 0;
 
-    // Log mode values: 
+    // Log mode values:
     // - 0 shows repeated events
     // - 1 hides repeated events
     // - 2 shows repeated events but hide hold events
     // - 3 hides repeated events and hide hold events
-    int logMode = 1; 
+    int logMode = 1;
 
     Color gestureColor = { 0, 0, 0, 255 };
     Rectangle logButton1 = { 53, 7, 48, 26 };
@@ -88,7 +88,7 @@ int main(void)
         const int touchCount = GetTouchPointCount();
 
         // Handle last gesture
-        if ((currentGesture != 0) && (currentGesture != 4) && (currentGesture != previousGesture)) 
+        if ((currentGesture != 0) && (currentGesture != 4) && (currentGesture != previousGesture))
             lastGesture = currentGesture; // Filter the meaningful gestures (1, 2, 8 to 512) for the display
 
         // Handle gesture log
@@ -155,7 +155,7 @@ int main(void)
 
         float currentAngleRadians = ((currentAngleDegrees + 90.0f)*PI/180); // Convert the current angle to Radians
         // Calculate the final vector for display
-        finalVector = (Vector2){ (angleLength*sinf(currentAngleRadians)) + protractorPosition.x, 
+        finalVector = (Vector2){ (angleLength*sinf(currentAngleRadians)) + protractorPosition.x,
             (angleLength*cosf(currentAngleRadians)) + protractorPosition.y };
 
         // Handle touch and mouse pointer points

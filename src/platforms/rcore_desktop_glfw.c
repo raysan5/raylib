@@ -83,14 +83,14 @@
                                         // Works as long as the current file consistently references any X11 Font as X11Font
                                         // Since it is never referenced (as of writing), this does not pose an issue
     #endif
-    
+
     #if defined(_GLFW_WAYLAND)
         #define GLFW_EXPOSE_NATIVE_WAYLAND
     #endif
-                                        
+
     #include "GLFW/glfw3native.h"       // Include native header only once, regardless of how many backends are defined
                                         // Required for: glfwGetX11Window() and glfwGetWaylandWindow()
-    
+
     #if defined(_GLFW_X11)              // Clean up X11-specific hacks
         #undef Font                     // Revert hack and allow normal raylib Font usage
     #endif

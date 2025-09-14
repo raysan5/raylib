@@ -702,7 +702,7 @@ bool ExportImage(Image image, const char *fileName)
         result = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Export image format requested not supported");
-    
+
     if (allocatedData) RL_FREE(imgData);
 #endif      // SUPPORT_IMAGE_EXPORT
 

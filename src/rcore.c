@@ -2565,14 +2565,14 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
     unsigned char *data0 = (unsigned char *)RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int size = sinflate(data0, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
 
-    // WARNING: RL_REALLOC can make (and leave) data copies in memory, 
+    // WARNING: RL_REALLOC can make (and leave) data copies in memory,
     // that can be a security concern in case of compression of sensitive data
     // So, we use a second buffer to copy data manually, wiping original buffer memory
     data = (unsigned char *)RL_CALLOC(size, 1);
     memcpy(data, data0, size);
     memset(data0, 0, MAX_DECOMPRESSION_SIZE*1024*1024); // Wipe memory, is memset() safe?
     RL_FREE(data0);
-    
+
     TRACELOG(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataSize, size);
 
     *dataSize = size;
@@ -2689,7 +2689,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
             TRACELOG(LOG_WARNING, "BASE64: Decoding error: Output data size is too small");
             break;
         }
-        
+
         decodedData[outputCount + 0] = (octetPack >> 16) & 0xff;
         decodedData[outputCount + 1] = (octetPack >> 8) & 0xff;
         decodedData[outputCount + 2] = octetPack & 0xff;
@@ -3018,7 +3018,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 
             char *result = fgets(buffer, 256, raeFile);
             if (result != buffer) TRACELOG(LOG_WARNING, "AUTOMATION: [%s] Issue reading line to buffer", fileName);
-            
+
             while (!feof(raeFile))
             {
                 switch (buffer[0])

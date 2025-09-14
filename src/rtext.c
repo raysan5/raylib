@@ -760,7 +760,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                         // NOTE: For optimum results, bitmap font should be generated at base pixel size
                         for (int p = 0; p < cpWidth*cpHeight; p++)
                         {
-                            if (((unsigned char *)glyphs[k].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) 
+                            if (((unsigned char *)glyphs[k].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD)
                                 ((unsigned char *)glyphs[k].image.data)[p] = 0;
                             else ((unsigned char *)glyphs[k].image.data)[p] = 255;
                         }
@@ -774,7 +774,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     // WARNING: Glyph not found on font, optionally use a fallback glyph
                 }
             }
-        
+
             if (glyphCounter < codepointCount) TRACELOG(LOG_WARNING, "FONT: Requested codepoints glyphs found: [%i/%i]", k, codepointCount);
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
