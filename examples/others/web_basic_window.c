@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window (adapted for HTML5 platform)
+*   raylib [others] example - Basic window (adapted for HTML5 platform)
 *
 *   This example is prepared to compile for PLATFORM_WEB and PLATFORM_DESKTOP
 *   As you will notice, code structure is slightly different to the other examples...
@@ -37,7 +37,7 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - web basic window");
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
