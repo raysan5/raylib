@@ -1428,10 +1428,18 @@ int InitPlatform(void)
     // was enabled by default. Disabling it gets back the old behavior. A
     // complete fix will require removing a lot of CORE.Window.render
     // manipulation code
-    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+    // NOTE: This currently doesn't work on macOS(see #5185), so we skip it there
+    // when FLAG_WINDOW_HIGHDPI is *unset*
+#if !defined(__APPLE__)
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+#endif
 
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
+        // since we skipped it before, now make sure to set this on macOS
+#if defined(__APPLE__)
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+#endif
         // Resize window content area based on the monitor content scale
         // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11
         // On platforms like macOS the resolution of the framebuffer is changed independently of the window size
