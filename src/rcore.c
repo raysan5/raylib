@@ -1012,7 +1012,14 @@ void EndDrawing(void)
 
                 Vector2 scale = GetWindowScaleDPI();
                 msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-                screenshotCounter++;
+
+                for (int i = 0; i <= 999; i++)
+                {
+                    if (!FileExists(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter)))
+                        break;
+
+                    screenshotCounter++;
+                }
 
                 TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
             }
