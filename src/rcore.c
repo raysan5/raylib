@@ -819,6 +819,18 @@ bool IsWindowState(unsigned int flag)
     return ((CORE.Window.flags & flag) > 0);
 }
 
+// Get display width
+int GetDisplayWidth(void)
+{
+    return CORE.Window.display.width;
+}
+
+// Get display height
+int GetDisplayHeight(void)
+{
+    return CORE.Window.display.height;
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
