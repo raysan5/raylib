@@ -4010,6 +4010,60 @@ return {
       }
     },
     {
+      name = "FileRename",
+      description = "Rename file (if exists)",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "const char *", name = "fileRename"}
+      }
+    },
+    {
+      name = "FileRemove",
+      description = "Remove file (if exists)",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "FileCopy",
+      description = "Copy file from one path to another, dstPath created if it doesn't exist",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "srcPath"},
+        {type = "const char *", name = "dstPath"}
+      }
+    },
+    {
+      name = "FileMove",
+      description = "Move file from one directory to another, dstPath created if it doesn't exist",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "srcPath"},
+        {type = "const char *", name = "dstPath"}
+      }
+    },
+    {
+      name = "FileTextReplace",
+      description = "Replace text in an existing file",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "const char *", name = "search"},
+        {type = "const char *", name = "replacement"}
+      }
+    },
+    {
+      name = "FileTextFindIndex",
+      description = "Find text in existing file",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "const char *", name = "search"}
+      }
+    },
+    {
       name = "FileExists",
       description = "Check if file exists",
       returnType = "bool",
@@ -4038,6 +4092,14 @@ return {
       name = "GetFileLength",
       description = "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)",
       returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "GetFileModTime",
+      description = "Get file modification time (last write time)",
+      returnType = "long",
       params = {
         {type = "const char *", name = "fileName"}
       }
@@ -4166,14 +4228,6 @@ return {
       returnType = "void",
       params = {
         {type = "FilePathList", name = "files"}
-      }
-    },
-    {
-      name = "GetFileModTime",
-      description = "Get file modification time (last write time)",
-      returnType = "long",
-      params = {
-        {type = "const char *", name = "fileName"}
       }
     },
     {
@@ -6910,13 +6964,42 @@ return {
       }
     },
     {
+      name = "TextRemoveSpaces",
+      description = "Remove text spaces, concat words",
+      returnType = "const char *",
+      params = {
+        {type = "const char *", name = "text"}
+      }
+    },
+    {
+      name = "GetTextBetween",
+      description = "Get text between two strings",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "begin"},
+        {type = "const char *", name = "end"}
+      }
+    },
+    {
       name = "TextReplace",
       description = "Replace text string (WARNING: memory must be freed!)",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},
-        {type = "const char *", name = "replace"},
-        {type = "const char *", name = "by"}
+        {type = "const char *", name = "search"},
+        {type = "const char *", name = "replacement"}
+      }
+    },
+    {
+      name = "TextReplaceBetween",
+      description = "Replace text between two specific strings (WARNING: memory must be freed!)",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "begin"},
+        {type = "const char *", name = "end"},
+        {type = "const char *", name = "replacement"}
       }
     },
     {
@@ -6951,7 +7034,7 @@ return {
     },
     {
       name = "TextAppend",
-      description = "Append text at specific position and move cursor!",
+      description = "Append text at specific position and move cursor",
       returnType = "void",
       params = {
         {type = "char *", name = "text"},
@@ -6965,7 +7048,7 @@ return {
       returnType = "int",
       params = {
         {type = "const char *", name = "text"},
-        {type = "const char *", name = "find"}
+        {type = "const char *", name = "search"}
       }
     },
     {
