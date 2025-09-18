@@ -1668,7 +1668,7 @@ const char *TextRemoveSpaces(const char *text)
 }
 
 // Get text between two strings
-static char *GetTextBetween(const char *text, const char *begin, const char *end)
+char *GetTextBetween(const char *text, const char *begin, const char *end)
 {
     #define MAX_TEXT_BETWEEN_SIZE   1024
 
