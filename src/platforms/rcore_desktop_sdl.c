@@ -90,6 +90,8 @@
     #endif
 #endif
 
+#define SCANCODE_MAPPED_NUM     232
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -110,10 +112,6 @@ extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific data
 
-//----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
-#define SCANCODE_MAPPED_NUM 232
 static const KeyboardKey mapScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_NULL,           // SDL_SCANCODE_UNKNOWN
     0,
@@ -321,7 +319,7 @@ Uint8 SDL_EventState(Uint32 type, int state)
     {
         case SDL_DISABLE: SDL_SetEventEnabled(type, false); break;
         case SDL_ENABLE: SDL_SetEventEnabled(type, true); break;
-        default: TRACELOG(LOG_WARNING, "Event sate: unknow type");
+        default: TRACELOG(LOG_WARNING, "SDL: Event state of unknow type");
     }
 
     return stateBefore;
@@ -329,10 +327,10 @@ Uint8 SDL_EventState(Uint32 type, int state)
 
 void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode* mode)
 {
-    const SDL_DisplayMode* currMode = SDL_GetCurrentDisplayMode(displayID);
+    const SDL_DisplayMode *currentMode = SDL_GetCurrentDisplayMode(displayID);
 
-    if (currMode == NULL) TRACELOG(LOG_WARNING, "No current display mode");
-    else *mode = *currMode;
+    if (currentMode == NULL) TRACELOG(LOG_WARNING, "SDL: No possible to get current display mode");
+    else *mode = *currentMode;
 }
 
 // SDL3 Migration: Renamed
@@ -423,7 +421,7 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
 void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
-    TRACELOG(LOG_WARNING, "Getting clipboard data that is not text is only available in SDL3");
+    TRACELOG(LOG_WARNING, "SDL: Getting clipboard data that is not text not available in SDL2");
 
     // We could possibly implement it ourselves in this case for some easier platforms
     return NULL;
@@ -438,8 +436,8 @@ int InitPlatform(void);                                      // Initialize platf
 void ClosePlatform(void);                                    // Close platform
 
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
-
 static int GetCodepointNextSDL(const char *text, int *codepointSize); // Get next codepoint in a byte sequence and bytes processed
+static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event); // Update CORE input touch point info from SDL touch data
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -1307,41 +1305,6 @@ const char *GetKeyName(int key)
     return SDL_GetKeyName(key);
 }
 
-static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
-{
-#if defined(USING_VERSION_SDL3) // SDL3
-    int count = 0;
-    SDL_Finger **fingers = SDL_GetTouchFingers(event.touchID, &count);
-    CORE.Input.Touch.pointCount = count;
-
-    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
-    {
-        SDL_Finger *finger = fingers[i];
-        CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
-        CORE.Input.Touch.currentTouchState[i] = 1;
-    }
-
-    SDL_free(fingers);
-
-#else // SDL2
-
-    CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
-
-    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
-    {
-        SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
-        CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
-        CORE.Input.Touch.currentTouchState[i] = 1;
-    }
-#endif
-
-    for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
-}
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -1399,15 +1362,9 @@ void PollInputEvents(void)
 
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
-    /*
     // WARNING: Indexes into this array are obtained by using SDL_Scancode values, not SDL_Keycode values
-    const Uint8 *keys = SDL_GetKeyboardState(NULL);
-    for (int i = 0; i < 256; ++i)
-    {
-        CORE.Input.Keyboard.currentKeyState[i] = keys[i];
-        //if (keys[i]) TRACELOG(LOG_WARNING, "Pressed key: %i", i);
-    }
-    */
+    //const Uint8 *keys = SDL_GetKeyboardState(NULL);
+    //for (int i = 0; i < 256; ++i) CORE.Input.Keyboard.currentKeyState[i] = keys[i];
 
     CORE.Window.resizedLastFrame = false;
 
@@ -2173,4 +2130,40 @@ static int GetCodepointNextSDL(const char *text, int *codepointSize)
     }
 
     return codepoint;
+}
+
+// Update CORE input touch point info from SDL touch data
+static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
+{
+#if defined(USING_VERSION_SDL3) // SDL3
+    int count = 0;
+    SDL_Finger **fingers = SDL_GetTouchFingers(event.touchID, &count);
+    CORE.Input.Touch.pointCount = count;
+
+    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+    {
+        SDL_Finger *finger = fingers[i];
+        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentTouchState[i] = 1;
+    }
+
+    SDL_free(fingers);
+
+#else // SDL2
+
+    CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
+
+    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+    {
+        SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
+        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentTouchState[i] = 1;
+    }
+#endif
+
+    for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
 }

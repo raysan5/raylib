@@ -130,27 +130,29 @@ void ClosePlatform(void);        // Close platform
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 
 // Window callbacks events
-static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
-static void WindowPosCallback(GLFWwindow* window, int x, int y);                     // GLFW3 WindowPos Callback, runs when window is moved
-static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
-static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
-static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
-static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley);    // GLFW3 Window Content Scale Callback, runs when window changes scale
+static void WindowSizeCallback(GLFWwindow *window, int width, int height);              // GLFW3 WindowSize Callback, runs when window is resized
+static void WindowPosCallback(GLFWwindow* window, int x, int y);                        // GLFW3 WindowPos Callback, runs when window is moved
+static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                  // GLFW3 Window Maximize Callback, runs when window is maximized
+static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);      // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 
 // Input callbacks events
-static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
-static void CharCallback(GLFWwindow *window, unsigned int codepoint);                      // GLFW3 Char Callback, runs on key pressed (get codepoint value)
-static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);     // GLFW3 Mouse Button Callback, runs on mouse button pressed
-static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);                // GLFW3 Cursor Position Callback, runs on mouse move
-static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);       // GLFW3 Scrolling Callback, runs on mouse wheel
-static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
-static void JoystickCallback(int jid, int event);                                           // GLFW3 Joystick Connected/Disconnected Callback
+static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
+static void CharCallback(GLFWwindow *window, unsigned int codepoint);                   // GLFW3 Char Callback, runs on key pressed (get codepoint value)
+static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);  // GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);             // GLFW3 Cursor Position Callback, runs on mouse move
+static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);    // GLFW3 Scrolling Callback, runs on mouse wheel
+static void CursorEnterCallback(GLFWwindow *window, int enter);                         // GLFW3 Cursor Enter Callback, cursor enters client area
+static void JoystickCallback(int jid, int event);                                       // GLFW3 Joystick Connected/Disconnected Callback
 
-// Wrappers used by glfwInitAllocator
-static void *AllocateWrapper(size_t size, void *user);                                     // GLFW3 GLFWallocatefun, wrapps around RL_CALLOC macro
-static void *ReallocateWrapper(void *block, size_t size, void *user);                      // GLFW3 GLFWreallocatefun, wrapps around RL_REALLOC macro
-static void DeallocateWrapper(void *block, void *user);                                    // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
+// Memory allocator wrappers [used by glfwInitAllocator()]
+static void *AllocateWrapper(size_t size, void *user);                                  // GLFW3 GLFWallocatefun, wrapps around RL_CALLOC macro
+static void *ReallocateWrapper(void *block, size_t size, void *user);                   // GLFW3 GLFWreallocatefun, wrapps around RL_REALLOC macro
+static void DeallocateWrapper(void *block, void *user);                                 // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
+
+static void SetDimensionsFromMonitor(GLFWmonitor *monitor);     // Set screen dimensions from monitor/display dimensions
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -435,7 +437,7 @@ void SetWindowState(unsigned int flags)
     // State change: FLAG_INTERLACED_HINT
     if (((CORE.Window.flags & FLAG_INTERLACED_HINT) != (flags & FLAG_INTERLACED_HINT)) && ((flags & FLAG_INTERLACED_HINT) > 0))
     {
-        TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: Interlaced mode can only be configured before window initialization");
     }
 }
 
@@ -993,7 +995,7 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    Vector2 scale = {0};
+    Vector2 scale = { 0 };
     glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
@@ -1321,20 +1323,6 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-
-static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
-{
-  const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
-  // Default display resolution to that of the current mode
-  CORE.Window.display.width = mode->width;
-  CORE.Window.display.height = mode->height;
-
-  // Set screen width/height to the display width/height if they are 0
-  if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-  if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
-}
-
 // Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
 // We need to provide these because GLFWallocator expects function pointers with specific signatures
 // Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch
@@ -1929,8 +1917,6 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 // GLFW3 Char Callback, get unicode codepoint value
 static void CharCallback(GLFWwindow *window, unsigned int codepoint)
 {
-    //TRACELOG(LOG_DEBUG, "Char Callback: Codepoint: %i", codepoint);
-
     // NOTE: Registers any key down considering OS keyboard layout but
     // does not detect action events, those should be managed by user...
     // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
@@ -2039,6 +2025,20 @@ static void JoystickCallback(int jid, int event)
     {
         memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
     }
+}
+
+// Set screen dimensions from monitor/display dimensions
+static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
+{
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+    // Default display resolution to that of the current mode
+    CORE.Window.display.width = mode->width;
+    CORE.Window.display.height = mode->height;
+
+    // Set screen width/height to the display width/height if they are 0
+    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 }
 
 #ifdef _WIN32

@@ -1927,6 +1927,115 @@ void SetConfigFlags(unsigned int flags)
 // Module Functions Definition: File system
 //----------------------------------------------------------------------------------
 
+// Rename file (if exists)
+// NOTE: Only rename file name required, not full path
+int FileRename(const char *fileName, const char *fileRename)
+{
+    int result = 0;
+
+    if (FileExists(fileName))
+    {
+        result = rename(fileName, fileRename);
+    }
+    else result = -1;
+
+    return result;
+}
+
+// Remove file (if exists)
+int FileRemove(const char *fileName)
+{
+    int result = 0;
+
+    if (FileExists(fileName))
+    {
+        result = remove(fileName);
+    }
+    else result = -1;
+
+    return result;
+}
+
+// Copy file from one path to another
+// NOTE: If destination path does not exist, it is created!
+int FileCopy(const char *srcPath, const char *dstPath)
+{
+    int result = 0;
+    int srcDataSize = 0;
+    unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
+
+    // Create required paths if they do not exist
+    if (!DirectoryExists(GetDirectoryPath(dstPath)))
+        result = MakeDirectory(GetDirectoryPath(dstPath));
+
+    if (result == 0) // Directory created successfully (or already exists)
+    {
+        if ((srcFileData != NULL) && (srcDataSize > 0))
+            result = SaveFileData(dstPath, srcFileData, srcDataSize);
+    }
+
+    UnloadFileData(srcFileData);
+
+    return result;
+}
+
+// Move file from one directory to another
+// NOTE: If dst directories do not exists they are created
+int FileMove(const char *srcPath, const char *dstPath)
+{
+    int result = 0;
+
+    if (FileExists(srcPath))
+    {
+        FileCopy(srcPath, dstPath);
+        FileRemove(srcPath);
+    }
+    else result = -1;
+
+    return result;
+}
+
+// Replace text in an existing file
+// WARNING: DEPENDENCY: [rtext] module
+int FileTextReplace(const char *fileName, const char *search, const char *replacement)
+{
+    int result = 0;
+    char *fileText = NULL;
+    char *fileTextUpdated = { 0 };
+
+#if defined(SUPPORT_MODULE_RTEXT)
+    if (FileExists(fileName))
+    {
+        fileText = LoadFileText(fileName);
+        fileTextUpdated = TextReplace(fileText, search, replacement);
+        result = SaveFileText(fileName, fileTextUpdated);
+        MemFree(fileTextUpdated);
+        UnloadFileText(fileText);
+    }
+#else
+    TRACELOG(LOG_WARNING, "FILE: File text replace requires [rtext] module");
+#endif
+
+    return result;
+}
+
+// Find text index position in existing file
+// WARNING: DEPENDENCY: [rtext] module
+int FileTextFindIndex(const char *fileName, const char *search)
+{
+    int result = -1;
+
+    if (FileExists(fileName))
+    {
+        char *fileText = LoadFileText(fileName);
+        char *ptr = strstr(fileText, search);
+        if (ptr != NULL) result = (int)(ptr - fileText);
+        UnloadFileText(fileText);
+    }
+
+    return result;
+}
+
 // Check if the file exists
 bool FileExists(const char *fileName)
 {
@@ -2052,6 +2161,21 @@ int GetFileLength(const char *fileName)
     }
 
     return size;
+}
+
+// Get file modification time (last write time)
+long GetFileModTime(const char *fileName)
+{
+    struct stat result = { 0 };
+    long modTime = 0;
+
+    if (stat(fileName, &result) == 0)
+    {
+        time_t mod = result.st_mtime;
+        modTime = (long)mod;
+    }
+
+    return modTime;
 }
 
 // Get pointer to extension for a filename string (includes the dot: .png)
@@ -2367,7 +2491,7 @@ void UnloadDirectoryFiles(FilePathList files)
 // Create directories (including full path requested), returns 0 on success
 int MakeDirectory(const char *dirPath)
 {
-    if ((dirPath == NULL) || (dirPath[0] == '\0')) return 1; // Path is not valid
+    if ((dirPath == NULL) || (dirPath[0] == '\0')) return -1; // Path is not valid
     if (DirectoryExists(dirPath)) return 0; // Path already exists (is valid)
 
     // Copy path string to avoid modifying original
@@ -2392,8 +2516,11 @@ int MakeDirectory(const char *dirPath)
 
     // Create final directory
     if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
-
     RL_FREE(pathcpy);
+    
+    // In case something failed and requested directory
+    // was not successfully created, return -1
+    if (!DirectoryExists(dirPath)) return -1;
 
     return 0;
 }
@@ -2511,22 +2638,6 @@ void UnloadDroppedFiles(FilePathList files)
         CORE.Window.dropFileCount = 0;
         CORE.Window.dropFilepaths = NULL;
     }
-}
-
-// Get file modification time (last write time)
-long GetFileModTime(const char *fileName)
-{
-    struct stat result = { 0 };
-    long modTime = 0;
-
-    if (stat(fileName, &result) == 0)
-    {
-        time_t mod = result.st_mtime;
-
-        modTime = (long)mod;
-    }
-
-    return modTime;
 }
 
 //----------------------------------------------------------------------------------
@@ -2903,7 +3014,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
     for (int offset = 0; offset < newDataSize; offset += (512/8))
     {
         // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
-        unsigned int w[80] = {0};
+        unsigned int w[80] = { 0 };
         for (int i = 0; i < 16; i++)
         {
             w[i] = (msg[offset + (i*4) + 0] << 24) |
