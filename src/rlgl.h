@@ -1680,7 +1680,9 @@ void rlSetTexture(unsigned int id)
             }
 
             if (RLGL.currentBatch->drawCounter >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
-
+            if (RLGL.currentBatch->drawCounter > 1) {
+                RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 2].mode;
+            }
             RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = id;
             RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
         }
