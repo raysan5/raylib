@@ -25,6 +25,7 @@
 *    - raylib.com/examples/<category>/<category>_example_name.data
 *    - raylib.com/examples/<category>/<category>_example_name.wasm
 *    - raylib.com/examples/<category>/<category>_example_name.js
+*    - ...
 *
 *   LICENSE: zlib/libpng
 *
@@ -136,12 +137,12 @@ static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_S
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static int FileTextFind(const char *fileName, const char *find);
-static int FileTextReplace(const char *fileName, const char *find, const char *replace);
-static int FileCopy(const char *srcPath, const char *dstPath);
-static int FileRename(const char *fileName, const char *fileRename);
-static int FileMove(const char *srcPath, const char *dstPath);
-static int FileRemove(const char *fileName);
+//static int FileTextFind(const char *fileName, const char *find);
+//static int FileTextReplace(const char *fileName, const char *find, const char *replace);
+//static int FileCopy(const char *srcPath, const char *dstPath);
+//static int FileRename(const char *fileName, const char *fileRename);
+//static int FileMove(const char *srcPath, const char *dstPath);
+//static int FileRemove(const char *fileName);
 
 // Update required files from examples collection
 // UPDATES: Makefile, Makefile.Web, README.md, examples.js
@@ -185,9 +186,9 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 
 // Get text between two strings
-static char *GetTextBetween(const char *text, const char *begin, const char *end);
+//static char *GetTextBetween(const char *text, const char *begin, const char *end);
 // Replace text between two specific strings
-static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace);
+//static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -1773,6 +1774,7 @@ static void UnloadExamplesData(rlExampleInfo *exInfo)
     RL_FREE(exInfo);
 }
 
+/*
 // Find text in existing file
 static int FileTextFind(const char *fileName, const char *find)
 {
@@ -1808,7 +1810,7 @@ static int FileTextReplace(const char *fileName, const char *textLookUp, const c
 }
 
 // Copy file from one path to another
-// WARNING: Destination path must exist
+// NOTE: If destination path does not exist, it is created!
 static int FileCopy(const char *srcPath, const char *dstPath)
 {
     int result = 0;
@@ -1817,10 +1819,13 @@ static int FileCopy(const char *srcPath, const char *dstPath)
 
     // Create required paths if they do not exist
     if (!DirectoryExists(GetDirectoryPath(dstPath)))
-        MakeDirectory(GetDirectoryPath(dstPath));
+        result = MakeDirectory(GetDirectoryPath(dstPath));
 
-    if ((srcFileData != NULL) && (srcDataSize > 0))
-        result = SaveFileData(dstPath, srcFileData, srcDataSize);
+    if (result == 0) // Directory created successfully (or already exists)
+    {
+        if ((srcFileData != NULL) && (srcDataSize > 0))
+            result = SaveFileData(dstPath, srcFileData, srcDataSize);
+    }
 
     UnloadFileData(srcFileData);
 
@@ -1871,6 +1876,7 @@ static int FileMove(const char *srcPath, const char *dstPath)
 
     return result;
 }
+*/
 
 // Get example info from example file header
 // WARNING: Expecting the example to follow raylib_example_template.c
@@ -2458,6 +2464,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
     }
 }
 
+/*
 // Get text between two strings
 // NOTE: Using static string to return result, MAX: 1024 bytes
 static char *GetTextBetween(const char *text, const char *begin, const char *end)
@@ -2515,3 +2522,4 @@ static char *TextReplaceBetween(const char *text, const char *begin, const char 
 
     return result;
 }
+*/
