@@ -3939,8 +3939,13 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     texcoords[2] = (Vector2){ (float)(source.x + source.width)/texture.width, (float)source.y/texture.height };
     texcoords[3] = (Vector2){ (float)source.x/texture.width, (float)source.y/texture.height };
 
+#if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(texture.id);
     rlBegin(RL_QUADS);
+#else
+    rlBegin(RL_QUADS);
+    rlSetTexture(texture.id);
+#endif
 
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
         for (int i = 0; i < 4; i++)

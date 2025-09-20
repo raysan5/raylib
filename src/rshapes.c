@@ -132,10 +132,16 @@ void DrawPixel(int posX, int posY, Color color)
 void DrawPixelV(Vector2 position, Color color)
 {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
 
         rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -311,10 +317,16 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
     float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
 
         // NOTE: Every QUAD actually represents two segments
         for (int i = 0; i < segments/2; i++)
@@ -552,10 +564,17 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
     float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
         for (int i = 0; i < segments; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -732,10 +751,17 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     }
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
 
         rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -787,10 +813,18 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color lef
 // Draw a gradient-filled rectangle
 void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color bottomRight, Color topRight)
 {
+
+#if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+#else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+#endif
+
         rlNormal3f(0.0f, 0.0f, 1.0f);
 
         // NOTE: Default raylib font character 95 is a white square
@@ -952,10 +986,17 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
         // Draw all the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
         {
@@ -1206,10 +1247,17 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     if (lineThick > 1)
     {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-        rlSetTexture(GetShapesTexture().id);
-        Rectangle shapeRect = GetShapesTextureRectangle();
+    #if defined(GRAPHICS_API_OPENGL_11)
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
 
-        rlBegin(RL_QUADS);
+    rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
 
             // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
@@ -1382,10 +1430,17 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
@@ -1436,10 +1491,18 @@ void DrawTriangleFan(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        rlSetTexture(GetShapesTexture().id);
-        Rectangle shapeRect = GetShapesTextureRectangle();
 
-        rlBegin(RL_QUADS);
+#if defined(GRAPHICS_API_OPENGL_11)
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+
+    rlBegin(RL_QUADS);
+#else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+#endif
+
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 1; i < pointCount - 1; i++)
@@ -1497,10 +1560,17 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
     float angleStep = 360.0f/(float)sides*DEG2RAD;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1566,10 +1636,17 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
     float innerRadius = radius - (lineThick*cosf(DEG2RAD*exteriorAngle/2.0f));
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    #if defined(GRAPHICS_API_OPENGL_11)
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
+    #else
+    rlBegin(RL_QUADS);
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+    #endif
+
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
