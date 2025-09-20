@@ -4568,8 +4568,13 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
 
+#if defined(GRAPHICS_API_OPENGL_11)
         rlSetTexture(texture.id);
         rlBegin(RL_QUADS);
+#else
+        rlBegin(RL_QUADS);
+        rlSetTexture(texture.id);
+#endif
 
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
@@ -4603,13 +4608,18 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // I leave here the old implementation for educational purposes,
         // just in case someone wants to do some performance test
         /*
-        rlSetTexture(texture.id);
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
             if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
+#if defined(GRAPHICS_API_OPENGL_11)
+            rlSetTexture(texture.id);
             rlBegin(RL_QUADS);
+#else
+            rlBegin(RL_QUADS);
+            rlSetTexture(texture.id);
+#endif
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
@@ -4698,7 +4708,9 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
         coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
 
-        rlSetTexture(texture.id);
+#if defined(GRAPHICS_API_OPENGL_11)
+            rlSetTexture(texture.id);
+#endif
 
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
@@ -4706,6 +4718,9 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
             rlBegin(RL_QUADS);
+#if !defined(GRAPHICS_API_OPENGL_11)
+            rlSetTexture(texture.id);
+#endif
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
                 rlNormal3f(0.0f, 0.0f, 1.0f);               // Normal vector pointing towards viewer
 

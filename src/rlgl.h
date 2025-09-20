@@ -1676,6 +1676,8 @@ void rlSetTexture(unsigned int id)
                     RLGL.State.vertexCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
 
                     RLGL.currentBatch->drawCounter++;
+                    
+                    RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 2].mode;
                 }
             }
 
