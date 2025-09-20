@@ -47,13 +47,13 @@ if (${PLATFORM} MATCHES "Desktop")
             set(OPENGL_LIBRARIES "GL")
         endif ()
 
-        set(LIBS_PRIVATE atomic pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        set(LIBS_PRIVATE pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
         set(LIBS_PUBLIC m)
 
         if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
             find_library(OSS_LIBRARY ossaudio)
-            set(LIBS_PRIVATE pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
-            set(LIBS_PUBLIC m)
+        else ()
+            set(LIBS_PRIVATE ${LIBS_PRIVATE} atomic)
         endif ()
 
         if (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD" AND USE_AUDIO)
