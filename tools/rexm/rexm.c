@@ -1337,6 +1337,9 @@ int main(int argc, char *argv[])
             //    add <example_name>            : Add existing example, category extracted from name
             //    rename <old_examples_name> <new_example_name> : Rename an existing example
             //    remove <example_name>         : Remove an existing example
+            //    build <example_name>          : Build example for Desktop and Web platforms
+            //    validate                      : Validate examples collection, generates report
+            //    update                        : Validate and update examples collection, generates report
 
             printf("\n////////////////////////////////////////////////////////////////////////////////////////////\n");
             printf("//                                                                                        //\n");
