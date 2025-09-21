@@ -939,22 +939,22 @@ int main(int argc, char *argv[])
                 UnloadImage(imScreenshot);
 
                 // Validate: raylib/examples/Makefile                                   -> Example listed?
-                if (FileTextFind(TextFormat("%s/Makefile", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE;
+                if (FileTextFindIndex(TextFormat("%s/Makefile", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE;
 
                 // Validate: raylib/examples/Makefile.Web                               -> Example listed?
-                if (FileTextFind(TextFormat("%s/Makefile.Web", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE_WEB;
+                if (FileTextFindIndex(TextFormat("%s/Makefile.Web", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE_WEB;
 
                 // Validate: raylib/examples/README.md                                  -> Example listed?
-                if (FileTextFind(TextFormat("%s/README.md", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_README;
+                if (FileTextFindIndex(TextFormat("%s/README.md", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_README;
 
                 // Validate: raylib.com/common/examples.js                              -> Example listed?
-                if (FileTextFind(TextFormat("%s/../common/examples.js", exWebPath), exInfo->name + TextFindIndex(exInfo->name, "_") + 1) == -1) exInfo->status |= VALID_NOT_IN_JS;
+                if (FileTextFindIndex(TextFormat("%s/../common/examples.js", exWebPath), exInfo->name + TextFindIndex(exInfo->name, "_") + 1) == -1) exInfo->status |= VALID_NOT_IN_JS;
 
                 // Validate: raylib/projects/VS2022/examples/<category>_example_name.vcxproj -> File exists?
                 if (!FileExists(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name))) exInfo->status |= VALID_MISSING_VCXPROJ;
 
                 // Validate: raylib/projects/VS2022/raylib.sln                          -> Example listed?
-                if (FileTextFind(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_VCXSOL;
+                if (FileTextFindIndex(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_VCXSOL;
 
                 // Validate: raylib/examples/<category>/resources/..                    -> Example resources available?
                 // Scan resources used in example to check for missing resource files
