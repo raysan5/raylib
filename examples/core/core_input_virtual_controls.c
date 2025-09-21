@@ -2,23 +2,22 @@
 *
 *   raylib [core] example - input virtual controls
 *
-*   Example complexity rating: [★★★☆] 3/4
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
-*   Example create by GreenSnakeLinux (@GreenSnakeLinux),
-*   lighter by oblerion (@oblerion) and
-*   reviewed by Ramon Santamaria (@raysan5) and
-*   improved by danilwhale (@danilwhale)
+*   Example contributed by GreenSnakeLinux (@GreenSnakeLinux), 
+*   reviewed by Ramon Santamaria (@raysan5), oblerion (@oblerion) and danilwhale (@danilwhale)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024-2025 oblerion (@oblerion) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2024-2025 GreenSnakeLinux (@GreenSnakeLinux) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include <math.h>
 
 typedef enum {
@@ -45,24 +44,21 @@ int main(void)
     Vector2 padPosition = { 100, 350 };
     float buttonRadius = 30;
 
-    Vector2 buttonPositions[BUTTON_MAX] =
-    {
+    Vector2 buttonPositions[BUTTON_MAX] = {
         { padPosition.x,padPosition.y - buttonRadius*1.5f },  // Up
         { padPosition.x - buttonRadius*1.5f, padPosition.y }, // Left
         { padPosition.x + buttonRadius*1.5f, padPosition.y }, // Right
         { padPosition.x, padPosition.y + buttonRadius*1.5f }  // Down
     };
 
-    const char *buttonLabels[BUTTON_MAX] =
-    {
+    const char *buttonLabels[BUTTON_MAX] = {
         "Y",    // Up
         "X",    // Left
         "B",    // Right
         "A"     // Down
     };
 
-    Color buttonLabelColors[BUTTON_MAX] =
-    {
+    Color buttonLabelColors[BUTTON_MAX] = {
         YELLOW, // Up
         BLUE,   // Left
         RED,    // Right
@@ -83,22 +79,15 @@ int main(void)
     {
         // Update
         //--------------------------------------------------------------------------
-        if ((GetTouchPointCount() > 0))
-        {
-            // Use touch position
-            inputPosition = GetTouchPosition(0);
-        }
-        else
-        {
-            // Use mouse position
-            inputPosition = GetMousePosition();
-        }
+        if ((GetTouchPointCount() > 0)) inputPosition = GetTouchPosition(0); // Use touch position
+        else inputPosition = GetMousePosition(); // Use mouse position
 
         // Reset pressed button to none
         pressedButton = BUTTON_NONE;
 
         // Make sure user is pressing left mouse button if they're from desktop
-        if ((GetTouchPointCount() > 0) || ((GetTouchPointCount() == 0) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
+        if ((GetTouchPointCount() > 0) || 
+            ((GetTouchPointCount() == 0) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
         {
             // Find nearest D-Pad button to the input position
             for (int i = 0; i < BUTTON_MAX; i++)
@@ -123,8 +112,8 @@ int main(void)
             case BUTTON_DOWN: playerPosition.y += playerSpeed*GetFrameTime(); break;
             default: break;
         };
-
         //--------------------------------------------------------------------------
+        
         // Draw
         //--------------------------------------------------------------------------
         BeginDrawing();
@@ -157,4 +146,3 @@ int main(void)
 
     return 0;
 }
-

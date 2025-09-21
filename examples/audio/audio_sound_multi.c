@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - sound alias
+*   raylib [audio] example - sound multi
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 4.6, last time updated with raylib 4.6
+*   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -31,7 +31,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound alias");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound multi");
 
     InitAudioDevice();      // Initialize audio device
 

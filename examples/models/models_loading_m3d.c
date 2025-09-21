@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - model loading m3d
+*   raylib [models] example - loading m3d
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -31,7 +31,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - model loading m3d");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - loading m3d");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

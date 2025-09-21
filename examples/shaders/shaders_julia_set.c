@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - julia sets
+*   raylib [shaders] example - julia set
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -53,7 +53,7 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia sets");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia set");
 
     // Load julia set shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader

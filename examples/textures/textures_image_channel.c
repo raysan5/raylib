@@ -1,12 +1,12 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - extract channel from image
+*   raylib [textures] example - image channel
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.1-dev, last time updated with raylib 5.1-dev
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
 *   Example contributed by Bruno Cabral (@brccabral) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -29,7 +29,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - extract channel from image");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image channel");
 
     Image fudesumiImage = LoadImage("resources/fudesumi.png");
 

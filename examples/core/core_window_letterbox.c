@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - window scale letterbox
+*   raylib [core] example - window letterbox
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -32,7 +32,7 @@ int main(void)
 
     // Enable config flags for resizable window and vertical synchro
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - window scale letterbox");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - window letterbox");
     SetWindowMinSize(320, 240);
 
     int gameScreenWidth = 640;

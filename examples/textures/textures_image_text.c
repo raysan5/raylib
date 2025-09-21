@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - image text drawing
+*   raylib [textures] example - image text
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image text drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image text");
 
     Image parrots = LoadImage("resources/parrots.png"); // Load image in CPU memory (RAM)
 

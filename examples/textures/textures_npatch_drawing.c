@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - N-patch drawing
+*   raylib [textures] example - npatch drawing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -29,7 +29,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - N-patch drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - npatch drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D nPatchTexture = LoadTexture("resources/ninepatch_button.png");

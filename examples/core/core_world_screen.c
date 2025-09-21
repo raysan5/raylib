@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - core world screen
+*   raylib [core] example - world screen
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - core world screen");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - world screen");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

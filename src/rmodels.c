@@ -1432,7 +1432,8 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
     rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormals);
+
+    if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
@@ -3864,7 +3865,7 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float sca
 {
     Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, source, position, (Vector2) { scale*fabsf((float)source.width/source.height), scale }, tint);
+    DrawBillboardRec(camera, texture, source, position, (Vector2){ scale*fabsf((float)source.width/source.height), scale }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
@@ -5535,7 +5536,7 @@ static Model LoadGLTF(const char *fileName)
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined
-                        
+
                         if (model.meshes[meshIndex].vertices != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data already loaded", fileName);
                         else
                         {
@@ -5881,7 +5882,7 @@ static Model LoadGLTF(const char *fileName)
                 };
                 MatrixDecompose(worldMatrix, &(model.bindPose[i].translation), &(model.bindPose[i].rotation), &(model.bindPose[i].scale));
             }
-            
+
             if (data->skins_count > 1) TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
 
@@ -6577,7 +6578,7 @@ static Model LoadM3D(const char *fileName)
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
-                    
+
                     // Create a second buffer for mesh re-allocation
                     Mesh *tempMeshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
                     memcpy(tempMeshes, model.meshes, (model.meshCount - 1)*sizeof(Mesh));

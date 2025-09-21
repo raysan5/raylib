@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - textures tiled drawing
+*   raylib [textures] example - tiled drawing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -36,7 +36,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE); // Make the window resizable
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - textures tiled drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - tiled drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture texPattern = LoadTexture("resources/patterns.png");

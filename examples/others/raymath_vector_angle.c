@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [math] example - vector angle
+*   raylib [others] example - vector angle
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 1.0, last time updated with raylib 4.6
+*   Example originally created with raylib 1.0, last time updated with raylib 5.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -27,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [math] example - vector angle");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - vector angle");
 
     Vector2 v0 = { screenWidth/2, screenHeight/2 };
     Vector2 v1 = Vector2Add(v0, (Vector2){ 100.0f, 80.0f });

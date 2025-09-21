@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - storage save/load values
+*   raylib [core] example - storage values
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -41,7 +41,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - storage save/load values");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - storage values");
 
     int score = 0;
     int hiscore = 0;

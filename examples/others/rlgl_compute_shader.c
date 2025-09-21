@@ -1,13 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [rlgl] example - compute shader - game of life
+*   raylib [others] example - compute shader
 *
 *   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
 *         shaders used in this example are #version 430 (OpenGL 4.3)
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 4.0, last time updated with raylib 2.5
+*   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
 *   Example contributed by Teddy Astie (@tsnake41) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -57,7 +57,7 @@ int main(void)
     const int screenWidth = GOL_WIDTH;
     const int screenHeight = GOL_WIDTH;
 
-    InitWindow(screenWidth, screenHeight, "raylib [rlgl] example - compute shader - game of life");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader");
 
     const Vector2 resolution = { screenWidth, screenHeight };
     unsigned int brushSize = 8;

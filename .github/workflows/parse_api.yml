@@ -22,7 +22,7 @@ jobs:
       - name: Diff parse files
         id: diff
         run: |
-          git add -N parser
+          git add -N tools/parser
           git diff --name-only --exit-code
         continue-on-error: true
 

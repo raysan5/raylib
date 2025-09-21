@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - generate random sequence
+*   raylib [core] example - random sequence
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
 #include <stdlib.h>     // Required for: malloc(), free()
@@ -45,7 +46,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - generate random sequence");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - random sequence");
 
     int rectCount = 20;
     float rectSize = (float)screenWidth/rectCount;
