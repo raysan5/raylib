@@ -1,5 +1,7 @@
 #version 100
 
+precision mediump float;
+
 // Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
 
@@ -14,8 +16,7 @@ void main()
 {
     // Handle potential Y-flipping
     vec2 texCoord = fragTexCoord;
-    if (flipY)
-        texCoord.y = 1.0 - texCoord.y;
+    if (flipY) texCoord.y = 1.0 - texCoord.y;
 
     // Sample depth texture
     float depth = texture2D(depthTexture, texCoord).r;
