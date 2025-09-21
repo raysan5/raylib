@@ -800,7 +800,6 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < enumCount; i++)
     {
-
         // Parse enum description
         // NOTE: This is not necessarily from the line immediately before,
         // some of the enums have extra lines between the "description"
