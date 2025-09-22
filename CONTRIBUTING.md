@@ -69,8 +69,8 @@ If you have any doubt, don't hesitate to [contact me](mailto:ray@raylib.com)!.
 You can write me a direct mail but you can also contact me on the following networks:
 
  - [raylib Discord](https://discord.gg/raylib) - A direct communication channel for project discussions.
- - [raylib twitter](https://twitter.com/raysan5) - My personal twitter account, I usually post about raylib, you can send me PMs.
  - [raylib reddit](https://www.reddit.com/r/raylib/) - A good place for discussions or to ask for help.
  - [raylib web](http://www.raylib.com/) - On top-right corner there is a bunch of networks where you can find me.
+ - [raylib X](https://x.com/raysan5) - My personal X account, I usually post about raylib, you can send me PMs.
 
 Thank you very much for your time! :)
