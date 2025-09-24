@@ -1436,7 +1436,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
-    rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+    if (mesh.colors) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
@@ -1452,7 +1452,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     rlDisableStatePointer(GL_VERTEX_ARRAY);
     rlDisableStatePointer(GL_TEXTURE_COORD_ARRAY);
     rlDisableStatePointer(GL_NORMAL_ARRAY);
-    rlDisableStatePointer(GL_COLOR_ARRAY);
+    if (mesh.colors) rlDisableStatePointer(GL_COLOR_ARRAY);
 
     rlDisableTexture();
 #endif
@@ -4420,7 +4420,11 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].vertices = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].normals = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
-        model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
+        #if defined(GRAPHICS_API_OPENGL_11)
+            model.meshes[i].colors = NULL;
+        #else
+            model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
+        #endif
     }
 
     MemFree(localMeshVertexCounts);
@@ -4487,9 +4491,9 @@ static Model LoadOBJ(const char *fileName)
             }
 
             model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
-
-            for (int i = 0; i < 4; i++) model.meshes[meshIndex].colors[localMeshVertexCount*4 + i] = 255;
-
+            #if !defined(GRAPHICS_API_OPENGL_11)
+                for (int i = 0; i < 4; i++) model.meshes[meshIndex].colors[localMeshVertexCount*4 + i] = 255;
+            #endif
             faceVertIndex++;
             localMeshVertexCount++;
         }
