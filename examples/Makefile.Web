@@ -604,6 +604,7 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_gpu_skinning \
     models/models_animation_playing \
     models/models_billboard_rendering \
     models/models_bone_socket \
@@ -611,7 +612,6 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_animation_gpu_skinning \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
@@ -1019,8 +1019,11 @@ text/text_sprite_fonts: text/text_sprite_fonts.c
 text/text_unicode_emojis: text/text_unicode_emojis.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/dejavu.fnt@resources/dejavu.fnt \
+    --preload-file text/resources/dejavu.png@resources/dejavu.png \
     --preload-file text/resources/noto_cjk.fnt@resources/noto_cjk.fnt \
-    --preload-file text/resources/symbola.fnt@resources/symbola.fnt
+    --preload-file text/resources/noto_cjk.png@resources/noto_cjk.png \
+    --preload-file text/resources/symbola.fnt@resources/symbola.fnt \
+    --preload-file text/resources/symbola.png@resources/symbola.png
 
 text/text_unicode_ranges: text/text_unicode_ranges.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1030,6 +1033,12 @@ text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile MODELS examples
+models/models_animation_gpu_skinning: models/models_animation_gpu_skinning.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
+
 models/models_animation_playing: models/models_animation_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
@@ -1062,12 +1071,6 @@ models/models_first_person_maze: models/models_first_person_maze.c
 
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-models/models_animation_gpu_skinning: models/models_animation_gpu_skinning.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
-    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
-    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
 models/models_heightmap_rendering: models/models_heightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

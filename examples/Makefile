@@ -604,6 +604,7 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_gpu_skinning \
     models/models_animation_playing \
     models/models_billboard_rendering \
     models/models_bone_socket \
@@ -611,7 +612,6 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_animation_gpu_skinning \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
