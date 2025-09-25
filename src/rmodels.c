@@ -4261,9 +4261,10 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
                 continue;
             }
             transforms[i].rotation = QuaternionMultiply(transforms[bones[i].parent].rotation, transforms[i].rotation);
+            transforms[i].scale = Vector3Multiply(transforms[i].scale, transforms[bones[i].parent].scale);
+            transforms[i].translation = Vector3Multiply(transforms[i].translation, transforms[bones[i].parent].scale);
             transforms[i].translation = Vector3RotateByQuaternion(transforms[i].translation, transforms[bones[i].parent].rotation);
             transforms[i].translation = Vector3Add(transforms[i].translation, transforms[bones[i].parent].translation);
-            transforms[i].scale = Vector3Multiply(transforms[i].scale, transforms[bones[i].parent].scale);
         }
     }
 }
@@ -6238,6 +6239,20 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
             *animCount = (int)data->animations_count;
             animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
 
+            Transform worldTransform;
+            {
+                cgltf_float cgltf_worldTransform[16];
+                cgltf_node* node = skin.joints[0];
+                cgltf_node_transform_world(node->parent, cgltf_worldTransform);
+                Matrix worldMatrix = {
+                    cgltf_worldTransform[0], cgltf_worldTransform[4], cgltf_worldTransform[8], cgltf_worldTransform[12],
+                    cgltf_worldTransform[1], cgltf_worldTransform[5], cgltf_worldTransform[9], cgltf_worldTransform[13],
+                    cgltf_worldTransform[2], cgltf_worldTransform[6], cgltf_worldTransform[10], cgltf_worldTransform[14],
+                    cgltf_worldTransform[3], cgltf_worldTransform[7], cgltf_worldTransform[11], cgltf_worldTransform[15]
+                };
+                MatrixDecompose(worldMatrix, &(worldTransform.translation), &(worldTransform.rotation), &(worldTransform.scale));
+            }
+
             for (unsigned int i = 0; i < data->animations_count; i++)
             {
                 animations[i].bones = LoadBoneInfoGLTF(skin, &animations[i].boneCount);
@@ -6355,6 +6370,13 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                             .scale = scale
                         };
                     }
+
+                    Transform* root = &animations[i].framePoses[j][0];
+                    root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
+                    root->scale = Vector3Multiply(root->scale, worldTransform.scale);
+                    root->translation = Vector3Multiply(root->translation, worldTransform.scale);
+                    root->translation = Vector3RotateByQuaternion(root->translation, worldTransform.rotation);
+                    root->translation = Vector3Add(root->translation, worldTransform.translation);
 
                     BuildPoseFromParentJoints(animations[i].bones, animations[i].boneCount, animations[i].framePoses[j]);
                 }
