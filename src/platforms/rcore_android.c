@@ -447,8 +447,8 @@ int GetMonitorCount(void)
 int GetCurrentMonitor(void)
 {
     int displayId = -1;
-    JNIEnv* env = NULL;
-    JavaVM* vm = platform.app->activity->vm;
+    JNIEnv *env = NULL;
+    JavaVM *vm = platform.app->activity->vm;
     (*vm)->AttachCurrentThread(vm, &env, NULL);
 
     jobject activity = platform.app->activity->clazz;
@@ -458,12 +458,15 @@ int GetCurrentMonitor(void)
 
     jobject display = (*env)->CallObjectMethod(env, activity, getDisplayMethod);
 
-    if (display == NULL) {
+    if (display == NULL)
+    {
         TRACELOG(LOG_ERROR, "GetCurrentMonitor() couldn't get the display object");
-    } else {
+    } 
+    else
+    {
         jclass displayClass = (*env)->FindClass(env, "android/view/Display");
         jmethodID getDisplayIdMethod = (*env)->GetMethodID(env, displayClass, "getDisplayId", "()I");
-        displayId = (int) (*env)->CallIntMethod(env, display, getDisplayIdMethod);
+        displayId = (int)(*env)->CallIntMethod(env, display, getDisplayIdMethod);
         (*env)->DeleteLocalRef(env, displayClass);
     }
 
