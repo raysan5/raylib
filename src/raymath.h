@@ -2555,7 +2555,7 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 // Decompose a transformation matrix into its rotational, translational and scaling components and remove shear
 RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotation, Vector3 *scale)
 {
-    float eps = 1e-9;
+    float eps = (float)1e-9;
 
     // Extract Translation
     translation->x = mat.m12;
