@@ -171,9 +171,18 @@ static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 #define WGL_DEPTH_BITS_ARB                  0x2022
 #define WGL_STENCIL_BITS_ARB                0x2023
 #define WGL_TYPE_RGBA_ARB                   0x202b
+
+// Context acceleration types
 #define WGL_NO_ACCELERATION_ARB             0x2025      // OpenGL 1.1 GDI software rasterizer
 #define WGL_GENERIC_ACCELERATION_ARB        0x2026
 #define WGL_FULL_ACCELERATION_ARB           0x2027      // OpenGL hardware-accelerated, using GPU-drivers provided by vendor
+
+// WGL_ARB_multisample extension supported
+#define WGL_SAMPLE_BUFFERS_ARB              0x2041      // Multisampling: 1 if multisample buffers are supported
+#define WGL_SAMPLES_ARB                     0x2042      // Multisampling: Number of samples per pixel (4, 8, 16)
+
+// WGL_ARB_framebuffer_sRGB extension supported
+#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9      // GL_TRUE if the framebuffer can do sRGB conversion
 
 #define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
 #define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
@@ -181,9 +190,6 @@ static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 #define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#define WGL_SAMPLE_BUFFERS_ARB              0x2041
-#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9
-#define WGL_TRANSPARENT_ARB                 0x200A
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
