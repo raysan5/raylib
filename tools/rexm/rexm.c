@@ -2047,6 +2047,7 @@ static void SortExampleByName(rlExampleInfo *items, int count)
 // WARNING: Supported resource file extensions is hardcoded by used file types
 // but new examples could require other file extensions to be added,
 // maybe it should look for '.xxx")' patterns instead
+// TODO: WARNING: Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png, ...
 static char **ScanExampleResources(const char *filePath, int *resPathCount)
 {
     #define REXM_MAX_RESOURCE_PATH_LEN    256
