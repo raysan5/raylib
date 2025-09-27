@@ -644,10 +644,8 @@ RLAPI void rlEnableVertexBufferElement(unsigned int id); // Enable vertex buffer
 RLAPI void rlDisableVertexBufferElement(void);          // Disable vertex buffer element (VBO element)
 RLAPI void rlEnableVertexAttribute(unsigned int index); // Enable vertex attribute index
 RLAPI void rlDisableVertexAttribute(unsigned int index); // Disable vertex attribute index
-#if defined(GRAPHICS_API_OPENGL_11)
 RLAPI void rlEnableStatePointer(int vertexAttribType, void *buffer); // Enable attribute state pointer
 RLAPI void rlDisableStatePointer(int vertexAttribType); // Disable attribute state pointer
-#endif
 
 // Textures state
 RLAPI void rlActiveTextureSlot(int slot);               // Select and active a texture slot
@@ -686,10 +684,8 @@ RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
 RLAPI void rlEnablePointMode(void);                     // Enable point mode
 RLAPI void rlDisablePointMode(void);                    // Disable point mode
-#if defined(GRAPHICS_API_OPENGL_11)
 RLAPI void rlSetPointSize(float size);                  // Set the point drawing size
 RLAPI float rlGetPointSize(void);                       // Get the point drawing size
-#endif
 RLAPI void rlEnableWireMode(void);                      // Enable wire mode
 RLAPI void rlDisableWireMode(void);                     // Disable wire mode
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
@@ -2020,18 +2016,24 @@ float rlGetLineWidth(void)
     return width;
 }
 
-#if defined(GRAPHICS_API_OPENGL_11)
 // Set the point drawing size
-void rlSetPointSize(float size) { glPointSize(size); }
+void rlSetPointSize(float size)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glPointSize(size);
+#endif
+}
 
 // Get the point drawing size
 float rlGetPointSize(void)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
     float size = 0;
     glGetFloatv(GL_POINT_SIZE, &size);
     return size;
-}
 #endif
+}
+
 // Enable line aliasing
 void rlEnableSmoothLines(void)
 {
@@ -4019,10 +4021,10 @@ void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffe
 #endif
 }
 
-#if defined(GRAPHICS_API_OPENGL_11)
 // Enable vertex state pointer
 void rlEnableStatePointer(int vertexAttribType, void *buffer)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
     if (buffer != NULL) glEnableClientState(vertexAttribType);
     switch (vertexAttribType)
     {
@@ -4033,14 +4035,16 @@ void rlEnableStatePointer(int vertexAttribType, void *buffer)
         //case GL_INDEX_ARRAY: if (buffer != NULL) glIndexPointer(GL_SHORT, 0, buffer); break; // Indexed colors
         default: break;
     }
+#endif
 }
 
 // Disable vertex state pointer
 void rlDisableStatePointer(int vertexAttribType)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
     glDisableClientState(vertexAttribType);
-}
 #endif
+}
 
 // Load vertex array object (VAO)
 unsigned int rlLoadVertexArray(void)
