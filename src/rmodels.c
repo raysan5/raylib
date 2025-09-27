@@ -1293,10 +1293,13 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
-    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
-    rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, 2, RL_FLOAT, 0, 0, 0);
-    rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
 
+    if (mesh->texcoords != NULL)
+    {
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, 2, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
+    }
     // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
     // is part of current state, and it is maintained even if a different program object is used
 
@@ -4418,13 +4421,10 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].triangleCount = vertexCount/3;
 
         model.meshes[i].vertices = (float *)MemAlloc(sizeof(float)*vertexCount*3);
+        //TODO iann: BEFORE MERGE TEST THIS: these should only get loaded when an obj has them,
+        //  synthesis can be tricky for all opengl contexts (especially colors)
         model.meshes[i].normals = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
-        #if defined(GRAPHICS_API_OPENGL_11)
-            model.meshes[i].colors = NULL;
-        #else
-            model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
-        #endif
     }
 
     MemFree(localMeshVertexCounts);
@@ -4489,11 +4489,9 @@ static Model LoadOBJ(const char *fileName)
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 1] = 1.0f;
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 2] = 0.0f;
             }
-
+            //TODO iann: BEFORE MERGE TEST THIS: these should only get loaded when an obj has them,
+            //  synthesis can be tricky for all opengl contexts (especially colors)
             model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
-            #if !defined(GRAPHICS_API_OPENGL_11)
-                for (int i = 0; i < 4; i++) model.meshes[meshIndex].colors[localMeshVertexCount*4 + i] = 255;
-            #endif
             faceVertIndex++;
             localMeshVertexCount++;
         }
