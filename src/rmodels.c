@@ -1300,6 +1300,12 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, 2, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
     }
+    else
+    {
+        float value[2] = { 0.0f, 0.0f };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, value, SHADER_ATTRIB_VEC2, 2);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
+    }
     // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
     // is part of current state, and it is maintained even if a different program object is used
 
@@ -1434,10 +1440,10 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.animVertices) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
-    rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
+    if (mesh.texcoords) rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
 
     if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
-    else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    else if (mesh.normals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
     if (mesh.colors) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
@@ -1455,7 +1461,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     rlDisableStatePointer(GL_VERTEX_ARRAY);
     rlDisableStatePointer(GL_TEXTURE_COORD_ARRAY);
     rlDisableStatePointer(GL_NORMAL_ARRAY);
-    if (mesh.colors) rlDisableStatePointer(GL_COLOR_ARRAY);
+    rlDisableStatePointer(GL_COLOR_ARRAY);
 
     rlDisableTexture();
 #endif
@@ -1477,6 +1483,17 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         };
 
         rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
+    }
+    else
+    {
+        float values[4] = {
+            material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f
+        };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, values, SHADER_ATTRIB_VEC4, 4);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR);
     }
 
     // Upload to shader material.colSpecular (if location available)
@@ -3839,6 +3856,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 
 // Draw a model points
 // WARNING: OpenGL ES 2.0 does not support point mode drawing
+// TODO: gate these properly for non es 2.0 versions only
 void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
 {
     rlEnablePointMode();
@@ -4421,8 +4439,6 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].triangleCount = vertexCount/3;
 
         model.meshes[i].vertices = (float *)MemAlloc(sizeof(float)*vertexCount*3);
-        //TODO iann: BEFORE MERGE TEST THIS: these should only get loaded when an obj has them,
-        //  synthesis can be tricky for all opengl contexts (especially colors)
         model.meshes[i].normals = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
     }
@@ -4478,7 +4494,17 @@ static Model LoadOBJ(const char *fileName)
 
             for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
 
-            for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
+            if (objAttributes.texcoords != NULL && texcordIndex != TINYOBJ_INVALID_INDEX && texcordIndex >= 0)
+            {
+                for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
+                model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
+            }
+            else
+            {
+                model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 0] = 0.0f;
+                model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 0.0f;
+            }
+
             if (objAttributes.normals != NULL && normalIndex != TINYOBJ_INVALID_INDEX && normalIndex >= 0)
             {
                 for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
@@ -4489,9 +4515,6 @@ static Model LoadOBJ(const char *fileName)
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 1] = 1.0f;
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 2] = 0.0f;
             }
-            //TODO iann: BEFORE MERGE TEST THIS: these should only get loaded when an obj has them,
-            //  synthesis can be tricky for all opengl contexts (especially colors)
-            model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
             faceVertIndex++;
             localMeshVertexCount++;
         }
