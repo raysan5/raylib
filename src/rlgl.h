@@ -686,6 +686,10 @@ RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
 RLAPI void rlEnablePointMode(void);                     // Enable point mode
 RLAPI void rlDisablePointMode(void);                    // Disable point mode
+#if defined(GRAPHICS_API_OPENGL_11)
+RLAPI void rlSetPointSize(float size);                  // Set the point drawing size
+RLAPI float rlGetPointSize(void);                       // Get the point drawing size
+#endif
 RLAPI void rlEnableWireMode(void);                      // Enable wire mode
 RLAPI void rlDisableWireMode(void);                     // Disable wire mode
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
@@ -2016,6 +2020,18 @@ float rlGetLineWidth(void)
     return width;
 }
 
+#if defined(GRAPHICS_API_OPENGL_11)
+// Set the point drawing size
+void rlSetPointSize(float size) { glPointSize(size); }
+
+// Get the point drawing size
+float rlGetPointSize(void)
+{
+    float size = 0;
+    glGetFloatv(GL_POINT_SIZE, &size);
+    return size;
+}
+#endif
 // Enable line aliasing
 void rlEnableSmoothLines(void)
 {
