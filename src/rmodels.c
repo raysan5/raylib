@@ -1484,17 +1484,6 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
         rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
     }
-    else
-    {
-        float values[4] = {
-            material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
-            material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
-            material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-            material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f
-        };
-        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, values, SHADER_ATTRIB_VEC4, 4);
-        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR);
-    }
 
     // Upload to shader material.colSpecular (if location available)
     if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)

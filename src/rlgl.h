@@ -2027,11 +2027,12 @@ void rlSetPointSize(float size)
 // Get the point drawing size
 float rlGetPointSize(void)
 {
+    float size = 1;
 #if defined(GRAPHICS_API_OPENGL_11)
-    float size = 0;
     glGetFloatv(GL_POINT_SIZE, &size);
-    return size;
 #endif
+    return size;
+
 }
 
 // Enable line aliasing
