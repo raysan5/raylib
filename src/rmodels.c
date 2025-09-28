@@ -4488,7 +4488,7 @@ static Model LoadOBJ(const char *fileName)
 
             for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
 
-            if (objAttributes.texcoords != NULL && texcordIndex != TINYOBJ_INVALID_INDEX && texcordIndex >= 0)
+            if ((objAttributes.texcoords != NULL) && (texcordIndex != TINYOBJ_INVALID_INDEX) && (texcordIndex >= 0))
             {
                 for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
                 model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
@@ -4499,7 +4499,7 @@ static Model LoadOBJ(const char *fileName)
                 model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 0.0f;
             }
 
-            if (objAttributes.normals != NULL && normalIndex != TINYOBJ_INVALID_INDEX && normalIndex >= 0)
+            if ((objAttributes.normals != NULL) && (normalIndex != TINYOBJ_INVALID_INDEX) && (normalIndex >= 0))
             {
                 for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
             }
