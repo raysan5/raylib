@@ -1,7 +1,7 @@
 
 /*******************************************************************************************
 *
-*   raylib [core_input_actions] example - presents a simple API for remapping input to actions 
+*   raylib [core_inputactionInputs] example - presents a simple API for remapping input to actions 
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "raylib.h"
+
 //  add your own action types here
+
 typedef enum ActionType
 {
     NO_ACTION,
@@ -51,13 +53,13 @@ typedef struct ActionInput
 
 //  gamepad index, change this if you have multiple gamepads. 
 int gamepadIndex = 0;
-static ActionInput _actions[MAX_ACTION] = {0};
+static ActionInput actionInputs[MAX_ACTION] = {0};
 
 //  combines IsKeyPressed and IsGameButtonPressed to one action
 bool isActionPressed(int action)
 {
     if (action<MAX_ACTION)
-        return (IsKeyPressed(_actions[action].key) || IsGamepadButtonPressed(gamepadIndex, _actions[action].button));
+        return (IsKeyPressed(actionInputs[action].key) || IsGamepadButtonPressed(gamepadIndex, actionInputs[action].button));
     return (false);
 }
 
@@ -65,7 +67,7 @@ bool isActionPressed(int action)
 bool isActionReleased(int action)
 {
     if (action<MAX_ACTION)  
-        return (IsKeyReleased(_actions[action].key) || IsGamepadButtonReleased(gamepadIndex, _actions[action].button));
+        return (IsKeyReleased(actionInputs[action].key) || IsGamepadButtonReleased(gamepadIndex, actionInputs[action].button));
     return (false);
 }
 
@@ -73,40 +75,44 @@ bool isActionReleased(int action)
 bool isActionDown(int action) 
 {
     if (action<MAX_ACTION)  
-        return (IsKeyDown(_actions[action].key) || IsGamepadButtonDown(gamepadIndex, _actions[action].button));
+        return (IsKeyDown(actionInputs[action].key) || IsGamepadButtonDown(gamepadIndex, actionInputs[action].button));
     return (false);
 }
 //  define the "default" keyset. here WASD and gamepad buttons on the left side for movement
 void DefaultActions()
 {
-    _actions[ACTION_UP].key = KEY_W;
-    _actions[ACTION_DOWN].key = KEY_S;
-    _actions[ACTION_LEFT].key = KEY_A;
-    _actions[ACTION_RIGHT].key = KEY_D;
-    _actions[ACTION_FIRE].key = KEY_SPACE;
+    actionInputs[ACTION_UP].key = KEY_W;
+    actionInputs[ACTION_DOWN].key = KEY_S;
+    actionInputs[ACTION_LEFT].key = KEY_A;
+    actionInputs[ACTION_RIGHT].key = KEY_D;
+    actionInputs[ACTION_FIRE].key = KEY_SPACE;
 
-    _actions[ACTION_UP].button = GAMEPAD_BUTTON_LEFT_FACE_UP;
-    _actions[ACTION_DOWN].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
-    _actions[ACTION_LEFT].button = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
-    _actions[ACTION_RIGHT].button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
-    _actions[ACTION_FIRE].button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+    actionInputs[ACTION_UP].button = GAMEPAD_BUTTON_LEFT_FACE_UP;
+    actionInputs[ACTION_DOWN].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+    actionInputs[ACTION_LEFT].button = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
+    actionInputs[ACTION_RIGHT].button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
+    actionInputs[ACTION_FIRE].button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
 }
 
 //  define the "alternate" keyset. here Cursor Keys and gamepad buttons on the right side for movement
 void CursorActions()
 {
-    _actions[ACTION_UP].key = KEY_UP;
-    _actions[ACTION_DOWN].key = KEY_DOWN;
-    _actions[ACTION_LEFT].key = KEY_LEFT;
-    _actions[ACTION_RIGHT].key = KEY_RIGHT;
-    _actions[ACTION_FIRE].key = KEY_SPACE;
+    actionInputs[ACTION_UP].key = KEY_UP;
+    actionInputs[ACTION_DOWN].key = KEY_DOWN;
+    actionInputs[ACTION_LEFT].key = KEY_LEFT;
+    actionInputs[ACTION_RIGHT].key = KEY_RIGHT;
+    actionInputs[ACTION_FIRE].key = KEY_SPACE;
 
-    _actions[ACTION_UP].button = GAMEPAD_BUTTON_RIGHT_FACE_UP;
-    _actions[ACTION_DOWN].button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
-    _actions[ACTION_LEFT].button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
-    _actions[ACTION_RIGHT].button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
-    _actions[ACTION_FIRE].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+    actionInputs[ACTION_UP].button = GAMEPAD_BUTTON_RIGHT_FACE_UP;
+    actionInputs[ACTION_DOWN].button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+    actionInputs[ACTION_LEFT].button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
+    actionInputs[ACTION_RIGHT].button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
+    actionInputs[ACTION_FIRE].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
 }
+
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 
 int main(int argc, char **argv)
 {
@@ -117,7 +123,7 @@ int main(int argc, char **argv)
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
 
-    //  set defaul actions 
+    //  set default actions 
     char actionSet = 0;
     DefaultActions();
 
@@ -160,6 +166,9 @@ int main(int argc, char **argv)
         }
         //----------------------------------------------------------------------------------
     }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------    
     CloseWindow(); // Close window and OpenGL context
     return 0;
 }
