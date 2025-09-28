@@ -127,6 +127,7 @@ models;models_textured_cube;★★☆☆;4.5;4.5;2022;2025;"Ramon Santamaria";@r
 models;models_animation_gpu_skinning;★★★☆;4.5;4.5;2024;2025;"Daniel Holden";@orangeduck
 models;models_bone_socket;★★★★;4.5;4.5;2024;2025;"iP";@ipzaur
 models;models_tesseract_view;★★☆☆;5.6-dev;5.6-dev;2024;2025;"Timothy van der Valk";@arceryz
+models;models_basic_voxel;★★☆☆;5.5;5.5;2025;2025;"Tim Little";@timlittle
 shaders;shaders_basic_lighting;★★★★;3.0;4.2;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_model_shader;★★☆☆;1.3;3.7;2014;2025;"Ramon Santamaria";@raysan5
 shaders;shaders_shapes_textures;★★☆☆;1.7;3.7;2015;2025;"Ramon Santamaria";@raysan5
