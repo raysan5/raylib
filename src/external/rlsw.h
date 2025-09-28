@@ -75,7 +75,7 @@
 #endif
 
 #ifndef SW_MAX_TEXTURE_STACK_SIZE
-#   define SW_MAX_TEXTURE_STACK_SIZE 4
+#   define SW_MAX_TEXTURE_STACK_SIZE 2
 #endif
 
 #ifndef SW_MAX_TEXTURES
@@ -96,7 +96,6 @@
 #   define SW_CLIP_EPSILON 1e-4f
 #endif
 
-
 /* === OpenGL Compatibility Types === */
 
 typedef unsigned int    GLenum;
@@ -114,7 +113,6 @@ typedef float           GLfloat;
 typedef float           GLclampf;
 typedef double          GLdouble;
 typedef double          GLclampd;
-
 
 /* === OpenGL Definitions === */
 
@@ -237,7 +235,6 @@ typedef double          GLclampd;
 #define GL_UNSIGNED_INT                     0x1405
 #define GL_FLOAT                            0x1406
 
-
 /* === Not Used Definitions === */
 
 #define GL_PERSPECTIVE_CORRECTION_HINT      0x0C50
@@ -256,7 +253,6 @@ typedef double          GLclampd;
 #define GL_NOTEQUAL                         0x0205
 #define GL_GEQUAL                           0x0206
 #define GL_ALWAYS                           0x0207
-
 
 /* === OpenGL Binding === */
 
@@ -319,7 +315,6 @@ typedef double          GLclampd;
 #define glTexParameteri(tr, pname, param)           swTexParameteri((pname), (param))
 #define glBindTexture(tr, id)                       swBindTexture((id))
 
-
 /* === Not Implemented === */
 
 #define glClearDepth(X)                         ((void)(X))
@@ -336,7 +331,6 @@ typedef double          GLclampd;
 #define glNormal3f(X,Y,Z)                       ((void)(X),(void)(Y),(void)(Z))
 #define glNormal3fv(X)                          ((void)(X))
 #define glNormalPointer(X,Y,Z)                  ((void)(X),(void)(Y),(void)(Z))
-
 
 /* === RLSW Enums === */
 
@@ -457,7 +451,6 @@ typedef enum {
     SW_INVALID_OPERATION = GL_INVALID_OPERATION,
 } SWerrcode;
 
-
 /* === Public API === */
 
 bool swInit(int w, int h);
@@ -536,6 +529,7 @@ void swBindTexture(uint32_t id);
 
 #endif // RLSW_H
 
+/* === RLSW Implementation === */
 
 #ifdef RLSW_IMPL
 
@@ -577,7 +571,7 @@ typedef enum {
     SW_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
     SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
     SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
-} sw_pixelformat_e;
+} sw_pixelformat_t;
 
 typedef void (*sw_factor_f)(
     float* SW_RESTRICT factor,
@@ -605,24 +599,24 @@ typedef struct {
     // TODO: Rework copied image handling  
 
     union {
-        const void* cptr;   //< NOTE: Is used for all data reads
-        void* ptr;          //< WARNING: Should only be used to allocate and free data
+        const void* cptr;       //< NOTE: Is used for all data reads
+        void* ptr;              //< WARNING: Should only be used to allocate and free data
     } pixels;
 
-    int width, height;      //< Dimensions of the texture
-    int wM1, hM1;           //< Dimensions minus one
-    int format;             //< Pixel format (internal representation)
+    int width, height;          //< Dimensions of the texture
+    int wMinus1, hMinus1;       //< Dimensions minus one
+    sw_pixelformat_t format;    //< Pixel format (internal representation)
 
-    SWfilter minFilter;     //< Minification filter
-    SWfilter magFilter;     //< Magnification filter
+    SWfilter minFilter;         //< Minification filter
+    SWfilter magFilter;         //< Magnification filter
 
-    SWwrap sWrap;           //< texcoord.x wrap mode
-    SWwrap tWrap;           //< texcoord.y wrap mode
+    SWwrap sWrap;               //< texcoord.x wrap mode
+    SWwrap tWrap;               //< texcoord.y wrap mode
 
-    float tx;               //< Texel width
-    float ty;               //< Texel height
+    float tx;                   //< Texel width
+    float ty;                   //< Texel height
 
-    bool copy;              //< Flag indicating whether memory has been allocated
+    bool copy;                  //< Flag indicating whether memory has been allocated
 
 } sw_texture_t;
 
@@ -637,18 +631,19 @@ typedef struct {
 typedef struct {
 
     sw_framebuffer_t framebuffer;
-    float clearColor[4];                                // Color used to clear the screen
-    float clearDepth;                                   // Depth value used to clear the screen
+    float clearColor[4];            // Color used to clear the screen
+    float clearDepth;               // Depth value used to clear the screen
 
-    int vpPos[2];                                               // Represents the top-left corner of the viewport
-    int vpDim[2];                                               // Represents the dimensions of the viewport (minus one)
-    int vpMin[2];                                               // Represents the minimum renderable point of the viewport (top-left)
-    int vpMax[2];                                               // Represents the maximum renderable point of the viewport (bottom-right)
+    int vpCenter[2];                // Represents the center of the viewport
+    int vpHalfSize[2];              // Represents the half dimensions of the viewport
+    int vpSize[2];                  // Represents the dimensions of the viewport (minus one)
+    int vpMin[2];                   // Represents the minimum renderable point of the viewport (top-left)
+    int vpMax[2];                   // Represents the maximum renderable point of the viewport (bottom-right)
 
-    int scMin[2];                                               // Represents the minimum renderable point of the scissor rect (top-left)
-    int scMax[2];                                               // Represents the maximum renderable point of the scissor rect (bottom-right)
-    float scHMin[2];                                            // Represents the minimum renderable point of the scissor rect in clip space
-    float scHMax[2];                                            // Represents the maximum renderable point of the scissor rect in clip space
+    int scMin[2];                   // Represents the minimum renderable point of the scissor rect (top-left)
+    int scMax[2];                   // Represents the maximum renderable point of the scissor rect (bottom-right)
+    float scClipMin[2];             // Represents the minimum renderable point of the scissor rect in clip space
+    float scClipMax[2];             // Represents the maximum renderable point of the scissor rect in clip space
 
     uint32_t currentTexture;
 
@@ -702,11 +697,9 @@ typedef struct {
 
 } sw_context_t;
 
-
 /* === Global Data === */
 
 static sw_context_t RLSW = { 0 };
-
 
 /* === Helper Functions === */
 
@@ -718,46 +711,49 @@ static inline void sw_matrix_id(sw_matrix_t dst)
     dst[12] = 0, dst[13] = 0, dst[14] = 0, dst[15] = 1;
 }
 
+static inline void sw_matrix_mul_rst(float* SW_RESTRICT dst, const float* SW_RESTRICT left, const float* SW_RESTRICT right)
+{
+    float l00 = left[0],  l01 = left[1],  l02 = left[2],  l03 = left[3]; 
+    float l10 = left[4],  l11 = left[5],  l12 = left[6],  l13 = left[7];
+    float l20 = left[8],  l21 = left[9],  l22 = left[10], l23 = left[11];
+    float l30 = left[12], l31 = left[13], l32 = left[14], l33 = left[15];
+
+    dst[0]  = l00 * right[0] + l01 * right[4] + l02 * right[8]  + l03 * right[12];
+    dst[4]  = l10 * right[0] + l11 * right[4] + l12 * right[8]  + l13 * right[12];
+    dst[8]  = l20 * right[0] + l21 * right[4] + l22 * right[8]  + l23 * right[12];
+    dst[12] = l30 * right[0] + l31 * right[4] + l32 * right[8]  + l33 * right[12];
+
+    dst[1]  = l00 * right[1] + l01 * right[5] + l02 * right[9]  + l03 * right[13];
+    dst[5]  = l10 * right[1] + l11 * right[5] + l12 * right[9]  + l13 * right[13];
+    dst[9]  = l20 * right[1] + l21 * right[5] + l22 * right[9]  + l23 * right[13];
+    dst[13] = l30 * right[1] + l31 * right[5] + l32 * right[9]  + l33 * right[13];
+
+    dst[2]  = l00 * right[2] + l01 * right[6] + l02 * right[10] + l03 * right[14];
+    dst[6]  = l10 * right[2] + l11 * right[6] + l12 * right[10] + l13 * right[14];
+    dst[10] = l20 * right[2] + l21 * right[6] + l22 * right[10] + l23 * right[14];
+    dst[14] = l30 * right[2] + l31 * right[6] + l32 * right[10] + l33 * right[14];
+
+    dst[3]  = l00 * right[3] + l01 * right[7] + l02 * right[11] + l03 * right[15];
+    dst[7]  = l10 * right[3] + l11 * right[7] + l12 * right[11] + l13 * right[15];
+    dst[11] = l20 * right[3] + l21 * right[7] + l22 * right[11] + l23 * right[15];
+    dst[15] = l30 * right[3] + l31 * right[7] + l32 * right[11] + l33 * right[15];
+}
+
 static inline void sw_matrix_mul(sw_matrix_t dst, const sw_matrix_t left, const sw_matrix_t right)
 {
-    sw_matrix_t result;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            float sum = 0.0;
-            for (int k = 0; k < 4; k++) {
-                sum += left[i * 4 + k] * right[k * 4 + j];
-            }
-            result[i * 4 + j] = sum;
-        }
-    }
+    float result[16];
+
+    sw_matrix_mul_rst(result, left, right);
+
     for (int i = 0; i < 16; i++) {
         dst[i] = result[i];
     }
 }
 
-/*
-static inline void sw_vec4_transform(float dst[4], const float v[4], const sw_matrix_t mat)
-{
-    float tmp[4] = {
-        mat[0] * v[0] + mat[4] * v[1] + mat[8] * v[2] + mat[12] * v[3],
-        mat[1] * v[0] + mat[5] * v[1] + mat[9] * v[2] + mat[13] * v[3],
-        mat[2] * v[0] + mat[6] * v[1] + mat[10] * v[2] + mat[14] * v[3],
-        mat[3] * v[0] + mat[7] * v[1] + mat[11] * v[2] + mat[15] * v[3]
-    };
-
-    for (int i = 0; i < 4; i++) {
-        dst[i] = tmp[i];
-    }
-}
-*/
-
 static inline float sw_saturate(float x)
 {
     union { float f; uint32_t u; } fb;
     fb.f = x;
-
-    const uint32_t ZERO_BITS = 0x00000000;       // Bit pattern of 0.0f
-    const uint32_t ONE_BITS  = 0x3F800000;       // Bit pattern of 1.0f (exp = 127, mantissa = 0)
 
     // Check if x < 0.0f
     // If sign bit is set (MSB), x is negative
@@ -767,7 +763,7 @@ static inline float sw_saturate(float x)
 
     // Check if x > 1.0f
     // Works for positive floats: IEEE 754 ordering matches integer ordering
-    if (fb.u > ONE_BITS) {
+    if (fb.u > 0x3F800000) {
         return 1.0f;
     }
 
@@ -785,11 +781,6 @@ static inline int sw_clampi(int v, int min, int max)
     if (v < min) return min;
     if (v > max) return max;
     return v;
-}
-
-static inline float sw_lerp(float a, float b, float t)
-{
-    return a + t * (b - a);
 }
 
 static inline void sw_lerp_vertex_PTCH(
@@ -879,10 +870,9 @@ static inline void sw_add_vertex_grad_PTCH(
     out->homogeneous[3] += gradients->homogeneous[3];
 }
 
-
 /* === Half Floating Point === */
 
-static inline uint32_t sw_cvt_hf_ui(uint16_t h)
+static inline uint32_t sw_f16_to_f32_ui(uint16_t h)
 {
     uint32_t s = (uint32_t)(h & 0x8000) << 16;
     int32_t em = h & 0x7fff;
@@ -900,15 +890,15 @@ static inline uint32_t sw_cvt_hf_ui(uint16_t h)
     return s | r;
 }
 
-static inline float sw_cvt_hf(sw_half_t y)
+static inline float sw_f16_to_f32(sw_half_t y)
 {
     union { float f; uint32_t i; } v = {
-        .i = sw_cvt_hf_ui(y)
+        .i = sw_f16_to_f32_ui(y)
     };
     return v.f;
 }
 
-static inline uint16_t sw_cvt_fh_ui(uint32_t ui)
+static inline uint16_t sw_f16_from_f32_ui(uint32_t ui)
 {
     int32_t s = (ui >> 16) & 0x8000;
     int32_t em = ui & 0x7fffffff;
@@ -928,13 +918,12 @@ static inline uint16_t sw_cvt_fh_ui(uint32_t ui)
     return (uint16_t)(s | h);
 }
 
-static inline sw_half_t sw_cvt_fh(float i)
+static inline sw_half_t sw_f16_from_f32(float i)
 {
     union { float f; uint32_t i; } v;
     v.f = i;
-    return sw_cvt_fh_ui(v.i);
+    return sw_f16_from_f32_ui(v.i);
 }
-
 
 /* === Framebuffer Part === */
 
@@ -1059,7 +1048,8 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, const float co
                 *curPtr++ = packedColor;
             }
         }
-    } else {
+    }
+    else {
         for (int i = 0; i < size; i++) {
             *p++ = packedColor;
         }
@@ -1119,7 +1109,8 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, const float co
                 *curPtr++ = packedColor;
             }
         }
-    } else {
+    }
+    else {
         for (int i = 0; i < size; i++) {
             *p++ = packedColor;
         }
@@ -1169,7 +1160,8 @@ static inline void sw_framebuffer_fill_color(void* ptr, int size, const float co
                 *curPtr++ = b;
             }
         }
-    } else {
+    }
+    else {
         for (int i = 0; i < size; i++) {
             *p++ = r;
             *p++ = g;
@@ -1345,23 +1337,23 @@ static inline void sw_framebuffer_fill(void* colorPtr, void* depthPtr, int size,
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++) {
-            int row_start_index = y * RLSW.framebuffer.width + RLSW.scMin[0];
+            int rowStartIdx = y * RLSW.framebuffer.width + RLSW.scMin[0];
 
             // Calculate starting pointers for the current row within the scissor rectangle
 #           if (SW_COLOR_BUFFER_BITS == 8)
-            uint8_t* curCPtr = cptr + row_start_index;
+            uint8_t* curCPtr = cptr + rowStartIdx;
 #           elif (SW_COLOR_BUFFER_BITS == 16)
-            uint16_t* curCPtr = cptr + row_start_index;
+            uint16_t* curCPtr = cptr + rowStartIdx;
 #           elif (SW_COLOR_BUFFER_BITS == 24)
-            uint8_t* curCPtr = cptr + 3 * row_start_index;
+            uint8_t* curCPtr = cptr + 3 * rowStartIdx;
 #           endif
 
 #           if (SW_DEPTH_BUFFER_BITS == 8)
-            uint8_t* curDPtr = dptr + row_start_index;
+            uint8_t* curDPtr = dptr + rowStartIdx;
 #           elif (SW_DEPTH_BUFFER_BITS == 16)
-            uint16_t* curDPtr = dptr + row_start_index;
+            uint16_t* curDPtr = dptr + rowStartIdx;
 #           elif (SW_DEPTH_BUFFER_BITS == 24)
-            uint8_t* curDPtr = dptr + 3 * row_start_index;
+            uint8_t* curDPtr = dptr + 3 * rowStartIdx;
 #           endif
 
             // Fill the current row within the scissor rectangle
@@ -1591,7 +1583,7 @@ DEFINE_FRAMEBUFFER_COPY_END()
 
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16, sw_half_t)
 {
-    dst[0] = sw_cvt_fh(color[0]);
+    dst[0] = sw_f16_from_f32(color[0]);
     dst++;
 }
 DEFINE_FRAMEBUFFER_COPY_END()
@@ -1599,13 +1591,13 @@ DEFINE_FRAMEBUFFER_COPY_END()
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16G16B16, sw_half_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_cvt_fh(color[2]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[0]);
+    dst[0] = sw_f16_from_f32(color[2]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[0]);
 #else // RGBA
-    dst[0] = sw_cvt_fh(color[0]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[2]);
+    dst[0] = sw_f16_from_f32(color[0]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[2]);
 #endif
 
     dst += 3;
@@ -1615,15 +1607,15 @@ DEFINE_FRAMEBUFFER_COPY_END()
 DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16G16B16A16, sw_half_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_cvt_fh(color[2]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[0]);
+    dst[0] = sw_f16_from_f32(color[2]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[0]);
 #else // RGBA
-    dst[0] = sw_cvt_fh(color[0]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[2]);
+    dst[0] = sw_f16_from_f32(color[0]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[2]);
 #endif
-    dst[3] = sw_cvt_fh(color[3]);
+    dst[3] = sw_f16_from_f32(color[3]);
 
     dst += 4;
 }
@@ -1823,7 +1815,7 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16, sw_half_t)
 {
-    dst[0] = sw_cvt_fh(color[0]);
+    dst[0] = sw_f16_from_f32(color[0]);
     dst++;
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
@@ -1831,13 +1823,13 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16G16B16, sw_half_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_cvt_fh(color[2]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[0]);
+    dst[0] = sw_f16_from_f32(color[2]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[0]);
 #else // RGBA
-    dst[0] = sw_cvt_fh(color[0]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[2]);
+    dst[0] = sw_f16_from_f32(color[0]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[2]);
 #endif
 
     dst += 3;
@@ -1847,20 +1839,19 @@ DEFINE_FRAMEBUFFER_BLIT_END()
 DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16G16B16A16, sw_half_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_cvt_fh(color[2]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[0]);
+    dst[0] = sw_f16_from_f32(color[2]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[0]);
 #else // RGBA
-    dst[0] = sw_cvt_fh(color[0]);
-    dst[1] = sw_cvt_fh(color[1]);
-    dst[2] = sw_cvt_fh(color[2]);
+    dst[0] = sw_f16_from_f32(color[0]);
+    dst[1] = sw_f16_from_f32(color[1]);
+    dst[2] = sw_f16_from_f32(color[2]);
 #endif
-    dst[3] = sw_cvt_fh(color[3]);
+    dst[3] = sw_f16_from_f32(color[3]);
 
     dst += 4;
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
-
 
 /* === Pixel Format Part === */
 
@@ -1871,25 +1862,25 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
     
     // Determine the number of channels (format)
     switch (format) {
-        case SW_LUMINANCE:        channels = 1; break;
-        case SW_LUMINANCE_ALPHA:  channels = 2; break;
-        case SW_RGB:              channels = 3; break;
-        case SW_RGBA:             channels = 4; break;
-        default:
-            return SW_PIXELFORMAT_UNKNOWN;
+    case SW_LUMINANCE:        channels = 1; break;
+    case SW_LUMINANCE_ALPHA:  channels = 2; break;
+    case SW_RGB:              channels = 3; break;
+    case SW_RGBA:             channels = 4; break;
+    default:
+        return SW_PIXELFORMAT_UNKNOWN;
     }
 
     // Determine the depth of each channel (type)
     switch (type) {
-        case SW_UNSIGNED_BYTE:    bitsPerChannel = 8;  break;
-        case SW_BYTE:             bitsPerChannel = 8;  break;
-        case SW_UNSIGNED_SHORT:   bitsPerChannel = 16; break;
-        case SW_SHORT:            bitsPerChannel = 16; break;
-        case SW_UNSIGNED_INT:     bitsPerChannel = 32; break;
-        case SW_INT:              bitsPerChannel = 32; break;
-        case SW_FLOAT:            bitsPerChannel = 32; break;
-        default:
-            return SW_PIXELFORMAT_UNKNOWN;
+    case SW_UNSIGNED_BYTE:    bitsPerChannel = 8;  break;
+    case SW_BYTE:             bitsPerChannel = 8;  break;
+    case SW_UNSIGNED_SHORT:   bitsPerChannel = 16; break;
+    case SW_SHORT:            bitsPerChannel = 16; break;
+    case SW_UNSIGNED_INT:     bitsPerChannel = 32; break;
+    case SW_INT:              bitsPerChannel = 32; break;
+    case SW_FLOAT:            bitsPerChannel = 32; break;
+    default:
+        return SW_PIXELFORMAT_UNKNOWN;
     }
 
     // Map the format and type to the correct internal format
@@ -1913,26 +1904,25 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
     return SW_PIXELFORMAT_UNKNOWN;
 }
 
-int sw_get_pixel_bytes(sw_pixelformat_e format)
+int sw_get_pixel_bytes(sw_pixelformat_t format)
 {
     int bpp = 0;
 
-    switch (format)
-    {
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 1; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
-        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 2; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 4*3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 4*4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 2; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 2*3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 2*4; break;
-        default: break;
+    switch (format) {
+    case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 1; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+    case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+    case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+    case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 2; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 4; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 3; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 4; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 4*3; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 4*4; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 2; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 2*3; break;
+    case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 2*4; break;
+    default: break;
     }
 
     return bpp;
@@ -1950,7 +1940,7 @@ static inline void sw_get_pixel_grayscale(float* color, const void* pixels, uint
 
 static inline void sw_get_pixel_red_16(float* color, const void* pixels, uint32_t offset)
 {
-    float value = sw_cvt_hf(((sw_half_t*)pixels)[offset]);
+    float value = sw_f16_to_f32(((sw_half_t*)pixels)[offset]);
 
     color[0] = value;
     color[1] = value;
@@ -2000,9 +1990,9 @@ static inline void sw_get_pixel_rgb_161616(float* color, const void* pixels, uin
 {
     const sw_half_t *pixel = (sw_half_t*)pixels + 3 * offset;
 
-    color[0] = sw_cvt_hf(pixel[0]);
-    color[1] = sw_cvt_hf(pixel[1]);
-    color[2] = sw_cvt_hf(pixel[2]);
+    color[0] = sw_f16_to_f32(pixel[0]);
+    color[1] = sw_f16_to_f32(pixel[1]);
+    color[2] = sw_f16_to_f32(pixel[2]);
     color[3] = 1.0f;
 }
 
@@ -2050,10 +2040,10 @@ static inline void sw_get_pixel_rgba_16161616(float* color, const void* pixels, 
 {
     const sw_half_t *pixel = (sw_half_t*)pixels + 4 * offset;
 
-    color[0] = sw_cvt_hf(pixel[0]);
-    color[1] = sw_cvt_hf(pixel[1]);
-    color[2] = sw_cvt_hf(pixel[2]);
-    color[3] = sw_cvt_hf(pixel[3]);
+    color[0] = sw_f16_to_f32(pixel[0]);
+    color[1] = sw_f16_to_f32(pixel[1]);
+    color[2] = sw_f16_to_f32(pixel[2]);
+    color[3] = sw_f16_to_f32(pixel[3]);
 }
 
 static inline void sw_get_pixel_rgba_32323232(float* color, const void* pixels, uint32_t offset)
@@ -2066,68 +2056,52 @@ static inline void sw_get_pixel_rgba_32323232(float* color, const void* pixels, 
     color[3] = pixel[3];
 }
 
-static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offset, sw_pixelformat_e format)
+static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offset, sw_pixelformat_t format)
 {
     switch (format) {
-
     case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         sw_get_pixel_grayscale(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
         sw_get_pixel_grayscale_alpha(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         sw_get_pixel_rgb_565(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8:
         sw_get_pixel_rgb_888(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         sw_get_pixel_rgba_5551(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         sw_get_pixel_rgba_4444(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
         sw_get_pixel_rgba_8888(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R32:
         sw_get_pixel_red_32(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32:
         sw_get_pixel_rgb_323232(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
         sw_get_pixel_rgba_32323232(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R16:
         sw_get_pixel_red_16(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         sw_get_pixel_rgb_161616(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         sw_get_pixel_rgba_16161616(color, pixels, offset);
         break;
-
     case SW_PIXELFORMAT_UNKNOWN:
         break;
-
     }
 }
-
 
 /* === Texture Sampling Part === */
 
@@ -2146,21 +2120,21 @@ static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
 static inline void sw_texture_sample_nearest(float* color, const sw_texture_t* tex, float u, float v)
 {
     int x, y;
-    sw_texture_map(&x, u, tex->wM1, tex->sWrap);
-    sw_texture_map(&y, v, tex->hM1, tex->tWrap);
+    sw_texture_map(&x, u, tex->wMinus1, tex->sWrap);
+    sw_texture_map(&y, v, tex->hMinus1, tex->tWrap);
     sw_get_pixel(color, tex->pixels.cptr, y * tex->width + x, tex->format);
 }
 
 static inline void sw_texture_sample_linear(float* color, const sw_texture_t* tex, float u, float v)
 {
-    int x0, y0, x1, y1;
-    sw_texture_map(&x0, u, tex->wM1, tex->sWrap);
-    sw_texture_map(&y0, v, tex->hM1, tex->tWrap);
-    sw_texture_map(&x1, u + tex->tx, tex->wM1, tex->sWrap);
-    sw_texture_map(&y1, v + tex->ty, tex->hM1, tex->tWrap);
+    float uScaled = u * tex->wMinus1;
+    float vScaled = v * tex->hMinus1;
 
-    float fx = u * (tex->width - 1) - x0;
-    float fy = v * (tex->height - 1) - y0;
+    int x0, y0, x1, y1;
+    sw_texture_map(&x0, u, tex->wMinus1, tex->sWrap);
+    sw_texture_map(&y0, v, tex->hMinus1, tex->tWrap);
+    sw_texture_map(&x1, u + tex->tx, tex->wMinus1, tex->sWrap);
+    sw_texture_map(&y1, v + tex->ty, tex->hMinus1, tex->tWrap);
 
     float c00[4], c10[4], c01[4], c11[4];
     sw_get_pixel(c00, tex->pixels.cptr, y0 * tex->width + x0, tex->format);
@@ -2168,11 +2142,13 @@ static inline void sw_texture_sample_linear(float* color, const sw_texture_t* te
     sw_get_pixel(c01, tex->pixels.cptr, y1 * tex->width + x0, tex->format);
     sw_get_pixel(c11, tex->pixels.cptr, y1 * tex->width + x1, tex->format);
 
-    float c0[4], c1[4];
+    float fx = uScaled - floorf(uScaled);
+    float fy = vScaled - floorf(vScaled);
+
     for (int i = 0; i < 4; i++) {
-        float a = sw_lerp(c00[i], c10[i], fx);
-        float b = sw_lerp(c01[i], c11[i], fx);
-        color[i] = sw_lerp(a, b, fy);
+        float t = c00[i] + fx * (c10[i] - c00[i]);
+        float b = c01[i] + fx * (c11[i] - c01[i]);
+        color[i] = t + fy * (b - t);
     }
 }
 
@@ -2202,7 +2178,6 @@ static inline void sw_texture_sample(float* color, const sw_texture_t* tex, floa
         break;
     }
 }
-
 
 /* === Color Blending Functions === */
 
@@ -2283,10 +2258,9 @@ static inline void sw_blend_colors(float* SW_RESTRICT dst/*[4]*/, const float* S
 
 static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 {
-    screen[0] = RLSW.vpPos[0] + (ndc[0] + 1.0f) * 0.5f * RLSW.vpDim[0];
-    screen[1] = RLSW.vpPos[1] + (1.0f - ndc[1]) * 0.5f * RLSW.vpDim[1];
+    screen[0] = RLSW.vpCenter[0] + ndc[0] * RLSW.vpHalfSize[0];
+    screen[1] = RLSW.vpCenter[1] - ndc[1] * RLSW.vpHalfSize[1];
 }
-
 
 /* === Polygon Clipping Part === */
 
@@ -2350,15 +2324,15 @@ DEFINE_CLIP_FUNC(z_neg, IS_INSIDE_PLANE_Z_NEG, COMPUTE_T_PLANE_Z_NEG)
 
 // Scissor clip functions
 
-#define COMPUTE_T_SCISSOR_X_MIN(hPrev, hCurr) (((RLSW.scHMin[0]) * (hPrev)[3] - (hPrev)[0]) / (((hCurr)[0] - (RLSW.scHMin[0]) * (hCurr)[3]) - ((hPrev)[0] - (RLSW.scHMin[0]) * (hPrev)[3])))
-#define COMPUTE_T_SCISSOR_X_MAX(hPrev, hCurr) (((RLSW.scHMax[0]) * (hPrev)[3] - (hPrev)[0]) / (((hCurr)[0] - (RLSW.scHMax[0]) * (hCurr)[3]) - ((hPrev)[0] - (RLSW.scHMax[0]) * (hPrev)[3])))
-#define COMPUTE_T_SCISSOR_Y_MIN(hPrev, hCurr) (((RLSW.scHMin[1]) * (hPrev)[3] - (hPrev)[1]) / (((hCurr)[1] - (RLSW.scHMin[1]) * (hCurr)[3]) - ((hPrev)[1] - (RLSW.scHMin[1]) * (hPrev)[3])))
-#define COMPUTE_T_SCISSOR_Y_MAX(hPrev, hCurr) (((RLSW.scHMax[1]) * (hPrev)[3] - (hPrev)[1]) / (((hCurr)[1] - (RLSW.scHMax[1]) * (hCurr)[3]) - ((hPrev)[1] - (RLSW.scHMax[1]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_X_MIN(hPrev, hCurr) (((RLSW.scClipMin[0]) * (hPrev)[3] - (hPrev)[0]) / (((hCurr)[0] - (RLSW.scClipMin[0]) * (hCurr)[3]) - ((hPrev)[0] - (RLSW.scClipMin[0]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_X_MAX(hPrev, hCurr) (((RLSW.scClipMax[0]) * (hPrev)[3] - (hPrev)[0]) / (((hCurr)[0] - (RLSW.scClipMax[0]) * (hCurr)[3]) - ((hPrev)[0] - (RLSW.scClipMax[0]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_Y_MIN(hPrev, hCurr) (((RLSW.scClipMin[1]) * (hPrev)[3] - (hPrev)[1]) / (((hCurr)[1] - (RLSW.scClipMin[1]) * (hCurr)[3]) - ((hPrev)[1] - (RLSW.scClipMin[1]) * (hPrev)[3])))
+#define COMPUTE_T_SCISSOR_Y_MAX(hPrev, hCurr) (((RLSW.scClipMax[1]) * (hPrev)[3] - (hPrev)[1]) / (((hCurr)[1] - (RLSW.scClipMax[1]) * (hCurr)[3]) - ((hPrev)[1] - (RLSW.scClipMax[1]) * (hPrev)[3])))
 
-#define IS_INSIDE_SCISSOR_X_MIN(h) ((h)[0] >= (RLSW.scHMin[0]) * (h)[3])
-#define IS_INSIDE_SCISSOR_X_MAX(h) ((h)[0] <= (RLSW.scHMax[0]) * (h)[3])
-#define IS_INSIDE_SCISSOR_Y_MIN(h) ((h)[1] >= (RLSW.scHMin[1]) * (h)[3])
-#define IS_INSIDE_SCISSOR_Y_MAX(h) ((h)[1] <= (RLSW.scHMax[1]) * (h)[3])
+#define IS_INSIDE_SCISSOR_X_MIN(h) ((h)[0] >= (RLSW.scClipMin[0]) * (h)[3])
+#define IS_INSIDE_SCISSOR_X_MAX(h) ((h)[0] <= (RLSW.scClipMax[0]) * (h)[3])
+#define IS_INSIDE_SCISSOR_Y_MIN(h) ((h)[1] >= (RLSW.scClipMin[1]) * (h)[3])
+#define IS_INSIDE_SCISSOR_Y_MAX(h) ((h)[1] <= (RLSW.scClipMax[1]) * (h)[3])
 
 DEFINE_CLIP_FUNC(scissor_x_min, IS_INSIDE_SCISSOR_X_MIN, COMPUTE_T_SCISSOR_X_MIN)
 DEFINE_CLIP_FUNC(scissor_x_max, IS_INSIDE_SCISSOR_X_MAX, COMPUTE_T_SCISSOR_X_MAX)
@@ -2404,7 +2378,6 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 
     return (n >= 3);
 }
-
 
 /* === Triangle Rendering Part === */
 
@@ -2800,7 +2773,6 @@ static inline void sw_triangle_render(void)
 #   undef TRIANGLE_RASTER
 }
 
-
 /* === Quad Rendering Part === */
 
 static inline bool sw_quad_face_culling(void)
@@ -2931,7 +2903,7 @@ static inline void sw_quad_sort_cw(const sw_vertex_t** output)
     // Sort 4 quad vertices into clockwise order with fixed layout:
     //
     // v0 -- v1
-    // |    |
+    // |      |
     // v3 -- v2
     //
     // The goal is:
@@ -2960,7 +2932,8 @@ static inline void sw_quad_sort_cw(const sw_vertex_t** output)
     for (int i = 0; i < 4; i++) {
         if (input[i].screen[1] == minY && topCount < 2) {
             top[topCount++] = &input[i];
-        } else if (input[i].screen[1] == maxY && bottomCount < 2) {
+        }
+        else if (input[i].screen[1] == maxY && bottomCount < 2) {
             bottom[bottomCount++] = &input[i];
         }
     }
@@ -3267,7 +3240,6 @@ static inline void sw_quad_render(void)
 #   undef TRIANGLE_RASTER
 }
 
-
 /* === Line Rendering Part === */
 
 static inline bool sw_line_clip_coord(float q, float p, float* t0, float* t1)
@@ -3283,7 +3255,8 @@ static inline bool sw_line_clip_coord(float q, float p, float* t0, float* t1)
     if (p < 0) {
         if (r > *t1) return 0;
         if (r > *t0) *t0 = r;
-    } else {
+    }
+    else {
         if (r < *t0) return 0;
         if (r < *t1) *t1 = r;
     }
@@ -3311,10 +3284,10 @@ static inline bool sw_line_clip(sw_vertex_t* v0, sw_vertex_t* v1)
 
     // Clipping Scissor
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
-        if (!sw_line_clip_coord(v0->homogeneous[0] - RLSW.scHMin[0] * v0->homogeneous[3], RLSW.scHMin[0] * dH[3] - dH[0], &t0, &t1)) return false;
-        if (!sw_line_clip_coord(RLSW.scHMax[0] * v0->homogeneous[3] - v0->homogeneous[0], dH[0] - RLSW.scHMax[0] * dH[3], &t0, &t1)) return false;
-        if (!sw_line_clip_coord(v0->homogeneous[1] - RLSW.scHMin[1] * v0->homogeneous[3], RLSW.scHMin[1] * dH[3] - dH[1], &t0, &t1)) return false;
-        if (!sw_line_clip_coord(RLSW.scHMax[1] * v0->homogeneous[3] - v0->homogeneous[1], dH[1] - RLSW.scHMax[1] * dH[3], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(v0->homogeneous[0] - RLSW.scClipMin[0] * v0->homogeneous[3], RLSW.scClipMin[0] * dH[3] - dH[0], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(RLSW.scClipMax[0] * v0->homogeneous[3] - v0->homogeneous[0], dH[0] - RLSW.scClipMax[0] * dH[3], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(v0->homogeneous[1] - RLSW.scClipMin[1] * v0->homogeneous[3], RLSW.scClipMin[1] * dH[3] - dH[1], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(RLSW.scClipMax[1] * v0->homogeneous[3] - v0->homogeneous[1], dH[1] - RLSW.scClipMax[1] * dH[3], &t0, &t1)) return false;
     }
 
     // Interpolation of new coordinates
@@ -3379,7 +3352,8 @@ static inline void FUNC_NAME(const sw_vertex_t* v0, const sw_vertex_t* v1) \
     if (yLonger) {                                                      \
         longLen = dy;                                                   \
         shortLen = dx;                                                  \
-    } else {                                                            \
+    }                                                                   \
+    else {                                                              \
         longLen = dx;                                                   \
         shortLen = dy;                                                  \
     }                                                                   \
@@ -3592,7 +3566,6 @@ static inline void sw_line_render(sw_vertex_t* vertices)
     }
 }
 
-
 /* === Point Rendering Part === */
 
 static inline bool sw_point_clip_and_project(sw_vertex_t* v)
@@ -3616,7 +3589,8 @@ static inline bool sw_point_clip_and_project(sw_vertex_t* v)
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST) {
         min = RLSW.scMin;
         max = RLSW.scMax;
-    } else {
+    }
+    else {
         min = RLSW.vpMin;
         max = RLSW.vpMax;
     }
@@ -3701,7 +3675,8 @@ static inline void FUNC_NAME(sw_vertex_t* v)                                \
         if (d > 0) {                                                        \
             y--;                                                            \
             d = d + 4 * (x - y) + 10;                                       \
-        } else {                                                            \
+        }                                                                   \
+        else {                                                              \
             d = d + 4 * x + 6;                                              \
         }                                                                   \
         x++;                                                                \
@@ -3796,7 +3771,6 @@ static inline void sw_point_render(sw_vertex_t* v)
         }
     }
 }
-
 
 /* === Polygon Modes Rendering Part === */
 
@@ -4017,8 +3991,8 @@ bool swInit(int w, int h)
     RLSW.loadedTextures[0].pixels.cptr = defTex;
     RLSW.loadedTextures[0].width = 2;
     RLSW.loadedTextures[0].height = 2;
-    RLSW.loadedTextures[0].wM1 = 1;
-    RLSW.loadedTextures[0].hM1 = 1;
+    RLSW.loadedTextures[0].wMinus1 = 1;
+    RLSW.loadedTextures[0].hMinus1 = 1;
     RLSW.loadedTextures[0].format = SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32;
     RLSW.loadedTextures[0].minFilter = SW_NEAREST;
     RLSW.loadedTextures[0].magFilter = SW_NEAREST;
@@ -4057,7 +4031,7 @@ bool swResizeFramebuffer(int w, int h)
 
 void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void* pixels)
 {
-    sw_pixelformat_e pFormat = sw_get_pixel_format(format, type);
+    sw_pixelformat_t pFormat = sw_get_pixel_format(format, type);
 
     if (w <= 0) {
         RLSW.errCode = SW_INVALID_VALUE;
@@ -4079,7 +4053,6 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
     y = sw_clampi(y, 0, h);
 
     switch (pFormat) {
-
     case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         sw_framebuffer_copy_to_GRAYALPHA(x, y, w, h, pixels);
         break;
@@ -4119,11 +4092,9 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
     case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         sw_framebuffer_copy_to_R16G16B16A16(x, y, w, h, pixels);
         break;
-
     default:
         RLSW.errCode = SW_INVALID_ENUM;
         break;
-
     }
 }
 
@@ -4131,7 +4102,7 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst,
                        int xSrc, int ySrc, int wSrc, int hSrc,
                        SWformat format, SWtype type, void* pixels)
 {
-    sw_pixelformat_e pFormat = sw_get_pixel_format(format, type);
+    sw_pixelformat_t pFormat = sw_get_pixel_format(format, type);
 
     if (wSrc <= 0) {
         RLSW.errCode = SW_INVALID_VALUE;
@@ -4153,7 +4124,6 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst,
     ySrc = sw_clampi(ySrc, 0, hSrc);
 
     switch (pFormat) {
-
     case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         sw_framebuffer_blit_to_GRAYALPHA(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pixels);
         break;
@@ -4193,11 +4163,9 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst,
     case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         sw_framebuffer_blit_to_R16G16B16A16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pixels);
         break;
-
     default:
         RLSW.errCode = SW_INVALID_ENUM;
         break;
-
     }
 }
 
@@ -4354,10 +4322,14 @@ void swViewport(int x, int y, int width, int height)
         return;
     }
 
-    RLSW.vpPos[0] = x;
-    RLSW.vpPos[1] = y;
-    RLSW.vpDim[0] = width;
-    RLSW.vpDim[1] = height;
+    RLSW.vpSize[0] = width;
+    RLSW.vpSize[1] = height;
+
+    RLSW.vpHalfSize[0] = (int)(width / 2.0f + 0.5f);
+    RLSW.vpHalfSize[1] = (int)(height / 2.0f + 0.5f);
+
+    RLSW.vpCenter[0] = x + RLSW.vpHalfSize[0];
+    RLSW.vpCenter[1] = y + RLSW.vpHalfSize[1];
 
     RLSW.vpMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
     RLSW.vpMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
@@ -4377,10 +4349,10 @@ void swScissor(int x, int y, int width, int height)
     RLSW.scMax[0] = sw_clampi(x + width, 0, RLSW.framebuffer.width - 1);
     RLSW.scMax[1] = sw_clampi(y + height, 0, RLSW.framebuffer.height - 1);
 
-    RLSW.scHMin[0] = (2.0f * (float)RLSW.scMin[0] / (float)RLSW.vpDim[0]) - 1.0f;
-    RLSW.scHMax[0] = (2.0f * (float)RLSW.scMax[0] / (float)RLSW.vpDim[0]) - 1.0f;
-    RLSW.scHMax[1] = 1.0f - (2.0f * (float)RLSW.scMin[1] / (float)RLSW.vpDim[1]);
-    RLSW.scHMin[1] = 1.0f - (2.0f * (float)RLSW.scMax[1] / (float)RLSW.vpDim[1]);
+    RLSW.scClipMin[0] = (2.0f * (float)RLSW.scMin[0] / (float)RLSW.vpSize[0]) - 1.0f;
+    RLSW.scClipMax[0] = (2.0f * (float)RLSW.scMax[0] / (float)RLSW.vpSize[0]) - 1.0f;
+    RLSW.scClipMax[1] = 1.0f - (2.0f * (float)RLSW.scMin[1] / (float)RLSW.vpSize[1]);
+    RLSW.scClipMin[1] = 1.0f - (2.0f * (float)RLSW.scMax[1] / (float)RLSW.vpSize[1]);
 }
 
 void swClearColor(float r, float g, float b, float a)
@@ -4543,7 +4515,6 @@ void swMatrixMode(SWmatrix mode)
 void swPushMatrix(void)
 {
     switch (RLSW.currentMatrixMode) {
-
     case SW_PROJECTION:
         {
             if (RLSW.stackProjectionCounter >= SW_MAX_PROJECTION_STACK_SIZE) {
@@ -4561,7 +4532,6 @@ void swPushMatrix(void)
             RLSW.currentMatrix = &RLSW.stackProjection[iNew];
         }
         break;
-
     case SW_MODELVIEW:
         {
             if (RLSW.stackModelviewCounter >= SW_MAX_MODELVIEW_STACK_SIZE) {
@@ -4579,7 +4549,6 @@ void swPushMatrix(void)
             RLSW.currentMatrix = &RLSW.stackModelview[iNew];
         }
         break;
-
     case SW_TEXTURE:
         {
             if (RLSW.stackTextureCounter >= SW_MAX_TEXTURE_STACK_SIZE) {
@@ -4597,14 +4566,12 @@ void swPushMatrix(void)
             RLSW.currentMatrix = &RLSW.stackTexture[iNew];
         }
         break;
-
     }
 }
 
 void swPopMatrix(void)
 {
     switch (RLSW.currentMatrixMode) {
-
     case SW_PROJECTION:
         {
             if (RLSW.stackProjectionCounter <= 0) {
@@ -4616,7 +4583,6 @@ void swPopMatrix(void)
             RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         }
         break;
-
     case SW_MODELVIEW:
         {
             if (RLSW.stackModelviewCounter <= 0) {
@@ -4628,7 +4594,6 @@ void swPopMatrix(void)
             RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         }
         break;
-
     case SW_TEXTURE:
         {
             if (RLSW.stackTextureCounter <= 0) {
@@ -4639,14 +4604,12 @@ void swPopMatrix(void)
             RLSW.currentMatrix = &RLSW.stackTexture[--RLSW.stackTextureCounter];
         }
         break;
-
     }
 }
 
 void swLoadIdentity(void)
 {
     sw_matrix_id(*RLSW.currentMatrix);
-
     if (RLSW.currentMatrixMode != SW_TEXTURE) {
         RLSW.isDirtyMVP = true;
     }
@@ -4821,7 +4784,7 @@ void swBegin(SWdraw mode)
     /* --- Recalculate the MVP if this is needed --- */
 
     if (RLSW.isDirtyMVP) {
-        sw_matrix_mul(
+        sw_matrix_mul_rst(
             RLSW.matMVP,
             RLSW.stackModelview[RLSW.stackModelviewCounter - 1],
             RLSW.stackProjection[RLSW.stackProjectionCounter - 1]
@@ -4927,12 +4890,12 @@ void swVertex4fv(const float* v)
 
     /* --- Calculation of homogeneous coordinates --- */
 
-    const sw_matrix_t* mat = &RLSW.matMVP;
+    const float* m = RLSW.matMVP;
 
-    vertex->homogeneous[0] = (*mat)[0] * v[0] + (*mat)[4] * v[1] + (*mat)[8] * v[2] + (*mat)[12] * v[3];
-    vertex->homogeneous[1] = (*mat)[1] * v[0] + (*mat)[5] * v[1] + (*mat)[9] * v[2] + (*mat)[13] * v[3];
-    vertex->homogeneous[2] = (*mat)[2] * v[0] + (*mat)[6] * v[1] + (*mat)[10] * v[2] + (*mat)[14] * v[3];
-    vertex->homogeneous[3] = (*mat)[3] * v[0] + (*mat)[7] * v[1] + (*mat)[11] * v[2] + (*mat)[15] * v[3];
+    vertex->homogeneous[0] = m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12] * v[3];
+    vertex->homogeneous[1] = m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13] * v[3];
+    vertex->homogeneous[2] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14] * v[3];
+    vertex->homogeneous[3] = m[3] * v[0] + m[7] * v[1] + m[11] * v[2] + m[15] * v[3];
 
     /* --- Immediate rendering of the primitive if the required number is reached --- */
 
@@ -5038,18 +5001,18 @@ void swColor4fv(const float* v)
 
 void swTexCoord2f(float u, float v)
 {
-    const sw_matrix_t* mat = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+    const float* m = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
 
-    RLSW.current.texcoord[0] = (*mat)[0] * u + (*mat)[4] * v + (*mat)[12];
-    RLSW.current.texcoord[1] = (*mat)[1] * u + (*mat)[5] * v + (*mat)[13];
+    RLSW.current.texcoord[0] = m[0] * u + m[4] * v + m[12];
+    RLSW.current.texcoord[1] = m[1] * u + m[5] * v + m[13];
 }
 
 void swTexCoord2fv(const float* v)
 {
-    const sw_matrix_t* mat = &RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+    const float* m = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
 
-    RLSW.current.texcoord[0] = (*mat)[0] * v[0] + (*mat)[4] * v[1] + (*mat)[12];
-    RLSW.current.texcoord[1] = (*mat)[1] * v[0] + (*mat)[5] * v[1] + (*mat)[13];
+    RLSW.current.texcoord[0] = m[0] * v[0] + m[4] * v[1] + m[12];
+    RLSW.current.texcoord[1] = m[1] * v[0] + m[5] * v[1] + m[13];
 }
 
 void swBindArray(SWarray type, void *buffer)
@@ -5168,8 +5131,8 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy
 
     texture->width = width;
     texture->height = height;
-    texture->wM1 = width - 1;
-    texture->hM1 = height - 1;
+    texture->wMinus1 = width - 1;
+    texture->hMinus1 = height - 1;
     texture->format = pixelFormat;
     texture->tx = 1.0f / width;
     texture->ty = 1.0f / height;
