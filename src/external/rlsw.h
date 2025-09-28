@@ -136,7 +136,7 @@ typedef double          GLclampd;
 //#define GL_COLOR_WRITEMASK                0x0C23
 //#define GL_CURRENT_INDEX                  0x0B01
 #define GL_CURRENT_COLOR                    0x0B00
-//#define GL_CURRENT_NORMAL                   0x0B02
+//#define GL_CURRENT_NORMAL                 0x0B02
 //#define GL_CURRENT_RASTER_COLOR           0x0B04
 //#define GL_CURRENT_RASTER_DISTANCE        0x0B09
 //#define GL_CURRENT_RASTER_INDEX           0x0B05
@@ -144,6 +144,8 @@ typedef double          GLclampd;
 //#define GL_CURRENT_RASTER_TEXTURE_COORDS  0x0B06
 //#define GL_CURRENT_RASTER_POSITION_VALID  0x0B08
 #define GL_CURRENT_TEXTURE_COORDS           0x0B03
+#define GL_POINT_SIZE                       0x0B11
+#define GL_LINE_WIDTH                       0x0B21
 //#define GL_INDEX_CLEAR_VALUE              0x0C20
 //#define GL_INDEX_MODE                     0x0C30
 //#define GL_INDEX_WRITEMASK                0x0C21
@@ -350,6 +352,8 @@ typedef enum {
     SW_COLOR_CLEAR_VALUE = GL_COLOR_CLEAR_VALUE,
     SW_CURRENT_COLOR = GL_CURRENT_COLOR,
     SW_CURRENT_TEXTURE_COORDS = GL_CURRENT_TEXTURE_COORDS,
+    SW_POINT_SIZE = GL_POINT_SIZE,
+    SW_LINE_WIDTH = GL_LINE_WIDTH,
     SW_MODELVIEW_MATRIX = GL_MODELVIEW_MATRIX,
     SW_MODELVIEW_STACK_DEPTH = GL_MODELVIEW_STACK_DEPTH,
     SW_PROJECTION_MATRIX = GL_PROJECTION_MATRIX,
@@ -4261,6 +4265,12 @@ void swGetFloatv(SWget name, float* v)
     case SW_CURRENT_TEXTURE_COORDS:
         v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[0];
         v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[1];
+        break;
+    case SW_POINT_SIZE:
+        v[0] = 2.0f * RLSW.pointRadius;
+        break;
+    case SW_LINE_WIDTH:
+        v[0] = RLSW.lineWidth;
         break;
     case SW_MODELVIEW_MATRIX:
         for (int i = 0; i < 16; i++) {
