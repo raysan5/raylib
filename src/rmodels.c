@@ -4430,6 +4430,11 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].vertices = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].normals = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
+    #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+        model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
+    #else
+        model.meshes[i].colors = NULL;
+    #endif
     }
 
     MemFree(localMeshVertexCounts);
@@ -4504,6 +4509,9 @@ static Model LoadOBJ(const char *fileName)
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 1] = 1.0f;
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 2] = 0.0f;
             }
+        #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+            for (int i = 0; i < 4; i++) model.meshes[meshIndex].colors[localMeshVertexCount*4 + i] = 255;
+        #endif
             faceVertIndex++;
             localMeshVertexCount++;
         }
