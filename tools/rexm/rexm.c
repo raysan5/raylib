@@ -2331,7 +2331,7 @@ static const char *GenerateUUIDv4(void)
 // Update source code header and comments metadata
 static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info)
 {
-    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
+    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c") && (!TextIsEqual(info->category, "others")))
     {
         // WARNING: Cache a copy of exSrcPath to avoid modifications by TextFormat()
         char exSourcePath[512] = { 0 };
