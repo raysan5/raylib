@@ -25,12 +25,13 @@
     which can be reassigned to e.g. KEY_A and also assigned to a gamepad button. the action will trigger with either gamepad or keys 
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include "raylib.h"
 //  add your own action types here
-enum
+typedef enum ActionType
 {
     NO_ACTION,
     ACTION_UP,
@@ -39,24 +40,24 @@ enum
     ACTION_RIGHT,
     ACTION_FIRE,
     MAX_ACTION
-} Action_Type;
+} ActionType;
 
 //  struct for key and button inputs
-typedef struct
+typedef struct ActionInput
 {
     int key;
     int button;
-} Action_Input_t;
+} ActionInput;
 
 //  gamepad index, change this if you have multiple gamepads. 
-int GamePadID = 0;
-static Action_Input_t _actions[MAX_ACTION] = {0};
+int gamepadIndex = 0;
+static ActionInput _actions[MAX_ACTION] = {0};
 
 //  combines IsKeyPressed and IsGameButtonPressed to one action
 bool isActionPressed(int action)
 {
     if (action<MAX_ACTION)
-        return (IsKeyPressed(_actions[action].key) || IsGamepadButtonPressed(GamePadID, _actions[action].button));
+        return (IsKeyPressed(_actions[action].key) || IsGamepadButtonPressed(gamepadIndex, _actions[action].button));
     return (false);
 }
 
@@ -64,7 +65,7 @@ bool isActionPressed(int action)
 bool isActionReleased(int action)
 {
     if (action<MAX_ACTION)  
-        return (IsKeyReleased(_actions[action].key) || IsGamepadButtonReleased(GamePadID, _actions[action].button));
+        return (IsKeyReleased(_actions[action].key) || IsGamepadButtonReleased(gamepadIndex, _actions[action].button));
     return (false);
 }
 
@@ -72,7 +73,7 @@ bool isActionReleased(int action)
 bool isActionDown(int action) 
 {
     if (action<MAX_ACTION)  
-        return (IsKeyDown(_actions[action].key) || IsGamepadButtonDown(GamePadID, _actions[action].button));
+        return (IsKeyDown(_actions[action].key) || IsGamepadButtonDown(gamepadIndex, _actions[action].button));
     return (false);
 }
 //  define the "default" keyset. here WASD and gamepad buttons on the left side for movement
@@ -111,12 +112,13 @@ int main(int argc, char **argv)
 {
     const int screenWidth = 800;
     const int screenHeight = 450;
+
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input via actions");
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
 
     //  set defaul actions 
-    char ctrl_set = 0;
+    char actionSet = 0;
     DefaultActions();
 
     Vector2 position = (Vector2){100, 100};
@@ -127,12 +129,12 @@ int main(int argc, char **argv)
         //----------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(DARKGRAY);
-        DrawText(ctrl_set == 0 ? "WASD Default Set" : "Cursor Set", 0, 0, 18, WHITE);
+        DrawText(actionSet == 0 ? "WASD Default Set" : "Cursor Set", 0, 0, 18, WHITE);
         DrawText("Tab key toggles keyset", 0, 18, 18, WHITE);
         DrawRectangleV(position, size, RED);
         EndDrawing();
 
-        GamePadID = 0; //  set this to gamepad being checked
+        gamepadIndex = 0; //  set this to gamepad being checked
         if (isActionDown(ACTION_UP))
             position.y -= 2;
         if (isActionDown(ACTION_DOWN))
@@ -150,8 +152,8 @@ int main(int argc, char **argv)
         //  switch control scheme by pressing TAB 
         if (IsKeyPressed(KEY_TAB))
         {
-            ctrl_set = !ctrl_set;
-            if (ctrl_set == 0)
+            actionSet = !actionSet;
+            if (actionSet == 0)
                 DefaultActions();
             else
                 CursorActions();
