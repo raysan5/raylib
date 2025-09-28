@@ -1,6 +1,6 @@
 ﻿/*******************************************************************************************
 *
-*   raylib [core] example - 3d first-person camera controller
+*   raylib [core] example - 3d camera fps
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -11,14 +11,13 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025-2025 Agnis Aldins (@nezvers)
+*   Copyright (c) 2025 Agnis Aldins (@nezvers)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
 #include "raymath.h"
-#include "rcamera.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -65,10 +64,10 @@ static float headLerp = STAND_HEIGHT;
 static Vector2 lean = { 0 };
 
 //----------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void DrawLevel(void);
-static void UpdateCameraAngle(Camera *camera);
+static void UpdateCameraFPS(Camera *camera);
 static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
 
 //------------------------------------------------------------------------------------
@@ -81,10 +80,10 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d first-person camera controller");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera fps");
 
     // Initialize camera variables
-    // NOTE: UpdateCameraAngle() takes care of the rest
+    // NOTE: UpdateCameraFPS() takes care of the rest
     Camera camera = { 0 };
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
@@ -94,7 +93,7 @@ int main(void)
         player.position.z,
     };
 
-    UpdateCameraAngle(&camera); // Update camera parameters
+    UpdateCameraFPS(&camera); // Update camera parameters
 
     DisableCursor();        // Limit cursor to relative movement inside the window
 
@@ -138,7 +137,7 @@ int main(void)
         lean.x = Lerp(lean.x, sideway*0.02f, 10.0f*delta);
         lean.y = Lerp(lean.y, forward*0.015f, 10.0f*delta);
 
-        UpdateCameraAngle(&camera);
+        UpdateCameraFPS(&camera);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -173,9 +172,10 @@ int main(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //----------------------------------------------------------------------------------
-void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed, bool crouchHold)
+// Update body considering current world state
+void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold)
 {
     Vector2 input = (Vector2){ (float)side, (float)-forward };
 
@@ -237,8 +237,8 @@ void UpdateBody(Body* body, float rot, char side, char forward, bool jumpPressed
     }
 }
 
-// Update camera
-static void UpdateCameraAngle(Camera *camera)
+// Update camera for FPS behaviour
+static void UpdateCameraFPS(Camera *camera)
 {
     const Vector3 up = (Vector3){ 0.0f, 1.0f, 0.0f };
     const Vector3 targetOffset = (Vector3){ 0.0f, 0.0f, -1.0f };
@@ -261,8 +261,7 @@ static void UpdateCameraAngle(Camera *camera)
     Vector3 right = Vector3Normalize(Vector3CrossProduct(yaw, up));
 
     // Rotate view vector around right axis
-    float pitchAngle = -lookRotation.y - 
-    lean.y;
+    float pitchAngle = -lookRotation.y - lean.y;
     pitchAngle = Clamp(pitchAngle, -PI/2 + 0.0001f, PI/2 - 0.0001f); // Clamp angle so it doesn't go past straight up or straight down
     Vector3 pitch = Vector3RotateByAxisAngle(yaw, right, pitchAngle);
 

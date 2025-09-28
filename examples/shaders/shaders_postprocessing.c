@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - postprocessing shader
+*   raylib [shaders] example - postprocessing
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -46,6 +46,9 @@ typedef enum {
     //FX_FXAA
 } PostproShader;
 
+//------------------------------------------------------------------------------------
+// Global Variables Definition
+//------------------------------------------------------------------------------------
 static const char *postproShaderText[] = {
     "GRAYSCALE",
     "POSTERIZATION",
@@ -74,7 +77,7 @@ int main(void)
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

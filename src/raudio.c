@@ -407,7 +407,7 @@ static AudioData AUDIO = {          // Global AUDIO context
 };
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage);
 
@@ -454,6 +454,7 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
+
 // Initialize audio device
 void InitAudioDevice(void)
 {
@@ -2352,9 +2353,8 @@ void DetachAudioMixedProcessor(AudioCallback process)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-
 // Log callback function
 static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage)
 {

@@ -25,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "others", "others", "{E9D708
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_anim", "examples\textures_sprite_anim.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_animation", "examples\textures_sprite_animation.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_srcrec_dstrec", "examples\textures_srcrec_dstrec.vcxproj", "{103B292B-049B-4B15-85A1-9F902840DB2C}"
 EndProject
@@ -69,8 +69,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_mouse", "example
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_multitouch", "examples\core_input_multitouch.vcxproj", "{A643BB06-735D-47F3-BFE7-B6D3C36F7097}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_loading_thread", "examples\core_loading_thread.vcxproj", "{F026020F-7B00-40C8-91C3-5DE85EC45A95}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_sequence", "examples\core_random_sequence.vcxproj", "{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_values", "examples\core_random_values.vcxproj", "{B332DCA8-3599-4A99-917A-82261BDC27AC}"
@@ -87,19 +85,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_window_letterbox", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_world_screen", "examples\core_world_screen.vcxproj", "{79417CE2-FEEB-42F0-BC53-62D5267B19B1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation", "examples\models_animation.vcxproj", "{AFDDE100-2D36-4749-817D-12E54C56312F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_playing", "examples\models_animation_playing.vcxproj", "{AFDDE100-2D36-4749-817D-12E54C56312F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_billboard", "examples\models_billboard.vcxproj", "{B7812167-50FB-4934-996F-DF6FE4CBBFDF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_billboard_rendering", "examples\models_billboard_rendering.vcxproj", "{B7812167-50FB-4934-996F-DF6FE4CBBFDF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_box_collisions", "examples\models_box_collisions.vcxproj", "{39DB56C7-05F8-492C-A8D4-F19E40FECB59}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_cubicmap", "examples\models_cubicmap.vcxproj", "{82F3D34B-8DB2-4C6A-98B1-132245DD9D99}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_cubicmap_rendering", "examples\models_cubicmap_rendering.vcxproj", "{82F3D34B-8DB2-4C6A-98B1-132245DD9D99}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_first_person_maze", "examples\models_first_person_maze.vcxproj", "{CBD6C0F8-8200-4E9A-9D7C-6505A2AA4A62}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_geometric_shapes", "examples\models_geometric_shapes.vcxproj", "{14BA7F98-02CC-4648-9236-676BFF9458AF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_heightmap", "examples\models_heightmap.vcxproj", "{0859A973-E4FE-4688-8D16-0253163FDE24}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_heightmap_rendering", "examples\models_heightmap_rendering.vcxproj", "{0859A973-E4FE-4688-8D16-0253163FDE24}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading", "examples\models_loading.vcxproj", "{F3412853-2B6A-4334-8CF2-B796CDAE0850}"
 EndProject
@@ -111,7 +109,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_orthographic_project
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_rlgl_solar_system", "examples\models_rlgl_solar_system.vcxproj", "{A53CCF42-A972-478F-9336-0F618B3EC06A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_skybox", "examples\models_skybox.vcxproj", "{0037A3CD-4F50-48B2-9AC3-5A0D1D16D2CA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_skybox_rendering", "examples\models_skybox_rendering.vcxproj", "{0037A3CD-4F50-48B2-9AC3-5A0D1D16D2CA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_waving_cubes", "examples\models_waving_cubes.vcxproj", "{870723DD-945A-4136-B65B-4AF3BF85369C}"
 EndProject
@@ -141,7 +139,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_image_loading", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_image_generation", "examples\textures_image_generation.vcxproj", "{B19DD336-538E-4091-A559-EAA717FEC899}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_draw_tiled", "examples\textures_draw_tiled.vcxproj", "{0BF60202-43F7-48E9-8717-D31E56FA5BE0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_tiled_drawing", "examples\textures_tiled_drawing.vcxproj", "{0BF60202-43F7-48E9-8717-D31E56FA5BE0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_bunnymark", "examples\textures_bunnymark.vcxproj", "{4E863E5B-0B95-43BE-8D4F-B9EB6C394FEC}"
 EndProject
@@ -151,11 +149,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_background_scrolli
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_writing_anim", "examples\text_writing_anim.vcxproj", "{F6FD9C75-AAA7-48C9-B19D-FD37C8FB9B7E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode", "examples\text_unicode.vcxproj", "{1FE8758D-7E8A-41F3-9B6D-FD50E9A2A03D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode_emojis", "examples\text_unicode_emojis.vcxproj", "{1FE8758D-7E8A-41F3-9B6D-FD50E9A2A03D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_rectangle_bounds", "examples\text_rectangle_bounds.vcxproj", "{25BCB876-B60A-499B-9046-E9801CFD7780}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_raylib_fonts", "examples\text_raylib_fonts.vcxproj", "{56FB0A45-145F-4EAE-B2C8-E5833E682D8F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_sprite_fonts", "examples\text_sprite_fonts.vcxproj", "{56FB0A45-145F-4EAE-B2C8-E5833E682D8F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_input_box", "examples\text_input_box.vcxproj", "{2BB0C1D4-9298-45AC-B244-67A99769A292}"
 EndProject
@@ -187,25 +185,25 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_collision_area", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_colors_palette", "examples\shapes_colors_palette.vcxproj", "{D91367C2-2189-4859-A7FE-D2CAB84FA15C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_circle_sector", "examples\shapes_draw_circle_sector.vcxproj", "{33459B4E-1839-4856-BF6B-22480D11FE31}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_circle_sector_drawing", "examples\shapes_circle_sector_drawing.vcxproj", "{33459B4E-1839-4856-BF6B-22480D11FE31}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_rectangle_rounded", "examples\shapes_draw_rectangle_rounded.vcxproj", "{48871156-181A-475A-BD8D-200086A09675}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rounded_rectangle_drawing", "examples\shapes_rounded_rectangle_drawing.vcxproj", "{48871156-181A-475A-BD8D-200086A09675}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_ring", "examples\shapes_draw_ring.vcxproj", "{C4416DA1-9E62-46BA-9CD3-F8963C79E1A1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_ring_drawing", "examples\shapes_ring_drawing.vcxproj", "{C4416DA1-9E62-46BA-9CD3-F8963C79E1A1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_ball_anim", "examples\shapes_easings_ball_anim.vcxproj", "{1C49E35A-2838-49D9-9D5F-4B8134960EF6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_ball", "examples\shapes_easings_ball.vcxproj", "{1C49E35A-2838-49D9-9D5F-4B8134960EF6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_box_anim", "examples\shapes_easings_box_anim.vcxproj", "{F91142E2-A999-47F0-9E74-38C1E2930EBE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_box", "examples\shapes_easings_box.vcxproj", "{F91142E2-A999-47F0-9E74-38C1E2930EBE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_rectangle_array", "examples\shapes_easings_rectangle_array.vcxproj", "{1EDD4BCF-345C-4065-8CBD-7285224293C3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_rectangles", "examples\shapes_easings_rectangles.vcxproj", "{1EDD4BCF-345C-4065-8CBD-7285224293C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_basic_lighting", "examples\shaders_basic_lighting.vcxproj", "{A6B2A11B-0669-4AF5-A025-8DD02DBBE5EA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_custom_uniform", "examples\shaders_custom_uniform.vcxproj", "{B176BB4A-CA31-4E2A-B790-3EA0ED2EE870}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_eratosthenes", "examples\shaders_eratosthenes.vcxproj", "{D08AA2A0-2F94-4BF5-B42D-E92450F03FD1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_eratosthenes_sieve", "examples\shaders_eratosthenes_sieve.vcxproj", "{D08AA2A0-2F94-4BF5-B42D-E92450F03FD1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_fog", "examples\shaders_fog.vcxproj", "{4A7D0ECA-D7CC-4E66-B741-C92E9C1B42FF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_fog_rendering", "examples\shaders_fog_rendering.vcxproj", "{4A7D0ECA-D7CC-4E66-B741-C92E9C1B42FF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hot_reloading", "examples\shaders_hot_reloading.vcxproj", "{CF3755C4-937D-4ABF-B7B3-95140808717F}"
 EndProject
@@ -219,7 +217,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_palette_switch", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_postprocessing", "examples\shaders_postprocessing.vcxproj", "{7381D91E-5C72-48F0-AAB4-95C9B10D7484}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_raymarching", "examples\shaders_raymarching.vcxproj", "{D36EC43E-B31F-4CF4-8285-93A7A9D90189}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_raymarching_rendering", "examples\shaders_raymarching_rendering.vcxproj", "{D36EC43E-B31F-4CF4-8285-93A7A9D90189}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_mesh_instancing", "examples\shaders_mesh_instancing.vcxproj", "{274C0319-7E1E-4188-936B-8DF3331230B3}"
 EndProject
@@ -227,9 +225,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shapes_textures", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_simple_mask", "examples\shaders_simple_mask.vcxproj", "{600C3D4F-0670-4DB4-B30F-520A729053B5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_spotlight", "examples\shaders_spotlight.vcxproj", "{11F33A39-74B7-4018-B5F9-CC285A673A8F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_spotlight_rendering", "examples\shaders_spotlight_rendering.vcxproj", "{11F33A39-74B7-4018-B5F9-CC285A673A8F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_drawing", "examples\shaders_texture_drawing.vcxproj", "{A6F5E35E-B4A7-41B3-853A-75558E6E0715}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_rendering", "examples\shaders_texture_rendering.vcxproj", "{A6F5E35E-B4A7-41B3-853A-75558E6E0715}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_waves", "examples\shaders_texture_waves.vcxproj", "{291B4975-8EFF-4C7C-8AF3-44A77B8491B8}"
 EndProject
@@ -257,11 +255,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_screen_manager",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_custom_frame_control", "examples\core_custom_frame_control.vcxproj", "{658A1B85-554E-4A5D-973A-FFE592CDD5F2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_compute_shaders", "examples\rlgl_compute_shaders.vcxproj", "{07CA51AD-72AE-46A2-AAED-DC3E3F807976}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_compute_shader", "examples\rlgl_compute_shader.vcxproj", "{07CA51AD-72AE-46A2-AAED-DC3E3F807976}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_draw_3d", "examples\text_draw_3d.vcxproj", "{27B110CC-43C0-400A-89D9-245E681647D7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_3d_drawing", "examples\text_3d_drawing.vcxproj", "{27B110CC-43C0-400A-89D9-245E681647D7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_polygon", "examples\textures_polygon.vcxproj", "{1DE84812-E143-4C4B-A61D-9267AAD55401}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_polygon_drawing", "examples\textures_polygon_drawing.vcxproj", "{1DE84812-E143-4C4B-A61D-9267AAD55401}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_stream_effects", "examples\audio_stream_effects.vcxproj", "{4A87569C-4BD3-4113-B4B9-573D65B3D3F8}"
 EndProject
@@ -269,11 +267,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_textured_curve", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading_m3d", "examples\models_loading_m3d.vcxproj", "{6D9E00D8-2893-45E4-9363-3F7F61D416BD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_write_depth", "examples\shaders_write_depth.vcxproj", "{70B35F59-AFC2-4D8F-8833-5314D2047A81}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_depth_writing", "examples\shaders_depth_writing.vcxproj", "{70B35F59-AFC2-4D8F-8833-5314D2047A81}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_view_depth", "examples\shaders_view_depth.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_depth_rendering", "examples\shaders_depth_rendering.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_render", "examples\shaders_hybrid_render.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_rendering", "examples\shaders_hybrid_rendering.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_multi", "examples\audio_sound_multi.vcxproj", "{F81C5819-85B4-4D2E-B6DC-104A7634461B}"
 EndProject
@@ -287,9 +285,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_mouse_wheel", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_smooth_pixelperfect", "examples\core_smooth_pixelperfect.vcxproj", "{71DB4284-5B1C-4E86-9AF5-B91542D44A6F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_draw_cube_texture", "examples\models_draw_cube_texture.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_textured_cube", "examples\models_textured_cube.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_render", "examples\shaders_deferred_render.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_rendering", "examples\shaders_deferred_rendering.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_outline", "examples\shaders_texture_outline.vcxproj", "{A546E75A-5242-46E6-9A9E-6C91554EAB84}"
 EndProject
@@ -301,9 +299,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_top_down_lights", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rectangle_advanced", "examples\shapes_rectangle_advanced.vcxproj", "{FAFEE2F9-24B0-4AF1-B512-433E9590033F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_gpu_skinning", "examples\models_gpu_skinning.vcxproj", "{8245DAD9-D402-4D5C-8F45-32229CD3B263}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_gpu_skinning", "examples\models_animation_gpu_skinning.vcxproj", "{8245DAD9-D402-4D5C-8F45-32229CD3B263}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap", "examples\shaders_shadowmap.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap_rendering", "examples\shaders_shadowmap_rendering.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_bone_socket", "examples\models_bone_socket.vcxproj", "{3A7FE53D-35F7-49DC-9C9A-A5204A53523F}"
 EndProject
@@ -327,7 +325,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_tesseract_view", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_basic_pbr", "examples\shaders_basic_pbr.vcxproj", "{4DF6D5E4-6796-4257-B466-BCD62DEBBCF8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_lightmap", "examples\shaders_lightmap.vcxproj", "{C54703BF-D68A-480D-BE27-49B62E45D582}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_lightmap_rendering", "examples\shaders_lightmap_rendering.vcxproj", "{C54703BF-D68A-480D-BE27-49B62E45D582}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_positioning", "examples\audio_sound_positioning.vcxproj", "{9CD8BCAD-F212-4BCC-BA98-899743CE3279}"
 EndProject
@@ -335,9 +333,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_virtual_controls
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_3d_camera_fps", "examples\core_3d_camera_fps.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normal_map", "examples\shaders_normal_map.vcxproj", "{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normalmap_rendering", "examples\shaders_normalmap_rendering.vcxproj", "{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode_ranges", "examples\text_unicode_ranges.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode_ranges", "examples\text_unicode_ranges.vcxproj", "{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_gestures_testbed", "examples\core_input_gestures_testbed.vcxproj", "{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_render_texture", "examples\core_render_texture.vcxproj", "{49C67F03-1A56-4F96-B278-39B66EC93678}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_inline_styling", "examples\text_inline_styling.vcxproj", "{D496308F-3C3C-40B3-A3ED-EA327D244B3E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_undo_redo", "examples\core_undo_redo.vcxproj", "{3B27F358-2679-4F38-B297-17B536F580BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -931,20 +937,6 @@ Global
 		{A643BB06-735D-47F3-BFE7-B6D3C36F7097}.Release|x64.Build.0 = Release|x64
 		{A643BB06-735D-47F3-BFE7-B6D3C36F7097}.Release|x86.ActiveCfg = Release|Win32
 		{A643BB06-735D-47F3-BFE7-B6D3C36F7097}.Release|x86.Build.0 = Release|Win32
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug|x64.ActiveCfg = Debug|x64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Debug|x86.ActiveCfg = Debug|Win32
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release.DLL|x86.Build.0 = Release.DLL|Win32
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release|ARM64.ActiveCfg = Release|ARM64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release|x64.ActiveCfg = Release|x64
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95}.Release|x86.ActiveCfg = Release|Win32
 		{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
 		{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
 		{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
@@ -4135,30 +4127,126 @@ Global
 		{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}.Release|x64.Build.0 = Release|x64
 		{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}.Release|x86.ActiveCfg = Release|Win32
 		{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}.Release|x86.Build.0 = Release|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug|ARM64.Build.0 = Debug|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug|x64.ActiveCfg = Debug|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug|x64.Build.0 = Debug|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug|x86.ActiveCfg = Debug|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Debug|x86.Build.0 = Debug|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release.DLL|x64.Build.0 = Release.DLL|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release.DLL|x86.Build.0 = Release.DLL|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release|ARM64.ActiveCfg = Release|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release|ARM64.Build.0 = Release|ARM64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release|x64.ActiveCfg = Release|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release|x64.Build.0 = Release|x64
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release|x86.ActiveCfg = Release|Win32
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671}.Release|x86.Build.0 = Release|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug|ARM64.Build.0 = Debug|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug|x64.ActiveCfg = Debug|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug|x64.Build.0 = Debug|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug|x86.ActiveCfg = Debug|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Debug|x86.Build.0 = Debug|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release|ARM64.ActiveCfg = Release|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release|ARM64.Build.0 = Release|ARM64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release|x64.ActiveCfg = Release|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release|x64.Build.0 = Release|x64
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release|x86.ActiveCfg = Release|Win32
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}.Release|x86.Build.0 = Release|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug|ARM64.Build.0 = Debug|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug|x64.ActiveCfg = Debug|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug|x64.Build.0 = Debug|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug|x86.ActiveCfg = Debug|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Debug|x86.Build.0 = Debug|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release|ARM64.ActiveCfg = Release|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release|ARM64.Build.0 = Release|ARM64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release|x64.ActiveCfg = Release|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release|x64.Build.0 = Release|x64
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release|x86.ActiveCfg = Release|Win32
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4}.Release|x86.Build.0 = Release|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug|ARM64.Build.0 = Debug|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug|x64.ActiveCfg = Debug|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug|x64.Build.0 = Debug|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug|x86.ActiveCfg = Debug|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Debug|x86.Build.0 = Debug|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release|ARM64.ActiveCfg = Release|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release|ARM64.Build.0 = Release|ARM64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release|x64.ActiveCfg = Release|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release|x64.Build.0 = Release|x64
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release|x86.ActiveCfg = Release|Win32
+		{49C67F03-1A56-4F96-B278-39B66EC93678}.Release|x86.Build.0 = Release|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug|ARM64.Build.0 = Debug|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug|x64.ActiveCfg = Debug|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug|x64.Build.0 = Debug|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug|x86.ActiveCfg = Debug|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Debug|x86.Build.0 = Debug|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release|ARM64.ActiveCfg = Release|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release|ARM64.Build.0 = Release|ARM64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release|x64.ActiveCfg = Release|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release|x64.Build.0 = Release|x64
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release|x86.ActiveCfg = Release|Win32
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E}.Release|x86.Build.0 = Release|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug|ARM64.Build.0 = Debug|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug|x64.ActiveCfg = Debug|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug|x64.Build.0 = Debug|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug|x86.ActiveCfg = Debug|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Debug|x86.Build.0 = Debug|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release|ARM64.ActiveCfg = Release|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release|ARM64.Build.0 = Release|ARM64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release|x64.ActiveCfg = Release|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release|x64.Build.0 = Release|x64
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release|x86.ActiveCfg = Release|Win32
+		{3B27F358-2679-4F38-B297-17B536F580BB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -4195,7 +4283,6 @@ Global
 		{92B64AE7-D773-4F05-89F1-CE59BBF4F053} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 		{A2BA5E5C-FDB9-4939-B0B5-2B753A5E33D3} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 		{A643BB06-735D-47F3-BFE7-B6D3C36F7097} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
-		{F026020F-7B00-40C8-91C3-5DE85EC45A95} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 		{6B8BAAF1-75C7-4C68-80B8-0E2A9EABBD9A} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 		{B332DCA8-3599-4A99-917A-82261BDC27AC} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 		{59089B0C-AAB4-4532-B294-44DEAE7178B7} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
@@ -4327,9 +4414,13 @@ Global
 		{C54703BF-D68A-480D-BE27-49B62E45D582} = {5317807F-61D4-4E0F-B6DC-2D9F12621ED9}
 		{9CD8BCAD-F212-4BCC-BA98-899743CE3279} = {CC132A4D-D081-4C26-BFB9-AB11984054F8}
 		{0981CA28-E4A5-4DF1-987F-A41D09131EFC} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671} = {5317807F-61D4-4E0F-B6DC-2D9F12621ED9}
+		{6B1A933E-71B8-4C1F-9E79-02D98830E671} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 		{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3} = {5317807F-61D4-4E0F-B6DC-2D9F12621ED9}
-		{6B1A933E-71B8-4C1F-9E79-02D98830E671} = {8D3C83B7-F1E0-4C2E-9E34-EE5F6AB2502A}
+		{6777EC3C-077C-42FC-B4AD-B799CE55CCE4} = {8D3C83B7-F1E0-4C2E-9E34-EE5F6AB2502A}
+		{A61DAD9C-271C-4E95-81AA-DB4CD58564D4} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
+		{49C67F03-1A56-4F96-B278-39B66EC93678} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
+		{D496308F-3C3C-40B3-A3ED-EA327D244B3E} = {8D3C83B7-F1E0-4C2E-9E34-EE5F6AB2502A}
+		{3B27F358-2679-4F38-B297-17B536F580BB} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E926C768-6307-4423-A1EC-57E95B1FAB29}

@@ -24,6 +24,9 @@
 
 #define MAX_ENVIRONMENT_ELEMENTS    5
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct Player {
     Vector2 position;
     float speed;
@@ -35,7 +38,6 @@ typedef struct EnvElement {
     int blocking;
     Color color;
 } EnvElement;
-
 
 //------------------------------------------------------------------------------------
 // Program main entry point

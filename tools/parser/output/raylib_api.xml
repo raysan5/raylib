@@ -151,7 +151,7 @@
             <Field type="Vector3" name="position" desc="Camera position" />
             <Field type="Vector3" name="target" desc="Camera target it looks-at" />
             <Field type="Vector3" name="up" desc="Camera up vector (rotation over its axis)" />
-            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic" />
+            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane height in world units in orthographic" />
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="586">
+    <Functions count="595">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1048,6 +1048,30 @@
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="text" desc="" />
         </Function>
+        <Function name="FileRename" retType="int" paramCount="2" desc="Rename file (if exists)">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="const char *" name="fileRename" desc="" />
+        </Function>
+        <Function name="FileRemove" retType="int" paramCount="1" desc="Remove file (if exists)">
+            <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="FileCopy" retType="int" paramCount="2" desc="Copy file from one path to another, dstPath created if it doesn't exist">
+            <Param type="const char *" name="srcPath" desc="" />
+            <Param type="const char *" name="dstPath" desc="" />
+        </Function>
+        <Function name="FileMove" retType="int" paramCount="2" desc="Move file from one directory to another, dstPath created if it doesn't exist">
+            <Param type="const char *" name="srcPath" desc="" />
+            <Param type="const char *" name="dstPath" desc="" />
+        </Function>
+        <Function name="FileTextReplace" retType="int" paramCount="3" desc="Replace text in an existing file">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="const char *" name="search" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
+        </Function>
+        <Function name="FileTextFindIndex" retType="int" paramCount="2" desc="Find text in existing file">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="const char *" name="search" desc="" />
+        </Function>
         <Function name="FileExists" retType="bool" paramCount="1" desc="Check if file exists">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
@@ -1059,6 +1083,9 @@
             <Param type="const char *" name="ext" desc="" />
         </Function>
         <Function name="GetFileLength" retType="int" paramCount="1" desc="Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)">
+            <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="GetFileModTime" retType="long" paramCount="1" desc="Get file modification time (last write time)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="GetFileExtension" retType="const char *" paramCount="1" desc="Get pointer to extension for a filename string (includes dot: '.png')">
@@ -1109,9 +1136,6 @@
         </Function>
         <Function name="UnloadDroppedFiles" retType="void" paramCount="1" desc="Unload dropped filepaths">
             <Param type="FilePathList" name="files" desc="" />
-        </Function>
-        <Function name="GetFileModTime" retType="long" paramCount="1" desc="Get file modification time (last write time)">
-            <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="CompressData" retType="unsigned char *" paramCount="3" desc="Compress data (DEFLATE algorithm), memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
@@ -2305,13 +2329,14 @@
         <Function name="IsFontValid" retType="bool" paramCount="1" desc="Check if a font is valid (font data loaded, WARNING: GPU texture not checked)">
             <Param type="Font" name="font" desc="" />
         </Function>
-        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="6" desc="Load font data for further use">
+        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="7" desc="Load font data for further use">
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="codepoints" desc="" />
+            <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
             <Param type="int" name="type" desc="" />
+            <Param type="int *" name="glyphCount" desc="" />
         </Function>
         <Function name="GenImageFontAtlas" retType="Image" paramCount="6" desc="Generate image font atlas using chars info">
             <Param type="const GlyphInfo *" name="glyphs" desc="" />
@@ -2439,8 +2464,9 @@
             <Param type="const char *" name="text" desc="" />
             <Param type="int *" name="count" desc="" />
         </Function>
-        <Function name="UnloadTextLines" retType="void" paramCount="1" desc="Unload text lines">
+        <Function name="UnloadTextLines" retType="void" paramCount="2" desc="Unload text lines">
             <Param type="char **" name="text" desc="" />
+            <Param type="int" name="lineCount" desc="" />
         </Function>
         <Function name="TextCopy" retType="int" paramCount="2" desc="Copy one string to another, returns bytes copied">
             <Param type="char *" name="dst" desc="" />
@@ -2462,10 +2488,24 @@
             <Param type="int" name="position" desc="" />
             <Param type="int" name="length" desc="" />
         </Function>
+        <Function name="TextRemoveSpaces" retType="const char *" paramCount="1" desc="Remove text spaces, concat words">
+            <Param type="const char *" name="text" desc="" />
+        </Function>
+        <Function name="GetTextBetween" retType="char *" paramCount="3" desc="Get text between two strings">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="begin" desc="" />
+            <Param type="const char *" name="end" desc="" />
+        </Function>
         <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string (WARNING: memory must be freed!)">
             <Param type="const char *" name="text" desc="" />
-            <Param type="const char *" name="replace" desc="" />
-            <Param type="const char *" name="by" desc="" />
+            <Param type="const char *" name="search" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
+        </Function>
+        <Function name="TextReplaceBetween" retType="char *" paramCount="4" desc="Replace text between two specific strings (WARNING: memory must be freed!)">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="begin" desc="" />
+            <Param type="const char *" name="end" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
         </Function>
         <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a position (WARNING: memory must be freed!)">
             <Param type="const char *" name="text" desc="" />
@@ -2482,14 +2522,14 @@
             <Param type="char" name="delimiter" desc="" />
             <Param type="int *" name="count" desc="" />
         </Function>
-        <Function name="TextAppend" retType="void" paramCount="3" desc="Append text at specific position and move cursor!">
+        <Function name="TextAppend" retType="void" paramCount="3" desc="Append text at specific position and move cursor">
             <Param type="char *" name="text" desc="" />
             <Param type="const char *" name="append" desc="" />
             <Param type="int *" name="position" desc="" />
         </Function>
         <Function name="TextFindIndex" retType="int" paramCount="2" desc="Find first text occurrence within a string, -1 if not found">
             <Param type="const char *" name="text" desc="" />
-            <Param type="const char *" name="find" desc="" />
+            <Param type="const char *" name="search" desc="" />
         </Function>
         <Function name="TextToUpper" retType="char *" paramCount="1" desc="Get upper case version of provided string">
             <Param type="const char *" name="text" desc="" />

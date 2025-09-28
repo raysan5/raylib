@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - rectangle avanced
+*   raylib [shapes] example - rectangle advanced
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -21,6 +21,9 @@
 
 #include <math.h>
 
+//--------------------------------------------------------------------------------------
+// Module Functions Declaration
+//--------------------------------------------------------------------------------------
 // Draw rectangle with rounded edges and horizontal gradient, with options to choose side of roundness
 static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, float roundnessRight, int segments, Color left, Color right);
 
@@ -34,7 +37,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle avanced");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle advanced");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -83,6 +86,9 @@ int main(void)
     return 0;
 }
 
+//--------------------------------------------------------------------------------------
+// Module Functions Definition
+//--------------------------------------------------------------------------------------
 // Draw rectangle with rounded edges and horizontal gradient, with options to choose side of roundness
 // NOTE: Adapted from both 'DrawRectangleRounded()' and 'DrawRectangleGradientH()' raylib [rshapes] implementations
 static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, float roundnessRight, int segments, Color left, Color right)

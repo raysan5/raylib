@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - 3d sound positioning
+*   raylib [audio] example - sound positioning
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -19,7 +19,9 @@
 
 #include "raymath.h"
 
-// Sound positioning function
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist);
 
 //------------------------------------------------------------------------------------
@@ -32,7 +34,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - 3d sound positioning");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound positioning");
 
     InitAudioDevice();
 
@@ -94,7 +96,10 @@ int main(void)
     //--------------------------------------------------------------------------------------
 }
 
-// Sound positioning function
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
+// Set sound 3d position
 static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, float maxDist)
 {
     // Calculate direction vector and distance between listener and sound source

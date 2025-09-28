@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - storage save/load values
+*   raylib [core] example - storage values
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -25,7 +25,9 @@ typedef enum {
     STORAGE_POSITION_HISCORE    = 1
 } StorageData;
 
-// Persistent storage functions
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static bool SaveStorageValue(unsigned int position, int value);
 static int LoadStorageValue(unsigned int position);
 
@@ -39,7 +41,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - storage save/load values");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - storage values");
 
     int score = 0;
     int hiscore = 0;
@@ -101,6 +103,9 @@ int main(void)
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
 bool SaveStorageValue(unsigned int position, int value)

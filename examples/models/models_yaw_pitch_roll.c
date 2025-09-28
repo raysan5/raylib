@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - plane rotations (yaw, pitch, roll)
+*   raylib [models] example - yaw pitch roll
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -30,7 +30,7 @@ int main(void)
     const int screenHeight = 450;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_HIGHDPI);
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - plane rotations (yaw, pitch, roll)");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - yaw pitch roll");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 0.0f, 50.0f, -120.0f };// Camera position perspective

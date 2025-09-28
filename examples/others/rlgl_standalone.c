@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [rlgl] example - Using rlgl module as standalone module
+*   raylib [others] example - standalone
 *
 *   rlgl library is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
@@ -77,7 +77,7 @@
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
 //----------------------------------------------------------------------------------
-// Structures Definition
+// Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
@@ -97,7 +97,7 @@ typedef struct Camera {
 } Camera;
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void ErrorCallback(int error, const char *description);
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -147,7 +147,7 @@ int main(void)
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "raylib [others] example - rlgl standalone", NULL, NULL);
 
     if (!window)
     {
@@ -260,7 +260,7 @@ int main(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definitions
+// Module Functions Definitions
 //----------------------------------------------------------------------------------
 
 // GLFW3: Error callback

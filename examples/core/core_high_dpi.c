@@ -2,19 +2,23 @@
 *
 *   raylib [core] example - high dpi
 *
-*   Example complexity rating: [★☆☆☆] e/4
+*   Example complexity rating: [★★☆☆] 2/4
+*
+*   Example originally created with raylib 5.0, last time updated with raylib 5.5
+*
+*   Example contributed by Jonathan Marler (@marler8997) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2025 Jonathan Marler (@marler8997)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
 //------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
 static void DrawTextCenter(const char *text, int x, int y, int fontSize, Color color);
 
@@ -120,7 +124,7 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //------------------------------------------------------------------------------------
 static void DrawTextCenter(const char *text, int x, int y, int fontSize, Color color)
 {

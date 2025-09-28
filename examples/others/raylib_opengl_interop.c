@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 3.8, last time updated with raylib 2.5
+*   Example originally created with raylib 3.8, last time updated with raylib 4.0
 *
 *   Example contributed by Stephan Soller (@arkanis) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -54,6 +54,9 @@
 
 #define MAX_PARTICLES       1000
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // Particle type
 typedef struct Particle {
     float x;

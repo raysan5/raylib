@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - sound loading and playing
+*   raylib [audio] example - sound loading
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound loading and playing");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound loading");
 
     InitAudioDevice();      // Initialize audio device
 

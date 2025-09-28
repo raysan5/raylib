@@ -504,33 +504,33 @@ CORE = \
     core/core_2d_camera_platformer \
     core/core_2d_camera_split_screen \
     core/core_3d_camera_first_person \
+    core/core_3d_camera_fps \
     core/core_3d_camera_free \
     core/core_3d_camera_mode \
     core/core_3d_camera_split_screen \
-    core/core_3d_camera_fps \
     core/core_3d_picking \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
-    core/core_basic_window_web \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_gamepad \
     core/core_input_gestures \
-    core/core_input_gestures_web \
+    core/core_input_gestures_testbed \
     core/core_input_keys \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
-    core/core_loading_thread \
     core/core_random_sequence \
     core/core_random_values \
+    core/core_render_texture \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
+    core/core_undo_redo \
     core/core_vr_simulator \
     core/core_window_flags \
     core/core_window_letterbox \
@@ -540,22 +540,22 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_draw_ring \
-    shapes/shapes_easings_ball_anim \
-    shapes/shapes_easings_box_anim \
-    shapes/shapes_easings_rectangle_array \
+    shapes/shapes_easings_ball \
+    shapes/shapes_easings_box \
+    shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_ring_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -563,7 +563,6 @@ TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
-    textures/textures_draw_tiled \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
     textures/textures_image_channel \
@@ -578,41 +577,42 @@ TEXTURES = \
     textures/textures_mouse_painting \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
-    textures/textures_polygon \
+    textures/textures_polygon_drawing \
     textures/textures_raw_data \
-    textures/textures_sprite_anim \
+    textures/textures_sprite_animation \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
     textures/textures_textured_curve \
+    textures/textures_tiled_drawing \
     textures/textures_to_image
 
 TEXT = \
+    text/text_3d_drawing \
     text/text_codepoints_loading \
-    text/text_draw_3d \
     text/text_font_filters \
     text/text_font_loading \
     text/text_font_sdf \
     text/text_font_spritefont \
     text/text_format_text \
+    text/text_inline_styling \
     text/text_input_box \
-    text/text_raylib_fonts \
     text/text_rectangle_bounds \
-    text/text_unicode \
+    text/text_sprite_fonts \
+    text/text_unicode_emojis \
     text/text_unicode_ranges \
     text/text_writing_anim
 
 MODELS = \
-    models/models_animation \
-    models/models_billboard \
+    models/models_animation_gpu_skinning \
+    models/models_animation_playing \
+    models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
-    models/models_cubicmap \
-    models/models_draw_cube_texture \
+    models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_gpu_skinning \
-    models/models_heightmap \
+    models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
     models/models_loading_m3d \
@@ -622,8 +622,9 @@ MODELS = \
     models/models_orthographic_projection \
     models/models_point_rendering \
     models/models_rlgl_solar_system \
-    models/models_skybox \
+    models/models_skybox_rendering \
     models/models_tesseract_view \
+    models/models_textured_cube \
     models/models_waving_cubes \
     models/models_yaw_pitch_roll
 
@@ -631,32 +632,32 @@ SHADERS = \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
-    shaders/shaders_deferred_render \
-    shaders/shaders_eratosthenes \
-    shaders/shaders_fog \
+    shaders/shaders_deferred_rendering \
+    shaders/shaders_depth_rendering \
+    shaders/shaders_depth_writing \
+    shaders/shaders_eratosthenes_sieve \
+    shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
-    shaders/shaders_hybrid_render \
+    shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
-    shaders/shaders_lightmap \
+    shaders/shaders_lightmap_rendering \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
-    shaders/shaders_normal_map \
+    shaders/shaders_normalmap_rendering \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
-    shaders/shaders_raymarching \
+    shaders/shaders_raymarching_rendering \
     shaders/shaders_rounded_rectangle \
-    shaders/shaders_shadowmap \
+    shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
-    shaders/shaders_spotlight \
-    shaders/shaders_texture_drawing \
+    shaders/shaders_spotlight_rendering \
     shaders/shaders_texture_outline \
+    shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_vertex_displacement \
-    shaders/shaders_view_depth \
-    shaders/shaders_write_depth
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \

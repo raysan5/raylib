@@ -22,6 +22,9 @@
 
 #define MAX_SPLINE_POINTS      32
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Cubic Bezier spline control points
 // NOTE: Every segment has two control points
 typedef struct {

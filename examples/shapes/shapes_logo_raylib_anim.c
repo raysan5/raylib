@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - raylib logo animation
+*   raylib [shapes] example - logo raylib anim
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib logo animation");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - logo raylib anim");
 
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;

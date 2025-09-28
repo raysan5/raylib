@@ -144,7 +144,7 @@
 // ...
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
@@ -171,7 +171,6 @@ static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *mate
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
@@ -1294,10 +1293,19 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
-    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
-    rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, 2, RL_FLOAT, 0, 0, 0);
-    rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
 
+    if (mesh->texcoords != NULL)
+    {
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, 2, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
+    }
+    else
+    {
+        float value[2] = { 0.0f, 0.0f };
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, value, SHADER_ATTRIB_VEC2, 2);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD);
+    }
     // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
     // is part of current state, and it is maintained even if a different program object is used
 
@@ -1432,11 +1440,12 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.animVertices) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
-    if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
-    else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    if (mesh.texcoords) rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
 
-    rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+    if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
+    else if (mesh.normals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+
+    if (mesh.colors) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
@@ -3836,6 +3845,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 
 // Draw a model points
 // WARNING: OpenGL ES 2.0 does not support point mode drawing
+// TODO: gate these properly for non es 2.0 versions only
 void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
 {
     rlEnablePointMode();
@@ -3865,7 +3875,7 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float sca
 {
     Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, source, position, (Vector2) { scale*fabsf((float)source.width/source.height), scale }, tint);
+    DrawBillboardRec(camera, texture, source, position, (Vector2){ scale*fabsf((float)source.width/source.height), scale }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
@@ -4244,7 +4254,7 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_IQM) || defined(SUPPORT_FILEFORMAT_GLTF)
 // Build pose from parent joints
@@ -4261,9 +4271,10 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
                 continue;
             }
             transforms[i].rotation = QuaternionMultiply(transforms[bones[i].parent].rotation, transforms[i].rotation);
+            transforms[i].scale = Vector3Multiply(transforms[i].scale, transforms[bones[i].parent].scale);
+            transforms[i].translation = Vector3Multiply(transforms[i].translation, transforms[bones[i].parent].scale);
             transforms[i].translation = Vector3RotateByQuaternion(transforms[i].translation, transforms[bones[i].parent].rotation);
             transforms[i].translation = Vector3Add(transforms[i].translation, transforms[bones[i].parent].translation);
-            transforms[i].scale = Vector3Multiply(transforms[i].scale, transforms[bones[i].parent].scale);
         }
     }
 }
@@ -4419,7 +4430,11 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].vertices = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].normals = (float *)MemAlloc(sizeof(float)*vertexCount*3);
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
+    #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
+    #else
+        model.meshes[i].colors = NULL;
+    #endif
     }
 
     MemFree(localMeshVertexCounts);
@@ -4473,7 +4488,17 @@ static Model LoadOBJ(const char *fileName)
 
             for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
 
-            for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
+            if (objAttributes.texcoords != NULL && texcordIndex != TINYOBJ_INVALID_INDEX && texcordIndex >= 0)
+            {
+                for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
+                model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
+            }
+            else
+            {
+                model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 0] = 0.0f;
+                model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 0.0f;
+            }
+
             if (objAttributes.normals != NULL && normalIndex != TINYOBJ_INVALID_INDEX && normalIndex >= 0)
             {
                 for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
@@ -4484,11 +4509,9 @@ static Model LoadOBJ(const char *fileName)
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 1] = 1.0f;
                 model.meshes[meshIndex].normals[localMeshVertexCount*3 + 2] = 0.0f;
             }
-
-            model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
-
+        #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
             for (int i = 0; i < 4; i++) model.meshes[meshIndex].colors[localMeshVertexCount*4 + i] = 255;
-
+        #endif
             faceVertIndex++;
             localMeshVertexCount++;
         }
@@ -5536,7 +5559,7 @@ static Model LoadGLTF(const char *fileName)
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
                         // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined
-                        
+
                         if (model.meshes[meshIndex].vertices != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data already loaded", fileName);
                         else
                         {
@@ -5882,7 +5905,7 @@ static Model LoadGLTF(const char *fileName)
                 };
                 MatrixDecompose(worldMatrix, &(model.bindPose[i].translation), &(model.bindPose[i].rotation), &(model.bindPose[i].scale));
             }
-            
+
             if (data->skins_count > 1) TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
 
@@ -6238,6 +6261,18 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
             *animCount = (int)data->animations_count;
             animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
 
+            Transform worldTransform = { 0 };
+            cgltf_float cgltf_worldTransform[16] = { 0 };
+            cgltf_node *node = skin.joints[0];
+            cgltf_node_transform_world(node->parent, cgltf_worldTransform);
+            Matrix worldMatrix = {
+                cgltf_worldTransform[0], cgltf_worldTransform[4], cgltf_worldTransform[8], cgltf_worldTransform[12],
+                cgltf_worldTransform[1], cgltf_worldTransform[5], cgltf_worldTransform[9], cgltf_worldTransform[13],
+                cgltf_worldTransform[2], cgltf_worldTransform[6], cgltf_worldTransform[10], cgltf_worldTransform[14],
+                cgltf_worldTransform[3], cgltf_worldTransform[7], cgltf_worldTransform[11], cgltf_worldTransform[15]
+            };
+            MatrixDecompose(worldMatrix, &worldTransform.translation, &worldTransform.rotation, &worldTransform.scale);
+
             for (unsigned int i = 0; i < data->animations_count; i++)
             {
                 animations[i].bones = LoadBoneInfoGLTF(skin, &animations[i].boneCount);
@@ -6355,6 +6390,13 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                             .scale = scale
                         };
                     }
+
+                    Transform* root = &animations[i].framePoses[j][0];
+                    root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
+                    root->scale = Vector3Multiply(root->scale, worldTransform.scale);
+                    root->translation = Vector3Multiply(root->translation, worldTransform.scale);
+                    root->translation = Vector3RotateByQuaternion(root->translation, worldTransform.rotation);
+                    root->translation = Vector3Add(root->translation, worldTransform.translation);
 
                     BuildPoseFromParentJoints(animations[i].bones, animations[i].boneCount, animations[i].framePoses[j]);
                 }
@@ -6573,13 +6615,23 @@ static Model LoadM3D(const char *fileName)
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
-                // there should be only one material switch per material kind, but be bulletproof for non-optimal model files
+                // There should be only one material switch per material kind,
+                // but be bulletproof for non-optimal model files
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
-                    model.meshes = (Mesh *)RL_REALLOC(model.meshes, model.meshCount*sizeof(Mesh));
-                    memset(&model.meshes[model.meshCount - 1], 0, sizeof(Mesh));
-                    model.meshMaterial = (int *)RL_REALLOC(model.meshMaterial, model.meshCount*sizeof(int));
+
+                    // Create a second buffer for mesh re-allocation
+                    Mesh *tempMeshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
+                    memcpy(tempMeshes, model.meshes, (model.meshCount - 1)*sizeof(Mesh));
+                    RL_FREE(model.meshes);
+                    model.meshes = tempMeshes;
+
+                    // Create a second buffer for material re-allocation
+                    int *tempMeshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+                    memcpy(tempMeshMaterial, model.meshMaterial, (model.meshCount - 1)*sizeof(int));
+                    RL_FREE(model.meshMaterial);
+                    model.meshMaterial = tempMeshMaterial;
                 }
 
                 k++;

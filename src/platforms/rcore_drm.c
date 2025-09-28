@@ -165,7 +165,7 @@ extern CoreData CORE;                   // Global CORE state context
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
-// Local Variables Definition
+// Global Variables Definition
 //----------------------------------------------------------------------------------
 
 // NOTE: The complete evdev EV_KEY list can be found at /usr/include/linux/input-event-codes.h
@@ -254,6 +254,7 @@ static void RestoreKeyboard(void);              // Restore keyboard system
 static void ProcessKeyboard(void);              // Process keyboard events
 #endif
 
+// Input management functions
 static void InitEvdevInput(void);               // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device); // Identifies a input device and configures it for use if appropriate
 static void PollKeyboardEvents(void);           // Process evdev keyboard events
@@ -712,7 +713,7 @@ void SwapScreenBuffer()
     if (!crtcSet || !platform.gbmSurface) return;
 
     static int loopCnt = 0;
-    static int errCnt[5] = {0};
+    static int errCnt[5] = { 0 };
     loopCnt++;
 
     // Call this only, if pendingFlip is not set

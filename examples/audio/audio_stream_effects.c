@@ -17,7 +17,9 @@
 
 #include <stdlib.h> // Required for: NULL
 
-// Required delay effect variables
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
 static float *delayBuffer = NULL;
 static unsigned int delayBufferSize = 0;
 static unsigned int delayReadIndex = 2;

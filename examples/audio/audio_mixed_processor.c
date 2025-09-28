@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - mixed audio processing
+*   raylib [audio] example - mixed processor
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -55,7 +55,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - mixed audio processing");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - mixed processor");
 
     InitAudioDevice();              // Initialize audio device
 

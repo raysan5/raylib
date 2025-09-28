@@ -155,7 +155,6 @@ int main()
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Draw textured curve using Spline Cubic Bezier
 static void DrawTexturedCurve(void)
 {

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - generate random values
+*   raylib [core] example - random values
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - generate random values");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - random values");
 
     // SetRandomSeed(0xaabbccff);   // Set a custom random seed if desired, by default: "time(NULL)"
 

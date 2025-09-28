@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - generate random sequence
+*   raylib [core] example - random sequence
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -16,22 +16,25 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
-#include <stdlib.h> // Required for: malloc() and free()
+#include <stdlib.h>     // Required for: malloc(), free()
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct ColorRect {
-    Color c;
-    Rectangle r;
+    Color color;
+    Rectangle rect;
 } ColorRect;
 
 //------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
-static Color GenerateRandomColor();
+static Color GenerateRandomColor(void);
 static ColorRect *GenerateRandomColorRectSequence(float rectCount, float rectWidth, float screenWidth, float screenHeight);
 static void ShuffleColorRectSequence(ColorRect *rectangles, int rectCount);
-static void DrawTextCenterKeyHelp(const char *key, const char *text, int posX, int posY, int fontSize, Color color);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -43,7 +46,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - generate random sequence");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - random sequence");
 
     int rectCount = 20;
     float rectSize = (float)screenWidth/rectCount;
@@ -63,7 +66,9 @@ int main(void)
         {
             rectCount++;
             rectSize = (float)screenWidth/rectCount;
-            free(rectangles);
+            RL_FREE(rectangles);
+
+            // Re-generate random sequence with new count
             rectangles = GenerateRandomColorRectSequence((float)rectCount, rectSize, (float)screenWidth, 0.75f*screenHeight);
         }
 
@@ -73,7 +78,9 @@ int main(void)
             {
                 rectCount--;
                 rectSize = (float)screenWidth/rectCount;
-                free(rectangles);
+                RL_FREE(rectangles);
+
+                // Re-generate random sequence with new count
                 rectangles = GenerateRandomColorRectSequence((float)rectCount, rectSize, (float)screenWidth, 0.75f*screenHeight);
             }
         }
@@ -85,20 +92,20 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            int fontSize = 20;
             for (int i = 0; i < rectCount; i++)
             {
-                DrawRectangleRec(rectangles[i].r, rectangles[i].c);
-                DrawTextCenterKeyHelp("SPACE", "to shuffle the sequence.", 10, screenHeight - 96, fontSize, BLACK);
-                DrawTextCenterKeyHelp("UP", "to add a rectangle and generate a new sequence.", 10, screenHeight - 64, fontSize, BLACK);
-                DrawTextCenterKeyHelp("DOWN", "to remove a rectangle and generate a new sequence.", 10, screenHeight - 32, fontSize, BLACK);
+                DrawRectangleRec(rectangles[i].rect, rectangles[i].color);
+
+                DrawText("Press SPACE to shuffle the sequence", 10, screenHeight - 96, 20, BLACK);
+
+                DrawText("Press SPACE to shuffle the current sequence", 10, screenHeight - 96, 20, BLACK);
+                DrawText("Press UP to add a rectangle and generate a new sequence", 10, screenHeight - 64, 20, BLACK);
+                DrawText("Press DOWN to remove a rectangle and generate a new sequence", 10, screenHeight - 32, 20, BLACK);
             }
 
-            const char *rectCountText = TextFormat("%d rectangles", rectCount);
-            int rectCountTextSize = MeasureText(rectCountText, fontSize);
-            DrawText(rectCountText, screenWidth - rectCountTextSize - 10, 10, fontSize, BLACK);
+            DrawText(TextFormat("Count: %d rectangles", rectCount), 10, 10, 20, MAROON);
 
-            DrawFPS(10, 10);
+            DrawFPS(screenWidth - 80, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -114,9 +121,9 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //------------------------------------------------------------------------------------
-static Color GenerateRandomColor()
+static Color GenerateRandomColor(void)
 {
     Color color = {
         GetRandomValue(0, 255),
@@ -130,7 +137,8 @@ static Color GenerateRandomColor()
 
 static ColorRect *GenerateRandomColorRectSequence(float rectCount, float rectWidth, float screenWidth, float screenHeight)
 {
-    ColorRect *rectangles = (ColorRect *)malloc((int)rectCount*sizeof(ColorRect));
+    ColorRect *rectangles = (ColorRect *)RL_CALLOC((int)rectCount, sizeof(ColorRect));
+
     int *seq = LoadRandomSequence((unsigned int)rectCount, 0, (unsigned int)rectCount - 1);
     float rectSeqWidth = rectCount*rectWidth;
     float startX = (screenWidth - rectSeqWidth)*0.5f;
@@ -139,8 +147,8 @@ static ColorRect *GenerateRandomColorRectSequence(float rectCount, float rectWid
     {
         int rectHeight = (int)Remap((float)seq[i], 0, rectCount - 1, 0, screenHeight);
 
-        rectangles[i].c = GenerateRandomColor();
-        rectangles[i].r = CLITERAL(Rectangle){ startX + i*rectWidth, screenHeight - rectHeight, rectWidth, (float)rectHeight };
+        rectangles[i].color = GenerateRandomColor();
+        rectangles[i].rect = CLITERAL(Rectangle){ startX + i*rectWidth, screenHeight - rectHeight, rectWidth, (float)rectHeight };
     }
 
     UnloadRandomSequence(seq);
@@ -159,28 +167,13 @@ static void ShuffleColorRectSequence(ColorRect *rectangles, int rectCount)
 
         // Swap only the color and height
         ColorRect tmp = *r1;
-        r1->c = r2->c;
-        r1->r.height = r2->r.height;
-        r1->r.y = r2->r.y;
-        r2->c = tmp.c;
-        r2->r.height = tmp.r.height;
-        r2->r.y = tmp.r.y;
+        r1->color = r2->color;
+        r1->rect.height = r2->rect.height;
+        r1->rect.y = r2->rect.y;
+        r2->color = tmp.color;
+        r2->rect.height = tmp.rect.height;
+        r2->rect.y = tmp.rect.y;
     }
 
     UnloadRandomSequence(seq);
-}
-
-static void DrawTextCenterKeyHelp(const char *key, const char *text, int posX, int posY, int fontSize, Color color)
-{
-    int spaceSize = MeasureText(" ", fontSize);
-    int pressSize = MeasureText("Press", fontSize);
-    int keySize = MeasureText(key, fontSize);
-    int textSizeCurrent = 0;
-
-    DrawText("Press", posX, posY, fontSize, color);
-    textSizeCurrent += pressSize + 2*spaceSize;
-    DrawText(key, posX + textSizeCurrent, posY, fontSize, RED);
-    DrawRectangle(posX + textSizeCurrent, posY + fontSize, keySize, 3, RED);
-    textSizeCurrent += keySize + 2*spaceSize;
-    DrawText(text, posX + textSizeCurrent, posY, fontSize, color);
 }

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - image convolution
+*   raylib [textures] example - image kernel
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -20,7 +20,7 @@
 #include "raylib.h"
 
 //------------------------------------------------------------------------------------
-// Module functions declaration
+// Module Functions Declaration
 //------------------------------------------------------------------------------------
 static void NormalizeKernel(float *kernel, int size);
 
@@ -34,7 +34,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image convolution");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image kernel");
 
     Image image = LoadImage("resources/cat.png"); // Loaded in CPU memory (RAM)
 
@@ -131,7 +131,7 @@ int main(void)
 }
 
 //------------------------------------------------------------------------------------
-// Module functions definition
+// Module Functions Definition
 //------------------------------------------------------------------------------------
 static void NormalizeKernel(float *kernel, int size)
 {

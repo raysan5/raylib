@@ -17,6 +17,9 @@
 
 #define NUM_MODELS  9               // Parametric 3d shapes to generate
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static Mesh GenMeshCustom(void);    // Generate a simple triangle mesh from code
 
 //------------------------------------------------------------------------------------
@@ -136,6 +139,9 @@ int main(void)
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
 // Generate a simple triangle mesh from code
 static Mesh GenMeshCustom(void)
 {
