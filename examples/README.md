@@ -145,7 +145,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_inline_styling](text/text_inline_styling.c) | <img src="text/text_inline_styling.png" alt="text_inline_styling" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Wagner Barongello](https://github.com/SultansOfCode) |
 
-### category: models [23]
+### category: models [24]
 
 Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.
 
@@ -174,6 +174,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_animation_gpu_skinning](models/models_animation_gpu_skinning.c) | <img src="models/models_animation_gpu_skinning.png" alt="models_animation_gpu_skinning" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Daniel Holden](https://github.com/orangeduck) |
 | [models_bone_socket](models/models_bone_socket.c) | <img src="models/models_bone_socket.png" alt="models_bone_socket" width="80"> | ⭐⭐⭐⭐️ | 4.5 | 4.5 | [iP](https://github.com/ipzaur) |
 | [models_tesseract_view](models/models_tesseract_view.c) | <img src="models/models_tesseract_view.png" alt="models_tesseract_view" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Timothy van der Valk](https://github.com/arceryz) |
+| [models_basic_voxel](models/models_basic_voxel.c) | <img src="models/models_basic_voxel.png" alt="models_basic_voxel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Tim Little](https://github.com/timlittle) |
 
 ### category: shaders [29]
 
