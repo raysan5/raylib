@@ -1495,8 +1495,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-    else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
-    else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+    else if (action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
+    else if (action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
     // Check if there is space available in the key queue
     if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
@@ -1722,8 +1722,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent = {0};
-
+    GestureEvent gestureEvent = { 0 };
     gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
     // Register touch actions
@@ -1852,7 +1851,7 @@ static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const Emscripte
 //-------------------------------------------------------------------------------------------------------
 
 // JS: Get the canvas id provided by the module configuration
-EM_JS(char*, GetCanvasIdJs, (), {
+EM_JS(char *, GetCanvasIdJs, (), {
     var canvasId = "#" + Module.canvas.id;
     var lengthBytes = lengthBytesUTF8(canvasId) + 1;
     var stringOnWasmHeap = _malloc(lengthBytes);

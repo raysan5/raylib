@@ -85,10 +85,12 @@
 #endif
 
 #if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
-    #ifndef PLATFORM_DESKTOP_SDL3
-        #define PLATFORM_DESKTOP_SDL3
+    #ifndef USING_VERSION_SDL3
+        #define USING_VERSION_SDL3
     #endif
 #endif
+
+#define SCANCODE_MAPPED_NUM     232
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -98,7 +100,7 @@ typedef struct {
     SDL_GLContext glContext;
 
     SDL_GameController *gamepad[MAX_GAMEPADS];
-    SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids
+    SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids, they do not start from 0
     SDL_Cursor *cursor;
     bool cursorRelative;
 } PlatformData;
@@ -110,10 +112,6 @@ extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific data
 
-//----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
-#define SCANCODE_MAPPED_NUM 232
 static const KeyboardKey mapScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_NULL,           // SDL_SCANCODE_UNKNOWN
     0,
@@ -255,7 +253,7 @@ static const int CursorsLUT[] = {
 };
 
 // SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
 
 // SDL3 Migration:
 //     SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
@@ -321,7 +319,7 @@ Uint8 SDL_EventState(Uint32 type, int state)
     {
         case SDL_DISABLE: SDL_SetEventEnabled(type, false); break;
         case SDL_ENABLE: SDL_SetEventEnabled(type, true); break;
-        default: TRACELOG(LOG_WARNING, "Event sate: unknow type");
+        default: TRACELOG(LOG_WARNING, "SDL: Event state of unknow type");
     }
 
     return stateBefore;
@@ -329,10 +327,10 @@ Uint8 SDL_EventState(Uint32 type, int state)
 
 void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode* mode)
 {
-    const SDL_DisplayMode* currMode = SDL_GetCurrentDisplayMode(displayID);
+    const SDL_DisplayMode *currentMode = SDL_GetCurrentDisplayMode(displayID);
 
-    if (currMode == NULL) TRACELOG(LOG_WARNING, "No current display mode");
-    else *mode = *currMode;
+    if (currentMode == NULL) TRACELOG(LOG_WARNING, "SDL: No possible to get current display mode");
+    else *mode = *currentMode;
 }
 
 // SDL3 Migration: Renamed
@@ -423,13 +421,13 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
 void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
-    TRACELOG(LOG_WARNING, "Getting clipboard data that is not text is only available in SDL3");
+    TRACELOG(LOG_WARNING, "SDL: Getting clipboard data that is not text not available in SDL2");
 
     // We could possibly implement it ourselves in this case for some easier platforms
     return NULL;
 }
 
-#endif // PLATFORM_DESKTOP_SDL3
+#endif // USING_VERSION_SDL3
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -438,8 +436,8 @@ int InitPlatform(void);                                      // Initialize platf
 void ClosePlatform(void);                                    // Close platform
 
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
-
 static int GetCodepointNextSDL(const char *text, int *codepointSize); // Get next codepoint in a byte sequence and bytes processed
+static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event); // Update CORE input touch point info from SDL touch data
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -463,7 +461,7 @@ void ToggleFullscreen(void)
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
 
-#if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if ((monitor > 0) && (monitor <= monitorCount))
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
@@ -491,7 +489,7 @@ void ToggleBorderlessWindowed(void)
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
     const int monitorCount = SDL_GetNumVideoDisplays();
 
-#if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if ((monitor > 0) && (monitor <= monitorCount))
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
@@ -548,7 +546,7 @@ void SetWindowState(unsigned int flags)
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
 
-    #if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
         if ((monitor > 0) && (monitor <= monitorCount))
     #else
         if ((monitor >= 0) && (monitor < monitorCount))
@@ -608,7 +606,7 @@ void SetWindowState(unsigned int flags)
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
 
-    #if defined(PLATFORM_DESKTOP_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
         if ((monitor > 0) && (monitor <= monitorCount))
     #else
         if ((monitor >= 0) && (monitor < monitorCount))
@@ -841,7 +839,7 @@ void SetWindowMonitor(int monitor)
         const int screenHeight = CORE.Window.screen.height;
         SDL_Rect usableBounds;
 
-    #if defined(PLATFORM_DESKTOP_SDL3) // Different style for success checking
+    #if defined(USING_VERSION_SDL3) // Different style for success checking
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds))
     #else
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
@@ -957,7 +955,7 @@ Vector2 GetMonitorPosition(int monitor)
     {
         SDL_Rect displayBounds;
 
-    #if defined(PLATFORM_DESKTOP_SDL3)
+    #if defined(USING_VERSION_SDL3)
         if (SDL_GetDisplayUsableBounds(monitor, &displayBounds))
     #else
         if (SDL_GetDisplayUsableBounds(monitor, &displayBounds) == 0)
@@ -1089,7 +1087,7 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
 
-#ifndef PLATFORM_DESKTOP_SDL3
+#ifndef USING_VERSION_SDL3
     // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
     //       see https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
     // TODO: Implement the window scale factor calculation manually
@@ -1175,7 +1173,7 @@ Image GetClipboardImage(void)
 // Show mouse cursor
 void ShowCursor(void)
 {
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     SDL_ShowCursor();
 #else
     SDL_ShowCursor(SDL_ENABLE);
@@ -1186,7 +1184,7 @@ void ShowCursor(void)
 // Hides mouse cursor
 void HideCursor(void)
 {
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     SDL_HideCursor();
 #else
     SDL_ShowCursor(SDL_DISABLE);
@@ -1199,7 +1197,7 @@ void EnableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     // SDL_ShowCursor() has been split into three functions: SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
     SDL_ShowCursor();
 #else
@@ -1298,41 +1296,6 @@ const char *GetKeyName(int key)
     return SDL_GetKeyName(key);
 }
 
-static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
-{
-#if defined(PLATFORM_DESKTOP_SDL3) // SDL3
-    int count = 0;
-    SDL_Finger **fingers = SDL_GetTouchFingers(event.touchID, &count);
-    CORE.Input.Touch.pointCount = count;
-
-    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
-    {
-        SDL_Finger *finger = fingers[i];
-        CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
-        CORE.Input.Touch.currentTouchState[i] = 1;
-    }
-
-    SDL_free(fingers);
-
-#else // SDL2
-
-    CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
-
-    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
-    {
-        SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
-        CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
-        CORE.Input.Touch.currentTouchState[i] = 1;
-    }
-#endif
-
-    for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
-}
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -1390,15 +1353,9 @@ void PollInputEvents(void)
 
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
-    /*
     // WARNING: Indexes into this array are obtained by using SDL_Scancode values, not SDL_Keycode values
-    const Uint8 *keys = SDL_GetKeyboardState(NULL);
-    for (int i = 0; i < 256; ++i)
-    {
-        CORE.Input.Keyboard.currentKeyState[i] = keys[i];
-        //if (keys[i]) TRACELOG(LOG_WARNING, "Pressed key: %i", i);
-    }
-    */
+    //const Uint8 *keys = SDL_GetKeyboardState(NULL);
+    //for (int i = 0; i < 256; ++i) CORE.Input.Keyboard.currentKeyState[i] = keys[i];
 
     CORE.Window.resizedLastFrame = false;
 
@@ -1427,7 +1384,7 @@ void PollInputEvents(void)
 
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-                #if defined(PLATFORM_DESKTOP_SDL3)
+                #if defined(USING_VERSION_SDL3)
                     // const char *data;   /**< The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events */
                     // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed.
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
@@ -1442,7 +1399,7 @@ void PollInputEvents(void)
                 {
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-                #if defined(PLATFORM_DESKTOP_SDL3)
+                #if defined(USING_VERSION_SDL3)
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
                 #else
                     strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
@@ -1457,7 +1414,7 @@ void PollInputEvents(void)
 
             // Window events are also polled (Minimized, maximized, close...)
 
-            #ifndef PLATFORM_DESKTOP_SDL3
+            #ifndef USING_VERSION_SDL3
             // SDL3 states:
             // The SDL_WINDOWEVENT_* events have been moved to top level events, and SDL_WINDOWEVENT has been removed
             // In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
@@ -1488,7 +1445,7 @@ void PollInputEvents(void)
                         CORE.Window.currentFbo.height = height;
                         CORE.Window.resizedLastFrame = true;
 
-                        #ifndef PLATFORM_DESKTOP_SDL3
+                        #ifndef USING_VERSION_SDL3
                         // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
                         if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED) > 0)
                         {
@@ -1529,8 +1486,8 @@ void PollInputEvents(void)
                             if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) > 0) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
                         }
 
-                        #ifdef PLATFORM_DESKTOP_SDL3
-                        if ((SDL_GetWindowFlags(platform.window), SDL_WINDOW_MAXIMIZED) == 0)
+                        #ifdef USING_VERSION_SDL3
+                        if (FLAG_CHECK(SDL_GetWindowFlags(platform.window), SDL_WINDOW_MAXIMIZED) == 0)
                         {
                             if (FLAG_CHECK(CORE.Window.flags, SDL_WINDOW_MAXIMIZED) > 0) FLAG_CLEAR(CORE.Window.flags, SDL_WINDOW_MAXIMIZED);
                         }
@@ -1555,7 +1512,7 @@ void PollInputEvents(void)
                         if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
                     } break;
 
-            #ifndef PLATFORM_DESKTOP_SDL3
+            #ifndef USING_VERSION_SDL3
                     default: break;
                 }
             } break;
@@ -1564,7 +1521,7 @@ void PollInputEvents(void)
             // Keyboard events
             case SDL_KEYDOWN:
             {
-            #if defined(PLATFORM_DESKTOP_SDL3)
+            #if defined(USING_VERSION_SDL3)
                 // SDL3 Migration: The following structures have been removed: * SDL_Keysym
                 KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
             #else
@@ -1595,7 +1552,7 @@ void PollInputEvents(void)
             case SDL_KEYUP:
             {
 
-            #if defined(PLATFORM_DESKTOP_SDL3)
+            #if defined(USING_VERSION_SDL3)
                 KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
             #else
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
@@ -1611,7 +1568,7 @@ void PollInputEvents(void)
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
                     // Add character (codepoint) to the queue
-                    #if defined(PLATFORM_DESKTOP_SDL3)
+                    #if defined(USING_VERSION_SDL3)
                     size_t textLen = strlen(event.text.text);
                     unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, &textLen);
                     #else
@@ -1697,19 +1654,34 @@ void PollInputEvents(void)
             {
                 int jid = event.jdevice.which; // Joystick device index
 
-                if (CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
+                // check if already added at InitPlatform
+                for (int i = 0; i < MAX_GAMEPADS; ++i)
                 {
-                    platform.gamepad[jid] = SDL_GameControllerOpen(jid);
-                    platform.gamepadId[jid] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
-
-                    if (platform.gamepad[jid])
+                    if (jid == platform.gamepadId[i])
                     {
-                        CORE.Input.Gamepad.ready[jid] = true;
-                        CORE.Input.Gamepad.axisCount[jid] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
-                        CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
-                        CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-                        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
-                        strncpy(CORE.Input.Gamepad.name[jid], SDL_GameControllerNameForIndex(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
+                        return;
+                    }
+                }
+
+                int nextAvailableSlot = 0;
+                while (nextAvailableSlot < MAX_GAMEPADS && CORE.Input.Gamepad.ready[nextAvailableSlot])
+                {
+                    ++nextAvailableSlot;
+                }
+
+                if ((nextAvailableSlot < MAX_GAMEPADS) && !CORE.Input.Gamepad.ready[nextAvailableSlot])
+                {
+                    platform.gamepad[nextAvailableSlot] = SDL_GameControllerOpen(jid);
+                    platform.gamepadId[nextAvailableSlot] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[nextAvailableSlot]));
+
+                    if (platform.gamepad[nextAvailableSlot])
+                    {
+                        CORE.Input.Gamepad.ready[nextAvailableSlot] = true;
+                        CORE.Input.Gamepad.axisCount[nextAvailableSlot] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[nextAvailableSlot]));
+                        CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+                        CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+                        memset(CORE.Input.Gamepad.name[nextAvailableSlot], 0, MAX_GAMEPAD_NAME_LENGTH);
+                        strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], SDL_GameControllerNameForIndex(nextAvailableSlot), MAX_GAMEPAD_NAME_LENGTH - 1);
                     }
                     else
                     {
@@ -1737,7 +1709,7 @@ void PollInputEvents(void)
             {
                 int button = -1;
 
-                switch (event.jbutton.button)
+                switch (event.gbutton.button)
                 {
                     case SDL_CONTROLLER_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
                     case SDL_CONTROLLER_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
@@ -1765,7 +1737,7 @@ void PollInputEvents(void)
                 {
                     for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
-                        if (platform.gamepadId[i] == event.jbutton.which)
+                        if (platform.gamepadId[i] == event.gbutton.which)
                         {
                             CORE.Input.Gamepad.currentButtonState[i][button] = 1;
                             CORE.Input.Gamepad.lastButtonPressed = button;
@@ -1778,7 +1750,7 @@ void PollInputEvents(void)
             {
                 int button = -1;
 
-                switch (event.jbutton.button)
+                switch (event.gbutton.button)
                 {
                     case SDL_CONTROLLER_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
                     case SDL_CONTROLLER_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
@@ -1806,7 +1778,7 @@ void PollInputEvents(void)
                 {
                     for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
-                        if (platform.gamepadId[i] == event.jbutton.which)
+                        if (platform.gamepadId[i] == event.gbutton.which)
                         {
                             CORE.Input.Gamepad.currentButtonState[i][button] = 0;
                             if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
@@ -1978,7 +1950,7 @@ int InitPlatform(void)
     }
 
     // Init window
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     platform.window = SDL_CreateWindow(CORE.Window.title, CORE.Window.screen.width, CORE.Window.screen.height, flags);
 #else
     platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
@@ -2031,21 +2003,28 @@ int InitPlatform(void)
         platform.gamepadId[i] = -1; // Set all gamepad initial instance ids as invalid to not conflict with instance id zero
     }
 
-    for (int i = 0; (i < SDL_NumJoysticks()) && (i < MAX_GAMEPADS); i++)
-    {
-        platform.gamepad[i] = SDL_GameControllerOpen(i);
-        platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+    int numJoysticks = 0;
+    SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks); // array of joystick IDs, they do not start from 0
 
-        if (platform.gamepad[i])
+    if (joysticks)
+    {
+        for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++)
         {
-            CORE.Input.Gamepad.ready[i] = true;
-            CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
-            CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
-            CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-            strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
-            CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
+            platform.gamepad[i] = SDL_GameControllerOpen(joysticks[i]);
+            platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+
+            if (platform.gamepad[i])
+            {
+                CORE.Input.Gamepad.ready[i] = true;
+                CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+                CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+                CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+                strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+                CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
+            }
+            else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
         }
-        else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
+        SDL_free(joysticks);
     }
 
     // Disable mouse events being interpreted as touch events
@@ -2072,7 +2051,7 @@ int InitPlatform(void)
     CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
-#if defined(PLATFORM_DESKTOP_SDL3)
+#if defined(USING_VERSION_SDL3)
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL3): Initialized successfully");
 #else
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL2): Initialized successfully");
@@ -2138,4 +2117,40 @@ static int GetCodepointNextSDL(const char *text, int *codepointSize)
     }
 
     return codepoint;
+}
+
+// Update CORE input touch point info from SDL touch data
+static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
+{
+#if defined(USING_VERSION_SDL3) // SDL3
+    int count = 0;
+    SDL_Finger **fingers = SDL_GetTouchFingers(event.touchID, &count);
+    CORE.Input.Touch.pointCount = count;
+
+    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+    {
+        SDL_Finger *finger = fingers[i];
+        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentTouchState[i] = 1;
+    }
+
+    SDL_free(fingers);
+
+#else // SDL2
+
+    CORE.Input.Touch.pointCount = SDL_GetNumTouchFingers(event.touchId);
+
+    for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+    {
+        SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
+        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentTouchState[i] = 1;
+    }
+#endif
+
+    for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
 }

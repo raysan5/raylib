@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - rectangle scaling mouse
+*   raylib [shapes] example - rectangle scaling
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -29,7 +29,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle scaling mouse");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rectangle scaling");
 
     Rectangle rec = { 100, 100, 200, 80 };
 

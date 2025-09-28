@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - 3d sound positioning
+*   raylib [audio] example - sound positioning
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -34,7 +34,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - 3d sound positioning");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound positioning");
 
     InitAudioDevice();
 

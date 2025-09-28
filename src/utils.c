@@ -203,7 +203,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
             if (size > 0)
             {
-                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+                data = (unsigned char *)RL_CALLOC(size, sizeof(unsigned char));
 
                 if (data != NULL)
                 {
@@ -366,7 +366,7 @@ char *LoadFileText(const char *fileName)
 
             if (size > 0)
             {
-                text = (char *)RL_MALLOC((size + 1)*sizeof(char));
+                text = (char *)RL_CALLOC(size + 1, sizeof(char));
 
                 if (text != NULL)
                 {

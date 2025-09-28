@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - color palette switch
+*   raylib [shaders] example - palette switch
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -86,7 +86,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color palette switch");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - palette switch");
 
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - 3d text drawing
+*   raylib [text] example - 3d drawing
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -87,7 +87,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT|FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - 3d text drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - 3d drawing");
 
     bool spin = true;        // Spin the camera?
     bool multicolor = false; // Multicolor mode

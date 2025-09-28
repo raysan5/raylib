@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - gif playing
+*   raylib [textures] example - gif player
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - gif playing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - gif player");
 
     int animFrames = 0;
 

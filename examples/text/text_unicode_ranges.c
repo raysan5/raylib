@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 4.0
+*   Example originally created with raylib 5.5, last time updated with raylib 5.6
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -17,7 +17,7 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // Required for: calloc(), free()
 
 //--------------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -150,6 +150,7 @@ int main(void)
             DrawRectangleLines(400, 16, 380, 380, RED);
 
             DrawText(TextFormat("ATLAS SIZE: %ix%i px (x%02.2f)", font.texture.width, font.texture.height, atlasScale), 20, 380, 20, BLUE);
+            DrawText(TextFormat("CODEPOINTS GLYPHS LOADED: %i", font.glyphCount), 20, 410, 20, LIME);
 
             // Display font attribution
             DrawText("Font: Noto Sans TC. License: SIL Open Font License 1.1", screenWidth - 300, screenHeight - 20, 10, GRAY);
@@ -158,7 +159,7 @@ int main(void)
             {
                 DrawRectangle(0, 0, screenWidth, screenHeight, Fade(WHITE, 0.8f));
                 DrawRectangle(0, 125, screenWidth, 200, GRAY);
-                DrawText("LOADING CODEPOINTS...", 150, 210, 40, BLACK);
+                DrawText("GENERATING FONT ATLAS...", 120, 210, 40, BLACK);
             }
             
         EndDrawing();
@@ -199,5 +200,6 @@ static void AddCodepointRange(Font *font, const char *fontPath, int start, int s
 
     UnloadFont(*font);
     *font = LoadFontEx(fontPath, 32, updatedCodepoints, updatedCodepointCount);
+    RL_FREE(updatedCodepoints);
 }
 

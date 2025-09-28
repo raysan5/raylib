@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - procedural images generation
+*   raylib [textures] example - image generation
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -29,7 +29,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - procedural images generation");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image generation");
 
     Image verticalGradient = GenImageGradientLinear(screenWidth, screenHeight, 0, RED, BLUE);
     Image horizontalGradient = GenImageGradientLinear(screenWidth, screenHeight, 90, RED, BLUE);

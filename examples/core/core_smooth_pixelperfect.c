@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - smooth pixel-perfect camera
+*   raylib [core] example - smooth pixelperfect
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -35,7 +35,7 @@ int main(void)
 
     const float virtualRatio = (float)screenWidth/(float)virtualScreenWidth;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - smooth pixel-perfect camera");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - smooth pixelperfect");
 
     Camera2D worldSpaceCamera = { 0 };  // Game world camera
     worldSpaceCamera.zoom = 1.0f;

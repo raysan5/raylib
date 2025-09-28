@@ -9,12 +9,12 @@
 *
 *   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
-*   Example contributed by Samuel Skiff (@GoldenThumbs) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Serenity Skiff (@GoldenThumbs) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2025 Samuel SKiff (@GoldenThumbs) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2025 Serenity Skiff (@GoldenThumbs) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

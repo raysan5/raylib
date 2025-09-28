@@ -592,11 +592,10 @@ Image LoadImageFromTexture(Texture2D texture)
 // Load image from screen buffer and (screenshot)
 Image LoadImageFromScreen(void)
 {
-    Vector2 scale = GetWindowScaleDPI();
     Image image = { 0 };
 
-    image.width = (int)(GetScreenWidth()*scale.x);
-    image.height = (int)(GetScreenHeight()*scale.y);
+    image.width = (int)(GetRenderWidth());
+    image.height = (int)(GetRenderHeight());
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);
@@ -702,7 +701,7 @@ bool ExportImage(Image image, const char *fileName)
         result = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Export image format requested not supported");
-    
+
     if (allocatedData) RL_FREE(imgData);
 #endif      // SUPPORT_IMAGE_EXPORT
 

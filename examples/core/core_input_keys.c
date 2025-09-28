@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - keyboard input
+*   raylib [core] example - input keys
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input keys");
 
     Vector2 ballPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 

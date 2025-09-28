@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - mouse input
+*   raylib [core] example - input mouse
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - mouse input");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input mouse");
 
     Vector2 ballPosition = { -100.0f, -100.0f };
     Color ballColor = DARKBLUE;

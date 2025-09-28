@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - shapes and texture shaders
+*   raylib [shaders] example - shapes textures
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -38,7 +38,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shapes and texture shaders");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shapes textures");
 
     Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
 

@@ -25,6 +25,7 @@
 *    - raylib.com/examples/<category>/<category>_example_name.data
 *    - raylib.com/examples/<category>/<category>_example_name.wasm
 *    - raylib.com/examples/<category>/<category>_example_name.js
+*    - ...
 *
 *   LICENSE: zlib/libpng
 *
@@ -67,6 +68,9 @@
 
 #define REXM_MAX_RESOURCE_PATHS         256
 
+// Create local commit with changes on example renaming
+#define RENAME_AUTO_COMMIT_CREATION
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -75,8 +79,10 @@ typedef struct {
     char category[16];      // Example category: core, shapes, textures, text, models, shaders, audio, others
     char name[128];         // Example name: <category>_name_part
     int stars;              // Example stars count: ★☆☆☆
-    float verCreated;       // Example raylib creation version
-    float verUpdated;       // Example raylib last update version
+    char verCreated[12];    // Example raylib creation version
+    char verUpdated[12];    // Example raylib last update version
+    int yearCreated;        // Example year created
+    int yearReviewed;       // Example year reviewed
     char author[64];        // Example author
     char authorGitHub[64];  // Example author, GitHub user name
 
@@ -131,12 +137,12 @@ static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_S
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static int FileTextFind(const char *fileName, const char *find);
-static int FileTextReplace(const char *fileName, const char *find, const char *replace);
-static int FileCopy(const char *srcPath, const char *dstPath);
-static int FileRename(const char *fileName, const char *fileRename);
-static int FileMove(const char *srcPath, const char *dstPath);
-static int FileRemove(const char *fileName);
+//static int FileTextFind(const char *fileName, const char *find);
+//static int FileTextReplace(const char *fileName, const char *find, const char *replace);
+//static int FileCopy(const char *srcPath, const char *dstPath);
+//static int FileRename(const char *fileName, const char *fileRename);
+//static int FileMove(const char *srcPath, const char *dstPath);
+//static int FileRemove(const char *fileName);
 
 // Update required files from examples collection
 // UPDATES: Makefile, Makefile.Web, README.md, examples.js
@@ -153,7 +159,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName);
 static void UnloadExampleInfo(rlExampleInfo *exInfo);
 
 // raylib example line info parser
-// Parses following line format: core/core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray"/@raysan5
+// Parses following line format: core/core_basic_window;★☆☆☆;1.0;1.0;"Ray"/@raysan5
 static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry);
 
 // Sort array of strings by name
@@ -166,15 +172,23 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 // Clear resource paths scanned
 static void ClearExampleResources(char **resPaths);
 
-// Add VS project (.vcxproj) to existing VS solution (.sln)
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
+// Add/remove VS project (.vcxproj) tofrom existing VS solution (.sln)
+static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category);
+static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName);
 
-// Generate unique UUID v4 string 
-// Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
+// Generate unique UUID v4 string
+// Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1}
 static const char *GenerateUUIDv4(void);
 
+// Update source code header and comments metadata
+static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info);
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
+
+// Get text between two strings
+//static char *GetTextBetween(const char *text, const char *begin, const char *end);
+// Replace text between two specific strings
+//static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -207,6 +221,24 @@ int main(int argc, char *argv[])
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
 
+    /*
+    // Testing code for UpdateSourceMetadata()
+    rlExampleInfo test = { 0 };
+    strcpy(test.category, "core");
+    strcpy(test.name, "core_boring_window");
+    test.stars = 4;
+    strcpy(test.verCreated, "2.9");
+    strcpy(test.verUpdated, "6.0");
+    test.yearCreated = 2010;
+    test.yearReviewed = 2026;
+    strcpy(test.author, "John W. Smith");
+    strcpy(test.authorGitHub, "littlejohnny");
+
+    char exSourcePath[512] = { 0 };
+    strcpy(exSourcePath, TextFormat("%s/core/core_basic_window.c", exBasePath)); // WARNING: Cache path for saving
+    UpdateSourceMetadata(exSourcePath, &test);
+    */
+
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
     if (argc > 1)
@@ -232,8 +264,8 @@ int main(int argc, char *argv[])
                     char cat[12] = { 0 };
                     strncpy(cat, argv[2], catIndex);
                     bool catFound = false;
-                    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
-                    { 
+                    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+                    {
                         if (TextIsEqual(cat, exCategories[i])) { catFound = true; break; }
                     }
 
@@ -257,24 +289,24 @@ int main(int argc, char *argv[])
             {
                 if (IsFileExtension(argv[2], ".c")) // Check for valid file extension: input
                 {
-                    if (FileExists(inFileName))
+                    if (FileExists(argv[2]))
                     {
                         // Security checks for file name to verify category is included
-                        int catIndex = TextFindIndex(argv[2], "_");
+                        int catIndex = TextFindIndex(GetFileName(argv[2]), "_");
                         if (catIndex > 3)
                         {
                             char cat[12] = { 0 };
-                            strncpy(cat, argv[2], catIndex);
+                            strncpy(cat, GetFileName(argv[2]), catIndex);
                             bool catFound = false;
-                            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
-                            { 
+                            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+                            {
                                 if (TextIsEqual(cat, exCategories[i])) { catFound = true; break; }
                             }
 
                             if (catFound)
                             {
                                 strcpy(inFileName, argv[2]); // Register filename for addition
-                                strcpy(exName, GetFileNameWithoutExt(argv[2])); // Register example name
+                                strcpy(exName, GetFileNameWithoutExt(inFileName)); // Register example name
                                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                                 opCode = OP_ADD;
                             }
@@ -305,8 +337,8 @@ int main(int argc, char *argv[])
                         char cat[12] = { 0 };
                         strncpy(cat, argv[3], newCatIndex);
                         bool newCatFound = false;
-                        for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++) 
-                        { 
+                        for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+                        {
                             if (TextIsEqual(cat, exCategories[i])) { newCatFound = true; break; }
                         }
 
@@ -392,7 +424,7 @@ int main(int argc, char *argv[])
             char *exText = LoadFileText(exTemplateFilePath);
             char *exTextUpdated[6] = { 0 };
             int exIndex = TextFindIndex(exText, "/****************");
-            
+
             // Update required info with some defaults
             exTextUpdated[0] = TextReplace(exText + exIndex, "<module>", exCategory);
             exTextUpdated[1] = TextReplace(exTextUpdated[0], "<name>", exName + strlen(exCategory) + 1);
@@ -400,7 +432,7 @@ int main(int argc, char *argv[])
             //TextReplace(newExample, "@<user_github>", "@raysan5");
             //TextReplace(newExample, "<year_created>", 2025);
             //TextReplace(newExample, "<year_updated>", 2025);
-            
+
             SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), exTextUpdated[1]);
             for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
             UnloadFileText(exText);
@@ -408,16 +440,26 @@ int main(int argc, char *argv[])
         case OP_ADD:     // Add: Example from command-line input filename
         {
             // Add: raylib/examples/<category>/<category>_example_name.c
-            if (opCode != 1) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            if (opCode != OP_CREATE) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Create: raylib/examples/<category>/<category>_example_name.png
-            FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName)); // WARNING: To be updated manually!
+            if (FileExists(TextFormat("%s/%s.png", GetDirectoryPath(inFileName), exName)))
+            {
+                FileCopy(TextFormat("%s/%s.png", GetDirectoryPath(inFileName), exName),
+                    TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
+            }
+            else // No screenshot available next to source file
+            {
+                // Copy screenshot template
+                FileCopy(exTemplateScreenshot, TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
+            }
 
             // Copy: raylib/examples/<category>/resources/...
             // -----------------------------------------------------------------------------------------
             // Scan resources used in example to copy
+            // NOTE: resources path will be relative to example source file directory
             int resPathCount = 0;
-            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), &resPathCount);
+            char **resPaths = ScanExampleResources(TextFormat("%s/%s.c", GetDirectoryPath(inFileName), exName), &resPathCount);
 
             if (resPathCount > 0)
             {
@@ -475,15 +517,15 @@ int main(int argc, char *argv[])
 
             ClearExampleResources(resPaths);
             // -----------------------------------------------------------------------------------------
-            
+
             // Add example to the collection list, if not already there
-            // NOTE: Required format: shapes;shapes_basic_shapes;⭐️☆☆☆;1.0;4.2;"Ray";@raysan5
+            // NOTE: Required format: shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ray";@raysan5
             //------------------------------------------------------------------------------------------------
             char *exCollectionList = LoadFileText(exCollectionFilePath);
             if (TextFindIndex(exCollectionList, exName) == -1) // Example not found
             {
                 char *exCollectionListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated list copy, 2MB
-                
+
                 // Add example to the main list, by category
                 // by default add it last in the category list
                 // NOTE: When populating to other files, lists are sorted by name
@@ -498,10 +540,11 @@ int main(int argc, char *argv[])
                 else if (strcmp(exCategory, "others") == 0) nextCategoryIndex = -1; // Add to EOF
 
                 // Get required example info from example file header (if provided)
+
                 // NOTE: If no example info is provided (other than category/name), just using some default values
                 rlExampleInfo *exInfo = LoadExampleInfo(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-                
-                // Get example difficulty stars
+
+                // Get example difficulty stars text
                 char starsText[16] = { 0 };
                 for (int i = 0; i < 4; i++)
                 {
@@ -515,21 +558,21 @@ int main(int argc, char *argv[])
                     // Add example to collection at the EOF
                     int endIndex = (int)strlen(exCollectionList);
                     memcpy(exCollectionListUpdated, exCollectionList, endIndex);
-                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%.2f;%.2f;\"%s\";@%s\n", 
-                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
+                    sprintf(exCollectionListUpdated + endIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
+                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
                 }
                 else
                 {
                     // Add example to collection, at the end of the category list
                     int categoryIndex = TextFindIndex(exCollectionList, exCategories[nextCategoryIndex]);
                     memcpy(exCollectionListUpdated, exCollectionList, categoryIndex);
-                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%.2f;%.2f;\"%s\";@%s\n",
-                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
+                    int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
+                        exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
                     memcpy(exCollectionListUpdated + categoryIndex + textWritenSize, exCollectionList + categoryIndex, strlen(exCollectionList) - categoryIndex);
                 }
 
                 UnloadExampleInfo(exInfo);
-                
+
                 SaveFileText(exCollectionFilePath, exCollectionListUpdated);
                 RL_FREE(exCollectionListUpdated);
             }
@@ -541,22 +584,24 @@ int main(int argc, char *argv[])
             //------------------------------------------------------------------------------------------------
             UpdateRequiredFiles();
             //------------------------------------------------------------------------------------------------
-            
+
             // Create: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             //------------------------------------------------------------------------------------------------
             // WARNING: When adding new project a unique UUID should be assigned!
             FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
-            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
                 "core_basic_window", exName);
-            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
+            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName),
                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exCategory));
-            
+
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
             // WARNING: This function uses TextFormat() extensively inside,
             // we must store provided file paths because pointers will be overwriten
-            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-                exVSProjectSolutionFile, exCategory);
+            // TODO: It seems projects are added to solution BUT not to required solution folder,
+            // that process still requires to be done manually
+            AddVSProjectToSolution(exVSProjectSolutionFile,
+                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), exCategory);
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -576,9 +621,8 @@ int main(int argc, char *argv[])
             system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 #endif
             // Update generated .html metadata
-            char exHtmlPath[512] = { 0 };
-            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
-            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -599,7 +643,7 @@ int main(int argc, char *argv[])
             if (strcmp(exCategory, exRecategory) == 0)
             {
                 // Rename example on collection
-                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName), 
+                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName),
                     TextFormat("%s;%s", exRecategory, exRename));
 
                 // Edit: Rename example code and screenshot files .c and .png
@@ -608,6 +652,16 @@ int main(int argc, char *argv[])
                 FileRename(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.png", exBasePath, exCategory, exRename));
 
+                // Edit: Update example source code metadata
+                int exListCount = 0;
+                rlExampleInfo *exList = LoadExamplesData(exCollectionFilePath, exCategory, false, &exListCount);
+                for (int i = 0; i < exListCount; i++)
+                {
+                    if (strcmp(exList[i].name, exRename) == 0)
+                        UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename), &exList[i]);
+                }
+                UnloadExamplesData(exList);
+
                 // NOTE: Example resource files do not need to be changed...
                 // unless the example is moved from one caegory to another
 
@@ -615,7 +669,7 @@ int main(int argc, char *argv[])
                 FileTextReplace(TextFormat("%s/Makefile", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/Makefile.Web", exBasePath), exName, exRename);
                 FileTextReplace(TextFormat("%s/README.md", exBasePath), exName, exRename);
-                FileTextReplace(TextFormat("%s/../common/examples.js", exWebPath), 
+                FileTextReplace(TextFormat("%s/../common/examples.js", exWebPath),
                     exName + strlen(exCategory) + 1, exRename + strlen(exRecategory) + 1); // Skip category
 
                 // Edit: Rename example project and solution
@@ -628,10 +682,10 @@ int main(int argc, char *argv[])
             {
                 // WARNING: Rename with change of category
                 // TODO: Reorder collection to place renamed example at the end of category
-                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName), 
+                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName),
                     TextFormat("%s;%s", exRecategory, exRename));
 
-                // TODO: Move example resources from <src_category>/resources to <dst_category>/resources
+                // TODO: Move example resources from <exCategory>/resources to <exRecategory>/resources
                 // WARNING: Resources can be shared with other examples in the category
 
                 // Edit: Rename example code file (copy and remove)
@@ -662,9 +716,8 @@ int main(int argc, char *argv[])
             system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
 #endif
             // Update generated .html metadata
-            char exHtmlPath[512] = { 0 };
-            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename)); // WARNING: Cache path for saving
-            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
+            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename),
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
@@ -675,6 +728,23 @@ int main(int argc, char *argv[])
                 TextFormat("%s/%s/%s.wasm", exWebPath, exRecategory, exRename));
             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRecategory, exRename),
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
+
+#if defined(RENAME_AUTO_COMMIT_CREATION)
+            // Create GitHub commit with changes (local)
+            putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
+            ChangeDirectory("C:\\GitHub\\raylib");
+            system("git --version");
+            system("git status");
+            system("git add -A");
+            int result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            if (result != 0) LOG("WARNING: Error committing changes\n");
+            ChangeDirectory("C:/GitHub/raylib.com");
+            system("git add -A");
+            result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            if (result != 0) LOG("WARNING: Error committing changes\n");
+            //result = system("git push"); // Push to the remote (origin, current branch)
+            //if (result != 0) LOG("WARNING: Error pushing changes\n");
+#endif
 
         } break;
         case OP_REMOVE:     // Remove
@@ -699,7 +769,7 @@ int main(int argc, char *argv[])
             else LOG("WARNING: REMOVE: Example not found in the collection\n");
             UnloadFileText(exCollectionList);
             //------------------------------------------------------------------------------------------------
-           
+
             // Remove: raylib/examples/<category>/resources/..
             // WARNING: Some of those resources could be used by other examples,
             // just leave this process to manual update for now!
@@ -738,20 +808,16 @@ int main(int argc, char *argv[])
             // Remove: raylib/examples/<category>/<category>_example_name.png
             FileRemove(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
             FileRemove(TextFormat("%s/%s/%s.png", exBasePath, exCategory, exName));
-            
+
             // Edit: Update required files: Makefile, Makefile.Web, README.md, examples.js
             UpdateRequiredFiles();
-            
+
             // Remove: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
             FileRemove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
             // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
-            //---------------------------------------------------------------------------
-            // TODO: Remove project from solution
-            //RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-            //    TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
-            //---------------------------------------------------------------------------
-            
+            RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exName);
+
             // Remove: raylib.com/examples/<category>/<category>_example_name.html
             // Remove: raylib.com/examples/<category>/<category>_example_name.data
             // Remove: raylib.com/examples/<category>/<category>_example_name.wasm
@@ -795,9 +861,26 @@ int main(int argc, char *argv[])
             int exListLen = (int)strlen(exList);
             strcpy(exListUpdated, exList);
 
+            // Copy examples list into an update list
+            // NOTE: Checking and removing duplicate entries
+            int lineCount = 0;
+            char **exListLines = LoadTextLines(exList, &lineCount);
+            int exListUpdatedOffset = 0;
+            exListUpdatedOffset = sprintf(exListUpdated, "%s\n", exListLines[0]);
+
+            for (int i = 1; i < lineCount; i++)
+            {
+                if ((TextFindIndex(exListUpdated, exListLines[i]) == -1) ||  (exListLines[i][0] == '#'))
+                    exListUpdatedOffset += sprintf(exListUpdated + exListUpdatedOffset, "%s\n", exListLines[i]);
+                else listUpdated = true;
+            }
+
+            UnloadTextLines(exListLines, lineCount);
+
             for (unsigned int i = 0; i < list.count; i++)
             {
-                if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&  // HACK: Skip "examples_template"
+                // NOTE: Skipping "examples_template" from checks
+                if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&
                     (TextFindIndex(exList, GetFileNameWithoutExt(list.paths[i])) == -1))
                 {
                     // Add example to the examples collection list
@@ -807,15 +890,15 @@ int main(int argc, char *argv[])
 
                     // Get example difficulty stars
                     char starsText[16] = { 0 };
-                    for (int i = 0; i < 4; i++)
+                    for (int s = 0; s < 4; s++)
                     {
                         // NOTE: Every UTF-8 star are 3 bytes
-                        if (i < exInfo->stars) strcpy(starsText + 3*i, "⭐️");
-                        else strcpy(starsText + 3*i, "☆");
+                        if (s < exInfo->stars) strcpy(starsText + 3*s, "★");
+                        else strcpy(starsText + 3*s, "☆");
                     }
 
                     exListLen += sprintf(exListUpdated + exListLen,
-                        TextFormat("%s;%s;%s;%.1f;%.1f;\"%s\";@%s\n",
+                        TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n",
                             exInfo->category, exInfo->name, starsText, exInfo->verCreated,
                             exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
 
@@ -835,8 +918,6 @@ int main(int argc, char *argv[])
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
 
-            // TODO: Validate: Check duplicate entries in collection list?
-
             // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
             {
@@ -848,32 +929,32 @@ int main(int argc, char *argv[])
 
                 // Validate: raylib/examples/<category>/<category>_example_name.png     -> File exists?
                 if (!FileExists(TextFormat("%s/%s/%s.png", exBasePath, exInfo->category, exInfo->name))) exInfo->status |= VALID_MISSING_PNG;
-                
+
                 // Validate: example screenshot is not the template default one
                 Image imScreenshot = LoadImage(TextFormat("%s/%s/%s.png", exBasePath, exInfo->category, exInfo->name));
                 Image imTemplate = LoadImage(TextFormat("%s/examples_template.png", exBasePath));
-                if (memcmp(imScreenshot.data, imTemplate.data, GetPixelDataSize(imScreenshot.width, imScreenshot.height, imScreenshot.format)) == 0) 
+                if (memcmp(imScreenshot.data, imTemplate.data, GetPixelDataSize(imScreenshot.width, imScreenshot.height, imScreenshot.format)) == 0)
                     exInfo->status |= VALID_INVALID_PNG;
                 UnloadImage(imTemplate);
                 UnloadImage(imScreenshot);
 
                 // Validate: raylib/examples/Makefile                                   -> Example listed?
-                if (FileTextFind(TextFormat("%s/Makefile", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE;
+                if (FileTextFindIndex(TextFormat("%s/Makefile", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE;
 
                 // Validate: raylib/examples/Makefile.Web                               -> Example listed?
-                if (FileTextFind(TextFormat("%s/Makefile.Web", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE_WEB;
+                if (FileTextFindIndex(TextFormat("%s/Makefile.Web", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_MAKEFILE_WEB;
 
                 // Validate: raylib/examples/README.md                                  -> Example listed?
-                if (FileTextFind(TextFormat("%s/README.md", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_README;
-                
+                if (FileTextFindIndex(TextFormat("%s/README.md", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_README;
+
                 // Validate: raylib.com/common/examples.js                              -> Example listed?
-                if (FileTextFind(TextFormat("%s/../common/examples.js", exWebPath), exInfo->name + TextFindIndex(exInfo->name, "_") + 1) == -1) exInfo->status |= VALID_NOT_IN_JS;
+                if (FileTextFindIndex(TextFormat("%s/../common/examples.js", exWebPath), exInfo->name + TextFindIndex(exInfo->name, "_") + 1) == -1) exInfo->status |= VALID_NOT_IN_JS;
 
                 // Validate: raylib/projects/VS2022/examples/<category>_example_name.vcxproj -> File exists?
                 if (!FileExists(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name))) exInfo->status |= VALID_MISSING_VCXPROJ;
 
                 // Validate: raylib/projects/VS2022/raylib.sln                          -> Example listed?
-                if (FileTextFind(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_VCXSOL;
+                if (FileTextFindIndex(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exInfo->name) == -1) exInfo->status |= VALID_NOT_IN_VCXSOL;
 
                 // Validate: raylib/examples/<category>/resources/..                    -> Example resources available?
                 // Scan resources used in example to check for missing resource files
@@ -945,10 +1026,10 @@ int main(int argc, char *argv[])
 
                 // NOTE: Additional validation elements
                 // Validate: Example naming conventions: <category>/<category>_example_name, valid category
-                if ((TextFindIndex(exInfo->name, exInfo->category) == -1) || 
-                    (!TextIsEqual(exInfo->category, "core") && !TextIsEqual(exInfo->category, "shapes") && 
-                     !TextIsEqual(exInfo->category, "textures") && !TextIsEqual(exInfo->category, "text") && 
-                     !TextIsEqual(exInfo->category, "models") && !TextIsEqual(exInfo->category, "shaders") && 
+                if ((TextFindIndex(exInfo->name, exInfo->category) == -1) ||
+                    (!TextIsEqual(exInfo->category, "core") && !TextIsEqual(exInfo->category, "shapes") &&
+                     !TextIsEqual(exInfo->category, "textures") && !TextIsEqual(exInfo->category, "text") &&
+                     !TextIsEqual(exInfo->category, "models") && !TextIsEqual(exInfo->category, "shaders") &&
                      !TextIsEqual(exInfo->category, "audio") && !TextIsEqual(exInfo->category, "others"))) exInfo->status |= VALID_INVALID_CATEGORY;
 
                 // Validate: Example info (stars, author, github) missmatches with example header content
@@ -959,8 +1040,11 @@ int main(int argc, char *argv[])
                     (strcmp(exInfo->author, exInfoHeader->author) != 0) ||
                     (strcmp(exInfo->authorGitHub, exInfoHeader->authorGitHub) != 0) ||
                     (exInfo->stars != exInfoHeader->stars) ||
-                    (exInfo->verCreated != exInfoHeader->verCreated) ||
-                    (exInfo->verUpdated != exInfoHeader->verUpdated)) exInfo->status |= VALID_INCONSISTENT_INFO;
+                    (strcmp(exInfo->verCreated, exInfoHeader->verCreated) != 0) ||
+                    (strcmp(exInfo->verUpdated, exInfoHeader->verUpdated) != 0))
+                {
+                    exInfo->status |= VALID_INCONSISTENT_INFO;
+                }
 
                 UnloadExampleInfo(exInfoHeader);
             }
@@ -998,9 +1082,9 @@ int main(int argc, char *argv[])
                         {
                             FileCopy(TextFormat("%s/../projects/VS2022/examples/core_basic_window.vcxproj", exBasePath),
                                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name));
-                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name),
                                 "core_basic_window", exInfo->name);
-                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
+                            FileTextReplace(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name),
                                 "..\\..\\examples\\core", TextFormat("..\\..\\examples\\%s", exInfo->category));
 
                             exInfo->status &= ~VALID_MISSING_VCXPROJ;
@@ -1009,8 +1093,8 @@ int main(int argc, char *argv[])
                         // Add project (.vcxproj) to raylib solution (.sln)
                         if (exInfo->status & VALID_NOT_IN_VCXSOL)
                         {
-                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
-                                exVSProjectSolutionFile, exInfo->category);
+                            AddVSProjectToSolution(exVSProjectSolutionFile,
+                                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), exInfo->category);
 
                             exInfo->status &= ~VALID_NOT_IN_VCXSOL;
                         }
@@ -1032,12 +1116,12 @@ int main(int argc, char *argv[])
                         #endif
 
                             // Update generated .html metadata
-                            char exHtmlPath[512] = { 0 };
-                            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name)); // WARNING: Cache path for saving
-                            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
+                            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
 
                             // Copy results to web side
-                            FileCopy(exHtmlPath, TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
+                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
                                 TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
@@ -1047,6 +1131,14 @@ int main(int argc, char *argv[])
 
                             exInfo->status &= ~VALID_MISSING_WEB_OUTPUT;
                             exInfo->status &= ~VALID_MISSING_WEB_METADATA;
+                        }
+
+                        if (exInfo->status & VALID_INCONSISTENT_INFO)
+                        {
+                            // Update source code header info
+                            UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name), exInfo);
+
+                            exInfo->status &= ~VALID_INCONSISTENT_INFO;
                         }
                     }
                 }
@@ -1193,7 +1285,7 @@ int main(int argc, char *argv[])
 
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
-            
+
         } break;
         case OP_BUILD:
         {
@@ -1210,7 +1302,7 @@ int main(int argc, char *argv[])
                 //putenv("MAKE=mingw32-make");
                 //ChangeDirectory(exBasePath);
                 system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-            #else       
+            #else
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
             #endif
 
@@ -1220,12 +1312,11 @@ int main(int argc, char *argv[])
                 system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
             #else
                 system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-            #endif 
+            #endif
 
                 // Update generated .html metadata
-                char exHtmlPath[512] = { 0 };
-                strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
-                UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
                 // Copy results to web side
                 FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -1246,6 +1337,9 @@ int main(int argc, char *argv[])
             //    add <example_name>            : Add existing example, category extracted from name
             //    rename <old_examples_name> <new_example_name> : Rename an existing example
             //    remove <example_name>         : Remove an existing example
+            //    build <example_name>          : Build example for Desktop and Web platforms
+            //    validate                      : Validate examples collection, generates report
+            //    update                        : Validate and update examples collection, generates report
 
             printf("\n////////////////////////////////////////////////////////////////////////////////////////////\n");
             printf("//                                                                                        //\n");
@@ -1289,6 +1383,18 @@ int main(int argc, char *argv[])
 static int UpdateRequiredFiles(void)
 {
     int result = 0;
+
+    // Edit: Example source code metadata for consistency
+    //------------------------------------------------------------------------------------------------
+    int exListCount = 0;
+    rlExampleInfo *exList = LoadExamplesData(exCollectionFilePath, "ALL", true, &exListCount);
+    for (int i = 0; i < exListCount; i++)
+    {
+        rlExampleInfo *info = &exList[i];
+        UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, info->category, info->name), info);
+    }
+    UnloadExamplesData(exList);
+    //------------------------------------------------------------------------------------------------
 
     // Edit: raylib/examples/Makefile --> Update from collection
     //------------------------------------------------------------------------------------------------
@@ -1388,7 +1494,7 @@ static int UpdateRequiredFiles(void)
                     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs \
                     --preload-file shaders/resources/shaders/glsl330/vertex_displacement.fs@resources/shaders/glsl330/vertex_displacement.fs
                 */
-                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, 
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex,
                     TextFormat("%s/%s: %s/%s.c\n", exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name));
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \\\n");
 
@@ -1423,7 +1529,7 @@ static int UpdateRequiredFiles(void)
                 core/core_2d_camera: core/core_2d_camera.c
                     $(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
                 */
-                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, 
+                mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex,
                     TextFormat("%s/%s: %s/%s.c\n", exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name));
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)\n\n");
             }
@@ -1465,7 +1571,7 @@ static int UpdateRequiredFiles(void)
     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
     {
         int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount);
 
         // Every category includes some introductory text, as it is quite short, just copying it here
         if (i == 0)         // "core"
@@ -1521,19 +1627,19 @@ static int UpdateRequiredFiles(void)
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|\n");
 
+        char starsText[16] = { 0 };
         for (int x = 0; x < exCollectionCount; x++)
         {
-            char stars[16] = { 0 };
             for (int s = 0; s < 4; s++)
             {
-                if (s < exCollection[x].stars) strcpy(stars + 3*s, "⭐️");
-                else strcpy(stars + 3*s, "☆");
+                if (s < exCollection[x].stars) strcpy(starsText + 3*s, "⭐️"); // WARNING: Different than '★', more visual
+                else strcpy(starsText + 3*s, "☆");
             }
 
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                TextFormat("| [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %.1f | %.1f | [%s](https://github.com/%s) |\n", 
+                TextFormat("| [%s](%s/%s.c) | <img src=\"%s/%s.png\" alt=\"%s\" width=\"80\"> | %s | %s | %s | [%s](https://github.com/%s) |\n",
                     exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].category, exCollection[x].name, exCollection[x].name,
-                    stars, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub));
+                    starsText, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub));
         }
 
         UnloadExamplesData(exCollection);
@@ -1564,30 +1670,31 @@ static int UpdateRequiredFiles(void)
     jsIndex = sprintf(jsTextUpdated + jsListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
     jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
 
+    char starsText[16] = { 0 };
+
     // NOTE: We avoid "others" category
     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
     {
         int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount); 
+        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount);
         for (int x = 0; x < exCollectionCount; x++)
         {
-            char stars[16] = { 0 };
             for (int s = 0; s < 4; s++)
             {
-                if (s < exCollection[x].stars) strcpy(stars + 3*s, "⭐️");
-                else strcpy(stars + 3*s, "☆");
+                if (s < exCollection[x].stars) strcpy(starsText + 3*s, "⭐️"); // WARNING: Different than '★', more visual
+                else strcpy(starsText + 3*s, "☆");
             }
 
             if ((i == 6) && (x == (exCollectionCount - 1)))
             {
                 // NOTE: Last line to add, special case to consider
                 jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", stars, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
+                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
             }
             else
             {
                 jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", stars, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
+                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
             }
         }
 
@@ -1610,22 +1717,22 @@ static int UpdateRequiredFiles(void)
 static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount)
 {
     #define MAX_EXAMPLES_INFO   256
-    
+
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(MAX_EXAMPLES_INFO, sizeof(rlExampleInfo));
     int exCounter = 0;
     *exCount = 0;
-    
+
     char *text = LoadFileText(fileName);
-    
+
     if (text != NULL)
     {
         int lineCount = 0;
         char **lines = LoadTextLines(text, &lineCount);
-        
+
         for (int i = 0; i < lineCount; i++)
         {
             // Basic validation for lines start categories
-            if ((lines[i][0] != '#') && 
+            if ((lines[i][0] != '#') &&
                ((lines[i][0] == 'c') ||      // core
                 (lines[i][0] == 's') ||      // shapes, shaders
                 (lines[i][0] == 't') ||      // textures, text
@@ -1652,11 +1759,11 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
                 }
             }
         }
-    
-        UnloadTextLines(lines);
+
+        UnloadTextLines(lines, lineCount);
         UnloadFileText(text);
     }
-    
+
     // Sorting required
     if (sort) SortExampleByName(exInfo, exCounter);
 
@@ -1670,6 +1777,7 @@ static void UnloadExamplesData(rlExampleInfo *exInfo)
     RL_FREE(exInfo);
 }
 
+/*
 // Find text in existing file
 static int FileTextFind(const char *fileName, const char *find)
 {
@@ -1682,7 +1790,7 @@ static int FileTextFind(const char *fileName, const char *find)
         UnloadFileText(fileText);
     }
 
-    return result; 
+    return result;
 }
 
 // Replace text in an existing file
@@ -1691,7 +1799,7 @@ static int FileTextReplace(const char *fileName, const char *textLookUp, const c
     int result = 0;
     char *fileText = NULL;
     char *fileTextUpdated = { 0 };
-    
+
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
@@ -1705,19 +1813,22 @@ static int FileTextReplace(const char *fileName, const char *textLookUp, const c
 }
 
 // Copy file from one path to another
-// WARNING: Destination path must exist
+// NOTE: If destination path does not exist, it is created!
 static int FileCopy(const char *srcPath, const char *dstPath)
 {
     int result = 0;
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
-    
+
     // Create required paths if they do not exist
     if (!DirectoryExists(GetDirectoryPath(dstPath)))
-        MakeDirectory(GetDirectoryPath(dstPath));
+        result = MakeDirectory(GetDirectoryPath(dstPath));
 
-    if ((srcFileData != NULL) && (srcDataSize > 0)) 
-        result = SaveFileData(dstPath, srcFileData, srcDataSize);
+    if (result == 0) // Directory created successfully (or already exists)
+    {
+        if ((srcFileData != NULL) && (srcDataSize > 0))
+            result = SaveFileData(dstPath, srcFileData, srcDataSize);
+    }
 
     UnloadFileData(srcFileData);
 
@@ -1768,13 +1879,14 @@ static int FileMove(const char *srcPath, const char *dstPath)
 
     return result;
 }
+*/
 
 // Get example info from example file header
-// NOTE: Expecting the example to follow raylib_example_template.c
+// WARNING: Expecting the example to follow raylib_example_template.c
 static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
     rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
-    
+
     if (FileExists(exFileName) && IsFileExtension(exFileName, ".c"))
     {
         strcpy(exInfo->name, GetFileNameWithoutExt(exFileName));
@@ -1783,8 +1895,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
         char *exText = LoadFileText(exFileName);
 
         // Get example difficulty stars
-        // NOTE: Counting the unicode char occurrences: ⭐️
-        // WARNING: The stars unicode in examples is not the same than in collection list!!!
+        // NOTE: Counting the unicode char occurrences: ★
         int starsIndex = TextFindIndex(exText, "★");
         if (starsIndex > 0)
         {
@@ -1803,26 +1914,32 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
         }
 
         // Get example create with raylib version
-        char verCreateText[4] = { 0 };
         int verCreateIndex = TextFindIndex(exText, "created with raylib "); // Version = index + 20
-        if (verCreateIndex > 0) strncpy(verCreateText, exText + verCreateIndex + 20, 3);
-        else strncpy(verCreateText, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
-        exInfo->verCreated = TextToFloat(verCreateText);
+        int verCreatedLen = 0;
+        for (int i = verCreateIndex + 20; (exText[i] != ' ') && (exText[i] != '\n') && (exText[i] != ','); i++) verCreatedLen++;
+        if (verCreateIndex > 0) strncpy(exInfo->verCreated, exText + verCreateIndex + 20, verCreatedLen);
+        else strcpy(exInfo->verCreated, RAYLIB_VERSION); // Use current raylib version
 
         // Get example update with raylib version
-        char verUpdateText[4] = { 0 };
         int verUpdateIndex = TextFindIndex(exText, "updated with raylib "); // Version = index + 20
-        if (verUpdateIndex > 0) strncpy(verUpdateText, exText + verUpdateIndex + 20, 3);
-        else strncpy(verUpdateText, RAYLIB_VERSION, 3); // Only pick MAJOR.MINOR
-        exInfo->verUpdated = TextToFloat(verUpdateText);
+        int verUpdateLen = 0;
+        for (int i = verUpdateIndex + 20; (exText[i] != ' ') && (exText[i] != '\n') && (exText[i] != ','); i++) verUpdateLen++;
+        if (verUpdateIndex > 0) strncpy(exInfo->verUpdated, exText + verUpdateIndex + 20, verUpdateLen);
+        else strcpy(exInfo->verUpdated, RAYLIB_VERSION); // Use current raylib version
 
-        // Get example creator and github user
+        // Get example years created/reviewed and creator and github user
         // NOTE: Using copyright line instead of "Example contributed by " because
         // most examples do not contain that line --> TODO: Review examples header formating?
         // Expected format: Copyright (c) <year_created>-<year_updated> <user_name> (@<user_github>)
         // Alternatives:  Copyright (c) <year_created> <author_name> (@<user_github>) and <contrib_name> (@<contrib_user>)
         int copyrightIndex = TextFindIndex(exText, "Copyright (c) ");
         int yearStartIndex = copyrightIndex + 14;
+        char yearText[5] = { 0 };
+        strncpy(yearText, exText + yearStartIndex, 4);
+        exInfo->yearCreated = TextToInteger(yearText);
+        // Check for review year included (or just use creation year)
+        if (exText[yearStartIndex + 4] == '-') strncpy(yearText, exText + yearStartIndex + 5, 4);
+        exInfo->yearReviewed = TextToInteger(yearText);
         int yearEndIndex = TextFindIndex(exText + yearStartIndex, " ");
         int authorStartIndex = yearStartIndex + yearEndIndex + 1;
         int authorEndIndex = TextFindIndex(exText + authorStartIndex, " (@");
@@ -1860,30 +1977,32 @@ static void UnloadExampleInfo(rlExampleInfo *exInfo)
 }
 
 // raylib example line info parser
-// Parses following line format: core;core_basic_window;⭐️☆☆☆;1.0;1.0;"Ray";@raysan5
+// Parses following line format: core;core_basic_window;★☆☆☆;1.0;1.0;2013;2025;"Ray";@raysan5
 static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
 {
     #define MAX_EXAMPLE_INFO_LINE_LEN   512
-    
+
     char temp[MAX_EXAMPLE_INFO_LINE_LEN] = { 0 };
     strncpy(temp, line, MAX_EXAMPLE_INFO_LINE_LEN);
     temp[MAX_EXAMPLE_INFO_LINE_LEN - 1] = '\0'; // Ensure null termination
-    
+
     int tokenCount = 0;
     char **tokens = TextSplit(line, ';', &tokenCount);
+
+    if (tokenCount != 9) LOG("REXM: WARNING: Example collection line contains invalid number of tokens: %i\n", tokenCount);
 
     // Get category and name
     strcpy(entry->category, tokens[0]);
     strcpy(entry->name, tokens[1]);
 
     // Parsing stars
-    // NOTE: Counting the unicode char occurrences: ⭐️
+    // NOTE: Counting the unicode char occurrences: ★
     const char *starPtr = tokens[2];
-    while (*starPtr) 
+    while (*starPtr)
     {
-        if (((unsigned char)starPtr[0] == 0xe2) && 
-            ((unsigned char)starPtr[1] == 0xad) && 
-            ((unsigned char)starPtr[2] == 0x90))
+        if (((unsigned char)starPtr[0] == 0xe2) &&
+            ((unsigned char)starPtr[1] == 0x98) &&
+            ((unsigned char)starPtr[2] == 0x85))
         {
             entry->stars++;
             starPtr += 3; // Advance past multibyte character
@@ -1892,14 +2011,18 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     }
 
     // Get raylib creation/update versions
-    entry->verCreated = strtof(tokens[3], NULL);
-    entry->verUpdated = strtof(tokens[4], NULL);
+    strcpy(entry->verCreated, tokens[3]);
+    strcpy(entry->verUpdated, tokens[4]);
 
-    // Get author and github   
-    if (tokens[5][0] == '"') tokens[5] += 1;
-    if (tokens[5][strlen(tokens[5]) - 1] == '"') tokens[5][strlen(tokens[5]) - 1] = '\0';
-    strcpy(entry->author, tokens[5]);
-    strcpy(entry->authorGitHub, tokens[6] + 1); // Skip '@'
+    // Get year created and year reviewed
+    entry->yearCreated = TextToInteger(tokens[5]);
+    entry->yearReviewed = TextToInteger(tokens[6]);
+
+    // Get author and github
+    if (tokens[7][0] == '"') tokens[7] += 1;
+    if (tokens[7][strlen(tokens[7]) - 1] == '"') tokens[7][strlen(tokens[7]) - 1] = '\0';
+    strcpy(entry->author, tokens[7]);
+    strcpy(entry->authorGitHub, tokens[8] + 1); // Skip '@'
 
     return 1;
 }
@@ -1909,7 +2032,7 @@ static int rlExampleInfoCompare(const void *a, const void *b)
 {
     const rlExampleInfo *ex1 = (const rlExampleInfo *)a;
     const rlExampleInfo *ex2 = (const rlExampleInfo *)b;
-    
+
     return strcmp(ex1->name, ex2->name);
 }
 
@@ -1924,6 +2047,7 @@ static void SortExampleByName(rlExampleInfo *items, int count)
 // WARNING: Supported resource file extensions is hardcoded by used file types
 // but new examples could require other file extensions to be added,
 // maybe it should look for '.xxx")' patterns instead
+// TODO: WARNING: Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png, ...
 static char **ScanExampleResources(const char *filePath, int *resPathCount)
 {
     #define REXM_MAX_RESOURCE_PATH_LEN    256
@@ -1937,7 +2061,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
     if (code != NULL)
     {
         // Resources extensions to check
-        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
+        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
         const int extCount = sizeof(exts)/sizeof(char *);
 
         char *ptr = code;
@@ -1948,9 +2072,16 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             if (!end) break;
 
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
-            // HACK: Just check previous position from pointer for function name including the string...
-            // This is a dirty solution, the good one would be getting the data loading function names...
-            if (TextFindIndex(ptr - 40, "ExportImage") == -1)
+            // HACK: Just check previous position from pointer for function name including the string and the index "distance"
+            // This is a quick solution, the good one would be getting the data loading function names...
+            int functionIndex01 = TextFindIndex(ptr - 40, "ExportImage");       // Check ExportImage()
+            int functionIndex02 = TextFindIndex(ptr - 10, "TraceLog");          // Check TraceLog()
+            int functionIndex03 = TextFindIndex(ptr - 40, "TakeScreenshot");    // Check TakeScreenshot()
+
+
+            if (!((functionIndex01 != -1) && (functionIndex01 < 40)) &&  // Not found ExportImage() before ""
+                !((functionIndex02 != -1) && (functionIndex02 < 10)) &&  // Not found TraceLog() before ""
+                !((functionIndex03 != -1) && (functionIndex03 < 40)))    // Not found TakeScreenshot() before ""
             {
                 int len = (int)(end - start);
                 if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
@@ -1959,14 +2090,11 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
                     strncpy(buffer, start, len);
                     buffer[len] = '\0';
 
-                    // TODO: Make sure buffer is a path (and not a TraceLog() string)
-
                     // Check for known extensions
                     for (int i = 0; i < extCount; i++)
                     {
-                        // TODO: WARNING: IsFileExtension() expects a NULL terminated fileName,
-                        // but in this case buffer can contain any kind of string, 
-                        // including not paths strings, for example TraceLog() string
+                        // NOTE: IsFileExtension() expects a NULL terminated fileName string,
+                        // it looks for the last '.' and checks "extension" after that
                         if (IsFileExtension(buffer, exts[i]))
                         {
                             // Avoid duplicates
@@ -2007,15 +2135,15 @@ static void ClearExampleResources(char **resPaths)
 }
 
 // Add VS project (.vcxproj) to existing VS solution (.sln)
-// WARNING: Adding a .vcxproj to .sln can not be automated with: 
+// WARNING: Adding a .vcxproj to .sln can not be automated with:
 //  - "dotnet" tool (C# projects only)
 //  - "devenv" tool (no adding support, only building)
 // It must be done manually editing the .sln file
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category)
+static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category)
 {
     int result = 0;
 
-    // WARNING: Function uses extensively TextFormat(), 
+    // WARNING: Function uses extensively TextFormat(),
     // *projFile ptr will be overwriten after a while
 
     // Generate unique UUID
@@ -2042,7 +2170,7 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
     offsetIndex += prjStartIndex;
     offsetIndex += sprintf(slnTextUpdated + offsetIndex, "EndProject\n");
     //----------------------------------------------------------------------------------------
-    
+
     // Update project config
     //----------------------------------------------------------------------------------------
     // Find position to add project config: At the end of global section, same strategy as VS2022 "Add Project"
@@ -2125,8 +2253,57 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
     return result;
 }
 
-// Generate unique UUID v4 string 
-// Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
+// Remove VS project (.vcxproj) to existing VS solution (.sln)
+static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName)
+{
+    int result = 0;
+
+    // Lines to be removed from solution file:
+    //Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_values", "examples\core_random_values.vcxproj", "{B332DCA8-3599-4A99-917A-82261BDC27AC}"
+    //EndProject
+    // All lines starting with:
+    //"\t\t{B332DCA8-3599-4A99-917A-82261BDC27AC}."
+
+    char *slnText = LoadFileText(slnFile);
+    char *slnTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+    int lineCount = 0;
+    char **lines = LoadTextLines(slnText, &lineCount); // WARNING: Max 512 lines, we need +4000!
+
+    char uuid[38] = { 0 };
+    strcpy(uuid, "ABCDEF00-0123-4567-89AB-000000000012"); // Temp value
+    int textUpdatedOfsset = 0;
+    int exNameLen = strlen(exName);
+
+    for (int i = 0, index = 0; i < lineCount; i++)
+    {
+        index = TextFindIndex(lines[i], exName);
+        if (index > 0)
+        {
+            // Found line with project --> get UUID
+            strncpy(uuid, lines[i] + index + exNameLen*2 + 26, 36);
+
+            // Skip copying line and also next one
+            i++;
+        }
+        else
+        {
+            if (TextFindIndex(lines[i], uuid) == -1)
+                textUpdatedOfsset += sprintf(slnTextUpdated + textUpdatedOfsset, "%s\n", lines[i]);
+        }
+    }
+
+    SaveFileText(slnFile, slnTextUpdated);
+
+    UnloadTextLines(lines, lineCount);
+    UnloadFileText(slnText);
+    RL_FREE(slnTextUpdated);
+
+    return result;
+}
+
+// Generate unique UUID v4 string
+// Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1}
 static const char *GenerateUUIDv4(void)
 {
     static char uuid[38] = { 0 };
@@ -2151,26 +2328,106 @@ static const char *GenerateUUIDv4(void)
     return uuid;
 }
 
+// Update source code header and comments metadata
+static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info)
+{
+    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
+    {
+        // WARNING: Cache a copy of exSrcPath to avoid modifications by TextFormat()
+        char exSourcePath[512] = { 0 };
+        strcpy(exSourcePath, exSrcPath);
+
+        char *exText = LoadFileText(exSourcePath);
+        char *exTextUpdated[6] = { 0 };     // Pointers to multiple updated text versions
+        char *exTextUpdatedPtr = exText;    // Pointer to current valid text version
+
+        char exNameFormated[256] = { 0 };   // Example name without category and using spaces
+        int exNameIndex = TextFindIndex(info->name, "_");
+        strcpy(exNameFormated, info->name + exNameIndex + 1);
+        int exNameLen = strlen(exNameFormated);
+        for (int i = 0; i < exNameLen; i++) { if (exNameFormated[i] == '_') exNameFormated[i] = ' '; }
+
+        // Update example header title (line #3 - ALWAYS)
+        // String: "*   raylib [shaders] example - texture drawing"
+        exTextUpdated[0] = TextReplaceBetween(exTextUpdatedPtr, "*   raylib [", "\n",
+            TextFormat("%s] example - %s", info->category, exNameFormated));
+        if (exTextUpdated[0] != NULL) exTextUpdatedPtr = exTextUpdated[0];
+
+        // Update example complexity rating
+        // String: "*   Example complexity rating: [★★☆☆] 2/4"
+        // Get example difficulty stars text
+        char starsText[16] = { 0 };
+        for (int i = 0; i < 4; i++)
+        {
+            // NOTE: Every UTF-8 star are 3 bytes
+            if (i < info->stars) strcpy(starsText + 3*i, "★");
+            else strcpy(starsText + 3*i, "☆");
+        }
+        exTextUpdated[1] = TextReplaceBetween(exTextUpdatedPtr, "*   Example complexity rating: [", "/4\n",
+            TextFormat("%s] %i", starsText, info->stars));
+        if (exTextUpdated[1] != NULL) exTextUpdatedPtr = exTextUpdated[1];
+
+        // Update example creation/update raylib versions
+        // String: "*   Example originally created with raylib 2.0, last time updated with raylib 3.7
+        exTextUpdated[2] = TextReplaceBetween(exTextUpdatedPtr, "*   Example originally created with raylib ", "\n",
+            TextFormat("%s, last time updated with raylib %s", info->verCreated, info->verUpdated));
+        if (exTextUpdated[2] != NULL) exTextUpdatedPtr = exTextUpdated[2];
+
+        // Update copyright message
+        // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
+        if (info->yearCreated == info->yearReviewed)
+        {
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr, "Copyright (c) ", ")",
+                TextFormat("%i %s (@%s", info->yearCreated, info->author, info->authorGitHub));
+            if (exTextUpdated[3] != NULL) exTextUpdatedPtr = exTextUpdated[3];
+        }
+        else
+        {
+            exTextUpdated[3] = TextReplaceBetween(exTextUpdatedPtr, "Copyright (c) ", ")",
+                TextFormat("%i-%i %s (@%s", info->yearCreated, info->yearReviewed, info->author, info->authorGitHub));
+            if (exTextUpdated[3] != NULL) exTextUpdatedPtr = exTextUpdated[3];
+        }
+
+        // Update window title
+        // String: "InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
+        exTextUpdated[4] = TextReplaceBetween(exTextUpdated[3], "InitWindow(screenWidth, screenHeight, \"", "\");",
+            TextFormat("raylib [%s] example - %s", info->category, exNameFormated));
+        if (exTextUpdated[4] != NULL) exTextUpdatedPtr = exTextUpdated[4];
+
+        // Update contributors names
+        // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
+        // WARNING: Not all examples are contributed by someone, so the result of this replace can be NULL (string not found)
+        exTextUpdated[5] = TextReplaceBetween(exTextUpdatedPtr, "*   Example contributed by ", ")",
+            TextFormat("%s (@%s", info->author, info->authorGitHub));
+        if (exTextUpdated[5] != NULL) exTextUpdatedPtr = exTextUpdated[5];
+
+        if (exTextUpdatedPtr != NULL) SaveFileText(exSourcePath, exTextUpdatedPtr);
+
+        for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
+
+        UnloadFileText(exText);
+    }
+}
+
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 {
     if (FileExists(exHtmlPath) && IsFileExtension(exHtmlPath, ".html"))
     {
-        char *fileText = LoadFileText(exHtmlPath);
-        char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
+        // WARNING: Cache a copy of exHtmlPath to avoid modifications by TextFormat()
+        char exHtmlPathCopy[512] = { 0 };
+        strcpy(exHtmlPathCopy, exHtmlPath);
+
+        char *exHtmlText = LoadFileText(exHtmlPathCopy);
+        char *exHtmlTextUpdated[6] = { 0 }; // Pointers to multiple updated text versions
 
         char exName[64] = { 0 };            // Example name: fileName without extension
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
         char exDescription[256] = { 0 };    // Example description: example text line #3
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
 
-        memset(exName, 0, 64);
-        memset(exTitle, 0, 64);
-        memset(exDescription, 0, 256);
-        memset(exCategory, 0, 16);
-
         // Get example name: replace underscore by spaces
-        strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
+        strcpy(exName, GetFileNameWithoutExt(exHtmlPathCopy));
         strcpy(exTitle, exName);
         for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
 
@@ -2183,21 +2440,21 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char **lines = LoadTextLines(exText, &lineCount);
         int lineLength = (int)strlen(lines[2]);
         strncpy(exDescription, lines[2] + 4, lineLength - 4);
-        UnloadTextLines(lines);
+        UnloadTextLines(lines, lineCount);
         UnloadFileText(exText);
 
         // Update example.html required text
-        fileTextUpdated[0] = TextReplace(fileText, "raylib web game", exTitle);
-        fileTextUpdated[1] = TextReplace(fileTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
-        fileTextUpdated[2] = TextReplace(fileTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
+        exHtmlTextUpdated[0] = TextReplace(exHtmlText, "raylib web game", exTitle);
+        exHtmlTextUpdated[1] = TextReplace(exHtmlTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
+        exHtmlTextUpdated[2] = TextReplace(exHtmlTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
             TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
-        fileTextUpdated[3] = TextReplace(fileTextUpdated[2], "https://www.raylib.com/games.html",
+        exHtmlTextUpdated[3] = TextReplace(exHtmlTextUpdated[2], "https://www.raylib.com/games.html",
             TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
-        fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
-        fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
+        exHtmlTextUpdated[4] = TextReplace(exHtmlTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
+        exHtmlTextUpdated[5] = TextReplace(exHtmlTextUpdated[4], "https://github.com/raysan5/raylib",
             TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
-        SaveFileText(exHtmlPath, fileTextUpdated[5]);
+        SaveFileText(exHtmlPathCopy, exHtmlTextUpdated[5]);
 
         //LOG("INFO: [%s] Updated successfully\n",files.paths[i]);
         //LOG("      - Name / Title: %s / %s\n", exName, exTitle);
@@ -2205,8 +2462,68 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         //LOG("      - URL:          %s\n", TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
         //LOG("      - URL Source:   %s\n", TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
-        for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
+        for (int i = 0; i < 6; i++) { MemFree(exHtmlTextUpdated[i]); exHtmlTextUpdated[i] = NULL; }
 
-        UnloadFileText(fileText);
+        UnloadFileText(exHtmlText);
     }
 }
+
+/*
+// Get text between two strings
+// NOTE: Using static string to return result, MAX: 1024 bytes
+static char *GetTextBetween(const char *text, const char *begin, const char *end)
+{
+    #define MAX_TEXT_BETWEEN_SIZE   1024
+
+    static char between[MAX_TEXT_BETWEEN_SIZE] = { 0 };
+    memset(between, 0, MAX_TEXT_BETWEEN_SIZE);
+
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int beginLen = strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
+
+        if (endIndex > -1)
+        {
+            endIndex += (beginIndex + beginLen);
+            int len = (endIndex - beginIndex - beginLen);
+            if (len < (MAX_TEXT_BETWEEN_SIZE - 1)) strncpy(between, text + beginIndex + beginLen, len);
+            else strncpy(between, text + beginIndex + beginLen, MAX_TEXT_BETWEEN_SIZE - 1);
+        }
+    }
+
+    return between;
+}
+
+// Replace text between two specific strings
+// WARNING: Returned string must be freed by user
+static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace)
+{
+    char *result = NULL;
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int beginLen = strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
+
+        if (endIndex > -1)
+        {
+            endIndex += (beginIndex + beginLen);
+
+            int textLen = strlen(text);
+            int replaceLen = strlen(replace);
+            int toreplaceLen = endIndex - beginIndex - beginLen;
+            result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
+
+            strncpy(result, text, beginIndex + beginLen); // Copy first text part
+            strncpy(result + beginIndex + beginLen, replace, replaceLen); // Copy replace
+            strncpy(result + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+        }
+    }
+
+    return result;
+}
+*/

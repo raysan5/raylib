@@ -240,11 +240,33 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_scrollLock] = KEY_SCROLL_LOCK,
 };
 
+static int RGFW_gpConvTable[18] = {
+    [RGFW_gamepadY] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+    [RGFW_gamepadB] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+    [RGFW_gamepadA] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+    [RGFW_gamepadX] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+    [RGFW_gamepadL1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+    [RGFW_gamepadR1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+    [RGFW_gamepadL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+    [RGFW_gamepadR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    [RGFW_gamepadSelect] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+    [RGFW_gamepadHome] = GAMEPAD_BUTTON_MIDDLE,
+    [RGFW_gamepadStart] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+    [RGFW_gamepadUp] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+    [RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+    [RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    [RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,    
+    [RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
+};
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 bool InitGraphicsDevice(void);   // Initialize graphics device
+
+static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -887,28 +909,6 @@ const char *GetKeyName(int key)
 
     return "";
 }
-
-static KeyboardKey ConvertScancodeToKey(u32 keycode);
-
-int RGFW_gpConvTable[18] = {
-    [RGFW_gamepadY] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
-    [RGFW_gamepadB] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-    [RGFW_gamepadA] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-    [RGFW_gamepadX] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-    [RGFW_gamepadL1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
-    [RGFW_gamepadR1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-    [RGFW_gamepadL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-    [RGFW_gamepadR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
-    [RGFW_gamepadSelect] = GAMEPAD_BUTTON_MIDDLE_LEFT,
-    [RGFW_gamepadHome] = GAMEPAD_BUTTON_MIDDLE,
-    [RGFW_gamepadStart] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
-    [RGFW_gamepadUp] = GAMEPAD_BUTTON_LEFT_FACE_UP,
-    [RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-    [RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-    [RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,    
-    [RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
-};
 
 // Register all input events
 void PollInputEvents(void)

@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{07CA51AD-72AE-46A2-AAED-DC3E3F807976}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>rlgl_compute_shader</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

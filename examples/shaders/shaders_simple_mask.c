@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - simple shader mask
+*   raylib [shaders] example - simple mask
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -41,7 +41,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - simple shader mask");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - simple mask");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };

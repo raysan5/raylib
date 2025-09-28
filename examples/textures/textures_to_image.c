@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - texture to image
+*   raylib [textures] example - to image
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -27,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture to image");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - to image");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
