@@ -88,7 +88,8 @@ int main(void)
             SetTargetFPS(currentFps);
         }
 
-        // Use of delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS. GetFrameTime() returns this frame's delta time.
+        // Use of delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS.
+		// GetFrameTime() returns the time it took to draw the last frame, in seconds (usually called delta time).
         // Multiply by 6.0 (an arbitrary value) in order to make the speed visually closer to the other circle (at 60 fps), for comparison.
         deltaX += GetFrameTime() * 6.0 * speed;
         // This circle can move faster or slower visually depending on the FPS.
