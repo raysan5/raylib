@@ -2109,45 +2109,56 @@ static inline void sw_get_pixel(float* color, const void* pixels, uint32_t offse
 
 /* === Texture Sampling Part === */
 
-static inline void sw_texture_map(int* out, float in, int max, SWwrap mode)
-{
-    switch (mode) {
-    case SW_REPEAT:
-        *out = (int)(sw_fract(in) * max + 0.5f);
-        break;
-    case SW_CLAMP:
-        *out = (int)(sw_saturate(in) * max + 0.5f);
-        break;
-    }
-}
-
 static inline void sw_texture_sample_nearest(float* color, const sw_texture_t* tex, float u, float v)
 {
-    int x, y;
-    sw_texture_map(&x, u, tex->wMinus1, tex->sWrap);
-    sw_texture_map(&y, v, tex->hMinus1, tex->tWrap);
+    u = (tex->sWrap == SW_REPEAT) ? sw_fract(u) : sw_saturate(u);
+    v = (tex->tWrap == SW_REPEAT) ? sw_fract(v) : sw_saturate(v);
+
+    int x = u * tex->width, y = v * tex->height;
+
     sw_get_pixel(color, tex->pixels.cptr, y * tex->width + x, tex->format);
 }
 
 static inline void sw_texture_sample_linear(float* color, const sw_texture_t* tex, float u, float v)
 {
-    float uScaled = u * tex->wMinus1;
-    float vScaled = v * tex->hMinus1;
+    // REVIEW: With a bit more cleverness we could clearly reduce the
+    //         number of operations here, but for now it works fine.
 
-    int x0, y0, x1, y1;
-    sw_texture_map(&x0, u, tex->wMinus1, tex->sWrap);
-    sw_texture_map(&y0, v, tex->hMinus1, tex->tWrap);
-    sw_texture_map(&x1, u + tex->tx, tex->wMinus1, tex->sWrap);
-    sw_texture_map(&y1, v + tex->ty, tex->hMinus1, tex->tWrap);
+    float xf = u * tex->width  - 0.5f;
+    float yf = v * tex->height - 0.5f;
+
+    int x0 = (int)floorf(xf);
+    int y0 = (int)floorf(yf);
+
+    float fx = xf - x0;
+    float fy = yf - y0;
+
+    int x1 = x0 + 1;
+    int y1 = y0 + 1;
+
+    if (tex->sWrap == SW_CLAMP) {
+        x0 = x0 > tex->wMinus1 ? tex->wMinus1 : x0;
+        x1 = x1 > tex->wMinus1 ? tex->wMinus1 : x1;
+    }
+    else {
+        x0 = (x0 % tex->width + tex->width) % tex->width;
+        x1 = (x1 % tex->width + tex->width) % tex->width;
+    }
+
+    if (tex->tWrap == SW_CLAMP) {
+        y0 = y0 > tex->hMinus1 ? tex->hMinus1 : y0;
+        y1 = y1 > tex->hMinus1 ? tex->hMinus1 : y1;
+    }
+    else {
+        y0 = (y0 % tex->height + tex->height) % tex->height;
+        y1 = (y1 % tex->height + tex->height) % tex->height;
+    }
 
     float c00[4], c10[4], c01[4], c11[4];
     sw_get_pixel(c00, tex->pixels.cptr, y0 * tex->width + x0, tex->format);
     sw_get_pixel(c10, tex->pixels.cptr, y0 * tex->width + x1, tex->format);
     sw_get_pixel(c01, tex->pixels.cptr, y1 * tex->width + x0, tex->format);
     sw_get_pixel(c11, tex->pixels.cptr, y1 * tex->width + x1, tex->format);
-
-    float fx = uScaled - floorf(uScaled);
-    float fy = vScaled - floorf(vScaled);
 
     for (int i = 0; i < 4; i++) {
         float t = c00[i] + fx * (c10[i] - c00[i]);
