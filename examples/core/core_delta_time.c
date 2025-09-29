@@ -42,17 +42,13 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - delta time");
 
-    // The x positions for each circle.
-    float deltaX = 0;
-    float frameX = 0;
+    // Store the position for the both of the circles.
+    Vector2 deltaCircle = {0, screenHeight / 3.0f};
+    Vector2 frameCircle = {0, screenHeight * (2.0f/3.0f)};
 
     // The speed applied to both circles.
     const float speed = 10.0;
-    const int circleRadius = 32;
-
-    // Calculate the visual Y position for both circles.
-    const float deltaY = screenHeight / 3.0;
-    const float frameY = screenHeight * (2.0/3.0);
+    const float circleRadius = 32;
 
     SetTargetFPS(currentFps);
     //--------------------------------------------------------------------------------------
@@ -76,35 +72,35 @@ int main(void)
 
         if (IsKeyPressed(KEY_R)) // Reset both circles' positions when you press R.
         {
-            deltaX = 0;
-            frameX = 0;
+            deltaCircle.x = 0;
+            frameCircle.x = 0;
         }
 
         // Adjust the FPS target based on the mouse wheel.
-        int mouseWheel = GetMouseWheelMove();
+        float mouseWheel = GetMouseWheelMove();
         if (mouseWheel != 0)
         {
-            currentFps += mouseWheel;
+            currentFps += (int)mouseWheel;
             SetTargetFPS(currentFps);
         }
-		
-		// GetFrameTime() returns the time it took to draw the last frame, in seconds (usually called delta time).
-		// Uses the delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS.
-        
-		// Multiply by 6.0 (an arbitrary value) in order to make the speed visually closer to the other circle (at 60 fps), for comparison.
-        deltaX += GetFrameTime() * 6.0 * speed;
+
+        // GetFrameTime() returns the time it took to draw the last frame, in seconds (usually called delta time).
+        // Uses the delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS.
+
+        // Multiply by 6.0 (an arbitrary value) in order to make the speed visually closer to the other circle (at 60 fps), for comparison.
+        deltaCircle.x += GetFrameTime() * 6.0f * speed;
         // This circle can move faster or slower visually depending on the FPS.
-        frameX += .1 * speed;
+        frameCircle.x += .1f * speed;
 
         // If either circle is off the screen, reset it back to the start.
-        if (deltaX > screenWidth)
+        if (deltaCircle.x > screenWidth)
         {
-            deltaX = 0;
+            deltaCircle.x = 0;
         }
 
-        if (frameX > screenWidth)
+        if (frameCircle.x > screenWidth)
         {
-            frameX = 0;
+            frameCircle.x = 0;
         }
 
         // Draw
@@ -114,11 +110,11 @@ int main(void)
         ClearBackground(RAYWHITE);
 
         // Draw both circles to the screen.
-        DrawCircle(deltaX, deltaY, circleRadius, RED);
-        DrawCircle(frameX, frameY, circleRadius, BLUE);
+        DrawCircleV(deltaCircle, circleRadius, RED);
+        DrawCircleV(frameCircle, circleRadius, BLUE);
 
         // Determine what help text to show depending on the current FPS target.
-        char* fpsText;
+        const char* fpsText;
 
         if (currentFps <= 0)
         {
