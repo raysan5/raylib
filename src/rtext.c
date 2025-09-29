@@ -1452,7 +1452,7 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 char **LoadTextLines(const char *text, int *count)
 {
     int lineCount = 1;
-    int textSize = strlen(text);
+    int textSize = (int)strlen(text);
 
     // Text pass to get required line count
     for (int i = 0; i < textSize; i++)
@@ -1679,7 +1679,7 @@ char *GetTextBetween(const char *text, const char *begin, const char *end)
 
     if (beginIndex > -1)
     {
-        int beginLen = strlen(begin);
+        int beginLen = (int)strlen(begin);
         int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
 
         if (endIndex > -1)
@@ -1758,15 +1758,15 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
 
     if (beginIndex > -1)
     {
-        int beginLen = strlen(begin);
+        int beginLen = (int)strlen(begin);
         int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
 
         if (endIndex > -1)
         {
             endIndex += (beginIndex + beginLen);
 
-            int textLen = strlen(text);
-            int replaceLen = (replacement == NULL)? 0 : strlen(replacement);
+            int textLen = (int)strlen(text);
+            int replaceLen = (replacement == NULL)? 0 : (int)strlen(replacement);
             int toreplaceLen = endIndex - beginIndex - beginLen;
             result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
 
