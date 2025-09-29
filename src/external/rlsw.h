@@ -4450,34 +4450,34 @@ void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
 
     switch (dfactor) {
     case SW_ZERO:
-        RLSW.srcFactorFunc = sw_factor_zero;
+        RLSW.dstFactorFunc = sw_factor_zero;
         break;
     case SW_ONE:
-        RLSW.srcFactorFunc = sw_factor_one;
+        RLSW.dstFactorFunc = sw_factor_one;
         break;
     case SW_SRC_COLOR:
-        RLSW.srcFactorFunc = sw_factor_src_color;
+        RLSW.dstFactorFunc = sw_factor_src_color;
         break;
     case SW_ONE_MINUS_SRC_COLOR:
-        RLSW.srcFactorFunc = sw_factor_one_minus_src_color;
+        RLSW.dstFactorFunc = sw_factor_one_minus_src_color;
         break;
     case SW_SRC_ALPHA:
-        RLSW.srcFactorFunc = sw_factor_src_alpha;
+        RLSW.dstFactorFunc = sw_factor_src_alpha;
         break;
     case SW_ONE_MINUS_SRC_ALPHA:
-        RLSW.srcFactorFunc = sw_factor_one_minus_src_alpha;
+        RLSW.dstFactorFunc = sw_factor_one_minus_src_alpha;
         break;
     case SW_DST_ALPHA:
-        RLSW.srcFactorFunc = sw_factor_dst_alpha;
+        RLSW.dstFactorFunc = sw_factor_dst_alpha;
         break;
     case SW_ONE_MINUS_DST_ALPHA:
-        RLSW.srcFactorFunc = sw_factor_one_minus_dst_alpha;
+        RLSW.dstFactorFunc = sw_factor_one_minus_dst_alpha;
         break;
     case SW_DST_COLOR:
-        RLSW.srcFactorFunc = sw_factor_dst_color;
+        RLSW.dstFactorFunc = sw_factor_dst_color;
         break;
     case SW_ONE_MINUS_DST_COLOR:
-        RLSW.srcFactorFunc = sw_factor_one_minus_dst_color;
+        RLSW.dstFactorFunc = sw_factor_one_minus_dst_color;
         break;
     case SW_SRC_ALPHA_SATURATE:
         // NOTE: Should never be reached
