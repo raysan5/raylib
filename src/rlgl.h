@@ -776,8 +776,8 @@ RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attac
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-RLAPI void rlCopyFramebuffer(int x, int y, int w, int h, int format, void* pixels);
-RLAPI void rlResizeFramebuffer(int width, int height);
+RLAPI void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels); // Copy framebuffer pixel data to internal buffer
+RLAPI void rlResizeFramebuffer(int width, int height);                    // Resize internal framebuffer
 #endif
 
 // Shaders management
@@ -846,7 +846,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-        #define RLSW_IMPL
+        #define RLSW_IMPLEMENTATION
         #define SW_MALLOC(sz) RL_MALLOC(sz)
         #define SW_REALLOC(ptr, newSz) RL_REALLOC(ptr, newSz)
         #define SW_FREE(ptr) RL_FREE(ptr)
@@ -2357,9 +2357,10 @@ void rlglInit(int width, int height)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    if (!swInit(width, height))
+    int result = swInit(width, height); // Initialize software renderer backend
+    if (result == 0)
     {
-        TRACELOG(RL_LOG_ERROR, "RLGL: Software renderer initialization failed!");
+        TRACELOG(RL_LOG_ERROR, "RLSW: Software renderer initialization failed!");
         exit(-1);
     }
 #endif
@@ -2385,14 +2386,14 @@ void rlglClose(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlUnloadRenderBatch(RLGL.defaultBatch);
 
-    rlUnloadShaderDefault();          // Unload default shader
+    rlUnloadShaderDefault(); // Unload default shader
 
     glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
     TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Default texture unloaded successfully", RLGL.State.defaultTextureId);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    swClose();
+    swClose(); // Unload sofware renderer resources
 #endif
 }
 
@@ -2703,6 +2704,7 @@ void *rlGetProcAddress(const char *procName)
 int rlGetVersion(void)
 {
     int glVersion = 0;
+
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     glVersion = RL_OPENGL_11_SOFTWARE;
 #elif defined(GRAPHICS_API_OPENGL_11)
@@ -3747,13 +3749,15 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 }
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-void rlCopyFramebuffer(int x, int y, int w, int h, int format, void* pixels)
+// Copy framebuffer pixel data to internal buffer
+void rlCopyFramebuffer(int x, int y, int width, int height, int format, void* pixels)
 {
     unsigned int glInternalFormat, glFormat, glType;
-    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
-    swCopyFramebuffer(x, y, w, h, glFormat, glType, pixels);
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType); // Get OpenGL texture format
+    swCopyFramebuffer(x, y, width, height, glFormat, glType, pixels);
 }
 
+// Resize internal framebuffer
 void rlResizeFramebuffer(int width, int height)
 {
     swResizeFramebuffer(width, height);

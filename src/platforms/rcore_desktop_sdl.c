@@ -1233,7 +1233,7 @@ void SwapScreenBuffer(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     // NOTE: We use a preprocessor condition here because `rlCopyFramebuffer` is only declared for software rendering
-    SDL_Surface* surface = SDL_GetWindowSurface(platform.window);
+    SDL_Surface *surface = SDL_GetWindowSurface(platform.window);
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, surface->pixels);
     SDL_UpdateWindowSurface(platform.window);
 #else

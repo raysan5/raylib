@@ -818,14 +818,14 @@ void SwapScreenBuffer(void)
     platform.prevBO = bo;
 #else
     // Software rendering buffer swap
-    if ((-1 == platform.fd) || !platform.connector || (platform.modeIndex < 0))
+    if ((platform.fd == -1) || !platform.connector || (platform.modeIndex < 0))
     {
         TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
         return;
     }
 
     // Get the software rendered color buffer
-    int bufferWidth, bufferHeight;
+    int bufferWidth = 0, bufferHeight = 0;
     void *colorBuffer = swGetColorBuffer(&bufferWidth, &bufferHeight);
     if (!colorBuffer)
     {
@@ -849,7 +849,7 @@ void SwapScreenBuffer(void)
 #endif
 
     // Create a dumb buffer for software rendering
-    struct drm_mode_create_dumb creq = {0};
+    struct drm_mode_create_dumb creq = { 0 };
     creq.width = width;
     creq.height = height;
     creq.bpp = bpp;
@@ -863,28 +863,25 @@ void SwapScreenBuffer(void)
 
     // Create framebuffer with the correct format
     uint32_t fb = 0;
-    result = drmModeAddFB(platform.fd, 
-                        width, height,
-                        depth, bpp, creq.pitch, 
-                        creq.handle, &fb);
+    result = drmModeAddFB(platform.fd, width, height, depth, bpp, creq.pitch, creq.handle, &fb);
     if (result != 0) 
     {
         TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d (%s)", result, strerror(errno));
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = creq.handle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
         return;
     }
 
     // Map the dumb buffer to copy our software rendered buffer
-    struct drm_mode_map_dumb mreq = {0};
+    struct drm_mode_map_dumb mreq = { 0 };
     mreq.handle = creq.handle;
     result = drmIoctl(platform.fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
     if (result != 0)
     {
         TRACELOG(LOG_ERROR, "DISPLAY: Failed to map dumb buffer: %s", strerror(errno));
         drmModeRmFB(platform.fd, fb);
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = creq.handle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
         return;
@@ -896,7 +893,7 @@ void SwapScreenBuffer(void)
     {
         TRACELOG(LOG_ERROR, "DISPLAY: Failed to mmap dumb buffer: %s", strerror(errno));
         drmModeRmFB(platform.fd, fb);
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = creq.handle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
         return;
@@ -919,10 +916,7 @@ void SwapScreenBuffer(void)
 
     // Find a CRTC compatible with the connector
     uint32_t crtcId = 0;
-    if (platform.crtc)
-    {
-        crtcId = platform.crtc->crtc_id;
-    }
+    if (platform.crtc) crtcId = platform.crtc->crtc_id;
     else
     {
         // Find a CRTC that's compatible with this connector
@@ -939,10 +933,7 @@ void SwapScreenBuffer(void)
 
         // Check which CRTCs are compatible with this connector
         drmModeEncoder *encoder = NULL;
-        if (platform.connector->encoder_id)
-        {
-            encoder = drmModeGetEncoder(platform.fd, platform.connector->encoder_id);
-        }
+        if (platform.connector->encoder_id) encoder = drmModeGetEncoder(platform.fd, platform.connector->encoder_id);
 
         if (encoder && encoder->crtc_id)
         {
@@ -962,6 +953,7 @@ void SwapScreenBuffer(void)
                     platform.crtc = crtc;
                     break;
                 }
+
                 if (crtc) drmModeFreeCrtc(crtc);
             }
         }
@@ -981,9 +973,7 @@ void SwapScreenBuffer(void)
     }
 
     // Set CRTC with better error handling
-    result = drmModeSetCrtc(platform.fd, crtcId, fb, 0, 0, 
-                        &platform.connector->connector_id, 1, 
-                        mode);
+    result = drmModeSetCrtc(platform.fd, crtcId, fb, 0, 0, &platform.connector->connector_id, 1, mode);
     if (result != 0) 
     {
         TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d (%s)", result, strerror(errno));
@@ -1001,10 +991,7 @@ void SwapScreenBuffer(void)
     if (platform.prevFB)
     {
         result = drmModeRmFB(platform.fd, platform.prevFB);
-        if (result != 0) 
-        {
-            TRACELOG(LOG_WARNING, "DISPLAY: drmModeRmFB() failed with result: %d", result);
-        }
+        if (result != 0) TRACELOG(LOG_WARNING, "DISPLAY: drmModeRmFB() failed with result: %d", result);
     }
 
     platform.prevFB = fb;
@@ -1249,7 +1236,7 @@ int InitPlatform(void)
         // In certain cases the status of the conneciton is reported as UKNOWN, but it is still connected
         // This might be a hardware or software limitation like on Raspberry Pi Zero with composite output
         // WARNING: Accept CONNECTED, UNKNOWN and even those without encoder_id connectors for software mode
-        if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->count_modes > 0)//(con->encoder_id))
+        if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->count_modes > 0))
         {
 #if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
             // For hardware rendering, we need an encoder_id
@@ -1259,10 +1246,7 @@ int InitPlatform(void)
                 platform.connector = con;
                 break;
             }
-            else
-            {
-                TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i connected but no encoder", i);
-            }
+            else TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i connected but no encoder", i);
 #else
             // For software rendering, we can accept even without encoder_id
             TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i suitable for software rendering", i);
