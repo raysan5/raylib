@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - ascii effect
+*   raylib [shaders] example - ascii rendering
 *
-*   Example complexity rating: [★☆☆☆] 1/4
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 5.5, last time updated with raylib 5.6
 *
@@ -33,7 +33,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - ascii effect");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - ascii rendering");
 
     // Texture to test static drawing
     Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
@@ -43,7 +43,7 @@ int main(void)
     // Load shader to be used on postprocessing
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/ascii.fs", GLSL_VERSION));
 
-    // These locations are used to send data to the GPU.
+    // These locations are used to send data to the GPU
     int resolutionLoc = GetShaderLocation(shader, "resolution");
     int fontSizeLoc = GetShaderLocation(shader, "fontSize");
 
@@ -69,33 +69,31 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (circlePos.x > 200.0f || circlePos.x < 40.0f) {
-            circleSpeed *= -1;
-        }
         circlePos.x += circleSpeed;
+        
+        if ((circlePos.x > 200.0f) || (circlePos.x < 40.0f)) circleSpeed *= -1;
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
-
+        // Draw our scene to a render texture first
         BeginTextureMode(target);
-            ClearBackground(WHITE); // The background of the scene itself
+            ClearBackground(WHITE);
             
-            DrawTexture(fudesumi, 500, -30, WHITE);    // Using custom shader
+            DrawTexture(fudesumi, 500, -30, WHITE);
             DrawTextureV(raysan, circlePos, WHITE);
-
+        
         EndTextureMode();
+        
         BeginDrawing();
-
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shader);
-
-                // Draw the scene texture (that we rendered earlier) to the screen.
-                // The shader will process every pixel of this texture.
-                DrawTextureRec(target.texture, 
-                               (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
-                               (Vector2){ 0, 0 }, 
-                               WHITE);
+                // Draw the render texture containing scene
+                // The shader will process every pixel on the screen
+                DrawTextureRec(target.texture,
+                    (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
+                    (Vector2){ 0, 0 }, WHITE);
             EndShaderMode();
 
             DrawRectangle(0, 0, screenWidth, 40, BLACK);
