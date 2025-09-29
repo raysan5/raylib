@@ -48,12 +48,12 @@ int main(void)
     int fontSizeLoc = GetShaderLocation(shader, "fontSize");
 
     // Set the character size for the ASCII effect
-    float fontSize = 4.0f;
+    // fontsize should be 9 or more
+    float fontSize = 9.0f;
 
     // Send the updated values to the shader
     float resolution[2] = { (float)screenWidth, (float)screenHeight };
     SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
-    SetShaderValue(shader, fontSizeLoc, &fontSize, SHADER_UNIFORM_FLOAT);
 
     Vector2 circlePos = (Vector2){40.0f, (float)screenHeight * 0.5f};
     float circleSpeed = 1.0f;
@@ -67,20 +67,36 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+    
         // Update
         //----------------------------------------------------------------------------------
+        if (IsKeyPressed(KEY_LEFT) && fontSize > 9.0)
+        {
+            fontSize -= 1;  // Reduce fontSize
+        }
+
+        if (IsKeyPressed(KEY_RIGHT) && fontSize < 15.0)
+        {
+            fontSize += 1;  // Increase fontSize
+        }
+
         if (circlePos.x > 200.0f || circlePos.x < 40.0f) {
             circleSpeed *= -1;
         }
+
         circlePos.x += circleSpeed;
+
+        // Set fontsize for the shader
+        SetShaderValue(shader, fontSizeLoc, &fontSize, SHADER_UNIFORM_FLOAT);
 
         // Draw
         //----------------------------------------------------------------------------------
 
         BeginTextureMode(target);
             ClearBackground(WHITE); // The background of the scene itself
-            
-            DrawTexture(fudesumi, 500, -30, WHITE);    // Using custom shader
+
+            // Samples Using custom shader
+            DrawTexture(fudesumi, 500, -30, WHITE);
             DrawTextureV(raysan, circlePos, WHITE);
 
         EndTextureMode();
@@ -99,7 +115,7 @@ int main(void)
             EndShaderMode();
 
             DrawRectangle(0, 0, screenWidth, 40, BLACK);
-            DrawText("Ascii effect", 120, 10, 20, LIGHTGRAY);
+            DrawText(TextFormat("Ascii effect - FontSize:%2.0f - [Left] -1 [Right] +1 ", fontSize), 120, 10, 20, LIGHTGRAY);
             DrawFPS(10, 10);
 
         EndDrawing();
