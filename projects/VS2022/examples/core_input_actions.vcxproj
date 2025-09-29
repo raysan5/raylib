@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{718FCBD0-591D-448C-B7D5-9F1CA8544E7B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>core_input_actions</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
