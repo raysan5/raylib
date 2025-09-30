@@ -56,6 +56,13 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
 
+        // Variables to find the max x and Y to calculate the scale
+        int maxWidth = 1;
+        int maxHeight = 1;
+
+        // Monitor offset is to fix when monitor position x is negative
+        int monitorOffsetX = 0;
+
         // Rebuild monitors array every frame
         monitorCount = GetMonitorCount();
         for (int i = 0; i < monitorCount; i++)
@@ -69,6 +76,13 @@ int main(void)
                 GetMonitorPhysicalHeight(i),
                 GetMonitorRefreshRate(i)
             };
+            if (monitors[i].position.x < monitorOffsetX) monitorOffsetX = monitors[i].position.x*-1;
+
+            const int width = monitors[i].position.x + monitors[i].width;
+            const int height = monitors[i].position.y + monitors[i].height;
+            
+            if (maxWidth < width) maxWidth = width;
+            if (maxHeight < height) maxHeight = height;
         }
 
         if (IsKeyPressed(KEY_ENTER) && monitorCount > 1) 
@@ -76,10 +90,8 @@ int main(void)
             currentMonitorIndex += 1;
 
             // Set index to 0 if the last one
-            if(currentMonitorIndex == GetMonitorCount()) 
-            {
-                currentMonitorIndex = 0;
-            }
+            if(currentMonitorIndex == monitorCount) currentMonitorIndex = 0;
+
             SetWindowMonitor(currentMonitorIndex); // Move window to currentMonitorIndex
         }
         else 
@@ -89,7 +101,10 @@ int main(void)
         }
         const Monitor currentMonitor = monitors[currentMonitorIndex];
 
-        const float monitorScale = 0.2 / monitorCount; 
+        float monitorScale = 0.6; 
+
+        if(maxHeight > maxWidth + monitorOffsetX) monitorScale *= ((float)screenHeight/(float)maxHeight);
+        else monitorScale *= ((float)screenWidth/(float)(maxWidth + monitorOffsetX));
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -99,46 +114,45 @@ int main(void)
 
             DrawText("Press [Enter] to move window to next monitor available", 20, 20, 20, DARKGRAY);
 
-            DrawText(
-                TextFormat("Resolution: [%ipx x %ipx]\nRefreshRate: [%ihz]\nPhysical Size: [%imm x %imm]\nPosition: %3.2f x %3.2f", 
-                    currentMonitor.width, 
-                    currentMonitor.height, 
-                    currentMonitor.refreshRate,
-                    currentMonitor.physicalWidth,
-                    currentMonitor.physicalHeight,
-                    currentMonitor.position.x,
-                    currentMonitor.position.y
-                ), 30, 80, 20, GRAY);
-
-            // List available Monitors
-            for (int i = 0; i < monitorCount; i++)
-            {
-                DrawText(TextFormat("%s", monitors[i].name), 40, 180 + 20*i, 20, GRAY);
-                if (i == currentMonitorIndex)
-                {
-                    DrawCircle(30, 190 + 20*i, 5, RED);
-                }
-            }
             DrawRectangleLines(20, 60, screenWidth - 40, screenHeight - 100, DARKGRAY);
 
-            // Draw Monitors
+            // Draw Monitor Rectangles with information inside
             for (int i = 0; i < monitorCount; i++)
             {
+                // Calculate retangle position and size using monitorScale
                 const Rectangle rec = (Rectangle){
-                    monitors[i].position.x * monitorScale + 140,
-                    monitors[i].position.y * monitorScale + 180,
+                    (monitors[i].position.x + monitorOffsetX) * monitorScale + 140,
+                    monitors[i].position.y * monitorScale + 80,
                     monitors[i].width * monitorScale,
                     monitors[i].height * monitorScale
                 };
+
+                // Draw monitor name and information inside the rectangle
+                DrawText(TextFormat("[%i] %s", i, monitors[i].name), rec.x + 10, rec.y + (int)(100*monitorScale), (int)(120*monitorScale), BLUE);
+                DrawText(
+                    TextFormat("Resolution: [%ipx x %ipx]\nRefreshRate: [%ihz]\nPhysical Size: [%imm x %imm]\nPosition: %3.0f x %3.0f", 
+                        monitors[i].width, 
+                        monitors[i].height, 
+                        monitors[i].refreshRate,
+                        monitors[i].physicalWidth,
+                        monitors[i].physicalHeight,
+                        monitors[i].position.x,
+                        monitors[i].position.y
+                    ), rec.x + 10, rec.y + (int)(200*monitorScale), (int)(120*monitorScale), DARKGRAY);
+
+                // Highlight current monitor
                 if (i == currentMonitorIndex)
                 {
                     DrawRectangleLinesEx(rec, 5, RED);
+                    Vector2 windowPosition = (Vector2){ (GetWindowPosition().x + monitorOffsetX)*monitorScale  + 140, GetWindowPosition().y*monitorScale + 80 };
+
+                    // Draw window position based on monitors
+                    DrawRectangleV(windowPosition, (Vector2){screenWidth * monitorScale, screenHeight * monitorScale}, Fade(GREEN, 0.5));
                 }
                 else
                 {
                     DrawRectangleLinesEx(rec, 5, GRAY);
                 }
-                DrawText(TextFormat("%i", i), rec.x + rec.width * 0.5 - 10, rec.y + rec.height * 0.5 - 25, 50, GRAY);
 
             }
 
