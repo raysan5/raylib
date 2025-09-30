@@ -21,15 +21,6 @@ Try to be very organized, using line-breaks appropiately
 
 #include "raylib.h"
 
-int currentFps = 60;
-
-// Used only in this example in order to allow finer control of the FPS limit.
-void UpdateFPS(int fps)
-{
-    currentFps = fps;
-    SetTargetFPS(currentFps);
-}
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -41,6 +32,8 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - delta time");
+
+    int currentFps = 60;
 
     // Store the position for the both of the circles.
     Vector2 deltaCircle = {0, screenHeight / 3.0f};
@@ -57,26 +50,14 @@ int main(void)
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
         // Update
-
-        // Update the target FPS based on number key.
-        if (IsKeyPressed(KEY_ONE)) UpdateFPS(10);
-        if (IsKeyPressed(KEY_TWO)) UpdateFPS(20);
-        if (IsKeyPressed(KEY_THREE)) UpdateFPS(30);
-        if (IsKeyPressed(KEY_FOUR)) UpdateFPS(40);
-        if (IsKeyPressed(KEY_FIVE)) UpdateFPS(50);
-        if (IsKeyPressed(KEY_SIX)) UpdateFPS(60);
-        if (IsKeyPressed(KEY_SEVEN)) UpdateFPS(70);
-        if (IsKeyPressed(KEY_EIGHT)) UpdateFPS(80);
-        if (IsKeyPressed(KEY_NINE)) UpdateFPS(90);
-        if (IsKeyPressed(KEY_ZERO)) UpdateFPS(0); // Unlimited framerate
-
-        if (IsKeyPressed(KEY_R)) // Reset both circles' positions when you press R.
+        //----------------------------------------------
+        if (IsKeyPressed(KEY_R)) // Reset both circles' positions when you press R
         {
             deltaCircle.x = 0;
             frameCircle.x = 0;
         }
 
-        // Adjust the FPS target based on the mouse wheel.
+        // Adjust the FPS target based on the mouse wheel
         float mouseWheel = GetMouseWheelMove();
         if (mouseWheel != 0)
         {
@@ -84,15 +65,15 @@ int main(void)
             SetTargetFPS(currentFps);
         }
 
-        // GetFrameTime() returns the time it took to draw the last frame, in seconds (usually called delta time).
-        // Uses the delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS.
+        // GetFrameTime() returns the time it took to draw the last frame, in seconds (usually called delta time)
+        // Uses the delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS
 
-        // Multiply by 6.0 (an arbitrary value) in order to make the speed visually closer to the other circle (at 60 fps), for comparison.
+        // Multiply by 6.0 (an arbitrary value) in order to make the speed visually closer to the other circle (at 60 fps), for comparison
         deltaCircle.x += GetFrameTime() * 6.0f * speed;
-        // This circle can move faster or slower visually depending on the FPS.
+        // This circle can move faster or slower visually depending on the FPS
         frameCircle.x += .1f * speed;
 
-        // If either circle is off the screen, reset it back to the start.
+        // If either circle is off the screen, reset it back to the start
         if (deltaCircle.x > screenWidth)
         {
             deltaCircle.x = 0;
@@ -127,14 +108,15 @@ int main(void)
             // Special text for when the FPS target is set to 0 or less, which makes it unlimited.
             fpsText = TextFormat("fps: unlimited (%i)", GetFPS());
         }
-        else {
-            fpsText = TextFormat("fps: %i", GetFPS());
+        else
+        {
+            fpsText = TextFormat("fps: %i (target: %i)", GetFPS(), currentFps);
         }
 
         // Draw the help text
         DrawText(fpsText, 10, 10, 20, DARKGRAY);
         DrawText(TextFormat("frame time: %02.02f ms", GetFrameTime()), 10, 30, 20, DARKGRAY);
-        DrawText("use the scroll wheel/number keys to change the fps limit, r to reset", 10, 50, 20, DARKGRAY);
+        DrawText("use the scroll wheel to change the fps limit, r to reset", 10, 50, 20, DARKGRAY);
 
         // Draw the text above the circles.
         DrawText("x += GetFrameTime() * speed", 10, 90, 20, RED);
