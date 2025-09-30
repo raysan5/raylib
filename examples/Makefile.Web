@@ -615,6 +615,7 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
+    models/models_geometry_textures_cube \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
@@ -1083,6 +1084,10 @@ models/models_first_person_maze: models/models_first_person_maze.c
 
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+models/models_geometry_textures_cube: models/models_geometry_textures_cube.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_heightmap_rendering: models/models_heightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
