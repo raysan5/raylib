@@ -1,7 +1,3 @@
-/*
-4. Code should follow raylib conventions: https://github.com/raysan5/raylib/wiki/raylib-coding-conventions
-Try to be very organized, using line-breaks appropiately
-
 /*******************************************************************************************
 *
 *   raylib [core] example - delta time
@@ -101,7 +97,7 @@ int main(void)
         {
             if (currentFps < 0)
             {
-                // Clamp values below 0.
+                // Clamp values below 0
                 currentFps = 0;
             }
 
