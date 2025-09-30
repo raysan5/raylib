@@ -16,25 +16,21 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include <stdlib.h> // Required for: malloc(), free()
-#include <math.h> // Required for: cosf(), sinf()
 
-#define MAX_BULLETS 500000 // Max bullets that 800x450 can keep on minimum settings is 130.000 bullets
+#include <stdlib.h>         // Required for: calloc(), free()
+#include <math.h>           // Required for: cosf(), sinf()
+
+#define MAX_BULLETS 500000      // Max bullets to be processed
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct Bullet {
-    Vector2 position;
-    Vector2 acceleration; // the amount of pixels to be incremented to position every frame
-    bool disabled; // skip processing and draw case out of screen
-    Color color;
+    Vector2 position;       // Bullet position on screen
+    Vector2 acceleration;   // Amount of pixels to be incremented to position every frame
+    bool disabled;          // Skip processing and draw case out of screen
+    Color color;            // Bullet color
 } Bullet;
-
-//----------------------------------------------------------------------------------
-// Module Functions Declaration
-//----------------------------------------------------------------------------------
-
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -48,8 +44,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - bullet hell");
 
-    // Bullet
-    Bullet *bullets = (Bullet *)malloc(MAX_BULLETS*sizeof(Bullet)); // Bullets array
+    // Bullets definition
+    Bullet *bullets = (Bullet *)RL_CALLOC(MAX_BULLETS, sizeof(Bullet)); // Bullets array
     int bulletCount = 0;
     int bulletDisabledCount = 0; // Used to calculate how many bullets are on screen
     int bulletRadius = 10;
@@ -57,7 +53,7 @@ int main(void)
     int bulletRows = 6;
     Color bulletColor[2] = { RED, BLUE };
 
-    // Spawner
+    // Spawner variables
     float baseDirection = 0;
     int angleIncrement = 5; // After spawn all bullet rows, increment this value on the baseDirection for next the frame
     float spawnCooldown = 2;
@@ -70,15 +66,13 @@ int main(void)
     RenderTexture bulletTexture = LoadRenderTexture(24, 24);
 
     // Draw circle to bullet texture, then draw bullet using DrawTexture()
-    // This is being done to improve the performance, since DrawCircle() is slow
-    BeginDrawing();
+    // NOTE: This is done to improve the performance, since DrawCircle() is very slow
     BeginTextureMode(bulletTexture);
-    DrawCircle(12, 12, bulletRadius, WHITE);
-    DrawCircleLines(12, 12, bulletRadius, BLACK);
+        DrawCircle(12, 12, bulletRadius, WHITE);
+        DrawCircleLines(12, 12, bulletRadius, BLACK);
     EndTextureMode();
-    EndDrawing();
 
-    bool drawInPerformanceMode = true;
+    bool drawInPerformanceMode = true; // Switch between DrawCircle() and DrawTexture()
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -88,7 +82,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
         // Reset the bullet index
         // New bullets will replace the old ones that are already disabled due to out-of-screen
         if (bulletCount >= MAX_BULLETS)
@@ -103,27 +96,25 @@ int main(void)
             spawnCooldownTimer = spawnCooldown;
 
             // Spawn bullets
-            float degreesPerRow = 360.0f / bulletRows;
+            float degreesPerRow = 360.0f/bulletRows;
             for (int row = 0; row < bulletRows; row++)
             {
-
                 if (bulletCount < MAX_BULLETS)
                 {
-
                     bullets[bulletCount].position = (Vector2){(float) screenWidth/2, (float) screenHeight/2};
                     bullets[bulletCount].disabled = false;
-                    bullets[bulletCount].color = bulletColor[row % 2];
+                    bullets[bulletCount].color = bulletColor[row%2];
 
-                    float bulletDirection = baseDirection + (degreesPerRow * row);
+                    float bulletDirection = baseDirection + (degreesPerRow*row);
 
-                    // bullet speed * bullet direction, this will determine how much pixels will be incremented/decremented
+                    // Bullet speed * bullet direction, this will determine how much pixels will be incremented/decremented
                     // from the bullet position every frame. Since the bullets doesn't change its direction and speed,
-                    // only need to calculate it at the spawning time.
-                    // 0 degrees = right, 90 degrees = down, 180 degrees = left and 270 degrees = up, basically clockwise.
+                    // only need to calculate it at the spawning time
+                    // 0 degrees = right, 90 degrees = down, 180 degrees = left and 270 degrees = up, basically clockwise
                     // Case you want it to be anti-clockwise, add "* -1" at the y acceleration
                     bullets[bulletCount].acceleration = (Vector2){
-                        bulletSpeed * cosf(bulletDirection * DEG2RAD),
-                        bulletSpeed * sinf(bulletDirection * DEG2RAD)
+                        bulletSpeed*cosf(bulletDirection*DEG2RAD),
+                        bulletSpeed*sinf(bulletDirection*DEG2RAD)
                     };
 
                     bulletCount++;
@@ -131,29 +122,22 @@ int main(void)
             }
 
             baseDirection += angleIncrement;
-
         }
-
 
         // Update bullets position based on its acceleration
         for (int i = 0; i < bulletCount; i++)
         {
-
             // Only update bullet if inside the screen
             if (!bullets[i].disabled)
             {
-
                 bullets[i].position.x += bullets[i].acceleration.x;
                 bullets[i].position.y += bullets[i].acceleration.y;
 
                 // Disable bullet if out of screen
-                if
-                (
-                    bullets[i].position.x < -bulletRadius*2 ||
-                    bullets[i].position.x > screenWidth + bulletRadius*2 ||
-                    bullets[i].position.y < -bulletRadius*2 ||
-                    bullets[i].position.y > screenHeight + bulletRadius*2
-                )
+                if ((bullets[i].position.x < -bulletRadius*2) ||
+                    (bullets[i].position.x > screenWidth + bulletRadius*2) ||
+                    (bullets[i].position.y < -bulletRadius*2) ||
+                    (bullets[i].position.y > screenHeight + bulletRadius*2))
                 {
                     bullets[i].disabled = true;
                     bulletDisabledCount++;
@@ -161,12 +145,12 @@ int main(void)
             }
         }
 
-        // Input
-        if ((IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) && bulletRows < 359) bulletRows++;
-        if ((IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) && bulletRows > 1) bulletRows--;
+        // Input logic
+        if ((IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) && (bulletRows < 359)) bulletRows++;
+        if ((IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) && (bulletRows > 1)) bulletRows--;
         if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) bulletSpeed += 0.25f;
-        if ((IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) && bulletSpeed > 0.50f) bulletSpeed -= 0.25f;
-        if (IsKeyPressed(KEY_Z) && spawnCooldown > 1) spawnCooldown--;
+        if ((IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) && (bulletSpeed > 0.50f)) bulletSpeed -= 0.25f;
+        if (IsKeyPressed(KEY_Z) && (spawnCooldown > 1)) spawnCooldown--;
         if (IsKeyPressed(KEY_X)) spawnCooldown++;
         if (IsKeyPressed(KEY_ENTER)) drawInPerformanceMode = !drawInPerformanceMode;
 
@@ -181,51 +165,42 @@ int main(void)
             bulletCount = 0;
             bulletDisabledCount = 0;
         }
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
             ClearBackground(RAYWHITE);
 
             // Draw magic circle
             magicCircleRotation++;
-            DrawRectanglePro(
-                (Rectangle) { (float) screenWidth/2, (float) screenHeight/2, 120, 120 },
-                (Vector2) { 60, 60 },
-                magicCircleRotation,
-                PURPLE
-            );
-            DrawRectanglePro(
-                (Rectangle) { (float) screenWidth/2, (float) screenHeight/2, 120, 120 },
-                (Vector2) { 60, 60 },
-                magicCircleRotation + 45,
-                PURPLE
-            );
+            DrawRectanglePro((Rectangle){ (float)screenWidth/2, (float)screenHeight/2, 120, 120 },
+                (Vector2){ 60.0f, 60.0f }, magicCircleRotation, PURPLE);
+            DrawRectanglePro((Rectangle){ (float)screenWidth/2, (float)screenHeight/2, 120, 120 },
+                (Vector2){ 60.0f, 60.0f }, magicCircleRotation + 45, PURPLE);
             DrawCircleLines(screenWidth/2, screenHeight/2, 70, BLACK);
             DrawCircleLines(screenWidth/2, screenHeight/2, 50, BLACK);
             DrawCircleLines(screenWidth/2, screenHeight/2, 30, BLACK);
 
-
             // Draw bullets
-            // DrawInPerformanceMode = draw bullets using DrawTexture, DrawCircle is vary slow
             if (drawInPerformanceMode)
             {
+                // Draw bullets using pre-rendered texture containing circle
                 for (int i = 0; i < bulletCount; i++)
                 {
                     // Do not draw disabled bullets (out of screen)
                     if (!bullets[i].disabled)
                     {
-                        DrawTexture(
-                            bulletTexture.texture,
+                        DrawTexture(bulletTexture.texture,
                             bullets[i].position.x - bulletTexture.texture.width*0.5f,
                             bullets[i].position.y - bulletTexture.texture.height*0.5f,
-                            bullets[i].color
-                        );
+                            bullets[i].color);
                     }
                 }
-            } else {
-
+            } 
+            else
+            {
+                // Draw bullets using DrawCircle(), less performant
                 for (int i = 0; i < bulletCount; i++)
                 {
                     // Do not draw disabled bullets (out of screen)
@@ -248,25 +223,13 @@ int main(void)
             DrawText("- C: Clear bullets", 40, 140, 10, LIGHTGRAY);
 
             DrawRectangle(610, 10, 170, 30, (Color){0,0, 0, 200 });
-            if (drawInPerformanceMode)
-            {
-                DrawText("Draw method: DrawTexture(*)", 620, 20, 10, GREEN);
-            } else {
-                DrawText("Draw method: DrawCircle(*)", 620, 20, 10, RED);
-            }
-            
+            if (drawInPerformanceMode) DrawText("Draw method: DrawTexture(*)", 620, 20, 10, GREEN);
+            else DrawText("Draw method: DrawCircle(*)", 620, 20, 10, RED);
 
             DrawRectangle(135, 410, 530, 30, (Color){0,0, 0, 200 });
-            DrawText(
-                TextFormat(
-                    "[ FPS: %d, Bullets: %d, Rows: %d, Bullet speed: %.2f, Angle increment per frame: %d, Cooldown: %.0f ]",
-                    GetFPS(), bulletCount - bulletDisabledCount, bulletRows, bulletSpeed,  angleIncrement, spawnCooldown
-                ),
-                155,
-                420,
-                10,
-                GREEN
-            );
+            DrawText(TextFormat("[ FPS: %d, Bullets: %d, Rows: %d, Bullet speed: %.2f, Angle increment per frame: %d, Cooldown: %.0f ]",
+                    GetFPS(), bulletCount - bulletDisabledCount, bulletRows, bulletSpeed,  angleIncrement, spawnCooldown),
+                155, 420, 10, GREEN);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -274,10 +237,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadRenderTexture(bulletTexture); // Unload bullet texture
 
-    UnloadRenderTexture(bulletTexture);
-
-    free(bullets);
+    RL_FREE(bullets);     // Free bullets array data
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
