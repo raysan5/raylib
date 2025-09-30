@@ -1,6 +1,6 @@
 #version 100
 
-precision highp float;
+precision mediump float;
 
 // Input from the vertex shader
 varying vec2 fragTexCoord;
