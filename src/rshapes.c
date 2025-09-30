@@ -182,6 +182,55 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
     rlEnd();
 }
 
+void DrawLineDashed(Vector2 startPos, Vector2 endPos, int dashSize, int whiteSpaceSize, Color color)
+{
+    // Calculate the vector and length of the line
+    float dx = endPos.x - startPos.x;
+    float dy = endPos.y - startPos.y;
+    float lineLength = sqrtf(dx*dx + dy*dy);
+
+    // If the line is too short for dashing or dash size is invalid, draw a solid thick line
+    if (lineLength < (dashSize + whiteSpaceSize) || dashSize <= 0)
+    {
+        DrawLineV(startPos, endPos, color);
+        return;
+    }
+
+    // Calculate the normalized direction vector of the line
+    float invLineLength = 1 / lineLength;
+    float dirX = dx * invLineLength;
+    float dirY = dy * invLineLength;
+
+    Vector2 currentPos = startPos;
+    float distanceTraveled = 0;
+
+    rlBegin(RL_LINES);
+    rlColor4ub(color.r, color.g, color.b, color.a);
+
+    while (distanceTraveled < lineLength)
+    {
+        // Calculate the end of the current dash
+        float dashEndDist = distanceTraveled + dashSize;
+        if (dashEndDist > lineLength)
+        {
+            dashEndDist = lineLength;
+        }
+
+        Vector2 dashEndPos = { startPos.x + dashEndDist * dirX, startPos.y + dashEndDist * dirY };
+
+        // Draw the dash segment
+        rlVertex2f(currentPos.x, currentPos.y);
+        rlVertex2f(dashEndPos.x, dashEndPos.y);
+
+        // Update the distance traveled and move the current position for the next dash
+        distanceTraveled = dashEndDist + whiteSpaceSize;
+        currentPos.x = startPos.x + distanceTraveled * dirX;
+        currentPos.y = startPos.y + distanceTraveled * dirY;
+    }
+
+    rlEnd();
+}
+
 // Draw a line (using gl lines)
 void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
