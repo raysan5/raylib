@@ -541,6 +541,7 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_bullet_hell \
     shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \

@@ -72,6 +72,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 |-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
 | [shapes_basic_shapes](shapes/shapes_basic_shapes.c) | <img src="shapes/shapes_basic_shapes.png" alt="shapes_basic_shapes" width="80"> | ⭐☆☆☆ | 1.0 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_bouncing_ball](shapes/shapes_bouncing_ball.c) | <img src="shapes/shapes_bouncing_ball.png" alt="shapes_bouncing_ball" width="80"> | ⭐☆☆☆ | 2.5 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_bullet_hell](shapes/shapes_bullet_hell.c) | <img src="shapes/shapes_bullet_hell.png" alt="shapes_bullet_hell" width="80"> | ⭐☆☆☆ | 5.6 | 5.6 | [Zero](https://github.com/zerohorsepower) |
 | [shapes_colors_palette](shapes/shapes_colors_palette.c) | <img src="shapes/shapes_colors_palette.png" alt="shapes_colors_palette" width="80"> | ⭐⭐☆☆ | 1.0 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_logo_raylib](shapes/shapes_logo_raylib.c) | <img src="shapes/shapes_logo_raylib.png" alt="shapes_logo_raylib" width="80"> | ⭐☆☆☆ | 1.0 | 1.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_logo_raylib_anim](shapes/shapes_logo_raylib_anim.c) | <img src="shapes/shapes_logo_raylib_anim.png" alt="shapes_logo_raylib_anim" width="80"> | ⭐⭐☆☆ | 2.5 | 4.0 | [Ramon Santamaria](https://github.com/raysan5) |
