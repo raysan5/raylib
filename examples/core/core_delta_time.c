@@ -118,7 +118,7 @@ int main(void)
         DrawText(TextFormat("frame time: %02.02f ms", GetFrameTime()), 10, 30, 20, DARKGRAY);
         DrawText("use the scroll wheel to change the fps limit, r to reset", 10, 50, 20, DARKGRAY);
 
-        // Draw the text above the circles.
+        // Draw the text above the circles
         DrawText("x += GetFrameTime() * speed", 10, 90, 20, RED);
         DrawText("x += speed", 10, 240, 20, BLUE);
 
