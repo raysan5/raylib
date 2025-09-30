@@ -4,8 +4,10 @@
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   Example originally created with raylib 2.5, last time updated with raylib 5.6
 *
+*   Example contributed by Jopestpe (@jopestpe)
+* 
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
@@ -31,6 +33,7 @@ int main(void)
     Vector2 ballPosition = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
     Vector2 ballSpeed = { 5.0f, 4.0f };
     int ballRadius = 20;
+    float gravity = 0.2f;
 
     bool pause = 0;
     int framesCounter = 0;
@@ -50,9 +53,11 @@ int main(void)
             ballPosition.x += ballSpeed.x;
             ballPosition.y += ballSpeed.y;
 
+            ballSpeed.y += gravity;
+            
             // Check walls collision for bouncing
             if ((ballPosition.x >= (GetScreenWidth() - ballRadius)) || (ballPosition.x <= ballRadius)) ballSpeed.x *= -1.0f;
-            if ((ballPosition.y >= (GetScreenHeight() - ballRadius)) || (ballPosition.y <= ballRadius)) ballSpeed.y *= -1.0f;
+            if ((ballPosition.y >= (GetScreenHeight() - ballRadius))) ballSpeed.y *= -0.95f;
         }
         else framesCounter++;
         //-----------------------------------------------------
