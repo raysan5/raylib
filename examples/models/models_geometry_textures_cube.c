@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - geometry textures cube
+*   raylib [models] example - geometry textures cube
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -57,9 +57,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
-
         rotation += 1.0f;
         
         // Draw
