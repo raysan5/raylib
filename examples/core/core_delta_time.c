@@ -35,11 +35,11 @@ int main(void)
 
     int currentFps = 60;
 
-    // Store the position for the both of the circles.
+    // Store the position for the both of the circles
     Vector2 deltaCircle = {0, screenHeight / 3.0f};
     Vector2 frameCircle = {0, screenHeight * (2.0f/3.0f)};
 
-    // The speed applied to both circles.
+    // The speed applied to both circles
     const float speed = 10.0;
     const float circleRadius = 32;
 
@@ -90,11 +90,11 @@ int main(void)
 
         ClearBackground(RAYWHITE);
 
-        // Draw both circles to the screen.
+        // Draw both circles to the screen
         DrawCircleV(deltaCircle, circleRadius, RED);
         DrawCircleV(frameCircle, circleRadius, BLUE);
 
-        // Determine what help text to show depending on the current FPS target.
+        // Determine what help text to show depending on the current FPS target
         const char* fpsText;
 
         if (currentFps <= 0)
@@ -105,7 +105,7 @@ int main(void)
                 currentFps = 0;
             }
 
-            // Special text for when the FPS target is set to 0 or less, which makes it unlimited.
+            // Special text for when the FPS target is set to 0 or less, which makes it unlimited
             fpsText = TextFormat("fps: unlimited (%i)", GetFPS());
         }
         else
