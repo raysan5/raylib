@@ -67,58 +67,52 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-    
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_LEFT) && fontSize > 9.0) fontSize -= 1;  // Reduce fontSize
-
-        if (IsKeyPressed(KEY_RIGHT) && fontSize < 15.0) fontSize += 1;  // Increase fontSize
-
-        if (circlePos.x > 200.0f || circlePos.x < 40.0f) circleSpeed *= -1; // Revert speed
-
         circlePos.x += circleSpeed;
+        if ((circlePos.x > 200.0f) || (circlePos.x < 40.0f)) circleSpeed *= -1; // Revert speed
+
+        if (IsKeyPressed(KEY_LEFT) && (fontSize > 9.0)) fontSize -= 1;  // Reduce fontSize
+        if (IsKeyPressed(KEY_RIGHT) && (fontSize < 15.0)) fontSize += 1;  // Increase fontSize
 
         // Set fontsize for the shader
         SetShaderValue(shader, fontSizeLoc, &fontSize, SHADER_UNIFORM_FLOAT);
 
         // Draw
         //----------------------------------------------------------------------------------
-
         BeginTextureMode(target);
-            ClearBackground(WHITE); // The background of the scene itself
+            ClearBackground(WHITE);
 
-            // Samples Using custom shader
+            // Draw scene in our render texture
             DrawTexture(fudesumi, 500, -30, WHITE);
             DrawTextureV(raysan, circlePos, WHITE);
-
         EndTextureMode();
+        
         BeginDrawing();
-
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shader);
-
                 // Draw the scene texture (that we rendered earlier) to the screen
                 // The shader will process every pixel of this texture
                 DrawTextureRec(target.texture, 
-                               (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
-                               (Vector2){ 0, 0 }, 
-                               WHITE);
+                    (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
+                    (Vector2){ 0, 0 }, WHITE);
             EndShaderMode();
 
             DrawRectangle(0, 0, screenWidth, 40, BLACK);
             DrawText(TextFormat("Ascii effect - FontSize:%2.0f - [Left] -1 [Right] +1 ", fontSize), 120, 10, 20, LIGHTGRAY);
             DrawFPS(10, 10);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);       // Unload shader
-    UnloadTexture(fudesumi);    // Unload texture
-    UnloadTexture(raysan);      // Unload texture
+    UnloadRenderTexture(target);    // Unload render texture
+
+    UnloadShader(shader);           // Unload shader
+    UnloadTexture(fudesumi);        // Unload texture
+    UnloadTexture(raysan);          // Unload texture
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
