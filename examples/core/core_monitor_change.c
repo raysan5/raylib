@@ -56,22 +56,19 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
 
-        // Rebuild monitors array with the new monitor count
-        if (monitorCount != GetMonitorCount())
+        // Rebuild monitors array every frame
+        monitorCount = GetMonitorCount();
+        for (int i = 0; i < monitorCount; i++)
         {
-            monitorCount = GetMonitorCount();
-            for (int i = 0; i < monitorCount; i++)
-            {
-                monitors[i] = (Monitor){
-                    GetMonitorPosition(i), 
-                    GetMonitorName(i), 
-                    GetMonitorWidth(i),
-                    GetMonitorHeight(i),
-                    GetMonitorPhysicalWidth(i),
-                    GetMonitorPhysicalHeight(i),
-                    GetMonitorRefreshRate(i)
-                };
-            }
+            monitors[i] = (Monitor){
+                GetMonitorPosition(i), 
+                GetMonitorName(i), 
+                GetMonitorWidth(i),
+                GetMonitorHeight(i),
+                GetMonitorPhysicalWidth(i),
+                GetMonitorPhysicalHeight(i),
+                GetMonitorRefreshRate(i)
+            };
         }
 
         if (IsKeyPressed(KEY_ENTER) && monitorCount > 1) 
