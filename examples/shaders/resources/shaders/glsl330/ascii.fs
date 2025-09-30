@@ -12,23 +12,26 @@ uniform vec2 resolution;
 // Fontsize less then 9 may be not complete
 uniform float fontSize;
 
-float greyScale(in vec3 col)
+float GreyScale(in vec3 col)
 {
     return dot(col, vec3(0.2126, 0.7152, 0.0722));
 }
 
-float character(int n, vec2 p)
+float GetCharacter(int n, vec2 p)
 {
 	p = floor(p*vec2(-4.0, 4.0) + 2.5);
 	
-	// Check if the coordinate is inside the 5x5 grid (0 to 4).
+	// Check if the coordinate is inside the 5x5 grid (0 to 4)
 	if (clamp(p.x, 0.0, 4.0) == p.x && clamp(p.y, 0.0, 4.0) == p.y)
     {
-        int a = int(round(p.x) + 5.0 * round(p.y));
-        if (((n >> a) & 1) == 1) return 1.0;
+        int a = int(round(p.x) + 5.0*round(p.y));
+        if (((n >> a) & 1) == 1)
+        {
+            return 1.0;
+        }
     }
 
-	return 0.0; // The bit is off, or we are outside the grid.
+	return 0.0; // The bit is off, or we are outside the grid
 }
 
 // -----------------------------------------------------------------------------
@@ -38,15 +41,15 @@ float character(int n, vec2 p)
 void main() 
 {
     vec2 charPixelSize = vec2(fontSize, fontSize);
-    vec2 uvCellSize = charPixelSize / resolution;
+    vec2 uvCellSize = charPixelSize/resolution;
 
     // The cell size is based on the fontSize set by application
-    vec2 cellUV = floor(fragTexCoord / uvCellSize)*uvCellSize;
+    vec2 cellUV = floor(fragTexCoord/uvCellSize)*uvCellSize;
 
     vec3 cellColor = texture(texture0, cellUV).rgb;
 
     // Gray is used to define what character will be selected to draw
-    float gray = greyScale(cellColor);
+    float gray = GreyScale(cellColor);
 
 	int n =  4096;
     
@@ -64,9 +67,7 @@ void main()
 
     vec2 p = localUV*2.0 - 1.0; // Range [-1.0, 1.0]
 
-    float charShape = character(n, p);
-
-    vec3 color = cellColor*charShape;
+    vec3 color = cellColor*GetCharacter(n, p);
 
     finalColor = vec4(color, 1.0);
 }

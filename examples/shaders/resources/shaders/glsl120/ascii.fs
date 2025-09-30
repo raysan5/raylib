@@ -12,30 +12,30 @@ uniform vec2 resolution;
 // Fontsize less then 9 may be not complete
 uniform float fontSize;
 
-float greyScale(in vec3 col)
+float GreyScale(in vec3 col)
 {
     return dot(col, vec3(0.2126, 0.7152, 0.0722));
 }
 
-float character(float n, vec2 p)
+float GetCharacter(float n, vec2 p)
 {
     p = floor(p*vec2(-4.0, 4.0) + 2.5);
 
-    // Check if the calculated coordinate is inside the 5x5 grid (from 0.0 to 4.0).
+    // Check if the calculated coordinate is inside the 5x5 grid (from 0.0 to 4.0)
     if (clamp(p.x, 0.0, 4.0) == p.x && clamp(p.y, 0.0, 4.0) == p.y)
     {
         float a = floor(p.x + 0.5) + 5.0*floor(p.y + 0.5);
 
-        // This checked if the 'a'-th bit of 'n' was set.
-        float shifted_n = floor(n/pow(2.0, a));
+        // This checked if the 'a'-th bit of 'n' was set
+        float shiftedN = floor(n/pow(2.0, a));
 
-        if (mod(shifted_n, 2.0) == 1.0)
+        if (mod(shiftedN, 2.0) == 1.0)
         {
-            return 1.0; // The bit is on.
+            return 1.0; // The bit is on
         }
     }
 
-    return 0.0; // The bit is off, or we are outside the grid.
+    return 0.0; // The bit is off, or we are outside the grid
 }
 
 // -----------------------------------------------------------------------------
@@ -53,7 +53,7 @@ void main()
     vec3 cellColor = texture2D(texture0, cellUV).rgb;
 
     // Gray is used to define what character will be selected to draw
-    float gray = greyScale(cellColor);
+    float gray = GreyScale(cellColor);
 
 	float n =  4096.0;
     
@@ -71,10 +71,8 @@ void main()
 
     vec2 p = localUV*2.0 - 1.0; // Range [-1.0, 1.0]
 
-    float charShape = character(n, p);
-
     // cellColor and charShape will define the color of the char
-    vec3 color = cellColor*charShape;
+    vec3 color = cellColor*GetCharacter(n, p);
 
     gl_FragColor = vec4(color, 1.0);
 }

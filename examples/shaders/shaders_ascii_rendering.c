@@ -48,14 +48,14 @@ int main(void)
     int fontSizeLoc = GetShaderLocation(shader, "fontSize");
 
     // Set the character size for the ASCII effect
-    // fontsize should be 9 or more
+    // Fontsize should be 9 or more
     float fontSize = 9.0f;
 
     // Send the updated values to the shader
     float resolution[2] = { (float)screenWidth, (float)screenHeight };
     SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
 
-    Vector2 circlePos = (Vector2){40.0f, (float)screenHeight * 0.5f};
+    Vector2 circlePos = (Vector2){40.0f, (float)screenHeight*0.5f};
     float circleSpeed = 1.0f;
 
     // RenderTexture to apply the postprocessing later
@@ -70,19 +70,11 @@ int main(void)
     
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_LEFT) && fontSize > 9.0)
-        {
-            fontSize -= 1;  // Reduce fontSize
-        }
+        if (IsKeyPressed(KEY_LEFT) && fontSize > 9.0) fontSize -= 1;  // Reduce fontSize
 
-        if (IsKeyPressed(KEY_RIGHT) && fontSize < 15.0)
-        {
-            fontSize += 1;  // Increase fontSize
-        }
+        if (IsKeyPressed(KEY_RIGHT) && fontSize < 15.0) fontSize += 1;  // Increase fontSize
 
-        if (circlePos.x > 200.0f || circlePos.x < 40.0f) {
-            circleSpeed *= -1;
-        }
+        if (circlePos.x > 200.0f || circlePos.x < 40.0f) circleSpeed *= -1; // Revert speed
 
         circlePos.x += circleSpeed;
 
@@ -106,8 +98,8 @@ int main(void)
 
             BeginShaderMode(shader);
 
-                // Draw the scene texture (that we rendered earlier) to the screen.
-                // The shader will process every pixel of this texture.
+                // Draw the scene texture (that we rendered earlier) to the screen
+                // The shader will process every pixel of this texture
                 DrawTextureRec(target.texture, 
                                (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
                                (Vector2){ 0, 0 }, 
