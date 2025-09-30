@@ -63,18 +63,20 @@
     #include "SDL.h"
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    // It seems it does not need to be included to work
-    //#include "SDL_opengles2.h"
-#else
-    // SDL OpenGL functionality (if required, instead of internal renderer)
-    #ifdef USING_SDL3_PROJECT
-        #include "SDL3/SDL_opengl.h"
-    #elif USING_SDL2_PROJECT
-        #include "SDL2/SDL_opengl.h"
-    #else
-        #include "SDL_opengl.h"
-    #endif
+#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+  #if defined(GRAPHICS_API_OPENGL_ES2)
+      // It seems it does not need to be included to work
+      //#include "SDL_opengles2.h"
+  #else
+      // SDL OpenGL functionality (if required, instead of internal renderer)
+      #ifdef USING_SDL3_PROJECT
+          #include "SDL3/SDL_opengl.h"
+      #elif USING_SDL2_PROJECT
+          #include "SDL2/SDL_opengl.h"
+      #else
+          #include "SDL_opengl.h"
+      #endif
+  #endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1229,7 +1231,14 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // NOTE: We use a preprocessor condition here because `rlCopyFramebuffer` is only declared for software rendering
+    SDL_Surface *surface = SDL_GetWindowSurface(platform.window);
+    rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, surface->pixels);
+    SDL_UpdateWindowSurface(platform.window);
+#else
     SDL_GL_SwapWindow(platform.window);
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -1577,13 +1586,15 @@ void PollInputEvents(void)
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
                     // Add character (codepoint) to the queue
-                    #if defined(USING_VERSION_SDL3)
+
+                #if defined(USING_VERSION_SDL3)
                     size_t textLen = strlen(event.text.text);
                     unsigned int codepoint = (unsigned int)SDL_StepUTF8(&event.text.text, &textLen);
-                    #else
+                #else
                     int codepointSize = 0;
                     int codepoint = GetCodepointNextSDL(event.text.text, &codepointSize);
-                    #endif
+                #endif
+
                     CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = codepoint;
                     CORE.Input.Keyboard.charPressedQueueCount++;
                 }
@@ -1887,7 +1898,6 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     unsigned int flags = 0;
     flags |= SDL_WINDOW_SHOWN;
-    flags |= SDL_WINDOW_OPENGL;
     flags |= SDL_WINDOW_INPUT_FOCUS;
     flags |= SDL_WINDOW_MOUSE_FOCUS;
     flags |= SDL_WINDOW_MOUSE_CAPTURE;  // Window has mouse captured
@@ -1922,44 +1932,50 @@ int InitPlatform(void)
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
-    // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_21)
+    if (rlGetVersion() != RL_OPENGL_11_SOFTWARE)
     {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    }
-    else if (rlGetVersion() == RL_OPENGL_33)
-    {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    }
-    else if (rlGetVersion() == RL_OPENGL_43)
-    {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-#if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);   // Enable OpenGL Debug Context
-#endif
-    }
-    else if (rlGetVersion() == RL_OPENGL_ES_20)                 // Request OpenGL ES 2.0 context
-    {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    }
-    else if (rlGetVersion() == RL_OPENGL_ES_30)                 // Request OpenGL ES 3.0 context
-    {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    }
+        // Add the flag telling the window to use an OpenGL context
+        flags |= SDL_WINDOW_OPENGL;
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-    {
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+        // Check selection OpenGL version
+        if (rlGetVersion() == RL_OPENGL_21)
+        {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+        }
+        else if (rlGetVersion() == RL_OPENGL_33)
+        {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        }
+        else if (rlGetVersion() == RL_OPENGL_43)
+        {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    #if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);   // Enable OpenGL Debug Context
+    #endif
+        }
+        else if (rlGetVersion() == RL_OPENGL_ES_20)                 // Request OpenGL ES 2.0 context
+        {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        }
+        else if (rlGetVersion() == RL_OPENGL_ES_30)                 // Request OpenGL ES 3.0 context
+        {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        }
+
+        if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+        {
+            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+        }
     }
 
     // Init window
@@ -1970,10 +1986,12 @@ int InitPlatform(void)
 #endif
 
     // Init OpenGL context
-    platform.glContext = SDL_GL_CreateContext(platform.window);
+    if (rlGetVersion() != RL_OPENGL_11_SOFTWARE)
+    {
+        platform.glContext = SDL_GL_CreateContext(platform.window);
+    }
 
-    // Check window and glContext have been initialized successfully
-    if ((platform.window != NULL) && (platform.glContext != NULL))
+    if ((platform.window != NULL) && ((rlGetVersion() == RL_OPENGL_11_SOFTWARE) || (platform.glContext != NULL)))
     {
         CORE.Window.ready = true;
 
@@ -1994,8 +2012,14 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
-        if (CORE.Window.flags & FLAG_VSYNC_HINT) SDL_GL_SetSwapInterval(1);
-        else SDL_GL_SetSwapInterval(0);
+        if (platform.glContext != NULL)
+        {
+            SDL_GL_SetSwapInterval((CORE.Window.flags & FLAG_VSYNC_HINT)? 1 : 0);
+
+            // Load OpenGL extensions
+            // NOTE: GL procedures address loader is required to load extensions
+            rlLoadExtensions(SDL_GL_GetProcAddress);
+        }
     }
     else
     {
@@ -2003,9 +2027,6 @@ int InitPlatform(void)
         return -1;
     }
 
-    // Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(SDL_GL_GetProcAddress);
     //----------------------------------------------------------------------------
 
     // Initialize input events system
@@ -2077,7 +2098,7 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     SDL_FreeCursor(platform.cursor); // Free cursor
-    SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
+    if (platform.glContext != NULL) SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
     SDL_DestroyWindow(platform.window);
     SDL_Quit(); // Deinitialize SDL internal global state
 }

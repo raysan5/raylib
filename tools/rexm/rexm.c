@@ -2047,6 +2047,7 @@ static void SortExampleByName(rlExampleInfo *items, int count)
 // WARNING: Supported resource file extensions is hardcoded by used file types
 // but new examples could require other file extensions to be added,
 // maybe it should look for '.xxx")' patterns instead
+// TODO: WARNING: Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png, ...
 static char **ScanExampleResources(const char *filePath, int *resPathCount)
 {
     #define REXM_MAX_RESOURCE_PATH_LEN    256
@@ -2330,7 +2331,7 @@ static const char *GenerateUUIDv4(void)
 // Update source code header and comments metadata
 static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info)
 {
-    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
+    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c") && (!TextIsEqual(info->category, "others")))
     {
         // WARNING: Cache a copy of exSrcPath to avoid modifications by TextFormat()
         char exSourcePath[512] = { 0 };

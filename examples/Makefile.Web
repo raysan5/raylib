@@ -516,6 +516,7 @@ CORE = \
     core/core_custom_logging \
     core/core_drop_files \
     core/core_high_dpi \
+    core/core_input_actions \
     core/core_input_gamepad \
     core/core_input_gestures \
     core/core_input_gestures_testbed \
@@ -606,6 +607,7 @@ TEXT = \
 MODELS = \
     models/models_animation_gpu_skinning \
     models/models_animation_playing \
+    models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
@@ -730,6 +732,9 @@ core/core_drop_files: core/core_drop_files.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_high_dpi: core/core_high_dpi.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_input_actions: core/core_input_actions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_gamepad: core/core_input_gamepad.c
@@ -1044,6 +1049,9 @@ models/models_animation_playing: models/models_animation_playing.c
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
     --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
+
+models/models_basic_voxel: models/models_basic_voxel.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 models/models_billboard_rendering: models/models_billboard_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

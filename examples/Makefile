@@ -516,6 +516,7 @@ CORE = \
     core/core_custom_logging \
     core/core_drop_files \
     core/core_high_dpi \
+    core/core_input_actions \
     core/core_input_gamepad \
     core/core_input_gestures \
     core/core_input_gestures_testbed \
@@ -606,6 +607,7 @@ TEXT = \
 MODELS = \
     models/models_animation_gpu_skinning \
     models/models_animation_playing \
+    models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
