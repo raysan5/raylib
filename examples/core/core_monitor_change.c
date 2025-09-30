@@ -17,6 +17,19 @@
 
 #include "raylib.h"
 
+#define MAX_MONITORS 10
+
+// Monitor Details
+typedef struct Monitor {
+    Vector2 position;
+    char *name;
+    int width;
+    int height;
+    int physicalWidth;
+    int physicalHeight;
+    int refreshRate;
+} Monitor;
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -27,9 +40,12 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    Monitor monitors[MAX_MONITORS] = { 0 };
+
     InitWindow(screenWidth, screenHeight, "raylib [core] example - monitor change");
 
-    int currentMonitor = GetCurrentMonitor();
+    int currentMonitorIndex = GetCurrentMonitor();
+    int monitorCount = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -40,18 +56,43 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
 
-        if (IsKeyPressed(KEY_ENTER)) {
-            currentMonitor += 1;
-            if(currentMonitor == GetMonitorCount()) {
-                currentMonitor = 0;
+        // Rebuild monitors array with the new monitor count
+        if (monitorCount != GetMonitorCount())
+        {
+            monitorCount = GetMonitorCount();
+            for (int i = 0; i < monitorCount; i++)
+            {
+                monitors[i] = (Monitor){
+                    GetMonitorPosition(i), 
+                    GetMonitorName(i), 
+                    GetMonitorWidth(i),
+                    GetMonitorHeight(i),
+                    GetMonitorPhysicalWidth(i),
+                    GetMonitorPhysicalHeight(i),
+                    GetMonitorRefreshRate(i)
+                };
             }
-            SetWindowMonitor(currentMonitor);
-        } else {
-            currentMonitor = GetCurrentMonitor();
         }
-        
-        const Vector2 resolution = (Vector2){(float)GetMonitorWidth(currentMonitor), (float)GetMonitorHeight(currentMonitor)};
-        const int refreshRate = GetMonitorRefreshRate(currentMonitor);
+
+        if (IsKeyPressed(KEY_ENTER) && monitorCount > 1) 
+        {
+            currentMonitorIndex += 1;
+
+            // Set index to 0 if the last one
+            if(currentMonitorIndex == GetMonitorCount()) 
+            {
+                currentMonitorIndex = 0;
+            }
+            SetWindowMonitor(currentMonitorIndex); // Move window to currentMonitorIndex
+        }
+        else 
+        {
+            // Get currentMonitorIndex if manually moved
+            currentMonitorIndex = GetCurrentMonitor();
+        }
+        const Monitor currentMonitor = monitors[currentMonitorIndex];
+
+        const float monitorScale = 0.2 / monitorCount; 
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -59,16 +100,50 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("[Enter] Move to the next monitor available", 20, 20, 20, DARKGRAY);
+            DrawText("Press [Enter] to move window to next monitor available", 20, 20, 20, DARKGRAY);
 
             DrawText(
-                TextFormat("%3.0f x %3.0f [%ihz]", 
-                    resolution.x, 
-                    resolution.y,
-                    refreshRate
-                ), 20, 70, 20, GRAY);
-            DrawText(TextFormat("%i", currentMonitor), screenWidth * 0.5, screenHeight * 0.5, 70, GRAY);
-            DrawRectangleLines(20, 100, screenWidth - 40, screenHeight - 120, DARKGRAY);
+                TextFormat("Resolution: [%ipx x %ipx]\nRefreshRate: [%ihz]\nPhysical Size: [%imm x %imm]\nPosition: %3.2f x %3.2f", 
+                    currentMonitor.width, 
+                    currentMonitor.height, 
+                    currentMonitor.refreshRate,
+                    currentMonitor.physicalWidth,
+                    currentMonitor.physicalHeight,
+                    currentMonitor.position.x,
+                    currentMonitor.position.y
+                ), 30, 80, 20, GRAY);
+
+            // List available Monitors
+            for (int i = 0; i < monitorCount; i++)
+            {
+                DrawText(TextFormat("%s", monitors[i].name), 40, 180 + 20*i, 20, GRAY);
+                if (i == currentMonitorIndex)
+                {
+                    DrawCircle(30, 190 + 20*i, 5, RED);
+                }
+            }
+            DrawRectangleLines(20, 60, screenWidth - 40, screenHeight - 100, DARKGRAY);
+
+            // Draw Monitors
+            for (int i = 0; i < monitorCount; i++)
+            {
+                const Rectangle rec = (Rectangle){
+                    monitors[i].position.x * monitorScale + 140,
+                    monitors[i].position.y * monitorScale + 180,
+                    monitors[i].width * monitorScale,
+                    monitors[i].height * monitorScale
+                };
+                if (i == currentMonitorIndex)
+                {
+                    DrawRectangleLinesEx(rec, 5, RED);
+                }
+                else
+                {
+                    DrawRectangleLinesEx(rec, 5, GRAY);
+                }
+                DrawText(TextFormat("%i", i), rec.x + rec.width * 0.5 - 10, rec.y + rec.height * 0.5 - 25, 50, GRAY);
+
+            }
 
 
         EndDrawing();
