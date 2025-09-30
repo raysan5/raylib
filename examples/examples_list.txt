@@ -47,6 +47,7 @@ core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
 core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoom
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
+shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
 shapes;shapes_colors_palette;★★☆☆;1.0;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_logo_raylib_anim;★★☆☆;2.5;4.0;2014;2025;"Ramon Santamaria";@raysan5
