@@ -35,7 +35,7 @@ PROJECT_BUILD_PATH    ?= .
 PROJECT_SOURCE_FILES  ?= rexm.c
 
 # raylib library variables
-RAYLIB_SRC_PATH       ?= ..\..\src
+RAYLIB_SRC_PATH       ?= ../../src
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 
@@ -236,7 +236,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --source-map-base          # allow debugging in browser with source map
     # --shell-file shell.html    # define a custom shell .html and output extension
     LDFLAGS += -sUSE_GLFW=3 -sTOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -sSTACK_SIZE=$(BUILD_WEB_STACK_SIZE) -sFORCE_FILESYSTEM=1 -sMINIFY_HTML=0
-    
+
     # Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
         LDFLAGS += -sASYNCIFY -sASYNCIFY_STACK_SIZE=$(BUILD_WEB_ASYNCIFY_STACK_SIZE)
@@ -363,4 +363,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-
