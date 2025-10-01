@@ -355,7 +355,7 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     ifeq ($(BUILD_WEB_WEBGL2),TRUE)
         LDFLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
     endif
-    
+
     # Add resources building if required
     ifeq ($(BUILD_WEB_RESOURCES),TRUE)
         LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
@@ -559,7 +559,8 @@ SHAPES = \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
-    shapes/shapes_top_down_lights
+    shapes/shapes_top_down_lights \
+    shapes/shapes_dashed_line
 
 TEXTURES = \
     textures/textures_background_scrolling \
