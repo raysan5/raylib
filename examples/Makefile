@@ -355,7 +355,7 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     ifeq ($(BUILD_WEB_WEBGL2),TRUE)
         LDFLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
     endif
-    
+
     # Add resources building if required
     ifeq ($(BUILD_WEB_RESOURCES),TRUE)
         LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
@@ -516,6 +516,7 @@ CORE = \
     core/core_custom_logging \
     core/core_drop_files \
     core/core_high_dpi \
+    core/core_input_actions \
     core/core_input_gamepad \
     core/core_input_gestures \
     core/core_input_gestures_testbed \
@@ -540,6 +541,7 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_bullet_hell \
     shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
@@ -557,7 +559,8 @@ SHAPES = \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
-    shapes/shapes_top_down_lights
+    shapes/shapes_top_down_lights \
+    shapes/shapes_dashed_line
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -606,12 +609,14 @@ TEXT = \
 MODELS = \
     models/models_animation_gpu_skinning \
     models/models_animation_playing \
+    models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
+    models/models_geometry_textures_cube \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \

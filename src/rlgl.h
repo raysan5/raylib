@@ -149,7 +149,8 @@
 #endif
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
-#if !defined(GRAPHICS_API_OPENGL_11) && \
+#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE) && \
+    !defined(GRAPHICS_API_OPENGL_11) && \
     !defined(GRAPHICS_API_OPENGL_21) && \
     !defined(GRAPHICS_API_OPENGL_33) && \
     !defined(GRAPHICS_API_OPENGL_43) && \
@@ -159,7 +160,7 @@
 #endif
 
 // Security check in case multiple GRAPHICS_API_OPENGL_* defined
-#if defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     #if defined(GRAPHICS_API_OPENGL_21)
         #undef GRAPHICS_API_OPENGL_21
     #endif
@@ -172,6 +173,11 @@
     #if defined(GRAPHICS_API_OPENGL_ES2)
         #undef GRAPHICS_API_OPENGL_ES2
     #endif
+#endif
+
+// Software implementation uses OpenGL 1.1 functionality
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    #define GRAPHICS_API_OPENGL_11
 #endif
 
 // OpenGL 2.1 uses most of OpenGL 3.3 Core functionality
@@ -427,7 +433,8 @@ typedef struct rlRenderBatch {
 
 // OpenGL version
 typedef enum {
-    RL_OPENGL_11 = 1,           // OpenGL 1.1
+    RL_OPENGL_11_SOFTWARE = 0,  // Software rendering
+    RL_OPENGL_11,               // OpenGL 1.1
     RL_OPENGL_21,               // OpenGL 2.1 (GLSL 120)
     RL_OPENGL_33,               // OpenGL 3.3 (GLSL 330)
     RL_OPENGL_43,               // OpenGL 4.3 (using GLSL 330)
@@ -644,10 +651,8 @@ RLAPI void rlEnableVertexBufferElement(unsigned int id); // Enable vertex buffer
 RLAPI void rlDisableVertexBufferElement(void);          // Disable vertex buffer element (VBO element)
 RLAPI void rlEnableVertexAttribute(unsigned int index); // Enable vertex attribute index
 RLAPI void rlDisableVertexAttribute(unsigned int index); // Disable vertex attribute index
-#if defined(GRAPHICS_API_OPENGL_11)
 RLAPI void rlEnableStatePointer(int vertexAttribType, void *buffer); // Enable attribute state pointer
 RLAPI void rlDisableStatePointer(int vertexAttribType); // Disable attribute state pointer
-#endif
 
 // Textures state
 RLAPI void rlActiveTextureSlot(int slot);               // Select and active a texture slot
@@ -686,6 +691,8 @@ RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
 RLAPI void rlEnablePointMode(void);                     // Enable point mode
 RLAPI void rlDisablePointMode(void);                    // Disable point mode
+RLAPI void rlSetPointSize(float size);                  // Set the point drawing size
+RLAPI float rlGetPointSize(void);                       // Get the point drawing size
 RLAPI void rlEnableWireMode(void);                      // Enable wire mode
 RLAPI void rlDisableWireMode(void);                     // Disable wire mode
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
@@ -768,6 +775,10 @@ RLAPI unsigned int rlLoadFramebuffer(void);                               // Loa
 RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType, int mipLevel); // Attach texture/renderbuffer to a framebuffer
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+RLAPI void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels); // Copy framebuffer pixel data to internal buffer
+RLAPI void rlResizeFramebuffer(int width, int height);                    // Resize internal framebuffer
+#endif
 
 // Shaders management
 RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    // Load shader from code strings
@@ -834,24 +845,32 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #if defined(__APPLE__)
-        #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
-        #include <OpenGL/glext.h>       // OpenGL extensions library
+    #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+        #define RLSW_IMPLEMENTATION
+        #define SW_MALLOC(sz) RL_MALLOC(sz)
+        #define SW_REALLOC(ptr, newSz) RL_REALLOC(ptr, newSz)
+        #define SW_FREE(ptr) RL_FREE(ptr)
+        #include "external/rlsw.h"          // OpenGL 1.1 software implementation
     #else
-        // APIENTRY for OpenGL function pointer declarations is required
-        #if !defined(APIENTRY)
-            #if defined(_WIN32)
-                #define APIENTRY __stdcall
-            #else
-                #define APIENTRY
+        #if defined(__APPLE__)
+            #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
+            #include <OpenGL/glext.h>       // OpenGL extensions library
+        #else
+            // APIENTRY for OpenGL function pointer declarations is required
+            #if !defined(APIENTRY)
+                #if defined(_WIN32)
+                    #define APIENTRY __stdcall
+                #else
+                    #define APIENTRY
+                #endif
             #endif
-        #endif
-        // WINGDIAPI definition. Some Windows OpenGL headers need it
-        #if !defined(WINGDIAPI) && defined(_WIN32)
-            #define WINGDIAPI __declspec(dllimport)
-        #endif
+            // WINGDIAPI definition. Some Windows OpenGL headers need it
+            #if !defined(WINGDIAPI) && defined(_WIN32)
+                #define WINGDIAPI __declspec(dllimport)
+            #endif
 
-        #include <GL/gl.h>              // OpenGL 1.1 library
+            #include <GL/gl.h>              // OpenGL 1.1 library
+        #endif
     #endif
 #endif
 
@@ -2016,6 +2035,25 @@ float rlGetLineWidth(void)
     return width;
 }
 
+// Set the point drawing size
+void rlSetPointSize(float size)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glPointSize(size);
+#endif
+}
+
+// Get the point drawing size
+float rlGetPointSize(void)
+{
+    float size = 1;
+#if defined(GRAPHICS_API_OPENGL_11)
+    glGetFloatv(GL_POINT_SIZE, &size);
+#endif
+    return size;
+
+}
+
 // Enable line aliasing
 void rlEnableSmoothLines(void)
 {
@@ -2318,6 +2356,15 @@ void rlglInit(int width, int height)
     glShadeModel(GL_SMOOTH);                                // Smooth shading between vertex (vertex colors interpolation)
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    int result = swInit(width, height); // Initialize software renderer backend
+    if (result == 0)
+    {
+        TRACELOG(RL_LOG_ERROR, "RLSW: Software renderer initialization failed!");
+        exit(-1);
+    }
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
@@ -2339,10 +2386,14 @@ void rlglClose(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlUnloadRenderBatch(RLGL.defaultBatch);
 
-    rlUnloadShaderDefault();          // Unload default shader
+    rlUnloadShaderDefault(); // Unload default shader
 
     glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
     TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Default texture unloaded successfully", RLGL.State.defaultTextureId);
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    swClose(); // Unload sofware renderer resources
 #endif
 }
 
@@ -2653,7 +2704,10 @@ void *rlGetProcAddress(const char *procName)
 int rlGetVersion(void)
 {
     int glVersion = 0;
-#if defined(GRAPHICS_API_OPENGL_11)
+
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    glVersion = RL_OPENGL_11_SOFTWARE;
+#elif defined(GRAPHICS_API_OPENGL_11)
     glVersion = RL_OPENGL_11;
 #endif
 #if defined(GRAPHICS_API_OPENGL_21)
@@ -3694,6 +3748,22 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     return pixels;
 }
 
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+// Copy framebuffer pixel data to internal buffer
+void rlCopyFramebuffer(int x, int y, int width, int height, int format, void* pixels)
+{
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType); // Get OpenGL texture format
+    swCopyFramebuffer(x, y, width, height, glFormat, glType, pixels);
+}
+
+// Resize internal framebuffer
+void rlResizeFramebuffer(int width, int height)
+{
+    swResizeFramebuffer(width, height);
+}
+#endif
+
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
 {
@@ -4003,10 +4073,10 @@ void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffe
 #endif
 }
 
-#if defined(GRAPHICS_API_OPENGL_11)
 // Enable vertex state pointer
 void rlEnableStatePointer(int vertexAttribType, void *buffer)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
     if (buffer != NULL) glEnableClientState(vertexAttribType);
     switch (vertexAttribType)
     {
@@ -4017,14 +4087,16 @@ void rlEnableStatePointer(int vertexAttribType, void *buffer)
         //case GL_INDEX_ARRAY: if (buffer != NULL) glIndexPointer(GL_SHORT, 0, buffer); break; // Indexed colors
         default: break;
     }
+#endif
 }
 
 // Disable vertex state pointer
 void rlDisableStatePointer(int vertexAttribType)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
     glDisableClientState(vertexAttribType);
-}
 #endif
+}
 
 // Load vertex array object (VAO)
 unsigned int rlLoadVertexArray(void)
