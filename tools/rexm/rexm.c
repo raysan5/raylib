@@ -205,12 +205,22 @@ int main(int argc, char *argv[])
     exCollectionFilePath = getenv("REXM_EXAMPLES_COLLECTION_FILE_PATH");
     exVSProjectSolutionFile = getenv("REXM_EXAMPLES_VS2022_SLN_FILE");
 
+#if defined(_WIN32)
     if (!exBasePath) exBasePath = "C:/GitHub/raylib/examples";
     if (!exWebPath) exWebPath = "C:/GitHub/raylib.com/examples";
     if (!exTemplateFilePath) exTemplateFilePath = "C:/GitHub/raylib/examples/examples_template.c";
     if (!exTemplateScreenshot) exTemplateScreenshot = "C:/GitHub/raylib/examples/examples_template.png";
     if (!exCollectionFilePath) exCollectionFilePath = "C:/GitHub/raylib/examples/examples_list.txt";
     if (!exVSProjectSolutionFile) exVSProjectSolutionFile = "C:/GitHub/raylib/projects/VS2022/raylib.sln";
+#else
+    // Cross-platform relative fallbacks (run from tools/rexm directory)
+    if (!exBasePath) exBasePath = "../../examples";
+    if (!exWebPath) exWebPath = "../../examples";
+    if (!exTemplateFilePath) exTemplateFilePath = "../../examples/examples_template.c";
+    if (!exTemplateScreenshot) exTemplateScreenshot = "../../examples/examples_template.png";
+    if (!exCollectionFilePath) exCollectionFilePath = "../../examples/examples_list.txt";
+    if (!exVSProjectSolutionFile) exVSProjectSolutionFile = "../../projects/VS2022/raylib.sln";
+#endif
 
     char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
@@ -436,7 +446,7 @@ int main(int argc, char *argv[])
             SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), exTextUpdated[1]);
             for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
             UnloadFileText(exText);
-        }
+        } break;
         case OP_ADD:     // Add: Example from command-line input filename
         {
             // Add: raylib/examples/<category>/<category>_example_name.c
