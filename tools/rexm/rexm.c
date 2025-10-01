@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 #else
     // Cross-platform relative fallbacks (run from tools/rexm directory)
     if (!exBasePath) exBasePath = "../../examples";
-    if (!exWebPath) exWebPath = "../../examples";
+    if (!exWebPath) exWebPath = "../../raylib.com/examples";
     if (!exTemplateFilePath) exTemplateFilePath = "../../examples/examples_template.c";
     if (!exTemplateScreenshot) exTemplateScreenshot = "../../examples/examples_template.png";
     if (!exCollectionFilePath) exCollectionFilePath = "../../examples/examples_list.txt";
@@ -446,7 +446,7 @@ int main(int argc, char *argv[])
             SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), exTextUpdated[1]);
             for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
             UnloadFileText(exText);
-        } break;
+        }
         case OP_ADD:     // Add: Example from command-line input filename
         {
             // Add: raylib/examples/<category>/<category>_example_name.c
@@ -1670,54 +1670,67 @@ static int UpdateRequiredFiles(void)
     // NOTE: Entries format: exampleEntry('⭐️☆☆☆' , 'core'    , 'basic_window'),
     //------------------------------------------------------------------------------------------------
     char *jsText = LoadFileText(TextFormat("%s/../common/examples.js", exWebPath));
-    char *jsTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated examples.js copy, 2MB
-
-    int jsListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
-    int jsListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
-
-    int jsIndex = 0;
-    memcpy(jsTextUpdated, jsText, jsListStartIndex);
-    jsIndex = sprintf(jsTextUpdated + jsListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
-    jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
-
-    char starsText[16] = { 0 };
-
-    // NOTE: We avoid "others" category
-    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
+    if (!jsText)
     {
-        int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount);
-        for (int x = 0; x < exCollectionCount; x++)
-        {
-            for (int s = 0; s < 4; s++)
-            {
-                if (s < exCollection[x].stars) strcpy(starsText + 3*s, "⭐️"); // WARNING: Different than '★', more visual
-                else strcpy(starsText + 3*s, "☆");
-            }
-
-            if ((i == 6) && (x == (exCollectionCount - 1)))
-            {
-                // NOTE: Last line to add, special case to consider
-                jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s')];\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
-            }
-            else
-            {
-                jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
-                    TextFormat("        exampleEntry('%s', '%s', '%s'),\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
-            }
-        }
-
-        UnloadExamplesData(exCollection);
+        LOG("INFO: examples.js not found, skipping web examples list update\n");
     }
+    else
+    {
+        int jsListStartIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_START");
+        int jsListEndIndex = TextFindIndex(jsText, "//EXAMPLE_DATA_LIST_END");
+        if ((jsListStartIndex < 0) || (jsListEndIndex < 0))
+        {
+            LOG("WARNING: examples.js markers not found, skipping update\n");
+            UnloadFileText(jsText);
+        }
+        else
+        {
+            char *jsTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated examples.js copy, 2MB
+            int jsIndex = 0;
+            memcpy(jsTextUpdated, jsText, jsListStartIndex);
+            jsIndex = sprintf(jsTextUpdated + jsListStartIndex, "//EXAMPLE_DATA_LIST_START\n");
+            jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex, "    var exampleData = [\n");
 
-    // Add the remaining part of the original file
-    memcpy(jsTextUpdated + jsListStartIndex + jsIndex, jsText + jsListEndIndex, strlen(jsText) - jsListEndIndex);
+            char starsText[16] = { 0 };
 
-    // Save updated file
-    SaveFileText(TextFormat("%s/../common/examples.js", exWebPath), jsTextUpdated);
-    UnloadFileText(jsText);
-    RL_FREE(jsTextUpdated);
+            // NOTE: We avoid "others" category
+            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
+            {
+                int exCollectionCount = 0;
+                rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount);
+                for (int x = 0; x < exCollectionCount; x++)
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        if (s < exCollection[x].stars) strcpy(starsText + 3*s, "⭐️"); // WARNING: Different than '★', more visual
+                        else strcpy(starsText + 3*s, "☆");
+                    }
+
+                    if ((i == 6) && (x == (exCollectionCount - 1)))
+                    {
+                        // NOTE: Last line to add, special case to consider
+                        jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
+                            TextFormat("        exampleEntry('%s', '%s', '%s')];\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
+                    }
+                    else
+                    {
+                        jsIndex += sprintf(jsTextUpdated + jsListStartIndex + jsIndex,
+                            TextFormat("        exampleEntry('%s', '%s', '%s'),\n", starsText, exCollection[x].category, exCollection[x].name + strlen(exCollection[x].category) + 1));
+                    }
+                }
+
+                UnloadExamplesData(exCollection);
+            }
+
+            // Add the remaining part of the original file
+            memcpy(jsTextUpdated + jsListStartIndex + jsIndex, jsText + jsListEndIndex, strlen(jsText) - jsListEndIndex);
+
+            // Save updated file
+            SaveFileText(TextFormat("%s/../common/examples.js", exWebPath), jsTextUpdated);
+            UnloadFileText(jsText);
+            RL_FREE(jsTextUpdated);
+        }
+    }
     //------------------------------------------------------------------------------------------------
 
     return result;
