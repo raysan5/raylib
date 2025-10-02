@@ -901,9 +901,9 @@ int main(int argc, char *argv[])
                     // defines placement on raylib webpage
                     rlExampleInfo *exInfo = LoadExampleInfo(clist.paths[i]);
 
-                    // Validate example category and avoid [others] examples (special category)
-                    if (TextInList(exInfo->category, exCategories, REXM_MAX_EXAMPLE_CATEGORIES) &&
-                        !TextIsEqual(exInfo->category, "others"))
+                    // Validate example category
+                    // TODO: Should [others] category be considered?
+                    if (TextInList(exInfo->category, exCategories, REXM_MAX_EXAMPLE_CATEGORIES))// && !TextIsEqual(exInfo->category, "others"))
                     {
                         // Get example difficulty stars
                         char starsText[16] = { 0 };
@@ -915,7 +915,7 @@ int main(int argc, char *argv[])
                         }
 
                         exListLen += sprintf(exListUpdated + exListLen,
-                            TextFormat("%s;%s;%s;%s;%s;%s;%s;\"%s\";@%s\n",
+                            TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
                                 exInfo->category, exInfo->name, starsText, exInfo->verCreated,
                                 exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed,
                                 exInfo->author, exInfo->authorGitHub));
