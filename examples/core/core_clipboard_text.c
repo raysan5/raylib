@@ -1,10 +1,10 @@
-﻿/*******************************************************************************************
+/*******************************************************************************************
 *
 *   raylib [core] example - clipboard text
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 5.5
+*   Example originally created with raylib 5.6-dev
 *
 *   Example contributed by Robin (@RobinsAviary) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -73,16 +73,32 @@ int main(void)
         // React to the user pressing paste
         if (pastePressed)
         {
-            // Get the text from the user's clipboard. Most operating systems explicitly hide this information until the key combination is pressed while the window is selected
-            clipboardText = GetClipboardText();
+            // Most operating systems hide this information until the user presses Ctrl-V on the window.
 
-            // Reset values
+            // Check to see if the clipboard contains an image
+            Image image = GetClipboardImage();
+
+            if (IsImageValid(image))
+            {
+                // Unload the image
+                UnloadImage(image);
+                // Update visuals
+                popupText = "clipboard contains image";
+            }
+            else
+            {
+                // Get text from the user's clipboard
+                clipboardText = GetClipboardText();
+                
+                // Update visuals
+                popupText = "text pasted";
+                pasteAnim = animMaxTime;
+            }
+
+            // Reset animation values
             textTimer = maxTime;
             textAnim = animMaxTime;
-            pasteAnim = animMaxTime;
             textAlpha = 1;
-            // Update the text that pops up at the bottom of the screen
-            popupText = "text pasted";
         }
 
         // React to the user pressing copy
@@ -110,7 +126,8 @@ int main(void)
 
             textIndex += 1;
 
-            if (textIndex >= sizeof(copyableText) / sizeof(const char*)) { // Length of array
+            if (textIndex >= sizeof(copyableText) / sizeof(const char*)) // Length of array
+            { 
                 // Loop back to the other end
                 textIndex = 0;
             }
