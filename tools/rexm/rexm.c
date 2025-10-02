@@ -224,24 +224,6 @@ int main(int argc, char *argv[])
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
     bool verbose = false;           // Flag for verbose log info
 
-    /*
-    // Testing code for UpdateSourceMetadata()
-    rlExampleInfo test = { 0 };
-    strcpy(test.category, "core");
-    strcpy(test.name, "core_boring_window");
-    test.stars = 4;
-    strcpy(test.verCreated, "2.9");
-    strcpy(test.verUpdated, "6.0");
-    test.yearCreated = 2010;
-    test.yearReviewed = 2026;
-    strcpy(test.author, "John W. Smith");
-    strcpy(test.authorGitHub, "littlejohnny");
-
-    char exSourcePath[512] = { 0 };
-    strcpy(exSourcePath, TextFormat("%s/core/core_basic_window.c", exBasePath)); // WARNING: Cache path for saving
-    UpdateSourceMetadata(exSourcePath, &test);
-    */
-
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
     if (argc > 1)
