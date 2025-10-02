@@ -137,13 +137,6 @@ static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_S
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-//static int FileTextFind(const char *fileName, const char *find);
-//static int FileTextReplace(const char *fileName, const char *find, const char *replace);
-//static int FileCopy(const char *srcPath, const char *dstPath);
-//static int FileRename(const char *fileName, const char *fileRename);
-//static int FileMove(const char *srcPath, const char *dstPath);
-//static int FileRemove(const char *fileName);
-
 // Update required files from examples collection
 // UPDATES: Makefile, Makefile.Web, README.md, examples.js
 static int UpdateRequiredFiles(void);
@@ -188,10 +181,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 
 // Check if text string is a list of strings
 static bool TextInList(const char *text, const char **list, int listCount);
-// Get text between two strings
-//static char *GetTextBetween(const char *text, const char *begin, const char *end);
-// Replace text between two specific strings
-//static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -1810,110 +1799,6 @@ static void UnloadExamplesData(rlExampleInfo *exInfo)
     RL_FREE(exInfo);
 }
 
-/*
-// Find text in existing file
-static int FileTextFind(const char *fileName, const char *find)
-{
-    int result = -1;
-
-    if (FileExists(fileName))
-    {
-        char *fileText = LoadFileText(fileName);
-        result = TextFindIndex(fileText, find);
-        UnloadFileText(fileText);
-    }
-
-    return result;
-}
-
-// Replace text in an existing file
-static int FileTextReplace(const char *fileName, const char *textLookUp, const char *textReplace)
-{
-    int result = 0;
-    char *fileText = NULL;
-    char *fileTextUpdated = { 0 };
-
-    if (FileExists(fileName))
-    {
-        fileText = LoadFileText(fileName);
-        fileTextUpdated = TextReplace(fileText, textLookUp, textReplace);
-        result = SaveFileText(fileName, fileTextUpdated);
-        MemFree(fileTextUpdated);
-        UnloadFileText(fileText);
-    }
-
-    return result;
-}
-
-// Copy file from one path to another
-// NOTE: If destination path does not exist, it is created!
-static int FileCopy(const char *srcPath, const char *dstPath)
-{
-    int result = 0;
-    int srcDataSize = 0;
-    unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
-
-    // Create required paths if they do not exist
-    if (!DirectoryExists(GetDirectoryPath(dstPath)))
-        result = MakeDirectory(GetDirectoryPath(dstPath));
-
-    if (result == 0) // Directory created successfully (or already exists)
-    {
-        if ((srcFileData != NULL) && (srcDataSize > 0))
-            result = SaveFileData(dstPath, srcFileData, srcDataSize);
-    }
-
-    UnloadFileData(srcFileData);
-
-    return result;
-}
-
-// Rename file (if exists)
-// NOTE: Only rename file name required, not full path
-static int FileRename(const char *fileName, const char *fileRename)
-{
-    int result = 0;
-
-    if (FileExists(fileName))
-    {
-        result = rename(fileName, fileRename);
-    }
-    else result = -1;
-
-    return result;
-}
-
-// Remove file (if exists)
-static int FileRemove(const char *fileName)
-{
-    int result = 0;
-
-    if (FileExists(fileName))
-    {
-        result = remove(fileName);
-    }
-    else result = -1;
-
-    return result;
-}
-
-// Move file from one directory to another
-// NOTE: If dst directories do not exists they are created
-static int FileMove(const char *srcPath, const char *dstPath)
-{
-    int result = 0;
-
-    if (FileExists(srcPath))
-    {
-        FileCopy(srcPath, dstPath);
-        remove(srcPath);
-    }
-    else result = -1;
-
-    return result;
-}
-*/
-
 // Get example info from example file header
 // WARNING: Expecting the example to follow raylib_example_template.c
 static rlExampleInfo *LoadExampleInfo(const char *exFileName)
@@ -2515,62 +2400,3 @@ static bool TextInList(const char *text, const char **list, int listCount)
     return result;
 }
 
-/*
-// Get text between two strings
-// NOTE: Using static string to return result, MAX: 1024 bytes
-static char *GetTextBetween(const char *text, const char *begin, const char *end)
-{
-    #define MAX_TEXT_BETWEEN_SIZE   1024
-
-    static char between[MAX_TEXT_BETWEEN_SIZE] = { 0 };
-    memset(between, 0, MAX_TEXT_BETWEEN_SIZE);
-
-    int beginIndex = TextFindIndex(text, begin);
-
-    if (beginIndex > -1)
-    {
-        int beginLen = strlen(begin);
-        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
-
-        if (endIndex > -1)
-        {
-            endIndex += (beginIndex + beginLen);
-            int len = (endIndex - beginIndex - beginLen);
-            if (len < (MAX_TEXT_BETWEEN_SIZE - 1)) strncpy(between, text + beginIndex + beginLen, len);
-            else strncpy(between, text + beginIndex + beginLen, MAX_TEXT_BETWEEN_SIZE - 1);
-        }
-    }
-
-    return between;
-}
-
-// Replace text between two specific strings
-// WARNING: Returned string must be freed by user
-static char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replace)
-{
-    char *result = NULL;
-    int beginIndex = TextFindIndex(text, begin);
-
-    if (beginIndex > -1)
-    {
-        int beginLen = strlen(begin);
-        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
-
-        if (endIndex > -1)
-        {
-            endIndex += (beginIndex + beginLen);
-
-            int textLen = strlen(text);
-            int replaceLen = strlen(replace);
-            int toreplaceLen = endIndex - beginIndex - beginLen;
-            result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
-
-            strncpy(result, text, beginIndex + beginLen); // Copy first text part
-            strncpy(result + beginIndex + beginLen, replace, replaceLen); // Copy replace
-            strncpy(result + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
-        }
-    }
-
-    return result;
-}
-*/
