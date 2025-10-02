@@ -16,8 +16,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h"                 // Required for GUI controls
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -42,6 +40,7 @@ int main(void)
     int colorIndex = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -49,8 +48,6 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         lineEndPosition = GetMousePosition(); // Line endpoint follows the mouse
-
-        // --- Keyboard Controls ---
 
         // Change Dash Length (UP/DOWN arrows)
         if (IsKeyDown(KEY_UP)) dashLength += 1.0f;
@@ -61,11 +58,7 @@ int main(void)
         if (IsKeyDown(KEY_LEFT) && blankLength > 1.0f) blankLength -= 1.0f;
 
         // Cycle through colors ('C' key)
-        if (IsKeyPressed(KEY_C))
-        {
-            colorIndex = (colorIndex + 1) % (sizeof(lineColors)/sizeof(Color));
-        }
-
+        if (IsKeyPressed(KEY_C)) colorIndex = (colorIndex + 1)%(sizeof(lineColors)/sizeof(Color));
         //----------------------------------------------------------------------------------
 
         // Draw
