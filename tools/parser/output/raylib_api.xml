@@ -1359,13 +1359,6 @@
             <Param type="int" name="endPosY" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawLineDashed" retType="void" paramCount="5" desc="Draw a dashed line">
-            <Param type="Vector2" name="startPos" desc="" />
-            <Param type="Vector2" name="endPos" desc="" />
-            <Param type="int" name="dashSize" desc="" />
-            <Param type="int" name="whiteSpaceSize" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
         <Function name="DrawLineV" retType="void" paramCount="3" desc="Draw a line (using gl lines)">
             <Param type="Vector2" name="startPos" desc="" />
             <Param type="Vector2" name="endPos" desc="" />
@@ -1386,6 +1379,13 @@
             <Param type="Vector2" name="startPos" desc="" />
             <Param type="Vector2" name="endPos" desc="" />
             <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawLineDashed" retType="void" paramCount="5" desc="Draw a dashed line">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="int" name="dashSize" desc="" />
+            <Param type="int" name="spaceSize" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCircle" retType="void" paramCount="4" desc="Draw a color-filled circle">
