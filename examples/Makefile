@@ -563,7 +563,8 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
-    shapes/shapes_vector_angle
+    shapes/shapes_vector_angle \
+    shapes/shapes_translation_rotation_scale
 
 TEXTURES = \
     textures/textures_background_scrolling \
