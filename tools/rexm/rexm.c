@@ -56,7 +56,7 @@
 
 #define SUPPORT_LOG_INFO
 #if defined(SUPPORT_LOG_INFO) && defined(_DEBUG)
-    #define LOG(...) printf(__VA_ARGS__)
+    #define LOG(...) printf("REXM: "__VA_ARGS__)
 #else
     #define LOG(...)
 #endif
@@ -221,10 +221,12 @@ int main(int argc, char *argv[])
     char exRecategory[32] = { 0 };  // Example re-name category: shapes
     char exRename[64] = { 0 };      // Example re-name, without extension
 
+    char exRebuildRequested[16] = { 0 }; // Example category/full rebuild request
+
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
     bool verbose = false;           // Flag for verbose log info
 
-    // Command-line usage mode
+    // Command-line usage mode: command args processing
     //--------------------------------------------------------------------------------------
     if (argc > 1)
     {
@@ -387,16 +389,25 @@ int main(int argc, char *argv[])
             else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                // Verify example exists in collection to be removed
-                char *exColInfo = LoadFileText(exCollectionFilePath);
-                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
-                {
-                    strcpy(exName, argv[2]); // Register example name for removal
-                    strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                    opCode = OP_BUILD;
+                // Support building not only individual examples but categories and "ALL"
+                if ((strcmp(argv[2], "ALL") == 0) || TextInList(argv[2], exCategories, REXM_MAX_EXAMPLE_CATEGORIES))
+                { 
+                    // Category/ALL rebuilt requested 
+                    strcpy(exRebuildRequested, argv[2]);
                 }
-                else LOG("WARNING: BUILD: Example not available in the collection\n");
-                UnloadFileText(exColInfo);
+                else
+                {
+                    // Verify example exists in collection to be removed
+                    char *exColInfo = LoadFileText(exCollectionFilePath);
+                    if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                    {
+                        strcpy(exName, argv[2]); // Register example name for removal
+                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                        opCode = OP_BUILD;
+                    }
+                    else LOG("WARNING: BUILD: Example requested not available in the collection\n");
+                    UnloadFileText(exColInfo);
+                }
             }
         }
     
@@ -407,10 +418,14 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Command-line usage mode: command execution
     switch (opCode)
     {
         case OP_CREATE:     // Create: New example from template
         {
+            LOG("INFO: Command requested: CREATE\n");
+            LOG("INFO: Example to create: %s\n", exName);
+
             // Create: raylib/examples/<category>/<category>_example_name.c
             char *exText = LoadFileText(exTemplateFilePath);
             char *exTextUpdated[6] = { 0 };
@@ -430,6 +445,9 @@ int main(int argc, char *argv[])
         }
         case OP_ADD:     // Add: Example from command-line input filename
         {
+            if (opCode != OP_CREATE) LOG("INFO: Command requested: ADD\n");
+            LOG("INFO: Example file to be added: %s\n", inFileName);
+
             // Add: raylib/examples/<category>/<category>_example_name.c
             if (opCode != OP_CREATE) FileCopy(inFileName, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
@@ -629,6 +647,9 @@ int main(int argc, char *argv[])
         } break;
         case OP_RENAME:     // Rename
         {
+            LOG("INFO: Command requested: RENAME\n");
+            LOG("INFO: Example to be renamed: %s --> %s\n", exName, exRename);
+
             // NOTE: At this point provided values have been validated:
             // exName, exCategory, exRename, exRecategory
             if (strcmp(exCategory, exRecategory) == 0)
@@ -740,6 +761,9 @@ int main(int argc, char *argv[])
         } break;
         case OP_REMOVE:     // Remove
         {
+            LOG("INFO: Command requested: REMOVE\n");
+            LOG("INFO: Example to be removed: %s\n", exName);
+
             // Remove example from collection for files update
             //------------------------------------------------------------------------------------------------
             char *exCollectionList = LoadFileText(exCollectionFilePath);
@@ -819,9 +843,69 @@ int main(int argc, char *argv[])
             FileRemove(TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
 
         } break;
+        case OP_BUILD:
+        {
+            LOG("INFO: Command requested: BUILD\n");
+            LOG("INFO: Example to be built: %s\n", exRebuildRequested);
+
+            if ((strcmp(exRebuildRequested, "others") != 0) &&
+                (strcmp(exCategory, "others") != 0)) // Skipping "others" category for rebuild: Special needs
+            {
+                int exRebuildCount = 0;
+                rlExampleInfo *exRebuildList = LoadExamplesData(exCollectionFilePath, exRebuildRequested, false, &exRebuildCount);
+
+                // Build: raylib.com/examples/<category>/<category>_example_name.html
+                // Build: raylib.com/examples/<category>/<category>_example_name.data
+                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
+                // Build: raylib.com/examples/<category>/<category>_example_name.js
+
+#if defined(_WIN32)
+                // Set required environment variables
+                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                //putenv("MAKE=mingw32-make");
+                //ChangeDirectory(exBasePath);
+#endif
+                for (int i = 0; i < exRebuildCount; i++)
+                {
+                    // Build example for PLATFORM_DESKTOP
+#if defined(_WIN32)
+                    system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
+#else
+                    system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
+#endif
+
+                    // Build example for PLATFORM_WEB
+#if defined(_WIN32)
+                    system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
+#else
+                    system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
+#endif
+                    // Update generated .html metadata
+                    UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
+                        TextFormat("%s/%s/%s.c", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
+
+                    // Copy results to web side
+                    FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
+                        TextFormat("%s/%s/%s.html", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
+                    FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
+                        TextFormat("%s/%s/%s.data", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
+                    FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
+                        TextFormat("%s/%s/%s.wasm", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
+                    FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
+                        TextFormat("%s/%s/%s.js", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
+                }
+
+                UnloadExamplesData(exRebuildList);
+            }
+            else LOG("WARNING: [others] category examples should be build manually, they could have specific build requirements\n");
+
+        } break;
         case OP_VALIDATE:     // Validate: report and actions
         case OP_UPDATE:
         {
+            LOG("INFO: Command requested: %s\n", (opCode == OP_VALIDATE)? "VALIDATE" : "UPDATE");
+            LOG("INFO: Example collection is being %s\n", (opCode == OP_VALIDATE)? "validated" : "validated and updated");
             /*
             // Validation flags available:
             VALID_MISSING_C
@@ -1284,48 +1368,6 @@ int main(int argc, char *argv[])
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
 
-        } break;
-        case OP_BUILD:
-        {
-            // Build: raylib.com/examples/<category>/<category>_example_name.html
-            // Build: raylib.com/examples/<category>/<category>_example_name.data
-            // Build: raylib.com/examples/<category>/<category>_example_name.wasm
-            // Build: raylib.com/examples/<category>/<category>_example_name.js
-            if (strcmp(exCategory, "others") != 0) // Skipping "others" category
-            {
-                // Build example for PLATFORM_DESKTOP
-            #if defined(_WIN32)
-                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                //putenv("MAKE=mingw32-make");
-                //ChangeDirectory(exBasePath);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-            #else
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-            #endif
-
-                // Build example for PLATFORM_WEB
-            #if defined(_WIN32)
-                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-            #else
-                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-            #endif
-
-                // Update generated .html metadata
-                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
-                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-
-                // Copy results to web side
-                FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
-                    TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
-                FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exCategory, exName),
-                    TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
-                FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exCategory, exName),
-                    TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
-                FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName),
-                    TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
-            }
         } break;
         default:    // Help
         {
