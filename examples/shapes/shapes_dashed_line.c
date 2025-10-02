@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - dashed line drawing
+*   raylib [shapes] example - dashed line
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
 *   Example contributed by Luís Almeida (@luis605)
 *
@@ -29,7 +29,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - interactive dashed line");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - dashed line");
 
     // Line Properties
     Vector2 lineStartPosition = { 20.0f, 50.0f };

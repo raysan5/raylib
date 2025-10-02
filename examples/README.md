@@ -19,13 +19,14 @@ You may find it easier to use than other toolchains, especially when it comes to
 
 ## EXAMPLES COLLECTION [TOTAL: 166]
 
-### category: core [38]
+### category: core [40]
 
 Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
 
 |  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
 | [core_basic_window](core/core_basic_window.c) | <img src="core/core_basic_window.png" alt="core_basic_window" width="80"> | ⭐☆☆☆ | 1.0 | 1.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_delta_time](core/core_delta_time.c) | <img src="core/core_delta_time.png" alt="core_delta_time" width="80"> | ⭐☆☆☆ | 5.5 | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 | [core_input_keys](core/core_input_keys.c) | <img src="core/core_input_keys.png" alt="core_input_keys" width="80"> | ⭐☆☆☆ | 1.0 | 1.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_mouse](core/core_input_mouse.c) | <img src="core/core_input_mouse.png" alt="core_input_mouse" width="80"> | ⭐☆☆☆ | 1.0 | 5.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_mouse_wheel](core/core_input_mouse_wheel.c) | <img src="core/core_input_mouse_wheel.png" alt="core_input_mouse_wheel" width="80"> | ⭐☆☆☆ | 1.1 | 1.3 | [Ramon Santamaria](https://github.com/raysan5) |
@@ -63,8 +64,9 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_render_texture](core/core_render_texture.c) | <img src="core/core_render_texture.png" alt="core_render_texture" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
+| [core_monitor_change](core/core_monitor_change.c) | <img src="core/core_monitor_change.png" alt="core_monitor_change" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Maicon Santana](https://github.com/maiconpintoabreu) |
 
-### category: shapes [21]
+### category: shapes [23]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -92,6 +94,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_double_pendulum](shapes/shapes_double_pendulum.c) | <img src="shapes/shapes_double_pendulum.png" alt="shapes_double_pendulum" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [JoeCheong](https://github.com/Joecheong2006) |
 | [shapes_dashed_line](shapes/shapes_dashed_line.c) | <img src="shapes/shapes_dashed_line.png" alt="shapes_dashed_line" width="80"> | ⭐☆☆☆ | 5.5 | 5.5 | [Luís Almeida](https://github.com/luis605) |
+| [shapes_vector_angle](shapes/shapes_vector_angle.c) | <img src="shapes/shapes_vector_angle.png" alt="shapes_vector_angle" width="80"> | ⭐⭐☆☆ | 1.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
 
 ### category: textures [26]
 
@@ -179,12 +182,13 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_basic_voxel](models/models_basic_voxel.c) | <img src="models/models_basic_voxel.png" alt="models_basic_voxel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Tim Little](https://github.com/timlittle) |
 | [models_geometry_textures_cube](models/models_geometry_textures_cube.c) | <img src="models/models_geometry_textures_cube.png" alt="models_geometry_textures_cube" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 
-### category: shaders [29]
+### category: shaders [30]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
 |  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
+| [shaders_ascii_rendering](shaders/shaders_ascii_rendering.c) | <img src="shaders/shaders_ascii_rendering.png" alt="shaders_ascii_rendering" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Maicon Santana](https://github.com/maiconpintoabreu) |
 | [shaders_basic_lighting](shaders/shaders_basic_lighting.c) | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="80"> | ⭐⭐⭐⭐️ | 3.0 | 4.2 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_model_shader](shaders/shaders_model_shader.c) | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="80"> | ⭐⭐☆☆ | 1.3 | 3.7 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shaders_shapes_textures](shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="80"> | ⭐⭐☆☆ | 1.7 | 3.7 | [Ramon Santamaria](https://github.com/raysan5) |
