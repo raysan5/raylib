@@ -30,7 +30,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - pie chart");
 
     // Pie slice angles (must sum to 360)
-    const int angles[] = { 30, 10, 45, 35, 60, 38, 75, 67 };
+    const float angles[] = { 30.0f, 10.0f, 45.0f, 35.0f, 60.0f, 38.0f, 75.0f, 67.0f };
     const int anglesCount = (int)(sizeof(angles)/sizeof(angles[0]));
 
     const float radius = 150.0f;
@@ -56,14 +56,18 @@ int main(void)
 
             for (int i = 0; i < anglesCount; i++)
             {
-                // Gradient gray color per slice
-                unsigned char gray = (unsigned char)((i/(float)anglesCount)*255.0f);
+                float hue = (i/(float)anglesCount)*360.0f;
+                float sat = 0.75f;
+                float val = 0.95f;
+
+                // Convert HSV to RGBA
+                Color col = ColorFromHSV(hue, sat, val);
 
                 // Draw pie piece using DrawCircleSector()
-                DrawCircleSector(center, radius, lastAngleDeg, lastAngleDeg + (float)angles[i],
-                    segments, (Color){ gray, gray, gray, 255 });
+                DrawCircleSector(center, radius, lastAngleDeg, lastAngleDeg + angles[i],
+                    segments, col);
 
-                lastAngleDeg += (float)angles[i];
+                lastAngleDeg += angles[i];
             }
 
             DrawText("Pie chart drawing example", 260, 400, 20, LIGHTGRAY);
