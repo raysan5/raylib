@@ -4759,18 +4759,6 @@ return {
       }
     },
     {
-      name = "DrawLineDashed",
-      description = "Draw a dashed line",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "startPos"},
-        {type = "Vector2", name = "endPos"},
-        {type = "int", name = "dashSize"},
-        {type = "int", name = "whiteSpaceSize"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
       name = "DrawLineV",
       description = "Draw a line (using gl lines)",
       returnType = "void",
@@ -4809,6 +4797,18 @@ return {
         {type = "Vector2", name = "startPos"},
         {type = "Vector2", name = "endPos"},
         {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawLineDashed",
+      description = "Draw a dashed line",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "int", name = "dashSize"},
+        {type = "int", name = "spaceSize"},
         {type = "Color", name = "color"}
       }
     },
