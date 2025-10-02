@@ -1,15 +1,19 @@
 /*******************************************************************************************
- *
- *   raylib [shapes] example - interactive pie chart
- *
- *   Example complexity rating: [★★☆☆] 2/4
- *
- *   This example has been created using raylib 5.5 (www.raylib.com)
- *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
- *
- *   Copyright (c) 2025 Ramon Santamaria (@raysan5) and Gideon Serfontein (@GideonSerf)
- *
- ********************************************************************************************/
+*
+*   raylib [shapes] example - pie chart
+*
+*   Example complexity rating: [★★☆☆] 2/4
+*
+*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
+*
+*   Example contributed by Gideon Serfontein (@GideonSerf) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2025 Gideon Serfontein (@GideonSerf)
+*
+********************************************************************************************/
 
 #include "raylib.h"
 #include <math.h>
