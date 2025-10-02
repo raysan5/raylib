@@ -514,6 +514,7 @@ CORE = \
     core/core_basic_window \
     core/core_custom_frame_control \
     core/core_custom_logging \
+    core/core_delta_time \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_actions \
@@ -525,6 +526,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
+    core/core_monitor_change \
     core/core_random_sequence \
     core/core_random_values \
     core/core_render_texture \
@@ -545,6 +547,7 @@ SHAPES = \
     shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
+    shapes/shapes_dashed_line \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
     shapes/shapes_easings_ball \
@@ -560,7 +563,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
-    shapes/shapes_dashed_line
+    shapes/shapes_vector_angle
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -634,6 +637,7 @@ MODELS = \
     models/models_yaw_pitch_roll
 
 SHADERS = \
+    shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
@@ -731,6 +735,9 @@ core/core_custom_frame_control: core/core_custom_frame_control.c
 core/core_custom_logging: core/core_custom_logging.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_delta_time: core/core_delta_time.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_drop_files: core/core_drop_files.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -764,6 +771,9 @@ core/core_input_multitouch: core/core_input_multitouch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_virtual_controls: core/core_input_virtual_controls.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_monitor_change: core/core_monitor_change.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_random_sequence: core/core_random_sequence.c
@@ -822,6 +832,9 @@ shapes/shapes_collision_area: shapes/shapes_collision_area.c
 shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_dashed_line: shapes/shapes_dashed_line.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -865,6 +878,9 @@ shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_vector_angle: shapes/shapes_vector_angle.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile TEXTURES examples
@@ -1158,6 +1174,12 @@ models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
     --preload-file models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
 
 # Compile SHADERS examples
+shaders/shaders_ascii_rendering: shaders/shaders_ascii_rendering.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
+    --preload-file shaders/resources/raysan.png@resources/raysan.png \
+    --preload-file shaders/resources/shaders/glsl100/ascii.fs@resources/shaders/glsl100/ascii.fs
+
 shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs \

@@ -8,6 +8,7 @@
 # WARNING: List is not ordered by example name but by the display order on web
 #
 core;core_basic_window;★☆☆☆;1.0;1.0;2013;2025;"Ramon Santamaria";@raysan5
+core;core_delta_time;★☆☆☆;5.5;5.6-dev;2025;2025;"Robin";@RobinsAviary
 core;core_input_keys;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 core;core_input_mouse;★☆☆☆;1.0;5.5;2014;2025;"Ramon Santamaria";@raysan5
 core;core_input_mouse_wheel;★☆☆☆;1.1;1.3;2014;2025;"Ramon Santamaria";@raysan5
@@ -30,6 +31,7 @@ core;core_world_screen;★★☆☆;1.3;1.4;2015;2025;"Ramon Santamaria";@raysan
 core;core_window_flags;★★★☆;3.5;3.5;2020;2025;"Ramon Santamaria";@raysan5
 core;core_window_letterbox;★★☆☆;2.5;4.0;2019;2025;"Anata";@anatagawa
 core;core_window_should_close;★☆☆☆;4.2;4.2;2013;2025;"Ramon Santamaria";@raysan5
+core;core_monitor_change;★☆☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
 core;core_custom_logging;★★★☆;2.5;2.5;2018;2025;"Pablo Marcos Oltra";@pamarcos
 core;core_drop_files;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
 core;core_random_values;★☆☆☆;1.1;1.1;2014;2025;"Ramon Santamaria";@raysan5
@@ -67,6 +69,7 @@ shapes;shapes_splines_drawing;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";
 shapes;shapes_digital_clock;★★★★;5.5;5.6;2025;2025;"Hamza RAHAL";@hmz-rhl
 shapes;shapes_double_pendulum;★★☆☆;5.5;5.5;2025;2025;"JoeCheong";@Joecheong2006
 shapes;shapes_dashed_line;★☆☆☆;5.5;5.5;2025;2025;"Luís Almeida";@luis605
+shapes;shapes_vector_angle;★★☆☆;1.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -132,6 +135,7 @@ models;models_bone_socket;★★★★;4.5;4.5;2024;2025;"iP";@ipzaur
 models;models_tesseract_view;★★☆☆;5.6-dev;5.6-dev;2024;2025;"Timothy van der Valk";@arceryz
 models;models_basic_voxel;★★☆☆;5.5;5.5;2025;2025;"Tim Little";@timlittle
 models;models_geometry_textures_cube;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
+shaders;shaders_ascii_rendering;★★☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
 shaders;shaders_basic_lighting;★★★★;3.0;4.2;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_model_shader;★★☆☆;1.3;3.7;2014;2025;"Ramon Santamaria";@raysan5
 shaders;shaders_shapes_textures;★★☆☆;1.7;3.7;2015;2025;"Ramon Santamaria";@raysan5
@@ -174,4 +178,4 @@ others;rlgl_compute_shader;★★★★;4.0;4.0;2021;2025;"Teddy Astie";@tsnake4
 others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flashback-fx
 others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@arkanis
 others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
-others;raymath_vector_angle;★★☆☆;1.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
+others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5

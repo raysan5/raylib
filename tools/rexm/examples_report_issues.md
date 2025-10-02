@@ -25,4 +25,4 @@ Example elements validated:
 | easings_testbed                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |  ✔  |
 | embedded_files_loading           |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| raymath_vector_angle             |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |  ✔  |
+| web_basic_window                 |  ✔ |  ❌  |  ✔  |  ❌ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |

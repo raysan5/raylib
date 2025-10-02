@@ -514,6 +514,7 @@ CORE = \
     core/core_basic_window \
     core/core_custom_frame_control \
     core/core_custom_logging \
+    core/core_delta_time \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_actions \
@@ -525,6 +526,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
+    core/core_monitor_change \
     core/core_random_sequence \
     core/core_random_values \
     core/core_render_texture \
@@ -545,6 +547,7 @@ SHAPES = \
     shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
+    shapes/shapes_dashed_line \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
     shapes/shapes_easings_ball \
@@ -560,7 +563,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
-    shapes/shapes_dashed_line
+    shapes/shapes_vector_angle
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -634,6 +637,7 @@ MODELS = \
     models/models_yaw_pitch_roll
 
 SHADERS = \
+    shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
@@ -678,9 +682,9 @@ OTHERS = \
     others/easings_testbed \
     others/embedded_files_loading \
     others/raylib_opengl_interop \
-    others/raymath_vector_angle \
     others/rlgl_compute_shader \
-    others/rlgl_standalone
+    others/rlgl_standalone \
+    others/web_basic_window
 #EXAMPLES_LIST_END
 
 # Define processes to execute
