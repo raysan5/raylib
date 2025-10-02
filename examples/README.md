@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 166]
+## EXAMPLES COLLECTION [TOTAL: 172]
 
 ### category: core [40]
 
@@ -245,7 +245,7 @@ Examples showing raylib misc functionality that does not fit in other categories
 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐⭐⭐⭐️ | 3.8 | 4.0 | [Stephan Soller](https://github.com/arkanis) |
 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐⭐☆☆ | 3.0 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
-| [raymath_vector_angle](others/raymath_vector_angle.c) | <img src="others/raymath_vector_angle.png" alt="raymath_vector_angle" width="80"> | ⭐⭐☆☆ | 1.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [web_basic_window](others/web_basic_window.c) | <img src="others/web_basic_window.png" alt="web_basic_window" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
 Here is an[examples template](examples_template.c) with instructions to start with!

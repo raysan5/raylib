@@ -682,9 +682,9 @@ OTHERS = \
     others/easings_testbed \
     others/embedded_files_loading \
     others/raylib_opengl_interop \
-    others/raymath_vector_angle \
     others/rlgl_compute_shader \
-    others/rlgl_standalone
+    others/rlgl_standalone \
+    others/web_basic_window
 #EXAMPLES_LIST_END
 
 # Define processes to execute
