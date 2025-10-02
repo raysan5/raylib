@@ -31,11 +31,10 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    const int MAX_SLICES = 10;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - interactive pie chart");
 
-#define MAX_SLICES 10
+    #define MAX_SLICES 10
     int sliceCount = 7;
     float values[MAX_SLICES] = {300.0f, 100.0f, 450.0f, 350.0f, 600.0f, 380.0f, 750.0f}; //initial slice values
     char labels[MAX_SLICES][32];
