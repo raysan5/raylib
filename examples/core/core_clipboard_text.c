@@ -76,25 +76,25 @@ int main(void)
             // Most operating systems hide this information until the user presses Ctrl-V on the window.
 
             // Check to see if the clipboard contains an image
-			// This function does nothing outside of Windows, as it directly calls the Windows API
-			Image image = GetClipboardImage();
-			
-			if (IsImageValid(image))
-			{
-				// Unload the image
-				UnloadImage(image);
-				// Update visuals
-				popupText = "clipboard contains image";
-			}
-			else
-			{
-				// Get text from the user's clipboard
-				clipboardText = GetClipboardText();
-				
-				// Update visuals
-				popupText = "text pasted";
-				pasteAnim = animMaxTime;
-			}
+            // This function does nothing outside of Windows, as it directly calls the Windows API
+            Image image = GetClipboardImage();
+            
+            if (IsImageValid(image))
+            {
+                // Unload the image
+                UnloadImage(image);
+                // Update visuals
+                popupText = "clipboard contains image";
+            }
+            else
+            {
+                // Get text from the user's clipboard
+                clipboardText = GetClipboardText();
+                
+                // Update visuals
+                popupText = "text pasted";
+                pasteAnim = animMaxTime;
+            }
 
             // Reset animation values
             textTimer = maxTime;
@@ -157,43 +157,43 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+			ClearBackground(RAYWHITE);
 
-        // Draw the user's pasted text, if there is any yet
-        if (clipboardText)
-        {
-            // Offset animation
-            int offset = 0;
-            if (pasteAnim > 0) offset = offsetAmount;
+			// Draw the user's pasted text, if there is any yet
+			if (clipboardText)
+			{
+				// Offset animation
+				int offset = 0;
+				if (pasteAnim > 0) offset = offsetAmount;
 
-            // Draw the pasted text
-            DrawText("pasted clipboard:", 10, 10 + offset, 20, DARKGREEN);
-            DrawText(clipboardText, 10, 30 + offset, 20, DARKGRAY);
-        }
+				// Draw the pasted text
+				DrawText("pasted clipboard:", 10, 10 + offset, 20, DARKGREEN);
+				DrawText(clipboardText, 10, 30 + offset, 20, DARKGRAY);
+			}
 
-        // Offset animation
-        int textOffset = 0;
-        if (copyAnim > 0) textOffset = offsetAmount;
+			// Offset animation
+			int textOffset = 0;
+			if (copyAnim > 0) textOffset = offsetAmount;
 
-        // Draw copyable text and controls
-        DrawText(copyableText[textIndex], 10, 330 + (textOffset * copyAnimMult), 20, MAROON);
-        DrawText("up/down to change string, ctrl-c to copy, ctrl-v to paste", 10, 355, 20, DARKGRAY);
+			// Draw copyable text and controls
+			DrawText(copyableText[textIndex], 10, 330 + (textOffset * copyAnimMult), 20, MAROON);
+			DrawText("up/down to change string, ctrl-c to copy, ctrl-v to paste", 10, 355, 20, DARKGRAY);
 
-        // Alpha / Offset animation
-        if (textAlpha > 0)
-        {
-            // Offset animation
-            int offset = 0;
-            if (textAnim > 0) offset = offsetAmount;
-            // Draw pop up text
-            DrawText(popupText, 10, 425 + offset, 20, ColorAlpha(DARKGREEN, textAlpha));
+			// Alpha / Offset animation
+			if (textAlpha > 0)
+			{
+				// Offset animation
+				int offset = 0;
+				if (textAnim > 0) offset = offsetAmount;
+				// Draw pop up text
+				DrawText(popupText, 10, 425 + offset, 20, ColorAlpha(DARKGREEN, textAlpha));
 
-            // Fade-out animation
-            if (textTimer < 0)
-            {
-                textAlpha -= GetFrameTime();
-            }
-        }
+				// Fade-out animation
+				if (textTimer < 0)
+				{
+					textAlpha -= GetFrameTime();
+				}
+			}
 
         EndDrawing();
         //----------------------------------------------------------------------------------
