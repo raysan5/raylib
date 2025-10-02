@@ -222,6 +222,7 @@ int main(int argc, char *argv[])
     char exRename[64] = { 0 };      // Example re-name, without extension
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
+    bool verbose = false;           // Flag for verbose log info
 
     /*
     // Testing code for UpdateSourceMetadata()
@@ -415,6 +416,12 @@ int main(int argc, char *argv[])
                 else LOG("WARNING: BUILD: Example not available in the collection\n");
                 UnloadFileText(exColInfo);
             }
+        }
+    
+        // Check for verbose log mode request
+        for (int i = 1; i < argc; i++)
+        {
+            if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0)) verbose = true;
         }
     }
 
@@ -1907,8 +1914,7 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     int tokenCount = 0;
     char **tokens = TextSplit(line, ';', &tokenCount);
 
-    if (tokenCount != 9) 
-        LOG("REXM: WARNING: Example collection line contains invalid number of tokens: %i\n", tokenCount);
+    if (tokenCount != 9) LOG("REXM: WARNING: Example collection line contains invalid number of tokens: %i\n", tokenCount);
 
     // Get category and name
     strcpy(entry->category, tokens[0]);
