@@ -76,7 +76,7 @@
 //----------------------------------------------------------------------------------
 // raylib example info struct
 typedef struct {
-    char category[16];      // Example category: core, shapes, textures, text, models, shaders, audio, others
+    char category[16];      // Example category: core, shapes, textures, text, models, shaders, audio, [others]
     char name[128];         // Example name: <category>_name_part
     int stars;              // Example stars count: ★☆☆☆
     char verCreated[12];    // Example raylib creation version
@@ -178,6 +178,7 @@ static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName);
 
 // Generate unique UUID v4 string
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1}
+// TODO: It seems generated UUID is not valid for VS2022
 static const char *GenerateUUIDv4(void);
 
 // Update source code header and comments metadata
@@ -185,6 +186,8 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 
+// Check if text string is a list of strings
+static bool TextInList(const char *text, const char **list, int listCount);
 // Get text between two strings
 //static char *GetTextBetween(const char *text, const char *begin, const char *end);
 // Replace text between two specific strings
@@ -540,14 +543,14 @@ int main(int argc, char *argv[])
                 // by default add it last in the category list
                 // NOTE: When populating to other files, lists are sorted by name
                 int nextCategoryIndex = 0;
-                if (strcmp(exCategory, "core") == 0) nextCategoryIndex = 1;
-                else if (strcmp(exCategory, "shapes") == 0) nextCategoryIndex = 2;
-                else if (strcmp(exCategory, "textures") == 0) nextCategoryIndex = 3;
-                else if (strcmp(exCategory, "text") == 0) nextCategoryIndex = 4;
-                else if (strcmp(exCategory, "models") == 0) nextCategoryIndex = 5;
-                else if (strcmp(exCategory, "shaders") == 0) nextCategoryIndex = 6;
-                else if (strcmp(exCategory, "audio") == 0) nextCategoryIndex = 7;
-                else if (strcmp(exCategory, "others") == 0) nextCategoryIndex = -1; // Add to EOF
+                if (TextIsEqual(exCategory, "core")) nextCategoryIndex = 1;
+                else if (TextIsEqual(exCategory, "shapes")) nextCategoryIndex = 2;
+                else if (TextIsEqual(exCategory, "textures")) nextCategoryIndex = 3;
+                else if (TextIsEqual(exCategory, "text")) nextCategoryIndex = 4;
+                else if (TextIsEqual(exCategory, "models")) nextCategoryIndex = 5;
+                else if (TextIsEqual(exCategory, "shaders")) nextCategoryIndex = 6;
+                else if (TextIsEqual(exCategory, "audio")) nextCategoryIndex = 7;
+                else if (TextIsEqual(exCategory, "others")) nextCategoryIndex = -1; // Add to EOF
 
                 // Get required example info from example file header (if provided)
 
@@ -862,7 +865,7 @@ int main(int argc, char *argv[])
 
             // Scan available example .c files and add to collection missing ones
             // NOTE: Source of truth is what we have in the examples directories (on validation/update)
-            FilePathList list = LoadDirectoryFilesEx(exBasePath, ".c", true);
+            FilePathList clist = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
             char *exList = LoadFileText(exCollectionFilePath);
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
@@ -887,32 +890,39 @@ int main(int argc, char *argv[])
 
             UnloadTextLines(exListLines, lineCount);
 
-            for (unsigned int i = 0; i < list.count; i++)
+            for (unsigned int i = 0; i < clist.count; i++)
             {
                 // NOTE: Skipping "examples_template" from checks
-                if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&
-                    (TextFindIndex(exList, GetFileNameWithoutExt(list.paths[i])) == -1))
+                if (!TextIsEqual(GetFileNameWithoutExt(clist.paths[i]), "examples_template") &&
+                    (TextFindIndex(exList, GetFileNameWithoutExt(clist.paths[i])) == -1))
                 {
                     // Add example to the examples collection list
                     // WARNING: Added to the end of the list, order must be set by users and
                     // defines placement on raylib webpage
-                    rlExampleInfo *exInfo = LoadExampleInfo(list.paths[i]);
+                    rlExampleInfo *exInfo = LoadExampleInfo(clist.paths[i]);
 
-                    // Get example difficulty stars
-                    char starsText[16] = { 0 };
-                    for (int s = 0; s < 4; s++)
+                    // Validate example category and avoid [others] examples (special category)
+                    if (TextInList(exInfo->category, exCategories, REXM_MAX_EXAMPLE_CATEGORIES) &&
+                        !TextIsEqual(exInfo->category, "others"))
                     {
-                        // NOTE: Every UTF-8 star are 3 bytes
-                        if (s < exInfo->stars) strcpy(starsText + 3*s, "★");
-                        else strcpy(starsText + 3*s, "☆");
+                        // Get example difficulty stars
+                        char starsText[16] = { 0 };
+                        for (int s = 0; s < 4; s++)
+                        {
+                            // NOTE: Every UTF-8 star are 3 bytes
+                            if (s < exInfo->stars) strcpy(starsText + 3*s, "★");
+                            else strcpy(starsText + 3*s, "☆");
+                        }
+
+                        exListLen += sprintf(exListUpdated + exListLen,
+                            TextFormat("%s;%s;%s;%s;%s;%s;%s;\"%s\";@%s\n",
+                                exInfo->category, exInfo->name, starsText, exInfo->verCreated,
+                                exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed,
+                                exInfo->author, exInfo->authorGitHub));
+
+                        listUpdated = true;
                     }
 
-                    exListLen += sprintf(exListUpdated + exListLen,
-                        TextFormat("%s;%s;%s;%s;%s;\"%s\";@%s\n",
-                            exInfo->category, exInfo->name, starsText, exInfo->verCreated,
-                            exInfo->verUpdated, exInfo->author, exInfo->authorGitHub));
-
-                    listUpdated = true;
                     UnloadExampleInfo(exInfo);
                 }
             }
@@ -922,7 +932,7 @@ int main(int argc, char *argv[])
             UnloadFileText(exList);
             RL_FREE(exListUpdated);
 
-            UnloadDirectoryFiles(list);
+            UnloadDirectoryFiles(clist);
 
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             int exCollectionCount = 0;
@@ -1756,12 +1766,12 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
         {
             // Basic validation for lines start categories
             if ((lines[i][0] != '#') &&
-               ((lines[i][0] == 'c') ||      // core
-                (lines[i][0] == 's') ||      // shapes, shaders
-                (lines[i][0] == 't') ||      // textures, text
-                (lines[i][0] == 'm') ||      // models
-                (lines[i][0] == 'a') ||      // audio
-                (lines[i][0] == 'o')))       // others
+                ((lines[i][0] == 'c') ||      // core
+                 (lines[i][0] == 's') ||      // shapes, shaders
+                 (lines[i][0] == 't') ||      // textures, text
+                 (lines[i][0] == 'm') ||      // models
+                 (lines[i][0] == 'a')))       // audio
+                 //(lines[i][0] == 'o')))       // NOTE: others category skipped
             {
                 rlExampleInfo info = { 0 };
                 int result = ParseExampleInfoLine(lines[i], &info);
@@ -2012,7 +2022,8 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry)
     int tokenCount = 0;
     char **tokens = TextSplit(line, ';', &tokenCount);
 
-    if (tokenCount != 9) LOG("REXM: WARNING: Example collection line contains invalid number of tokens: %i\n", tokenCount);
+    if (tokenCount != 9) 
+        LOG("REXM: WARNING: Example collection line contains invalid number of tokens: %i\n", tokenCount);
 
     // Get category and name
     strcpy(entry->category, tokens[0]);
@@ -2489,6 +2500,19 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         UnloadFileText(exHtmlText);
     }
+}
+
+// Check if text string is a list of strings
+static bool TextInList(const char *text, const char **list, int listCount)
+{
+    bool result = false;
+    
+    for (int i = 0; i < listCount; i++)
+    {
+        if (TextIsEqual(text, list[i])) { result = true; break; }
+    }
+
+    return result;
 }
 
 /*
