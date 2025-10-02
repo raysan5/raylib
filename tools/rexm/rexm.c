@@ -1759,8 +1759,8 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
                  (lines[i][0] == 's') ||      // shapes, shaders
                  (lines[i][0] == 't') ||      // textures, text
                  (lines[i][0] == 'm') ||      // models
-                 (lines[i][0] == 'a')))       // audio
-                 //(lines[i][0] == 'o')))       // NOTE: others category skipped
+                 (lines[i][0] == 'a') ||      // audio
+                 (lines[i][0] == 'o')))       // TODO: Get others category?
             {
                 rlExampleInfo info = { 0 };
                 int result = ParseExampleInfoLine(lines[i], &info);
