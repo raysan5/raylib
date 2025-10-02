@@ -76,24 +76,25 @@ int main(void)
             // Most operating systems hide this information until the user presses Ctrl-V on the window.
 
             // Check to see if the clipboard contains an image
-            Image image = GetClipboardImage();
-
-            if (IsImageValid(image))
-            {
-                // Unload the image
-                UnloadImage(image);
-                // Update visuals
-                popupText = "clipboard contains image";
-            }
-            else
-            {
-                // Get text from the user's clipboard
-                clipboardText = GetClipboardText();
-                
-                // Update visuals
-                popupText = "text pasted";
-                pasteAnim = animMaxTime;
-            }
+			// This function does nothing outside of Windows, as it directly calls the Windows API
+			Image image = GetClipboardImage();
+			
+			if (IsImageValid(image))
+			{
+				// Unload the image
+				UnloadImage(image);
+				// Update visuals
+				popupText = "clipboard contains image";
+			}
+			else
+			{
+				// Get text from the user's clipboard
+				clipboardText = GetClipboardText();
+				
+				// Update visuals
+				popupText = "text pasted";
+				pasteAnim = animMaxTime;
+			}
 
             // Reset animation values
             textTimer = maxTime;
