@@ -5209,7 +5209,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 void *data = NULL;
 
                 #ifdef __cplusplus
-                cgltf_options options = {DEFINIT};
+                cgltf_options options = {};
                 #else
                 cgltf_options options = { 0 };
                 #endif
@@ -6246,7 +6246,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
     // glTF data loading
     #ifdef __cplusplus
-    cgltf_options options = {DEFINIT};
+    cgltf_options options = {};
     #else
     cgltf_options options = { 0 };
     #endif

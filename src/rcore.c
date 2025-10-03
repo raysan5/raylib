@@ -553,7 +553,6 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     // #endif
 
 #endif // SUPPORT_CLIPBOARD_IMAGE
-#define UNICODE
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)
     #include "platforms/rcore_desktop_glfw.c"
