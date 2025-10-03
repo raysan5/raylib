@@ -96,9 +96,7 @@ typedef int WINBOOL;
 
 // typedef HANDLE HGLOBAL;
 
-#ifndef HWND
-#define HWND void*
-#endif
+typedef struct HWND__ *HWND;
 
 
 #if !defined(_WINUSER_) || !defined(WINUSER_ALREADY_INCLUDED)
@@ -284,7 +282,7 @@ unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long
     // This may be wrong since we might be allocating in a DLL and freeing from another module, the main application
     // that may cause heap corruption. We could create a FreeImage function
     //
-    bmpData = malloc(sizeof(bmpFileHeader) + clipDataSize);
+    bmpData = (BYTE*)malloc(sizeof(bmpFileHeader) + clipDataSize);
     // First we add the header for a bmp file
     memcpy(bmpData, &bmpFileHeader, sizeof(bmpFileHeader));
     // Then we add the header for the bmp itself + the pixel data

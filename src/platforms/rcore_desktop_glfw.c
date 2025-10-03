@@ -1028,7 +1028,7 @@ Image GetClipboardImage(void)
     fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    else image = LoadImageFromMemory(".bmp", fileData, (int)dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif
@@ -1350,8 +1350,8 @@ int InitPlatform(void)
 
     const GLFWallocator allocator = {
         .allocate = AllocateWrapper,
-        .deallocate = DeallocateWrapper,
         .reallocate = ReallocateWrapper,
+        .deallocate = DeallocateWrapper,
         .user = NULL, // RL_*ALLOC macros are not capable of handling user-provided data
     };
 
