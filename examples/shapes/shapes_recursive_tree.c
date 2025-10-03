@@ -21,27 +21,20 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"                 // Required for GUI controls
 
-float theta;
-float thick = 1.0f;
-float branchDecay = 0.66f;
-bool bezier = false;
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+typedef struct {
+    Vector2 start;
+    float angle;
+    float length;
+} Branch;
 
-void Branch(Vector2 start, float length, float angle) {
-    length *= branchDecay;
-
-    if (length > 2) {
-        Vector2 end = {
-            start.x + length * sinf(angle),
-            start.y - length * cosf(angle)
-        };
-
-        if(!bezier) DrawLineEx(start, end, thick, RED);  
-        else DrawLineBezier(start, end, thick, RED);  
-
-        Branch(end, length, angle + theta);
-        Branch(end, length, angle - theta);
-    }
-}
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+static Vector2 CalculateBranchEnd(Vector2 start, float angle, float length);
+static void DrawBranch(Vector2 start, float angle, float length, float thick, bool bezier);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -56,8 +49,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - shapes recursive tree");
 
     Vector2 start = { (screenWidth / 2.0f) - 125, screenHeight };
-    Vector2 end = { (screenWidth / 2.0f) - 125, screenHeight - 120.0f };
-    float angle = 0.0f;
+    float angle = 45.0f;
+    float thick = 1.0f;   
+    float treeDepth = 1.0f;
+    float branchDecay = 0.66f;
+    float length = 120.0f;
+    bool bezier = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -65,28 +62,52 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        float a = (angle / screenWidth) * 90.0f;
-        theta = a * (PI / 180.0f);
+        // Update
+        //----------------------------------------------------------------------------------
+        float theta = angle * DEG2RAD;
+        int maxBranches = (int)(powf(2, treeDepth) - 1); 
+        Branch branches[4096];
+        int count = 0;
         
+        branches[count++] = (Branch){start, 0.0f, length};
+        
+        for (int i = 0; i < count; i++) {
+            Branch branch = branches[i];
+            if (branch.length < 2) continue;
+            
+            Vector2 end = CalculateBranchEnd(branch.start, branch.angle, branch.length);
+            float nextLength = branch.length * branchDecay;
+            
+            if (count < maxBranches && nextLength >= 2) {
+                branches[count++] = (Branch){end, branch.angle + theta, nextLength};
+                branches[count++] = (Branch){end, branch.angle - theta, nextLength};
+            }
+        }
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
 
-            DrawLine(560, 0, 560, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
-            DrawRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
+            for (int i = 0; i < count; i++) {
+                Branch branch = branches[i];
+                if (branch.length >= 2) {
+                    DrawBranch(branch.start, branch.angle, branch.length, thick, bezier);
+                }
+            }
+
+            DrawLine(560, 0, 560, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
+            DrawRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), (Color){ 232, 232, 232, 255 });
             
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.2f", angle), &angle, 0, 1600);
-            GuiSliderBar((Rectangle){ 640, 70, 120, 20}, "Thick", TextFormat("%.2f", thick), &thick, 1, 8);
+            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.0f", angle), &angle, 0, 180);
+            GuiSliderBar((Rectangle){ 640, 70, 120, 20 }, "Length", TextFormat("%.0f", length), &length, 12.0f, 240.0f);
             GuiSliderBar((Rectangle){ 640, 100, 120, 20}, "Branch Decay", TextFormat("%.2f", branchDecay), &branchDecay, 0.1f, 0.78f);
-            GuiCheckBox((Rectangle){ 640, 130, 20, 20 }, "Bezier", &bezier);
+            GuiSliderBar((Rectangle){ 640, 130, 120, 20 }, "Tree Depth", TextFormat("%.0f", treeDepth), &treeDepth, 1.0f, 12.f);
+            GuiSliderBar((Rectangle){ 640, 160, 120, 20}, "Thick", TextFormat("%.0f", thick), &thick, 1, 8);
+            GuiCheckBox((Rectangle){ 640, 190, 20, 20 }, "Bezier", &bezier);
             //------------------------------------------------------------------------------
-            
-            DrawLineEx(start, end, thick, RED);
-            Branch(end, 120.0f, 0.0f);
 
             DrawFPS(10, 10);
 
@@ -100,4 +121,17 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+static Vector2 CalculateBranchEnd(Vector2 start, float angle, float length) {
+    return (Vector2){
+        start.x + length * sinf(angle),
+        start.y - length * cosf(angle)
+    };
+}
+
+static void DrawBranch(Vector2 start, float angle, float length, float thick, bool bezier) {
+    Vector2 end = CalculateBranchEnd(start, angle, length);
+    if (!bezier) DrawLineEx(start, end, thick, RED);
+    else DrawLineBezier(start, end, thick, RED);
 }
