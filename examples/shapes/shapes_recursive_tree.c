@@ -26,6 +26,7 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     Vector2 start;
+    Vector2 end;
     float angle;
     float length;
 } Branch;
@@ -34,7 +35,6 @@ typedef struct {
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 static Vector2 CalculateBranchEnd(Vector2 start, float angle, float length);
-static void DrawBranch(Vector2 start, float angle, float length, float thick, bool bezier);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -49,9 +49,9 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - shapes recursive tree");
 
     Vector2 start = { (screenWidth / 2.0f) - 125, screenHeight };
-    float angle = 45.0f;
+    float angle = 40.0f;
     float thick = 1.0f;   
-    float treeDepth = 1.0f;
+    float treeDepth = 10.0f;
     float branchDecay = 0.66f;
     float length = 120.0f;
     bool bezier = false;
@@ -68,21 +68,27 @@ int main(void)
         int maxBranches = (int)(powf(2, treeDepth) - 1); 
         Branch branches[4096];
         int count = 0;
-        
-        branches[count++] = (Branch){start, 0.0f, length};
+
+        Vector2 initialEnd = CalculateBranchEnd(start, 0.0f, length);
+        branches[count++] = (Branch){start, initialEnd, 0.0f, length};
         
         for (int i = 0; i < count; i++) {
             Branch branch = branches[i];
             if (branch.length < 2) continue;
             
-            Vector2 end = CalculateBranchEnd(branch.start, branch.angle, branch.length);
             float nextLength = branch.length * branchDecay;
             
             if (count < maxBranches && nextLength >= 2) {
-                branches[count++] = (Branch){end, branch.angle + theta, nextLength};
-                branches[count++] = (Branch){end, branch.angle - theta, nextLength};
+                Vector2 branchStart = branch.end;
+                
+                Vector2 branchEnd1 = CalculateBranchEnd(branchStart, branch.angle + theta, nextLength);
+                Vector2 branchEnd2 = CalculateBranchEnd(branchStart, branch.angle - theta, nextLength);
+                
+                branches[count++] = (Branch){branchStart, branchEnd1, branch.angle + theta, nextLength};
+                branches[count++] = (Branch){branchStart, branchEnd2, branch.angle - theta, nextLength};
             }
         }
+        
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -92,19 +98,20 @@ int main(void)
             for (int i = 0; i < count; i++) {
                 Branch branch = branches[i];
                 if (branch.length >= 2) {
-                    DrawBranch(branch.start, branch.angle, branch.length, thick, bezier);
+                    if (!bezier) DrawLineEx(branch.start, branch.end, thick, RED);
+                    else DrawLineBezier(branch.start, branch.end, thick, RED);
                 }
             }
 
-            DrawLine(560, 0, 560, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
-            DrawRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), (Color){ 232, 232, 232, 255 });
+            DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
+            DrawRectangle(580, 0, GetScreenWidth(), GetScreenHeight(), (Color){ 232, 232, 232, 255 });
             
             // Draw GUI controls
             //------------------------------------------------------------------------------
             GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.0f", angle), &angle, 0, 180);
             GuiSliderBar((Rectangle){ 640, 70, 120, 20 }, "Length", TextFormat("%.0f", length), &length, 12.0f, 240.0f);
-            GuiSliderBar((Rectangle){ 640, 100, 120, 20}, "Branch Decay", TextFormat("%.2f", branchDecay), &branchDecay, 0.1f, 0.78f);
-            GuiSliderBar((Rectangle){ 640, 130, 120, 20 }, "Tree Depth", TextFormat("%.0f", treeDepth), &treeDepth, 1.0f, 12.f);
+            GuiSliderBar((Rectangle){ 640, 100, 120, 20}, "Decay", TextFormat("%.2f", branchDecay), &branchDecay, 0.1f, 0.78f);
+            GuiSliderBar((Rectangle){ 640, 130, 120, 20 }, "Depth", TextFormat("%.0f", treeDepth), &treeDepth, 1.0f, 12.f);
             GuiSliderBar((Rectangle){ 640, 160, 120, 20}, "Thick", TextFormat("%.0f", thick), &thick, 1, 8);
             GuiCheckBox((Rectangle){ 640, 190, 20, 20 }, "Bezier", &bezier);
             //------------------------------------------------------------------------------
@@ -128,10 +135,4 @@ static Vector2 CalculateBranchEnd(Vector2 start, float angle, float length) {
         start.x + length * sinf(angle),
         start.y - length * cosf(angle)
     };
-}
-
-static void DrawBranch(Vector2 start, float angle, float length, float thick, bool bezier) {
-    Vector2 end = CalculateBranchEnd(start, angle, length);
-    if (!bezier) DrawLineEx(start, end, thick, RED);
-    else DrawLineBezier(start, end, thick, RED);
 }
