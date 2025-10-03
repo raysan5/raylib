@@ -166,11 +166,17 @@
         #define MAX_PATH 1025
     #endif
 struct HINSTANCE__;
+#if defined(__cplusplus)
+extern "C" {
+#endif
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(struct HINSTANCE__ *hModule, char *lpFilename, unsigned long nSize);
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(struct HINSTANCE__ *hModule, wchar_t *lpFilename, unsigned long nSize);
 __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
 __declspec(dllimport) unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
 __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
+#if defined(__cplusplus)
+}
+#endif
 #elif defined(__linux__)
     #include <unistd.h>
 #elif defined(__FreeBSD__)
@@ -547,7 +553,7 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     // #endif
 
 #endif // SUPPORT_CLIPBOARD_IMAGE
-
+#define UNICODE
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)
     #include "platforms/rcore_desktop_glfw.c"
@@ -2330,8 +2336,8 @@ const char *GetApplicationDirectory(void)
     int len = 0;
 #if defined(UNICODE)
     unsigned short widePath[MAX_PATH];
-    len = GetModuleFileNameW(NULL, widePath, MAX_PATH);
-    len = WideCharToMultiByte(0, 0, widePath, len, appDir, MAX_PATH, NULL, NULL);
+    len = GetModuleFileNameW(NULL, (wchar_t*)widePath, MAX_PATH);
+    len = WideCharToMultiByte(0, 0, (wchar_t*)widePath, len, appDir, MAX_PATH, NULL, NULL);
 #else
     len = GetModuleFileNameA(NULL, appDir, MAX_PATH);
 #endif
