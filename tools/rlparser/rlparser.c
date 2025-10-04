@@ -80,7 +80,7 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-// Type of parsed define
+// Define value type
 typedef enum {
     UNKNOWN = 0,
     MACRO,
@@ -101,7 +101,7 @@ typedef enum {
 // Define info data
 typedef struct DefineInfo {
     char name[64];              // Define name
-    int type;                   // Define type
+    int type;                   // Define type: enum DefineType
     char value[256];            // Define value
     char desc[128];             // Define description
     bool isHex;                 // Define is hex number (for types INT, LONG)
@@ -169,7 +169,7 @@ static char apiDefine[32] = { 0 };         // Functions define (i.e. RLAPI for r
 static char truncAfter[32] = { 0 };        // Truncate marker (i.e. "RLGL IMPLEMENTATION" for rlgl.h)
 static int outputFormat = DEFAULT;
 
-// NOTE: Max length depends on OS, in Windows MAX_PATH = 256
+// NOTE: Filename max length depends on OS, in Windows MAX_PATH = 256
 static char inFileName[512] = { 0 };        // Input file name (required in case of drag & drop over executable)
 static char outFileName[512] = { 0 };       // Output file name (required for file save/export)
 
@@ -179,15 +179,17 @@ static char outFileName[512] = { 0 };       // Output file name (required for fi
 static void ShowCommandLineInfo(void);                      // Show command line usage info
 static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
 
-static char *LoadFileText(const char *fileName, int *length);
-static char **GetTextLines(const char *buffer, int length, int *linesCount);
-static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type, char *name);
-static void GetDescription(const char *source, char *description);
+static char *LoadFileText(const char *fileName, int *length); // Load text file - UnloadFileText() required!
+static void UnloadFileText(char *text);                     // Unload text data
+static char **LoadTextLines(const char *buffer, int length, int *lineCount); // Load all lines from a text buffer (expecting lines ending with '\n') - UnloadTextLines() required
+static void UnloadTextLines(char **lines, int lineCount);   // Unload text lines data
+static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type, char *name); // Get data type and name from a string containing both (i.e function param and struct fields)
+static void GetDescription(const char *source, char *description); // Get description comment from a line, do nothing if no comment in line
 static void MoveArraySize(char *name, char *type);          // Move array size from name to type
 static unsigned int TextLength(const char *text);           // Get text length in bytes, check for \0 character
 static bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
 static int TextFindIndex(const char *text, const char *find); // Find first text occurrence within a string
-static void MemoryCopy(void *dest, const void *src, unsigned int count);
+static void MemoryCopy(void *dest, const void *src, unsigned int count); // Memory copy, memcpy() replacement to avoid <string.h>
 static char *EscapeBackslashes(char *text);                 // Replace '\' by "\\" when exporting to JSON and XML
 static const char *StrDefineType(DefineType type);          // Get string of define type
 
@@ -217,21 +219,21 @@ int main(int argc, char* argv[])
     }
 
     // Preprocess buffer to get separate lines
-    // NOTE: GetTextLines() also removes leading spaces/tabs
-    int linesCount = 0;
-    char **lines = GetTextLines(buffer, length, &linesCount);
+    // NOTE: LoadTextLines() also removes leading spaces/tabs
+    int lineCount = 0;
+    char **lines = LoadTextLines(buffer, length, &lineCount);
 
-    // Truncate lines
+    // Truncate lines (if required)
     if (truncAfter[0] != '\0')
     {
         int newCount = -1;
-        for (int i = 0; i < linesCount; i++)
+        for (int i = 0; i < lineCount; i++)
         {
             if (newCount > -1) free(lines[i]);
             else if (TextFindIndex(lines[i], truncAfter) > -1) newCount = i;
         }
-        if (newCount > -1) linesCount = newCount;
-        printf("Number of truncated text lines: %i\n", linesCount);
+        if (newCount > -1) lineCount = newCount;
+        printf("Number of truncated text lines: %i\n", lineCount);
     }
 
     // Defines line indices
@@ -254,9 +256,8 @@ int main(int argc, char* argv[])
 
     // Prepare required lines for parsing
     //----------------------------------------------------------------------------------
-
     // Read define lines
-    for (int i = 0; i < linesCount; i++)
+    for (int i = 0; i < lineCount; i++)
     {
         int j = 0;
         while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the begining
@@ -271,7 +272,7 @@ int main(int argc, char* argv[])
     }
 
     // Read struct lines
-    for (int i = 0; i < linesCount; i++)
+    for (int i = 0; i < lineCount; i++)
     {
         // Find structs
         // starting with "typedef struct ... {" or "typedef struct ... ; \n struct ... {"
@@ -298,7 +299,7 @@ int main(int argc, char* argv[])
     }
 
     // Read alias lines
-    for (int i = 0; i < linesCount; i++)
+    for (int i = 0; i < lineCount; i++)
     {
         // Find aliases (lines with "typedef ... ...;")
         if (IsTextEqual(lines[i], "typedef", 7))
@@ -320,7 +321,7 @@ int main(int argc, char* argv[])
     }
 
     // Read enum lines
-    for (int i = 0; i < linesCount; i++)
+    for (int i = 0; i < lineCount; i++)
     {
         // Read enum line
         if (IsTextEqual(lines[i], "typedef enum {", 14) && (lines[i][TextLength(lines[i])-1] != ';')) // ignore inline enums
@@ -333,7 +334,7 @@ int main(int argc, char* argv[])
     }
 
     // Read callback lines
-    for (int i = 0; i < linesCount; i++)
+    for (int i = 0; i < lineCount; i++)
     {
         // Find callbacks (lines with "typedef ... (* ... )( ... );")
         if (IsTextEqual(lines[i], "typedef", 7))
@@ -359,7 +360,7 @@ int main(int argc, char* argv[])
     }
 
     // Read function lines
-    for (int i = 0; i < linesCount; i++)
+    for (int i = 0; i < lineCount; i++)
     {
         // Read function line (starting with `define`, i.e. for raylib.h "RLAPI")
         if (IsTextEqual(lines[i], apiDefine, TextLength(apiDefine)))
@@ -371,14 +372,13 @@ int main(int argc, char* argv[])
 
     // At this point we have all raylib defines, structs, aliases, enums, callbacks, functions lines data to start parsing
 
-    free(buffer);       // Unload text buffer
+    UnloadFileText(buffer); // Unload text buffer
 
     // Parsing raylib data
     //----------------------------------------------------------------------------------
-
     // Define info data
-    defines = (DefineInfo *)calloc(MAX_DEFINES_TO_PARSE, sizeof(DefineInfo));
     int defineIndex = 0;
+    defines = (DefineInfo *)calloc(MAX_DEFINES_TO_PARSE, sizeof(DefineInfo));
 
     for (int i = 0; i < defineCount; i++)
     {
@@ -1038,8 +1038,7 @@ int main(int argc, char* argv[])
     }
     free(funcLines);
 
-    for (int i = 0; i < linesCount; i++) free(lines[i]);
-    free(lines);
+    UnloadTextLines(lines, lineCount);
 
     // At this point, all raylib data has been parsed!
     //----------------------------------------------------------------------------------
@@ -1219,8 +1218,14 @@ static char *LoadFileText(const char *fileName, int *length)
     return text;
 }
 
+// Unload text data
+static void UnloadFileText(char *text)
+{
+    free(text);
+}
+
 // Get all lines from a text buffer (expecting lines ending with '\n')
-static char **GetTextLines(const char *buffer, int length, int *linesCount)
+static char **LoadTextLines(const char *buffer, int length, int *lineCount)
 {
     // Get the number of lines in the text
     int count = 0;
@@ -1235,7 +1240,7 @@ static char **GetTextLines(const char *buffer, int length, int *linesCount)
 
     for (int i = 0; (i < count) || (bufferPtr[0] != '\0'); i++)
     {
-        lines[i] = (char *)calloc(MAX_LINE_LENGTH, sizeof(char));
+        lines[i] = (char *)calloc(MAX_LINE_LENGTH, sizeof(char)); // MAX_LINE_LENGTH=1024
 
         // Remove line leading spaces
         // Find last index of space/tab character
@@ -1252,8 +1257,15 @@ static char **GetTextLines(const char *buffer, int length, int *linesCount)
         bufferPtr += (index + j + 1);
     }
 
-    *linesCount = count;
+    *lineCount = count;
     return lines;
+}
+
+// Unload text lines data
+static void UnloadTextLines(char **lines, int lineCount)
+{
+    for (int i = 0; i < lineCount; i++) free(lines[i]);
+    free(lines);
 }
 
 // Get data type and name from a string containing both
