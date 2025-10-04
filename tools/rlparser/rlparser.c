@@ -1,28 +1,28 @@
 /**********************************************************************************************
 
-    raylib API parser
+    rlparser - raylib header API parser, extracts API information as separate tokens
 
     This parser scans raylib.h to get API information about defines, structs, aliases, enums, callbacks and functions.
     All data is divided into pieces, usually as strings. The following types are used for data:
-
      - struct DefineInfo
      - struct StructInfo
      - struct AliasInfo
      - struct EnumInfo
      - struct FunctionInfo
+     
+    WARNING: This parser is specifically designed to work with raylib.h, and has some contraints
+    in that regards. Still, it can also work with other header files that follow same file structure
+    conventions as raylib.h: rlgl.h, raymath.h, raygui.h, reasings.h 
 
     CONSTRAINTS:
-
     This parser is specifically designed to work with raylib.h, so, it has some constraints:
 
      - Functions are expected as a single line with the following structure:
-
        <retType> <name>(<paramType[0]> <paramName[0]>, <paramType[1]> <paramName[1]>);  <desc>
 
-       Be careful with functions broken into several lines, it breaks the process!
+       WARNING: Be careful with functions broken into several lines, it breaks the process!
 
      - Structures are expected as several lines with the following form:
-
        <desc>
        typedef struct <name> {
            <fieldType[0]> <fieldName[0]>;  <fieldDesc[0]>
@@ -31,7 +31,6 @@
        } <name>;
 
      - Enums are expected as several lines with the following form:
-
        <desc>
        typedef enum {
            <valueName[0]> = <valueInteger[0]>, <valueDesc[0]>
@@ -45,7 +44,6 @@
           - Value description can be provided or not
 
     OTHER NOTES:
-
      - This parser could work with other C header files if mentioned constraints are followed.
      - This parser does not require <string.h> library, all data is parsed directly from char buffers.
 
