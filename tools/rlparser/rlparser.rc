@@ -1,0 +1,24 @@
+IDI_APP_ICON ICON "rlparser.ico"
+1 VERSIONINFO
+FILEVERSION     5,5,0,0
+PRODUCTVERSION  5,5,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"    // English US
+    BEGIN
+      VALUE "CompanyName", "raylib technologies"
+      VALUE "FileDescription", "rlparser | raylib header API parser"
+      VALUE "FileVersion", "1.0"
+      VALUE "InternalName", "rlparser"
+      VALUE "LegalCopyright", "(c) 2025 Ramon Santamaria (@raysan5)"
+      VALUE "OriginalFilename", "rlparser"
+      VALUE "ProductName", "rlparser"
+      VALUE "ProductVersion", "1.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252    // English US
+  END
+END
