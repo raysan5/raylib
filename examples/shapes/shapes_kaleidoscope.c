@@ -68,10 +68,11 @@ int main(void)
 
                         DrawLineEx(lineStart, lineEnd, thickness, WHITE);
 
-                        //EndMode2D();
-                        // TODO: reflect line
-                        //BeginMode2D(camera);
+                        Vector2 scaleVector = {1.0f, -1.0f};
+                        Vector2 reflectLineStart = Vector2Multiply(lineStart, scaleVector);
+                        Vector2 reflectLineEnd = Vector2Multiply(lineEnd, scaleVector);
 
+                        DrawLineEx(reflectLineStart, reflectLineEnd, thickness, WHITE);
                     }
                 }
 
