@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Kaleidoscope
+*   raylib [shapes] example - kaleidoscope
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025-2025 Hugo ARNAL (@hugoarnal)
+*   Copyright (c) 2025 Hugo ARNAL (@hugoarnal)
 *
 ********************************************************************************************/
 
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - Kaleidoscope");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - kaleidoscope");
 
     int symmetry = 6;
     float angle = 360.0f / (float)symmetry;
