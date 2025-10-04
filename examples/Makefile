@@ -554,6 +554,7 @@ SHAPES = \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
+    shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
