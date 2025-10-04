@@ -1049,6 +1049,11 @@ int main(int argc, char* argv[])
     // callbacks[] -> We have all the callbacks decomposed into pieces for further analysis
     // funcs[]     -> We have all the functions decomposed into pieces for further analysis
 
+    // Export data as required
+    // NOTE: We are exporting data in several common formats (JSON, XML, LUA...) for convenience
+    // but this data can be directly used to create bindings for other languages modifying this
+    // small parser for every binding need, there is no need to use (and re-parse) the
+    // generated files... despite it seems that's the usual approach...
     printf("\nInput file:       %s", inFileName);
     printf("\nOutput file:      %s", outFileName);
     if (outputFormat == DEFAULT) printf("\nOutput format:    DEFAULT\n\n");
@@ -1070,22 +1075,21 @@ int main(int argc, char* argv[])
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// raylib API parser                                                            //\n");
+    printf("// rlparser - raylib header API parser                                          //\n");
     printf("//                                                                              //\n");
-    printf("// more info and bugs-report: github.com/raysan5/raylib/parser                  //\n");
+    printf("// more info and bugs-report: github.com/raysan5/raylib/tools/rlparser          //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)                          //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("USAGE:\n\n");
-    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]\n");
+    printf("    > rlparser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]\n");
 
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
@@ -1102,11 +1106,11 @@ static void ShowCommandLineInfo(void)
     printf("                                      NOTE: If not specified, the full input file is parsed.\n\n");
 
     printf("\nEXAMPLES:\n\n");
-    printf("    > raylib_parser --input raylib.h --output api.json\n");
+    printf("    > rlparser --input raylib.h --output api.json\n");
     printf("        Process <raylib.h> to generate <api.json>\n\n");
-    printf("    > raylib_parser --output raylib_data.info --format XML\n");
+    printf("    > rlparser --output raylib_data.info --format XML\n");
     printf("        Process <raylib.h> to generate <raylib_data.info> as XML text data\n\n");
-    printf("    > raylib_parser --input raymath.h --output raymath_data.info --format XML --define RMAPI\n");
+    printf("    > rlparser --input raymath.h --output raymath_data.info --format XML --define RMAPI\n");
     printf("        Process <raymath.h> to generate <raymath_data.info> as XML text data\n\n");
 }
 
