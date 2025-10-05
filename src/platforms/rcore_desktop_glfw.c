@@ -959,8 +959,11 @@ int GetMonitorRefreshRate(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        const GLFWvidmode *vidmode = glfwGetVideoMode(monitors[monitor]);
-        refresh = vidmode->refreshRate;
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+
+        if (mode) refresh = mode->refreshRate;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 
