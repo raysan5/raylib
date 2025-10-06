@@ -99,7 +99,7 @@ jobs:
     # Filter out rules with low severity or high false positve rate
     # Also filter out warnings in third-party code
     - name: Filter out unwanted errors and warnings
-      uses: advanced-security/filter-sarif@v2
+      uses: advanced-security/filter-sarif@v1
       with:
         patterns: |
           -**:cpp/path-injection
