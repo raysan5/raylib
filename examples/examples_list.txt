@@ -60,6 +60,7 @@ shapes;shapes_following_eyes;★★☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@
 shapes;shapes_easings_ball;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_box;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_rectangles;★★★☆;2.0;2.5;2014;2025;"Ramon Santamaria";@raysan5
+shapes;shapes_recursive_tree;★★★☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 shapes;shapes_ring_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
 shapes;shapes_circle_sector_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
 shapes;shapes_rounded_rectangle_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
