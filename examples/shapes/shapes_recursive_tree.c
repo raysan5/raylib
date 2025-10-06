@@ -65,30 +65,30 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         float theta = angle * DEG2RAD;
-        int maxBranches = (int)(powf(2, treeDepth) - 1); 
+        int maxBranches = (int)(powf(2, (int)(treeDepth))); 
         Branch branches[4096];
         int count = 0;
 
         Vector2 initialEnd = CalculateBranchEnd(start, 0.0f, length);
         branches[count++] = (Branch){start, initialEnd, 0.0f, length};
-        
+
         for (int i = 0; i < count; i++) {
             Branch branch = branches[i];
             if (branch.length < 2) continue;
-            
+
             float nextLength = branch.length * branchDecay;
-            
+
             if (count < maxBranches && nextLength >= 2) {
                 Vector2 branchStart = branch.end;
-                
+
                 Vector2 branchEnd1 = CalculateBranchEnd(branchStart, branch.angle + theta, nextLength);
                 Vector2 branchEnd2 = CalculateBranchEnd(branchStart, branch.angle - theta, nextLength);
-                
+
                 branches[count++] = (Branch){branchStart, branchEnd1, branch.angle + theta, nextLength};
                 branches[count++] = (Branch){branchStart, branchEnd2, branch.angle - theta, nextLength};
             }
         }
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -105,7 +105,7 @@ int main(void)
 
             DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
             DrawRectangle(580, 0, GetScreenWidth(), GetScreenHeight(), (Color){ 232, 232, 232, 255 });
-            
+
             // Draw GUI controls
             //------------------------------------------------------------------------------
             GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.0f", angle), &angle, 0, 180);
