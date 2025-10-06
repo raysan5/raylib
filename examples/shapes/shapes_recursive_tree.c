@@ -67,7 +67,7 @@ int main(void)
 
         float theta = angle*DEG2RAD;
         int maxBranches = (int)(powf(2, (int)(treeDepth)));
-        Branch branches[1024];
+        Branch branches[1024] = { 0 };
         int count = 0;
 
         Vector2 initialEnd = CalculateBranchEnd(start, 0.0f, length);
@@ -78,7 +78,7 @@ int main(void)
             Branch branch = branches[i];
             if (branch.length < 2) continue;
 
-            float nextLength = branch.length * branchDecay;
+            float nextLength = branch.length*branchDecay;
 
             if (count < maxBranches && nextLength >= 2) 
             {
