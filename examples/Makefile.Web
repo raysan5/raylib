@@ -559,6 +559,7 @@ SHAPES = \
     shapes/shapes_logo_raylib_anim \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
@@ -866,6 +867,9 @@ shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_recursive_tree: shapes/shapes_recursive_tree.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
