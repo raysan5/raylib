@@ -71,7 +71,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -90,7 +90,7 @@ jobs:
         cmake --build . --config $BUILD_TYPE
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
         upload: false
@@ -99,7 +99,7 @@ jobs:
     # Filter out rules with low severity or high false positve rate
     # Also filter out warnings in third-party code
     - name: Filter out unwanted errors and warnings
-      uses: advanced-security/filter-sarif@v1
+      uses: advanced-security/filter-sarif@v3
       with:
         patterns: |
           -**:cpp/path-injection
@@ -121,7 +121,7 @@ jobs:
         output: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
 
     - name: Upload CodeQL results to code scanning
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: ${{ steps.step1.outputs.sarif-output }}
         category: "/language:${{matrix.language}}"
