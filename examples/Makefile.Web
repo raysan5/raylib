@@ -564,6 +564,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
+    shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
 
 TEXTURES = \
@@ -882,6 +883,9 @@ shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_triangle_strip: shapes/shapes_triangle_strip.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_vector_angle: shapes/shapes_vector_angle.c
