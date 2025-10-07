@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 174]
+## EXAMPLES COLLECTION [TOTAL: 175]
 
 ### category: core [40]
 
@@ -66,7 +66,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
 
-### category: shapes [25]
+### category: shapes [26]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -84,8 +84,8 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_following_eyes](shapes/shapes_following_eyes.c) | <img src="shapes/shapes_following_eyes.png" alt="shapes_following_eyes" width="80"> | ⭐⭐☆☆ | 2.5 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_easings_ball](shapes/shapes_easings_ball.c) | <img src="shapes/shapes_easings_ball.png" alt="shapes_easings_ball" width="80"> | ⭐⭐☆☆ | 2.5 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_easings_box](shapes/shapes_easings_box.c) | <img src="shapes/shapes_easings_box.png" alt="shapes_easings_box" width="80"> | ⭐⭐☆☆ | 2.5 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
-| [shapes_recursive_tree](shapes/shapes_recursive_tree.c) | <img src="shapes/shapes_recursive_tree.png" alt="shapes_recursive_tree" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev| [Jopestpe](https://github.com/jopestpe) |
 | [shapes_easings_rectangles](shapes/shapes_easings_rectangles.c) | <img src="shapes/shapes_easings_rectangles.png" alt="shapes_easings_rectangles" width="80"> | ⭐⭐⭐☆ | 2.0 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_recursive_tree](shapes/shapes_recursive_tree.c) | <img src="shapes/shapes_recursive_tree.png" alt="shapes_recursive_tree" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_ring_drawing](shapes/shapes_ring_drawing.c) | <img src="shapes/shapes_ring_drawing.png" alt="shapes_ring_drawing" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | [shapes_circle_sector_drawing](shapes/shapes_circle_sector_drawing.c) | <img src="shapes/shapes_circle_sector_drawing.png" alt="shapes_circle_sector_drawing" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | [shapes_rounded_rectangle_drawing](shapes/shapes_rounded_rectangle_drawing.c) | <img src="shapes/shapes_rounded_rectangle_drawing.png" alt="shapes_rounded_rectangle_drawing" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
@@ -97,6 +97,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_dashed_line](shapes/shapes_dashed_line.c) | <img src="shapes/shapes_dashed_line.png" alt="shapes_dashed_line" width="80"> | ⭐☆☆☆ | 5.5 | 5.5 | [Luís Almeida](https://github.com/luis605) |
 | [shapes_triangle_strip](shapes/shapes_triangle_strip.c) | <img src="shapes/shapes_triangle_strip.png" alt="shapes_triangle_strip" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_vector_angle](shapes/shapes_vector_angle.c) | <img src="shapes/shapes_vector_angle.png" alt="shapes_vector_angle" width="80"> | ⭐⭐☆☆ | 1.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_kaleidoscope](shapes/shapes_kaleidoscope.c) | <img src="shapes/shapes_kaleidoscope.png" alt="shapes_kaleidoscope" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 
 ### category: textures [26]
 
