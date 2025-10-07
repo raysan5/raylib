@@ -1954,6 +1954,7 @@ char *TextToPascal(const char *text)
             {
                 j++;
                 if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
+                else if ((text[j] >= '0') && (text[j] <= '9')) buffer[i] = text[j];
             }
         }
     }
