@@ -44,13 +44,13 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
             ClearBackground(RAYWHITE);
 
             DrawText(TextFormat("Files in directory \"%s\":", directory), 100, 40, 20, DARKGRAY);
 
-            for (int i = 0; i < (int)files.count; i++) {
-                float alpha = i % 2 == 0 ? 0.5f : 0.3f;
+            for (int i = 0; i < (int)files.count; i++)
+            {
+                float alpha = (i % 2 == 0)? 0.5f : 0.3f;
                 DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, alpha));
 
                 DrawText(files.paths[i], 120, 100 + 40*i, 10, GRAY);
