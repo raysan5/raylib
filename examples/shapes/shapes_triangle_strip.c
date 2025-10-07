@@ -21,12 +21,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"                 // Required for GUI controls
 
-//----------------------------------------------------------------------------------
-// Module Functions Declaration
-//----------------------------------------------------------------------------------
-static Vector2 CalculatePoint(Vector2 start, float angle, float length);
-static void DrawTriangleCustom(Vector2 point1, Vector2 point2, Vector2 point3, float angle, bool outline);
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -54,18 +48,20 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
         int pointCount = (int)(segments);
         float angleStep = (360.0f/pointCount)*DEG2RAD;
 
         for (int i = 0, i2 = 0; i < pointCount; i++, i2 += 2)
         {
-            points[i2] = CalculatePoint(center, i*angleStep, insideRadius);
-            points[i2 + 1] = CalculatePoint(center, i*angleStep + angleStep/2.0f, outsideRadius);
+            float angle1 = i*angleStep;
+            points[i2] = (Vector2){ center.x + cosf(angle1)*insideRadius, center.y + sinf(angle1)*insideRadius };
+            float angle2 = angle1 + angleStep/2.0f;
+            points[i2 + 1] = (Vector2){ center.x + cosf(angle2)*outsideRadius, center.y + sinf(angle2)*outsideRadius };
         }
-        
+
         points[pointCount*2] = points[0];
         points[pointCount*2 + 1] = points[1];
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -75,8 +71,15 @@ int main(void)
 
             for (int i = 0, i2 = 0; i < pointCount; i++, i2 += 2)
             {
-                DrawTriangleCustom(points[i2], points[i2 + 1], points[i2 + 2], i*angleStep, outline);
-                DrawTriangleCustom(points[i2 + 2], points[i2 + 1], points[i2 + 3], i*angleStep + (angleStep/2), outline);
+                float angle1 = i*angleStep;
+                Color color = ColorFromHSV(angle1*RAD2DEG, 1.0f, 1.0f);
+                DrawTriangle(points[i2 + 2], points[i2 + 1], points[i2], color);
+                if (outline) DrawTriangleLines(points[i2], points[i2 + 1], points[i2 + 2], BLACK);
+
+                float angle2 = angle1 + angleStep/2.0f;
+                color = ColorFromHSV(angle2*RAD2DEG, 1.0f, 1.0f);
+                DrawTriangle(points[i2 + 3], points[i2 + 1], points[i2 + 2], color);
+                if (outline) DrawTriangleLines(points[i2 + 2], points[i2 + 1], points[i2 + 3], BLACK);
             }
  
             DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
@@ -100,16 +103,4 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
-}
-
-static Vector2 CalculatePoint(Vector2 start, float angle, float radius)
-{
-    return (Vector2){ start.x + cosf(angle)*radius, start.y + sinf(angle)*radius };
-} 
-
-static void DrawTriangleCustom(Vector2 point1, Vector2 point2, Vector2 point3, float angle, bool outline) 
-{
-    Color color = ColorFromHSV(angle*RAD2DEG, 1.0f, 1.0f);
-    DrawTriangle(point3, point2, point1, color);
-    if (outline) DrawTriangleLines(point1, point2, point3, BLACK);
 }
