@@ -386,6 +386,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             setDesktopPlatform(raylib, options.platform);
         },
         .emscripten => {
+            const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
+            raylib.step.dependOn(activate_emsdk_step);
             raylib.root_module.addCMacro("PLATFORM_WEB", "");
             if (options.opengl_version == .auto) {
                 raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES3", "");
