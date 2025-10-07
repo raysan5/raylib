@@ -564,6 +564,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
+    shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
 
 TEXTURES = \
