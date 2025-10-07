@@ -31,19 +31,21 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - kaleidoscope");
 
     int symmetry = 6;
-    float angle = 360.0f / (float)symmetry;
+    float angle = 360.0f/(float)symmetry;
     float thickness = 3.0f;
     Vector2 prevMousePos = { 0 };
 
     SetTargetFPS(60);
     ClearBackground(BLACK);
 
-    Vector2 offset = {(float)screenWidth / 2.0f, (float)screenHeight / 2.0f};
+    Vector2 offset = { (float)screenWidth/2.0f, (float)screenHeight/2.0f };
     Camera2D camera = { 0 };
     camera.target = (Vector2){ 0 };
     camera.offset = offset;
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
+
+    Vector2 scaleVector = { 1.0f, -1.0f };
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -52,23 +54,21 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         Vector2 mousePos = GetMousePosition();
+        Vector2 lineStart = Vector2Subtract(mousePos, offset);
+        Vector2 lineEnd = Vector2Subtract(prevMousePos, offset);
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
             BeginMode2D(camera);
-                Vector2 lineStart = Vector2Subtract(mousePos, offset);
-                Vector2 lineEnd = Vector2Subtract(prevMousePos, offset);
-
                 if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
                     for (int i = 0; i < symmetry; i++) {
-                        lineStart = Vector2Rotate(lineStart, angle * DEG2RAD);
-                        lineEnd = Vector2Rotate(lineEnd, angle * DEG2RAD);
+                        lineStart = Vector2Rotate(lineStart, angle*DEG2RAD);
+                        lineEnd = Vector2Rotate(lineEnd, angle*DEG2RAD);
 
                         DrawLineEx(lineStart, lineEnd, thickness, WHITE);
 
-                        Vector2 scaleVector = {1.0f, -1.0f};
                         Vector2 reflectLineStart = Vector2Multiply(lineStart, scaleVector);
                         Vector2 reflectLineEnd = Vector2Multiply(lineEnd, scaleVector);
 
