@@ -48,6 +48,11 @@
 *
 **********************************************************************************************/
 
+#ifndef RAYLIB_H // this should never actually happen, it's only here for IDEs
+    #include "../raylib.h"
+    #include "../rcore.c"
+#endif
+
 #include <fcntl.h>          // POSIX file control definitions - open(), creat(), fcntl()
 #include <unistd.h>         // POSIX standard function definitions - read(), close(), STDIN_FILENO
 #include <termios.h>        // POSIX terminal control definitions - tcgetattr(), tcsetattr()

@@ -48,6 +48,11 @@
 *
 **********************************************************************************************/
 
+#ifndef RAYLIB_H // this should never actually happen, it's only here for IDEs
+    #include "../raylib.h"
+    #include "../rcore.c"
+#endif
+
 #ifdef USING_SDL3_PACKAGE
     #define USING_SDL3_PROJECT
 #endif

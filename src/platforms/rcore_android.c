@@ -46,6 +46,11 @@
 *
 **********************************************************************************************/
 
+#ifndef RAYLIB_H // this should never actually happen, it's only here for IDEs
+#include "../raylib.h"
+#include "../rcore.c"
+#endif
+
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)

@@ -47,6 +47,10 @@
 **********************************************************************************************/
 
 // TODO: Include the platform specific libraries
+#ifndef RAYLIB_H // this should never actually happen, it's only here for IDEs
+    #include "../raylib.h"
+    #include "../rcore.c"
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition

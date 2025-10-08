@@ -48,9 +48,9 @@
 *
 **********************************************************************************************/
 
-#ifndef RAYLIB_H /* this should never actually happen, it's only here for IDEs */
-#include "raylib.h"
-#include "../rcore.c"
+#ifndef RAYLIB_H // this should never actually happen, it's only here for IDEs
+    #include "../raylib.h"
+    #include "../rcore.c"
 #endif
 
 #if defined(PLATFORM_WEB_RGFW)

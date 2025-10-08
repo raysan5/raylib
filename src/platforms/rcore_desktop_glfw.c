@@ -49,6 +49,11 @@
 *
 **********************************************************************************************/
 
+#ifndef RAYLIB_H // this should never actually happen, it's only here for IDEs
+    #include "../raylib.h"
+    #include "../rcore.c"
+#endif
+
 #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
                                 // NOTE: Already provided by rlgl implementation (on glad.h)
 #include "GLFW/glfw3.h"         // GLFW3 library: Windows, OpenGL context and Input management
