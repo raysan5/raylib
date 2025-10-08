@@ -135,7 +135,6 @@ static bool RGFW_disableCursor = false;
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_keyNULL] = KEY_NULL,
     [RGFW_return] = KEY_ENTER,
-    [RGFW_return] = KEY_ENTER,
     [RGFW_apostrophe] = KEY_APOSTROPHE,
     [RGFW_comma] = KEY_COMMA,
     [RGFW_minus] = KEY_MINUS,
