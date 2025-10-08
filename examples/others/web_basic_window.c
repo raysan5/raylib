@@ -1,15 +1,18 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - Basic window (adapted for HTML5 platform)
+*   raylib [others] example - basic window
 *
-*   This example is prepared to compile for PLATFORM_WEB and PLATFORM_DESKTOP
-*   As you will notice, code structure is slightly different to the other examples...
-*   To compile it for PLATFORM_WEB just uncomment #define PLATFORM_WEB at beginning
+*   This example has been adapted to compile for PLATFORM_WEB and PLATFORM_DESKTOP
+*   As you will notice, code structure is slightly different to the other examples
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Example originally created with raylib 1.3, last time updated with raylib 5.5
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

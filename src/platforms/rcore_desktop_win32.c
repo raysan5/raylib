@@ -76,8 +76,9 @@
 #include <shellscalingapi.h>
 #include <versionhelpers.h>
 
-#include <GL/gl.h>
-//#include <GL/wglext.h>
+#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    #include <GL/gl.h>
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -87,9 +88,14 @@
 // the backend must keep the client area this size (after DPI scaling is applied) 
 // when the window isn't fullscreen/maximized/minimized
 typedef struct {
-    HWND hwnd;
-    HDC hdc;
-    HGLRC glContext;
+    HWND hwnd;              // Window handler
+    HDC hdc;                // Graphic context handler
+    HGLRC glContext;        // OpenGL context handler
+    // Software renderer variables
+    HDC hdcmem;             // Memory graphic context handler
+    HBITMAP hbitmap;        // GDI bitmap handler
+    unsigned int *pixels;   // Pointer to pixel data buffer (BGRA format)
+
     LARGE_INTEGER timerFrequency;
     unsigned int appScreenWidth;
     unsigned int appScreenHeight;
@@ -251,7 +257,7 @@ static bool DecoratedFromStyle(DWORD style)
 
 static Mized MizedFromStyle(DWORD style)
 {
-    // minimized takes precedence over maximized
+    // Minimized takes precedence over maximized
     if (style & WS_MINIMIZE) return MIZED_MIN;
     if (style & WS_MAXIMIZE) return MIZED_MAX;
     return MIZED_NONE;
@@ -260,7 +266,7 @@ static Mized MizedFromStyle(DWORD style)
 static Mized MizedFromFlags(unsigned flags)
 {
     // minimized takes precedence over maximized
-    if (flags & FLAG_WINDOW_MINIMIZED) return MIZED_MIN;
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED)) return MIZED_MIN;
     if (flags & FLAG_WINDOW_MAXIMIZED) return MIZED_MAX;
     return MIZED_NONE;
 }
@@ -285,15 +291,6 @@ static DWORD MakeWindowStyle(unsigned flags)
     }
 
     return style;
-}
-
-static bool IsMinimized2(HWND hwnd)
-{
-    bool isIconic = IsIconic(hwnd);
-    bool styleMinimized = !!(WS_MINIMIZE & GetWindowLongPtrW(hwnd, GWL_STYLE));
-    if (isIconic != styleMinimized) TRACELOG(LOG_WARNING, "IsIconic(%d) != WS_MINIMIZED(%d)", isIconic, styleMinimized);
-
-    return isIconic;
 }
 
 // Enforces that the actual window/platform state is in sync with raylib's flags
@@ -433,6 +430,8 @@ static bool UpdateWindowSize(UpdateWindowKind kind, HWND hwnd, int width, int he
         info.cbSize = sizeof(info);
         if (!GetMonitorInfoW(monitor, &info)) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "GetMonitorInfo", GetLastError());
 
+        #define MAX(a,b) (((a)>(b))? (a):(b))
+
         LONG monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
         LONG monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
         windowPos = (POINT){
@@ -442,10 +441,16 @@ static bool UpdateWindowSize(UpdateWindowKind kind, HWND hwnd, int width, int he
     }
     else swpFlags |= SWP_NOMOVE;
 
-    if (!SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, windowSize.cx, windowSize.cy, swpFlags))
-    {
-        TRACELOG(LOG_ERROR, "%s failed, error=%lu", "SetWindowPos", GetLastError());
-    }
+    // WARNING: This code must be called after swInit() has been called, after InitPlatform() in [rcore]
+    //RECT rc = {0, 0, desired.cx, desired.cy};
+    //AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, FALSE, 0);
+    //SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOZORDER);
+
+    // Old code
+    //if (!SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, windowSize.cx, windowSize.cy, swpFlags))
+    //{
+    //    TRACELOG(LOG_ERROR, "%s failed, error=%lu", "SetWindowPos", GetLastError());
+    //}
 
     return true;
 }
@@ -1149,8 +1154,18 @@ void DisableCursor(void)
 void SwapScreenBuffer(void)
 {
     if (!platform.hdc) abort();
+
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Update framebuffer
+    rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
+
+    // Force redraw
+    InvalidateRect(platform.hwnd, NULL, FALSE);
+    UpdateWindow(platform.hwnd);
+#else
     if (!SwapBuffers(platform.hdc)) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "SwapBuffers", GetLastError());
     if (!ValidateRect(platform.hwnd, NULL)) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "ValidateRect", GetLastError());
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -1264,7 +1279,6 @@ void PollInputEvents(void)
     MSG msg = { 0 };
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
     {
-        if (msg.message == WM_PAINT) return;
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
@@ -1432,7 +1446,7 @@ int InitPlatform(void)
     // NOTE: Title string needs to be converted to WCHAR
     WCHAR *titleWide = NULL;
     A_TO_W_ALLOCA(titleWide, CORE.Window.title);
-    
+
     // Create window and get handle
     platform.hwnd = CreateWindowExW(
         WINDOW_STYLE_EX,
@@ -1440,7 +1454,7 @@ int InitPlatform(void)
         titleWide,
         MakeWindowStyle(CORE.Window.flags),     // WS_OVERLAPPEDWINDOW | WS_VISIBLE
         CW_USEDEFAULT, CW_USEDEFAULT,
-        0, 0,                                   // Window size [width, height], needs to be updated
+        platform.appScreenWidth, platform.appScreenHeight,  // TODO: Window size [width, height], needs to be updated?
         NULL, NULL,
         GetModuleHandleW(NULL), NULL);
 
@@ -1454,15 +1468,40 @@ int InitPlatform(void)
     // NOTE: Windows GDI object that represents a drawing surface
     platform.hdc = GetDC(platform.hwnd);
 
-    // TODO: Support software rendering (instead of hardware-accelerated OpenGL context)
+    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+    {
+        //ShowWindow(platform.hwnd, SW_SHOWDEFAULT); //SW_SHOWNORMAL
 
-    // Init OpenGL modern context
-    platform.glContext = InitOpenGL(platform.hwnd, platform.hdc);
+        // Initialize software framebuffer
+        BITMAPINFO bmi = { 0 };
+        ZeroMemory(&bmi, sizeof(bmi));
+        bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth       = platform.appScreenWidth;
+        bmi.bmiHeader.biHeight      = -(int)(platform.appScreenHeight); // Top-down bitmap
+        bmi.bmiHeader.biPlanes      = 1;
+        bmi.bmiHeader.biBitCount    = 32;      // 32-bit BGRA
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        platform.hdcmem = CreateCompatibleDC(platform.hdc);
+
+        platform.hbitmap = CreateDIBSection(
+            platform.hdcmem, &bmi, DIB_RGB_COLORS,
+            (void**)&platform.pixels, NULL, 0);
+
+        SelectObject(platform.hdcmem, platform.hbitmap);
+
+        //ReleaseDC(platform.hwnd, platform.hdc); // Required?
+    }
+    else
+    {
+        // Init hardware-accelerated OpenGL modern context
+        platform.glContext = InitOpenGL(platform.hwnd, platform.hdc);
+    }
 
     CORE.Window.ready = true;
     
-    // TODO: Should this function be called before or after drawing context is created?
-    UpdateWindowSize(UPDATE_WINDOW_FIRST, platform.hwnd, platform.appScreenWidth, platform.appScreenHeight, platform.desiredFlags);
+    // TODO: Should this function be called before or after drawing context is created? --> After swInit() called!
+    //UpdateWindowSize(UPDATE_WINDOW_FIRST, platform.hwnd, platform.appScreenWidth, platform.appScreenHeight, platform.desiredFlags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 
     CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -1531,11 +1570,29 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_DESTROY:
         {
             // Clean up for window destruction
-            wglMakeCurrent(platform.hdc, NULL);
-            if (platform.glContext)
+            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
             {
-                if (!wglDeleteContext(platform.glContext)) abort();
-                platform.glContext = NULL;
+                if (platform.hdcmem) 
+                {
+                    DeleteDC(platform.hdcmem);
+                    platform.hdcmem = NULL;
+                }
+
+                if (platform.hbitmap) 
+                {
+                    DeleteObject(platform.hbitmap); // Clears platform.pixels data
+                    platform.hbitmap = NULL;
+                    platform.pixels = NULL; // NOTE: Pointer invalid after DeleteObject()
+                }
+            }
+            else // OpenGL hardware renderer
+            {
+                wglMakeCurrent(platform.hdc, NULL);
+                if (platform.glContext)
+                {
+                    if (!wglDeleteContext(platform.glContext)) abort();
+                    platform.glContext = NULL;
+                }
             }
 
             if (platform.hdc)
@@ -1543,6 +1600,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 if (!ReleaseDC(hwnd, platform.hdc)) abort();
                 platform.hdc = NULL;
             }
+
+            PostQuitMessage(0);
 
         } break;
         case WM_CLOSE: CORE.Window.shouldClose = true; break; // Window close button [x], ALT+F4
@@ -1711,10 +1770,22 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             result = DefWindowProc(hwnd, msg, wparam, lparam);
         } break;
-        //case WM_PAINT
+        case WM_PAINT:
+        {
+            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            {
+                PAINTSTRUCT ps = { 0 };
+                HDC hdc = BeginPaint(hwnd, &ps);
+
+                // Blit from memory DC to window DC
+                BitBlt(hdc, 0, 0, platform.appScreenWidth, platform.appScreenHeight, platform.hdcmem, 0, 0, SRCCOPY);
+
+                EndPaint(hwnd, &ps);
+            }
+        }
         case WM_INPUT:
         {
-            HandleRawInput(lparam);
+            //HandleRawInput(lparam);
         } break;
         case WM_MOUSEMOVE:
         {
@@ -1755,7 +1826,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
         case WM_APP_UPDATE_WINDOW_SIZE:
         {
-            UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, platform.appScreenWidth, platform.appScreenHeight, CORE.Window.flags);
+            //UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, platform.appScreenWidth, platform.appScreenHeight, CORE.Window.flags);
         } break;
 
         default: result = DefWindowProcW(hwnd, msg, wparam, lparam); // Message passed directly for execution (default behaviour)
@@ -1955,6 +2026,7 @@ static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
         else CORE.Window.flags &= ~FLAG_VSYNC_HINT;
     }
 
+    // TODO: Review all this code...
     DWORD previousStyle;
     for (unsigned attempt = 1; ; attempt++)
     {

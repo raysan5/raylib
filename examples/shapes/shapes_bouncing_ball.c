@@ -4,9 +4,9 @@
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 5.6
+*   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
-*   Example contributed by Jopestpe (@jopestpe)
+*   Example contributed by Ramon Santamaria (@raysan5), reviewed by Jopestpe (@jopestpe)
 * 
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

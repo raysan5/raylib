@@ -2190,23 +2190,14 @@ Function 221: DrawLine() (5 input parameters)
   Param[3]: endPosX (type: int)
   Param[4]: endPosY (type: int)
   Param[5]: color (type: Color)
-Function 222: DrawLineDashed() (5 input parameters)
-  Name: DrawLineDashed
-  Return type: void
-  Description: Draw a dashed line
-  Param[1]: startPos (type: Vector2)
-  Param[2]: endPos (type: Vector2)
-  Param[3]: dashSize (type: int)
-  Param[4]: whiteSpaceSize (type: int)
-  Param[5]: color (type: Color)
-Function 223: DrawLineV() (3 input parameters)
+Function 222: DrawLineV() (3 input parameters)
   Name: DrawLineV
   Return type: void
   Description: Draw a line (using gl lines)
   Param[1]: startPos (type: Vector2)
   Param[2]: endPos (type: Vector2)
   Param[3]: color (type: Color)
-Function 224: DrawLineEx() (4 input parameters)
+Function 223: DrawLineEx() (4 input parameters)
   Name: DrawLineEx
   Return type: void
   Description: Draw a line (using triangles/quads)
@@ -2214,14 +2205,14 @@ Function 224: DrawLineEx() (4 input parameters)
   Param[2]: endPos (type: Vector2)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
-Function 225: DrawLineStrip() (3 input parameters)
+Function 224: DrawLineStrip() (3 input parameters)
   Name: DrawLineStrip
   Return type: void
   Description: Draw lines sequence (using gl lines)
   Param[1]: points (type: const Vector2 *)
   Param[2]: pointCount (type: int)
   Param[3]: color (type: Color)
-Function 226: DrawLineBezier() (4 input parameters)
+Function 225: DrawLineBezier() (4 input parameters)
   Name: DrawLineBezier
   Return type: void
   Description: Draw line segment cubic-bezier in-out interpolation
@@ -2229,6 +2220,15 @@ Function 226: DrawLineBezier() (4 input parameters)
   Param[2]: endPos (type: Vector2)
   Param[3]: thick (type: float)
   Param[4]: color (type: Color)
+Function 226: DrawLineDashed() (5 input parameters)
+  Name: DrawLineDashed
+  Return type: void
+  Description: Draw a dashed line
+  Param[1]: startPos (type: Vector2)
+  Param[2]: endPos (type: Vector2)
+  Param[3]: dashSize (type: int)
+  Param[4]: spaceSize (type: int)
+  Param[5]: color (type: Color)
 Function 227: DrawCircle() (4 input parameters)
   Name: DrawCircle
   Return type: void
