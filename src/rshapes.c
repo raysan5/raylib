@@ -182,6 +182,28 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
     rlEnd();
 }
 
+// Draw a line defining thickness
+void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
+{
+    Vector2 delta = { endPos.x - startPos.x, endPos.y - startPos.y };
+    float length = sqrtf(delta.x*delta.x + delta.y*delta.y);
+
+    if ((length > 0) && (thick > 0))
+    {
+        float scale = thick/(2*length);
+
+        Vector2 radius = { -scale*delta.y, scale*delta.x };
+        Vector2 strip[4] = {
+            { startPos.x - radius.x, startPos.y - radius.y },
+            { startPos.x + radius.x, startPos.y + radius.y },
+            { endPos.x - radius.x, endPos.y - radius.y },
+            { endPos.x + radius.x, endPos.y + radius.y }
+        };
+
+        DrawTriangleStrip(strip, 4, color);
+    }
+}
+
 // Draw a line (using gl lines)
 void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
@@ -246,26 +268,50 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     DrawTriangleStrip(points, 2*SPLINE_SEGMENT_DIVISIONS + 2, color);
 }
 
-// Draw a line defining thickness
-void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
+// Draw a dashed line
+void DrawLineDashed(Vector2 startPos, Vector2 endPos, int dashSize, int spaceSize, Color color)
 {
-    Vector2 delta = { endPos.x - startPos.x, endPos.y - startPos.y };
-    float length = sqrtf(delta.x*delta.x + delta.y*delta.y);
+    // Calculate the vector and length of the line
+    float dx = endPos.x - startPos.x;
+    float dy = endPos.y - startPos.y;
+    float lineLength = sqrtf(dx*dx + dy*dy);
 
-    if ((length > 0) && (thick > 0))
+    // If the line is too short for dashing or dash size is invalid, draw a solid thick line
+    if ((lineLength < (dashSize + spaceSize)) || (dashSize <= 0))
     {
-        float scale = thick/(2*length);
-
-        Vector2 radius = { -scale*delta.y, scale*delta.x };
-        Vector2 strip[4] = {
-            { startPos.x - radius.x, startPos.y - radius.y },
-            { startPos.x + radius.x, startPos.y + radius.y },
-            { endPos.x - radius.x, endPos.y - radius.y },
-            { endPos.x + radius.x, endPos.y + radius.y }
-        };
-
-        DrawTriangleStrip(strip, 4, color);
+        DrawLineV(startPos, endPos, color);
+        return;
     }
+
+    // Calculate the normalized direction vector of the line
+    float invLineLength = 1.0f/lineLength;
+    float dirX = dx*invLineLength;
+    float dirY = dy*invLineLength;
+
+    Vector2 currentPos = startPos;
+    float distanceTraveled = 0;
+
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        while (distanceTraveled < lineLength)
+        {
+            // Calculate the end of the current dash
+            float dashEndDist = distanceTraveled + dashSize;
+            if (dashEndDist > lineLength) dashEndDist = lineLength;
+
+            Vector2 dashEndPos = { startPos.x + dashEndDist*dirX, startPos.y + dashEndDist*dirY };
+
+            // Draw the dash segment
+            rlVertex2f(currentPos.x, currentPos.y);
+            rlVertex2f(dashEndPos.x, dashEndPos.y);
+
+            // Update the distance traveled and move the current position for the next dash
+            distanceTraveled = dashEndDist + spaceSize;
+            currentPos.x = startPos.x + distanceTraveled*dirX;
+            currentPos.y = startPos.y + distanceTraveled*dirY;
+        }
+    rlEnd();
 }
 
 // Draw a color-filled circle
