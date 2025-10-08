@@ -469,7 +469,7 @@ void ToggleFullscreen(void)
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
     {
-        if (FLAG_CHECK(CORE.Window.flags, FLAG_FULLSCREEN_MODE) > 0)
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
         {
             SDL_SetWindowFullscreen(platform.window, 0);
             FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
@@ -497,7 +497,7 @@ void ToggleBorderlessWindowed(void)
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
     {
-        if (FLAG_CHECK(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE) > 0)
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
         {
             SDL_SetWindowFullscreen(platform.window, 0);
             FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
@@ -515,14 +515,14 @@ void ToggleBorderlessWindowed(void)
 void MaximizeWindow(void)
 {
     SDL_MaximizeWindow(platform.window);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
     SDL_MinimizeWindow(platform.window);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
 }
 
 // Restore window from being minimized/maximized
@@ -539,11 +539,11 @@ void SetWindowState(unsigned int flags)
 
     FLAG_SET(CORE.Window.flags, flags);
 
-    if (FLAG_CHECK(flags, FLAG_VSYNC_HINT))
+    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
     {
         SDL_GL_SetSwapInterval(1);
     }
-    if (FLAG_CHECK(flags, FLAG_FULLSCREEN_MODE))
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
@@ -559,51 +559,51 @@ void SetWindowState(unsigned int flags)
         }
         else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_RESIZABLE))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
         SDL_SetWindowResizable(platform.window, SDL_TRUE);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_UNDECORATED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
     {
         SDL_SetWindowBordered(platform.window, SDL_FALSE);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_HIDDEN))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
     {
         SDL_HideWindow(platform.window);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
     {
         SDL_MinimizeWindow(platform.window);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MAXIMIZED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
     {
         SDL_MaximizeWindow(platform.window);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_UNFOCUSED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNFOCUSED))
     {
         // NOTE: To be able to implement this part it seems that we should
         // do it ourselves, via 'windows.h', 'X11/Xlib.h' or even 'Cocoa.h'
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_TOPMOST))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TOPMOST))
     {
         SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_TRANSPARENT))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_HIGHDPI))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
     {
         // NOTE: Such a function does not seem to exist
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
         //SDL_SetWindowGrab(platform.window, SDL_FALSE);
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
         const int monitorCount = SDL_GetNumVideoDisplays();
@@ -618,12 +618,12 @@ void SetWindowState(unsigned int flags)
         }
         else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
-    if (FLAG_CHECK(flags, FLAG_MSAA_4X_HINT))
+    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1); // Enable multisampling buffers
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); // Enable multisampling
     }
-    if (FLAG_CHECK(flags, FLAG_INTERLACED_HINT))
+    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
     {
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_INTERLACED_HINT is not supported on PLATFORM_DESKTOP_SDL");
     }
@@ -634,45 +634,45 @@ void ClearWindowState(unsigned int flags)
 {
     FLAG_CLEAR(CORE.Window.flags, flags);
 
-    if (FLAG_CHECK(flags, FLAG_VSYNC_HINT))
+    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
     {
         SDL_GL_SetSwapInterval(0);
     }
-    if (FLAG_CHECK(flags, FLAG_FULLSCREEN_MODE))
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
         SDL_SetWindowFullscreen(platform.window, 0);
         CORE.Window.fullscreen = false;
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_RESIZABLE))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
         SDL_SetWindowResizable(platform.window, SDL_FALSE);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_UNDECORATED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
     {
         SDL_SetWindowBordered(platform.window, SDL_TRUE);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_HIDDEN))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
     {
         SDL_ShowWindow(platform.window);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
     {
         SDL_RestoreWindow(platform.window);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MAXIMIZED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
     {
         SDL_RestoreWindow(platform.window);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_UNFOCUSED))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNFOCUSED))
     {
         //SDL_RaiseWindow(platform.window);
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_TOPMOST))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TOPMOST))
     {
         SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_TRANSPARENT))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
     }
@@ -680,21 +680,21 @@ void ClearWindowState(unsigned int flags)
         // NOTE: There also doesn't seem to be a feature to disable high DPI once enabled
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
         //SDL_SetWindowGrab(platform.window, SDL_TRUE);
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_SDL");
     }
-    if (FLAG_CHECK(flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         SDL_SetWindowFullscreen(platform.window, 0);
     }
-    if (FLAG_CHECK(flags, FLAG_MSAA_4X_HINT))
+    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0); // Disable multisampling buffers
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0); // Disable multisampling
     }
-    if (FLAG_CHECK(flags, FLAG_INTERLACED_HINT))
+    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
     {
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_INTERLACED_HINT is not supported on PLATFORM_DESKTOP_SDL");
     }
@@ -835,7 +835,7 @@ void SetWindowMonitor(int monitor)
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
         // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again
-        const bool wasFullscreen = (FLAG_CHECK(CORE.Window.flags, FLAG_FULLSCREEN_MODE) > 0)? true : false;
+        const bool wasFullscreen = (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))? true : false;
 
         const int screenWidth = CORE.Window.screen.width;
         const int screenHeight = CORE.Window.screen.height;
@@ -1368,7 +1368,7 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if ((CORE.Window.eventWaiting) || (FLAG_CHECK((CORE.Window.flags, FLAG_WINDOW_MINIMIZED) > 0) && (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN) == 0)))
+    if ((CORE.Window.eventWaiting) || FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) && !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN))
     {
         SDL_WaitEvent(NULL);
         CORE.Time.previous = GetTime();
@@ -1456,7 +1456,7 @@ void PollInputEvents(void)
 
                         #ifndef USING_VERSION_SDL3
                         // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED) > 0)
+                        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))
                         {
                             int borderTop = 0;
                             int borderLeft = 0;
@@ -1482,43 +1482,43 @@ void PollInputEvents(void)
 
                     case SDL_WINDOWEVENT_MINIMIZED:
                     {
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
+                        if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
                     } break;
                     case SDL_WINDOWEVENT_MAXIMIZED:
                     {
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
+                        if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
                     } break;
                     case SDL_WINDOWEVENT_RESTORED:
                     {
-                        if (FLAG_CHECK(SDL_GetWindowFlags(platform.window), SDL_WINDOW_MINIMIZED) == 0)
+                        if (!FLAG_IS_SET(SDL_GetWindowFlags(platform.window), SDL_WINDOW_MINIMIZED))
                         {
-                            if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) > 0) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
+                            if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
                         }
 
                         #ifdef USING_VERSION_SDL3
-                        if (FLAG_CHECK(SDL_GetWindowFlags(platform.window), SDL_WINDOW_MAXIMIZED) == 0)
+                        if (!FLAG_IS_SET(SDL_GetWindowFlags(platform.window), SDL_WINDOW_MAXIMIZED))
                         {
-                            if (FLAG_CHECK(CORE.Window.flags, SDL_WINDOW_MAXIMIZED) > 0) FLAG_CLEAR(CORE.Window.flags, SDL_WINDOW_MAXIMIZED);
+                            if (FLAG_IS_SET(CORE.Window.flags, SDL_WINDOW_MAXIMIZED)) FLAG_CLEAR(CORE.Window.flags, SDL_WINDOW_MAXIMIZED);
                         }
                         #endif
                     } break;
 
                     case SDL_WINDOWEVENT_HIDDEN:
                     {
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIDDEN) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN);
+                        if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN);
                     } break;
                     case SDL_WINDOWEVENT_SHOWN:
                     {
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIDDEN) > 0) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_HIDDEN);
+                        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_HIDDEN);
                     } break;
 
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
                     {
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED) > 0) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
+                        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
                     } break;
                     case SDL_WINDOWEVENT_FOCUS_LOST:
                     {
-                        if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED) == 0) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
+                        if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
                     } break;
 
             #ifndef USING_VERSION_SDL3
@@ -1894,28 +1894,28 @@ int InitPlatform(void)
     FLAG_SET(flags, SDL_WINDOW_MOUSE_CAPTURE);  // Window has mouse captured
 
     // Check window creation flags
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_FULLSCREEN_MODE) > 0)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         CORE.Window.fullscreen = true;
         FLAG_SET(flags, SDL_WINDOW_FULLSCREEN);
     }
 
-    //if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIDDEN) == 0)    FLAG_SET(flags, SDL_WINDOW_HIDDEN);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) > 0) FLAG_SET(flags, SDL_WINDOW_BORDERLESS);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) > 0)   FLAG_SET(flags, SDL_WINDOW_RESIZABLE);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) > 0)   FLAG_SET(flags, SDL_WINDOW_MINIMIZED);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) > 0)   FLAG_SET(flags, SDL_WINDOW_MAXIMIZED);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) > 0)
+    //if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN))   FLAG_SET(flags, SDL_WINDOW_HIDDEN);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, SDL_WINDOW_BORDERLESS);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE))   FLAG_SET(flags, SDL_WINDOW_RESIZABLE);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED))   FLAG_SET(flags, SDL_WINDOW_MINIMIZED);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))   FLAG_SET(flags, SDL_WINDOW_MAXIMIZED);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED))
     {
         FLAG_CLEAR(flags, SDL_WINDOW_INPUT_FOCUS);
         FLAG_CLEAR(flags, SDL_WINDOW_MOUSE_FOCUS);
     }
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_TOPMOST) > 0)           FLAG_SET(flags, SDL_WINDOW_ALWAYS_ON_TOP);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) FLAG_CLEAR(flags, SDL_WINDOW_MOUSE_CAPTURE);
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) > 0)           FLAG_SET(flags, SDL_WINDOW_ALLOW_HIGHDPI);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TOPMOST))           FLAG_SET(flags, SDL_WINDOW_ALWAYS_ON_TOP);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MOUSE_PASSTHROUGH)) FLAG_CLEAR(flags, SDL_WINDOW_MOUSE_CAPTURE);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))           FLAG_SET(flags, SDL_WINDOW_ALLOW_HIGHDPI);
 
-    //if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT) > 0) FLAG_SET(flags, SDL_WINDOW_TRANSPARENT);     // Alternative: SDL_GL_ALPHA_SIZE = 8
-    //if (FLAG_CHECK(CORE.Window.flags, FLAG_FULLSCREEN_DESKTOP) > 0) FLAG_SET(flags, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    //if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) FLAG_SET(flags, SDL_WINDOW_TRANSPARENT);     // Alternative: SDL_GL_ALPHA_SIZE = 8
+    //if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_DESKTOP)) FLAG_SET(flags, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
@@ -1958,7 +1958,7 @@ int InitPlatform(void)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
         }
 
-        if (FLAG_CHECK(CORE.Window.flags, FLAG_MSAA_4X_HINT) > 0)
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
         {
             SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
             SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
@@ -2001,7 +2001,7 @@ int InitPlatform(void)
 
         if (platform.glContext != NULL)
         {
-            SDL_GL_SetSwapInterval((FLAG_CHECK(CORE.Window.flags, FLAG_VSYNC_HINT) > 0)? 1 : 0);
+            SDL_GL_SetSwapInterval((FLAG_IS_SET(CORE.Window.flags, FLAG_VSYNC_HINT))? 1: 0);
 
             // Load OpenGL extensions
             // NOTE: GL procedures address loader is required to load extensions

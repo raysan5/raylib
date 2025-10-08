@@ -272,7 +272,7 @@ __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod)
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
-#define FLAG_CHECK(n, f) ((n) & (f))
+#define FLAG_IS_SET(n, f) (((n) & (f)) > 0)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -714,7 +714,7 @@ void InitWindow(int width, int height, const char *title)
         // Set font white rectangle for shapes drawing, so shapes and text can be batched together
         // WARNING: rshapes module is required, if not available, default internal white rectangle is used
         Rectangle rec = GetFontDefault().recs[95];
-        if (FLAG_CHECK(CORE.Window.flags, FLAG_MSAA_4X_HINT))
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
         {
             // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
             SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
@@ -786,25 +786,25 @@ bool IsWindowFullscreen(void)
 // Check if window is currently hidden
 bool IsWindowHidden(void)
 {
-    return (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIDDEN) > 0);
+    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN));
 }
 
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {
-    return (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) > 0);
+    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED));
 }
 
 // Check if window has been maximized
 bool IsWindowMaximized(void)
 {
-    return (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED) > 0);
+    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED));
 }
 
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
-    return (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED) == 0);
+    return (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED));
 }
 
 // Check if window has been resizedLastFrame
@@ -816,7 +816,7 @@ bool IsWindowResized(void)
 // Check if one specific window flag is enabled
 bool IsWindowState(unsigned int flag)
 {
-    return (FLAG_CHECK(CORE.Window.flags, flag) > 0);
+    return (FLAG_IS_SET(CORE.Window.flags, flag));
 }
 
 // Get current screen width
@@ -1197,7 +1197,7 @@ void BeginScissorMode(int x, int y, int width, int height)
         rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
-    if (!CORE.Window.usingFbo && (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) > 0))
+    if (!CORE.Window.usingFbo && (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)))
     {
         Vector2 scale = GetWindowScaleDPI();
         rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));

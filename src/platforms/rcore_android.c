@@ -887,7 +887,7 @@ static int InitGraphicsDevice(void)
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_MSAA_4X_HINT) > 0)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
         samples = 4;
         sampleBuffer = 1;
@@ -992,7 +992,7 @@ static int InitGraphicsDevice(void)
 
     CORE.Window.ready = true;
 
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
     return 0;
 }
@@ -1059,7 +1059,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Set font white rectangle for shapes drawing, so shapes and text can be batched together
                     // WARNING: rshapes module is required, if not available, default internal white rectangle is used
                     Rectangle rec = GetFontDefault().recs[95];
-                    if (FLAG_CHECK(CORE.Window.flags, FLAG_MSAA_4X_HINT) > 0)
+                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
                     {
                         // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
                         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
@@ -1187,8 +1187,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        if ((FLAG_CHECK(source, AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
-            (FLAG_CHECK(source, AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
+        if ((FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
+            (FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // For now we'll assume a single gamepad which we "detect" on its input event
             CORE.Input.Gamepad.ready[0] = true;
@@ -1251,8 +1251,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //int32_t AKeyEvent_getMetaState(event);
 
         // Handle gamepad button presses and releases
-        if ((FLAG_CHECK(source, AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
-            (FLAG_CHECK(source, AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
+        if ((FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
+            (FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // For now we'll assume a single gamepad which we "detect" on its input event
             CORE.Input.Gamepad.ready[0] = true;

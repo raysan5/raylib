@@ -464,7 +464,7 @@ int InitPlatform(void)
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (FLAG_CHECK(CORE.Window.flags, FLAG_MSAA_4X_HINT) > 0)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
         samples = 4;
         sampleBuffer = 1;
