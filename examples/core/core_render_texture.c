@@ -65,6 +65,7 @@ int main(void)
         
             ClearBackground(SKYBLUE);
             
+            DrawRectangle(0, 0, 20, 20, RED);
             DrawCircleV(ballPosition, (float)ballRadius, MAROON);
         
         EndTextureMode();
@@ -75,11 +76,12 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw our render texture with rotation applied
-            // NOTE: We set the origin of the texture to the center of the render texture
+            // NOTE 1: We set the origin of the texture to the center of the render texture
+            // NOTE 2: We flip vertically the texture setting negative source rectangle height  
             DrawTexturePro(target.texture, 
                 (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, 
-                (Rectangle){ screenWidth/2, screenHeight/2, target.texture.width, -target.texture.height }, 
                 (Vector2){ target.texture.width/2, target.texture.height/2 }, rotation, WHITE);
+                (Rectangle){ screenWidth/2, screenHeight/2, target.texture.width, target.texture.height }, 
 
             DrawText("DRAWING BOUNCING BALL INSIDE RENDER TEXTURE!", 10, screenHeight - 40, 20, BLACK);
             
