@@ -92,11 +92,13 @@ unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long
 
 typedef int WINBOOL;
 
-
-
 // typedef HANDLE HGLOBAL;
 
+#if !defined(HWND) && !defined(_MSC_VER)
+#define HWND void*
+#else
 typedef struct HWND__ *HWND;
+#endif
 
 
 #if !defined(_WINUSER_) || !defined(WINUSER_ALREADY_INCLUDED)
