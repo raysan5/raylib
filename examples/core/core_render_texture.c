@@ -80,8 +80,8 @@ int main(void)
             // NOTE 2: We flip vertically the texture setting negative source rectangle height  
             DrawTexturePro(target.texture, 
                 (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, 
+                (Rectangle){ screenWidth/2, screenHeight/2, target.texture.width, target.texture.height },
                 (Vector2){ target.texture.width/2, target.texture.height/2 }, rotation, WHITE);
-                (Rectangle){ screenWidth/2, screenHeight/2, target.texture.width, target.texture.height }, 
 
             DrawText("DRAWING BOUNCING BALL INSIDE RENDER TEXTURE!", 10, screenHeight - 40, 20, BLACK);
             
