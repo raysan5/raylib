@@ -155,6 +155,26 @@ extern void LoadFontDefault(void);
 extern void UnloadFontDefault(void);
 #endif
 
+// Glyph hashmap related declarations
+typedef struct {
+    int key;
+    int value;
+    bool active;
+} GlyphMapBucket;
+
+typedef struct {
+    int count;
+    int capacity;
+    GlyphMapBucket *buckets;
+} GlyphLookupMap;
+
+static unsigned int HashCodepoint(int key);
+static GlyphLookupMap *CreateGlyphLookupMap(int capacity);
+static void DestroyGlyphLookupMap(GlyphLookupMap *map);
+static bool MapInsert(GlyphLookupMap *map, int key, int value);
+static bool MapGet(GlyphLookupMap *map, int key, int *value);
+static void GenFontGlyphLookupMap(Font *font);
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -324,12 +344,21 @@ extern void LoadFontDefault(void)
 
     defaultFont.baseSize = (int)defaultFont.recs[0].height;
 
+    // Create a lookup map for the font
+    GenFontGlyphLookupMap(&defaultFont);
+
     TRACELOG(LOG_INFO, "FONT: Default font loaded successfully (%i glyphs)", defaultFont.glyphCount);
 }
 
 // Unload raylib default font
 extern void UnloadFontDefault(void)
 {
+    if (defaultFont.glyphLookup != NULL)
+    {
+        DestroyGlyphLookupMap((GlyphLookupMap *)defaultFont.glyphLookup);
+        defaultFont.glyphLookup = NULL;
+    }
+
     for (int i = 0; i < defaultFont.glyphCount; i++) UnloadImage(defaultFont.glyphs[i].image);
     if (isGpuReady) UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
@@ -541,6 +570,9 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         font.glyphs[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
     }
 
+    // Create a lookup map for the font
+    GenFontGlyphLookupMap(&font);
+
     UnloadImage(fontClear);     // Unload processed image once converted to texture
 
     font.baseSize = (int)font.recs[0].height;
@@ -558,6 +590,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
     font.baseSize = fontSize;
     font.glyphPadding = 0;
+    font.glyphLookup = NULL;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (TextIsEqual(fileExtLower, ".ttf") ||
@@ -595,6 +628,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
         }
 
         UnloadImage(atlas);
+
+        GenFontGlyphLookupMap(&font);
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
@@ -1007,6 +1042,11 @@ void UnloadFont(Font font)
     // NOTE: Make sure font is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
+        if (font.glyphLookup != NULL)
+        {
+            DestroyGlyphLookupMap((GlyphLookupMap *)font.glyphLookup);
+            font.glyphLookup = NULL;
+        }
         UnloadFontData(font.glyphs, font.glyphCount);
         if (isGpuReady) UnloadTexture(font.texture);
         RL_FREE(font.recs);
@@ -1395,32 +1435,44 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 // NOTE: If codepoint is not found in the font it fallbacks to '?'
 int GetGlyphIndex(Font font, int codepoint)
 {
-    int index = 0;
-    if (!IsFontValid(font)) return index;
+    if (!IsFontValid(font)) return 0;
 
-#define SUPPORT_UNORDERED_CHARSET
-#if defined(SUPPORT_UNORDERED_CHARSET)
-    int fallbackIndex = 0;      // Get index of fallback glyph '?'
-
-    // Look for character index in the unordered charset
-    for (int i = 0; i < font.glyphCount; i++)
+    // The font hashmap searching algorithm
+    if (font.glyphLookup != NULL)
     {
-        if (font.glyphs[i].value == 63) fallbackIndex = i;
+        int index = 0;
+        GlyphLookupMap *map = (GlyphLookupMap *)font.glyphLookup;
 
-        if (font.glyphs[i].value == codepoint)
+        if (MapGet(map, codepoint, &index))
         {
-            index = i;
-            break;
+            return index; // found, can now return
+        }
+        else
+        {
+            // codepoint not in font, try to find the fallback character '?'
+            if (MapGet(map, '?', &index)) return index;
+            else return 0; // fallback to the first character
         }
     }
 
-    if ((index == 0) && (font.glyphs[0].value != codepoint)) index = fallbackIndex;
-#else
-    index = codepoint - 32;
-#endif
+    // If a font somehow gets loaded without a map being created, this is the fallback.
+    // I recommend making a bug report if you ever get this error message, or looking at how you're creating your fonts!!
+    TRACELOG(LOG_WARNING, "FONT: GetGlyphIndex() is using slow linear search. Font might be missing a lookup map.");
 
-    return index;
+    #if defined(SUPPORT_UNORDERED_CHARSET)
+        int fallbackIndex = 0;
+        for (int i = 0; i < font.glyphCount; i++)
+        {
+            if (font.glyphs[i].value == '?') fallbackIndex = i;
+            if (font.glyphs[i].value == codepoint) return i;
+        }
+        return fallbackIndex;
+    #else
+        // Assumes ASCII-based ordered charset
+        return (codepoint - 32);
+    #endif
 }
+
 
 // Get glyph font info data for a codepoint (unicode character)
 // NOTE: If codepoint is not found in the font it fallbacks to '?'
@@ -2344,6 +2396,7 @@ static Font LoadBMFont(const char *fileName)
 
     int fontSize = 0;
     int glyphCount = 0;
+    font.glyphLookup = NULL;
 
     int imWidth = 0;
     int imHeight = 0;
@@ -2483,6 +2536,8 @@ static Font LoadBMFont(const char *fileName)
         }
     }
 
+    GenFontGlyphLookupMap(&font);
+
     UnloadImage(fullFont);
     UnloadFileText(fileText);
 
@@ -2497,6 +2552,115 @@ static Font LoadBMFont(const char *fileName)
     return font;
 }
 #endif
+
+// My implementation of fnv-1a for quick hash tables
+// If you change this, I strongly recommend using the documentation below!
+// http://www.isthe.com/chongo/tech/comp/fnv/#FNV-1a
+
+static unsigned int HashCodepoint(int key)
+{
+    unsigned int hash = 2166136261u;
+    char *p = (char *)&key;
+    for (int i = 0; i < sizeof(int); i++)
+    {
+        hash ^= (unsigned int)p[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static GlyphLookupMap *CreateGlyphLookupMap(int capacity)
+{
+    GlyphLookupMap *map = (GlyphLookupMap *)RL_CALLOC(1, sizeof(GlyphLookupMap));
+    if (map == NULL) return NULL;
+
+    map->capacity = capacity;
+    map->buckets = (GlyphMapBucket *)RL_CALLOC(capacity, sizeof(GlyphMapBucket));
+    if (map->buckets == NULL)
+    {
+        RL_FREE(map);
+        return NULL;
+    }
+    return map;
+}
+
+static void DestroyGlyphLookupMap(GlyphLookupMap *map)
+{
+    if (map == NULL) return;
+    RL_FREE(map->buckets);
+    RL_FREE(map);
+}
+
+static bool MapInsert(GlyphLookupMap *map, int key, int value)
+{
+    if (map == NULL || map->buckets == NULL) return false;
+    
+    unsigned int index = HashCodepoint(key) & (map->capacity - 1);
+
+    for (int i = 0; i < map->capacity; i++)
+    {
+        int tryIndex = (index + i) & (map->capacity - 1);
+        if (!map->buckets[tryIndex].active)
+        {
+            map->buckets[tryIndex].key = key;
+            map->buckets[tryIndex].value = value;
+            map->buckets[tryIndex].active = true;
+            map->count++;
+            return true;
+        }
+    }
+    
+    // This should not be reached under normal circumstances
+    TRACELOG(LOG_WARNING, "FONT: Glyph lookup map is full, can not insert codepoint %d", key);
+    return false;
+}
+
+static bool MapGet(GlyphLookupMap *map, int key, int *value)
+{
+    if (map == NULL || map->buckets == NULL) return false;
+
+    unsigned int index = HashCodepoint(key) & (map->capacity - 1);
+    
+    for (int i = 0; i < map->capacity; i++)
+    {
+        int tryIndex = (index + i) & (map->capacity - 1);
+        if (map->buckets[tryIndex].active && map->buckets[tryIndex].key == key)
+        {
+            *value = map->buckets[tryIndex].value;
+            return true;
+        }
+        if (!map->buckets[tryIndex].active) break; // if it's empty we can exit earlier
+    }
+
+    return false;
+}
+
+static void GenFontGlyphLookupMap(Font *font)
+{
+    if (font == NULL || font->glyphs == NULL || font->glyphCount == 0) return;
+
+    // make sure we have more than enough space without overallocating
+    // This must remain a power of two for CPU efficiency as the rest of the code uses bitwise operations on this value
+    int capacity = 16;
+    while (capacity < font->glyphCount * 1.5) capacity *= 2;
+
+    GlyphLookupMap *map = CreateGlyphLookupMap(capacity);
+    if (map == NULL)
+    {
+        TRACELOG(LOG_WARNING, "FONT: Failed to create glyph lookup map");
+        font->glyphLookup = NULL;
+        return;
+    }
+
+    for (int i = 0; i < font->glyphCount; i++)
+    {
+        MapInsert(map, font->glyphs[i].value, i);
+    }
+    
+    font->glyphLookup = map;
+    TRACELOG(LOG_INFO, "FONT: Generated glyph lookup map for %d glyphs", font->glyphCount);
+}
+
 
 #if defined(SUPPORT_FILEFORMAT_BDF)
 // Convert hexadecimal to decimal (single digit)

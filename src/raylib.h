@@ -320,6 +320,7 @@ typedef struct Font {
     Texture2D texture;      // Texture atlas containing the glyphs
     Rectangle *recs;        // Rectangles in texture for the glyphs
     GlyphInfo *glyphs;      // Glyphs info data
+    void *glyphLookup;      // Interal glyphs lookup map 
 } Font;
 
 // Camera, defines position/orientation in 3d space
