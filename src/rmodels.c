@@ -2352,6 +2352,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         Mesh mesh = model.meshes[m];
         Vector3 animVertex = { 0 };
         Vector3 animNormal = { 0 };
+        Matrix boneMatrix = { 0 };
+        Matrix InverseBoneMatrix = { 0 };
         int boneId = 0;
         int boneCounter = 0;
         float boneWeight = 0.0;
@@ -2359,47 +2361,50 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         const int vValues = mesh.vertexCount*3;
 
         // Skip if missing bone data, causes segfault without on some models
-        if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
+		if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
 
-        for (int vCounter = 0; vCounter < vValues; vCounter += 3)
-        {
-            mesh.animVertices[vCounter] = 0;
-            mesh.animVertices[vCounter + 1] = 0;
-            mesh.animVertices[vCounter + 2] = 0;
-            if (mesh.animNormals != NULL)
-            {
-                mesh.animNormals[vCounter] = 0;
-                mesh.animNormals[vCounter + 1] = 0;
-                mesh.animNormals[vCounter + 2] = 0;
-            }
+		// Iterates over 4 bones per vertex
+		for (int j = 0; j < 4; j++, boneCounter++)
+		{
+            boneWeight = mesh.boneWeights[boneCounter];
+            boneId = mesh.boneIds[boneCounter];
 
-            // Iterates over 4 bones per vertex
-            for (int j = 0; j < 4; j++, boneCounter++)
-            {
-                boneWeight = mesh.boneWeights[boneCounter];
-                boneId = mesh.boneIds[boneCounter];
+            // Early stop when no transformation will be applied
+            if (boneWeight == 0.0f) continue;
 
-                // Early stop when no transformation will be applied
-                if (boneWeight == 0.0f) continue;
-                animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                animVertex = Vector3Transform(animVertex,model.meshes[m].boneMatrices[boneId]);
-                mesh.animVertices[vCounter] += animVertex.x*boneWeight;
-                mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
-                mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
-                updated = true;
+            boneMatrix = model.meshes[m].boneMatrices[boneId];
+            InverseBoneMatrix = MatrixTranspose(MatrixInvert(boneMatrix));
 
-                // Normals processing
-                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
-                {
-                    animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.meshes[m].boneMatrices[boneId])));
-                    mesh.animNormals[vCounter] += animNormal.x*boneWeight;
-                    mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
-                    mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
-                }
-            }
-        }
+			for (int vCounter = 0; vCounter < vValues; vCounter += 3)
+			{
+				mesh.animVertices[vCounter] = 0;
+				mesh.animVertices[vCounter + 1] = 0;
+				mesh.animVertices[vCounter + 2] = 0;
+				if (mesh.animNormals != NULL)
+				{
+					mesh.animNormals[vCounter] = 0;
+					mesh.animNormals[vCounter + 1] = 0;
+					mesh.animNormals[vCounter + 2] = 0;
+				}
+				animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
+				animVertex = Vector3Transform(animVertex, boneMatrix);
+				mesh.animVertices[vCounter] += animVertex.x*boneWeight;
+				mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
+				mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
+				updated = true;
+
+				// Normals processing
+				// NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+				if ((mesh.normals != NULL) && (mesh.animNormals != NULL))
+				{
+					animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
+					animNormal = Vector3Transform(animNormal, InverseBoneMatrix);
+					mesh.animNormals[vCounter] += animNormal.x*boneWeight;
+					mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
+					mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
+				}
+			}
+		}
 
         if (updated)
         {
