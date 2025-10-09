@@ -22,7 +22,7 @@
 // Monitor Details
 typedef struct Monitor {
     Vector2 position;
-    char *name;
+    const char *name;
     int width;
     int height;
     int physicalWidth;
@@ -99,7 +99,6 @@ int main(void)
             // Get currentMonitorIndex if manually moved
             currentMonitorIndex = GetCurrentMonitor();
         }
-        const Monitor currentMonitor = monitors[currentMonitorIndex];
 
         float monitorScale = 0.6; 
 
