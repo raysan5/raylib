@@ -1072,15 +1072,7 @@ const char *GetKeyName(int key)
     TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
     return "";
 }
-
-// Register all input events
-void PollInputEvents(void)
-{
-    CORE.Input.Touch.pointCount = 0;   // <-- ADD THIS LINE HERE
-    
-    // ... the rest of the original code follows
-}
-
+CORE.Input.Touch.pointCount = 0;
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
