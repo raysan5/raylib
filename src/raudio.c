@@ -575,7 +575,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
         return NULL;
     }
 
-    if (sizeInFrames > 0) audioBuffer->data = RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
+    if (sizeInFrames > 0) audioBuffer->data = (unsigned char *)RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
     ma_data_converter_config converterConfig = ma_data_converter_config_init(format, AUDIO_DEVICE_FORMAT, channels, AUDIO_DEVICE_CHANNELS, sampleRate, AUDIO.System.device.sampleRate);
@@ -808,7 +808,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.data = (short *)RL_MALLOC((size_t)wave.frameCount*wave.channels*sizeof(short));
 
             // NOTE: We are forcing conversion to 16bit sample size on reading
-            drwav_read_pcm_frames_s16(&wav, wave.frameCount, wave.data);
+            drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
 
@@ -1062,7 +1062,12 @@ bool ExportWave(Wave wave, const char *fileName)
     else if (IsFileExtension(fileName, ".wav"))
     {
         drwav wav = { 0 };
+        #ifdef __cplusplus
+        drwav_data_format format = {};
+        #else
         drwav_data_format format = { 0 };
+        #endif
+
         format.container = drwav_container_riff;
         if (wave.sampleSize == 32) format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
         else format.format = DR_WAVE_FORMAT_PCM;
@@ -1091,7 +1096,7 @@ bool ExportWave(Wave wave, const char *fileName)
             qoa.samplerate = wave.sampleRate;
             qoa.samples = wave.frameCount;
 
-            int bytesWritten = qoa_write(fileName, wave.data, &qoa);
+            int bytesWritten = qoa_write(fileName, (const short *)wave.data, &qoa);
             if (bytesWritten > 0) success = true;
         }
         else TRACELOG(LOG_WARNING, "AUDIO: Wave data must be 16 bit per sample for QOA format export");
@@ -2079,7 +2084,7 @@ float GetMusicTimePlayed(Music music)
         {
             uint64_t framesPlayed = 0;
 
-            jar_xm_get_position(music.ctxData, NULL, NULL, NULL, &framesPlayed);
+            jar_xm_get_position((jar_xm_context_t *)music.ctxData, NULL, NULL, NULL, &framesPlayed);
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
         }
         else

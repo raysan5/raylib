@@ -56,10 +56,12 @@
 
 // Support retrieving native window handlers
 #if defined(_WIN32)
-    typedef void *PVOID;
-    typedef PVOID HANDLE;
+     #if !defined(HWND) && !defined(_MSVC_LANG)
+    #define HWND void*
+    #elif !defined(HWND) && defined(_MSVC_LANG)
+    typedef struct HWND__ *HWND;
+    #endif
     #include "../external/win32_clipboard.h"
-    typedef HANDLE HWND;
     #define GLFW_EXPOSE_NATIVE_WIN32
     #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
     #include "GLFW/glfw3native.h"
@@ -1031,7 +1033,7 @@ Image GetClipboardImage(void)
     fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    else image = LoadImageFromMemory(".bmp", fileData, (int)dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif
@@ -1353,8 +1355,8 @@ int InitPlatform(void)
 
     const GLFWallocator allocator = {
         .allocate = AllocateWrapper,
-        .deallocate = DeallocateWrapper,
         .reallocate = ReallocateWrapper,
+        .deallocate = DeallocateWrapper,
         .user = NULL, // RL_*ALLOC macros are not capable of handling user-provided data
     };
 

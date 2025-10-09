@@ -1039,7 +1039,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             // We need to normalize the data from [-1..1] to [0..1]
             float np = (p + 1.0f)/2.0f;
 
-            int intensity = (int)(np*255.0f);
+            unsigned char intensity = (unsigned char)(np*255.0f);
             pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
         }
     }
@@ -1103,7 +1103,8 @@ Image GenImageCellular(int width, int height, int tileSize)
             int intensity = (int)(minDistance*256.0f/tileSize);
             if (intensity > 255) intensity = 255;
 
-            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
+            unsigned char intensityUC = (unsigned char)intensity;
+            pixels[y*width + x] = (Color){ intensityUC, intensityUC, intensityUC, 255 };
         }
     }
 
@@ -2405,7 +2406,7 @@ void ImageMipmaps(Image *image)
         image->data = temp;
 
         // Pointer to allocated memory point where store next mipmap level data
-        unsigned char *nextmip = image->data;
+        unsigned char *nextmip = (unsigned char*)image->data;
 
         mipWidth = image->width;
         mipHeight = image->height;

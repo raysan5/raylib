@@ -104,7 +104,7 @@ qoaplay_desc *qoaplay_open(const char *path)
     // + a buffer to hold one frame of encoded data
     unsigned int buffer_size = qoa_max_frame_size(&qoa);
     unsigned int sample_data_size = qoa.channels*QOA_FRAME_LEN*sizeof(short)*2;
-    qoaplay_desc *qoa_ctx = QOA_MALLOC(sizeof(qoaplay_desc) + buffer_size + sample_data_size);
+    qoaplay_desc *qoa_ctx = (qoaplay_desc *)QOA_MALLOC(sizeof(qoaplay_desc) + buffer_size + sample_data_size);
     memset(qoa_ctx, 0, sizeof(qoaplay_desc));
 
     qoa_ctx->file = file;
@@ -136,7 +136,7 @@ qoaplay_desc *qoaplay_open_memory(const unsigned char *data, int data_size)
     // + the sample data for one frame
     // + a buffer to hold one frame of encoded data
     unsigned int sample_data_size = qoa.channels*QOA_FRAME_LEN*sizeof(short)*2;
-    qoaplay_desc *qoa_ctx = QOA_MALLOC(sizeof(qoaplay_desc) + sample_data_size + data_size);
+    qoaplay_desc *qoa_ctx = (qoaplay_desc *)QOA_MALLOC(sizeof(qoaplay_desc) + sample_data_size + data_size);
     memset(qoa_ctx, 0, sizeof(qoaplay_desc));
 
     qoa_ctx->file = NULL;
