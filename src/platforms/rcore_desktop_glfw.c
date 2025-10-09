@@ -56,10 +56,12 @@
 
 // Support retrieving native window handlers
 #if defined(_WIN32)
-    typedef void *PVOID;
-    typedef PVOID HANDLE;
+    #if !defined(HWND) && !defined(_MSVC_LANG)
+    #define HWND void*
+    #elif !defined(HWND) && defined(_MSVC_LANG)
+    typedef struct HWND__ *HWND;
+    #endif
     #include "../external/win32_clipboard.h"
-    typedef HANDLE HWND;
     #define GLFW_EXPOSE_NATIVE_WIN32
     #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
     #include "GLFW/glfw3native.h"

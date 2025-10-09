@@ -519,8 +519,14 @@ static void RecordAutomationEvent(void); // Record frame events (to internal eve
 #endif
 
 #if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
+#ifdef __cplusplus
+extern "C" {
+#endif
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 __declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout); // Required for: WaitTime()
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #if !defined(SUPPORT_MODULE_RTEXT)
@@ -2522,7 +2528,7 @@ int MakeDirectory(const char *dirPath)
     // Create final directory
     if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
     RL_FREE(pathcpy);
-    
+
     // In case something failed and requested directory
     // was not successfully created, return -1
     if (!DirectoryExists(dirPath)) return -1;

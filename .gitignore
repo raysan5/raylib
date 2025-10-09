@@ -55,6 +55,7 @@ packages/
 *.so
 *.so.*
 *.dll
+*.obj
 
 # Emscripten
 emsdk
