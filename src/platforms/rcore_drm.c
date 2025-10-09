@@ -1076,6 +1076,12 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
+    CORE.Input.Touch.pointCount = 0;   // <-- ADD THIS LINE HERE
+    
+    // ... the rest of the original code follows
+}
+
+{
 #if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
@@ -1124,7 +1130,7 @@ void PollInputEvents(void)
         CORE.Input.Touch.currentTouchState[i] = platform.currentButtonStateEvdev[i];
     }
 
-    // Register gamepads buttons events
+    // Register gamepads buttons events in
     PollGamepadEvents();
 
     // Register previous touch states
