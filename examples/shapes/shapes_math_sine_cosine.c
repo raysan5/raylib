@@ -47,11 +47,9 @@ int main(void)
     for (int i = 0; i < wavePoints; i++)
     {
         float t = i/(float)(wavePoints - 1);
-        float angleDeg = t*360.0f;
-        float s = sinf(angleDeg*DEG2RAD);
-        float c = cosf(angleDeg*DEG2RAD);
-        sinePoints[i] = (Vector2){ start.x + t*start.width, start.y + start.height/2.0f - s*(start.height/2.0f) };
-        cosPoints[i] = (Vector2){ start.x + t*start.width, start.y + start.height/2.0f - c*(start.height/2.0f) };
+        float currentAngle = t*360.0f*DEG2RAD;
+        sinePoints[i] = (Vector2){ start.x + t*start.width, start.y + start.height/2.0f - sinf(currentAngle)*(start.height/2.0f) };
+        cosPoints[i] = (Vector2){ start.x + t*start.width, start.y + start.height/2.0f - cosf(currentAngle)*(start.height/2.0f) };
     }
     
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -75,9 +73,9 @@ int main(void)
         float explementary = 360.0f - angle;
         
         float tangent = Clamp(tanf(angleRad), -10.0f, 10.0f);
-        float cotangent = Clamp(fabs(tangent) < 0.001f ? 0.0f : 1.0f/tangent, -radius, radius);
-        Vector2 tangentPoint = { center.x + radius, center.y - tangent * radius };
-        Vector2 cotangentPoint = { center.x + cotangent * radius, center.y - radius };
+        float cotangent = (fabsf(tangent) > 0.001f) ? Clamp(1.0f/tangent, -radius, radius) : 0.0f;
+        Vector2 tangentPoint = { center.x + radius, center.y - tangent*radius };
+        Vector2 cotangentPoint = { center.x + cotangent*radius, center.y - radius };
 
         angle = Wrap(angle + (!pause ? 1.0f : 0.0f), 0.0f, 360.0f);
         //----------------------------------------------------------------------------------
@@ -107,8 +105,8 @@ int main(void)
             DrawLineEx((Vector2){ start.x , start.y }, (Vector2){ start.x , start.y + start.height }, 2.0f, GRAY);
             DrawLineEx((Vector2){ start.x + start.width, start.y }, (Vector2){ start.x + start.width, start.y + start.height }, 2.0f, GRAY);
             DrawLineEx((Vector2){ start.x, start.y + start.height/2 }, (Vector2){ start.x + start.width, start.y + start.height/2 }, 2.0f, GRAY);
-            DrawCircleV((Vector2){ start.x + (angle/360.0f)*start.width, start.y + ((-sinRad + 1)*start.height / 2.0f) }, 4.0f, RED);
-            DrawCircleV((Vector2){ start.x + (angle/360.0f)*start.width, start.y + ((-cosRad + 1)*start.height / 2.0f) }, 4.0f, BLUE);
+            DrawCircleV((Vector2){ start.x + (angle/360.0f)*start.width, start.y + ((-sinRad + 1)*start.height/2.0f) }, 4.0f, RED);
+            DrawCircleV((Vector2){ start.x + (angle/360.0f)*start.width, start.y + ((-cosRad + 1)*start.height/2.0f) }, 4.0f, BLUE);
             DrawSplineLinear(sinePoints, wavePoints, 1.0f, RED);
             DrawSplineLinear(cosPoints, wavePoints, 1.0f, BLUE);
             DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
