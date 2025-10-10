@@ -88,10 +88,10 @@ int main(void)
             ClearBackground(RAYWHITE);
             
             DrawCircleLinesV(center, radius, GRAY);
-            DrawCircleSectorLines(center, radius/2 , -angle, -360.f , 36.0f, PINK);
-            DrawCircleSectorLines(center, radius/2 , -angle, -180.f , 36.0f, DARKBLUE);
-            DrawCircleSectorLines(center, radius/2 , -angle, -90.f , 36.0f, BEIGE); 
-            DrawCircleSectorLines(center, radius/2 , -angle, 0.f, 36.0f, LIME); 
+            DrawCircleSectorLines(center, radius*0.4f , -angle, -360.f , 36.0f, PINK);
+            DrawCircleSectorLines(center, radius*0.5f , -angle, -180.f , 36.0f, DARKBLUE);
+            DrawCircleSectorLines(center, radius*0.6f , -angle, -90.f , 36.0f, BEIGE); 
+            DrawCircleSectorLines(center, radius*0.7f , -angle, 0.f, 36.0f, LIME); 
             DrawLineEx((Vector2){ center.x, limitMin.y }, (Vector2){ center.x, limitMax.y }, 1.0f, GRAY);      
             DrawLineEx((Vector2){ limitMin.x, center.y }, (Vector2){ limitMax.x, center.y }, 1.f, GRAY);
             DrawLineEx((Vector2){ center.x, center.y }, (Vector2){ center.x, point.y }, 2.0f, RED);  
