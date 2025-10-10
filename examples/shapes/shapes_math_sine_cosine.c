@@ -72,12 +72,12 @@ int main(void)
         
         float complementary = 90.0f - angle;
         float supplementary = 180.0f - angle;
-        float replementary = 360.0f - angle;
+        float explementary = 360.0f - angle;
         
         float tangent = Clamp(tanf(angleRad), -10.0f, 10.0f);
         float cotangent = Clamp(fabs(tangent) < 0.001f ? 0.0f : 1.0f/tangent, -radius, radius);
-        Vector2 tangentPoint = { center.x + radius, center.y - tangent*radius };
-        Vector2 cotangentPoint = { center.x + cotangent*radius, center.y - radius };
+        Vector2 tangentPoint = { center.x + radius, center.y - tangent * radius };
+        Vector2 cotangentPoint = { center.x + cotangent * radius, center.y - radius };
 
         angle = Wrap(angle + (!pause ? 1.0f : 0.0f), 0.0f, 360.0f);
         //----------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ int main(void)
             GuiSliderBar((Rectangle){ 640, 70, 120, 20}, "Angle", TextFormat("%.0f°", angle), &angle, 0.0f, 360.f);
             DrawText(TextFormat("Supplementary  %0.f°",supplementary), 640, 130, 6, DARKBLUE);
             DrawText(TextFormat("Complementary  %0.f°",complementary), 640, 150, 6, BEIGE);
-            DrawText(TextFormat("Replementary  %0.f°",replementary), 640, 170, 6, PINK);
+            DrawText(TextFormat("Explementary  %0.f°",explementary), 640, 170, 6, PINK);
             DrawText(TextFormat("Sine %.2f", sinRad), 640, 190, 6, RED);
             DrawText(TextFormat("Cosine %.2f", cosRad), 640, 210, 6, BLUE);
             DrawText(TextFormat("Tangent %.2f", tangent), 640, 230, 6, PURPLE);
