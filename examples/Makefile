@@ -515,6 +515,7 @@ CORE = \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
+    core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_actions \
