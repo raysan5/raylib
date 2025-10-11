@@ -64,12 +64,11 @@ int main(void)
 
             for (int i = 0; i < (int)files.count; i++)
             {
-                float alpha = (i % 2 == 0)? 0.5f : 0.3f;
-                Color color = Fade(LIGHTGRAY, alpha);
+                Color color = Fade(LIGHTGRAY, 0.3f);
 
                 if (!IsPathFile(files.paths[i]))
                 {
-                    if (GuiButton((Rectangle){0.0f, 85.0f + 40.0f*(float)i, screenWidth, 40}, "<"))
+                    if (GuiButton((Rectangle){0.0f, 85.0f + 40.0f*(float)i, screenWidth, 40}, ""))
                     {
                         strcpy(directory, files.paths[i]);
                         UnloadDirectoryFiles(files);
