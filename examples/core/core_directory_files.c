@@ -16,6 +16,12 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <string.h>         // Required for: strcpy()
+
+#define MAX_FILEPATH_SIZE       2048
+
+#define RAYGUI_IMPLEMENTATION
+#include "../shapes/raygui.h"                 // Required for GUI controls
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -29,7 +35,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - directory files");
 
-    char *directory = ".";
+    char directory[MAX_FILEPATH_SIZE] = { 0 };
+    strcpy(directory, GetWorkingDirectory());
     FilePathList files = LoadDirectoryFiles(directory);
 
     SetTargetFPS(60);
@@ -46,14 +53,32 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
-            DrawText(TextFormat("Files in directory \"%s\":", directory), 100, 40, 20, DARKGRAY);
+            DrawText(directory, 100, 40, 20, DARKGRAY);
+
+            if (GuiButton((Rectangle){40.0f, 40.0f, 20, 20}, "<"))
+            {
+                strcpy(directory, GetPrevDirectoryPath(directory));
+                UnloadDirectoryFiles(files);
+                files = LoadDirectoryFiles(directory);
+            }
 
             for (int i = 0; i < (int)files.count; i++)
             {
                 float alpha = (i % 2 == 0)? 0.5f : 0.3f;
-                DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, alpha));
+                Color color = Fade(LIGHTGRAY, alpha);
 
-                DrawText(files.paths[i], 120, 100 + 40*i, 10, GRAY);
+                if (!IsPathFile(files.paths[i]))
+                {
+                    if (GuiButton((Rectangle){0.0f, 85.0f + 40.0f*(float)i, screenWidth, 40}, "<"))
+                    {
+                        strcpy(directory, files.paths[i]);
+                        UnloadDirectoryFiles(files);
+                        files = LoadDirectoryFiles(directory);
+                    }
+                }
+                DrawRectangle(0, 85 + 40*i, screenWidth, 40, color);
+
+                DrawText(GetFileName(files.paths[i]), 120, 100 + 40*i, 10, GRAY);
             }
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -61,7 +86,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
     UnloadDirectoryFiles(files);
 
     CloseWindow();        // Close window and OpenGL context
