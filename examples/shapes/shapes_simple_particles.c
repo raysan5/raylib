@@ -41,6 +41,9 @@ typedef struct Particle {
 //----------------------------------------------------------------------------------
 int main(void)
 {
+    //----------------------------------------------------------------------------------
+    // Initialization
+
     const int screenWidth = 800;
     const int screenHeight = 450;
 
@@ -53,10 +56,10 @@ int main(void)
     Particle particles[MAX_PARTICLES] = {0};   // Particles that emitter has emitted
     int particle_count = 0;                    // Number of particles emmitted yet
 
-
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - simple particles");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //----------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------------------
     // Main game loop
