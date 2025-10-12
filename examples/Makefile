@@ -566,7 +566,8 @@ SHAPES = \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
     shapes/shapes_triangle_strip \
-    shapes/shapes_vector_angle
+    shapes/shapes_vector_angle \
+	shapes/shapes_simple_particles
 
 TEXTURES = \
     textures/textures_background_scrolling \

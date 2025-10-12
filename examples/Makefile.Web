@@ -566,7 +566,8 @@ SHAPES = \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
     shapes/shapes_triangle_strip \
-    shapes/shapes_vector_angle
+    shapes/shapes_vector_angle \
+	shapes/shapes_simple_particles
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -893,6 +894,9 @@ shapes/shapes_triangle_strip: shapes/shapes_triangle_strip.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_vector_angle: shapes/shapes_vector_angle.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_simple_particles: shapes/shapes_simple_particles.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile TEXTURES examples
