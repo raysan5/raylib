@@ -3082,13 +3082,13 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 
 // Compute SHA-256 hash code
 // NOTE: Returns a static int[8] array (32 bytes)
-unsigned int *ComputeSHA256(const unsigned char *data, int size)
+unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
 {
     #define ROTATE_RIGHT(x, c) (x >> c) | (x << ((sizeof(unsigned int) * 8) - c))
     #define A0(x) (ROTATE_RIGHT(x, 7) ^ ROTATE_RIGHT(x, 18) ^ (x >> 3))
     #define A1(x) (ROTATE_RIGHT(x, 17) ^ ROTATE_RIGHT(x, 19) ^ (x >> 10))
 
-    static const unsigned int K[64] = {
+    static const unsigned int k[64] = {
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
         0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -3117,13 +3117,13 @@ unsigned int *ComputeSHA256(const unsigned char *data, int size)
     hash[0] = 0x1f83d9ab;
     hash[0] = 0x5be0cd19;
 
-    uint64_t const bitLen = size*8;
-    uint64_t paddedSize = size + sizeof(size);
+    unsigned long long const bitLen = dataSize*8;
+    unsigned long long paddedSize = dataSize + sizeof(dataSize);
     paddedSize += (64 - (paddedSize%64));
-    uint8_t* const buffer = RL_CALLOC(paddedSize, sizeof(uint8_t));
+    unsigned char* const buffer = RL_CALLOC(paddedSize, sizeof(unsigned char));
 
-    memcpy(buffer, data, size);
-    buffer[size] = 0x80;
+    memcpy(buffer, data, dataSize);
+    buffer[dataSize] = 0x80;
     for (int i = 1; i <= sizeof(bitLen); i++)
         buffer[(paddedSize - sizeof(bitLen)) + (i - 1)] = (bitLen >> (8*(sizeof(bitLen) - i))) & 0xFF;
 
@@ -3138,7 +3138,7 @@ unsigned int *ComputeSHA256(const unsigned char *data, int size)
         unsigned int g = hash[6];
         unsigned int h = hash[7];
 
-        uint8_t *block = buffer + (blockN*64);
+        unsigned char *block = buffer + (blockN*64);
         unsigned int w[64];
         for (int i = 0; i < 16; i++)
         {         
@@ -3154,7 +3154,7 @@ unsigned int *ComputeSHA256(const unsigned char *data, int size)
         {
             unsigned int e1 = (ROTATE_RIGHT(e, 6) ^ ROTATE_RIGHT(e, 11) ^ ROTATE_RIGHT(e, 25));
             unsigned int ch = ((e & f) ^ (~e & g));
-            unsigned int t1 = (h + e1 + ch + K[t] + w[t]);
+            unsigned int t1 = (h + e1 + ch + k[t] + w[t]);
             unsigned int e0 = (ROTATE_RIGHT(a, 2) ^ ROTATE_RIGHT(a, 13) ^ ROTATE_RIGHT(a, 22));
             unsigned int maj = ((a & b) ^ (a & c) ^ (b & c));
             unsigned int t2 = e0 + maj;
@@ -3178,8 +3178,12 @@ unsigned int *ComputeSHA256(const unsigned char *data, int size)
         hash[6] += g;
         hash[7] += h;
     }
-    free(buffer);
+    RL_FREE(buffer);
     return hash;
+
+    #undef ROTATE_LEFT
+    #undef A0
+    #undef A1
 }
 
 //----------------------------------------------------------------------------------
