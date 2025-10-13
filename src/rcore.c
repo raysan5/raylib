@@ -3080,6 +3080,93 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
     return hash;
 }
 
+// Compute SHA-256 hash code
+// NOTE: Returns a static int[8] array (32 bytes)
+unsigned int *ComputeSHA256(unsigned char *data, int dataSize) {
+    #define SHA256_ROTR_32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
+    static unsigned int result[8];
+    if (!data || dataSize < 0){
+        return NULL;
+    }
+
+    unsigned int h[8] = {
+        0x6a09e667u, 0xbb67ae85u, 0x3c6ef372u, 0xa54ff53au,
+        0x510e527fu, 0x9b05688cu, 0x1f83d9abu, 0x5be0cd19u
+    };
+
+    const unsigned int k[64] = {
+        0x428a2f98u, 0x71374491u, 0xb5c0fbcfu, 0xe9b5dba5u, 0x3956c25bu, 0x59f111f1u, 0x923f82a4u, 0xab1c5ed5u,
+        0xd807aa98u, 0x12835b01u, 0x243185beu, 0x550c7dc3u, 0x72be5d74u, 0x80deb1feu, 0x9bdc06a7u, 0xc19bf174u,
+        0xe49b69c1u, 0xefbe4786u, 0x0fc19dc6u, 0x240ca1ccu, 0x2de92c6fu, 0x4a7484aau, 0x5cb0a9dcu, 0x76f988dau,
+        0x983e5152u, 0xa831c66du, 0xb00327c8u, 0xbf597fc7u, 0xc6e00bf3u, 0xd5a79147u, 0x06ca6351u, 0x14292967u,
+        0x27b70a85u, 0x2e1b2138u, 0x4d2c6dfcu, 0x53380d13u, 0x650a7354u, 0x766a0abbu, 0x81c2c92eu, 0x92722c85u,
+        0xa2bfe8a1u, 0xa81a664bu, 0xc24b8b70u, 0xc76c51a3u, 0xd192e819u, 0xd6990624u, 0xf40e3585u, 0x106aa070u,
+        0x19a4c116u, 0x1e376c08u, 0x2748774cu, 0x34b0bcb5u, 0x391c0cb3u, 0x4ed8aa4au, 0x5b9cca4fu, 0x682e6ff3u,
+        0x748f82eeu, 0x78a5636fu, 0x84c87814u, 0x8cc70208u, 0x90befffau, 0xa4506cebu, 0xbef9a3f7u, 0xc67178f2u
+    };
+
+    uint64_t bit_len = (uint64_t)dataSize * 8ULL;
+    int pad_len = (int)((56 - ((dataSize + 1) % 64) + 64) % 64);
+    size_t total_len = (size_t)dataSize + 1 + pad_len + 8;
+    unsigned char *buf = (unsigned char *)RL_CALLOC(total_len, 1);
+    if (!buf){
+        return NULL;
+    }
+
+    memcpy(buf, data, (size_t)dataSize);
+    buf[dataSize] = 0x80u;
+    for (int i = 0; i < 8; ++i){
+        buf[dataSize + 1 + pad_len + i] = (unsigned char)((bit_len >> (56 - 8 * i)) & 0xFFu);
+    }
+
+    size_t num_blocks = total_len / 64;
+    for (size_t blk = 0; blk < num_blocks; ++blk) {
+        const unsigned char *chunk = buf + blk * 64;
+        unsigned int w[64];
+        for (int t = 0; t < 16; ++t){
+            w[t] = ((unsigned int)chunk[t * 4 + 0] << 24) | ((unsigned int)chunk[t * 4 + 1] << 16) |
+                   ((unsigned int)chunk[t * 4 + 2] << 8) | ((unsigned int)chunk[t * 4 + 3]);
+        }
+        for (int t = 16; t < 64; ++t) {
+            unsigned int s0 = SHA256_ROTR_32(w[t - 15], 7) ^ SHA256_ROTR_32(w[t - 15], 18) ^ (w[t - 15] >> 3);
+            unsigned int s1 = SHA256_ROTR_32(w[t - 2], 17) ^ SHA256_ROTR_32(w[t - 2], 19) ^ (w[t - 2] >> 10);
+            w[t] = w[t - 16] + s0 + w[t - 7] + s1;
+        }
+        unsigned int a = h[0], b = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+        for (int t = 0; t < 64; ++t) {
+            unsigned int S1 = SHA256_ROTR_32(e, 6) ^ SHA256_ROTR_32(e, 11) ^ SHA256_ROTR_32(e, 25);
+            unsigned int ch = (e & f) ^ ((~e) & g);
+            unsigned int temp1 = hh + S1 + ch + k[t] + w[t];
+            unsigned int S0 = SHA256_ROTR_32(a, 2) ^ SHA256_ROTR_32(a, 13) ^ SHA256_ROTR_32(a, 22);
+            unsigned int maj = (a & b) ^ (a & c) ^ (b & c);
+            unsigned int temp2 = S0 + maj;
+            hh = g;
+            g = f;
+            f = e;
+            e = d + temp1;
+            d = c;
+            c = b;
+            b = a;
+            a = temp1 + temp2;
+        }
+        h[0] += a;
+        h[1] += b;
+        h[2] += c;
+        h[3] += d;
+        h[4] += e;
+        h[5] += f;
+        h[6] += g;
+        h[7] += hh;
+    }
+
+    RL_FREE(buf);
+    for (int i = 0; i < 8; ++i){
+        result[i] = (unsigned int)h[i];
+    }
+    return result;
+    #undef SHA256_ROTR_32
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Automation Events Recording and Playing
 //----------------------------------------------------------------------------------
