@@ -3084,7 +3084,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 // NOTE: Returns a static int[8] array (32 bytes)
 unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
 {
-    #define ROTATE_RIGHT(x, c) (x >> c) | (x << ((sizeof(unsigned int) * 8) - c))
+    #define ROTATE_RIGHT(x, c) ((x >> c) | (x << ((sizeof(unsigned int) * 8) - c)))
     #define A0(x) (ROTATE_RIGHT(x, 7) ^ ROTATE_RIGHT(x, 18) ^ (x >> 3))
     #define A1(x) (ROTATE_RIGHT(x, 17) ^ ROTATE_RIGHT(x, 19) ^ (x >> 10))
 
