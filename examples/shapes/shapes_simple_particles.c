@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - particles
+*   raylib [shapes] example - simple particles
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -256,7 +256,7 @@ static void UpdateParticles(CircularBuffer *circularBuffer, int screenWidth, int
 static void UpdateCircularBuffer(CircularBuffer *circularBuffer)
 {
     // Update circular buffer: advance tail over dead particles
-    while (circularBuffer->tail != circularBuffer->head &&
+    while ((circularBuffer->tail != circularBuffer->head) &&
            !circularBuffer->buffer[circularBuffer->tail].alive)
     {
         circularBuffer->tail = (circularBuffer->tail + 1)%MAX_PARTICLES;

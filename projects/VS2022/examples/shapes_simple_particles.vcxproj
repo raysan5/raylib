@@ -53,9 +53,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{497FDF54-9762-4048-A833-61CC3980A0FB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shapes_particles</RootNamespace>
+    <RootNamespace>shapes_simple_particles</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shapes_particles</ProjectName>
+    <ProjectName>shapes_simple_particles</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shapes\shapes_particles.c" />
+    <ClCompile Include="..\..\..\examples\shapes\shapes_simple_particles.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />
