@@ -2885,7 +2885,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
         hash[4] += e;
     }
 
-    free(msg);
+    RL_FREE(msg);
 
     return hash;
 }
