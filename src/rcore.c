@@ -3109,13 +3109,13 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
 
     static unsigned int hash[8];
     hash[0] = 0x6A09e667;
-    hash[0] = 0xbb67ae85;
-    hash[0] = 0x3c6ef372;
-    hash[0] = 0xa54ff53a;
-    hash[0] = 0x510e527f;
-    hash[0] = 0x9b05688c;
-    hash[0] = 0x1f83d9ab;
-    hash[0] = 0x5be0cd19;
+    hash[1] = 0xbb67ae85;
+    hash[2] = 0x3c6ef372;
+    hash[3] = 0xa54ff53a;
+    hash[4] = 0x510e527f;
+    hash[5] = 0x9b05688c;
+    hash[6] = 0x1f83d9ab;
+    hash[7] = 0x5be0cd19;
 
     unsigned long long const bitLen = dataSize*8;
     unsigned long long paddedSize = dataSize + sizeof(dataSize);
