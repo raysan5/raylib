@@ -3104,23 +3104,23 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize) {
         0x19a4c116u, 0x1e376c08u, 0x2748774cu, 0x34b0bcb5u, 0x391c0cb3u, 0x4ed8aa4au, 0x5b9cca4fu, 0x682e6ff3u,
         0x748f82eeu, 0x78a5636fu, 0x84c87814u, 0x8cc70208u, 0x90befffau, 0xa4506cebu, 0xbef9a3f7u, 0xc67178f2u
     };
-
-    uint64_t bit_len = (uint64_t)dataSize * 8ULL;
-    int pad_len = (int)((56 - ((dataSize + 1) % 64) + 64) % 64);
-    size_t total_len = (size_t)dataSize + 1 + pad_len + 8;
+    
+    unsigned long long bit_len = (unsigned long long)dataSize * 8U;
+    long long pad_len = ((56LL - (((long long)dataSize + 1) % 64) + 64) % 64);
+    unsigned int total_len = (unsigned long long)dataSize + 1 + pad_len + 8;
     unsigned char *buf = (unsigned char *)RL_CALLOC(total_len, 1);
     if (!buf){
         return NULL;
     }
 
-    memcpy(buf, data, (size_t)dataSize);
+    memcpy(buf, data, (unsigned long long)dataSize);
     buf[dataSize] = 0x80u;
     for (int i = 0; i < 8; ++i){
-        buf[dataSize + 1 + pad_len + i] = (unsigned char)((bit_len >> (56 - 8 * i)) & 0xFFu);
+        buf[(dataSize + 1LL) + pad_len + i] = (unsigned char)((bit_len >> (56 - 8 * i)) & 0xFFu);
     }
 
-    size_t num_blocks = total_len / 64;
-    for (size_t blk = 0; blk < num_blocks; ++blk) {
+    unsigned long long num_blocks = total_len / 64;
+    for (unsigned long long blk = 0; blk < num_blocks; ++blk) {
         const unsigned char *chunk = buf + blk * 64;
         unsigned int w[64];
         for (int t = 0; t < 16; ++t){
