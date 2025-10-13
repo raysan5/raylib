@@ -68,7 +68,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw the dashed line with the current properties
-            DrawLineDashed(lineStartPosition, lineEndPosition, dashLength, blankLength, lineColors[colorIndex]);
+            DrawLineDashed(lineStartPosition, lineEndPosition, (int)dashLength, (int)blankLength, lineColors[colorIndex]);
 
             // Draw UI and Instructions
             DrawRectangle(5, 5, 265, 95, Fade(SKYBLUE, 0.5f));
@@ -79,7 +79,7 @@ int main(void)
             DrawText("LEFT/RIGHT: Change Space Length", 15, 55, 10, BLACK);
             DrawText("C: Cycle Color", 15, 75, 10, BLACK);
 
-            DrawText(TextFormat("Dash: %.0f | Space: %.0f", dashLength, blankLength), 15, 115, 10, DARKGRAY);
+            DrawText(TextFormat("Dash: %.0f | Space: %.0f", (int)dashLength, (int)blankLength), 15, 115, 10, DARKGRAY);
 
             DrawFPS(screenWidth - 80, 10);
 

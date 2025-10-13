@@ -113,7 +113,7 @@ int main(void)
         if (IsKeyPressed(KEY_N)) useNormalMap = !useNormalMap;
 
         // Spin plane model at a constant rate
-        plane.transform = MatrixRotateY(GetTime()*0.5f);
+        plane.transform = MatrixRotateY((float)GetTime()*0.5f);
 
         // Update shader values
         float lightPos[3] = {lightPosition.x, lightPosition.y, lightPosition.z};
