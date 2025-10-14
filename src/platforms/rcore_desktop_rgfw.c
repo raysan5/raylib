@@ -571,7 +571,7 @@ int RGFW_formatToChannels(int format)
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    RGFW_window_setIcon(platform.window, (u8*)image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
+    RGFW_window_setIcon(platform.window, (u8 *)image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
 }
 
 // Set icon for window
@@ -592,8 +592,8 @@ void SetWindowIcons(Image *images, int count)
             if ((smallIcon == NULL) || ((images[i].width < smallIcon->width) && (images[i].height > smallIcon->height))) smallIcon = &images[i];
         }
 
-        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8*)smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
-        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8*)bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
+        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
+        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
     }
 }
 
@@ -812,7 +812,7 @@ Image GetClipboardImage(void)
     fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
-    else image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, dataSize);
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
 #endif
@@ -1429,3 +1429,4 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
 
     return (KeyboardKey)keyMappingRGFW[keycode];
 }
+
