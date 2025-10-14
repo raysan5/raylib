@@ -3117,17 +3117,17 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
     hash[6] = 0x1f83d9ab;
     hash[7] = 0x5be0cd19;
 
-    unsigned long long const bitLen = dataSize*8;
-    unsigned long long paddedSize = dataSize + sizeof(dataSize);
+    const unsigned long long int bitLen = ((unsigned long long int)dataSize)*8;
+    unsigned long long int paddedSize = dataSize + sizeof(dataSize);
     paddedSize += (64 - (paddedSize%64));
-    unsigned char* const buffer = RL_CALLOC(paddedSize, sizeof(unsigned char));
+    unsigned char *buffer = RL_CALLOC(paddedSize, sizeof(unsigned char));
 
     memcpy(buffer, data, dataSize);
     buffer[dataSize] = 0x80;
     for (int i = 1; i <= sizeof(bitLen); i++)
         buffer[(paddedSize - sizeof(bitLen)) + (i - 1)] = (bitLen >> (8*(sizeof(bitLen) - i))) & 0xFF;
 
-    for (size_t blockN = 0; blockN < paddedSize/64; blockN++)
+    for (unsigned long long int blockN = 0; blockN < paddedSize/64; blockN++)
     {
         unsigned int a = hash[0];
         unsigned int b = hash[1];
@@ -3150,7 +3150,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
         }
         for (int t = 16; t < 64; t++) w[t] = A1(w[t - 2]) + w[t - 7] + A0(w[t - 15]) + w[t - 16];
 
-        for (size_t t = 0; t < 64; t++)
+        for (unsigned long long int t = 0; t < 64; t++)
         {
             unsigned int e1 = (ROTATE_RIGHT(e, 6) ^ ROTATE_RIGHT(e, 11) ^ ROTATE_RIGHT(e, 25));
             unsigned int ch = ((e & f) ^ (~e & g));
