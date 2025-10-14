@@ -3085,8 +3085,8 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
 {
     #define ROTATE_RIGHT(x, c) ((x >> c) | (x << ((sizeof(unsigned int) * 8) - c)))
-    #define A0(x) (ROTATE_RIGHT(x, 7) ^ ROTATE_RIGHT(x, 18) ^ (x >> 3))
-    #define A1(x) (ROTATE_RIGHT(x, 17) ^ ROTATE_RIGHT(x, 19) ^ (x >> 10))
+    #define SHA256_A0(x) (ROTATE_RIGHT(x, 7) ^ ROTATE_RIGHT(x, 18) ^ (x >> 3))
+    #define SHA256_A1(x) (ROTATE_RIGHT(x, 17) ^ ROTATE_RIGHT(x, 19) ^ (x >> 10))
 
     static const unsigned int k[64] = {
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
@@ -3148,7 +3148,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
                 ((unsigned int)block[i*4 + 2] << 8)  |
                 ((unsigned int)block[i*4 + 3]);
         }
-        for (int t = 16; t < 64; t++) w[t] = A1(w[t - 2]) + w[t - 7] + A0(w[t - 15]) + w[t - 16];
+        for (int t = 16; t < 64; t++) w[t] = SHA256_A1(w[t - 2]) + w[t - 7] + SHA256_A0(w[t - 15]) + w[t - 16];
 
         for (unsigned long long int t = 0; t < 64; t++)
         {
