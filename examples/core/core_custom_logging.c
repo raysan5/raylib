@@ -15,7 +15,7 @@
 *
 ********************************************************************************************/
 
-#include "raylib.h"
+#include "../src/raylib.h"
 
 #include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
 #include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
@@ -23,21 +23,24 @@
 // Custom logging function
 void CustomLog(int msgType, const char *text, va_list args)
 {
+
     char timeStr[64] = { 0 };
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
 
     strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", tm_info);
-    printf("[%s] ", timeStr);
 
     switch (msgType)
     {
-        case LOG_INFO: printf("[INFO] : "); break;
-        case LOG_ERROR: printf("[ERROR]: "); break;
-        case LOG_WARNING: printf("[WARN] : "); break;
-        case LOG_DEBUG: printf("[DEBUG]: "); break;
+        case LOG_INFO: printf(ANSI_GREEN "[%s] [INFO] : ", timeStr); break;
+        case LOG_ERROR: printf(ANSI_YELLOW "[%s] [ERROR]: ", timeStr); break;
+        case LOG_WARNING: printf(ANSI_RED "[%s] [WARN] : ", timeStr); break;
+        case LOG_DEBUG: printf(ANSI_BLUE "[%s] [DEBUG]: ", timeStr); break;
+        case LOG_FATAL: printf(ANSI_BOLD ANSI_RED "[%s] [FATAL] : ", timeStr); break;
         default: break;
     }
+
+    printf("%s", ANSI_RESET);
 
     vprintf(text, args);
     printf("\n");
@@ -54,7 +57,7 @@ int main(void)
     const int screenHeight = 450;
 
     // Set custom logger
-    SetTraceLogCallback(CustomLog);
+    // SetTraceLogCallback(CustomLog);
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 

@@ -133,14 +133,16 @@ void TraceLog(int logType, const char *text, ...)
 
     switch (logType)
     {
-        case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
-        case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
-        case LOG_INFO: strcpy(buffer, "INFO: "); break;
-        case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
-        case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
-        case LOG_FATAL: strcpy(buffer, "FATAL: "); break;
+        case LOG_TRACE:   printf(ANSI_BLUE "TRACE: "); break;
+        case LOG_DEBUG:   printf(ANSI_CYAN "DEBUG: "); break;
+        case LOG_INFO:    printf(ANSI_GREEN "INFO: "); break;
+        case LOG_WARNING: printf(ANSI_YELLOW "WARNING: "); break;
+        case LOG_ERROR:   printf(ANSI_RED "ERROR: "); break;
+        case LOG_FATAL:   printf(ANSI_BOLD ANSI_RED "FATAL: "); break;
         default: break;
     }
+
+    printf("%s", ANSI_RESET);
 
     unsigned int textSize = (unsigned int)strlen(text);
     memcpy(buffer + strlen(buffer), text, (textSize < (MAX_TRACELOG_MSG_LENGTH - 12))? textSize : (MAX_TRACELOG_MSG_LENGTH - 12));
