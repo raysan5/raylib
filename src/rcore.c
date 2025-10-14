@@ -161,7 +161,7 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
+#if (defined(_WIN32))
     #ifndef MAX_PATH
         #define MAX_PATH 1025
     #endif
