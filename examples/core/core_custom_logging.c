@@ -57,7 +57,7 @@ int main(void)
     const int screenHeight = 450;
 
     // Set custom logger
-    // SetTraceLogCallback(CustomLog);
+    SetTraceLogCallback(CustomLog);
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 
