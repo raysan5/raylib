@@ -3180,10 +3180,6 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
     }
     RL_FREE(buffer);
     return hash;
-
-    #undef ROTATE_RIGHT
-    #undef A0
-    #undef A1
 }
 
 //----------------------------------------------------------------------------------
