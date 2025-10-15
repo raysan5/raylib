@@ -2112,7 +2112,7 @@ void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned ch
 // rendered scene without them clipping through world geometry.
 void rlClearDepthBuffer(void)
 {
-    glClear(GL_DEPTH_BUFFER_BIT); // Beats having to #import <GL/gl.h> just to call this one function.
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 // Clear used screen buffers (color and depth)
