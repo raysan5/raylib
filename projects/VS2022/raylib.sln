@@ -383,6 +383,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_triangle_strip", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_directory_files", "examples\core_directory_files.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_kaleidoscope", "examples\shapes_kaleidoscope.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_recursive_tree", "examples\shapes_recursive_tree.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_triangle_strip", "examples\shapes_triangle_strip.vcxproj", "{2CCCD9E4-9058-4291-BD89-39C979F0CA1E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_simple_particles", "examples\shapes_simple_particles.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.DLL|ARM64 = Debug.DLL|ARM64
