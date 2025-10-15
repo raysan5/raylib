@@ -1,4 +1,4 @@
-# raylib parser
+# rlparser - raylib parser
 
 This parser scans [`raylib.h`](../src/raylib.h) to get information about `defines`, `structs`, `enums` and `functions`.
 All data is separated into parts, usually as strings. The following types are used for data:
@@ -8,16 +8,16 @@ All data is separated into parts, usually as strings. The following types are us
  - `struct StructInfo`
  - `struct EnumInfo`
  
-Check `raylib_parser.c` for details about those structs.
+Check `rlparser.c` for details about those structs.
 
 ## Command Line
 
 ```
 //////////////////////////////////////////////////////////////////////////////////
 //                                                                              //
-// raylib API parser                                                            //
+// rlparser - raylib header API parser                                          //
 //                                                                              //
-// more info and bugs-report: github.com/raysan5/raylib/parser                  //
+// more info and bugs-report: github.com/raysan5/raylib/tools/rlparser          //
 //                                                                              //
 // Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)                          //
 //                                                                              //
@@ -25,7 +25,7 @@ Check `raylib_parser.c` for details about those structs.
 
 USAGE:
 
-    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]
+    > rlparser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]
 
 OPTIONS:
 
@@ -50,19 +50,19 @@ OPTIONS:
 
 EXAMPLES:
 
-    > raylib_parser --input raylib.h --output api.json
+    > rlparser --input raylib.h --output api.json
         Process <raylib.h> to generate <api.json>
 
-    > raylib_parser --output raylib_data.info --format XML
+    > rlparser --output raylib_data.info --format XML
         Process <raylib.h> to generate <raylib_data.info> as XML text data
 
-    > raylib_parser --input raymath.h --output raymath_data.info --format XML --define RMAPI
+    > rlparser --input raymath.h --output raymath_data.info --format XML --define RMAPI
         Process <raymath.h> to generate <raymath_data.info> as XML text data
 ```
 
 ## Constraints
 
-This parser is specifically designed to work with raylib.h, so, it has some constraints: 
+`rlparser` is specifically designed to work with `raylib.h`, so, it has some constraints: 
 
  - Functions are expected as a single line with the following structure:
 ```
@@ -91,7 +91,7 @@ This parser is specifically designed to work with raylib.h, so, it has some cons
 ```   
    
 _NOTE: For enums, multiple options are supported:_
-      
+
  - If value is not provided, (<valueInteger[i -1]> + 1) is assigned
  - Value description can be provided or not
 
@@ -103,5 +103,7 @@ This parser **does not require `<string.h>` library**, all data is parsed direct
 
 ### LICENSE: zlib/libpng
 
-raylib-parser is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
+raylib-parser is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. 
+
+Check [LICENSE](LICENSE) for further details.
 

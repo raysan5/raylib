@@ -60,6 +60,7 @@ shapes;shapes_following_eyes;★★☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@
 shapes;shapes_easings_ball;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_box;★★☆☆;2.5;2.5;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_easings_rectangles;★★★☆;2.0;2.5;2014;2025;"Ramon Santamaria";@raysan5
+shapes;shapes_recursive_tree;★★★☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 shapes;shapes_ring_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
 shapes;shapes_circle_sector_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
 shapes;shapes_rounded_rectangle_drawing;★★★☆;2.5;2.5;2018;2025;"Vlad Adrian";@demizdor
@@ -69,6 +70,7 @@ shapes;shapes_splines_drawing;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";
 shapes;shapes_digital_clock;★★★★;5.5;5.6;2025;2025;"Hamza RAHAL";@hmz-rhl
 shapes;shapes_double_pendulum;★★☆☆;5.5;5.5;2025;2025;"JoeCheong";@Joecheong2006
 shapes;shapes_dashed_line;★☆☆☆;5.5;5.5;2025;2025;"Luís Almeida";@luis605
+shapes;shapes_triangle_strip;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 shapes;shapes_vector_angle;★★☆☆;1.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_pie_chart;★☆☆☆;5.5;5.6;2025;2025;"Gideon Serfontein";@GideonSerf
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
@@ -107,7 +109,7 @@ text;text_input_box;★★☆☆;1.7;3.5;2017;2025;"Ramon Santamaria";@raysan5
 text;text_writing_anim;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
 text;text_rectangle_bounds;★★★★;2.5;4.0;2018;2025;"Vlad Adrian";@demizdor
 text;text_unicode_emojis;★★★★;2.5;4.0;2019;2025;"Vlad Adrian";@demizdor
-text;text_unicode_ranges;★★★★;5.5;5.6;2025;2025;"Vlad Adrian";@demizdor
+text;text_unicode_ranges;★★★★;5.5;5.6;2025;2025;"Vadim Gunko";@GuvaCode
 text;text_3d_drawing;★★★★;3.5;4.0;2021;2025;"Vlad Adrian";@demizdor
 text;text_codepoints_loading;★★★☆;4.2;4.2;2022;2025;"Ramon Santamaria";@raysan5
 text;text_inline_styling;★★★☆;5.6-dev;5.6-dev;2025;2025;"Wagner Barongello";@SultansOfCode
@@ -180,3 +182,4 @@ others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flas
 others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@arkanis
 others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
 others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5
+shapes;shapes_kaleidoscope;★★☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
