@@ -187,42 +187,42 @@ int main(void)
             if (lastUndoIndex > firstUndoIndex)
             {
                 for (int i = firstUndoIndex; i < currentUndoIndex; i++)
-                    DrawRectangle(gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
-                        GRID_CELL_SIZE, GRID_CELL_SIZE, LIGHTGRAY);
+                    DrawRectangleRec((Rectangle){gridPosition.x + states[i].cell.x * GRID_CELL_SIZE, gridPosition.y + states[i].cell.y * GRID_CELL_SIZE,
+                        GRID_CELL_SIZE, GRID_CELL_SIZE }, LIGHTGRAY);
             }
             else if (firstUndoIndex > lastUndoIndex)
             {
                 if ((currentUndoIndex < MAX_UNDO_STATES) && (currentUndoIndex > lastUndoIndex))
                 {
                     for (int i = firstUndoIndex; i < currentUndoIndex; i++)
-                        DrawRectangle(gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
-                            GRID_CELL_SIZE, GRID_CELL_SIZE, LIGHTGRAY);
+                        DrawRectangleRec((Rectangle) { gridPosition.x + states[i].cell.x * GRID_CELL_SIZE, gridPosition.y + states[i].cell.y * GRID_CELL_SIZE,
+                            GRID_CELL_SIZE, GRID_CELL_SIZE }, LIGHTGRAY);
                 }
                 else
                 {
                     for (int i = firstUndoIndex; i < MAX_UNDO_STATES; i++)
-                        DrawRectangle(gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
+                        DrawRectangle((int)gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, (int)gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
                             GRID_CELL_SIZE, GRID_CELL_SIZE, LIGHTGRAY);
                     for (int i = 0; i < currentUndoIndex; i++)
-                        DrawRectangle(gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
+                        DrawRectangle((int)gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, (int)gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
                             GRID_CELL_SIZE, GRID_CELL_SIZE, LIGHTGRAY);
                 }
             }
 
             // Draw game grid
             for (int y = 0; y <= MAX_GRID_CELLS_Y; y++)
-                DrawLine(gridPosition.x, gridPosition.y + y*GRID_CELL_SIZE,
-                    gridPosition.x + MAX_GRID_CELLS_X*GRID_CELL_SIZE, gridPosition.y + y*GRID_CELL_SIZE, GRAY);
+                DrawLine((int)gridPosition.x, (int)gridPosition.y + y*GRID_CELL_SIZE,
+                    (int)gridPosition.x + MAX_GRID_CELLS_X*GRID_CELL_SIZE, (int)gridPosition.y + y*GRID_CELL_SIZE, GRAY);
             for (int x = 0; x <= MAX_GRID_CELLS_X; x++)
-                DrawLine(gridPosition.x + x*GRID_CELL_SIZE, gridPosition.y,
-                    gridPosition.x + x*GRID_CELL_SIZE, gridPosition.y + MAX_GRID_CELLS_Y*GRID_CELL_SIZE, GRAY);
+                DrawLine((int)gridPosition.x + x*GRID_CELL_SIZE, (int)gridPosition.y,
+                    (int)gridPosition.x + x*GRID_CELL_SIZE, (int)gridPosition.y + MAX_GRID_CELLS_Y*GRID_CELL_SIZE, GRAY);
 
             // Draw player
-            DrawRectangle(gridPosition.x + player.cell.x*GRID_CELL_SIZE, gridPosition.y + player.cell.y*GRID_CELL_SIZE,
+            DrawRectangle((int)gridPosition.x + player.cell.x*GRID_CELL_SIZE, (int)gridPosition.y + player.cell.y*GRID_CELL_SIZE,
                 GRID_CELL_SIZE + 1, GRID_CELL_SIZE + 1, player.color);
 
             // Draw undo system buffer info
-            DrawText("UNDO STATES:", undoInfoPos.x - 85, undoInfoPos.y + 9, 10, DARKGRAY);
+            DrawText("UNDO STATES:", (int)undoInfoPos.x - 85, (int)undoInfoPos.y + 9, 10, DARKGRAY);
             DrawUndoBuffer(undoInfoPos, firstUndoIndex, lastUndoIndex, currentUndoIndex, 24);
 
         EndDrawing();
@@ -247,15 +247,15 @@ int main(void)
 static void DrawUndoBuffer(Vector2 position, int firstUndoIndex, int lastUndoIndex, int currentUndoIndex, int slotSize)
 {
     // Draw index marks
-    DrawRectangle(position.x + 8 + slotSize*currentUndoIndex, position.y - 10, 8, 8, RED);
-    DrawRectangleLines(position.x + 2 + slotSize*firstUndoIndex, position.y + 27, 8, 8, BLACK);
-    DrawRectangle(position.x + 14 + slotSize*lastUndoIndex, position.y + 27, 8, 8, BLACK);
+    DrawRectangle((int)position.x + 8 + slotSize*currentUndoIndex, (int)position.y - 10, 8, 8, RED);
+    DrawRectangleLines((int)position.x + 2 + slotSize*firstUndoIndex, (int)position.y + 27, 8, 8, BLACK);
+    DrawRectangle((int)position.x + 14 + slotSize*lastUndoIndex, (int)position.y + 27, 8, 8, BLACK);
 
     // Draw background gray slots
     for (int i = 0; i < MAX_UNDO_STATES; i++)
     {
-        DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, LIGHTGRAY);
-        DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, GRAY);
+        DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, LIGHTGRAY);
+        DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, GRAY);
     }
 
     // Draw occupied slots: firstUndoIndex --> lastUndoIndex
@@ -263,22 +263,22 @@ static void DrawUndoBuffer(Vector2 position, int firstUndoIndex, int lastUndoInd
     {
         for (int i = firstUndoIndex; i < lastUndoIndex + 1; i++)
         {
-            DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, SKYBLUE);
-            DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, BLUE);
+            DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, SKYBLUE);
+            DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, BLUE);
         }
     }
     else if (lastUndoIndex < firstUndoIndex)
     {
         for (int i = firstUndoIndex; i < MAX_UNDO_STATES; i++)
         {
-            DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, SKYBLUE);
-            DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, BLUE);
+            DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, SKYBLUE);
+            DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, BLUE);
         }
 
         for (int i = 0; i < lastUndoIndex + 1; i++)
         {
-            DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, SKYBLUE);
-            DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, BLUE);
+            DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, SKYBLUE);
+            DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, BLUE);
         }
     }
 
@@ -287,26 +287,26 @@ static void DrawUndoBuffer(Vector2 position, int firstUndoIndex, int lastUndoInd
     {
         for (int i = firstUndoIndex; i < currentUndoIndex; i++)
         {
-            DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, GREEN);
-            DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, LIME);
+            DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, GREEN);
+            DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, LIME);
         }
     }
     else if (currentUndoIndex < firstUndoIndex)
     {
         for (int i = firstUndoIndex; i < MAX_UNDO_STATES; i++)
         {
-            DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, GREEN);
-            DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, LIME);
+            DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, GREEN);
+            DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, LIME);
         }
 
         for (int i = 0; i < currentUndoIndex; i++)
         {
-            DrawRectangle(position.x + slotSize*i, position.y, slotSize, slotSize, GREEN);
-            DrawRectangleLines(position.x + slotSize*i, position.y, slotSize, slotSize, LIME);
+            DrawRectangle((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, GREEN);
+            DrawRectangleLines((int)position.x + slotSize*i, (int)position.y, slotSize, slotSize, LIME);
         }
     }
 
     // Draw current selected UNDO slot
-    DrawRectangle(position.x + slotSize*currentUndoIndex, position.y, slotSize, slotSize, GOLD);
-    DrawRectangleLines(position.x + slotSize*currentUndoIndex, position.y, slotSize, slotSize, ORANGE);
+    DrawRectangle((int)position.x + slotSize*currentUndoIndex, (int)position.y, slotSize, slotSize, GOLD);
+    DrawRectangleLines((int)position.x + slotSize*currentUndoIndex, (int)position.y, slotSize, slotSize, ORANGE);
 }

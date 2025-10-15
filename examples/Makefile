@@ -512,9 +512,11 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
+    core/core_clipboard_text \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
+    core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_actions \
@@ -545,6 +547,7 @@ SHAPES = \
     shapes/shapes_bouncing_ball \
     shapes/shapes_bullet_hell \
     shapes/shapes_circle_sector_drawing \
+    shapes/shapes_clock_of_clocks \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_dashed_line \
@@ -554,17 +557,23 @@ SHAPES = \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
+    shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_mouse_trail \
+    shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
+    shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
+    shapes/shapes_starfield \
     shapes/shapes_top_down_lights \
-    shapes/shapes_vector_angle \
-    shapes/shapes_translation_rotation_scale
+    shapes/shapes_triangle_strip \
+    shapes/shapes_vector_angle
 
 TEXTURES = \
     textures/textures_background_scrolling \
@@ -608,6 +617,7 @@ TEXT = \
     text/text_sprite_fonts \
     text/text_unicode_emojis \
     text/text_unicode_ranges \
+    text/text_words_alignment \
     text/text_writing_anim
 
 MODELS = \

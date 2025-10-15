@@ -86,7 +86,7 @@ int main(void)
             DrawTextStyled(GetFontDefault(), text, (Vector2){ 100, 220 }, 40.0f, 2.0f, BLACK);
                 
             textSize = MeasureTextStyled(GetFontDefault(), text, 40.0f, 2.0f);
-            DrawRectangleLines(100, 220, textSize.x, textSize.y, GREEN);
+            DrawRectangleLines(100, 220, (int)textSize.x, (int)textSize.y, GREEN);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
                     
                     // Parse following color
                     char colHexText[9] = { 0 };
-                    char *textPtr = &text[i]; // Color should start here, let's see...
+                    const char *textPtr = &text[i]; // Color should start here, let's see...
 
                     int colHexCount = 0;
                     while ((textPtr != NULL) && (textPtr[colHexCount] != '\0') && (textPtr[colHexCount] != ']'))
@@ -186,7 +186,7 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
             else increaseX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
 
             // Draw background rectangle color (if required)
-            if (colBack.a > 0) DrawRectangle(position.x + textOffsetX, position.y + textOffsetY - backRecPadding, increaseX, fontSize + 2*backRecPadding, colBack);
+            if (colBack.a > 0) DrawRectangleRec((Rectangle) { position.x + textOffsetX, position.y + textOffsetY - backRecPadding, increaseX, fontSize + 2 * backRecPadding }, colBack);
 
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
@@ -236,7 +236,7 @@ static Vector2 MeasureTextStyled(Font font, const char *text, float fontSize, fl
             {
                 i += 2;     // Skip "[c" or "[b" to start parsing color
 
-                char *textPtr = &text[i]; // Color should start here, let's see...
+                const char *textPtr = &text[i]; // Color should start here, let's see...
 
                 int colHexCount = 0;
                 while ((textPtr != NULL) && (textPtr[colHexCount] != '\0') && (textPtr[colHexCount] != ']'))
