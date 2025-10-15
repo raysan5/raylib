@@ -3899,14 +3899,14 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     // Flip the content of the billboard while maintaining the counterclockwise edge rendering order
     if (size.x < 0.0f)
     {
-        source.x += size.x;
+        source.x -= size.x;
         source.width *= -1.0;
         right = Vector3Negate(right);
         origin.x *= -1.0f;
     }
     if (size.y < 0.0f)
     {
-        source.y += size.y;
+        source.y -= size.y;
         source.height *= -1.0;
         up = Vector3Negate(up);
         origin.y *= -1.0f;
