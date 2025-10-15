@@ -599,6 +599,13 @@ typedef enum {
     RL_CULL_FACE_BACK
 } rlCullMode;
 
+// Buffer bit flags
+typedef enum {
+    RL_DEPTH_BUFFER_BIT   = 0x00000100,
+    RL_STENCIL_BUFFER_BIT = 0x00000400,
+    RL_COLOR_BUFFER_BIT   = 0x00004000,
+} rlBufferBitFlags;
+
 //------------------------------------------------------------------------------------
 // Functions Declaration - Matrix operations
 //------------------------------------------------------------------------------------
@@ -705,6 +712,7 @@ RLAPI bool rlIsStereoRenderEnabled(void);               // Check if stereo rende
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                  // Clear used screen buffers (color and depth)
+RLAPI void rlClearScreenBuffersEX(rlBufferBitFlags flags); // Clear used screen buffers (selectable with '|'-separated flags)
 RLAPI void rlCheckErrors(void);                         // Check and log OpenGL error codes
 RLAPI void rlSetBlendMode(int mode);                    // Set blending mode
 RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation (using OpenGL factors)
@@ -2110,15 +2118,15 @@ void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned ch
 
 // Clears the depth buffer. Useful for drawing first person weapons over the
 // rendered scene without them clipping through world geometry.
-void rlClearDepthBuffer(void)
+void rlClearScreenBuffersEX(rlBufferBitFlags flags)
 {
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(flags);
 }
 
 // Clear used screen buffers (color and depth)
 void rlClearScreenBuffers(void)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers: Color and Depth (Depth is used for 3D)
+    rlClearScreenBuffersEX(RL_COLOR_BUFFER_BIT | RL_DEPTH_BUFFER_BIT);     // Clear used buffers: Color and Depth (Depth is used for 3D)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     // Stencil buffer not used...
 }
 
