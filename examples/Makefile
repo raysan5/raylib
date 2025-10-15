@@ -515,6 +515,7 @@ CORE = \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
+    core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_actions \
@@ -554,15 +555,19 @@ SHAPES = \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
+    shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
+    shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
 
 TEXTURES = \

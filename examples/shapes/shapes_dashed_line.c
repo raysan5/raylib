@@ -68,7 +68,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw the dashed line with the current properties
-            DrawLineDashed(lineStartPosition, lineEndPosition, dashLength, blankLength, lineColors[colorIndex]);
+            DrawLineDashed(lineStartPosition, lineEndPosition, (int)dashLength, (int)blankLength, lineColors[colorIndex]);
 
             // Draw UI and Instructions
             DrawRectangle(5, 5, 265, 95, Fade(SKYBLUE, 0.5f));

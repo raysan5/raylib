@@ -40,7 +40,7 @@ int main(void)
     // Load image to create texture for the cube
     Model model = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
     Image img = LoadImage("resources/cubicmap_atlas.png");
-    Image crop = ImageFromImage(img, (Rectangle){0, img.height/2, img.width/2, img.height/2});
+    Image crop = ImageFromImage(img, (Rectangle){0, img.height/2.0f, img.width/2.0f, img.height/2.0f});
     Texture2D texture = LoadTextureFromImage(crop);
     UnloadImage(img);
     UnloadImage(crop);

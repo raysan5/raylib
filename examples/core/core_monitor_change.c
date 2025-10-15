@@ -22,7 +22,7 @@
 // Monitor Details
 typedef struct Monitor {
     Vector2 position;
-    char *name;
+    const char *name;
     int width;
     int height;
     int physicalWidth;
@@ -76,10 +76,10 @@ int main(void)
                 GetMonitorPhysicalHeight(i),
                 GetMonitorRefreshRate(i)
             };
-            if (monitors[i].position.x < monitorOffsetX) monitorOffsetX = monitors[i].position.x*-1;
+            if (monitors[i].position.x < monitorOffsetX) monitorOffsetX = (int)monitors[i].position.x*-1;
 
-            const int width = monitors[i].position.x + monitors[i].width;
-            const int height = monitors[i].position.y + monitors[i].height;
+            const int width = (int)monitors[i].position.x + monitors[i].width;
+            const int height = (int)monitors[i].position.y + monitors[i].height;
             
             if (maxWidth < width) maxWidth = width;
             if (maxHeight < height) maxHeight = height;
@@ -99,9 +99,8 @@ int main(void)
             // Get currentMonitorIndex if manually moved
             currentMonitorIndex = GetCurrentMonitor();
         }
-        const Monitor currentMonitor = monitors[currentMonitorIndex];
 
-        float monitorScale = 0.6; 
+        float monitorScale = 0.6f; 
 
         if(maxHeight > maxWidth + monitorOffsetX) monitorScale *= ((float)screenHeight/(float)maxHeight);
         else monitorScale *= ((float)screenWidth/(float)(maxWidth + monitorOffsetX));
@@ -128,7 +127,7 @@ int main(void)
                 };
 
                 // Draw monitor name and information inside the rectangle
-                DrawText(TextFormat("[%i] %s", i, monitors[i].name), rec.x + 10, rec.y + (int)(100*monitorScale), (int)(120*monitorScale), BLUE);
+                DrawText(TextFormat("[%i] %s", i, monitors[i].name), (int)rec.x + 10, (int)rec.y + (int)(100*monitorScale), (int)(120*monitorScale), BLUE);
                 DrawText(
                     TextFormat("Resolution: [%ipx x %ipx]\nRefreshRate: [%ihz]\nPhysical Size: [%imm x %imm]\nPosition: %3.0f x %3.0f", 
                         monitors[i].width, 
@@ -138,7 +137,7 @@ int main(void)
                         monitors[i].physicalHeight,
                         monitors[i].position.x,
                         monitors[i].position.y
-                    ), rec.x + 10, rec.y + (int)(200*monitorScale), (int)(120*monitorScale), DARKGRAY);
+                    ), (int)rec.x + 10, (int)rec.y + (int)(200*monitorScale), (int)(120*monitorScale), DARKGRAY);
 
                 // Highlight current monitor
                 if (i == currentMonitorIndex)

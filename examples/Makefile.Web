@@ -515,6 +515,7 @@ CORE = \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
+    core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
     core/core_input_actions \
@@ -554,15 +555,19 @@ SHAPES = \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
+    shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights \
+    shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
 
 TEXTURES = \
@@ -739,6 +744,9 @@ core/core_custom_logging: core/core_custom_logging.c
 core/core_delta_time: core/core_delta_time.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_directory_files: core/core_directory_files.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_drop_files: core/core_drop_files.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -854,6 +862,9 @@ shapes/shapes_easings_rectangles: shapes/shapes_easings_rectangles.c
 shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_kaleidoscope: shapes/shapes_kaleidoscope.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_lines_bezier: shapes/shapes_lines_bezier.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -863,10 +874,16 @@ shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_pie_chart: shapes/shapes_pie_chart.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_recursive_tree: shapes/shapes_recursive_tree.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
@@ -879,6 +896,9 @@ shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_triangle_strip: shapes/shapes_triangle_strip.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_vector_angle: shapes/shapes_vector_angle.c

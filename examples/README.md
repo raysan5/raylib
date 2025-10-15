@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 173]
+## EXAMPLES COLLECTION [TOTAL: 176]
 
-### category: core [40]
+### category: core [41]
 
 Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
 
@@ -65,8 +65,9 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_render_texture](core/core_render_texture.c) | <img src="core/core_render_texture.png" alt="core_render_texture" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
+| [core_directory_files](core/core_directory_files.c) | <img src="core/core_directory_files.png" alt="core_directory_files" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 
-### category: shapes [23]
+### category: shapes [26]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -85,6 +86,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_easings_ball](shapes/shapes_easings_ball.c) | <img src="shapes/shapes_easings_ball.png" alt="shapes_easings_ball" width="80"> | ⭐⭐☆☆ | 2.5 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_easings_box](shapes/shapes_easings_box.c) | <img src="shapes/shapes_easings_box.png" alt="shapes_easings_box" width="80"> | ⭐⭐☆☆ | 2.5 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shapes_easings_rectangles](shapes/shapes_easings_rectangles.c) | <img src="shapes/shapes_easings_rectangles.png" alt="shapes_easings_rectangles" width="80"> | ⭐⭐⭐☆ | 2.0 | 2.5 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_recursive_tree](shapes/shapes_recursive_tree.c) | <img src="shapes/shapes_recursive_tree.png" alt="shapes_recursive_tree" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_ring_drawing](shapes/shapes_ring_drawing.c) | <img src="shapes/shapes_ring_drawing.png" alt="shapes_ring_drawing" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | [shapes_circle_sector_drawing](shapes/shapes_circle_sector_drawing.c) | <img src="shapes/shapes_circle_sector_drawing.png" alt="shapes_circle_sector_drawing" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
 | [shapes_rounded_rectangle_drawing](shapes/shapes_rounded_rectangle_drawing.c) | <img src="shapes/shapes_rounded_rectangle_drawing.png" alt="shapes_rounded_rectangle_drawing" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Vlad Adrian](https://github.com/demizdor) |
@@ -94,7 +96,9 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_double_pendulum](shapes/shapes_double_pendulum.c) | <img src="shapes/shapes_double_pendulum.png" alt="shapes_double_pendulum" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [JoeCheong](https://github.com/Joecheong2006) |
 | [shapes_dashed_line](shapes/shapes_dashed_line.c) | <img src="shapes/shapes_dashed_line.png" alt="shapes_dashed_line" width="80"> | ⭐☆☆☆ | 5.5 | 5.5 | [Luís Almeida](https://github.com/luis605) |
+| [shapes_triangle_strip](shapes/shapes_triangle_strip.c) | <img src="shapes/shapes_triangle_strip.png" alt="shapes_triangle_strip" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_vector_angle](shapes/shapes_vector_angle.c) | <img src="shapes/shapes_vector_angle.png" alt="shapes_vector_angle" width="80"> | ⭐⭐☆☆ | 1.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_kaleidoscope](shapes/shapes_kaleidoscope.c) | <img src="shapes/shapes_kaleidoscope.png" alt="shapes_kaleidoscope" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 
 ### category: textures [26]
 
@@ -145,7 +149,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_writing_anim](text/text_writing_anim.c) | <img src="text/text_writing_anim.png" alt="text_writing_anim" width="80"> | ⭐⭐☆☆ | 1.4 | 1.4 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_rectangle_bounds](text/text_rectangle_bounds.c) | <img src="text/text_rectangle_bounds.png" alt="text_rectangle_bounds" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_unicode_emojis](text/text_unicode_emojis.c) | <img src="text/text_unicode_emojis.png" alt="text_unicode_emojis" width="80"> | ⭐⭐⭐⭐️ | 2.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
-| [text_unicode_ranges](text/text_unicode_ranges.c) | <img src="text/text_unicode_ranges.png" alt="text_unicode_ranges" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6 | [Vlad Adrian](https://github.com/demizdor) |
+| [text_unicode_ranges](text/text_unicode_ranges.c) | <img src="text/text_unicode_ranges.png" alt="text_unicode_ranges" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6 | [Vadim Gunko](https://github.com/GuvaCode) |
 | [text_3d_drawing](text/text_3d_drawing.c) | <img src="text/text_3d_drawing.png" alt="text_3d_drawing" width="80"> | ⭐⭐⭐⭐️ | 3.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_inline_styling](text/text_inline_styling.c) | <img src="text/text_inline_styling.png" alt="text_inline_styling" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Wagner Barongello](https://github.com/SultansOfCode) |
