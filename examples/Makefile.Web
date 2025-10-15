@@ -566,6 +566,7 @@ SHAPES = \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
+    shapes/shapes_starfield \
     shapes/shapes_top_down_lights \
     shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle

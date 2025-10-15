@@ -67,7 +67,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
 | [core_directory_files](core/core_directory_files.c) | <img src="core/core_directory_files.png" alt="core_directory_files" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 
-### category: shapes [26]
+### category: shapes [27]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -93,6 +93,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_top_down_lights](shapes/shapes_top_down_lights.c) | <img src="shapes/shapes_top_down_lights.png" alt="shapes_top_down_lights" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 4.2 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [shapes_rectangle_advanced](shapes/shapes_rectangle_advanced.c) | <img src="shapes/shapes_rectangle_advanced.png" alt="shapes_rectangle_advanced" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.5 | [Everton Jr.](https://github.com/evertonse) |
 | [shapes_splines_drawing](shapes/shapes_splines_drawing.c) | <img src="shapes/shapes_splines_drawing.png" alt="shapes_splines_drawing" width="80"> | ⭐⭐⭐☆ | 5.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_starfield](shapes/shapes_starfield.c) | <img src="shapes/shapes_starfield.png" alt="shapes_starfield" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [JP Mortiboys](https://github.com/themushroompirates) |
 | [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_double_pendulum](shapes/shapes_double_pendulum.c) | <img src="shapes/shapes_double_pendulum.png" alt="shapes_double_pendulum" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [JoeCheong](https://github.com/Joecheong2006) |
 | [shapes_dashed_line](shapes/shapes_dashed_line.c) | <img src="shapes/shapes_dashed_line.png" alt="shapes_dashed_line" width="80"> | ⭐☆☆☆ | 5.5 | 5.5 | [Luís Almeida](https://github.com/luis605) |
