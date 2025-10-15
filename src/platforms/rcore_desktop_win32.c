@@ -1486,7 +1486,7 @@ int InitPlatform(void)
 
         platform.hbitmap = CreateDIBSection(
             platform.hdcmem, &bmi, DIB_RGB_COLORS,
-            (void**)&platform.pixels, NULL, 0);
+            (void **)&platform.pixels, NULL, 0);
 
         SelectObject(platform.hdcmem, platform.hbitmap);
 

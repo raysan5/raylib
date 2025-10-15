@@ -55,6 +55,8 @@ packages/
 *.so
 *.so.*
 *.dll
+*.h.pch
+./*.obj
 
 # Emscripten
 emsdk
@@ -81,6 +83,7 @@ DerivedData/
 
 # VSCode project
 .vscode
+.clangd
 
 # Jetbrains project
 .idea/

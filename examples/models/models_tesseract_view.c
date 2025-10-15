@@ -65,7 +65,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        rotation = DEG2RAD*45.0f*GetTime();
+        rotation = DEG2RAD*45.0f*(float)GetTime();
 
         for (int i = 0; i < 16; i++)
         {

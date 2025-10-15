@@ -2352,6 +2352,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         Mesh mesh = model.meshes[m];
         Vector3 animVertex = { 0 };
         Vector3 animNormal = { 0 };
+        Matrix boneMatrix = { 0 };
+        Matrix InverseBoneMatrix = { 0 };
         int boneId = 0;
         int boneCounter = 0;
         float boneWeight = 0.0;
@@ -2359,47 +2361,50 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         const int vValues = mesh.vertexCount*3;
 
         // Skip if missing bone data, causes segfault without on some models
-        if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
+		if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
 
-        for (int vCounter = 0; vCounter < vValues; vCounter += 3)
-        {
-            mesh.animVertices[vCounter] = 0;
-            mesh.animVertices[vCounter + 1] = 0;
-            mesh.animVertices[vCounter + 2] = 0;
-            if (mesh.animNormals != NULL)
-            {
-                mesh.animNormals[vCounter] = 0;
-                mesh.animNormals[vCounter + 1] = 0;
-                mesh.animNormals[vCounter + 2] = 0;
-            }
+		// Iterates over 4 bones per vertex
+		for (int j = 0; j < 4; j++, boneCounter++)
+		{
+            boneWeight = mesh.boneWeights[boneCounter];
+            boneId = mesh.boneIds[boneCounter];
 
-            // Iterates over 4 bones per vertex
-            for (int j = 0; j < 4; j++, boneCounter++)
-            {
-                boneWeight = mesh.boneWeights[boneCounter];
-                boneId = mesh.boneIds[boneCounter];
+            // Early stop when no transformation will be applied
+            if (boneWeight == 0.0f) continue;
 
-                // Early stop when no transformation will be applied
-                if (boneWeight == 0.0f) continue;
-                animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                animVertex = Vector3Transform(animVertex,model.meshes[m].boneMatrices[boneId]);
-                mesh.animVertices[vCounter] += animVertex.x*boneWeight;
-                mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
-                mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
-                updated = true;
+            boneMatrix = model.meshes[m].boneMatrices[boneId];
+            InverseBoneMatrix = MatrixTranspose(MatrixInvert(boneMatrix));
 
-                // Normals processing
-                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
-                {
-                    animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.meshes[m].boneMatrices[boneId])));
-                    mesh.animNormals[vCounter] += animNormal.x*boneWeight;
-                    mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
-                    mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
-                }
-            }
-        }
+			for (int vCounter = 0; vCounter < vValues; vCounter += 3)
+			{
+				mesh.animVertices[vCounter] = 0;
+				mesh.animVertices[vCounter + 1] = 0;
+				mesh.animVertices[vCounter + 2] = 0;
+				if (mesh.animNormals != NULL)
+				{
+					mesh.animNormals[vCounter] = 0;
+					mesh.animNormals[vCounter + 1] = 0;
+					mesh.animNormals[vCounter + 2] = 0;
+				}
+				animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
+				animVertex = Vector3Transform(animVertex, boneMatrix);
+				mesh.animVertices[vCounter] += animVertex.x*boneWeight;
+				mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
+				mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
+				updated = true;
+
+				// Normals processing
+				// NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+				if ((mesh.normals != NULL) && (mesh.animNormals != NULL))
+				{
+					animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
+					animNormal = Vector3Transform(animNormal, InverseBoneMatrix);
+					mesh.animNormals[vCounter] += animNormal.x*boneWeight;
+					mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
+					mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
+				}
+			}
+		}
 
         if (updated)
         {
@@ -5174,7 +5179,7 @@ static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memo
 // Release file data callback for cgltf
 static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data)
 {
-    UnloadFileData(data);
+    UnloadFileData((unsigned char *)data);
 }
 
 // Load image from different glTF provided methods (uri, path, buffer_view)
@@ -6135,7 +6140,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 float tmp[3] = { 0.0f };
                 cgltf_accessor_read_float(output, keyframe, tmp, 3);
                 Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
-                Vector3 *r = data;
+                Vector3 *r = (Vector3 *)data;
 
                 *r = v1;
             } break;
@@ -6146,7 +6151,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
                 Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
-                Vector3 *r = data;
+                Vector3 *r = (Vector3 *)data;
 
                 *r = Vector3Lerp(v1, v2, t);
             } break;
@@ -6161,7 +6166,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 3);
                 Vector3 tangent2 = {tmp[0], tmp[1], tmp[2]};
-                Vector3 *r = data;
+                Vector3 *r = (Vector3 *)data;
 
                 *r = Vector3CubicHermite(v1, tangent1, v2, tangent2, t);
             } break;
@@ -6178,7 +6183,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 float tmp[4] = { 0.0f };
                 cgltf_accessor_read_float(output, keyframe, tmp, 4);
                 Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
-                Vector4 *r = data;
+                Vector4 *r = (Vector4 *)data;
 
                 *r = v1;
             } break;
@@ -6189,7 +6194,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
                 Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
-                Vector4 *r = data;
+                Vector4 *r = (Vector4 *)data;
 
                 *r = QuaternionSlerp(v1, v2, t);
             } break;
@@ -6204,7 +6209,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 4);
                 Vector4 inTangent2 = {tmp[0], tmp[1], tmp[2], 0.0f};
-                Vector4 *r = data;
+                Vector4 *r = (Vector4 *)data;
 
                 v1 = QuaternionNormalize(v1);
                 v2 = QuaternionNormalize(v2);
