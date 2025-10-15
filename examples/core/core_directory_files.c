@@ -16,12 +16,13 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include <string.h>         // Required for: strcpy()
-
-#define MAX_FILEPATH_SIZE       2048
 
 #define RAYGUI_IMPLEMENTATION
-#include "../shapes/raygui.h"                 // Required for GUI controls
+#include "raygui.h"                 // Required for GUI controls
+
+#include <string.h>                 // Required for: strcpy()
+
+#define MAX_FILEPATH_SIZE       2048
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -37,7 +38,10 @@ int main(void)
 
     char directory[MAX_FILEPATH_SIZE] = { 0 };
     strcpy(directory, GetWorkingDirectory());
+
     FilePathList files = LoadDirectoryFiles(directory);
+
+    int btnBackPressed = false;
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -47,6 +51,15 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        if (btnBackPressed)
+        {
+            strcpy(directory, GetPrevDirectoryPath(directory));
+            UnloadDirectoryFiles(files);
+            files = LoadDirectoryFiles(directory);
+        }
+
+
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -55,13 +68,8 @@ int main(void)
 
             DrawText(directory, 100, 40, 20, DARKGRAY);
 
-            if (GuiButton((Rectangle){40.0f, 40.0f, 20, 20}, "<"))
-            {
-                strcpy(directory, GetPrevDirectoryPath(directory));
-                UnloadDirectoryFiles(files);
-                files = LoadDirectoryFiles(directory);
-            }
-
+            btnBackPressed = GuiButton((Rectangle){ 40.0f, 40.0f, 20, 20 }, "<");
+            
             for (int i = 0; i < (int)files.count; i++)
             {
                 Color color = Fade(LIGHTGRAY, 0.3f);
@@ -75,10 +83,11 @@ int main(void)
                         files = LoadDirectoryFiles(directory);
                     }
                 }
-                DrawRectangle(0, 85 + 40*i, screenWidth, 40, color);
 
+                DrawRectangle(0, 85 + 40*i, screenWidth, 40, color);
                 DrawText(GetFileName(files.paths[i]), 120, 100 + 40*i, 10, GRAY);
             }
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

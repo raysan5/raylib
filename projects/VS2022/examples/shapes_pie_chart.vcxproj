@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{61997220-5383-4AE5-ABD4-5F45AE1B0F2A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shapes_pie_chart</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
