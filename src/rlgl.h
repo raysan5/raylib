@@ -712,7 +712,7 @@ RLAPI bool rlIsStereoRenderEnabled(void);               // Check if stereo rende
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                  // Clear used screen buffers (color and depth)
-RLAPI void rlClearScreenBuffersEX(rlBufferBitFlags flags); // Clear used screen buffers (selectable with '|'-separated flags)
+RLAPI void rlClearScreenBuffersEx(rlBufferBitFlags flags); // Clear used screen buffers (selectable with '|'-separated flags)
 RLAPI void rlCheckErrors(void);                         // Check and log OpenGL error codes
 RLAPI void rlSetBlendMode(int mode);                    // Set blending mode
 RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation (using OpenGL factors)
@@ -2118,7 +2118,7 @@ void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned ch
 
 // Clears the depth buffer. Useful for drawing first person weapons over the
 // rendered scene without them clipping through world geometry.
-void rlClearScreenBuffersEX(rlBufferBitFlags flags)
+void rlClearScreenBuffersEx(rlBufferBitFlags flags)
 {
     glClear(flags);
 }
