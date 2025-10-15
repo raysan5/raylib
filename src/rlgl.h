@@ -2126,7 +2126,7 @@ void rlClearScreenBuffersEx(rlBufferBitFlags flags)
 // Clear used screen buffers (color and depth)
 void rlClearScreenBuffers(void)
 {
-    rlClearScreenBuffersEX(RL_COLOR_BUFFER_BIT | RL_DEPTH_BUFFER_BIT);     // Clear used buffers: Color and Depth (Depth is used for 3D)
+    rlClearScreenBuffersEx(RL_COLOR_BUFFER_BIT | RL_DEPTH_BUFFER_BIT);     // Clear used buffers: Color and Depth (Depth is used for 3D)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     // Stencil buffer not used...
 }
 
