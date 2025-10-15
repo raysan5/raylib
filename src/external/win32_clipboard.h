@@ -13,7 +13,7 @@ unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long
 #include <stdlib.h>
 #include <assert.h>
 
-// NOTE: These search for architecture is taken from "Windows.h", and it's necessary if we really don't wanna import windows.h 
+// NOTE: These search for architecture is taken from "Windows.h", and it's necessary if we really don't wanna import windows.h
 // and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined.
 #if !defined(_X86_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_IX86)
 #define _X86_
@@ -91,14 +91,6 @@ unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long
 #endif
 
 typedef int WINBOOL;
-
-
-
-// typedef HANDLE HGLOBAL;
-
-#ifndef HWND
-#define HWND void*
-#endif
 
 
 #if !defined(_WINUSER_) || !defined(WINUSER_ALREADY_INCLUDED)
@@ -284,7 +276,7 @@ unsigned char* Win32GetClipboardImageData(int* width, int* height, unsigned long
     // This may be wrong since we might be allocating in a DLL and freeing from another module, the main application
     // that may cause heap corruption. We could create a FreeImage function
     //
-    bmpData = malloc(sizeof(bmpFileHeader) + clipDataSize);
+    bmpData = (BYTE *)malloc(sizeof(bmpFileHeader) + clipDataSize);
     // First we add the header for a bmp file
     memcpy(bmpData, &bmpFileHeader, sizeof(bmpFileHeader));
     // Then we add the header for the bmp itself + the pixel data
@@ -371,4 +363,3 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
 }
 #endif // WIN32_CLIPBOARD_IMPLEMENTATION
 // EOF
-

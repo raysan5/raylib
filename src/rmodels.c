@@ -5179,7 +5179,7 @@ static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memo
 // Release file data callback for cgltf
 static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data)
 {
-    UnloadFileData(data);
+    UnloadFileData((unsigned char *)data);
 }
 
 // Load image from different glTF provided methods (uri, path, buffer_view)
@@ -6140,7 +6140,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 float tmp[3] = { 0.0f };
                 cgltf_accessor_read_float(output, keyframe, tmp, 3);
                 Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
-                Vector3 *r = data;
+                Vector3 *r = (Vector3 *)data;
 
                 *r = v1;
             } break;
@@ -6151,7 +6151,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
                 Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
-                Vector3 *r = data;
+                Vector3 *r = (Vector3 *)data;
 
                 *r = Vector3Lerp(v1, v2, t);
             } break;
@@ -6166,7 +6166,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 3);
                 Vector3 tangent2 = {tmp[0], tmp[1], tmp[2]};
-                Vector3 *r = data;
+                Vector3 *r = (Vector3 *)data;
 
                 *r = Vector3CubicHermite(v1, tangent1, v2, tangent2, t);
             } break;
@@ -6183,7 +6183,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 float tmp[4] = { 0.0f };
                 cgltf_accessor_read_float(output, keyframe, tmp, 4);
                 Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
-                Vector4 *r = data;
+                Vector4 *r = (Vector4 *)data;
 
                 *r = v1;
             } break;
@@ -6194,7 +6194,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
                 Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
-                Vector4 *r = data;
+                Vector4 *r = (Vector4 *)data;
 
                 *r = QuaternionSlerp(v1, v2, t);
             } break;
@@ -6209,7 +6209,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
                 Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
                 cgltf_accessor_read_float(output, 3*(keyframe+1), tmp, 4);
                 Vector4 inTangent2 = {tmp[0], tmp[1], tmp[2], 0.0f};
-                Vector4 *r = data;
+                Vector4 *r = (Vector4 *)data;
 
                 v1 = QuaternionNormalize(v1);
                 v2 = QuaternionNormalize(v2);
