@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2CCCD9E4-9058-4291-BD89-39C979F0CA1E}</ProjectGuid>
+    <ProjectGuid>{A4662163-83E7-4309-8CAA-B0BF13655FE6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>models_geometry_textures_cube</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

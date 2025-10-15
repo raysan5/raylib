@@ -21,7 +21,7 @@
 
 // Constant for Simulation
 #define SIMULATION_STEPS 30
-#define G 9.81
+#define G 9.81f
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -43,9 +43,9 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - double pendulum");
 
     // Simulation Paramters
-    float l1 = 15, m1 = 0.2, theta1 = DEG2RAD*170, w1 = 0;
-    float l2 = 15, m2 = 0.1, theta2 = DEG2RAD*0, w2 = 0;
-    float lengthScaler = 0.1;
+    float l1 = 15.0f, m1 = 0.2f, theta1 = DEG2RAD*170, w1 = 0;
+    float l2 = 15.0f, m2 = 0.1f, theta2 = DEG2RAD*0, w2 = 0;
+    float lengthScaler = 0.1f;
     float totalM = m1 + m2;
 
     Vector2 previousPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
@@ -57,8 +57,8 @@ int main(void)
     float L2 = l2*lengthScaler;
 
     // Draw parameters
-    int lineThick = 20, trailThick = 2;
-    float fateAlpha = 0.01;
+    float lineThick = 20, trailThick = 2;
+    float fateAlpha = 0.01f;
 
     // Create framebuffer
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
@@ -129,15 +129,15 @@ int main(void)
             ClearBackground(BLACK);
 
             // Draw trails texture
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
 
             // Draw double pendulum
-            DrawRectanglePro((Rectangle){ screenWidth/2, screenHeight/2 - 100, 10*l1, lineThick },
-                (Vector2){0, lineThick*0.5}, 90 - RAD2DEG*theta1, RAYWHITE);
+            DrawRectanglePro((Rectangle){ screenWidth/2.0f, screenHeight/2.0f - 100, 10*l1, lineThick },
+                (Vector2){0, lineThick*0.5f}, 90 - RAD2DEG*theta1, RAYWHITE);
 
             Vector2 endpoint1 = CalculatePendulumEndPoint(l1, theta1);
-            DrawRectanglePro((Rectangle){ screenWidth/2 + endpoint1.x, screenHeight/2 - 100 + endpoint1.y, 10*l2, lineThick },
-                (Vector2){0, lineThick*0.5}, 90 - RAD2DEG*theta2, RAYWHITE);
+            DrawRectanglePro((Rectangle){ screenWidth/2.0f + endpoint1.x, screenHeight/2.0f - 100 + endpoint1.y, 10*l2, lineThick },
+                (Vector2){0, lineThick*0.5f}, 90 - RAD2DEG*theta2, RAYWHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -159,7 +159,7 @@ int main(void)
 // Calculate pendulum end point
 static Vector2 CalculatePendulumEndPoint(float l, float theta)
 {
-    return (Vector2){ 10*l*sin(theta), 10*l*cos(theta) };
+    return (Vector2){ 10*l*sinf(theta), 10*l*cosf(theta) };
 }
 
 // Calculate double pendulum end point

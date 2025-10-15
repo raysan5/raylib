@@ -60,6 +60,7 @@ Example elements validated:
 | core_render_texture              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_undo_redo                   |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_input_actions               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| core_directory_files             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_basic_shapes              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_bouncing_ball             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_bullet_hell               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -73,6 +74,7 @@ Example elements validated:
 | shapes_easings_ball              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_easings_box               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_easings_rectangles        |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_recursive_tree            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_ring_drawing              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_circle_sector_drawing     |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_rounded_rectangle_drawing |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -82,7 +84,9 @@ Example elements validated:
 | shapes_digital_clock             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_double_pendulum           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_dashed_line               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_triangle_strip            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_vector_angle              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_pie_chart                 |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | textures_logo_raylib             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | textures_srcrec_dstrec           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | textures_image_drawing           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -123,6 +127,7 @@ Example elements validated:
 | text_3d_drawing                  |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_codepoints_loading          |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | text_inline_styling              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| text_words_alignment             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | models_animation_playing         |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | models_billboard_rendering       |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | models_box_collisions            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -192,3 +197,9 @@ Example elements validated:
 | raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |  ✔  |
 | embedded_files_loading           |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | web_basic_window                 |  ✔ |  ❌  |  ✔  |  ❌ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_kaleidoscope              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| core_clipboard_text              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_clock_of_clocks           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_mouse_trail               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_simple_particles          |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_starfield                 |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
