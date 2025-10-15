@@ -612,7 +612,8 @@ TEXT = \
     text/text_sprite_fonts \
     text/text_unicode_emojis \
     text/text_unicode_ranges \
-    text/text_writing_anim
+    text/text_writing_anim \
+    text/text_words_alignment
 
 MODELS = \
     models/models_animation_gpu_skinning \
