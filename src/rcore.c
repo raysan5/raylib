@@ -161,10 +161,8 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if (defined(_WIN32))
-    #ifndef MAX_PATH
-        #define MAX_PATH 1025
-    #endif
+#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
+
 struct HINSTANCE__;
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(struct HINSTANCE__ *hModule, char *lpFilename, unsigned long nSize);
 __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(struct HINSTANCE__ *hModule, wchar_t *lpFilename, unsigned long nSize);

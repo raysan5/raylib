@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{0C442799-B09C-4CD1-9538-711B6E85E9BF}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shapes_kaleidoscope</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
