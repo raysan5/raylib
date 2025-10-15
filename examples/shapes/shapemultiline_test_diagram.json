@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Raylib Example",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-o", "core_clipboard_text.exe",
+                "core_clipboard_text.c",
+                "-IC:/raylib/raylib-5.5_win64_mingw-w64/include",
+                "C:/raylib/raylib-5.5_win64_mingw-w64/lib/libraylib.a",
+                "-lgdi32", 
+                "-lwinmm",
+                "-lopengl32"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
