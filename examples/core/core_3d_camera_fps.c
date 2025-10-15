@@ -198,8 +198,8 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
         //PlaySound(fxJump);
     }
 
-    Vector3 front = (Vector3){ sin(rot), 0.f, cos(rot) };
-    Vector3 right = (Vector3){ cos(-rot), 0.f, sin(-rot) };
+    Vector3 front = (Vector3){ sinf(rot), 0.f, cosf(rot) };
+    Vector3 right = (Vector3){ cosf(-rot), 0.f, sinf(-rot) };
 
     Vector3 desiredDir = (Vector3){ input.x*right.x + input.y*front.x, 0.0f, input.x*right.z + input.y*front.z, };
     body->dir = Vector3Lerp(body->dir, desiredDir, CONTROL*delta);
@@ -267,8 +267,8 @@ static void UpdateCameraFPS(Camera *camera)
 
     // Head animation
     // Rotate up direction around forward axis
-    float headSin = sin(headTimer*PI);
-    float headCos = cos(headTimer*PI);
+    float headSin = sinf(headTimer*PI);
+    float headCos = cosf(headTimer*PI);
     const float stepRotation = 0.01f;
     camera->up = Vector3RotateByAxisAngle(up, pitch, headSin*stepRotation + lean.x);
 

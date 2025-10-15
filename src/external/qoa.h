@@ -500,7 +500,7 @@ void *qoa_encode(const short *sample_data, qoa_desc *qoa, unsigned int *out_len)
 		num_frames * QOA_LMS_LEN * 4 * qoa->channels + /* 4 * 4 bytes lms state per channel */
 		num_slices * 8 * qoa->channels;                /* 8 byte slices */
 
-	unsigned char *bytes = QOA_MALLOC(encoded_size);
+	unsigned char *bytes = (unsigned char *)QOA_MALLOC(encoded_size);
 
 	for (unsigned int c = 0; c < qoa->channels; c++) {
 		/* Set the initial LMS weights to {0, 0, -1, 2}. This helps with the 
@@ -657,7 +657,7 @@ short *qoa_decode(const unsigned char *bytes, int size, qoa_desc *qoa) {
 
 	/* Calculate the required size of the sample buffer and allocate */
 	int total_samples = qoa->samples * qoa->channels;
-	short *sample_data = QOA_MALLOC(total_samples * sizeof(short));
+	short *sample_data = (short *)QOA_MALLOC(total_samples * sizeof(short));
 
 	unsigned int sample_index = 0;
 	unsigned int frame_len;
@@ -733,7 +733,7 @@ void *qoa_read(const char *filename, qoa_desc *qoa) {
 	bytes_read = fread(data, 1, size, f);
 	fclose(f);
 
-	sample_data = qoa_decode(data, bytes_read, qoa);
+	sample_data = qoa_decode((const unsigned char *)data, bytes_read, qoa);
 	QOA_FREE(data);
 	return sample_data;
 }

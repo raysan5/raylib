@@ -144,9 +144,9 @@ int main(void)
             
             // Draw font texture scaled to screen
             float atlasScale = 380.0f/font.texture.width;
-            DrawRectangle(400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale, BLACK);
-            DrawTexturePro(font.texture, (Rectangle){ 0, 0, font.texture.width, font.texture.height },
-                (Rectangle){ 400, 16, font.texture.width*atlasScale, font.texture.height*atlasScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            DrawRectangleRec((Rectangle) { 400.0f, 16.0f, font.texture.width* atlasScale, font.texture.height* atlasScale }, BLACK);
+            DrawTexturePro(font.texture, (Rectangle){ 0, 0, (float)font.texture.width, (float)font.texture.height },
+                (Rectangle){ 400.0f, 16.0f, font.texture.width*atlasScale, font.texture.height*atlasScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             DrawRectangleLines(400, 16, 380, 380, RED);
 
             DrawText(TextFormat("ATLAS SIZE: %ix%i px (x%02.2f)", font.texture.width, font.texture.height, atlasScale), 20, 380, 20, BLUE);
