@@ -56,12 +56,14 @@
 
 // Support retrieving native window handlers
 #if defined(_WIN32)
-     #if !defined(HWND) && !defined(_MSVC_LANG)
-    #define HWND void*
+    #if !defined(HWND) && !defined(_MSVC_LANG)
+        #define HWND void*
     #elif !defined(HWND) && defined(_MSVC_LANG)
-    typedef struct HWND__ *HWND;
+        typedef struct HWND__ *HWND;
     #endif
-    #include "../external/win32_clipboard.h"
+
+    #include "../external/win32_clipboard.h" // Clipboard image copy-paste
+
     #define GLFW_EXPOSE_NATIVE_WIN32
     #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
     #include "GLFW/glfw3native.h"
@@ -1030,10 +1032,10 @@ Image GetClipboardImage(void)
     int width = 0;
     int height = 0;
 
-    fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
+    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    else image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif

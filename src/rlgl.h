@@ -3750,7 +3750,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
 // Copy framebuffer pixel data to internal buffer
-void rlCopyFramebuffer(int x, int y, int width, int height, int format, void* pixels)
+void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels)
 {
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType); // Get OpenGL texture format

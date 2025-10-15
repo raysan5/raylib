@@ -1587,7 +1587,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
     {
         drmp3 *ctxMp3 = (drmp3 *)RL_CALLOC(1, sizeof(drmp3));
-        int success = drmp3_init_memory(ctxMp3, (const void*)data, dataSize, NULL);
+        int success = drmp3_init_memory(ctxMp3, (const void *)data, dataSize, NULL);
 
         if (success)
         {
@@ -1631,7 +1631,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if ((strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0))
     {
-        drflac *ctxFlac = drflac_open_memory((const void*)data, dataSize, NULL);
+        drflac *ctxFlac = drflac_open_memory((const void *)data, dataSize, NULL);
 
         if (ctxFlac != NULL)
         {
