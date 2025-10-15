@@ -2108,6 +2108,13 @@ void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned ch
     glClearColor(cr, cg, cb, ca);
 }
 
+// Clears the depth buffer. Useful for drawing first person weapons over the
+// rendered scene without them clipping through world geometry.
+void rlClearDepthBuffer(void)
+{
+    glClear(GL_DEPTH_BUFFER_BIT); // Beats having to #import <GL/gl.h> just to call this one function.
+}
+
 // Clear used screen buffers (color and depth)
 void rlClearScreenBuffers(void)
 {
