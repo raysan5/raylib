@@ -1,0 +1,17 @@
+BasedOnStyle: Microsoft
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignEscapedNewlines: Left
+AlignTrailingComments: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AlwaysBreakAfterReturnType: None
+ColumnLimit: 9999
+IndentWidth: 4
+PointerAlignment: Right
+SpaceInEmptyParentheses: false
+SpacesInCStyleCastParentheses: false
+TabWidth: 4
+UseTab: Never
+IndentPPDirectives: BeforeHash
