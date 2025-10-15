@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 176]
+## EXAMPLES COLLECTION [TOTAL: 183]
 
-### category: core [41]
+### category: core [42]
 
 Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
 
@@ -66,8 +66,9 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
 | [core_directory_files](core/core_directory_files.c) | <img src="core/core_directory_files.png" alt="core_directory_files" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
+| [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 
-### category: shapes [27]
+### category: shapes [31]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -93,13 +94,17 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_top_down_lights](shapes/shapes_top_down_lights.c) | <img src="shapes/shapes_top_down_lights.png" alt="shapes_top_down_lights" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 4.2 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [shapes_rectangle_advanced](shapes/shapes_rectangle_advanced.c) | <img src="shapes/shapes_rectangle_advanced.png" alt="shapes_rectangle_advanced" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.5 | [Everton Jr.](https://github.com/evertonse) |
 | [shapes_splines_drawing](shapes/shapes_splines_drawing.c) | <img src="shapes/shapes_splines_drawing.png" alt="shapes_splines_drawing" width="80"> | ⭐⭐⭐☆ | 5.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
-| [shapes_starfield](shapes/shapes_starfield.c) | <img src="shapes/shapes_starfield.png" alt="shapes_starfield" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [JP Mortiboys](https://github.com/themushroompirates) |
 | [shapes_digital_clock](shapes/shapes_digital_clock.c) | <img src="shapes/shapes_digital_clock.png" alt="shapes_digital_clock" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_double_pendulum](shapes/shapes_double_pendulum.c) | <img src="shapes/shapes_double_pendulum.png" alt="shapes_double_pendulum" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [JoeCheong](https://github.com/Joecheong2006) |
 | [shapes_dashed_line](shapes/shapes_dashed_line.c) | <img src="shapes/shapes_dashed_line.png" alt="shapes_dashed_line" width="80"> | ⭐☆☆☆ | 5.5 | 5.5 | [Luís Almeida](https://github.com/luis605) |
 | [shapes_triangle_strip](shapes/shapes_triangle_strip.c) | <img src="shapes/shapes_triangle_strip.png" alt="shapes_triangle_strip" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_vector_angle](shapes/shapes_vector_angle.c) | <img src="shapes/shapes_vector_angle.png" alt="shapes_vector_angle" width="80"> | ⭐⭐☆☆ | 1.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [shapes_pie_chart](shapes/shapes_pie_chart.c) | <img src="shapes/shapes_pie_chart.png" alt="shapes_pie_chart" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Gideon Serfontein](https://github.com/GideonSerf) |
 | [shapes_kaleidoscope](shapes/shapes_kaleidoscope.c) | <img src="shapes/shapes_kaleidoscope.png" alt="shapes_kaleidoscope" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
+| [shapes_clock_of_clocks](shapes/shapes_clock_of_clocks.c) | <img src="shapes/shapes_clock_of_clocks.png" alt="shapes_clock_of_clocks" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
+| [shapes_mouse_trail](shapes/shapes_mouse_trail.c) | <img src="shapes/shapes_mouse_trail.png" alt="shapes_mouse_trail" width="80"> | ⭐☆☆☆ | 5.6 | 5.6-dev | [[Balamurugan R]](https://github.com/[Bala050814]) |
+| [shapes_simple_particles](shapes/shapes_simple_particles.c) | <img src="shapes/shapes_simple_particles.png" alt="shapes_simple_particles" width="80"> | ⭐☆☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shapes_starfield](shapes/shapes_starfield.c) | <img src="shapes/shapes_starfield.png" alt="shapes_starfield" width="80"> | ⭐☆☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 
 ### category: textures [26]
 
@@ -154,7 +159,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_3d_drawing](text/text_3d_drawing.c) | <img src="text/text_3d_drawing.png" alt="text_3d_drawing" width="80"> | ⭐⭐⭐⭐️ | 3.5 | 4.0 | [Vlad Adrian](https://github.com/demizdor) |
 | [text_codepoints_loading](text/text_codepoints_loading.c) | <img src="text/text_codepoints_loading.png" alt="text_codepoints_loading" width="80"> | ⭐⭐⭐☆ | 4.2 | 4.2 | [Ramon Santamaria](https://github.com/raysan5) |
 | [text_inline_styling](text/text_inline_styling.c) | <img src="text/text_inline_styling.png" alt="text_inline_styling" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Wagner Barongello](https://github.com/SultansOfCode) |
-| [text_words_alignment](text/text_words_alignment.c) | <img src="text/text_words_alignment.png" alt="text_words_alignment" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
+| [text_words_alignment](text/text_words_alignment.c) | <img src="text/text_words_alignment.png" alt="text_words_alignment" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 
 ### category: models [25]
 

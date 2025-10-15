@@ -31,7 +31,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - Draw a mouse trail");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - mouse trail");
 
     // Array to store the history of mouse positions (our fixed-size queue)
     Vector2 trailPositions[MAX_TRAIL_LENGTH] = { 0 }; 

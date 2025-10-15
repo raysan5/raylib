@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - text alignment
+*   raylib [text] example - words alignment
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 5.0, last time updated with raylib 5.5
+*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
 *
 *   Example contributed by JP Mortiboys (@themushroompirates) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -38,7 +38,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - text alignment");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - words alignment");
     
     // Define the rectangle we will draw the text in
     Rectangle textContainerRect = (Rectangle){ screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/3, screenWidth/2, screenHeight*2/3 };

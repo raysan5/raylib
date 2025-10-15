@@ -512,6 +512,7 @@ CORE = \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
+    core/core_clipboard_text \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
@@ -546,6 +547,7 @@ SHAPES = \
     shapes/shapes_bouncing_ball \
     shapes/shapes_bullet_hell \
     shapes/shapes_circle_sector_drawing \
+    shapes/shapes_clock_of_clocks \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_dashed_line \
@@ -559,12 +561,14 @@ SHAPES = \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
     shapes/shapes_rounded_rectangle_drawing \
+    shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
     shapes/shapes_starfield \
     shapes/shapes_top_down_lights \
@@ -613,8 +617,8 @@ TEXT = \
     text/text_sprite_fonts \
     text/text_unicode_emojis \
     text/text_unicode_ranges \
-    text/text_writing_anim \
-    text/text_words_alignment
+    text/text_words_alignment \
+    text/text_writing_anim
 
 MODELS = \
     models/models_animation_gpu_skinning \
@@ -736,6 +740,9 @@ core/core_basic_screen_manager: core/core_basic_screen_manager.c
 core/core_basic_window: core/core_basic_window.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_clipboard_text: core/core_clipboard_text.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_custom_frame_control: core/core_custom_frame_control.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -836,6 +843,9 @@ shapes/shapes_bullet_hell: shapes/shapes_bullet_hell.c
 shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_clock_of_clocks: shapes/shapes_clock_of_clocks.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_collision_area: shapes/shapes_collision_area.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -875,6 +885,9 @@ shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_mouse_trail: shapes/shapes_mouse_trail.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_pie_chart: shapes/shapes_pie_chart.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -893,7 +906,13 @@ shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
 shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_simple_particles: shapes/shapes_simple_particles.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_starfield: shapes/shapes_starfield.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
@@ -1077,6 +1096,9 @@ text/text_unicode_emojis: text/text_unicode_emojis.c
 text/text_unicode_ranges: text/text_unicode_ranges.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/NotoSansTC-Regular.ttf@resources/NotoSansTC-Regular.ttf
+
+text/text_words_alignment: text/text_words_alignment.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)

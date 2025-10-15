@@ -31,16 +31,17 @@ typedef enum ParticleType {
     FIRE
 } ParticleType;
 
-static const char particleTypesChar[3][10] = { "WATER", "SMOKE", "FIRE" };
+static const char particleTypeNames[3][10] = { "WATER", "SMOKE", "FIRE" };
 
 typedef struct Particle {
+    ParticleType type;      // Particle type (WATER, SMOKE, FIRE)
     Vector2 position;       // Particle position on screen
 	Vector2 velocity;       // Particle current speed and direction
-	bool alive;             // Particle alive: inside screen and life time
-	float lifeTime;         // Particle life time
-	ParticleType type;      // Particle type (WATER, SMOKE, FIRE)
     float radius;           // Particle radius
     Color color;            // Particle color
+
+    float lifeTime;         // Particle life time
+    bool alive;             // Particle alive: inside screen and life time
 } Particle;
 
 typedef struct CircularBuffer {
@@ -68,7 +69,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - particles");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - simple particles");
 
     // Definition of particles
     Particle *particles = (Particle*)RL_CALLOC(MAX_PARTICLES, sizeof(Particle)); // Particle array
@@ -90,13 +91,11 @@ int main(void)
 		// Emit new particles: when emissionRate is 1, emit every frame
         if (emissionRate < 0)
         {
-            if (rand()%(-emissionRate) == 0)
-                EmitParticle(&circularBuffer, emitterPosition, currentType);
+            if (rand()%(-emissionRate) == 0) EmitParticle(&circularBuffer, emitterPosition, currentType);
         }
         else
         {
-            for (int i = 0; i <= emissionRate; ++i)
-                EmitParticle(&circularBuffer, emitterPosition, currentType);
+            for (int i = 0; i <= emissionRate; ++i) EmitParticle(&circularBuffer, emitterPosition, currentType);
 		}
 
 		// Update the parameters of each particle
@@ -105,43 +104,37 @@ int main(void)
         UpdateCircularBuffer(&circularBuffer);
 
         // Change Particle Emission Rate (UP/DOWN arrows)
-        if (IsKeyPressed(KEY_UP))
-            ++emissionRate;
-        if (IsKeyPressed(KEY_DOWN))
-            --emissionRate;
+        if (IsKeyPressed(KEY_UP)) emissionRate++;
+        if (IsKeyPressed(KEY_DOWN)) emissionRate--;
 
         // Change Particle Type (LEFT/RIGHT arrows)
-        if (IsKeyPressed(KEY_RIGHT))
-            (currentType == FIRE) ? (currentType = WATER) : ++currentType;
-        if (IsKeyPressed(KEY_LEFT))
-            (currentType == WATER) ? (currentType = FIRE) : --currentType;
+        if (IsKeyPressed(KEY_RIGHT)) (currentType == FIRE)? (currentType = WATER) : currentType++;
+        if (IsKeyPressed(KEY_LEFT)) (currentType == WATER)? (currentType = FIRE) : currentType--;
 
-		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-            emitterPosition = GetMousePosition();
+		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) emitterPosition = GetMousePosition();
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
-		// Call the function with a loop to draw all particles
-        DrawParticles(&circularBuffer);
+		    // Call the function with a loop to draw all particles
+            DrawParticles(&circularBuffer);
 
-        // Draw UI and Instructions
-        DrawRectangle(5, 5, 315, 75, Fade(SKYBLUE, 0.5f));
-        DrawRectangleLines(5, 5, 315, 75, BLUE);
+            // Draw UI and Instructions
+            DrawRectangle(5, 5, 315, 75, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(5, 5, 315, 75, BLUE);
 
-        DrawText("CONTROLS:", 15, 15, 10, BLACK);
-        DrawText("UP/DOWN: Change Particle Emission Rate", 15, 35, 10, BLACK);
-        DrawText("LEFT/RIGHT: Change Particle Type (Water, Smoke, Fire)", 15, 55, 10, BLACK);
+            DrawText("CONTROLS:", 15, 15, 10, BLACK);
+            DrawText("UP/DOWN: Change Particle Emission Rate", 15, 35, 10, BLACK);
+            DrawText("LEFT/RIGHT: Change Particle Type (Water, Smoke, Fire)", 15, 55, 10, BLACK);
 
-        if (emissionRate < 0)
-            DrawText(TextFormat("Particles every %d frames | Type: %s", -emissionRate, particleTypesChar[currentType]), 15, 95, 10, DARKGRAY);
-		else
-            DrawText(TextFormat("%d Particles per frame | Type: %s", emissionRate + 1, particleTypesChar[currentType]), 15, 95, 10, DARKGRAY);
+            if (emissionRate < 0) DrawText(TextFormat("Particles every %d frames | Type: %s", -emissionRate, particleTypeNames[currentType]), 15, 95, 10, DARKGRAY);
+		    else DrawText(TextFormat("%d Particles per frame | Type: %s", emissionRate + 1, particleTypeNames[currentType]), 15, 95, 10, DARKGRAY);
 
-        DrawFPS(screenWidth - 80, 10);
+            DrawFPS(screenWidth - 80, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -163,6 +156,7 @@ int main(void)
 static void EmitParticle(CircularBuffer *circularBuffer, Vector2 emitterPosition, ParticleType type)
 {
     Particle *newParticle = AddToCircularBuffer(circularBuffer);
+
     // If buffer is full, newParticle is NULL
     if (newParticle != NULL)
     {
@@ -174,21 +168,25 @@ static void EmitParticle(CircularBuffer *circularBuffer, Vector2 emitterPosition
         float speed = (float)(rand()%10)/5.0f;
         switch (type)
         {
-        case WATER:
-            newParticle->radius = 5.0f;
-            newParticle->color = BLUE;
-            break;
-        case SMOKE:
-            newParticle->radius = 7.0f;
-            newParticle->color = GRAY;
-            break;
-        case FIRE:
-            newParticle->radius = 10.0f;
-            newParticle->color = YELLOW;
-            speed /= 10.0f;
-            break;
-        default: break;
+            case WATER:
+            {
+                newParticle->radius = 5.0f;
+                newParticle->color = BLUE;
+            } break;
+            case SMOKE:
+            {
+                newParticle->radius = 7.0f;
+                newParticle->color = GRAY;
+            } break;
+            case FIRE:
+            {
+                newParticle->radius = 10.0f;
+                newParticle->color = YELLOW;
+                speed /= 10.0f;
+            } break;
+            default: break;
         }
+
         float direction = (float)(rand()%360);
         newParticle->velocity = (Vector2){ speed*cosf(direction*DEG2RAD), speed*sinf(direction*DEG2RAD) };
     }
@@ -253,6 +251,7 @@ static void UpdateParticles(CircularBuffer *circularBuffer, int screenWidth, int
             circularBuffer->buffer[i].alive = false;
     }
 }
+
 static void UpdateCircularBuffer(CircularBuffer *circularBuffer)
 {
     // Update circular buffer: advance tail over dead particles

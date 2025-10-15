@@ -185,3 +185,8 @@ others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@ar
 others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
 others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_kaleidoscope;★★☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
+core;core_clipboard_text;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
+shapes;shapes_clock_of_clocks;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
+shapes;shapes_mouse_trail;★☆☆☆;5.6;5.6-dev;2024;2024;"[Balamurugan R]";@[Bala050814]
+shapes;shapes_simple_particles;★☆☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
+shapes;shapes_starfield;★☆☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
