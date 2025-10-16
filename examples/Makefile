@@ -535,6 +535,7 @@ CORE = \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
+    core/core_text_file_loading \
     core/core_undo_redo \
     core/core_vr_simulator \
     core/core_window_flags \
