@@ -52,8 +52,6 @@ int main(void)
     Vector2 scrollContentOffset = {0};
     Rectangle view = {0};
 
-    int scrollbar_width = GuiGetStyle(SCROLLBAR, SCROLLBAR_WIDTH);
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
