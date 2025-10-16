@@ -36,6 +36,7 @@ int main(void)
 
     #define MAX_SLICES 10
     int sliceCount = 7;
+    float donutInnerRadius = 25.0f;
     float values[MAX_SLICES] = {300.0f, 100.0f, 450.0f, 350.0f, 600.0f, 380.0f, 750.0f}; //initial slice values
     char labels[MAX_SLICES][32];
     bool editingLabel[MAX_SLICES] = {false};
@@ -45,6 +46,7 @@ int main(void)
 
     bool showValues = true;
     bool showPercentages = false;
+    bool showDonut = false;
     int hoveredSlice = -1;
     Rectangle scrollPanelBounds = {0};
     Vector2 scrollContentOffset = {0};
@@ -72,7 +74,7 @@ int main(void)
         const Rectangle panelRect = {
             panelPos.x, panelPos.y,
             (float)panelWidth,
-            (float)screenHeight - 2.0f*panelMargin
+            (float)screenHeight - 2.0f*panelMargin 
         };
 
         // Pie chart geometry
@@ -159,6 +161,12 @@ int main(void)
                 DrawText(labelText, (int)labelPos.x, (int)labelPos.y, 18, WHITE);
             }
 
+            if(showDonut)
+            {
+                // Draw inner circle to create donut effect
+                DrawCircle(center.x, center.y, donutInnerRadius, RAYWHITE);
+            }
+
             startAngle += sweepAngle;
         }
         //------------------------------------------------------------------------------
@@ -177,17 +185,29 @@ int main(void)
         currentY += 30;
 
         GuiCheckBox((Rectangle){ panelPos.x + 20, (float)currentY, 20, 20 }, "Show Percentages", &showPercentages);
-        currentY += 40;
+        currentY += 30;
+
+        GuiCheckBox((Rectangle){ panelPos.x + 20, (float)currentY, 20, 20 }, "Make Donut", &showDonut);
+        currentY += 30;
+
+        if(showDonut)
+        {
+            GuiSliderBar((Rectangle){ panelPos.x + 80, (float)currentY, panelRect.width - 100, 30 },
+                         "Inner Radius", NULL, &donutInnerRadius, 5.0f, radius - 10.0f);
+            currentY += 40;
+        }
 
         GuiLine((Rectangle){ panelPos.x + 10, (float)currentY, panelRect.width - 20, 1 }, NULL);
         currentY += 20;
+
+        
 
         // Scrollable area for slice editors
         scrollPanelBounds = (Rectangle){ panelPos.x+panelMargin, (float)currentY, panelRect.width-panelMargin*2, panelRect.y + panelRect.height - currentY - panelMargin };
         int contentHeight = sliceCount * 35;
 
         GuiScrollPanel(scrollPanelBounds, NULL,
-                       (Rectangle){ 0, 0, panelRect.width - 20, (float)contentHeight },
+                       (Rectangle){ 0, 0, panelRect.width - 25, (float)contentHeight },
                        &scrollContentOffset, &view);
 
         const float contentX = view.x + scrollContentOffset.x; // left of content

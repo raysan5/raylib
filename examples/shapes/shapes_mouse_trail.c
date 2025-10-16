@@ -1,6 +1,3 @@
-#include "raylib.h"
-#include "raymath.h"
-
 /*******************************************************************************************
 *
 * raylib [shapes] example - Draw a mouse trail (position history)
@@ -17,6 +14,9 @@
 * Copyright (c) 2024 [Balamurugan R] (@[Bala050814])
 *
 ********************************************************************************************/
+
+#include "raylib.h"
+#include "raymath.h"
 
 // Define the maximum number of positions to store in the trail
 #define MAX_TRAIL_LENGTH 30
