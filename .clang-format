@@ -7,7 +7,7 @@ AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AlwaysBreakAfterReturnType: None
-ColumnLimit: 9999
+ColumnLimit: 320
 IndentWidth: 4
 PointerAlignment: Right
 SpaceInEmptyParentheses: false
@@ -15,3 +15,14 @@ SpacesInCStyleCastParentheses: false
 TabWidth: 4
 UseTab: Never
 IndentPPDirectives: BeforeHash
+AlignConsecutiveAssignments: Consecutive
+BraceWrapping:
+  AfterEnum: false
+BreakFunctionDefinitionParameters: false
+Cpp11BracedListStyle: false
+IndentCaseLabels: false
+MaxEmptyLinesToKeep: 2
+# ReflowComments: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpacesBeforeTrailingComments: 1
