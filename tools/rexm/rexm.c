@@ -2372,7 +2372,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         char exName[64] = { 0 };            // Example name: fileName without extension
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
-        char exDescription[256] = { 0 };    // Example description: example text line #3
+        char exDescription[512] = { 0 };    // Example description: example text line #3
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
 
         // Get example name: replace underscore by spaces
