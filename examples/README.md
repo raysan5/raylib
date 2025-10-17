@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 185]
+## EXAMPLES COLLECTION [TOTAL: 186]
 
 ### category: core [44]
 
@@ -70,7 +70,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_screen_recording](core/core_screen_recording.c) | <img src="core/core_screen_recording.png" alt="core_screen_recording" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 
-### category: shapes [31]
+### category: shapes [32]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -104,6 +104,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_pie_chart](shapes/shapes_pie_chart.c) | <img src="shapes/shapes_pie_chart.png" alt="shapes_pie_chart" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Gideon Serfontein](https://github.com/GideonSerf) |
 | [shapes_kaleidoscope](shapes/shapes_kaleidoscope.c) | <img src="shapes/shapes_kaleidoscope.png" alt="shapes_kaleidoscope" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 | [shapes_clock_of_clocks](shapes/shapes_clock_of_clocks.c) | <img src="shapes/shapes_clock_of_clocks.png" alt="shapes_clock_of_clocks" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
+| [shapes_math_sine_cosine](shapes/shapes_math_sine_cosine.c) | <img src="shapes/shapes_math_sine_cosine.png" alt="shapes_math_sine_cosine" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_mouse_trail](shapes/shapes_mouse_trail.c) | <img src="shapes/shapes_mouse_trail.png" alt="shapes_mouse_trail" width="80"> | ⭐☆☆☆ | 5.6 | 5.6-dev | [[Balamurugan R]](https://github.com/[Bala050814]) |
 | [shapes_simple_particles](shapes/shapes_simple_particles.c) | <img src="shapes/shapes_simple_particles.png" alt="shapes_simple_particles" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 | [shapes_starfield_effect](shapes/shapes_starfield_effect.c) | <img src="shapes/shapes_starfield_effect.png" alt="shapes_starfield_effect" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |

@@ -564,6 +564,7 @@ SHAPES = \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+		shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
