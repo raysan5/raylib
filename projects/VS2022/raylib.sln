@@ -361,7 +361,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_rotating_cube", "exa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_ascii_rendering", "examples\shaders_ascii_rendering.vcxproj", "{5F4B766F-DD52-4B53-B6C3-BC7611E17F20}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_monitor_change", "examples\core_monitor_change.vcxproj", "{FF5F9EE9-29C5-40EE-BBCF-AE51B001FEC3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_monitor_detector", "examples\core_monitor_detector.vcxproj", "{FF5F9EE9-29C5-40EE-BBCF-AE51B001FEC3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "web_basic_window", "examples\web_basic_window.vcxproj", "{A9C422E7-0F03-4DBC-AC93-5C3EF4942DEC}"
 EndProject
@@ -385,7 +385,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_clock_of_clocks", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_mouse_trail", "examples\shapes_mouse_trail.vcxproj", "{0835E6BF-0170-4E99-A55C-E06E1EF4C3B2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_starfield", "examples\shapes_starfield.vcxproj", "{EA4AD5A7-DB95-43C0-9A67-2D94146BCF91}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_starfield_effect", "examples\shapes_starfield_effect.vcxproj", "{EA4AD5A7-DB95-43C0-9A67-2D94146BCF91}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_highdpi_testbed", "examples\core_highdpi_testbed.vcxproj", "{1ACC8236-EF4E-44B0-BD0C-AB1D95D5890F}"
 EndProject

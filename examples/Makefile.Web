@@ -529,7 +529,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
-    core/core_monitor_change \
+    core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
     core/core_render_texture \
@@ -572,7 +572,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
-    shapes/shapes_starfield \
+    shapes/shapes_starfield_effect \
     shapes/shapes_top_down_lights \
     shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
@@ -632,7 +632,6 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_rotating_cube \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
@@ -643,6 +642,7 @@ MODELS = \
     models/models_orthographic_projection \
     models/models_point_rendering \
     models/models_rlgl_solar_system \
+    models/models_rotating_cube \
     models/models_skybox_rendering \
     models/models_tesseract_view \
     models/models_textured_cube \
@@ -795,7 +795,7 @@ core/core_input_multitouch: core/core_input_multitouch.c
 core/core_input_virtual_controls: core/core_input_virtual_controls.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_monitor_change: core/core_monitor_change.c
+core/core_monitor_detector: core/core_monitor_detector.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_random_sequence: core/core_random_sequence.c
@@ -920,7 +920,7 @@ shapes/shapes_simple_particles: shapes/shapes_simple_particles.c
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_starfield: shapes/shapes_starfield.c
+shapes/shapes_starfield_effect: shapes/shapes_starfield_effect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
@@ -1154,10 +1154,6 @@ models/models_first_person_maze: models/models_first_person_maze.c
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-models/models_rotating_cube: models/models_rotating_cube.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
-
 models/models_heightmap_rendering: models/models_heightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/heightmap.png@resources/heightmap.png
@@ -1200,6 +1196,10 @@ models/models_point_rendering: models/models_point_rendering.c
 
 models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+models/models_rotating_cube: models/models_rotating_cube.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_skybox_rendering: models/models_skybox_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

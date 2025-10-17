@@ -31,7 +31,7 @@ core;core_world_screen;★★☆☆;1.3;1.4;2015;2025;"Ramon Santamaria";@raysan
 core;core_window_flags;★★★☆;3.5;3.5;2020;2025;"Ramon Santamaria";@raysan5
 core;core_window_letterbox;★★☆☆;2.5;4.0;2019;2025;"Anata";@anatagawa
 core;core_window_should_close;★☆☆☆;4.2;4.2;2013;2025;"Ramon Santamaria";@raysan5
-core;core_monitor_change;★☆☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
+core;core_monitor_detector;★☆☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
 core;core_custom_logging;★★★☆;2.5;2.5;2018;2025;"Pablo Marcos Oltra";@pamarcos
 core;core_drop_files;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
 core;core_random_values;★☆☆☆;1.1;1.1;2014;2025;"Ramon Santamaria";@raysan5
@@ -48,8 +48,9 @@ core;core_render_texture;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamari
 core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
 core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoom
 core;core_directory_files;★☆☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
-core;core_highdpi_testbed;★☆☆☆;5.5;5.6;0;0;"<author_name>";@<user_github>
-core;core_screen_recording;★☆☆☆;5.5;5.6;0;0;"<author_name>";@<user_github>
+core;core_highdpi_testbed;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
+core;core_screen_recording;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
+core;core_clipboard_text;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
@@ -75,7 +76,12 @@ shapes;shapes_double_pendulum;★★☆☆;5.5;5.5;2025;2025;"JoeCheong";@Joeche
 shapes;shapes_dashed_line;★☆☆☆;5.5;5.5;2025;2025;"Luís Almeida";@luis605
 shapes;shapes_triangle_strip;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 shapes;shapes_vector_angle;★★☆☆;1.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
-shapes;shapes_pie_chart;★☆☆☆;5.5;5.6;2025;2025;"Gideon Serfontein";@GideonSerf
+shapes;shapes_pie_chart;★★★☆;5.5;5.6;2025;2025;"Gideon Serfontein";@GideonSerf
+shapes;shapes_kaleidoscope;★★☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
+shapes;shapes_clock_of_clocks;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
+shapes;shapes_mouse_trail;★☆☆☆;5.6;5.6-dev;2024;2024;"[Balamurugan R]";@[Bala050814]
+shapes;shapes_simple_particles;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
+shapes;shapes_starfield_effect;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -186,9 +192,3 @@ others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flas
 others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@arkanis
 others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
 others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5
-shapes;shapes_kaleidoscope;★★☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
-core;core_clipboard_text;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
-shapes;shapes_clock_of_clocks;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
-shapes;shapes_mouse_trail;★☆☆☆;5.6;5.6-dev;2024;2024;"[Balamurugan R]";@[Bala050814]
-shapes;shapes_simple_particles;★☆☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
-shapes;shapes_starfield;★☆☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
