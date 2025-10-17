@@ -88,7 +88,7 @@ int main(void)
                         if (!voxels[x][y][z]) continue; // Skip empty voxels
 
                         // Build a bounding box for this voxel
-                        Vector3 position = { x, y, z };
+                        Vector3 position = { (float)x, (float)y, (float)z };
                         BoundingBox box = {
                             (Vector3){ position.x - 0.5f, position.y - 0.5f, position.z - 0.5f },
                             (Vector3){ position.x + 0.5f, position.y + 0.5f, position.z + 0.5f }
@@ -126,7 +126,7 @@ int main(void)
                         {
                             if (!voxels[x][y][z]) continue;
 
-                            Vector3 position = { x, y, z };
+                            Vector3 position = { (float)x, (float)y, (float)z };
                             DrawModel(cubeModel, position, 1.0f, BEIGE);
                             DrawCubeWires(position, 1.0f, 1.0f, 1.0f, BLACK);
                         }

@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2025 Jopestpe (@jopestpe)
+*   Copyright (c) 2025 Jopestpe (@jopestpe)
 *
 ********************************************************************************************/
 
@@ -33,7 +33,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - triangle strip");
 
-    Vector2 points[120] = { 0 };
+    Vector2 points[122] = { 0 };
     Vector2 center = { (screenWidth/2.0f) - 125.f, screenHeight/2.0f };
     float segments = 6.0f;
     float insideRadius = 100.0f;
@@ -69,17 +69,22 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            for (int i = 0, i2 = 0; i < pointCount; i++, i2 += 2)
+            for (int i = 0; i < pointCount; i++)
             {
-                float angle1 = i*angleStep;
-                Color color = ColorFromHSV(angle1*RAD2DEG, 1.0f, 1.0f);
-                DrawTriangle(points[i2 + 2], points[i2 + 1], points[i2], color);
-                if (outline) DrawTriangleLines(points[i2], points[i2 + 1], points[i2 + 2], BLACK);
+                Vector2 a = points[i*2];
+                Vector2 b = points[i*2 + 1];
+                Vector2 c = points[i*2 + 2];
+                Vector2 d = points[i*2 + 3];
 
-                float angle2 = angle1 + angleStep/2.0f;
-                color = ColorFromHSV(angle2*RAD2DEG, 1.0f, 1.0f);
-                DrawTriangle(points[i2 + 3], points[i2 + 1], points[i2 + 2], color);
-                if (outline) DrawTriangleLines(points[i2 + 2], points[i2 + 1], points[i2 + 3], BLACK);
+                float angle1 = i*angleStep;
+                DrawTriangle(c, b, a, ColorFromHSV(angle1*RAD2DEG, 1.0f, 1.0f));
+                DrawTriangle(d, b, c, ColorFromHSV((angle1 + angleStep/2)*RAD2DEG, 1.0f, 1.0f));
+                
+                if (outline)
+                {
+                    DrawTriangleLines(a, b, c, BLACK);
+                    DrawTriangleLines(c, b, d, BLACK);
+                }
             }
  
             DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });

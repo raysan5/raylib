@@ -69,7 +69,7 @@
 #define REXM_MAX_RESOURCE_PATHS         256
 
 // Create local commit with changes on example renaming
-#define RENAME_AUTO_COMMIT_CREATION
+//#define RENAME_AUTO_COMMIT_CREATION
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -224,6 +224,7 @@ int main(int argc, char *argv[])
     char exRebuildRequested[16] = { 0 }; // Example category/full rebuild request
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
+    bool showUsage = false;         // Flag to show usage help
     bool verbose = false;           // Flag for verbose log info
 
     // Command-line usage mode: command args processing
@@ -231,12 +232,14 @@ int main(int argc, char *argv[])
     if (argc > 1)
     {
         // Supported commands:
-        //    help                          : Provides command-line usage information (default)
         //    create <new_example_name>     : Creates an empty example, from internal template
         //    add <example_name>            : Add existing example, category extracted from name
         //    rename <old_examples_name> <new_example_name> : Rename an existing example
         //    remove <example_name>         : Remove an existing example
-        //    validate                      : Validate examples collection
+        //    build <example_name>          : Build example for Desktop and Web platforms
+        //    validate                      : Validate examples collection, generates report
+        //    update                        : Validate and update examples collection, generates report
+        
         if (strcmp(argv[1], "create") == 0)
         {
             // Check for valid upcoming argument
@@ -410,11 +413,18 @@ int main(int argc, char *argv[])
                 }
             }
         }
-    
-        // Check for verbose log mode request
+
+        // Process command line options arguments
         for (int i = 1; i < argc; i++)
         {
-            if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0)) verbose = true;
+            if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0))
+            {
+                showUsage = true;
+            }
+            else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0))
+            {
+                verbose = true;
+            }
         }
     }
 
@@ -1372,7 +1382,6 @@ int main(int argc, char *argv[])
         default:    // Help
         {
             // Supported commands:
-            //    help                          : Provides command-line usage information
             //    create <new_example_name>     : Creates an empty example, from internal template
             //    add <example_name>            : Add existing example, category extracted from name
             //    rename <old_examples_name> <new_example_name> : Rename an existing example
@@ -1394,7 +1403,6 @@ int main(int argc, char *argv[])
             printf("    > rexm <command> <example_name> [<example_rename>]\n\n");
 
             printf("COMMANDS:\n\n");
-            printf("    help                          : Provides command-line usage information\n");
             printf("    create <new_example_name>     : Creates an empty example, from internal template\n");
             printf("    add <example_name>            : Add existing example, category extracted from name\n");
             printf("                                    Supported categories: core, shapes, textures, text, models\n");
@@ -1403,6 +1411,9 @@ int main(int argc, char *argv[])
             printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
             printf("    validate                      : Validate examples collection, generates report\n");
             printf("    update                        : Validate and update examples collection, generates report\n\n");
+            printf("OPTIONS:\n\n");
+            printf("    -h, --help                    : Show tool version and command line usage help\n");
+            printf("    -v, --verbose                 : Verbose mode, show additional logs on processes\n");
             printf("\nEXAMPLES:\n\n");
             printf("    > rexm add shapes_custom_stars\n");
             printf("        Add and updates new example provided <shapes_custom_stars>\n\n");

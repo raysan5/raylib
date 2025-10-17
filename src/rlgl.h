@@ -785,8 +785,8 @@ RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    
 RLAPI unsigned int rlCompileShader(const char *shaderCode, int type);           // Compile custom shader and return shader id (type: RL_VERTEX_SHADER, RL_FRAGMENT_SHADER, RL_COMPUTE_SHADER)
 RLAPI unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId); // Load custom shader program
 RLAPI void rlUnloadShaderProgram(unsigned int id);                              // Unload shader program
-RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform
-RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName);   // Get shader location attribute
+RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform, requires shader program id
+RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName);   // Get shader location attribute, requires shader program id
 RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count); // Set shader value uniform
 RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                        // Set shader value matrix
 RLAPI void rlSetUniformMatrices(int locIndex, const Matrix *mat, int count);    // Set shader value matrices
@@ -3750,7 +3750,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
 // Copy framebuffer pixel data to internal buffer
-void rlCopyFramebuffer(int x, int y, int width, int height, int format, void* pixels)
+void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels)
 {
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType); // Get OpenGL texture format
@@ -4238,121 +4238,121 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
 // Compile custom shader and return shader id
 unsigned int rlCompileShader(const char *shaderCode, int type)
 {
-    unsigned int shader = 0;
+    unsigned int shaderId = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    shader = glCreateShader(type);
-    glShaderSource(shader, 1, &shaderCode, NULL);
+    shaderId = glCreateShader(type);
+    glShaderSource(shaderId, 1, &shaderCode, NULL);
 
     GLint success = 0;
-    glCompileShader(shader);
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    glCompileShader(shaderId);
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
 
     if (success == GL_FALSE)
     {
         switch (type)
         {
-            case GL_VERTEX_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile vertex shader code", shader); break;
-            case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile fragment shader code", shader); break;
+            case GL_VERTEX_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile vertex shader code", shaderId); break;
+            case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile fragment shader code", shaderId); break;
             //case GL_GEOMETRY_SHADER:
         #if defined(GRAPHICS_API_OPENGL_43)
-            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile compute shader code", shader); break;
+            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile compute shader code", shaderId); break;
         #elif defined(GRAPHICS_API_OPENGL_33)
-            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shader); break;
+            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shaderId); break;
         #endif
             default: break;
         }
 
         int maxLength = 0;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+        glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &maxLength);
 
         if (maxLength > 0)
         {
             int length = 0;
             char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
-            glGetShaderInfoLog(shader, maxLength, &length, log);
-            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
+            glGetShaderInfoLog(shaderId, maxLength, &length, log);
+            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shaderId, log);
             RL_FREE(log);
         }
 
         // Unload object allocated by glCreateShader(),
         // despite failing in the compilation process
-        glDeleteShader(shader);
-        shader = 0;
+        glDeleteShader(shaderId);
+        shaderId = 0;
     }
     else
     {
         switch (type)
         {
-            case GL_VERTEX_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Vertex shader compiled successfully", shader); break;
-            case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Fragment shader compiled successfully", shader); break;
+            case GL_VERTEX_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Vertex shader compiled successfully", shaderId); break;
+            case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Fragment shader compiled successfully", shaderId); break;
             //case GL_GEOMETRY_SHADER:
         #if defined(GRAPHICS_API_OPENGL_43)
-            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader compiled successfully", shader); break;
+            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader compiled successfully", shaderId); break;
         #elif defined(GRAPHICS_API_OPENGL_33)
-            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shader); break;
+            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shaderId); break;
         #endif
             default: break;
         }
     }
 #endif
 
-    return shader;
+    return shaderId;
 }
 
 // Load custom shader strings and return program id
 unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
 {
-    unsigned int program = 0;
+    unsigned int programId = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLint success = 0;
-    program = glCreateProgram();
+    programId = glCreateProgram();
 
-    glAttachShader(program, vShaderId);
-    glAttachShader(program, fShaderId);
+    glAttachShader(programId, vShaderId);
+    glAttachShader(programId, fShaderId);
 
     // NOTE: Default attribute shader locations must be Bound before linking
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX);
 
 #ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
-    glBindAttribLocation(program, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
 #endif
 
     // NOTE: If some attrib name is no found on the shader, it locations becomes -1
 
-    glLinkProgram(program);
+    glLinkProgram(programId);
 
     // NOTE: All uniform variables are intitialised to 0 when a program links
 
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    glGetProgramiv(programId, GL_LINK_STATUS, &success);
 
     if (success == GL_FALSE)
     {
-        TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to link shader program", program);
+        TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to link shader program", programId);
 
         int maxLength = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+        glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &maxLength);
 
         if (maxLength > 0)
         {
             int length = 0;
             char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
-            glGetProgramInfoLog(program, maxLength, &length, log);
-            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
+            glGetProgramInfoLog(programId, maxLength, &length, log);
+            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", programId, log);
             RL_FREE(log);
         }
 
-        glDeleteProgram(program);
+        glDeleteProgram(programId);
 
-        program = 0;
+        programId = 0;
     }
     else
     {
@@ -4361,10 +4361,10 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
         //GLint binarySize = 0;
         //glGetProgramiv(id, GL_PROGRAM_BINARY_LENGTH, &binarySize);
 
-        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Program shader loaded successfully", program);
+        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Program shader loaded successfully", programId);
     }
 #endif
-    return program;
+    return programId;
 }
 
 // Unload shader program
@@ -4378,6 +4378,7 @@ void rlUnloadShaderProgram(unsigned int id)
 }
 
 // Get shader location uniform
+// NOTE: First parameter refers to shader program id
 int rlGetLocationUniform(unsigned int shaderId, const char *uniformName)
 {
     int location = -1;
@@ -4391,6 +4392,7 @@ int rlGetLocationUniform(unsigned int shaderId, const char *uniformName)
 }
 
 // Get shader location attribute
+// NOTE: First parameter refers to shader program id
 int rlGetLocationAttrib(unsigned int shaderId, const char *attribName)
 {
     int location = -1;
@@ -4516,37 +4518,37 @@ void rlSetShader(unsigned int id, int *locs)
 // Load compute shader program
 unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 {
-    unsigned int program = 0;
+    unsigned int programId = 0;
 
 #if defined(GRAPHICS_API_OPENGL_43)
     GLint success = 0;
-    program = glCreateProgram();
-    glAttachShader(program, shaderId);
-    glLinkProgram(program);
+    programId = glCreateProgram();
+    glAttachShader(programId, shaderId);
+    glLinkProgram(programId);
 
     // NOTE: All uniform variables are intitialised to 0 when a program links
 
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    glGetProgramiv(programId, GL_LINK_STATUS, &success);
 
     if (success == GL_FALSE)
     {
-        TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to link compute shader program", program);
+        TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to link compute shader program", programId);
 
         int maxLength = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+        glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &maxLength);
 
         if (maxLength > 0)
         {
             int length = 0;
             char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
-            glGetProgramInfoLog(program, maxLength, &length, log);
-            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
+            glGetProgramInfoLog(programId, maxLength, &length, log);
+            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", programId, log);
             RL_FREE(log);
         }
 
-        glDeleteProgram(program);
+        glDeleteProgram(programId);
 
-        program = 0;
+        programId = 0;
     }
     else
     {
@@ -4555,13 +4557,13 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
         //GLint binarySize = 0;
         //glGetProgramiv(id, GL_PROGRAM_BINARY_LENGTH, &binarySize);
 
-        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader program loaded successfully", program);
+        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader program loaded successfully", programId);
     }
 #else
     TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
 
-    return program;
+    return programId;
 }
 
 // Dispatch compute shader (equivalent to *draw* for graphics pilepine)
