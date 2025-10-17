@@ -537,6 +537,7 @@ CORE = \
     core/core_screen_recording \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
+    core/core_text_file_loading \
     core/core_undo_redo \
     core/core_vr_simulator \
     core/core_window_flags \
@@ -818,6 +819,10 @@ core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 
 core/core_storage_values: core/core_storage_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_text_file_loading: core/core_text_file_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file core/resources/text_file.txt@resources/text_file.txt
 
 core/core_undo_redo: core/core_undo_redo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)

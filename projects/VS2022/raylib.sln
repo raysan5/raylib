@@ -391,6 +391,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_highdpi_testbed", "exa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_screen_recording", "examples\core_screen_recording.vcxproj", "{9DE2FC01-A839-4F89-8319-9071D4C54821}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_text_file_loading", "examples\core_text_file_loading.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.DLL|ARM64 = Debug.DLL|ARM64
