@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{1ACC8236-EF4E-44B0-BD0C-AB1D95D5890F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>core_highdpi_testbed</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
