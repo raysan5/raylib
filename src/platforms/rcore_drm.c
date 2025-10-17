@@ -1130,11 +1130,12 @@ void PollInputEvents(void)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
-    // Reset touch positions
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    // Reset touch positions to invalid state
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ -1, -1 };
 
     // Map touch position to mouse position for convenience
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    // NOTE: For DRM touchscreen devices, this mapping is disabled to avoid false touch detection
+    // CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Handle the mouse/touch/gestures events:
     PollMouseEvents();
@@ -2262,7 +2263,8 @@ static void PollMouseEvents(void)
                 }
                 else CORE.Input.Mouse.currentPosition.x += event.value;
 
-                CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
+                // NOTE: For DRM touchscreen, do not simulate touch from mouse movement
+                // CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
@@ -2275,7 +2277,8 @@ static void PollMouseEvents(void)
                 }
                 else CORE.Input.Mouse.currentPosition.y += event.value;
 
-                CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
+                // NOTE: For DRM touchscreen, do not simulate touch from mouse movement
+                // CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
