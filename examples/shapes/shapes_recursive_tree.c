@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - shapes recursive tree
+*   raylib [shapes] example - recursive tree
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2025 Jopestpe (@jopestpe)
+*   Copyright (c) 2025 Jopestpe (@jopestpe)
 *
 ********************************************************************************************/
 
@@ -46,9 +46,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - shapes recursive tree");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - recursive tree");
 
-    Vector2 start = { (screenWidth/2.0f) - 125.0f, screenHeight };
+    Vector2 start = { (screenWidth/2.0f) - 125.0f, (float)screenHeight };
     float angle = 40.0f;
     float thick = 1.0f;   
     float treeDepth = 10.0f;
@@ -66,7 +66,7 @@ int main(void)
         //----------------------------------------------------------------------------------
 
         float theta = angle*DEG2RAD;
-        int maxBranches = (int)(powf(2, (int)(treeDepth)));
+        int maxBranches = (int)(powf(2, floorf(treeDepth)));
         Branch branches[1024] = { 0 };
         int count = 0;
 
