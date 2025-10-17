@@ -630,7 +630,7 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_geometry_textures_cube \
+    models/models_rotating_cube \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \

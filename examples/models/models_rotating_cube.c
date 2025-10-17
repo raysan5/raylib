@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - geometry textures cube
+*   raylib [models] example - rotating cube
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -27,11 +27,11 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - geometry textures cube");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - rotating cube");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 0.0f, 0.0f, 4.0f };
+    camera.position = (Vector3){ 0.0f, 3.0f, 3.0f };
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
@@ -58,6 +58,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         rotation += 1.0f;
+        //----------------------------------------------------------------------------------
         
         // Draw
         //----------------------------------------------------------------------------------
@@ -67,7 +68,11 @@ int main(void)
 
             BeginMode3D(camera);
             
-                DrawModelEx(model, (Vector3){0,0,0}, (Vector3){0.5f,1,0}, rotation, (Vector3){1,1,1}, WHITE);
+                // Draw model defining: position, size, rotation-axis, rotation (degrees), size, and tint-color 
+                DrawModelEx(model, (Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.5f, 1.0f, 0.0f }, 
+                    rotation, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
+                    
+                DrawGrid(10, 1.0f);
                 
             EndMode3D();
 
@@ -81,6 +86,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture); // Unload texture
     UnloadModel(model);     // Unload model
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

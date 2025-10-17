@@ -357,7 +357,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_basic_voxel", "examp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_dashed_line", "examples\shapes_dashed_line.vcxproj", "{8E132D5A-2C00-48D0-8747-97E41356F26F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_geometry_textures_cube", "examples\models_geometry_textures_cube.vcxproj", "{A4662163-83E7-4309-8CAA-B0BF13655FE6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_rotating_cube", "examples\models_rotating_cube.vcxproj", "{A4662163-83E7-4309-8CAA-B0BF13655FE6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_ascii_rendering", "examples\shaders_ascii_rendering.vcxproj", "{5F4B766F-DD52-4B53-B6C3-BC7611E17F20}"
 EndProject
