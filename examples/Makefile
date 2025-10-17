@@ -519,6 +519,7 @@ CORE = \
     core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
+    core/core_highdpi_testbed \
     core/core_input_actions \
     core/core_input_gamepad \
     core/core_input_gestures \
@@ -533,6 +534,7 @@ CORE = \
     core/core_random_values \
     core/core_render_texture \
     core/core_scissor_test \
+    core/core_screen_recording \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
     core/core_undo_redo \
