@@ -31,11 +31,6 @@ typedef struct {
     float length;
 } Branch;
 
-//----------------------------------------------------------------------------------
-// Module Functions Declaration
-//----------------------------------------------------------------------------------
-static Vector2 CalculateBranchEnd(Vector2 start, float angle, float length);
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -64,13 +59,12 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
         float theta = angle*DEG2RAD;
         int maxBranches = (int)(powf(2, floorf(treeDepth)));
-        Branch branches[1024] = { 0 };
+        Branch branches[1030] = { 0 };
         int count = 0;
 
-        Vector2 initialEnd = CalculateBranchEnd(start, 0.0f, length);
+        Vector2 initialEnd = { start.x + length*sinf(0.0f), start.y - length*cosf(0.0f) };
         branches[count++] = (Branch){start, initialEnd, 0.0f, length};
 
         for (int i = 0; i < count; i++) 
@@ -84,14 +78,16 @@ int main(void)
             {
                 Vector2 branchStart = branch.end;
 
-                Vector2 branchEnd1 = CalculateBranchEnd(branchStart, branch.angle + theta, nextLength);
-                Vector2 branchEnd2 = CalculateBranchEnd(branchStart, branch.angle - theta, nextLength);
-
-                branches[count++] = (Branch){branchStart, branchEnd1, branch.angle + theta, nextLength};
-                branches[count++] = (Branch){branchStart, branchEnd2, branch.angle - theta, nextLength};
+                float angle1 = branch.angle + theta;
+                Vector2 branchEnd1 = { branchStart.x + nextLength*sinf(angle1), branchStart.y - nextLength*cosf(angle1) };
+                branches[count++] = (Branch){branchStart, branchEnd1, angle1, nextLength};
+                
+                float angle2 = branch.angle - theta;
+                Vector2 branchEnd2 = { branchStart.x + nextLength*sinf(angle2), branchStart.y - nextLength*cosf(angle2) };
+                branches[count++] = (Branch){branchStart, branchEnd2, angle2, nextLength};
             }
         }
-
+        //----------------------------------------------------------------------------------
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -103,8 +99,8 @@ int main(void)
                 Branch branch = branches[i];
                 if (branch.length >= 2) 
                 {
-                    if (!bezier) DrawLineEx(branch.start, branch.end, thick, RED);
-                    else DrawLineBezier(branch.start, branch.end, thick, RED);
+                    if (bezier) DrawLineBezier(branch.start, branch.end, thick, RED);
+                    else DrawLineEx(branch.start, branch.end, thick, RED);
                 }
             }
 
@@ -133,9 +129,4 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
-}
-
-static Vector2 CalculateBranchEnd(Vector2 start, float angle, float length)
-{
-    return (Vector2){ start.x + length*sinf(angle), start.y - length*cosf(angle) };
 }

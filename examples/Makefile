@@ -519,6 +519,7 @@ CORE = \
     core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
+    core/core_highdpi_testbed \
     core/core_input_actions \
     core/core_input_gamepad \
     core/core_input_gestures \
@@ -528,11 +529,12 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
-    core/core_monitor_change \
+    core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
     core/core_render_texture \
     core/core_scissor_test \
+    core/core_screen_recording \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
     core/core_text_file_loading \
@@ -571,7 +573,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
-    shapes/shapes_starfield \
+    shapes/shapes_starfield_effect \
     shapes/shapes_top_down_lights \
     shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
@@ -631,7 +633,6 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_geometry_textures_cube \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
@@ -642,6 +643,7 @@ MODELS = \
     models/models_orthographic_projection \
     models/models_point_rendering \
     models/models_rlgl_solar_system \
+    models/models_rotating_cube \
     models/models_skybox_rendering \
     models/models_tesseract_view \
     models/models_textured_cube \
