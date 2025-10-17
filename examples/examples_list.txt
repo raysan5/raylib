@@ -79,7 +79,7 @@ shapes;shapes_vector_angle;★★☆☆;1.0;5.0;2023;2025;"Ramon Santamaria";@ra
 shapes;shapes_pie_chart;★★★☆;5.5;5.6;2025;2025;"Gideon Serfontein";@GideonSerf
 shapes;shapes_kaleidoscope;★★☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
 shapes;shapes_clock_of_clocks;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
-shapes;shapes_mouse_trail;★☆☆☆;5.6;5.6-dev;2024;2024;"[Balamurugan R]";@[Bala050814]
+shapes;shapes_mouse_trail;★☆☆☆;5.6;5.6-dev;2025;2025;"Balamurugan R";@Bala050814
 shapes;shapes_simple_particles;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 shapes;shapes_starfield_effect;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
