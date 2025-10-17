@@ -69,7 +69,7 @@
 #define REXM_MAX_RESOURCE_PATHS         256
 
 // Create local commit with changes on example renaming
-#define RENAME_AUTO_COMMIT_CREATION
+//#define RENAME_AUTO_COMMIT_CREATION
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
