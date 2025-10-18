@@ -12,7 +12,7 @@
 *   Example originally created with raylib 5.6, last time updated with raylib 5.6
 *
 *   Example contributed by Jordi Santonja (@JordSant)
-*   based on previous work by Josh Colclough (@joshcol9232)
+*   Based on previous work by Josh Colclough (@joshcol9232)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -146,12 +146,12 @@ int main(void)
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         {
             // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out
-            zoom *= IsMouseButtonDown(MOUSE_BUTTON_LEFT)? zoomSpeed : 1.0f/zoomSpeed;
+            zoom *= IsMouseButtonDown(MOUSE_BUTTON_LEFT)? zoomSpeed : (1.0f/zoomSpeed);
 
             const Vector2 mousePos = GetMousePosition();
             Vector2 offsetVelocity;
             // Find the velocity at which to change the camera. Take the distance of the mouse
-            // from the center of the screen as the direction, and adjust magnitude based on the current zoom
+            // From the center of the screen as the direction, and adjust magnitude based on the current zoom
             offsetVelocity.x = (mousePos.x/(float)screenWidth - 0.5f)*offsetSpeedMul/zoom;
             offsetVelocity.y = (mousePos.y/(float)screenHeight - 0.5f)*offsetSpeedMul/zoom;
 
@@ -184,8 +184,8 @@ int main(void)
 
             // Draw a rectangle in shader mode to be used as shader canvas
             // NOTE: Rectangle uses font white character texture coordinates,
-            // so shader can not be applied here directly because input vertexTexCoord
-            // do not represent full screen coordinates (space where want to apply shader)
+            // So shader can not be applied here directly because input vertexTexCoord
+            // Do not represent full screen coordinates (space where want to apply shader)
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
         EndTextureMode();
 
@@ -196,7 +196,7 @@ int main(void)
             // NOTE: We do not invert texture on Y, already considered inside shader
             BeginShaderMode(shader);
                 // WARNING: If FLAG_WINDOW_HIGHDPI is enabled, HighDPI monitor scaling should be considered
-                // when rendering the RenderTexture2D to fit in the HighDPI scaled Window
+                // When rendering the RenderTexture2D to fit in the HighDPI scaled Window
                 DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, WHITE);
             EndShaderMode();
 

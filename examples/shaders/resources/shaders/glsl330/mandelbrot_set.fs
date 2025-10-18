@@ -14,7 +14,7 @@ uniform float zoom;             // Zoom of the scale
 uniform int maxIterations;      // Max iterations per pixel
 
 const float max = 4.0;          // We consider infinite as 4.0: if a point reaches a distance of 4.0 it will escape to infinity
-const float max2 = max * max;   // Square of max to avoid computing square root
+const float max2 = max*max;     // Square of max to avoid computing square root
 
 void main()
 {
@@ -27,7 +27,7 @@ void main()
     float b = 0.0;
 
     // The Mandelbrot set is a two-dimensional set defined in the complex plane on which the iteration of the function
-    // fc(z) = z^2 + c on the complex numbers c from the plane does not diverge to infinity starting at z = 0
+    // Fc(z) = z^2 + c on the complex numbers c from the plane does not diverge to infinity starting at z = 0
     // Here: z = a + bi. Iterations: z -> z^2 + c = (a + bi)^2 + (c.x + c.yi) = (a^2 - b^2 + c.x) + (2ab + c.y)i
 
     int iter = 0;
