@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 5.6-dev
+*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6
 *
 *   Example contributed by Robin (@RobinsAviary) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -75,24 +75,28 @@ int main(void)
 		bool leftButtonDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 		bool rightButtonDown = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
 
-		if (leftButtonDown || rightButtonDown) {
+		if (leftButtonDown || rightButtonDown)
+		{
 			// The color for the line
 			Color drawColor;
 
-			if (leftButtonDown) {
+			if (leftButtonDown)
+			{
 				// Increase the hue value by the distance our cursor has moved since the last frame (divided by 3)
 				lineHue += Vector2Distance(mousePositionPrevious, GetMousePosition())/3.0f;
 
 				// While the hue is >=360, subtract it to bring it down into the range 0-360
 				// This is more visually accurate than resetting to zero
-				while (lineHue >= 360.0f) {
+				while (lineHue >= 360.0f)
+				{
 					lineHue -= 360.0f;
 				}
 
 				// Create the final color
 				drawColor = ColorFromHSV(lineHue, 1.0f, 1.0f);
 			}
-			else if (rightButtonDown) {
+			else if (rightButtonDown) 
+			{
 				// Use the background color as an "eraser"
 				drawColor = backgroundColor;
 			}
