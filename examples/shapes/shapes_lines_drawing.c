@@ -106,7 +106,7 @@ int main(void)
 
 		// Update line thickness based on mousewheel
 		lineThickness += GetMouseWheelMove();
-		Clamp(lineThickness, 1.0, 500.0f);
+		lineThickness = Clamp(lineThickness, 1.0, 500.0f);
 
 		// Update mouse's previous position
 		mousePositionPrevious = GetMousePosition();
