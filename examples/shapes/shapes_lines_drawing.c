@@ -58,12 +58,14 @@ int main(void)
 	{
 		// Update
 		// Disable the hint text once the user clicks
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && startText) {
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && startText)
+		{
 			startText = false;
 		}
 
 		// Clear the canvas when the user middle-clicks
-		if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
+		if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE))
+		{
 			BeginTextureMode(canvas);
 				ClearBackground(backgroundColor);
 			EndTextureMode();
@@ -79,7 +81,7 @@ int main(void)
 
 			if (leftButtonDown) {
 				// Increase the hue value by the distance our cursor has moved since the last frame (divided by 3)
-				lineHue += Vector2Distance(mousePositionPrevious, GetMousePosition()) / 3.0f;
+				lineHue += Vector2Distance(mousePositionPrevious, GetMousePosition())/3.0f;
 
 				// While the hue is >=360, subtract it to bring it down into the range 0-360
 				// This is more visually accurate than resetting to zero
@@ -98,8 +100,8 @@ int main(void)
 			// Draw the line onto the canvas
 			BeginTextureMode(canvas);
 				// Circles act as "caps", smoothing corners
-				DrawCircleV(mousePositionPrevious, lineThickness / 2.0f, drawColor);
-				DrawCircleV(GetMousePosition(), lineThickness / 2.0f, drawColor);
+				DrawCircleV(mousePositionPrevious, lineThickness/2.0f, drawColor);
+				DrawCircleV(GetMousePosition(), lineThickness/2.0f, drawColor);
 				DrawLineEx(mousePositionPrevious, GetMousePosition(), lineThickness, drawColor);
 			EndTextureMode();
 		}
@@ -115,10 +117,10 @@ int main(void)
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 			// Draw the render texture to the screen, flipped vertically to make it appear top-side up
-			DrawTextureRec(canvas.texture, (Rectangle){0.0f, 0.0f, (float)canvas.texture.width,(float)-canvas.texture.height}, (Vector2){0, 0}, WHITE);
+			DrawTextureRec(canvas.texture, (Rectangle){ 0.0f, 0.0f, (float)canvas.texture.width,(float)-canvas.texture.height }, Vector2Zero(), WHITE);
 
 			// Draw the preview circle
-			if (!leftButtonDown) DrawCircleLinesV(GetMousePosition(), lineThickness / 2.0f, (Color){127, 127, 127, 127});
+			if (!leftButtonDown) DrawCircleLinesV(GetMousePosition(), lineThickness/2.0f, (Color){ 127, 127, 127, 127 });
 
 			// Draw the hint text
 			if (startText) DrawText("try clicking and dragging!", 275, 215, 20, LIGHTGRAY);
