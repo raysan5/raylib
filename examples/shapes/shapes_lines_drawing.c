@@ -57,6 +57,7 @@ int main(void)
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
 		// Update
+		//----------------------------------------------------------------------------------
 		// Disable the hint text once the user clicks
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && startText)
 		{
@@ -116,6 +117,7 @@ int main(void)
 
 		// Update mouse's previous position
 		mousePositionPrevious = GetMousePosition();
+		//----------------------------------------------------------------------------------
 
 		// Draw
 		//----------------------------------------------------------------------------------
