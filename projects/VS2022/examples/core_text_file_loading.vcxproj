@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{2F578155-D51F-4C03-AB7F-5C5122CA46CC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>core_text_file_loading</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
