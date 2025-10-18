@@ -68,6 +68,8 @@ int main(void)
     // Offset and zoom to draw the mandelbrot set at. (centered on screen and default size)
     float offset[2] = { startingOffset[0], startingOffset[1] };
     float zoom = startingZoom;
+    // Depending on the zoom the mximum number of iterations must be adapted to get more detail as we zzoom in
+	// The solution is not perfect, so a control has been added to increase/decrease the number of iterations with UP/DOWN keys
     int maxIterations = 333;
     float maxIterationsMultiplier = 166.5f;
 
@@ -160,9 +162,11 @@ int main(void)
             updateShader = true;
         }
 
+		// In case a parameter has been changed, update the shader values
         if (updateShader)
 		{
 			// As we zoom in, increase the number of max iterations to get more detail
+            // Aproximate formula, but it works-ish
             maxIterations = (int)(sqrtf(2.0f*sqrtf(fabsf(1.0f - sqrtf(37.5f*zoom))))*maxIterationsMultiplier);
 
             // Update the shader uniform values!
