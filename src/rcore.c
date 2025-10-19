@@ -889,6 +889,12 @@ bool IsCursorOnScreen(void)
     return CORE.Input.Mouse.cursorOnScreen;
 }
 
+// Check if cursor is disabled (locked)
+bool IsCursorDisabled(void)
+{
+    return CORE.Input.Mouse.cursorLocked;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Screen Drawing
 //----------------------------------------------------------------------------------

@@ -1027,6 +1027,7 @@ RLAPI bool IsCursorHidden(void);                                  // Check if cu
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
 RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the screen
+RLAPI bool IsCursorDisabled(void);                                // Check if cursor is disabled (locked)
 
 // Drawing-related functions
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
