@@ -3468,6 +3468,11 @@ return {
       returnType = "bool"
     },
     {
+      name = "IsCursorDisabled",
+      description = "Check if cursor is disabled (locked)",
+      returnType = "bool"
+    },
+    {
       name = "ClearBackground",
       description = "Set background color (framebuffer clear color)",
       returnType = "void",

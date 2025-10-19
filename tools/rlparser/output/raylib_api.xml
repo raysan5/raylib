@@ -679,7 +679,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="597">
+    <Functions count="598">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -817,6 +817,8 @@
         <Function name="DisableCursor" retType="void" paramCount="0" desc="Disables cursor (lock cursor)">
         </Function>
         <Function name="IsCursorOnScreen" retType="bool" paramCount="0" desc="Check if cursor is on the screen">
+        </Function>
+        <Function name="IsCursorDisabled" retType="bool" paramCount="0" desc="Check if cursor is disabled (locked)">
         </Function>
         <Function name="ClearBackground" retType="void" paramCount="1" desc="Set background color (framebuffer clear color)">
             <Param type="Color" name="color" desc="" />
