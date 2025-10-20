@@ -17,6 +17,9 @@ uniform int maxIterations;      // Max iterations per pixel
 const float max = 4.0;          // We consider infinite as 4.0: if a point reaches a distance of 4.0 it will escape to infinity
 const float max2 = max*max;     // Square of max to avoid computing square root
 
+// WebGL shaders for loop iteration limit only const
+const int maxIterationsLimit = 20000;
+
 void main()
 {
     // The pixel coordinates are scaled so they are on the mandelbrot scale
@@ -31,31 +34,29 @@ void main()
     // Fc(z) = z^2 + c on the complex numbers c from the plane does not diverge to infinity starting at z = 0
     // Here: z = a + bi. Iterations: z -> z^2 + c = (a + bi)^2 + (c.x + c.yi) = (a^2 - b^2 + c.x) + (2ab + c.y)i
 
-    int iter = 0;
-    while (iter < maxIterations)
+    for (int iter = 0; iter < maxIterationsLimit; ++iter)
     {
         float aa = a*a;
         float bb = b*b;
+        if (iter >= maxIterations)
+        {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            return;
+        }
         if (aa + bb > max2)
-            break;
+        {
+            float normR = float(iter - (iter/55)*55)/55.0;
+            float normG = float(iter - (iter/69)*69)/69.0;
+            float normB = float(iter - (iter/40)*40)/40.0;
+        
+            gl_FragColor = vec4(sin(normR*PI), sin(normG*PI), sin(normB*PI), 1.0);
+            return;
+        }
 
         float twoab = 2.0*a*b;
         a = aa - bb + c.x;
         b = twoab + c.y;
-
-        ++iter;
     }
 
-    if (iter >= maxIterations)
-    {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    }
-    else
-    {
-        float normR = float(iter - (iter/55)*55)/55.0;
-        float normG = float(iter - (iter/69)*69)/69.0;
-        float normB = float(iter - (iter/40)*40)/40.0;
-
-        gl_FragColor = vec4(sin(normR*PI), sin(normG*PI), sin(normB*PI), 1.0);
-    }
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
