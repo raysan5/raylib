@@ -679,12 +679,15 @@ void InitWindow(int width, int height, const char *title)
     // Initialize window data
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+    CORE.Window.currentFbo.width = CORE.Window.screen.width;
+    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+
     CORE.Window.eventWaiting = false;
-    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
+    CORE.Window.screenScale = MatrixIdentity(); // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
+    memset(&CORE.Input, 0, sizeof(CORE.Input)); // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
@@ -696,7 +699,7 @@ void InitWindow(int width, int height, const char *title)
 
     if (result != 0)
     {
-        TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize Platform");
+        TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize platform");
         return;
     }
     //--------------------------------------------------------------
