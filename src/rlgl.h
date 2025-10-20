@@ -2329,6 +2329,16 @@ void rlglInit(int width, int height)
     RLGL.State.currentMatrix = &RLGL.State.modelview;
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Initialize software renderer backend
+    int result = swInit(width, height);
+    if (result == 0)
+    {
+        TRACELOG(RL_LOG_ERROR, "RLSW: Software renderer initialization failed!");
+        exit(-1);
+    }
+#endif
+
     // Initialize OpenGL default states
     //----------------------------------------------------------
     // Init state: Depth test
@@ -2345,39 +2355,28 @@ void rlglInit(int width, int height)
     glFrontFace(GL_CCW);                                    // Front face are defined counter clockwise (default)
     glEnable(GL_CULL_FACE);                                 // Enable backface culling
 
-    // Init state: Cubemap seamless
-#if defined(GRAPHICS_API_OPENGL_33)
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);                 // Seamless cubemaps (not supported on OpenGL ES 2.0)
-#endif
-
 #if defined(GRAPHICS_API_OPENGL_11)
     // Init state: Color hints (deprecated in OpenGL 3.0+)
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation
     glShadeModel(GL_SMOOTH);                                // Smooth shading between vertex (vertex colors interpolation)
 #endif
-
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    int result = swInit(width, height); // Initialize software renderer backend
-    if (result == 0)
-    {
-        TRACELOG(RL_LOG_ERROR, "RLSW: Software renderer initialization failed!");
-        exit(-1);
-    }
+#if defined(GRAPHICS_API_OPENGL_33)
+    // Init state: Cubemap seamless
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);                 // Seamless cubemaps (not supported on OpenGL ES 2.0)
 #endif
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
-
-    TRACELOG(RL_LOG_INFO, "RLGL: Default OpenGL state initialized successfully");
-    //----------------------------------------------------------
 #endif
 
     // Init state: Color/Depth buffers clear
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
     glClearDepth(1.0f);                                     // Set clear depth value (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
+
+    TRACELOG(RL_LOG_INFO, "RLGL: Default OpenGL state initialized successfully");
+    //----------------------------------------------------------
 }
 
 // Vertex Buffer Object deinitialization (memory free)
