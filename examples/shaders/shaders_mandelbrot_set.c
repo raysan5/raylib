@@ -70,8 +70,13 @@ int main(void)
     float zoom = startingZoom;
     // Depending on the zoom the mximum number of iterations must be adapted to get more detail as we zzoom in
 	// The solution is not perfect, so a control has been added to increase/decrease the number of iterations with UP/DOWN keys
+#if defined(PLATFORM_DESKTOP)
     int maxIterations = 333;
     float maxIterationsMultiplier = 166.5f;
+#else
+    int maxIterations = 43;
+    float maxIterationsMultiplier = 22.0f;
+#endif
 
     // Get variable (uniform) locations on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
