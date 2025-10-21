@@ -6,7 +6,7 @@
 *       rlsw is a custom OpenGL 1.1-style implementation on software, intended to provide all
 *       functionality available on rlgl.h library used by raylib, becoming a direct software
 *       rendering replacement for OpenGL 1.1 backend and allowing to run raylib on GPU-less
-*       devices when required.
+*       devices when required
 * 
 *   FEATURES:
 *       - Rendering to custom internal framebuffer with multiple color modes supported:
@@ -2892,8 +2892,8 @@ static inline bool sw_quad_is_axis_aligned(void)
         float dx = v1[0] - v0[0];
         float dy = v1[1] - v0[1];
 
-        if (fabsf(dx) > 1e-6f && fabsf(dy) < 1e-6f) horizontal++;
-        else if (fabsf(dy) > 1e-6f && fabsf(dx) < 1e-6f) vertical++;
+        if ((fabsf(dx) > 1e-6f) && (fabsf(dy) < 1e-6f)) horizontal++;
+        else if ((fabsf(dy) > 1e-6f) && (fabsf(dx) < 1e-6f)) vertical++;
         else return false; // Diagonal edge -> not axis-aligned
     }
 
@@ -2933,8 +2933,8 @@ static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
     // Separate vertices based on Y-coordinate
     for (int i = 0; i < 4; i++)
     {
-        if (input[i].screen[1] == minY && topCount < 2) top[topCount++] = &input[i];
-        else if (input[i].screen[1] == maxY && bottomCount < 2) bottom[bottomCount++] = &input[i];
+        if ((input[i].screen[1] == minY) && (topCount < 2)) top[topCount++] = &input[i];
+        else if ((input[i].screen[1] == maxY) && (bottomCount < 2)) bottom[bottomCount++] = &input[i];
     }
 
     // If we don't have enough top/bottom vertices (e.g., Y values are all different),
@@ -2960,7 +2960,7 @@ static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
     }
 
     // Sort bottom vertices by X (left to right)
-    if (bottomCount == 2 && bottom[0]->screen[0] > bottom[1]->screen[0])
+    if ((bottomCount == 2) && (bottom[0]->screen[0] > bottom[1]->screen[0]))
     {
         const sw_vertex_t *temp = bottom[0];
         bottom[0] = bottom[1];
@@ -2997,7 +2997,7 @@ static inline void FUNC_NAME(void)                                              
     int width = xMax - xMin;                                                    \
     int height = yMax - yMin;                                                   \
                                                                                 \
-    if (width == 0 || height == 0) return;                                      \
+    if ((width == 0) || (height == 0)) return;                                  \
                                                                                 \
     float wRcp = (width > 0.0f)? 1.0f/width : 0.0f;                             \
     float hRcp = (height > 0.0f)? 1.0f/height : 0.0f;                           \
@@ -3157,7 +3157,7 @@ static inline void sw_quad_render(void)
 
     if (RLSW.vertexCounter < 3) return;
 
-    if (RLSW.vertexCounter == 4 && sw_quad_is_axis_aligned())
+    if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
     {
         if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND();
         else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_DEPTH_BLEND();
@@ -3304,7 +3304,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
     int dy = y2 - y1;                                                   \
                                                                         \
     /* Handling of lines that are more horizontal or vertical */        \
-    if (dx == 0 && dy == 0)                                             \
+    if ((dx == 0) && (dy == 0))                                             \
     {                                                                   \
         /* TODO: A point should be rendered here */                     \
         return;                                                         \
@@ -3444,7 +3444,7 @@ void FUNC_NAME(const sw_vertex_t *v1, const sw_vertex_t *v2)            \
                                                                         \
     RASTER_FUNC(v1, v2);                                                \
                                                                         \
-    if (dx != 0 && abs(dy/dx) < 1)                                      \
+    if ((dx != 0) && (abs(dy/dx) < 1))                                  \
     {                                                                   \
         int wy = (int)((RLSW.lineWidth - 1.0f)*abs(dx)/sqrtf(dx*dx + dy*dy)); \
         wy >>= 1;                                                       \
@@ -3551,13 +3551,13 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
 {                                                                           \
     if (CHECK_BOUNDS == 1)                                                  \
     {                                                                       \
-        if (x < RLSW.vpMin[0] || x >= RLSW.vpMax[0]) return;                \
-        if (y < RLSW.vpMin[1] || y >= RLSW.vpMax[1]) return;                \
+        if ((x < RLSW.vpMin[0]) || (x >= RLSW.vpMax[0])) return;            \
+        if ((y < RLSW.vpMin[1]) || (y >= RLSW.vpMax[1])) return;            \
     }                                                                       \
     else if (CHECK_BOUNDS == SW_SCISSOR_TEST)                               \
     {                                                                       \
-        if (x < RLSW.scMin[0] || x >= RLSW.scMax[0]) return;                \
-        if (y < RLSW.scMin[1] || y >= RLSW.scMax[1]) return;                \
+        if ((x < RLSW.scMin[0]) || (x >= RLSW.scMax[0])) return;            \
+        if ((y < RLSW.scMin[1]) || (y >= RLSW.scMax[1])) return;            \
     }                                                                       \
                                                                             \
     int offset = y*RLSW.framebuffer.width + x;                              \
@@ -3718,12 +3718,12 @@ static inline bool sw_is_texture_valid(uint32_t id)
 
 static inline bool sw_is_texture_filter_valid(int filter)
 {
-    return (filter == SW_NEAREST || filter == SW_LINEAR);
+    return ((filter == SW_NEAREST) || (filter == SW_LINEAR));
 }
 
 static inline bool sw_is_texture_wrap_valid(int wrap)
 {
-    return (wrap == SW_REPEAT || wrap == SW_CLAMP);
+    return ((wrap == SW_REPEAT) || (wrap == SW_CLAMP));
 }
 
 static inline bool sw_is_draw_mode_valid(int mode)
@@ -4392,7 +4392,7 @@ void swRotatef(float angle, float x, float y, float z)
 
     float lengthSq = x*x + y*y + z*z;
 
-    if (lengthSq != 1.0f && lengthSq != 0.0f)
+    if ((lengthSq != 1.0f) && (lengthSq != 0.0f))
     {
         float invLength = 1.0f/sqrtf(lengthSq);
         x *= invLength;

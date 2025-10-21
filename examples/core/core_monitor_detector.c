@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - monitor change
+*   raylib [core] example - monitor detector
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -19,8 +19,8 @@
 
 #define MAX_MONITORS 10
 
-// Monitor Details
-typedef struct Monitor {
+// Monitor info
+typedef struct MonitorInfo {
     Vector2 position;
     const char *name;
     int width;
@@ -28,7 +28,7 @@ typedef struct Monitor {
     int physicalWidth;
     int physicalHeight;
     int refreshRate;
-} Monitor;
+} MonitorInfo;
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -40,9 +40,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    Monitor monitors[MAX_MONITORS] = { 0 };
+    MonitorInfo monitors[MAX_MONITORS] = { 0 };
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - monitor change");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - monitor detector");
 
     int currentMonitorIndex = GetCurrentMonitor();
     int monitorCount = 0;
@@ -67,7 +67,7 @@ int main(void)
         monitorCount = GetMonitorCount();
         for (int i = 0; i < monitorCount; i++)
         {
-            monitors[i] = (Monitor){
+            monitors[i] = (MonitorInfo){
                 GetMonitorPosition(i), 
                 GetMonitorName(i), 
                 GetMonitorWidth(i),

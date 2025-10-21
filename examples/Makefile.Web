@@ -519,6 +519,7 @@ CORE = \
     core/core_directory_files \
     core/core_drop_files \
     core/core_high_dpi \
+    core/core_highdpi_testbed \
     core/core_input_actions \
     core/core_input_gamepad \
     core/core_input_gestures \
@@ -528,13 +529,15 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
-    core/core_monitor_change \
+    core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
     core/core_render_texture \
     core/core_scissor_test \
+    core/core_screen_recording \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
+    core/core_text_file_loading \
     core/core_undo_redo \
     core/core_vr_simulator \
     core/core_window_flags \
@@ -570,7 +573,7 @@ SHAPES = \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
-    shapes/shapes_starfield \
+    shapes/shapes_starfield_effect \
     shapes/shapes_top_down_lights \
     shapes/shapes_triangle_strip \
     shapes/shapes_vector_angle
@@ -630,7 +633,6 @@ MODELS = \
     models/models_cubicmap_rendering \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_geometry_textures_cube \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
@@ -641,6 +643,7 @@ MODELS = \
     models/models_orthographic_projection \
     models/models_point_rendering \
     models/models_rlgl_solar_system \
+    models/models_rotating_cube \
     models/models_skybox_rendering \
     models/models_tesseract_view \
     models/models_textured_cube \
@@ -661,6 +664,7 @@ SHADERS = \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap_rendering \
+    shaders/shaders_mandelbrot_set \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
@@ -761,6 +765,9 @@ core/core_drop_files: core/core_drop_files.c
 core/core_high_dpi: core/core_high_dpi.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_highdpi_testbed: core/core_highdpi_testbed.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_input_actions: core/core_input_actions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -790,7 +797,7 @@ core/core_input_multitouch: core/core_input_multitouch.c
 core/core_input_virtual_controls: core/core_input_virtual_controls.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_monitor_change: core/core_monitor_change.c
+core/core_monitor_detector: core/core_monitor_detector.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_random_sequence: core/core_random_sequence.c
@@ -805,11 +812,18 @@ core/core_render_texture: core/core_render_texture.c
 core/core_scissor_test: core/core_scissor_test.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_screen_recording: core/core_screen_recording.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_storage_values: core/core_storage_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_text_file_loading: core/core_text_file_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file core/resources/text_file.txt@resources/text_file.txt
 
 core/core_undo_redo: core/core_undo_redo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -912,7 +926,7 @@ shapes/shapes_simple_particles: shapes/shapes_simple_particles.c
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_starfield: shapes/shapes_starfield.c
+shapes/shapes_starfield_effect: shapes/shapes_starfield_effect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
@@ -1146,10 +1160,6 @@ models/models_first_person_maze: models/models_first_person_maze.c
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-models/models_geometry_textures_cube: models/models_geometry_textures_cube.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
-
 models/models_heightmap_rendering: models/models_heightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/heightmap.png@resources/heightmap.png
@@ -1192,6 +1202,10 @@ models/models_point_rendering: models/models_point_rendering.c
 
 models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+models/models_rotating_cube: models/models_rotating_cube.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_skybox_rendering: models/models_skybox_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1293,6 +1307,10 @@ shaders/shaders_lightmap_rendering: shaders/shaders_lightmap_rendering.c
     --preload-file shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
     --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
     --preload-file shaders/resources/spark_flame.png@resources/spark_flame.png
+
+shaders/shaders_mandelbrot_set: shaders/shaders_mandelbrot_set.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/mandelbrot_set.fs@resources/shaders/glsl100/mandelbrot_set.fs
 
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

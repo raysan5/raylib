@@ -6,16 +6,17 @@
 *
 * Example originally created with raylib 5.6
 *
-* Example contributed by [Balamurugan R] (@[Bala050814]]) and reviewed by [Ray] (@raysan5)
+* Example contributed by Balamurugan R (@Bala050814]) and reviewed by Ramon Santamaria (@raysan5)
 *
 * Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 * BSD-like license that allows static linking with closed source software
 *
-* Copyright (c) 2024 [Balamurugan R] (@[Bala050814])
+* Copyright (c) 2025 Balamurugan R (@Bala050814)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
 // Define the maximum number of positions to store in the trail
@@ -46,14 +47,14 @@ int main(void)
         //----------------------------------------------------------------------------------
         Vector2 mousePosition = GetMousePosition();
 
-        // 1. Shift all existing positions backward by one slot in the array
-        // The last element (the oldest position) is dropped.
+        // Shift all existing positions backward by one slot in the array
+        // The last element (the oldest position) is dropped
         for (int i = MAX_TRAIL_LENGTH - 1; i > 0; i--)
         {
             trailPositions[i] = trailPositions[i - 1];
         }
 
-        // 2. Store the new, current mouse position at the start of the array (Index 0)
+        // Store the new, current mouse position at the start of the array (Index 0)
         trailPositions[0] = mousePosition;
         //----------------------------------------------------------------------------------
 
@@ -61,24 +62,23 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            // Use BLACK for a darker background to make the colored trail pop
             ClearBackground(BLACK); 
             
-            // 3. Draw the trail by looping through the history array
+            // Draw the trail by looping through the history array
             for (int i = 0; i < MAX_TRAIL_LENGTH; i++)
             {
                 // Ensure we skip drawing if the array hasn't been fully filled on startup
-                if (trailPositions[i].x != 0.0f || trailPositions[i].y != 0.0f)
+                if ((trailPositions[i].x != 0.0f) || (trailPositions[i].y != 0.0f))
                 {
                     // Calculate relative trail strength (ratio is near 1.0 for new, near 0.0 for old)
                     float ratio = (float)(MAX_TRAIL_LENGTH - i) / MAX_TRAIL_LENGTH; 
                     
                     // Fade effect: oldest positions are more transparent
                     // Fade (color, alpha) - alpha is 0.5 to 1.0 based on ratio
-                    Color trailColor = Fade(SKYBLUE, ratio * 0.5f + 0.5f); 
+                    Color trailColor = Fade(SKYBLUE, ratio*0.5f + 0.5f); 
                     
                     // Size effect: oldest positions are smaller
-                    float trailRadius = 15.0f * ratio; 
+                    float trailRadius = 15.0f*ratio; 
                     
                     DrawCircleV(trailPositions[i], trailRadius, trailColor);
                 }
@@ -87,8 +87,7 @@ int main(void)
             // Draw a distinct white circle for the current mouse position (Index 0)
             DrawCircleV(mousePosition, 15.0f, WHITE);
             
-            DrawText("Move the mouse to see the trail effect!", 
-                     10, screenHeight - 30, 20, LIGHTGRAY);
+            DrawText("Move the mouse to see the trail effect!", 10, screenHeight - 30, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -96,9 +95,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-    // No resources loaded, nothing to unload.
-
     CloseWindow();         // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

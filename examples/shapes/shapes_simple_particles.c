@@ -2,7 +2,7 @@
 *
 *   raylib [shapes] example - simple particles
 *
-*   Example complexity rating: [★☆☆☆] 1/4
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 5.6, last time updated with raylib 5.6
 *
@@ -20,7 +20,7 @@
 #include <stdlib.h>         // Required for: calloc(), free()
 #include <math.h>           // Required for: cosf(), sinf()
 
-#define MAX_PARTICLES 3000  // Max number particles
+#define MAX_PARTICLES 3000  // Max number of particles
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -74,7 +74,7 @@ int main(void)
     // Definition of particles
     Particle *particles = (Particle*)RL_CALLOC(MAX_PARTICLES, sizeof(Particle)); // Particle array
 	CircularBuffer circularBuffer = { 0, 0, particles };
-    
+
 	// Particle emitter parameters
     int emissionRate = -2;          // Negative: on average every -X frames. Positive: particles per frame
 	ParticleType currentType = WATER;
@@ -100,6 +100,7 @@ int main(void)
 
 		// Update the parameters of each particle
         UpdateParticles(&circularBuffer, screenWidth, screenHeight);
+
         // Remove dead particles from the circular buffer
         UpdateCircularBuffer(&circularBuffer);
 
@@ -217,46 +218,53 @@ static void UpdateParticles(CircularBuffer *circularBuffer, int screenWidth, int
         switch (circularBuffer->buffer[i].type)
         {
             case WATER:
+            {
                 circularBuffer->buffer[i].position.x += circularBuffer->buffer[i].velocity.x;
                 circularBuffer->buffer[i].velocity.y += 0.2f;   // Gravity
                 circularBuffer->buffer[i].position.y += circularBuffer->buffer[i].velocity.y;
-                break;
+            } break;
             case SMOKE:
+            {
                 circularBuffer->buffer[i].position.x += circularBuffer->buffer[i].velocity.x;
 				circularBuffer->buffer[i].velocity.y -= 0.05f;  // Upwards
                 circularBuffer->buffer[i].position.y += circularBuffer->buffer[i].velocity.y;
                 circularBuffer->buffer[i].radius += 0.5f;       // Increment radius: smoke expands
 				circularBuffer->buffer[i].color.a -= 4;         // Decrement alpha: smoke fades
-				if (circularBuffer->buffer[i].color.a < 4)      // If alpha transparent, particle dies
-                    circularBuffer->buffer[i].alive = false;
-                break;
+				
+                // If alpha transparent, particle dies
+                if (circularBuffer->buffer[i].color.a < 4) circularBuffer->buffer[i].alive = false;
+            } break;
             case FIRE:
+            {
 				// Add a little horizontal oscillation to fire particles
                 circularBuffer->buffer[i].position.x += circularBuffer->buffer[i].velocity.x + cosf(circularBuffer->buffer[i].lifeTime*215.0f);
                 circularBuffer->buffer[i].velocity.y -= 0.05f;  // Upwards
                 circularBuffer->buffer[i].position.y += circularBuffer->buffer[i].velocity.y;
 				circularBuffer->buffer[i].radius -= 0.15f;      // Decrement radius: fire shrinks
 				circularBuffer->buffer[i].color.g -= 3;         // Decrement green: fire turns reddish starting from yellow
-				if (circularBuffer->buffer[i].radius <= 0.02f)  // If radius too small, particle dies
-                    circularBuffer->buffer[i].alive = false;
-                break;
+				
+                // If radius too small, particle dies
+                if (circularBuffer->buffer[i].radius <= 0.02f) circularBuffer->buffer[i].alive = false;
+            } break;
             default: break;
         }
 
 		// Disable particle when out of screen
         Vector2 center = circularBuffer->buffer[i].position;
 		float radius = circularBuffer->buffer[i].radius;
-        if ((center.x < -radius) || (center.x > screenWidth + radius) ||
-            (center.y < -radius) || (center.y > screenHeight + radius))
+
+        if ((center.x < -radius) || (center.x > (screenWidth + radius)) ||
+            (center.y < -radius) || (center.y > (screenHeight + radius)))
+        {
             circularBuffer->buffer[i].alive = false;
+        }
     }
 }
 
 static void UpdateCircularBuffer(CircularBuffer *circularBuffer)
 {
     // Update circular buffer: advance tail over dead particles
-    while ((circularBuffer->tail != circularBuffer->head) &&
-           !circularBuffer->buffer[circularBuffer->tail].alive)
+    while ((circularBuffer->tail != circularBuffer->head) && !circularBuffer->buffer[circularBuffer->tail].alive)
     {
         circularBuffer->tail = (circularBuffer->tail + 1)%MAX_PARTICLES;
 	}
