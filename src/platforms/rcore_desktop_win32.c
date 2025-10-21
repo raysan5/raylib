@@ -1136,17 +1136,17 @@ Image GetClipboardImage(void)
 // Show mouse cursor
 void ShowCursor(void)
 {
-    CORE.Input.Mouse.cursorHidden = false;
     SetCursor(LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
+    CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
-    // NOTE: we use SetCursor instead of ShowCursor because it makes it easy
-    // to only hide the cursor while it's inside the client area
-    CORE.Input.Mouse.cursorHidden = true;
+    // NOTE: We use SetCursor() instead of ShowCursor() because 
+    // it makes it easy to only hide the cursor while it's inside the client area
     SetCursor(NULL);
+    CORE.Input.Mouse.cursorHidden = true;
 }
 
 // Enables cursor (unlock cursor)
@@ -1346,7 +1346,7 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 
 // Initialize modern OpenGL context
-// NOTE: We need to create a dummy context first to query requried extensions
+// NOTE: We need to create a dummy context first to query required extensions
 HGLRC InitOpenGL(HWND hwnd, HDC hdc)
 {
     // First, create a dummy context to get WGL extensions
@@ -1621,8 +1621,7 @@ int InitPlatform(void)
 
     CORE.Window.ready = true;
 
-    // TODO: Should this function be called before or after drawing context is created? --> After swInit() called!
-    //UpdateWindowSize(UPDATE_WINDOW_FIRST, platform.hwnd, platform.appScreenWidth, platform.appScreenHeight, platform.desiredFlags);
+    // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 
     CORE.Window.render.width = CORE.Window.screen.width;
@@ -1887,6 +1886,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_SETCURSOR:
         {
+            // Called when mouse moves, enters/leaves window...
             if (LOWORD(lparam) == HTCLIENT)
             {
                 SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
@@ -1972,6 +1972,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return result;
 }
 
+// Handle keyboard input event
 static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
 {
     KeyboardKey key = GetKeyFromWparam(wparam);
@@ -1991,12 +1992,15 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
     // TODO: Add key to the queue as well?
 }
 
+// Handle mouse button input event
 static void HandleMouseButton(int button, char state)
 {
+    // Register current mouse button state
     CORE.Input.Mouse.currentButtonState[button] = state;
     CORE.Input.Touch.currentTouchState[button] = state;
 }
 
+// Handle raw input event
 static void HandleRawInput(LPARAM lparam)
 {
     RAWINPUT input = { 0 };
@@ -2020,6 +2024,7 @@ static void HandleRawInput(LPARAM lparam)
     //if (CORE.Input.Mouse.currentPosition.y != 0) abort();
 }
 
+// Handle window resizing event
 static void HandleWindowResize(HWND hwnd, int *width, int *height)
 {
     if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return;
@@ -2051,10 +2056,8 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
         *height = screenHeight;
     }
 
-    CORE.Window.screenScale = MatrixScale(
-        (float)CORE.Window.render.width/CORE.Window.screen.width,
-        (float)CORE.Window.render.height/CORE.Window.screen.height,
-        1.0f);
+    CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
+        (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
 }
 
 // Update window style
