@@ -104,7 +104,6 @@ typedef struct {
     SDL_GameController *gamepad[MAX_GAMEPADS];
     SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids, they do not start from 0
     SDL_Cursor *cursor;
-    bool cursorRelative;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -1209,13 +1208,13 @@ void EnableCursor(void)
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
 #if defined(USING_VERSION_SDL3)
-    // SDL_ShowCursor() has been split into three functions: SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
+    // NOTE: SDL_ShowCursor() has been split into three functions: 
+    // SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
     SDL_ShowCursor();
 #else
     SDL_ShowCursor(SDL_ENABLE);
 #endif
 
-    platform.cursorRelative = false;
     CORE.Input.Mouse.cursorLocked = false;
 }
 
@@ -1224,7 +1223,6 @@ void DisableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    platform.cursorRelative = true;
     CORE.Input.Mouse.cursorLocked = true;
 }
 
@@ -1332,7 +1330,7 @@ void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove.y = 0;
 
     // Register previous mouse position
-    if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+    if (CORE.Input.Mouse.cursorLocked) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
     else CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     // Reset last gamepad button/axis registered state
@@ -1634,7 +1632,7 @@ void PollInputEvents(void)
             } break;
             case SDL_MOUSEMOTION:
             {
-                if (platform.cursorRelative)
+                if (CORE.Input.Mouse.cursorLocked)
                 {
                     CORE.Input.Mouse.currentPosition.x = (float)event.motion.xrel;
                     CORE.Input.Mouse.currentPosition.y = (float)event.motion.yrel;
