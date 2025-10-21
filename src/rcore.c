@@ -620,6 +620,70 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 //void EnableCursor(void)
 //void DisableCursor(void)
 
+void ClearMonitorProfile(MonitorProfile *profile) {
+    if(profile != NULL){
+        if(profile->resolutions!=NULL){
+            free(profile->resolutions);
+        }
+        free(profile);
+    }
+}
+
+MonitorProfile *GetMonitorProfile(unsigned int monitor_id) {
+#if defined(PLATFORM_DESKTOP_GLFW)
+    int count;
+    GLFWmonitor **monitors = glfwGetMonitors(&count);
+    if (
+        count < monitor_id || 
+        monitors == NULL || 
+        monitors[monitor_id] == NULL
+    ) { return NULL; }
+    const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor_id], &count);
+    const GLFWvidmode* currentMode = glfwGetVideoMode(monitors[monitor_id]);
+    if (
+        count == 0 || 
+        modes == NULL || 
+        currentMode == NULL
+    ) { return NULL; }
+    MonitorProfile *profile = malloc(sizeof(MonitorProfile));
+    profile->monitor_id = monitor_id;
+    int actual_count = 0, idx;
+    const int 
+        max_rr = currentMode->refreshRate,
+        max_rb = currentMode->redBits,
+        max_bb = currentMode->blueBits,
+        max_gb = currentMode->greenBits;
+    for (idx = 0; idx < count; idx++) {
+        const GLFWvidmode mode = modes[idx];
+        if (
+            mode.refreshRate != max_rr ||
+            mode.greenBits != max_gb ||
+            mode.blueBits != max_bb ||
+            mode.redBits != max_rb
+        ) { continue; }
+        actual_count++;
+    }
+    profile->resolution_count = actual_count;
+    profile->resolutions = calloc(actual_count, sizeof(MonitorResolution));
+    int filtered_idx = 0;
+    for (idx = 0; idx < count; idx++) {
+        const GLFWvidmode mode = modes[idx];
+        if (
+            mode.refreshRate != max_rr ||
+            mode.greenBits != max_gb ||
+            mode.blueBits != max_bb ||
+            mode.redBits != max_rb
+        ) { continue; }
+        profile->resolutions[filtered_idx].width = mode.width;
+        profile->resolutions[filtered_idx].height = mode.height;
+        filtered_idx++;
+    }
+    return profile;
+#else
+    return NULL;
+#endif
+}
+
 // Initialize window and OpenGL context
 void InitWindow(int width, int height, const char *title)
 {

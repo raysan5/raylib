@@ -956,6 +956,17 @@ typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataS
 typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, const char *text); // FileIO: Save text data
 
+typedef struct{
+    unsigned int width;
+    unsigned int height;
+} MonitorResolution;
+
+typedef struct {
+    unsigned int monitor_id;
+    unsigned int resolution_count;
+    MonitorResolution *resolutions;
+}MonitorProfile;
+
 //------------------------------------------------------------------------------------
 // Global Variables Definition
 //------------------------------------------------------------------------------------
@@ -1011,6 +1022,8 @@ RLAPI int GetMonitorHeight(int monitor);                          // Get specifi
 RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get specified monitor physical width in millimetres
 RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get specified monitor physical height in millimetres
 RLAPI int GetMonitorRefreshRate(int monitor);                     // Get specified monitor refresh rate
+RLAPI MonitorProfile* GetMonitorProfile(unsigned int monitor_id); // Get monitor profiles
+RLAPI void ClearMonitorProfile(MonitorProfile* profile);          // Destruct monitor profile object
 RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
 RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window scale DPI factor
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the specified monitor
