@@ -2524,7 +2524,7 @@ int MakeDirectory(const char *dirPath)
     // Create final directory
     if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
     RL_FREE(pathcpy);
-    
+
     // In case something failed and requested directory
     // was not successfully created, return -1
     if (!DirectoryExists(dirPath)) return -1;
@@ -3148,7 +3148,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
         unsigned char *block = buffer + (blockN*64);
         unsigned int w[64];
         for (int i = 0; i < 16; i++)
-        {         
+        {
             w[i] =
                 ((unsigned int)block[i*4 + 0] << 24) |
                 ((unsigned int)block[i*4 + 1] << 16) |

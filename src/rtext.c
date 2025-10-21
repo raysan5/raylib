@@ -1701,9 +1701,9 @@ char *GetTextBetween(const char *text, const char *begin, const char *end)
 char *TextReplace(const char *text, const char *search, const char *replacement)
 {
     char *result = NULL;
-    
+
     if (!text || !search) return NULL; // Sanity check
-    
+
     char *insertPoint = NULL;   // Next insert point
     char *temp = NULL;          // Temp pointer
     int searchLen = 0;          // Search string length of (the string to remove)
@@ -1753,7 +1753,7 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
     char *result = NULL;
 
     if (!text || !begin || !end) return NULL; // Sanity check
-    
+
     int beginIndex = TextFindIndex(text, begin);
 
     if (beginIndex > -1)

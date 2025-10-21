@@ -64,7 +64,7 @@ int main(void)
             if (lines[i][j] == ' ')
             {
                 // Making a C Style string by adding a '\0' at the required location so that we can use the MeasureText function
-                lines[i][j] = '\0'; 
+                lines[i][j] = '\0';
 
                 // Checking if the text has crossed the wrapWidth, then going back and inserting a newline
                 if (MeasureText(lines[i] + lastWrapStart, fontSize) > wrapWidth)
@@ -112,8 +112,8 @@ int main(void)
         cam.target.y -= scroll*fontSize*1.5f;   // Choosing an arbitrary speed for scroll
 
         if (cam.target.y < 0) cam.target.y = 0;  // Snapping to 0 if we go too far back
-    
-        // Ensuring that the camera does not scroll past all text 
+
+        // Ensuring that the camera does not scroll past all text
         if (cam.target.y > textHeight - screenHeight + textTop)
             cam.target.y = textHeight - screenHeight + textTop;
 
@@ -133,10 +133,10 @@ int main(void)
                 {
                     // Each time we go through and calculate the height of the text to move the cursor appropriately
                     Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], fontSize, 2);
-                    
+
                     DrawText(lines[i], 10, t, fontSize, RED);
 
-                    // Inserting extra space for real newlines, 
+                    // Inserting extra space for real newlines,
                     // wrapped lines are rendered closer together
                     t += size.y + 10;
                 }
