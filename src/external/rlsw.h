@@ -1728,7 +1728,7 @@ static inline void sw_framebuffer_blit_to_##name(                               
     int xSrc, int ySrc, int wSrc, int hSrc,                                     \
     DST_PTR_T *dst)                                                             \
 {                                                                               \
-    const uint8_t *srcBase = (uint8_t*)RLSW.framebuffer.color;                  \
+    const uint8_t *srcBase = (uint8_t *)RLSW.framebuffer.color;                  \
     int fbWidth = RLSW.framebuffer.width;                                       \
                                                                                 \
     uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                  \
@@ -3367,7 +3367,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         {                                                               \
             int offset = (y1 + i)*fbWidth + (x1 + (j >> 16));           \
             void *dptr = sw_framebuffer_get_depth_addr(dBuffer, offset); \
-            void* cptr;                                                 \
+            void *cptr;                                                 \
                                                                         \
             if (ENABLE_DEPTH_TEST)                                      \
             {                                                           \
@@ -3404,7 +3404,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         {                                                               \
             int offset = (y1 + (j >> 16))*fbWidth + (x1 + i);           \
             void *dptr = sw_framebuffer_get_depth_addr(dBuffer, offset); \
-            void* cptr;                                                 \
+            void *cptr;                                                 \
                                                                         \
             if (ENABLE_DEPTH_TEST)                                      \
             {                                                           \
@@ -3830,10 +3830,10 @@ bool swInit(int w, int h)
     swViewport(0, 0, w, h);
     swScissor(0, 0, w, h);
 
-    RLSW.loadedTextures = (sw_texture_t*)SW_MALLOC(SW_MAX_TEXTURES*sizeof(sw_texture_t));
+    RLSW.loadedTextures = (sw_texture_t *)SW_MALLOC(SW_MAX_TEXTURES*sizeof(sw_texture_t));
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
-    RLSW.freeTextureIds = (uint32_t*)SW_MALLOC(SW_MAX_TEXTURES*sizeof(uint32_t));
+    RLSW.freeTextureIds = (uint32_t *)SW_MALLOC(SW_MAX_TEXTURES*sizeof(uint32_t));
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
     RLSW.clearColor[0] = 0.0f;
@@ -3943,19 +3943,19 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
 
     switch (pFormat)
     {
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: sw_framebuffer_copy_to_GRAYALPHA(x, y, w, h, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: sw_framebuffer_copy_to_GRAYALPHA(x, y, w, h, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5: sw_framebuffer_copy_to_R5G6B5(x, y, w, h, (uint16_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_framebuffer_copy_to_R8G8B8(x, y, w, h, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_copy_to_R5G5B5A1(x, y, w, h, (uint16_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_copy_to_R4G4B4A4(x, y, w, h, (uint16_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_framebuffer_copy_to_R32(x, y, w, h, (float*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_framebuffer_copy_to_R32G32B32(x, y, w, h, (float*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: sw_framebuffer_copy_to_R32G32B32A32(x, y, w, h, (float*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_framebuffer_copy_to_R16(x, y, w, h, (sw_half_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_framebuffer_copy_to_R16G16B16(x, y, w, h, (sw_half_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_framebuffer_copy_to_R16G16B16A16(x, y, w, h, (sw_half_t*)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: sw_framebuffer_copy_to_GRAYALPHA(x, y, w, h, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: sw_framebuffer_copy_to_GRAYALPHA(x, y, w, h, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5: sw_framebuffer_copy_to_R5G6B5(x, y, w, h, (uint16_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_framebuffer_copy_to_R8G8B8(x, y, w, h, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_copy_to_R5G5B5A1(x, y, w, h, (uint16_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_copy_to_R4G4B4A4(x, y, w, h, (uint16_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_framebuffer_copy_to_R32(x, y, w, h, (float *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_framebuffer_copy_to_R32G32B32(x, y, w, h, (float *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: sw_framebuffer_copy_to_R32G32B32A32(x, y, w, h, (float *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_framebuffer_copy_to_R16(x, y, w, h, (sw_half_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_framebuffer_copy_to_R16G16B16(x, y, w, h, (sw_half_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_framebuffer_copy_to_R16G16B16A16(x, y, w, h, (sw_half_t *)pixels); break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
@@ -3984,19 +3984,19 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
 
     switch (pFormat)
     {
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: sw_framebuffer_blit_to_GRAYALPHA(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: sw_framebuffer_blit_to_GRAYALPHA(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5: sw_framebuffer_blit_to_R5G6B5(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_framebuffer_blit_to_R8G8B8(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_blit_to_R5G5B5A1(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_blit_to_R4G4B4A4(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_blit_to_R8G8B8A8(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_framebuffer_blit_to_R32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_framebuffer_blit_to_R32G32B32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (float*)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: sw_framebuffer_blit_to_GRAYALPHA(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: sw_framebuffer_blit_to_GRAYALPHA(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5: sw_framebuffer_blit_to_R5G6B5(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_framebuffer_blit_to_R8G8B8(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_blit_to_R5G5B5A1(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_blit_to_R4G4B4A4(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_blit_to_R8G8B8A8(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_framebuffer_blit_to_R32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_framebuffer_blit_to_R32G32B32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (float *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: sw_framebuffer_blit_to_R32G32B32A32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (float*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_framebuffer_blit_to_R16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_framebuffer_blit_to_R16G16B16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_framebuffer_blit_to_R16G16B16A16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t*)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_framebuffer_blit_to_R16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_framebuffer_blit_to_R16G16B16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t *)pixels); break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_framebuffer_blit_to_R16G16B16A16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t *)pixels); break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
@@ -4751,9 +4751,9 @@ void swBindArray(SWarray type, void *buffer)
 {
     switch (type)
     {
-        case SW_VERTEX_ARRAY: RLSW.array.positions = (float*)buffer; break;
-        case SW_TEXTURE_COORD_ARRAY: RLSW.array.texcoords = (float*)buffer; break;
-        case SW_COLOR_ARRAY: RLSW.array.colors = (uint8_t*)buffer; break;
+        case SW_VERTEX_ARRAY: RLSW.array.positions = (float *)buffer; break;
+        case SW_TEXTURE_COORD_ARRAY: RLSW.array.texcoords = (float *)buffer; break;
+        case SW_COLOR_ARRAY: RLSW.array.colors = (uint8_t *)buffer; break;
         default: break;
     }
 }
