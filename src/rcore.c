@@ -26,7 +26,8 @@
 *           - Linux DRM subsystem (KMS mode)
 *       > PLATFORM_ANDROID:
 *           - Android (ARM, ARM64)
-*
+*       > PLATFORM_DESKTOP_WIN32 (Native Win32):
+*           - Windows (Win32, Win64)
 *   CONFIGURATION:
 *       #define SUPPORT_DEFAULT_FONT (default)
 *           Default font is loaded on window initialization to be available for the user to render simple text.
@@ -161,7 +162,10 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
+#if defined(_WIN32)
+    #if !defined(MAX_PATH)
+        #define MAX_PATH 260
+    #endif
 
 struct HINSTANCE__;
 #if defined(__cplusplus)
