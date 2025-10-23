@@ -619,6 +619,79 @@ SWAPI void swBindTexture(uint32_t id);
 #define SW_COLOR_PIXEL_SIZE     (SW_COLOR_BUFFER_BITS/8)
 #define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS/8)
 
+#if (SW_COLOR_BUFFER_BITS == 8)
+    #define COLOR_TYPE uint8_t
+    #define COLOR_IS_PACKED 1
+    #define PACK_COLOR(r,g,b) ((((uint8_t)((r)*7+0.5f))&0x07)<<5 | (((uint8_t)((g)*7+0.5f))&0x07)<<2 | ((uint8_t)((b)*3+0.5f))&0x03)
+    #define UNPACK_R(p) (((p)>>5)&0x07)
+    #define UNPACK_G(p) (((p)>>2)&0x07)
+    #define UNPACK_B(p) ((p)&0x03)
+    #define SCALE_R(v) ((v)*255+3)/7
+    #define SCALE_G(v) ((v)*255+3)/7
+    #define SCALE_B(v) ((v)*255+1)/3
+    #define TO_FLOAT_R(v) ((v)*(1.0f/7.0f))
+    #define TO_FLOAT_G(v) ((v)*(1.0f/7.0f))
+    #define TO_FLOAT_B(v) ((v)*(1.0f/3.0f))
+#elif (SW_COLOR_BUFFER_BITS == 16)
+    #define COLOR_TYPE uint16_t
+    #define COLOR_IS_PACKED 1
+    #define PACK_COLOR(r,g,b) ((((uint16_t)((r)*31+0.5f))&0x1F)<<11 | (((uint16_t)((g)*63+0.5f))&0x3F)<<5 | ((uint16_t)((b)*31+0.5f))&0x1F)
+    #define UNPACK_R(p) (((p)>>11)&0x1F)
+    #define UNPACK_G(p) (((p)>>5)&0x3F)
+    #define UNPACK_B(p) ((p)&0x1F)
+    #define SCALE_R(v) ((v)*255+15)/31
+    #define SCALE_G(v) ((v)*255+31)/63
+    #define SCALE_B(v) ((v)*255+15)/31
+    #define TO_FLOAT_R(v) ((v)*(1.0f/31.0f))
+    #define TO_FLOAT_G(v) ((v)*(1.0f/63.0f))
+    #define TO_FLOAT_B(v) ((v)*(1.0f/31.0f))
+#else // 24 bits
+    #define COLOR_TYPE uint8_t
+    #define COLOR_IS_PACKED 0
+    #define PACK_R(r) ((uint8_t)((r)*255.0f))
+    #define PACK_G(g) ((uint8_t)((g)*255.0f))
+    #define PACK_B(b) ((uint8_t)((b)*255.0f))
+    #define UNPACK_R(p) (p)[0]
+    #define UNPACK_G(p) (p)[1]
+    #define UNPACK_B(p) (p)[2]
+    #define SCALE_R(v) (v)
+    #define SCALE_G(v) (v)
+    #define SCALE_B(v) (v)
+    #define TO_FLOAT_R(v) ((v)*(1.0f/255.0f))
+    #define TO_FLOAT_G(v) ((v)*(1.0f/255.0f))
+    #define TO_FLOAT_B(v) ((v)*(1.0f/255.0f))
+#endif
+
+#if (SW_DEPTH_BUFFER_BITS == 8)
+    #define DEPTH_TYPE uint8_t
+    #define DEPTH_IS_PACKED 1
+    #define DEPTH_MAX UINT8_MAX
+    #define DEPTH_SCALE (1.0f/UINT8_MAX)
+    #define PACK_DEPTH(d) ((DEPTH_TYPE)((d)*DEPTH_MAX))
+    #define UNPACK_DEPTH(p) (p)
+#elif (SW_DEPTH_BUFFER_BITS == 16)
+    #define DEPTH_TYPE uint16_t
+    #define DEPTH_IS_PACKED 1
+    #define DEPTH_MAX UINT16_MAX
+    #define DEPTH_SCALE (1.0f/UINT16_MAX)
+    #define PACK_DEPTH(d) ((DEPTH_TYPE)((d)*DEPTH_MAX))
+    #define UNPACK_DEPTH(p) (p)
+#else // 24 bits
+    #define DEPTH_TYPE uint8_t
+    #define DEPTH_IS_PACKED 0
+    #define DEPTH_MAX 0xFFFFFF
+    #define DEPTH_SCALE (1.0f/0xFFFFFF)
+    #define PACK_DEPTH_0(d) (((uint32_t)((d)*DEPTH_MAX)>>16)&0xFF)
+    #define PACK_DEPTH_1(d) (((uint32_t)((d)*DEPTH_MAX)>>8)&0xFF)
+    #define PACK_DEPTH_2(d) ((uint32_t)((d)*DEPTH_MAX)&0xFF)
+    #define UNPACK_DEPTH(p) (((p)[0]<<16)|((p)[1]<<8)|(p)[2])
+#endif
+
+#define GET_COLOR_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset) * SW_COLOR_PIXEL_SIZE))
+#define GET_DEPTH_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset) * SW_DEPTH_PIXEL_SIZE))
+#define INC_COLOR_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_COLOR_PIXEL_SIZE))
+#define INC_DEPTH_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_DEPTH_PIXEL_SIZE))
+
 #define SW_STATE_CHECK(flags)   ((RLSW.stateFlags & (flags)) == (flags))
 
 #define SW_STATE_SCISSOR_TEST   (1 << 0)
@@ -999,7 +1072,11 @@ static inline bool sw_framebuffer_load(int w, int h)
     if (RLSW.framebuffer.color == NULL) return false;
 
     RLSW.framebuffer.depth = SW_MALLOC(SW_DEPTH_PIXEL_SIZE*size);
-    if (RLSW.framebuffer.depth == NULL) return false;
+    if (RLSW.framebuffer.depth == NULL)
+    {
+        SW_FREE(RLSW.framebuffer.color);
+        return false;
+    }
 
     RLSW.framebuffer.width = w;
     RLSW.framebuffer.height = h;
@@ -1019,11 +1096,15 @@ static inline bool sw_framebuffer_resize(int w, int h)
         return true;
     }
 
-    void *newColor = SW_REALLOC(RLSW.framebuffer.color, newSize);
+    void *newColor = SW_REALLOC(RLSW.framebuffer.color, SW_COLOR_PIXEL_SIZE*newSize);
     if (newColor == NULL) return false;
 
-    void *newDepth = SW_REALLOC(RLSW.framebuffer.depth, newSize);
-    if (newDepth == NULL) return false;
+    void *newDepth = SW_REALLOC(RLSW.framebuffer.depth, SW_DEPTH_PIXEL_SIZE*newSize);
+    if (newDepth == NULL)
+    {
+        SW_FREE(newColor);
+        return false;
+    }
 
     RLSW.framebuffer.color = newColor;
     RLSW.framebuffer.depth = newDepth;
@@ -1035,314 +1116,221 @@ static inline bool sw_framebuffer_resize(int w, int h)
     return true;
 }
 
-static inline void *sw_framebuffer_get_color_addr(const void *ptr, uint32_t offset)
-{
-    return (uint8_t *)ptr + offset*SW_COLOR_PIXEL_SIZE;
-}
-
-static inline void sw_framebuffer_inc_color_addr(void **ptr)
-{
-    *ptr = (void *)(((uint8_t *)*ptr) + SW_COLOR_PIXEL_SIZE);
-}
-
-static inline void sw_framebuffer_inc_const_color_addr(const void **ptr)
-{
-    *ptr = (const void *)(((const uint8_t *)*ptr) + SW_COLOR_PIXEL_SIZE);
-}
-
-static inline void *sw_framebuffer_get_depth_addr(const void *ptr, uint32_t offset)
-{
-    return (uint8_t *)ptr + offset*SW_DEPTH_PIXEL_SIZE;
-}
-
-static inline void sw_framebuffer_inc_depth_addr(void* *ptr)
-{
-    *ptr = (void*)(((uint8_t *)*ptr) + SW_DEPTH_PIXEL_SIZE);
-}
-
-#if (SW_COLOR_BUFFER_BITS == 8)     // RGB - (3:3:2)
 static inline void sw_framebuffer_read_color(float dst[4], const void *src)
 {
-    uint8_t pixel = ((uint8_t *)src)[0];
-
-    dst[0] = ((pixel >> 5) & 0x07)*(1.0f/7.0f);
-    dst[1] = ((pixel >> 2) & 0x07)*(1.0f/7.0f);
-    dst[2] = (pixel & 0x03)*(1.0f/3.0f);
+#if COLOR_IS_PACKED
+    COLOR_TYPE pixel = ((COLOR_TYPE*)src)[0];
+    dst[0] = TO_FLOAT_R(UNPACK_R(pixel));
+    dst[1] = TO_FLOAT_G(UNPACK_G(pixel));
+    dst[2] = TO_FLOAT_B(UNPACK_B(pixel));
+#else
+    const COLOR_TYPE *p = (const COLOR_TYPE*)src;
+    dst[0] = TO_FLOAT_R(UNPACK_R(p));
+    dst[1] = TO_FLOAT_G(UNPACK_G(p));
+    dst[2] = TO_FLOAT_B(UNPACK_B(p));
+#endif
     dst[3] = 1.0f;
 }
 
 static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
 {
-    uint8_t pixel = ((const uint8_t *)src)[0];
-
-    uint8_t r = (pixel >> 5) & 0x07;
-    uint8_t g = (pixel >> 2) & 0x07;
-    uint8_t b = pixel & 0x03;
-
-    dst[0] = (r*255 + 3)/7;
-    dst[1] = (g*255 + 3)/7;
-    dst[2] = (b*255 + 1)/3;
+#if COLOR_IS_PACKED
+    COLOR_TYPE pixel = ((COLOR_TYPE*)src)[0];
+    dst[0] = SCALE_R(UNPACK_R(pixel));
+    dst[1] = SCALE_G(UNPACK_G(pixel));
+    dst[2] = SCALE_B(UNPACK_B(pixel));
+#else
+    const COLOR_TYPE *p = (const COLOR_TYPE*)src;
+    dst[0] = SCALE_R(UNPACK_R(p));
+    dst[1] = SCALE_G(UNPACK_G(p));
+    dst[2] = SCALE_B(UNPACK_B(p));
+#endif
     dst[3] = 255;
 }
 
 static inline void sw_framebuffer_write_color(void *dst, const float color[3])
 {
-    uint8_t r = ((uint8_t)(color[0]*UINT8_MAX) >> 5) & 0x07;
-    uint8_t g = ((uint8_t)(color[1]*UINT8_MAX) >> 5) & 0x07;
-    uint8_t b = ((uint8_t)(color[2]*UINT8_MAX) >> 6) & 0x03;
-
-    ((uint8_t *)dst)[0] = (r << 5) | (g << 2) | b;
+#if COLOR_IS_PACKED
+    ((COLOR_TYPE*)dst)[0] = PACK_COLOR(color[0], color[1], color[2]);
+#else
+    COLOR_TYPE *p = (COLOR_TYPE*)dst;
+    p[0] = PACK_R(color[0]);
+    p[1] = PACK_G(color[1]);
+    p[2] = PACK_B(color[2]);
+#endif
 }
 
 static inline void sw_framebuffer_fill_color(void *ptr, int size, const float color[3])
 {
-    uint8_t r8 = (uint8_t)(color[0]*7.0f + 0.5f);
-    uint8_t g8 = (uint8_t)(color[1]*7.0f + 0.5f);
-    uint8_t b8 = (uint8_t)(color[2]*3.0f + 0.5f);
-
-    uint8_t packedColor = ((r8 & 0x07) << 5) | ((g8 & 0x07) << 2) | (b8 & 0x03);
-
-    uint8_t *p = (uint8_t *)ptr;
-
+#if COLOR_IS_PACKED
+    COLOR_TYPE packed = PACK_COLOR(color[0], color[1], color[2]);
+    COLOR_TYPE *p = (COLOR_TYPE*)ptr;
+#else
+    COLOR_TYPE r = PACK_R(color[0]);
+    COLOR_TYPE g = PACK_G(color[1]);
+    COLOR_TYPE b = PACK_B(color[2]);
+    COLOR_TYPE *p = (COLOR_TYPE*)ptr;
+#endif
+    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
+        int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-            uint8_t *curPtr = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
-            for (int xCount = 0; xCount < wScissor; xCount++) *curPtr++ = packedColor;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < size; i++) *p++ = packedColor;
-    }
-}
-
-#elif (SW_COLOR_BUFFER_BITS == 16)      // RGB - (5:6:5)
-
-static inline void sw_framebuffer_read_color(float dst[4], const void *src)
-{
-    uint16_t pixel = ((uint16_t *)src)[0];
-
-    dst[0] = ((pixel >> 11) & 0x1F)*(1.0f/31.0f);
-    dst[1] = ((pixel >> 5) & 0x3F)*(1.0f/63.0f);
-    dst[2] = (pixel & 0x1F)*(1.0f/31.0f);
-    dst[3] = 1.0f;
-}
-
-static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
-{
-    uint16_t pixel = ((const uint16_t *)src)[0];
-
-    uint8_t r = (pixel >> 11) & 0x1F;
-    uint8_t g = (pixel >> 5)  & 0x3F;
-    uint8_t b = pixel & 0x1F;
-
-    dst[0] = (r*255 + 15)/31;
-    dst[1] = (g*255 + 31)/63;
-    dst[2] = (b*255 + 15)/31;
-    dst[3] = 255;
-}
-
-static inline void sw_framebuffer_write_color(void *dst, const float color[3])
-{
-    uint8_t r = (uint8_t)(color[0]*31.0f + 0.5f) & 0x1F;
-    uint8_t g = (uint8_t)(color[1]*63.0f + 0.5f) & 0x3F;
-    uint8_t b = (uint8_t)(color[2]*31.0f + 0.5f) & 0x1F;
-
-    ((uint16_t *)dst)[0] = (r << 11) | (g << 5) | b;
-}
-
-static inline void sw_framebuffer_fill_color(void *ptr, int size, const float color[3])
-{
-    uint16_t r16 = (uint16_t)(color[0]*31.0f + 0.5f);
-    uint16_t g_16 = (uint16_t)(color[1]*63.0f + 0.5f);
-    uint16_t b_16 = (uint16_t)(color[2]*31.0f + 0.5f);
-
-    uint16_t packedColor = ((r16 & 0x1F) << 11) | ((g_16 & 0x3F) << 5) | (b_16 & 0x1F);
-
-    uint16_t *p = (uint16_t *)ptr;
-
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
-    {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
-        {
-            uint16_t *curPtr = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
-            for (int xCount = 0; xCount < wScissor; xCount++) *curPtr++ = packedColor;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < size; i++) *p++ = packedColor;
-    }
-}
-
-#elif (SW_COLOR_BUFFER_BITS == 24)      // RGB - (8:8:8)
-
-static inline void sw_framebuffer_read_color(float dst[4], const void *src)
-{
-    dst[0] = ((uint8_t *)src)[0]*(1.0f/255.0f);
-    dst[1] = ((uint8_t *)src)[1]*(1.0f/255.0f);
-    dst[2] = ((uint8_t *)src)[2]*(1.0f/255.0f);
-    dst[3] = 1.0f;
-}
-
-static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
-{
-    dst[0] = ((uint8_t *)src)[0];
-    dst[1] = ((uint8_t *)src)[1];
-    dst[2] = ((uint8_t *)src)[2];
-    dst[3] = 255;
-}
-
-static inline void sw_framebuffer_write_color(void *dst, const float color[3])
-{
-    ((uint8_t *)dst)[0] = (uint8_t)(color[0]*UINT8_MAX);
-    ((uint8_t *)dst)[1] = (uint8_t)(color[1]*UINT8_MAX);
-    ((uint8_t *)dst)[2] = (uint8_t)(color[2]*UINT8_MAX);
-}
-
-static inline void sw_framebuffer_fill_color(void *ptr, int size, const float color[3])
-{
-    uint8_t r = (uint8_t)(color[0]*255.0f);
-    uint8_t g = (uint8_t)(color[1]*255.0f);
-    uint8_t b = (uint8_t)(color[2]*255.0f);
-
-    uint8_t *p = (uint8_t *)ptr;
-
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
-    {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
-        {
-            uint8_t *curPtr = p + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
-            for (int xCount = 0; xCount < wScissor; xCount++)
+#if COLOR_IS_PACKED
+            COLOR_TYPE *row = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int x = 0; x < w; x++) *row++ = packed;
+#else
+            COLOR_TYPE *row = p + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
+            for (int x = 0; x < w; x++)
             {
-                *curPtr++ = r;
-                *curPtr++ = g;
-                *curPtr++ = b;
+                *row++ = r;
+                *row++ = g;
+                *row++ = b;
             }
+#endif
         }
     }
     else
     {
+#if COLOR_IS_PACKED
+        for (int i = 0; i < size; i++) *p++ = packed;
+#else
         for (int i = 0; i < size; i++)
         {
             *p++ = r;
             *p++ = g;
             *p++ = b;
         }
+#endif
     }
 }
 
-#endif // SW_COLOR_BUFFER_BITS
-
-#if (SW_DEPTH_BUFFER_BITS == 8)
-
 static inline float sw_framebuffer_read_depth(const void *src)
 {
-    return (float)((uint8_t *)src)[0]*(1.0f/UINT8_MAX);
+#if DEPTH_IS_PACKED
+    return ((DEPTH_TYPE*)src)[0]*DEPTH_SCALE;
+#else
+    const DEPTH_TYPE *p = (const DEPTH_TYPE*)src;
+    uint32_t d = UNPACK_DEPTH(p);
+    return d * DEPTH_SCALE;
+#endif
 }
 
 static inline void sw_framebuffer_write_depth(void *dst, float depth)
 {
-    ((uint8_t *)dst)[0] = (uint8_t)(depth*UINT8_MAX);
+#if DEPTH_IS_PACKED
+    ((DEPTH_TYPE*)dst)[0] = PACK_DEPTH(depth);
+#else
+    DEPTH_TYPE *p = (DEPTH_TYPE*)dst;
+    p[0] = PACK_DEPTH_0(depth);
+    p[1] = PACK_DEPTH_1(depth);
+    p[2] = PACK_DEPTH_2(depth);
+#endif
 }
 
 static inline void sw_framebuffer_fill_depth(void *ptr, int size, float value)
 {
-    uint8_t d8  = (uint8_t)(value*UINT8_MAX);
-    uint8_t *p = (uint8_t *)ptr;
-
+#if DEPTH_IS_PACKED
+    DEPTH_TYPE d = PACK_DEPTH(value);
+    DEPTH_TYPE *p = (DEPTH_TYPE*)ptr;
+#else
+    DEPTH_TYPE d0 = PACK_DEPTH_0(value);
+    DEPTH_TYPE d1 = PACK_DEPTH_1(value);
+    DEPTH_TYPE d2 = PACK_DEPTH_2(value);
+    DEPTH_TYPE *p = (DEPTH_TYPE*)ptr;
+#endif
+    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
+        int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-            uint8_t *curPtr = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
-            for (int xCount = 0; xCount < wScissor; xCount++) *curPtr++ = d8;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < size; i++) *p++ = d8;
-    }
-}
-
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-
-static inline float sw_framebuffer_read_depth(const void *src)
-{
-    return (float)((uint16_t *)src)[0]*(1.0f/UINT16_MAX);
-}
-
-static inline void sw_framebuffer_write_depth(void *dst, float depth)
-{
-    ((uint16_t *)dst)[0] = (uint16_t)(depth*UINT16_MAX);
-}
-
-static inline void sw_framebuffer_fill_depth(void *ptr, int size, float value)
-{
-    uint16_t d16  = (uint16_t)(value*UINT16_MAX);
-    uint16_t *p = (uint16_t *)ptr;
-
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
-    {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
-        {
-            uint16_t *curPtr = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
-            for (int xCount = 0; xCount < wScissor; xCount++) *curPtr++ = d16;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < size; i++) *p++ = d16;
-    }
-}
-
-#elif (SW_DEPTH_BUFFER_BITS == 24)
-
-static inline float sw_framebuffer_read_depth(const void *src)
-{
-    uint32_t depth24 = (((uint8_t *)src)[0] << 16) |
-                       (((uint8_t *)src)[1] << 8) |
-                       ((uint8_t *)src)[2];
-
-    return depth24/(float)0xFFFFFF;
-}
-
-static inline void sw_framebuffer_write_depth(void *dst, float depth)
-{
-    uint32_t depth24 = (uint32_t)(depth*0xFFFFFF);
-
-    ((uint8_t *)dst)[0] = (depth24 >> 16) & 0xFF;
-    ((uint8_t *)dst)[1] = (depth24 >> 8) & 0xFF;
-    ((uint8_t *)dst)[2] = depth24 & 0xFF;
-}
-
-static inline void sw_framebuffer_fill_depth(void *ptr, int size, float value)
-{
-    uint32_t d32 = (uint32_t)(value*UINT32_MAX);
-    uint8_t d_byte0 = (uint8_t)((d32 >> 16) & 0xFF);
-    uint8_t d_byte1 = (uint8_t)((d32 >> 8) & 0xFF);
-    uint8_t d_byte2 = (uint8_t)(d32 & 0xFF);
-
-    uint8_t *p = (uint8_t *)ptr;
-
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
-    {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
-        {
-            uint8_t *curPtr = p + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
-            for (int xCount = 0; xCount < wScissor; xCount++)
+#if DEPTH_IS_PACKED
+            DEPTH_TYPE *row = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int x = 0; x < w; x++) *row++ = d;
+#else
+            DEPTH_TYPE *row = p + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
+            for (int x = 0; x < w; x++)
             {
-                *curPtr++ = d_byte0;
-                *curPtr++ = d_byte1;
-                *curPtr++ = d_byte2;
+                *row++ = d0;
+                *row++ = d1;
+                *row++ = d2;
+            }
+#endif
+        }
+    }
+    else
+    {
+#if DEPTH_IS_PACKED
+        for (int i = 0; i < size; i++) *p++ = d;
+#else
+        for (int i = 0; i < size; i++)
+        {
+            *p++ = d0;
+            *p++ = d1;
+            *p++ = d2;
+        }
+#endif
+    }
+}
+
+static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size, float color[4], float depth)
+{
+#if COLOR_IS_PACKED
+    COLOR_TYPE packedColor = PACK_COLOR(color[0], color[1], color[2]);
+    COLOR_TYPE *pColor = (COLOR_TYPE*)colorPtr;
+#else
+    COLOR_TYPE r = PACK_R(color[0]);
+    COLOR_TYPE g = PACK_G(color[1]);
+    COLOR_TYPE b = PACK_B(color[2]);
+    COLOR_TYPE *pColor = (COLOR_TYPE*)colorPtr;
+#endif
+
+#if DEPTH_IS_PACKED
+    DEPTH_TYPE d = PACK_DEPTH(depth);
+    DEPTH_TYPE *pDepth = (DEPTH_TYPE*)depthPtr;
+#else
+    DEPTH_TYPE d0 = PACK_DEPTH_0(depth);
+    DEPTH_TYPE d1 = PACK_DEPTH_1(depth);
+    DEPTH_TYPE d2 = PACK_DEPTH_2(depth);
+    DEPTH_TYPE *pDepth = (DEPTH_TYPE*)depthPtr;
+#endif
+    
+    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
+    {
+        int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
+        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
+        {
+#if COLOR_IS_PACKED
+            COLOR_TYPE *rowColor = pColor + y*RLSW.framebuffer.width + RLSW.scMin[0];
+#else
+            COLOR_TYPE *rowColor = pColor + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
+#endif
+
+#if DEPTH_IS_PACKED
+            DEPTH_TYPE *rowDepth = pDepth + y*RLSW.framebuffer.width + RLSW.scMin[0];
+#else
+            DEPTH_TYPE *rowDepth = pDepth + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
+#endif
+
+            for (int x = 0; x < w; x++)
+            {
+#if COLOR_IS_PACKED
+                *rowColor++ = packedColor;
+#else
+                *rowColor++ = r;
+                *rowColor++ = g;
+                *rowColor++ = b;
+#endif
+
+#if DEPTH_IS_PACKED
+                *rowDepth++ = d;
+#else
+                *rowDepth++ = d0;
+                *rowDepth++ = d1;
+                *rowDepth++ = d2;
+#endif
             }
         }
     }
@@ -1350,136 +1338,22 @@ static inline void sw_framebuffer_fill_depth(void *ptr, int size, float value)
     {
         for (int i = 0; i < size; i++)
         {
-            *p++ = d_byte0;
-            *p++ = d_byte1;
-            *p++ = d_byte2;
-        }
-    }
-}
-
-#endif // SW_DEPTH_BUFFER_BITS
-
-static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size, float color[4], float depth_value)
-{
-#if (SW_COLOR_BUFFER_BITS == 8)
-    // Calculate and pack 3:3:2 color
-    // Scale color components to the max value for each bit depth and round
-    uint8_t r8 = (uint8_t)(color[0]*7.0f + 0.5f);
-    uint8_t g8 = (uint8_t)(color[1]*7.0f + 0.5f);
-    uint8_t b8 = (uint8_t)(color[2]*3.0f + 0.5f);
-    // Pack the components into a single byte
-    uint8_t packedColor = ((r8 & 0x07) << 5) | ((g8 & 0x07) << 2) | (b8 & 0x03);
-    uint8_t *cptr = (uint8_t *)colorPtr;
-#elif (SW_COLOR_BUFFER_BITS == 16)
-    // Calculate and pack 5:6:5 color
-    // Scale color components to the max value for each bit depth and round
-    uint16_t r16 = (uint16_t)(color[0]*31.0f + 0.5f);
-    uint16_t g16 = (uint16_t)(color[1]*63.0f + 0.5f);
-    uint16_t b16 = (uint16_t)(color[2]*31.0f + 0.5f);
-    // Pack the components into a 16-bit value
-    uint16_t packedColor = ((r16 & 0x1F) << 11) | ((g16 & 0x3F) << 5) | (b16 & 0x1F);
-    uint16_t *cptr = (uint16_t *)colorPtr;
-#elif (SW_COLOR_BUFFER_BITS == 24)
-    // Calculate 8:8:8 color components
-    uint8_t r24 = (uint8_t)(color[0]*255.0f);
-    uint8_t g24 = (uint8_t)(color[1]*255.0f);
-    uint8_t b24 = (uint8_t)(color[2]*255.0f);
-    uint8_t *cptr = (uint8_t *)colorPtr;
+#if COLOR_IS_PACKED
+            *pColor++ = packedColor;
+#else
+            *pColor++ = r;
+            *pColor++ = g;
+            *pColor++ = b;
 #endif
 
-#if (SW_DEPTH_BUFFER_BITS == 8)
-    // Calculate 8-bit depth
-    uint8_t d8  = (uint8_t)(depth_value*UINT8_MAX);
-    uint8_t *dptr = (uint8_t *)depthPtr;
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-    // Calculate 16-bit depth
-    uint16_t d16  = (uint16_t)(depth_value*UINT16_MAX);
-    uint16_t *dptr = (uint16_t *)depthPtr;
-#elif (SW_DEPTH_BUFFER_BITS == 24)
-    // Calculate 24-bit depth and pre-calculate bytes
-    uint32_t d32 = (uint32_t)(depth_value*UINT32_MAX);
-    uint8_t dByte0 = (uint8_t)((d32 >> 16) & 0xFF);
-    uint8_t dByte1 = (uint8_t)((d32 >> 8) & 0xFF);
-    uint8_t dByte2 = (uint8_t)(d32 & 0xFF);
-    uint8_t *dptr = (uint8_t *)depthPtr;
+#if DEPTH_IS_PACKED
+            *pDepth++ = d;
+#else
+            *pDepth++ = d0;
+            *pDepth++ = d1;
+            *pDepth++ = d2;
 #endif
-
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
-    {
-        int wScissor = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
-        {
-            int rowStartIdx = y*RLSW.framebuffer.width + RLSW.scMin[0];
-
-            // Calculate starting pointers for the current row within the scissor rectangle
-        #if (SW_COLOR_BUFFER_BITS == 8)
-            uint8_t *curCPtr = cptr + rowStartIdx;
-        #elif (SW_COLOR_BUFFER_BITS == 16)
-            uint16_t *curCPtr = cptr + rowStartIdx;
-        #elif (SW_COLOR_BUFFER_BITS == 24)
-            uint8_t *curCPtr = cptr + 3*rowStartIdx;
-        #endif
-
-        #if (SW_DEPTH_BUFFER_BITS == 8)
-            uint8_t *curDPtr = dptr + rowStartIdx;
-        #elif (SW_DEPTH_BUFFER_BITS == 16)
-            uint16_t *curDPtr = dptr + rowStartIdx;
-        #elif (SW_DEPTH_BUFFER_BITS == 24)
-            uint8_t *curDPtr = dptr + 3*rowStartIdx;
-        #endif
-
-            // Fill the current row within the scissor rectangle
-            for (int xCount = 0; xCount < wScissor; xCount++)
-            {
-                // Write color
-            #if (SW_COLOR_BUFFER_BITS == 8)
-                *curCPtr++ = packedColor;
-            #elif (SW_COLOR_BUFFER_BITS == 16)
-                *curCPtr++ = packedColor;
-            #elif (SW_COLOR_BUFFER_BITS == 24)
-                *curCPtr++ = r24;
-                *curCPtr++ = g24;
-                *curCPtr++ = b24;
-            #endif
-
-                // Write depth
-            #if (SW_DEPTH_BUFFER_BITS == 8)
-                *curDPtr++ = d8;
-            #elif (SW_DEPTH_BUFFER_BITS == 16)
-                *curDPtr++ = d16;
-            #elif (SW_DEPTH_BUFFER_BITS == 24)
-                *curDPtr++ = dByte0;
-                *curDPtr++ = dByte1;
-                *curDPtr++ = dByte2;
-            #endif
-            }
         }
-        return;
-    }
-
-    for (int i = 0; i < size; i++)
-    {
-        // Write color
-    #if (SW_COLOR_BUFFER_BITS == 8)
-        *cptr++ = packedColor;
-    #elif (SW_COLOR_BUFFER_BITS == 16)
-        *cptr++ = packedColor;
-    #elif (SW_COLOR_BUFFER_BITS == 24)
-        *cptr++ = r24;
-        *cptr++ = g24;
-        *cptr++ = b24;
-    #endif
-
-        // Write depth
-    #if (SW_DEPTH_BUFFER_BITS == 8)
-        *dptr++ = d8;
-    #elif (SW_DEPTH_BUFFER_BITS == 16)
-        *dptr++ = d16;
-    #elif (SW_DEPTH_BUFFER_BITS == 24)
-        *dptr++ = dByte0;
-        *dptr++ = dByte1;
-        *dptr++ = dByte2;
-    #endif
     }
 }
 
@@ -1504,7 +1378,7 @@ static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST
             sw_framebuffer_read_color(color, src);                              \
 
 #define DEFINE_FRAMEBUFFER_COPY_END()                                           \
-            sw_framebuffer_inc_const_color_addr(&src);                          \
+            INC_COLOR_PTR(src);                                                 \
         }                                                                       \
     }                                                                           \
 }
@@ -1702,17 +1576,17 @@ static inline void sw_framebuffer_blit_to_##name(                               
     const uint8_t *srcBase = RLSW.framebuffer.color;                            \
     int fbWidth = RLSW.framebuffer.width;                                       \
                                                                                 \
-    uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                  \
-    uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;                  \
+    uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                    \
+    uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;                    \
                                                                                 \
     for (int dy = 0; dy < hDst; dy++) {                                         \
-        uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                   \
+        uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                     \
         int sy = yFix >> 16;                                                    \
                                                                                 \
         for (int dx = 0; dx < wDst; dx++) {                                     \
-            uint32_t xFix = dx*xScale;                                        \
+            uint32_t xFix = dx*xScale;                                          \
             int sx = xFix >> 16;                                                \
-            const void *srcPtr = sw_framebuffer_get_color_addr(srcBase, sy*fbWidth + sx); \
+            const void *srcPtr = GET_COLOR_PTR(srcBase, sy*fbWidth + sx);       \
             uint8_t color[4];                                                   \
             sw_framebuffer_read_color8(color, srcPtr);                          \
 
@@ -1725,17 +1599,17 @@ static inline void sw_framebuffer_blit_to_##name(                               
     const uint8_t *srcBase = RLSW.framebuffer.color;                            \
     int fbWidth = RLSW.framebuffer.width;                                       \
                                                                                 \
-    uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                  \
-    uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;                  \
+    uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                    \
+    uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;                    \
                                                                                 \
     for (int dy = 0; dy < hDst; dy++) {                                         \
-        uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                   \
+        uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                     \
         int sy = yFix >> 16;                                                    \
                                                                                 \
         for (int dx = 0; dx < wDst; dx++) {                                     \
-            uint32_t xFix = dx*xScale;                                        \
+            uint32_t xFix = dx*xScale;                                          \
             int sx = xFix >> 16;                                                \
-            const void *srcPtr = sw_framebuffer_get_color_addr(srcBase, sy*fbWidth + sx); \
+            const void *srcPtr = GET_COLOR_PTR(srcBase, sy*fbWidth + sx);       \
             float color[4];                                                     \
             sw_framebuffer_read_color(color, srcPtr);                           \
 
@@ -2577,8 +2451,8 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
     }                                                                               \
                                                                                     \
     /* Pre-calculate the starting pointers for the framebuffer row */               \
-    void *cptr = sw_framebuffer_get_color_addr(RLSW.framebuffer.color, y*RLSW.framebuffer.width + xStart);  \
-    void *dptr = sw_framebuffer_get_depth_addr(RLSW.framebuffer.depth, y*RLSW.framebuffer.width + xStart);  \
+    void *cptr = GET_COLOR_PTR(RLSW.framebuffer.color, y*RLSW.framebuffer.width + xStart);  \
+    void *dptr = GET_DEPTH_PTR(RLSW.framebuffer.depth, y*RLSW.framebuffer.width + xStart);  \
                                                                                     \
     /* Scanline rasterization */                                                    \
     for (int x = xStart; x < xEnd; x++)                                             \
@@ -2645,8 +2519,8 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
             v += dvDx;                                                              \
         }                                                                           \
                                                                                     \
-        sw_framebuffer_inc_color_addr(&cptr);                                       \
-        sw_framebuffer_inc_depth_addr(&dptr);                                       \
+        INC_COLOR_PTR(cptr);                                                        \
+        INC_DEPTH_PTR(dptr);                                                        \
     }                                                                               \
 }
 
@@ -3046,8 +2920,8 @@ static inline void FUNC_NAME(void)                                              
                                                                                 \
     for (int y = yMin; y < yMax; y++)                                           \
     {                                                                           \
-        void *cptr = sw_framebuffer_get_color_addr(cDstBase, y*wDst + xMin);    \
-        void *dptr = sw_framebuffer_get_depth_addr(dDstBase, y*wDst + xMin);    \
+        void *cptr = GET_COLOR_PTR(cDstBase, y*wDst + xMin);                    \
+        void *dptr = GET_DEPTH_PTR(dDstBase, y*wDst + xMin);                    \
                                                                                 \
         float z = zScanline;                                                    \
         float u = uScanline;                                                    \
@@ -3119,8 +2993,8 @@ static inline void FUNC_NAME(void)                                              
                 v += tcDx[1];                                                   \
             }                                                                   \
                                                                                 \
-            sw_framebuffer_inc_color_addr(&cptr);                               \
-            sw_framebuffer_inc_depth_addr(&dptr);                               \
+            INC_COLOR_PTR(cptr);                                                \
+            INC_DEPTH_PTR(dptr);                                                \
         }                                                                       \
                                                                                 \
         zScanline += zDy;                                                       \
@@ -3360,7 +3234,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         for (int i = 0; i != longLen; i += sgnInc)                      \
         {                                                               \
             int offset = (y1 + i)*fbWidth + (x1 + (j >> 16));           \
-            void *dptr = sw_framebuffer_get_depth_addr(dBuffer, offset); \
+            void *dptr = GET_DEPTH_PTR(dBuffer, offset); \
                                                                         \
             if (ENABLE_DEPTH_TEST)                                      \
             {                                                           \
@@ -3370,7 +3244,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
                                                                         \
             sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void *cptr = sw_framebuffer_get_color_addr(cBuffer, offset); \
+            void *cptr = GET_COLOR_PTR(cBuffer, offset);                \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
@@ -3396,7 +3270,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         for (int i = 0; i != longLen; i += sgnInc)                      \
         {                                                               \
             int offset = (y1 + (j >> 16))*fbWidth + (x1 + i);           \
-            void *dptr = sw_framebuffer_get_depth_addr(dBuffer, offset); \
+            void *dptr = GET_DEPTH_PTR(dBuffer, offset); \
                                                                         \
             if (ENABLE_DEPTH_TEST)                                      \
             {                                                           \
@@ -3406,7 +3280,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
                                                                         \
             sw_framebuffer_write_depth(dptr, z);                        \
                                                                         \
-            void *cptr = sw_framebuffer_get_color_addr(cBuffer, offset); \
+            void *cptr = GET_COLOR_PTR(cBuffer, offset);                \
                                                                         \
             if (ENABLE_COLOR_BLEND)                                     \
             {                                                           \
@@ -3416,7 +3290,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
                 sw_blend_colors(dstColor, color);                       \
                 sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
-            else sw_framebuffer_write_color(cptr, color);                \
+            else sw_framebuffer_write_color(cptr, color);               \
                                                                         \
         discardB:                                                       \
             j += decInc;                                                \
@@ -3562,7 +3436,7 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
                                                                             \
     int offset = y*RLSW.framebuffer.width + x;                              \
                                                                             \
-    void *dptr = sw_framebuffer_get_depth_addr(RLSW.framebuffer.depth, offset); \
+    void *dptr = GET_DEPTH_PTR(RLSW.framebuffer.depth, offset);             \
                                                                             \
     if (ENABLE_DEPTH_TEST)                                                  \
     {                                                                       \
@@ -3572,7 +3446,7 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
                                                                             \
     sw_framebuffer_write_depth(dptr, z);                                    \
                                                                             \
-    void *cptr = sw_framebuffer_get_color_addr(RLSW.framebuffer.color, offset); \
+    void *cptr = GET_COLOR_PTR(RLSW.framebuffer.color, offset);             \
                                                                             \
     if (ENABLE_COLOR_BLEND)                                                 \
     {                                                                       \
