@@ -115,10 +115,6 @@
     #define SW_GL_FRAMEBUFFER_COPY_BGRA     true
 #endif
 
-#ifndef SW_GL_BINDING_COPY_TEXTURE
-    #define SW_GL_BINDING_COPY_TEXTURE      true
-#endif
-
 #ifndef SW_COLOR_BUFFER_BITS
     #define SW_COLOR_BUFFER_BITS            24
 #endif
@@ -382,7 +378,7 @@ typedef double              GLclampd;
 #define glDrawArrays(m, o, c)                       swDrawArrays((m), (o), (c))
 #define glGenTextures(c, v)                         swGenTextures((c), (v))
 #define glDeleteTextures(c, v)                      swDeleteTextures((c), (v))
-#define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D((w), (h), (f), (t), SW_GL_BINDING_COPY_TEXTURE, (p))
+#define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D((w), (h), (f), (t), (p))
 #define glTexParameteri(tr, pname, param)           swTexParameteri((pname), (param))
 #define glBindTexture(tr, id)                       swBindTexture((id))
 
@@ -597,7 +593,7 @@ SWAPI void swDrawArrays(SWdraw mode, int offset, int count);
 SWAPI void swGenTextures(int count, uint32_t *textures);
 SWAPI void swDeleteTextures(int count, uint32_t *textures);
 
-SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy, const void *data);
+SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data);
 SWAPI void swTexParameteri(int param, int value);
 SWAPI void swBindTexture(uint32_t id);
 
@@ -693,8 +689,8 @@ SWAPI void swBindTexture(uint32_t id);
     #define UNPACK_DEPTH(p) (((p)[0]<<16)|((p)[1]<<8)|(p)[2])
 #endif
 
-#define GET_COLOR_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset) * SW_COLOR_PIXEL_SIZE))
-#define GET_DEPTH_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset) * SW_DEPTH_PIXEL_SIZE))
+#define GET_COLOR_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset)*SW_COLOR_PIXEL_SIZE))
+#define GET_DEPTH_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset)*SW_DEPTH_PIXEL_SIZE))
 #define INC_COLOR_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_COLOR_PIXEL_SIZE))
 #define INC_DEPTH_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_DEPTH_PIXEL_SIZE))
 
@@ -747,16 +743,11 @@ typedef struct {
 } sw_vertex_t;
 
 typedef struct {
-    // Dirty hack for copied data  
-    // TODO: Rework copied image handling
-    union {
-        const void *cptr;       // NOTE: Is used for all data reads
-        void *ptr;              // WARNING: Should only be used to allocate and free data
-    } pixels;
+
+    uint8_t* pixels;            // Texture pixels (RGBA32)
 
     int width, height;          // Dimensions of the texture
     int wMinus1, hMinus1;       // Dimensions minus one
-    sw_pixelformat_t format;    // Pixel format (internal representation)
 
     SWfilter minFilter;         // Minification filter
     SWfilter magFilter;         // Magnification filter
@@ -766,8 +757,6 @@ typedef struct {
 
     float tx;                   // Texel width
     float ty;                   // Texel height
-
-    bool copy;                  // Flag indicating whether memory has been allocated
 
 } sw_texture_t;
 
@@ -1070,6 +1059,7 @@ static inline sw_half_t sw_f16_from_f32(float i)
 }
 
 // Framebuffer management functions
+
 static inline bool sw_framebuffer_load(int w, int h)
 {
     int size = w*h;
@@ -1219,7 +1209,7 @@ static inline float sw_framebuffer_read_depth(const void *src)
 #else
     const DEPTH_TYPE *p = (const DEPTH_TYPE*)src;
     uint32_t d = UNPACK_DEPTH(p);
-    return d * DEPTH_SCALE;
+    return d*DEPTH_SCALE;
 #endif
 }
 
@@ -1859,196 +1849,167 @@ static inline int sw_get_pixel_format(SWformat format, SWtype type)
     return SW_PIXELFORMAT_UNKNOWN;
 }
 
-int sw_get_pixel_bytes(sw_pixelformat_t format)
+static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t offset, sw_pixelformat_t format)
 {
-    int bpp = 0;
-
     switch (format)
     {
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 1; break;
+        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+        {
+            uint8_t gray = ((const uint8_t*)pixels)[offset];
+            color[0] = gray;
+            color[1] = gray;
+            color[2] = gray;
+            color[3] = 255;
+            break;
+        }
         case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+        {
+            const uint8_t *src = &((const uint8_t*)pixels)[offset*2];
+            color[0] = src[0];
+            color[1] = src[0];
+            color[2] = src[0];
+            color[3] = src[1];
+            break;
+        }
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+        {
+            uint16_t pixel = ((const uint16_t*)pixels)[offset];
+            color[0] = ((pixel >> 11) & 0x1F)*255 / 31;  // R (5 bits)
+            color[1] = ((pixel >> 5) & 0x3F)*255 / 63;   // G (6 bits)
+            color[2] = (pixel & 0x1F)*255 / 31;          // B (5 bits)
+            color[3] = 255;
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8:
+        {
+            const uint8_t *src = &((const uint8_t*)pixels)[offset*3];
+            color[0] = src[0];
+            color[1] = src[1];
+            color[2] = src[2];
+            color[3] = 255;
+            break;
+        }
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
-        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 2; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 4*3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 4*4; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 2; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 2*3; break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 2*4; break;
-        default: break;
-    }
-
-    return bpp;
-}
-
-static inline void sw_get_pixel_grayscale(float *color, const void *pixels, uint32_t offset)
-{
-    float gray = (float)((uint8_t *)pixels)[offset]*(1.0f/255);
-
-    color[0] = gray;
-    color[1] = gray;
-    color[2] = gray;
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_red_16(float *color, const void *pixels, uint32_t offset)
-{
-    float value = sw_f16_to_f32(((sw_half_t *)pixels)[offset]);
-
-    color[0] = value;
-    color[1] = value;
-    color[2] = value;
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_red_32(float *color, const void *pixels, uint32_t offset)
-{
-    float value = ((float *)pixels)[offset];
-
-    color[0] = value;
-    color[1] = value;
-    color[2] = value;
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_grayscale_alpha(float *color, const void *pixels, uint32_t offset)
-{
-    const uint8_t *pixelData = (const uint8_t *)pixels + 2*offset;
-
-    color[0] = color[1] = color[2] = (float)pixelData[0]*(1.0f/255);
-    color[3] = (float)pixelData[1]*(1.0f/255);
-}
-
-static inline void sw_get_pixel_rgb_565(float *color, const void *pixels, uint32_t offset)
-{
-    uint16_t pixel = ((uint16_t *)pixels)[offset];
-
-    color[0] = (float)((pixel & 0xF800) >> 11)/31;
-    color[1] = (float)((pixel & 0x7E0) >> 5)/63;
-    color[2] = (float)(pixel & 0x1F)/31;
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_rgb_888(float *color, const void *pixels, uint32_t offset)
-{
-    const uint8_t *pixel = (const uint8_t *)pixels + 3*offset;
-
-    color[0] = (float)pixel[0]*(1.0f/255);
-    color[1] = (float)pixel[1]*(1.0f/255);
-    color[2] = (float)pixel[2]*(1.0f/255);
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_rgb_161616(float *color, const void *pixels, uint32_t offset)
-{
-    const sw_half_t *pixel = (sw_half_t *)pixels + 3*offset;
-
-    color[0] = sw_f16_to_f32(pixel[0]);
-    color[1] = sw_f16_to_f32(pixel[1]);
-    color[2] = sw_f16_to_f32(pixel[2]);
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_rgb_323232(float *color, const void *pixels, uint32_t offset)
-{
-    const float *pixel = (float *)pixels + 3*offset;
-
-    color[0] = pixel[0];
-    color[1] = pixel[1];
-    color[2] = pixel[2];
-    color[3] = 1.0f;
-}
-
-static inline void sw_get_pixel_rgba_5551(float *color, const void *pixels, uint32_t offset)
-{
-    uint16_t pixel = ((uint16_t *)pixels)[offset];
-
-    color[0] = (float)((pixel & 0xF800) >> 11)/31;
-    color[1] = (float)((pixel & 0x7C0) >> 6)/31;
-    color[2] = (float)((pixel & 0x3E) >> 1)/31;
-    color[3] = (float)(pixel & 0x1);
-}
-
-static inline void sw_get_pixel_rgba_4444(float *color, const void *pixels, uint32_t offset)
-{
-    uint16_t pixel = ((uint16_t *)pixels)[offset];
-
-    color[0] = (float)((pixel & 0xF000) >> 12)/15;
-    color[1] = (float)((pixel & 0xF00) >> 8)/15;
-    color[2] = (float)((pixel & 0xF0) >> 4)/15;
-    color[3] = (float)(pixel & 0xF)/15;
-}
-
-static inline void sw_get_pixel_rgba_8888(float *color, const void *pixels, uint32_t offset)
-{
-    const uint8_t *pixel = (uint8_t *)pixels + 4*offset;
-
-    color[0] = (float)pixel[0]*(1.0f/255);
-    color[1] = (float)pixel[1]*(1.0f/255);
-    color[2] = (float)pixel[2]*(1.0f/255);
-    color[3] = (float)pixel[3]*(1.0f/255);
-}
-
-static inline void sw_get_pixel_rgba_16161616(float *color, const void *pixels, uint32_t offset)
-{
-    const sw_half_t *pixel = (sw_half_t *)pixels + 4*offset;
-
-    color[0] = sw_f16_to_f32(pixel[0]);
-    color[1] = sw_f16_to_f32(pixel[1]);
-    color[2] = sw_f16_to_f32(pixel[2]);
-    color[3] = sw_f16_to_f32(pixel[3]);
-}
-
-static inline void sw_get_pixel_rgba_32323232(float *color, const void *pixels, uint32_t offset)
-{
-    const float *pixel = (float *)pixels + 4*offset;
-
-    color[0] = pixel[0];
-    color[1] = pixel[1];
-    color[2] = pixel[2];
-    color[3] = pixel[3];
-}
-
-static inline void sw_get_pixel(float *color, const void *pixels, uint32_t offset, sw_pixelformat_t format)
-{
-    switch (format)
-    {
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: sw_get_pixel_grayscale(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: sw_get_pixel_grayscale_alpha(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5: sw_get_pixel_rgb_565(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_get_pixel_rgb_888(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_get_pixel_rgba_5551(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_get_pixel_rgba_4444(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_get_pixel_rgba_8888(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_get_pixel_red_32(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_get_pixel_rgb_323232(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: sw_get_pixel_rgba_32323232(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_get_pixel_red_16(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_get_pixel_rgb_161616(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_get_pixel_rgba_16161616(color, pixels, offset); break;
-        case SW_PIXELFORMAT_UNKNOWN: break;
-        default: break;
+        {
+            uint16_t pixel = ((const uint16_t*)pixels)[offset];
+            color[0] = ((pixel >> 11) & 0x1F)*255 / 31;  // R (5 bits)
+            color[1] = ((pixel >> 6) & 0x1F)*255 / 31;   // G (5 bits)
+            color[2] = ((pixel >> 1) & 0x1F)*255 / 31;   // B (5 bits)
+            color[3] = (pixel & 0x01)*255;               // A (1 bit)
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
+        {
+            uint16_t pixel = ((const uint16_t*)pixels)[offset];
+            color[0] = ((pixel >> 12) & 0x0F)*255 / 15;  // R (4 bits)
+            color[1] = ((pixel >> 8) & 0x0F)*255 / 15;   // G (4 bits)
+            color[2] = ((pixel >> 4) & 0x0F)*255 / 15;   // B (4 bits)
+            color[3] = (pixel & 0x0F)*255 / 15;          // A (4 bits)
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
+        {
+            const uint8_t *src = &((const uint8_t*)pixels)[offset*4];
+            color[0] = src[0];
+            color[1] = src[1];
+            color[2] = src[2];
+            color[3] = src[3];
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32:
+        {
+            float val = ((const float*)pixels)[offset];
+            uint8_t gray = (uint8_t)(val*255.0f);
+            color[0] = gray;
+            color[1] = gray;
+            color[2] = gray;
+            color[3] = 255;
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+        {
+            const float *src = &((const float*)pixels)[offset*3];
+            color[0] = (uint8_t)(src[0]*255.0f);
+            color[1] = (uint8_t)(src[1]*255.0f);
+            color[2] = (uint8_t)(src[2]*255.0f);
+            color[3] = 255;
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+        {
+            const float *src = &((const float*)pixels)[offset*4];
+            color[0] = (uint8_t)(src[0]*255.0f);
+            color[1] = (uint8_t)(src[1]*255.0f);
+            color[2] = (uint8_t)(src[2]*255.0f);
+            color[3] = (uint8_t)(src[3]*255.0f);
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16:
+        {
+            uint16_t val = ((const uint16_t*)pixels)[offset];
+            uint8_t gray = val / 256;
+            color[0] = gray;
+            color[1] = gray;
+            color[2] = gray;
+            color[3] = 255;
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+        {
+            const uint16_t *src = &((const uint16_t*)pixels)[offset*3];
+            color[0] = src[0] / 256;
+            color[1] = src[1] / 256;
+            color[2] = src[2] / 256;
+            color[3] = 255;
+            break;
+        }
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+        {
+            const uint16_t *src = &((const uint16_t*)pixels)[offset*4];
+            color[0] = src[0] / 256;
+            color[1] = src[1] / 256;
+            color[2] = src[2] / 256;
+            color[3] = src[3] / 256;
+            break;
+        }
+        case SW_PIXELFORMAT_UNKNOWN:
+        default:
+        {
+            color[0] = 0;
+            color[1] = 0;
+            color[2] = 0;
+            color[3] = 0;
+            break;
+        }
     }
 }
 
 // Texture sampling functionality
+
+static inline void sw_texture_fetch(float* color, const sw_texture_t* tex, int x, int y)
+{
+    int offset = 4*(y*tex->width + x);
+
+    color[0] = (float)tex->pixels[offset + 0] / 255;
+    color[1] = (float)tex->pixels[offset + 1] / 255;
+    color[2] = (float)tex->pixels[offset + 2] / 255;
+    color[3] = (float)tex->pixels[offset + 3] / 255;
+}
 
 static inline void sw_texture_sample_nearest(float *color, const sw_texture_t *tex, float u, float v)
 {
     u = (tex->sWrap == SW_REPEAT)? sw_fract(u) : sw_saturate(u);
     v = (tex->tWrap == SW_REPEAT)? sw_fract(v) : sw_saturate(v);
 
-    int x = u*tex->width, y = v*tex->height;
+    int x = u*tex->width;
+    int y = v*tex->height;
 
-    sw_get_pixel(color, tex->pixels.cptr, y*tex->width + x, tex->format);
+    sw_texture_fetch(color, tex, x, y);
 }
 
 static inline void sw_texture_sample_linear(float *color, const sw_texture_t *tex, float u, float v)
 {
-    // TODO: REVIEW: With a bit more cleverness we could clearly reduce the
+    // TODO: With a bit more cleverness we could clearly reduce the
     // number of operations here, but for now it works fine.
 
     float xf = u*tex->width  - 0.5f;
@@ -2086,10 +2047,10 @@ static inline void sw_texture_sample_linear(float *color, const sw_texture_t *te
     }
 
     float c00[4], c10[4], c01[4], c11[4];
-    sw_get_pixel(c00, tex->pixels.cptr, y0*tex->width + x0, tex->format);
-    sw_get_pixel(c10, tex->pixels.cptr, y0*tex->width + x1, tex->format);
-    sw_get_pixel(c01, tex->pixels.cptr, y1*tex->width + x0, tex->format);
-    sw_get_pixel(c11, tex->pixels.cptr, y1*tex->width + x1, tex->format);
+    sw_texture_fetch(c00, tex, x0, y0);
+    sw_texture_fetch(c10, tex, x1, y0);
+    sw_texture_fetch(c01, tex, x0, y1);
+    sw_texture_fetch(c11, tex, x1, y1);
 
     for (int i = 0; i < 4; i++)
     {
@@ -3598,7 +3559,7 @@ static inline bool sw_is_texture_valid(uint32_t id)
 
     if (id == 0) valid = false;
     else if (id >= SW_MAX_TEXTURES) valid = false;
-    else if (RLSW.loadedTextures[id].pixels.cptr == 0) valid = false;
+    else if (RLSW.loadedTextures[id].pixels == NULL) valid = false;
 
     return true;
 }
@@ -3746,26 +3707,24 @@ bool swInit(int w, int h)
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
-    static const float defTex[3*2*2] = {
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+    static uint32_t defaultTex[3*2*2] = {
+        0xFFFFFFFF,
+        0xFFFFFFFF,
+        0xFFFFFFFF,
+        0xFFFFFFFF
     };
 
-    RLSW.loadedTextures[0].pixels.cptr = defTex;
+    RLSW.loadedTextures[0].pixels = (uint8_t*)defaultTex;
     RLSW.loadedTextures[0].width = 2;
     RLSW.loadedTextures[0].height = 2;
     RLSW.loadedTextures[0].wMinus1 = 1;
     RLSW.loadedTextures[0].hMinus1 = 1;
-    RLSW.loadedTextures[0].format = SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32;
     RLSW.loadedTextures[0].minFilter = SW_NEAREST;
     RLSW.loadedTextures[0].magFilter = SW_NEAREST;
     RLSW.loadedTextures[0].sWrap = SW_REPEAT;
     RLSW.loadedTextures[0].tWrap = SW_REPEAT;
     RLSW.loadedTextures[0].tx = 0.5f;
     RLSW.loadedTextures[0].ty = 0.5f;
-    RLSW.loadedTextures[0].copy = false;
 
     RLSW.loadedTextureCount = 1;
 
@@ -3774,10 +3733,13 @@ bool swInit(int w, int h)
 
 void swClose(void)
 {
+    // NOTE: Starts at texture 1, texture 0 does not have to be freed
     for (int i = 1; i < RLSW.loadedTextureCount; i++)
     {
-        sw_texture_t *texture = &RLSW.loadedTextures[i];
-        if (sw_is_texture_valid(i) && texture->copy) SW_FREE(texture->pixels.ptr);
+        if (sw_is_texture_valid(i))
+        {
+            SW_FREE(RLSW.loadedTextures[i].pixels);
+        }
     }
 
     SW_FREE(RLSW.framebuffer.color);
@@ -4688,17 +4650,14 @@ void swDeleteTextures(int count, uint32_t *textures)
             continue;
         }
 
-        if (RLSW.loadedTextures[textures[i]].copy)
-        {
-            SW_FREE(RLSW.loadedTextures[textures[i]].pixels.ptr);
-        }
+        SW_FREE(RLSW.loadedTextures[textures[i]].pixels);
 
-        RLSW.loadedTextures[textures[i]].pixels.cptr = NULL;
+        RLSW.loadedTextures[textures[i]].pixels = NULL;
         RLSW.freeTextureIds[RLSW.freeTextureIdCount++] = textures[i];
     }
 }
 
-void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy, const void *data)
+void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data)
 {
     uint32_t id = RLSW.currentTexture;
 
@@ -4718,33 +4677,27 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, bool copy
 
     sw_texture_t *texture = &RLSW.loadedTextures[id];
 
-    if (copy)
+    int size = width*height;
+    texture->pixels = SW_MALLOC(4*size);
+
+    if (texture->pixels == NULL)
     {
-        int bytes = sw_get_pixel_bytes((sw_pixelformat_t)pixelFormat);
-        int size = bytes*width*height;
-        texture->pixels.ptr = SW_MALLOC(size);
-
-        if (texture->pixels.ptr == NULL)
-        {
-            RLSW.errCode = SW_STACK_OVERFLOW; // WARING: Out of memory...
-            return;
-        }
-
-        for (int i = 0; i < size; i++)
-        {
-            ((uint8_t *)texture->pixels.ptr)[i] = ((uint8_t *)data)[i];
-        }
+        RLSW.errCode = SW_STACK_OVERFLOW; // WARNING: Out of memory...
+        return;
     }
-    else texture->pixels.cptr = data;
+
+    for (int i = 0; i < size; i++)
+    {
+        uint32_t *dst = &((uint32_t*)texture->pixels)[i];
+        sw_get_pixel((uint8_t*)dst, data, i, pixelFormat);
+    }
 
     texture->width = width;
     texture->height = height;
     texture->wMinus1 = width - 1;
     texture->hMinus1 = height - 1;
-    texture->format = (sw_pixelformat_t)pixelFormat;
     texture->tx = 1.0f/width;
     texture->ty = 1.0f/height;
-    texture->copy = copy;
 }
 
 void swTexParameteri(int param, int value)
@@ -4813,7 +4766,7 @@ void swBindTexture(uint32_t id)
         return;
     }
 
-    if (RLSW.loadedTextures[id].pixels.cptr == NULL)
+    if (RLSW.loadedTextures[id].pixels == NULL)
     {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
