@@ -1353,7 +1353,7 @@ static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size,
     }
 }
 
-#define DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(name, DST_PTR_T)                      \
+#define DEFINE_FRAMEBUFFER_COPY_BEGIN(name, DST_PTR_T)                          \
 static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst)   \
 {                                                                               \
     const void *src = RLSW.framebuffer.color;                                   \
@@ -1363,23 +1363,13 @@ static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST
             uint8_t color[4];                                                   \
             sw_framebuffer_read_color8(color, src);                             \
 
-#define DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(name, DST_PTR_T)                      \
-static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst)   \
-{                                                                               \
-    const void *src = RLSW.framebuffer.color;                                   \
-                                                                                \
-    for (int iy = y; iy < h; iy++) {                                            \
-        for (int ix = x; ix < w; ix++) {                                        \
-            float color[4];                                                     \
-            sw_framebuffer_read_color(color, src);                              \
-
 #define DEFINE_FRAMEBUFFER_COPY_END()                                           \
             INC_COLOR_PTR(src);                                                 \
         }                                                                       \
     }                                                                           \
 }
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(GRAYSCALE, uint8_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(GRAYSCALE, uint8_t)
 {
     // NTSC grayscale conversion: Y = 0.299R + 0.587G + 0.114B
     uint8_t gray = (uint8_t)((color[0]*299 + color[1]*587 + color[2]*114 + 500)/1000);
@@ -1387,7 +1377,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(GRAYSCALE, uint8_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(GRAYALPHA, uint8_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(GRAYALPHA, uint8_t)
 {
     // Convert RGB to grayscale using NTSC formula
     uint8_t gray = (uint8_t)((color[0]*299 + color[1]*587 + color[2]*114 + 500)/1000);
@@ -1399,7 +1389,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(GRAYALPHA, uint8_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R5G6B5, uint16_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(R5G6B5, uint16_t)
 {
     // Convert 8-bit RGB to 5:6:5 format
     uint8_t r5 = (color[0]*31 + 127)/255;
@@ -1416,7 +1406,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R5G6B5, uint16_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R8G8B8, uint8_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(R8G8B8, uint8_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     dst[0] = color[2];
@@ -1432,7 +1422,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R8G8B8, uint8_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R5G5B5A1, uint16_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(R5G5B5A1, uint16_t)
 {
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g5 = (color[1]*31 + 127)/255;
@@ -1449,7 +1439,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R5G5B5A1, uint16_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R4G4B4A4, uint16_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(R4G4B4A4, uint16_t)
 {
     uint8_t r4 = (color[0]*15 + 127)/255;
     uint8_t g4 = (color[1]*15 + 127)/255;
@@ -1466,7 +1456,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R4G4B4A4, uint16_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R8G8B8A8, uint8_t)
+DEFINE_FRAMEBUFFER_COPY_BEGIN(R8G8B8A8, uint8_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     dst[0] = color[2];
@@ -1483,87 +1473,7 @@ DEFINE_FRAMEBUFFER_COPY_U32_BEGIN(R8G8B8A8, uint8_t)
 }
 DEFINE_FRAMEBUFFER_COPY_END()
 
-DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R32, float)
-{
-    dst[0] = color[0];
-    dst++;
-}
-DEFINE_FRAMEBUFFER_COPY_END()
-
-DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R32G32B32, float)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = color[2];
-    dst[1] = color[1];
-    dst[2] = color[0];
-#else // RGBA
-    dst[0] = color[0];
-    dst[1] = color[1];
-    dst[2] = color[2];
-#endif
-
-    dst += 3;
-}
-DEFINE_FRAMEBUFFER_COPY_END()
-
-DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R32G32B32A32, float)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = color[2];
-    dst[1] = color[1];
-    dst[2] = color[0];
-#else // RGBA
-    dst[0] = color[0];
-    dst[1] = color[1];
-    dst[2] = color[2];
-#endif
-    dst[3] = color[3];
-
-    dst += 4;
-}
-DEFINE_FRAMEBUFFER_COPY_END()
-
-DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16, sw_half_t)
-{
-    dst[0] = sw_f16_from_f32(color[0]);
-    dst++;
-}
-DEFINE_FRAMEBUFFER_COPY_END()
-
-DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16G16B16, sw_half_t)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_f16_from_f32(color[2]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[0]);
-#else // RGBA
-    dst[0] = sw_f16_from_f32(color[0]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[2]);
-#endif
-
-    dst += 3;
-}
-DEFINE_FRAMEBUFFER_COPY_END()
-
-DEFINE_FRAMEBUFFER_COPY_F32_BEGIN(R16G16B16A16, sw_half_t)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_f16_from_f32(color[2]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[0]);
-#else // RGBA
-    dst[0] = sw_f16_from_f32(color[0]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[2]);
-#endif
-    dst[3] = sw_f16_from_f32(color[3]);
-
-    dst += 4;
-}
-DEFINE_FRAMEBUFFER_COPY_END()
-
-#define DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(name, DST_PTR_T)                      \
+#define DEFINE_FRAMEBUFFER_BLIT_BEGIN(name, DST_PTR_T)                          \
 static inline void sw_framebuffer_blit_to_##name(                               \
     int xDst, int yDst, int wDst, int hDst,                                     \
     int xSrc, int ySrc, int wSrc, int hSrc,                                     \
@@ -1586,42 +1496,19 @@ static inline void sw_framebuffer_blit_to_##name(                               
             uint8_t color[4];                                                   \
             sw_framebuffer_read_color8(color, srcPtr);                          \
 
-#define DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(name, DST_PTR_T)                      \
-static inline void sw_framebuffer_blit_to_##name(                               \
-    int xDst, int yDst, int wDst, int hDst,                                     \
-    int xSrc, int ySrc, int wSrc, int hSrc,                                     \
-    DST_PTR_T *dst)                                                             \
-{                                                                               \
-    const uint8_t *srcBase = (uint8_t *)RLSW.framebuffer.color;                  \
-    int fbWidth = RLSW.framebuffer.width;                                       \
-                                                                                \
-    uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                    \
-    uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;                    \
-                                                                                \
-    for (int dy = 0; dy < hDst; dy++) {                                         \
-        uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                     \
-        int sy = yFix >> 16;                                                    \
-                                                                                \
-        for (int dx = 0; dx < wDst; dx++) {                                     \
-            uint32_t xFix = dx*xScale;                                          \
-            int sx = xFix >> 16;                                                \
-            const void *srcPtr = GET_COLOR_PTR(srcBase, sy*fbWidth + sx);       \
-            float color[4];                                                     \
-            sw_framebuffer_read_color(color, srcPtr);                           \
-
 #define DEFINE_FRAMEBUFFER_BLIT_END()                                           \
         }                                                                       \
     }                                                                           \
 }
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(GRAYSCALE, uint8_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(GRAYSCALE, uint8_t)
 {
     uint8_t gray = (uint8_t)((color[0]*299 + color[1]*587 + color[2]*114 + 500)/1000);
     *dst++ = gray;
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(GRAYALPHA, uint8_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(GRAYALPHA, uint8_t)
 {
     uint8_t gray = (uint8_t)((color[0]*299 + color[1]*587 + color[2]*114 + 500)/1000);
 
@@ -1632,7 +1519,7 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(GRAYALPHA, uint8_t)
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R5G6B5, uint16_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(R5G6B5, uint16_t)
 {
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g6 = (color[1]*63 + 127)/255;
@@ -1648,7 +1535,7 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R5G6B5, uint16_t)
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R8G8B8, uint8_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(R8G8B8, uint8_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     dst[0] = color[2];
@@ -1664,7 +1551,7 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R8G8B8, uint8_t)
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R5G5B5A1, uint16_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(R5G5B5A1, uint16_t)
 {
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g5 = (color[1]*31 + 127)/255;
@@ -1681,7 +1568,7 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R5G5B5A1, uint16_t)
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R4G4B4A4, uint16_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(R4G4B4A4, uint16_t)
 {
     uint8_t r4 = (color[0]*15 + 127)/255;
     uint8_t g4 = (color[1]*15 + 127)/255;
@@ -1698,7 +1585,7 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R4G4B4A4, uint16_t)
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
 
-DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R8G8B8A8, uint8_t)
+DEFINE_FRAMEBUFFER_BLIT_BEGIN(R8G8B8A8, uint8_t)
 {
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     dst[0] = color[2];
@@ -1710,86 +1597,6 @@ DEFINE_FRAMEBUFFER_BLIT_U32_BEGIN(R8G8B8A8, uint8_t)
     dst[2] = color[2];
 #endif
     dst[3] = color[3];
-
-    dst += 4;
-}
-DEFINE_FRAMEBUFFER_BLIT_END()
-
-DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R32, uint8_t)
-{
-    dst[0] = color[0];
-    dst++;
-}
-DEFINE_FRAMEBUFFER_BLIT_END()
-
-DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R32G32B32, float)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = color[2];
-    dst[1] = color[1];
-    dst[2] = color[0];
-#else // RGBA
-    dst[0] = color[0];
-    dst[1] = color[1];
-    dst[2] = color[2];
-#endif
-
-    dst += 3;
-}
-DEFINE_FRAMEBUFFER_BLIT_END()
-
-DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R32G32B32A32, float)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = color[2];
-    dst[1] = color[1];
-    dst[2] = color[0];
-#else // RGBA
-    dst[0] = color[0];
-    dst[1] = color[1];
-    dst[2] = color[2];
-#endif
-    dst[3] = color[3];
-
-    dst += 4;
-}
-DEFINE_FRAMEBUFFER_BLIT_END()
-
-DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16, sw_half_t)
-{
-    dst[0] = sw_f16_from_f32(color[0]);
-    dst++;
-}
-DEFINE_FRAMEBUFFER_BLIT_END()
-
-DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16G16B16, sw_half_t)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_f16_from_f32(color[2]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[0]);
-#else // RGBA
-    dst[0] = sw_f16_from_f32(color[0]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[2]);
-#endif
-
-    dst += 3;
-}
-DEFINE_FRAMEBUFFER_BLIT_END()
-
-DEFINE_FRAMEBUFFER_BLIT_F32_BEGIN(R16G16B16A16, sw_half_t)
-{
-#if SW_GL_FRAMEBUFFER_COPY_BGRA
-    dst[0] = sw_f16_from_f32(color[2]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[0]);
-#else // RGBA
-    dst[0] = sw_f16_from_f32(color[0]);
-    dst[1] = sw_f16_from_f32(color[1]);
-    dst[2] = sw_f16_from_f32(color[2]);
-#endif
-    dst[3] = sw_f16_from_f32(color[3]);
 
     dst += 4;
 }
@@ -1947,7 +1754,7 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R16:
         {
             uint16_t val = ((const uint16_t*)pixels)[offset];
-            uint8_t gray = val / 256;
+            uint8_t gray = sw_f16_to_f32(val)/255.0f;
             color[0] = gray;
             color[1] = gray;
             color[2] = gray;
@@ -1957,19 +1764,19 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         {
             const uint16_t *src = &((const uint16_t*)pixels)[offset*3];
-            color[0] = src[0] / 256;
-            color[1] = src[1] / 256;
-            color[2] = src[2] / 256;
+            color[0] = sw_f16_to_f32(src[0])/255.0f;
+            color[1] = sw_f16_to_f32(src[1])/255.0f;
+            color[2] = sw_f16_to_f32(src[2])/255.0f;
             color[3] = 255;
             break;
         }
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         {
             const uint16_t *src = &((const uint16_t*)pixels)[offset*4];
-            color[0] = src[0] / 256;
-            color[1] = src[1] / 256;
-            color[2] = src[2] / 256;
-            color[3] = src[3] / 256;
+            color[0] = sw_f16_to_f32(src[0])/255.0f;
+            color[1] = sw_f16_to_f32(src[1])/255.0f;
+            color[2] = sw_f16_to_f32(src[2])/255.0f;
+            color[3] = sw_f16_to_f32(src[3])/255.0f;
             break;
         }
         case SW_PIXELFORMAT_UNKNOWN:
@@ -3786,13 +3593,16 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_copy_to_R5G5B5A1(x, y, w, h, (uint16_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_copy_to_R4G4B4A4(x, y, w, h, (uint16_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_framebuffer_copy_to_R32(x, y, w, h, (float *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_framebuffer_copy_to_R32G32B32(x, y, w, h, (float *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: sw_framebuffer_copy_to_R32G32B32A32(x, y, w, h, (float *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_framebuffer_copy_to_R16(x, y, w, h, (sw_half_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_framebuffer_copy_to_R16G16B16(x, y, w, h, (sw_half_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_framebuffer_copy_to_R16G16B16A16(x, y, w, h, (sw_half_t *)pixels); break;
-        default: RLSW.errCode = SW_INVALID_ENUM; break;
+        // Below: not implemented
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+        default:
+            RLSW.errCode = SW_INVALID_ENUM;
+            break;
     }
 }
 
@@ -3827,13 +3637,16 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_blit_to_R5G5B5A1(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_blit_to_R4G4B4A4(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint16_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_blit_to_R8G8B8A8(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32: sw_framebuffer_blit_to_R32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (uint8_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32: sw_framebuffer_blit_to_R32G32B32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (float *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: sw_framebuffer_blit_to_R32G32B32A32(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (float*)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16: sw_framebuffer_blit_to_R16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16: sw_framebuffer_blit_to_R16G16B16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: sw_framebuffer_blit_to_R16G16B16A16(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, (sw_half_t *)pixels); break;
-        default: RLSW.errCode = SW_INVALID_ENUM; break;
+        // Below: not implemented
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+        case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+        default:
+            RLSW.errCode = SW_INVALID_ENUM;
+            break;
     }
 }
 
