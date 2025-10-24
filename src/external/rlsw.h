@@ -1104,14 +1104,14 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     uint32x4_t ints = vmovl_u16(vget_low_u16(bytes16));
 
     float32x4_t floats = vcvtq_f32_u32(ints);
-    floats = vmulq_n_f32(floats, 1.0f / 255.0f);
+    floats = vmulq_n_f32(floats, 1.0f/255.0f);
     vst1q_f32(dst, floats);
 
 #elif defined(SW_HAS_SSE41)
     __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
     __m128i ints = _mm_cvtepu8_epi32(bytes);
     __m128 floats = _mm_cvtepi32_ps(ints);
-    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f / 255.0f));
+    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f/255.0f));
     _mm_storeu_ps(dst, floats);
 
 #elif defined(SW_HAS_SSE2)
@@ -1119,7 +1119,7 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     bytes = _mm_unpacklo_epi8(bytes, _mm_setzero_si128());
     __m128i ints = _mm_unpacklo_epi16(bytes, _mm_setzero_si128());
     __m128 floats = _mm_cvtepi32_ps(ints);
-    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f / 255.0f));
+    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f/255.0f));
     _mm_storeu_ps(dst, floats);
 
 #else
@@ -1806,9 +1806,9 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         {
             uint16_t pixel = ((const uint16_t*)pixels)[offset];
-            color[0] = ((pixel >> 11) & 0x1F)*255 / 31;  // R (5 bits)
-            color[1] = ((pixel >> 5) & 0x3F)*255 / 63;   // G (6 bits)
-            color[2] = (pixel & 0x1F)*255 / 31;          // B (5 bits)
+            color[0] = ((pixel >> 11) & 0x1F)*255/31;   // R (5 bits)
+            color[1] = ((pixel >> 5) & 0x3F)*255/63;    // G (6 bits)
+            color[2] = (pixel & 0x1F)*255/31;           // B (5 bits)
             color[3] = 255;
             break;
         }
@@ -1824,19 +1824,19 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         {
             uint16_t pixel = ((const uint16_t*)pixels)[offset];
-            color[0] = ((pixel >> 11) & 0x1F)*255 / 31;  // R (5 bits)
-            color[1] = ((pixel >> 6) & 0x1F)*255 / 31;   // G (5 bits)
-            color[2] = ((pixel >> 1) & 0x1F)*255 / 31;   // B (5 bits)
-            color[3] = (pixel & 0x01)*255;               // A (1 bit)
+            color[0] = ((pixel >> 11) & 0x1F)*255/31;   // R (5 bits)
+            color[1] = ((pixel >> 6) & 0x1F)*255/31;    // G (5 bits)
+            color[2] = ((pixel >> 1) & 0x1F)*255/31;    // B (5 bits)
+            color[3] = (pixel & 0x01)*255;              // A (1 bit)
             break;
         }
         case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         {
             uint16_t pixel = ((const uint16_t*)pixels)[offset];
-            color[0] = ((pixel >> 12) & 0x0F)*255 / 15;  // R (4 bits)
-            color[1] = ((pixel >> 8) & 0x0F)*255 / 15;   // G (4 bits)
-            color[2] = ((pixel >> 4) & 0x0F)*255 / 15;   // B (4 bits)
-            color[3] = (pixel & 0x0F)*255 / 15;          // A (4 bits)
+            color[0] = ((pixel >> 12) & 0x0F)*255/15;   // R (4 bits)
+            color[1] = ((pixel >> 8) & 0x0F)*255/15;    // G (4 bits)
+            color[2] = ((pixel >> 4) & 0x0F)*255/15;    // B (4 bits)
+            color[3] = (pixel & 0x0F)*255/15;           // A (4 bits)
             break;
         }
         case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
@@ -2274,23 +2274,23 @@ static inline void sw_triangle_clip_and_project(void)
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
-            const float invW = 1.0f/v->homogeneous[3];
-            v->homogeneous[3] = invW;
+            const float wRcp = 1.0f/v->homogeneous[3];
+            v->homogeneous[3] = wRcp;
 
             // Division of XYZ coordinates by weight
-            v->homogeneous[0] *= invW;
-            v->homogeneous[1] *= invW;
-            v->homogeneous[2] *= invW;
+            v->homogeneous[0] *= wRcp;
+            v->homogeneous[1] *= wRcp;
+            v->homogeneous[2] *= wRcp;
 
             // Division of texture coordinates (perspective-correct)
-            v->texcoord[0] *= invW;
-            v->texcoord[1] *= invW;
+            v->texcoord[0] *= wRcp;
+            v->texcoord[1] *= wRcp;
 
             // Division of colors (perspective-correct)
-            v->color[0] *= invW;
-            v->color[1] *= invW;
-            v->color[2] *= invW;
-            v->color[3] *= invW;
+            v->color[0] *= wRcp;
+            v->color[1] *= wRcp;
+            v->color[2] *= wRcp;
+            v->color[3] *= wRcp;
 
             // Transformation to screen space
             sw_project_ndc_to_screen(v->screen, v->homogeneous);
@@ -2616,23 +2616,23 @@ static inline void sw_quad_clip_and_project(void)
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
-            const float invW = 1.0f/v->homogeneous[3];
-            v->homogeneous[3] = invW;
+            const float wRcp = 1.0f/v->homogeneous[3];
+            v->homogeneous[3] = wRcp;
 
             // Division of XYZ coordinates by weight
-            v->homogeneous[0] *= invW;
-            v->homogeneous[1] *= invW;
-            v->homogeneous[2] *= invW;
+            v->homogeneous[0] *= wRcp;
+            v->homogeneous[1] *= wRcp;
+            v->homogeneous[2] *= wRcp;
 
             // Division of texture coordinates (perspective-correct)
-            v->texcoord[0] *= invW;
-            v->texcoord[1] *= invW;
+            v->texcoord[0] *= wRcp;
+            v->texcoord[1] *= wRcp;
 
             // Division of colors (perspective-correct)
-            v->color[0] *= invW;
-            v->color[1] *= invW;
-            v->color[2] *= invW;
-            v->color[3] *= invW;
+            v->color[0] *= wRcp;
+            v->color[1] *= wRcp;
+            v->color[2] *= wRcp;
+            v->color[3] *= wRcp;
 
             // Transformation to screen space
             sw_project_ndc_to_screen(v->screen, v->homogeneous);
