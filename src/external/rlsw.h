@@ -1087,10 +1087,11 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 
 #else
-    for (int i = 0; i < 4; i++) {
-        float val = src[i] * 255.0f;
-        val = (val > 255.0f) ? 255.0f : val;
-        val = (val < 0.0f) ? 0.0f : val;
+    for (int i = 0; i < 4; i++)
+    {
+        float val = src[i]*255.0f;
+        val = (val > 255.0f)? 255.0f : val;
+        val = (val < 0.0f)? 0.0f : val;
         dst[i] = (uint8_t)(val + 0.5f);
     }
 #endif
@@ -1943,8 +1944,8 @@ static inline void sw_texture_sample_linear(float *color, const sw_texture_t *te
     // TODO: With a bit more cleverness we could clearly reduce the
     // number of operations here, but for now it works fine.
 
-    float xf = (u * tex->width) - 0.5f;
-    float yf = (v * tex->height) - 0.5f;
+    float xf = (u*tex->width) - 0.5f;
+    float yf = (v*tex->height) - 0.5f;
 
     float fx = sw_fract(xf);
     float fy = sw_fract(yf);
@@ -2679,9 +2680,9 @@ static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
 
     // Calculate the centroid of the quad
     float cx = (input[0].screen[0] + input[1].screen[0] + 
-                input[2].screen[0] + input[3].screen[0]) * 0.25f;
+                input[2].screen[0] + input[3].screen[0])*0.25f;
     float cy = (input[0].screen[1] + input[1].screen[1] + 
-                input[2].screen[1] + input[3].screen[1]) * 0.25f;
+                input[2].screen[1] + input[3].screen[1])*0.25f;
 
     // Calculate the angle of each vertex relative to the center
     // and assign them directly to their correct position
