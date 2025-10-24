@@ -1942,17 +1942,19 @@ static inline void sw_texture_sample_linear(float *color, const sw_texture_t *te
     // TODO: With a bit more cleverness we could clearly reduce the
     // number of operations here, but for now it works fine.
 
-    float xf = u*tex->width  - 0.5f;
-    float yf = v*tex->height - 0.5f;
+    float xf = (u * tex->width) - 0.5f;
+    float yf = (v * tex->height) - 0.5f;
 
-    int x0 = (int)floorf(xf);
-    int y0 = (int)floorf(yf);
+    float fx = sw_fract(xf);
+    float fy = sw_fract(yf);
 
-    float fx = xf - x0;
-    float fy = yf - y0;
+    int x0 = (int)xf;
+    int y0 = (int)yf;
 
     int x1 = x0 + 1;
     int y1 = y0 + 1;
+
+    // NOTE: If the textures are POT we could avoid the division for SW_REPEAT
 
     if (tex->sWrap == SW_CLAMP)
     {
