@@ -741,7 +741,8 @@ SWAPI void swBindTexture(uint32_t id);
 #define INC_COLOR_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_COLOR_PIXEL_SIZE))
 #define INC_DEPTH_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_DEPTH_PIXEL_SIZE))
 
-#define SW_STATE_CHECK(flags)   ((RLSW.stateFlags & (flags)) == (flags))
+#define SW_STATE_CHECK(flags)           (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
+#define SW_STATE_CHECK_EX(state, flags) (((state) & (flags)) == (flags))
 
 #define SW_STATE_SCISSOR_TEST   (1 << 0)
 #define SW_STATE_TEXTURE_2D     (1 << 1)
@@ -2539,13 +2540,17 @@ static inline void sw_triangle_render(void)
         }                                                       \
     }
 
-    if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
-    else if (SW_STATE_CHECK(SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
-    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
+    uint32_t state = RLSW.stateFlags;
+    if (RLSW.currentTexture == 0) state &= ~SW_STATE_TEXTURE_2D;
+    if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
+
+    if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
     else TRIANGLE_RASTER(sw_triangle_raster)
 
     #undef TRIANGLE_RASTER
@@ -2883,15 +2888,19 @@ static inline void sw_quad_render(void)
 
     if (RLSW.vertexCounter < 3) return;
 
+    uint32_t state = RLSW.stateFlags;
+    if (RLSW.currentTexture == 0) state &= ~SW_STATE_TEXTURE_2D;
+    if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
+
     if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
     {
-        if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND();
-        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_DEPTH_BLEND();
-        else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_BLEND();
-        else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_TEX_DEPTH();
-        else if (SW_STATE_CHECK(SW_STATE_BLEND)) sw_quad_raster_axis_aligned_BLEND();
-        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_DEPTH();
-        else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D)) sw_quad_raster_axis_aligned_TEX();
+        if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND();
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_DEPTH_BLEND();
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_BLEND();
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_TEX_DEPTH();
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) sw_quad_raster_axis_aligned_BLEND();
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_DEPTH();
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) sw_quad_raster_axis_aligned_TEX();
         else sw_quad_raster_axis_aligned();
         return;
     }
@@ -2909,13 +2918,13 @@ static inline void sw_quad_render(void)
         }                                                       \
     }
 
-    if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
-    else if (SW_STATE_CHECK(SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
-    else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
-    else if (SW_STATE_CHECK(SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
+    if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
+    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
     else TRIANGLE_RASTER(sw_triangle_raster)
 
     #undef TRIANGLE_RASTER
