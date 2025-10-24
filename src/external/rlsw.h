@@ -116,11 +116,11 @@
 #endif
 
 #ifndef SW_COLOR_BUFFER_BITS
-    #define SW_COLOR_BUFFER_BITS            24
+    #define SW_COLOR_BUFFER_BITS            32  //< 32 (rgba), 16 (rgb packed) or 8 (rgb packed) 
 #endif
 
 #ifndef SW_DEPTH_BUFFER_BITS
-    #define SW_DEPTH_BUFFER_BITS            16
+    #define SW_DEPTH_BUFFER_BITS            16  //< 24, 16 or 8
 #endif
 
 #ifndef SW_MAX_PROJECTION_STACK_SIZE
@@ -611,6 +611,65 @@ SWAPI void swBindTexture(uint32_t id);
 #include <stddef.h>
 #include <math.h>           // Required for: floorf(), fabsf()
 
+#if defined(__FMA__) && defined(__AVX2__)
+#   define SW_HAS_FMA_AVX2
+#   include <immintrin.h>
+#endif
+
+#if defined(__FMA__) && defined(__AVX__)
+#    define SW_HAS_FMA_AVX
+#    include <immintrin.h>
+#endif
+
+#if defined(__AVX2__)
+#    define SW_HAS_AVX2
+#    include <immintrin.h>
+#endif
+
+#if defined(__AVX__)
+#    define SW_HAS_AVX
+#    include <immintrin.h>
+#endif
+
+#if defined(__SSE4_2__)
+#    define SW_HAS_SSE42
+#    include <nmmintrin.h>
+#endif
+
+#if defined(__SSE4_1__)
+#    define SW_HAS_SSE41
+#    include <smmintrin.h>
+#endif
+
+#if defined(__SSSE3__)
+#    define SW_HAS_SSSE3
+#    include <tmmintrin.h>
+#endif
+
+#if defined(__SSE3__)
+#    define SW_HAS_SSE3
+#    include <pmmintrin.h>
+#endif
+
+#if defined(__SSE2__)
+#    define SW_HAS_SSE2
+#    include <emmintrin.h>
+#endif
+
+#if defined(__SSE__)
+#    define SW_HAS_SSE
+#    include <xmmintrin.h>
+#endif
+
+#if defined(__ARM_NEON) || defined(__aarch64__)
+#    if defined(__ARM_FEATURE_FMA)
+#        define SW_HAS_NEON_FMA
+#    else
+#        define SW_HAS_NEON
+#    endif
+#    include <arm_neon.h>
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -647,21 +706,9 @@ SWAPI void swBindTexture(uint32_t id);
     #define TO_FLOAT_R(v) ((v)*(1.0f/31.0f))
     #define TO_FLOAT_G(v) ((v)*(1.0f/63.0f))
     #define TO_FLOAT_B(v) ((v)*(1.0f/31.0f))
-#else // 24 bits
+#else // 32 bits
     #define COLOR_TYPE uint8_t
     #define COLOR_IS_PACKED 0
-    #define PACK_R(r) ((uint8_t)((r)*255.0f))
-    #define PACK_G(g) ((uint8_t)((g)*255.0f))
-    #define PACK_B(b) ((uint8_t)((b)*255.0f))
-    #define UNPACK_R(p) (p)[0]
-    #define UNPACK_G(p) (p)[1]
-    #define UNPACK_B(p) (p)[2]
-    #define SCALE_R(v) (v)
-    #define SCALE_G(v) (v)
-    #define SCALE_B(v) (v)
-    #define TO_FLOAT_R(v) ((v)*(1.0f/255.0f))
-    #define TO_FLOAT_G(v) ((v)*(1.0f/255.0f))
-    #define TO_FLOAT_B(v) ((v)*(1.0f/255.0f))
 #endif
 
 #if (SW_DEPTH_BUFFER_BITS == 8)
@@ -1005,8 +1052,85 @@ static inline void sw_add_vertex_grad_PTCH(
     out->homogeneous[3] += gradients->homogeneous[3];
 }
 
-// Half floating point management functions
-static inline uint32_t sw_f16_to_f32_ui(uint16_t h)
+static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
+{
+#if defined(SW_HAS_NEON) || defined(SW_HAS_NEON_FMA)
+    float32x4_t values = vld1q_f32(src);
+    float32x4_t scaled = vmulq_n_f32(values, 255.0f);
+    scaled = vminq_f32(vmaxq_f32(scaled, vdupq_n_f32(0.0f)), vdupq_n_f32(255.0f));
+    uint32x4_t clamped = vcvtq_u32_f32(scaled);
+
+    uint16x4_t narrow16 = vmovn_u32(clamped);
+    uint8x8_t narrow8 = vmovn_u16(vcombine_u16(narrow16, narrow16));
+
+    vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8), 0);
+
+#elif defined(SW_HAS_SSE41)
+    __m128 values = _mm_loadu_ps(src);
+    __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
+    scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
+    __m128i clamped = _mm_cvtps_epi32(scaled);
+
+    clamped = _mm_packus_epi32(clamped, clamped);
+    clamped = _mm_packus_epi16(clamped, clamped);
+    *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
+
+#elif defined(SW_HAS_SSE2)
+    __m128 values = _mm_loadu_ps(src);
+    __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
+    scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
+    __m128i clamped = _mm_cvtps_epi32(scaled);
+    clamped = _mm_packus_epi16(_mm_packs_epi32(clamped, clamped), clamped);
+    *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
+
+#else
+    for (int i = 0; i < 4; i++) {
+        float val = src[i] * 255.0f;
+        val = (val > 255.0f) ? 255.0f : val;
+        val = (val < 0.0f) ? 0.0f : val;
+        dst[i] = (uint8_t)(val + 0.5f);
+    }
+#endif
+}
+
+static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
+{
+#if defined(SW_HAS_NEON)
+    uint32x4_t bytes = vdupq_n_u32(0);
+    bytes = vld1q_lane_u32((const uint32_t*)src, bytes, 0);
+
+    uint8x8_t bytes8 = vreinterpret_u8_u32(vget_low_u32(bytes));
+    uint16x8_t bytes16 = vmovl_u8(bytes8);
+    uint32x4_t ints = vmovl_u16(vget_low_u16(bytes16));
+
+    float32x4_t floats = vcvtq_f32_u32(ints);
+    floats = vmulq_n_f32(floats, 1.0f / 255.0f);
+    vst1q_f32(dst, floats);
+
+#elif defined(SW_HAS_SSE41)
+    __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
+    __m128i ints = _mm_cvtepu8_epi32(bytes);
+    __m128 floats = _mm_cvtepi32_ps(ints);
+    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f / 255.0f));
+    _mm_storeu_ps(dst, floats);
+
+#elif defined(SW_HAS_SSE2)
+    __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
+    bytes = _mm_unpacklo_epi8(bytes, _mm_setzero_si128());
+    __m128i ints = _mm_unpacklo_epi16(bytes, _mm_setzero_si128());
+    __m128 floats = _mm_cvtepi32_ps(ints);
+    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f / 255.0f));
+    _mm_storeu_ps(dst, floats);
+
+#else
+    for (int i = 0; i < 4; i++) {
+        dst[i] = (float)src[i]/255.0f;
+    }
+#endif
+}
+
+// Half conversion functions
+static inline uint32_t sw_half_to_float_ui(uint16_t h)
 {
     uint32_t s = (uint32_t)(h & 0x8000) << 16;
     int32_t em = h & 0x7fff;
@@ -1024,14 +1148,14 @@ static inline uint32_t sw_f16_to_f32_ui(uint16_t h)
     return s | r;
 }
 
-static inline float sw_f16_to_f32(sw_half_t y)
+static inline float sw_half_to_float(sw_half_t y)
 {
-    union { float f; uint32_t i; } v = { .i = sw_f16_to_f32_ui(y) };
+    union { float f; uint32_t i; } v = { .i = sw_half_to_float_ui(y) };
 
     return v.f;
 }
 
-static inline uint16_t sw_f16_from_f32_ui(uint32_t ui)
+static inline uint16_t sw_half_from_float_ui(uint32_t ui)
 {
     int32_t s = (ui >> 16) & 0x8000;
     int32_t em = ui & 0x7fffffff;
@@ -1051,11 +1175,11 @@ static inline uint16_t sw_f16_from_f32_ui(uint32_t ui)
     return (uint16_t)(s | h);
 }
 
-static inline sw_half_t sw_f16_from_f32(float i)
+static inline sw_half_t sw_half_from_float(float i)
 {
     union { float f; uint32_t i; } v;
     v.f = i;
-    return sw_f16_from_f32_ui(v.i);
+    return sw_half_from_float_ui(v.i);
 }
 
 // Framebuffer management functions
@@ -1119,13 +1243,10 @@ static inline void sw_framebuffer_read_color(float dst[4], const void *src)
     dst[0] = TO_FLOAT_R(UNPACK_R(pixel));
     dst[1] = TO_FLOAT_G(UNPACK_G(pixel));
     dst[2] = TO_FLOAT_B(UNPACK_B(pixel));
-#else
-    const COLOR_TYPE *p = (const COLOR_TYPE*)src;
-    dst[0] = TO_FLOAT_R(UNPACK_R(p));
-    dst[1] = TO_FLOAT_G(UNPACK_G(p));
-    dst[2] = TO_FLOAT_B(UNPACK_B(p));
-#endif
     dst[3] = 1.0f;
+#else
+    sw_float_from_unorm8_simd(dst, src);
+#endif
 }
 
 static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
@@ -1135,36 +1256,35 @@ static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
     dst[0] = SCALE_R(UNPACK_R(pixel));
     dst[1] = SCALE_G(UNPACK_G(pixel));
     dst[2] = SCALE_B(UNPACK_B(pixel));
+    dst[3] = 255;
 #else
     const COLOR_TYPE *p = (const COLOR_TYPE*)src;
-    dst[0] = SCALE_R(UNPACK_R(p));
-    dst[1] = SCALE_G(UNPACK_G(p));
-    dst[2] = SCALE_B(UNPACK_B(p));
+    dst[0] = p[0];
+    dst[1] = p[1];
+    dst[2] = p[2];
+    dst[3] = p[3];
 #endif
-    dst[3] = 255;
 }
 
-static inline void sw_framebuffer_write_color(void *dst, const float color[3])
+static inline void sw_framebuffer_write_color(void *dst, const float src[4])
 {
 #if COLOR_IS_PACKED
-    ((COLOR_TYPE*)dst)[0] = PACK_COLOR(color[0], color[1], color[2]);
+    ((COLOR_TYPE*)dst)[0] = PACK_COLOR(src[0], src[1], src[2]);
 #else
-    COLOR_TYPE *p = (COLOR_TYPE*)dst;
-    p[0] = PACK_R(color[0]);
-    p[1] = PACK_G(color[1]);
-    p[2] = PACK_B(color[2]);
+    sw_float_to_unorm8_simd(dst, src);
 #endif
 }
 
-static inline void sw_framebuffer_fill_color(void *ptr, int size, const float color[3])
+static inline void sw_framebuffer_fill_color(void *ptr, int size, const float color[4])
 {
 #if COLOR_IS_PACKED
     COLOR_TYPE packed = PACK_COLOR(color[0], color[1], color[2]);
     COLOR_TYPE *p = (COLOR_TYPE*)ptr;
 #else
-    COLOR_TYPE r = PACK_R(color[0]);
-    COLOR_TYPE g = PACK_G(color[1]);
-    COLOR_TYPE b = PACK_B(color[2]);
+    COLOR_TYPE r = sw_clampi(color[0]*255, 0, 255);
+    COLOR_TYPE g = sw_clampi(color[1]*255, 0, 255);
+    COLOR_TYPE b = sw_clampi(color[2]*255, 0, 255);
+    COLOR_TYPE a = sw_clampi(color[3]*255, 0, 255);
     COLOR_TYPE *p = (COLOR_TYPE*)ptr;
 #endif
     
@@ -1183,6 +1303,7 @@ static inline void sw_framebuffer_fill_color(void *ptr, int size, const float co
                 *row++ = r;
                 *row++ = g;
                 *row++ = b;
+                *row++ = a;
             }
 #endif
         }
@@ -1197,6 +1318,7 @@ static inline void sw_framebuffer_fill_color(void *ptr, int size, const float co
             *p++ = r;
             *p++ = g;
             *p++ = b;
+            *p++ = a;
         }
 #endif
     }
@@ -1277,9 +1399,10 @@ static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size,
     COLOR_TYPE packedColor = PACK_COLOR(color[0], color[1], color[2]);
     COLOR_TYPE *pColor = (COLOR_TYPE*)colorPtr;
 #else
-    COLOR_TYPE r = PACK_R(color[0]);
-    COLOR_TYPE g = PACK_G(color[1]);
-    COLOR_TYPE b = PACK_B(color[2]);
+    COLOR_TYPE r = sw_clampi(color[0]*255, 0, 255);
+    COLOR_TYPE g = sw_clampi(color[1]*255, 0, 255);
+    COLOR_TYPE b = sw_clampi(color[2]*255, 0, 255);
+    COLOR_TYPE a = sw_clampi(color[3]*255, 0, 255);
     COLOR_TYPE *pColor = (COLOR_TYPE*)colorPtr;
 #endif
 
@@ -1318,6 +1441,7 @@ static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size,
                 *rowColor++ = r;
                 *rowColor++ = g;
                 *rowColor++ = b;
+                *rowColor++ = a;
 #endif
 
 #if DEPTH_IS_PACKED
@@ -1340,6 +1464,7 @@ static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size,
             *pColor++ = r;
             *pColor++ = g;
             *pColor++ = b;
+            *pColor++ = a;
 #endif
 
 #if DEPTH_IS_PACKED
@@ -1754,7 +1879,7 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R16:
         {
             uint16_t val = ((const uint16_t*)pixels)[offset];
-            uint8_t gray = sw_f16_to_f32(val)/255.0f;
+            uint8_t gray = sw_half_to_float(val)/255.0f;
             color[0] = gray;
             color[1] = gray;
             color[2] = gray;
@@ -1764,19 +1889,19 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         {
             const uint16_t *src = &((const uint16_t*)pixels)[offset*3];
-            color[0] = sw_f16_to_f32(src[0])/255.0f;
-            color[1] = sw_f16_to_f32(src[1])/255.0f;
-            color[2] = sw_f16_to_f32(src[2])/255.0f;
+            color[0] = sw_half_to_float(src[0])/255.0f;
+            color[1] = sw_half_to_float(src[1])/255.0f;
+            color[2] = sw_half_to_float(src[2])/255.0f;
             color[3] = 255;
             break;
         }
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         {
             const uint16_t *src = &((const uint16_t*)pixels)[offset*4];
-            color[0] = sw_f16_to_f32(src[0])/255.0f;
-            color[1] = sw_f16_to_f32(src[1])/255.0f;
-            color[2] = sw_f16_to_f32(src[2])/255.0f;
-            color[3] = sw_f16_to_f32(src[3])/255.0f;
+            color[0] = sw_half_to_float(src[0])/255.0f;
+            color[1] = sw_half_to_float(src[1])/255.0f;
+            color[2] = sw_half_to_float(src[2])/255.0f;
+            color[3] = sw_half_to_float(src[3])/255.0f;
             break;
         }
         case SW_PIXELFORMAT_UNKNOWN:
@@ -1795,12 +1920,7 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
 
 static inline void sw_texture_fetch(float* color, const sw_texture_t* tex, int x, int y)
 {
-    int offset = 4*(y*tex->width + x);
-
-    color[0] = (float)tex->pixels[offset + 0] / 255;
-    color[1] = (float)tex->pixels[offset + 1] / 255;
-    color[2] = (float)tex->pixels[offset + 2] / 255;
-    color[3] = (float)tex->pixels[offset + 3] / 255;
+    sw_float_from_unorm8_simd(color, &tex->pixels[4*(y*tex->width + x)]);
 }
 
 static inline void sw_texture_sample_nearest(float *color, const sw_texture_t *tex, float u, float v)
@@ -2266,12 +2386,7 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
         {                                                                           \
             float dstColor[4];                                                      \
             sw_framebuffer_read_color(dstColor, cptr);                              \
-                                                                                    \
             sw_blend_colors(dstColor, srcColor);                                    \
-            dstColor[0] = sw_saturate(dstColor[0]);                                 \
-            dstColor[1] = sw_saturate(dstColor[1]);                                 \
-            dstColor[2] = sw_saturate(dstColor[2]);                                 \
-                                                                                    \
             sw_framebuffer_write_color(cptr, dstColor);                             \
         }                                                                           \
         else                                                                        \
@@ -2743,13 +2858,7 @@ static inline void FUNC_NAME(void)                                              
             {                                                                   \
                 float dstColor[4];                                              \
                 sw_framebuffer_read_color(dstColor, cptr);                      \
-                                                                                \
                 sw_blend_colors(dstColor, srcColor);                            \
-                dstColor[0] = sw_saturate(dstColor[0]);                         \
-                dstColor[1] = sw_saturate(dstColor[1]);                         \
-                dstColor[2] = sw_saturate(dstColor[2]);                         \
-                dstColor[3] = sw_saturate(dstColor[3]);                         \
-                                                                                \
                 sw_framebuffer_write_color(cptr, dstColor);                     \
             }                                                                   \
             else sw_framebuffer_write_color(cptr, srcColor);                    \
@@ -3025,7 +3134,6 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
             {                                                           \
                 float dstColor[4];                                      \
                 sw_framebuffer_read_color(dstColor, cptr);              \
-                                                                        \
                 sw_blend_colors(dstColor, color);                       \
                 sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
@@ -3062,7 +3170,6 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
             {                                                           \
                 float dstColor[4];                                      \
                 sw_framebuffer_read_color(dstColor, cptr);              \
-                                                                        \
                 sw_blend_colors(dstColor, color);                       \
                 sw_framebuffer_write_color(cptr, dstColor);             \
             }                                                           \
@@ -3228,7 +3335,6 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
     {                                                                       \
         float dstColor[4];                                                  \
         sw_framebuffer_read_color(dstColor, cptr);                          \
-                                                                            \
         sw_blend_colors(dstColor, color);                                   \
         sw_framebuffer_write_color(cptr, dstColor);                         \
     }                                                                       \
