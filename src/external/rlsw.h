@@ -2670,76 +2670,40 @@ static inline bool sw_quad_is_axis_aligned(void)
 
 static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
 {
-    // Sort 4 quad vertices into clockwise order with fixed layout:
-    //
-    // v0 -- v1
-    // |      |
-    // v3 -- v2
-    //
-    // The goal is:
-    // - v0: top-left (minimum Y, then minimum X)
-    // - v1: top-right (minimum Y row, maximum X)
-    // - v2: bottom-right (maximum Y, maximum X)
-    // - v3: bottom-left (maximum Y, minimum X)
     const sw_vertex_t *input = RLSW.vertexBuffer;
 
-    // Separate vertices into top and bottom based on Y-coordinate
-    const sw_vertex_t *top[2] = {NULL, NULL};
-    const sw_vertex_t *bottom[2] = {NULL, NULL};
-    int topCount = 0, bottomCount = 0;
+    // Calculate the centroid of the quad
+    float cx = (input[0].screen[0] + input[1].screen[0] + 
+                input[2].screen[0] + input[3].screen[0]) * 0.25f;
+    float cy = (input[0].screen[1] + input[1].screen[1] + 
+                input[2].screen[1] + input[3].screen[1]) * 0.25f;
 
-    // Find minimum and maximum Y
-    float minY = input[0].screen[1];
-    float maxY = input[0].screen[1];
+    // Calculate the angle of each vertex relative to the center
+    // and assign them directly to their correct position
+    const sw_vertex_t *corners[4] = { 0 };
 
-    for (int i = 1; i < 4; i++)
-    {
-        if (input[i].screen[1] < minY) minY = input[i].screen[1];
-        if (input[i].screen[1] > maxY) maxY = input[i].screen[1];
-    }
-
-    // Separate vertices based on Y-coordinate
     for (int i = 0; i < 4; i++)
     {
-        if ((input[i].screen[1] == minY) && (topCount < 2)) top[topCount++] = &input[i];
-        else if ((input[i].screen[1] == maxY) && (bottomCount < 2)) bottom[bottomCount++] = &input[i];
+        float dx = input[i].screen[0] - cx;
+        float dy = input[i].screen[1] - cy;
+
+        // Determine the quadrant (clockwise from top-left)
+        // top-left: dx < 0, dy < 0
+        // top-right: dx >= 0, dy < 0
+        // bottom-right: dx >= 0, dy >= 0
+        // bottom-left: dx < 0, dy >= 0
+
+        int idx;
+        if (dy < 0) idx = (dx < 0)? 0 : 1; // Top row
+        else idx = (dx < 0)? 3 : 2; // Bottom row
+
+        corners[idx] = &input[i];
     }
 
-    // If we don't have enough top/bottom vertices (e.g., Y values are all different),
-    // classify vertices as top or bottom based on whether they're closer to minY or maxY
-    for (int i = 0; i < 4; i++)
-    {
-        if ((topCount < 2) && (&input[i] != top[0]) && (&input[i] != bottom[0]) && (&input[i] != bottom[1]))
-        {
-            if (fabsf(input[i].screen[1] - minY) <= fabsf(input[i].screen[1] - maxY)) top[topCount++] = &input[i];
-        }
-        if ((bottomCount < 2) && (&input[i] != top[0]) && (&input[i] != top[1]) && (&input[i] != bottom[0]))
-        {
-            if (fabsf(input[i].screen[1] - maxY) < fabsf(input[i].screen[1] - minY)) bottom[bottomCount++] = &input[i];
-        }
-    }
-
-    // Sort top vertices by X (left to right)
-    if ((topCount == 2) && (top[0]->screen[0] > top[1]->screen[0]))
-    {
-        const sw_vertex_t *temp = top[0];
-        top[0] = top[1];
-        top[1] = temp;
-    }
-
-    // Sort bottom vertices by X (left to right)
-    if ((bottomCount == 2) && (bottom[0]->screen[0] > bottom[1]->screen[0]))
-    {
-        const sw_vertex_t *temp = bottom[0];
-        bottom[0] = bottom[1];
-        bottom[1] = temp;
-    }
-
-    // Assign vertices in clockwise order as per the required layout
-    output[0] = top[0];                 // v0: top-left
-    output[1] = top[topCount-1];        // v1: top-right
-    output[2] = bottom[bottomCount-1];  // v2: bottom-right
-    output[3] = bottom[0];              // v3: bottom-left
+    output[0] = corners[0];  // top-left
+    output[1] = corners[1];  // top-right
+    output[2] = corners[2];  // bottom-right
+    output[3] = corners[3];  // bottom-left
 }
 
 // TODO: REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth,
@@ -3066,7 +3030,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
     int dy = y2 - y1;                                                   \
                                                                         \
     /* Handling of lines that are more horizontal or vertical */        \
-    if ((dx == 0) && (dy == 0))                                             \
+    if ((dx == 0) && (dy == 0))                                         \
     {                                                                   \
         /* TODO: A point should be rendered here */                     \
         return;                                                         \
