@@ -1054,7 +1054,7 @@ static inline void sw_add_vertex_grad_PTCH(
 
 static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
 {
-#if defined(SW_HAS_NEON) || defined(SW_HAS_NEON_FMA)
+#if defined(SW_HAS_NEON)
     float32x4_t values = vld1q_f32(src);
     float32x4_t scaled = vmulq_n_f32(values, 255.0f);
     scaled = vminq_f32(vmaxq_f32(scaled, vdupq_n_f32(0.0f)), vdupq_n_f32(255.0f));
@@ -1080,7 +1080,9 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
     scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
     __m128i clamped = _mm_cvtps_epi32(scaled);
-    clamped = _mm_packus_epi16(_mm_packs_epi32(clamped, clamped), clamped);
+
+    clamped = _mm_packs_epi32(clamped, clamped);
+    clamped = _mm_packus_epi16(clamped, clamped);
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 
 #else
@@ -1123,9 +1125,10 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     _mm_storeu_ps(dst, floats);
 
 #else
-    for (int i = 0; i < 4; i++) {
-        dst[i] = (float)src[i]/255.0f;
-    }
+    dst[0] = (float)src[0]/255.0f;
+    dst[1] = (float)src[1]/255.0f;
+    dst[2] = (float)src[2]/255.0f;
+    dst[3] = (float)src[3]/255.0f;
 #endif
 }
 
