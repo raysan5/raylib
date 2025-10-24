@@ -165,7 +165,8 @@ int main(void)
         
         // --------------
         
-        if (collision.hit && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && decalCount < MAX_DECALS) {
+        if (collision.hit && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && decalCount < MAX_DECALS)
+        {
             
             // Create the transformation to project the decal
             Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
@@ -188,12 +189,14 @@ int main(void)
             // (for each mesh of the model)
             for (int meshIndex = 0; meshIndex < model.meshCount; meshIndex++) {
                 Mesh mesh = model.meshes[meshIndex];
-                for (int tri = 0; tri < mesh.triangleCount; tri++) {
+                for (int tri = 0; tri < mesh.triangleCount; tri++)
+                {
                     Vector3 vertices[3];
                     
                     // The way we calculate the vertices of the mesh triangle
                     // depend on whether the mesh vertices are indexed or not
-                    if (mesh.indices == 0) {
+                    if (mesh.indices == 0)
+                    {
                         for (int v = 0; v < 3; v++) {
                             vertices[v] = (Vector3) {
                                 mesh.vertices[3*3*tri + 3*v + 0],
@@ -202,8 +205,10 @@ int main(void)
                             };
                         }
                     }
-                    else {
-                        for (int v = 0; v < 3; v++) {
+                    else
+                    {
+                        for (int v = 0; v < 3; v++)
+                        {
                             vertices[v] = (Vector3) {
                                 mesh.vertices[ 3*mesh.indices[3*tri+0] + v],
                                 mesh.vertices[ 3*mesh.indices[3*tri+1] + v],
@@ -215,7 +220,8 @@ int main(void)
                     // Transform all 3 vertices of the triangle
                     // and check if they are inside our decal box
                     int insideCount = 0;
-                    for (int i = 0; i < 3; i++) {
+                    for (int i = 0; i < 3; i++)
+                    {
                         // To splat space
                         Vector3 v = Vector3Transform(vertices[i], splat);
                         
@@ -228,7 +234,8 @@ int main(void)
                     }
                     
                     // If any of them are inside, we add the triangle - we'll clip it later
-                    if (insideCount > 0) {
+                    if (insideCount > 0)
+                    {
                         AddTriangleToMeshBuilder(&mesh_builders[mb_index], vertices);
                     }
                 }
@@ -243,7 +250,8 @@ int main(void)
                {  0,  0,  1 }, 
                {  0,  0, -1 }
             };
-            for (int face = 0; face < 6; face++) {
+            for (int face = 0; face < 6; face++)
+            {
                 // Swap current model builder (so we read from the one we just wrote to)
                 mb_index = 1 - mb_index;
                 
@@ -255,7 +263,8 @@ int main(void)
                 
                 float s = 0.5f * decalSize;
                 
-                for (int i = 0; i < inMesh->vertexCount; i+=3) {
+                for (int i = 0; i < inMesh->vertexCount; i+=3)
+                {
                     Vector3 nV1, nV2, nV3, nV4;
 
                     float d1 = Vector3DotProduct(inMesh->vertices[ i + 0 ], planes[face] ) - s;
@@ -346,9 +355,11 @@ int main(void)
             MeshBuilder *theMesh = &mesh_builders[mb_index];
             
             // Allocate room for UVs
-            if (theMesh->vertexCount > 0) {
+            if (theMesh->vertexCount > 0)
+            {
                 theMesh->uvs = (Vector2*)MemAlloc(sizeof(Vector2)*theMesh->vertexCount);
-                for (int i = 0; i < theMesh->vertexCount; i++) {
+                for (int i = 0; i < theMesh->vertexCount; i++)
+                {
                     
                     // Calculate the UVs based on the projected coords
                     // They are clipped to (-decalSize .. decalSize) and we want them (0..1)
@@ -381,17 +392,20 @@ int main(void)
             BeginMode3D(camera);
 
                 // Draw the model at the origin and default scale
-                if (showModel) {
+                if (showModel)
+                {
                     DrawModel(model, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
                 }
                 
                 // Draw the decal models
-                for (int i = 0; i < decalCount; i++) {
+                for (int i = 0; i < decalCount; i++)
+                {
                     DrawModel(decalModels[i], (Vector3){0}, 1.0f, WHITE);
                 }
 
                 // If we hit the mesh, draw the box for the decal 
-                if (collision.hit) {
+                if (collision.hit)
+                {
                     
                     Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
                     Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){0,1,0});
@@ -417,7 +431,8 @@ int main(void)
                 int vertexCount = 0;
                 int triangleCount = 0;
                 
-                for (int i = 0; i < model.meshCount; i++) {
+                for (int i = 0; i < model.meshCount; i++)
+                {
                     vertexCount += model.meshes[i].vertexCount;
                     triangleCount += model.meshes[i].triangleCount;
                 }
@@ -427,7 +442,8 @@ int main(void)
                 DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
                 yPos += 15;
                 
-                for (int i = 0; i < decalCount; i++) {
+                for (int i = 0; i < decalCount; i++)
+                {
                     DrawText(TextFormat("Decal #%d", i+1), x0, yPos, 10, LIME);
                     DrawText(TextFormat("%d", decalModels[i].meshes[0].vertexCount), x1, yPos, 10, LIME);
                     DrawText(TextFormat("%d", decalModels[i].meshes[0].triangleCount), x2, yPos, 10, LIME);
@@ -458,7 +474,8 @@ int main(void)
     UnloadModel(model);
     UnloadTexture(modelTexture);
     
-    for (int i = 0; i < decalCount; i++) {
+    for (int i = 0; i < decalCount; i++)
+    {
         UnloadModel(decalModels[i]);
     }
     
@@ -476,10 +493,12 @@ int main(void)
 // A really simple dynamic array manager
 void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3]) {
     // Reallocate and copy if we need to
-    if (mb->vertexCapacity <= mb->vertexCount + 3 ) {
+    if (mb->vertexCapacity <= mb->vertexCount + 3 )
+    {
         int newVertexCapacity = (1 + (mb->vertexCapacity / 256)) * 256;
         Vector3 *newVertices = (Vector3*)MemAlloc(newVertexCapacity * sizeof(Vector3));
-        if (mb->vertexCapacity > 0) {
+        if (mb->vertexCapacity > 0)
+        {
             memcpy(newVertices, mb->vertices, mb->vertexCount * sizeof(Vector3));
             MemFree(mb->vertices);
         }
@@ -491,15 +510,18 @@ void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3]) {
     int index = mb->vertexCount;
     mb->vertexCount += 3;
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         mb->vertices[index+i] = vertices[i];
     }
 }
 
-void FreeMeshBuilder(MeshBuilder *mb) {
+void FreeMeshBuilder(MeshBuilder *mb)
+{
     MemFree(mb->vertices);
     
-    if (mb->uvs) {
+    if (mb->uvs)
+    {
         MemFree(mb->uvs);
     }
     
@@ -507,7 +529,8 @@ void FreeMeshBuilder(MeshBuilder *mb) {
 }
 
 // Construct a Raylib Mesh from our MeshBuilder data
-Mesh BuildMesh(MeshBuilder *mb) {
+Mesh BuildMesh(MeshBuilder *mb)
+{
     Mesh outMesh = { 0 };
     
     outMesh.vertexCount = mb->vertexCount;
@@ -515,15 +538,18 @@ Mesh BuildMesh(MeshBuilder *mb) {
     
     outMesh.vertices = MemAlloc(outMesh.vertexCount * 3 * sizeof(float));
     
-    if (mb->uvs) {
+    if (mb->uvs)
+    {
         outMesh.texcoords = MemAlloc(outMesh.vertexCount * 2 * sizeof(float));
     }
     
-    for (int i = 0; i < mb->vertexCount; i++) {
+    for (int i = 0; i < mb->vertexCount; i++)
+    {
         outMesh.vertices[3*i+0] = mb->vertices[i].x;
         outMesh.vertices[3*i+1] = mb->vertices[i].y;
         outMesh.vertices[3*i+2] = mb->vertices[i].z;
-        if (mb->uvs) {
+        if (mb->uvs)
+        {
             outMesh.texcoords[2*i+0] = mb->uvs[i].x;
             outMesh.texcoords[2*i+1] = mb->uvs[i].y;
         }
@@ -534,7 +560,8 @@ Mesh BuildMesh(MeshBuilder *mb) {
     return outMesh;
 }
 
-Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s) {
+Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s)
+{
     float d0 = Vector3DotProduct(v0, p) - s;
     float d1 = Vector3DotProduct(v1, p) - s;
 
