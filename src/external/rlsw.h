@@ -791,8 +791,7 @@ typedef struct {
 } sw_vertex_t;
 
 typedef struct {
-
-    uint8_t* pixels;            // Texture pixels (RGBA32)
+    uint8_t *pixels;            // Texture pixels (RGBA32)
 
     int width, height;          // Dimensions of the texture
     int wMinus1, hMinus1;       // Dimensions minus one
@@ -805,7 +804,6 @@ typedef struct {
 
     float tx;                   // Texel width
     float ty;                   // Texel height
-
 } sw_texture_t;
 
 typedef struct {
@@ -881,7 +879,6 @@ typedef struct {
     int freeTextureIdCount;
 
     uint32_t stateFlags;
-
 } sw_context_t;
 
 //----------------------------------------------------------------------------------
@@ -966,11 +963,7 @@ static inline int sw_clampi(int v, int min, int max)
     return v;
 }
 
-static inline void sw_lerp_vertex_PTCH(
-    sw_vertex_t *SW_RESTRICT out,
-    const sw_vertex_t *SW_RESTRICT a,
-    const sw_vertex_t *SW_RESTRICT b,
-    float t)
+static inline void sw_lerp_vertex_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
 {
     const float tInv = 1.0f - t;
 
@@ -997,11 +990,7 @@ static inline void sw_lerp_vertex_PTCH(
     out->homogeneous[3] = a->homogeneous[3]*tInv + b->homogeneous[3]*t;
 }
 
-static inline void sw_get_vertex_grad_PTCH(
-    sw_vertex_t *SW_RESTRICT out,
-    const sw_vertex_t *SW_RESTRICT a,
-    const sw_vertex_t *SW_RESTRICT b,
-    float scale)
+static inline void sw_get_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
 {
     // Calculate gradients for Position
     out->position[0] = (b->position[0] - a->position[0])*scale;
@@ -1026,9 +1015,7 @@ static inline void sw_get_vertex_grad_PTCH(
     out->homogeneous[3] = (b->homogeneous[3] - a->homogeneous[3])*scale;
 }
 
-static inline void sw_add_vertex_grad_PTCH(
-    sw_vertex_t *SW_RESTRICT out,
-    const sw_vertex_t *SW_RESTRICT gradients)
+static inline void sw_add_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
 {
     // Add gradients to Position
     out->position[0] += gradients->position[0];
@@ -1065,7 +1052,6 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     uint8x8_t narrow8 = vmovn_u16(vcombine_u16(narrow16, narrow16));
 
     vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8), 0);
-
 #elif defined(SW_HAS_SSE41)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
@@ -1075,7 +1061,6 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     clamped = _mm_packus_epi32(clamped, clamped);
     clamped = _mm_packus_epi16(clamped, clamped);
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
-
 #elif defined(SW_HAS_SSE2)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
@@ -1085,7 +1070,6 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     clamped = _mm_packs_epi32(clamped, clamped);
     clamped = _mm_packus_epi16(clamped, clamped);
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
-
 #else
     for (int i = 0; i < 4; i++)
     {
@@ -1110,14 +1094,12 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     float32x4_t floats = vcvtq_f32_u32(ints);
     floats = vmulq_n_f32(floats, 1.0f/255.0f);
     vst1q_f32(dst, floats);
-
 #elif defined(SW_HAS_SSE41)
     __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
     __m128i ints = _mm_cvtepu8_epi32(bytes);
     __m128 floats = _mm_cvtepi32_ps(ints);
     floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f/255.0f));
     _mm_storeu_ps(dst, floats);
-
 #elif defined(SW_HAS_SSE2)
     __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
     bytes = _mm_unpacklo_epi8(bytes, _mm_setzero_si128());
@@ -1125,7 +1107,6 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     __m128 floats = _mm_cvtepi32_ps(ints);
     floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f/255.0f));
     _mm_storeu_ps(dst, floats);
-
 #else
     dst[0] = (float)src[0]/255.0f;
     dst[1] = (float)src[1]/255.0f;
@@ -1188,7 +1169,7 @@ static inline sw_half_t sw_half_from_float(float i)
 }
 
 // Framebuffer management functions
-
+//-------------------------------------------------------------------------------------------
 static inline bool sw_framebuffer_load(int w, int h)
 {
     int size = w*h;
@@ -1731,9 +1712,10 @@ DEFINE_FRAMEBUFFER_BLIT_BEGIN(R8G8B8A8, uint8_t)
     dst += 4;
 }
 DEFINE_FRAMEBUFFER_BLIT_END()
+//-------------------------------------------------------------------------------------------
 
 // Pixel format management functions
-
+//-------------------------------------------------------------------------------------------
 static inline int sw_get_pixel_format(SWformat format, SWtype type)
 {
     int channels = 0;
@@ -1920,9 +1902,10 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         }
     }
 }
+//-------------------------------------------------------------------------------------------
 
 // Texture sampling functionality
-
+//-------------------------------------------------------------------------------------------
 static inline void sw_texture_fetch(float* color, const sw_texture_t* tex, int x, int y)
 {
     sw_float_from_unorm8_simd(color, &tex->pixels[4*(y*tex->width + x)]);
@@ -2016,9 +1999,10 @@ static inline void sw_texture_sample(float *color, const sw_texture_t *tex, floa
         default: break;
     }
 }
+//-------------------------------------------------------------------------------------------
 
-// Color Blending functionality
-
+// Color blending functionality
+//-------------------------------------------------------------------------------------------
 static inline void sw_factor_zero(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
 {
     factor[0] = factor[1] = factor[2] = factor[3] = 0.0f;
@@ -2091,17 +2075,19 @@ static inline void sw_blend_colors(float *SW_RESTRICT dst/*[4]*/, const float *S
     dst[2] = srcFactor[2]*src[2] + dstFactor[2]*dst[2];
     dst[3] = srcFactor[3]*src[3] + dstFactor[3]*dst[3];
 }
+//-------------------------------------------------------------------------------------------
 
 // Projection helper functions
-
+//-------------------------------------------------------------------------------------------
 static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 {
     screen[0] = RLSW.vpCenter[0] + ndc[0]*RLSW.vpHalfSize[0];
     screen[1] = RLSW.vpCenter[1] - ndc[1]*RLSW.vpHalfSize[1];
 }
+//-------------------------------------------------------------------------------------------
 
-// Polygon Clipping management
-
+// Polygon clipping management
+//-------------------------------------------------------------------------------------------
 #define DEFINE_CLIP_FUNC(name, FUNC_IS_INSIDE, FUNC_COMPUTE_T)                          \
 static inline int sw_clip_##name(                                                       \
     sw_vertex_t output[SW_MAX_CLIPPED_POLYGON_VERTICES],                                \
@@ -2133,9 +2119,10 @@ static inline int sw_clip_##name(                                               
                                                                                         \
     return outputCount;                                                                 \
 }
+//-------------------------------------------------------------------------------------------
 
 // Frustum cliping functions
-
+//-------------------------------------------------------------------------------------------
 #define IS_INSIDE_PLANE_W(h) ((h)[3] >= SW_CLIP_EPSILON)
 #define IS_INSIDE_PLANE_X_POS(h) ((h)[0] <= (h)[3])
 #define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <= (h)[3])
@@ -2159,9 +2146,10 @@ DEFINE_CLIP_FUNC(y_pos, IS_INSIDE_PLANE_Y_POS, COMPUTE_T_PLANE_Y_POS)
 DEFINE_CLIP_FUNC(y_neg, IS_INSIDE_PLANE_Y_NEG, COMPUTE_T_PLANE_Y_NEG)
 DEFINE_CLIP_FUNC(z_pos, IS_INSIDE_PLANE_Z_POS, COMPUTE_T_PLANE_Z_POS)
 DEFINE_CLIP_FUNC(z_neg, IS_INSIDE_PLANE_Z_NEG, COMPUTE_T_PLANE_Z_NEG)
+//-------------------------------------------------------------------------------------------
 
 // Scissor clip functions
-
+//-------------------------------------------------------------------------------------------
 #define COMPUTE_T_SCISSOR_X_MIN(hPrev, hCurr) (((RLSW.scClipMin[0])*(hPrev)[3] - (hPrev)[0])/(((hCurr)[0] - (RLSW.scClipMin[0])*(hCurr)[3]) - ((hPrev)[0] - (RLSW.scClipMin[0])*(hPrev)[3])))
 #define COMPUTE_T_SCISSOR_X_MAX(hPrev, hCurr) (((RLSW.scClipMax[0])*(hPrev)[3] - (hPrev)[0])/(((hCurr)[0] - (RLSW.scClipMax[0])*(hCurr)[3]) - ((hPrev)[0] - (RLSW.scClipMax[0])*(hPrev)[3])))
 #define COMPUTE_T_SCISSOR_Y_MIN(hPrev, hCurr) (((RLSW.scClipMin[1])*(hPrev)[3] - (hPrev)[1])/(((hCurr)[1] - (RLSW.scClipMin[1])*(hCurr)[3]) - ((hPrev)[1] - (RLSW.scClipMin[1])*(hPrev)[3])))
@@ -2176,9 +2164,9 @@ DEFINE_CLIP_FUNC(scissor_x_min, IS_INSIDE_SCISSOR_X_MIN, COMPUTE_T_SCISSOR_X_MIN
 DEFINE_CLIP_FUNC(scissor_x_max, IS_INSIDE_SCISSOR_X_MAX, COMPUTE_T_SCISSOR_X_MAX)
 DEFINE_CLIP_FUNC(scissor_y_min, IS_INSIDE_SCISSOR_Y_MIN, COMPUTE_T_SCISSOR_Y_MIN)
 DEFINE_CLIP_FUNC(scissor_y_max, IS_INSIDE_SCISSOR_Y_MAX, COMPUTE_T_SCISSOR_Y_MAX)
+//-------------------------------------------------------------------------------------------
 
-// Main clip function
-
+// Main polygon clip function
 static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES], int *vertexCounter)
 {
     static sw_vertex_t tmp[SW_MAX_CLIPPED_POLYGON_VERTICES];
@@ -2218,7 +2206,7 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 }
 
 // Triangle rendering logic
-
+//-------------------------------------------------------------------------------------------
 static inline bool sw_triangle_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations.
@@ -2556,9 +2544,10 @@ static inline void sw_triangle_render(void)
 
     #undef TRIANGLE_RASTER
 }
+//-------------------------------------------------------------------------------------------
 
 // Quad rendering logic
-
+//-------------------------------------------------------------------------------------------
 static inline bool sw_quad_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations.
@@ -2930,9 +2919,10 @@ static inline void sw_quad_render(void)
 
     #undef TRIANGLE_RASTER
 }
+//-------------------------------------------------------------------------------------------
 
 // Line rendering logic
-
+//-------------------------------------------------------------------------------------------
 static inline bool sw_line_clip_coord(float q, float p, float *t0, float *t1)
 {
     if (fabsf(p) < SW_CLIP_EPSILON)
@@ -3243,9 +3233,10 @@ static inline void sw_line_render(sw_vertex_t *vertices)
         else sw_line_raster(&vertices[0], &vertices[1]);
     }
 }
+//-------------------------------------------------------------------------------------------
 
 // Point rendering logic
-
+//-------------------------------------------------------------------------------------------
 static inline bool sw_point_clip_and_project(sw_vertex_t *v)
 {
     if (v->homogeneous[3] != 1.0f)
@@ -3409,9 +3400,10 @@ static inline void sw_point_render(sw_vertex_t *v)
         else sw_point_raster(v->screen[0], v->screen[1], v->homogeneous[2], v->color);
     }
 }
+//-------------------------------------------------------------------------------------------
 
 // Polygon modes mendering logic
-
+//-------------------------------------------------------------------------------------------
 static inline void sw_poly_point_render(void)
 {
     for (int i = 0; i < RLSW.vertexCounter; i++) sw_point_render(&RLSW.vertexBuffer[i]);
@@ -3546,6 +3538,7 @@ static inline bool sw_is_blend_dst_factor_valid(int blend)
 
     return result;
 }
+//-------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
