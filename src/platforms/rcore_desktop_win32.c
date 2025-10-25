@@ -49,8 +49,6 @@
 #define CloseWindow CloseWindowWin32
 #define Rectangle RectangleWin32
 #define ShowCursor ShowCursorWin32
-#define LoadImageA LoadImageAWin32
-#define LoadImageW LoadImageWin32
 #define DrawTextA DrawTextAWin32
 #define DrawTextW DrawTextWin32
 #define DrawTextExA DrawTextExAWin32
@@ -63,8 +61,6 @@
 #undef Rectangle        // raylib symbol collision
 #undef ShowCursor       // raylib symbol collision
 #undef LoadImage        // raylib symbol collision
-#undef LoadImageA
-#undef LoadImageW
 #undef DrawText         // raylib symbol collision
 #undef DrawTextA
 #undef DrawTextW
@@ -1529,7 +1525,7 @@ int InitPlatform(void)
     // Load user-provided icon if available
     // NOTE: raylib resource file defaults to GLFW_ICON id, so looking for same identifier
     windowClass.hIcon = LoadImageW(hInstance, L"GLFW_ICON", IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, (LPCWSTR)IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 
     // Register window class
     result = (int)RegisterClassExW(&windowClass);
