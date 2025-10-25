@@ -2354,11 +2354,12 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
     float dZdx = (end->homogeneous[2] - start->homogeneous[2])*dxRcp;               \
     float dWdx = (end->homogeneous[3] - start->homogeneous[3])*dxRcp;               \
                                                                                     \
-    float dCdx[4] = { 0 };                                                          \
-    dCdx[0] = (end->color[0] - start->color[0])*dxRcp;                              \
-    dCdx[1] = (end->color[1] - start->color[1])*dxRcp;                              \
-    dCdx[2] = (end->color[2] - start->color[2])*dxRcp;                              \
-    dCdx[3] = (end->color[3] - start->color[3])*dxRcp;                              \
+    float dCdx[4] = {                                                               \
+        (end->color[0] - start->color[0])*dxRcp,                                    \
+        (end->color[1] - start->color[1])*dxRcp,                                    \
+        (end->color[2] - start->color[2])*dxRcp,                                    \
+        (end->color[3] - start->color[3])*dxRcp                                     \
+    };                                                                              \
                                                                                     \
     float dUdx = 0.0f;                                                              \
     float dVdx = 0.0f;                                                              \
@@ -2408,6 +2409,7 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
+        /* TODO: Implement depth mask */                                            \
         sw_framebuffer_write_depth(dptr, z);                                        \
                                                                                     \
         if (ENABLE_TEXTURE)                                                         \
@@ -2776,36 +2778,41 @@ static inline void FUNC_NAME(void)                                              
     int xMax = (int)v2->screen[0];                                              \
     int yMax = (int)v2->screen[1];                                              \
                                                                                 \
-    int width = xMax - xMin;                                                    \
-    int height = yMax - yMin;                                                   \
+    float w = v2->screen[0] - v0->screen[0];                                    \
+    float h = v2->screen[1] - v0->screen[1];                                    \
                                                                                 \
-    if ((width == 0) || (height == 0)) return;                                  \
+    if ((w == 0) || (h == 0)) return;                                           \
                                                                                 \
-    float wRcp = (width > 0.0f)? 1.0f/width : 0.0f;                             \
-    float hRcp = (height > 0.0f)? 1.0f/height : 0.0f;                           \
+    float wRcp = (w > 0.0f)? 1.0f/w : 0.0f;                                     \
+    float hRcp = (h > 0.0f)? 1.0f/h : 0.0f;                                     \
+                                                                                \
+    /* Subpixel corrections */                                                  \
+    float xSubstep = 1.0f - sw_fract(v0->screen[0]);                            \
+    float ySubstep = 1.0f - sw_fract(v0->screen[1]);                            \
                                                                                 \
     /* Calculation of vertex gradients in X and Y */                            \
-    float tcDx[2], tcDy[2];                                                     \
+    float dUdx, dVdx;                                                           \
+    float dUdy, dVdy;                                                           \
     if (ENABLE_TEXTURE) {                                                       \
-        tcDx[0] = (v1->texcoord[0] - v0->texcoord[0])*wRcp;                     \
-        tcDx[1] = (v1->texcoord[1] - v0->texcoord[1])*wRcp;                     \
-        tcDy[0] = (v3->texcoord[0] - v0->texcoord[0])*hRcp;                     \
-        tcDy[1] = (v3->texcoord[1] - v0->texcoord[1])*hRcp;                     \
+        dUdx = (v1->texcoord[0] - v0->texcoord[0])*wRcp;                        \
+        dVdx = (v1->texcoord[1] - v0->texcoord[1])*wRcp;                        \
+        dUdy = (v3->texcoord[0] - v0->texcoord[0])*hRcp;                        \
+        dVdy = (v3->texcoord[1] - v0->texcoord[1])*hRcp;                        \
     }                                                                           \
                                                                                 \
-    float cDx[4], cDy[4];                                                       \
-    cDx[0] = (v1->color[0] - v0->color[0])*wRcp;                                \
-    cDx[1] = (v1->color[1] - v0->color[1])*wRcp;                                \
-    cDx[2] = (v1->color[2] - v0->color[2])*wRcp;                                \
-    cDx[3] = (v1->color[3] - v0->color[3])*wRcp;                                \
-    cDy[0] = (v3->color[0] - v0->color[0])*hRcp;                                \
-    cDy[1] = (v3->color[1] - v0->color[1])*hRcp;                                \
-    cDy[2] = (v3->color[2] - v0->color[2])*hRcp;                                \
-    cDy[3] = (v3->color[3] - v0->color[3])*hRcp;                                \
+    float dCdx[4], dCdy[4];                                                     \
+    dCdx[0] = (v1->color[0] - v0->color[0])*wRcp;                               \
+    dCdx[1] = (v1->color[1] - v0->color[1])*wRcp;                               \
+    dCdx[2] = (v1->color[2] - v0->color[2])*wRcp;                               \
+    dCdx[3] = (v1->color[3] - v0->color[3])*wRcp;                               \
+    dCdy[0] = (v3->color[0] - v0->color[0])*hRcp;                               \
+    dCdy[1] = (v3->color[1] - v0->color[1])*hRcp;                               \
+    dCdy[2] = (v3->color[2] - v0->color[2])*hRcp;                               \
+    dCdy[3] = (v3->color[3] - v0->color[3])*hRcp;                               \
                                                                                 \
-    float zDx, zDy;                                                             \
-    zDx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;                       \
-    zDy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;                       \
+    float dZdx, dZdy;                                                           \
+    dZdx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;                      \
+    dZdy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;                      \
                                                                                 \
     /* Start of quad rasterization */                                           \
     const sw_texture_t *tex;                                                    \
@@ -2815,15 +2822,15 @@ static inline void FUNC_NAME(void)                                              
     void *dDstBase = RLSW.framebuffer.depth;                                    \
     int wDst = RLSW.framebuffer.width;                                          \
                                                                                 \
-    float zScanline = v0->homogeneous[2];                                       \
-    float uScanline = v0->texcoord[0];                                          \
-    float vScanline = v0->texcoord[1];                                          \
+    float zScanline = v0->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;       \
+    float uScanline = v0->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;          \
+    float vScanline = v0->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;          \
                                                                                 \
     float colorScanline[4] = {                                                  \
-        v0->color[0],                                                           \
-        v0->color[1],                                                           \
-        v0->color[2],                                                           \
-        v0->color[3]                                                            \
+        v0->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,                     \
+        v0->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,                     \
+        v0->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,                     \
+        v0->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep                      \
     };                                                                          \
                                                                                 \
     for (int y = yMin; y < yMax; y++)                                           \
@@ -2861,12 +2868,13 @@ static inline void FUNC_NAME(void)                                              
                 if (z > depth) goto discard;                                    \
             }                                                                   \
                                                                                 \
+            /* TODO: Implement depth mask */                                    \
             sw_framebuffer_write_depth(dptr, z);                                \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
                 float texColor[4];                                              \
-                sw_texture_sample(texColor, tex, u, v, tcDx[0], tcDy[0], tcDx[1], tcDy[1]); \
+                sw_texture_sample(texColor, tex, u, v, dUdx, dUdy, dVdx, dVdy); \
                 srcColor[0] *= texColor[0];                                     \
                 srcColor[1] *= texColor[1];                                     \
                 srcColor[2] *= texColor[2];                                     \
@@ -2883,32 +2891,32 @@ static inline void FUNC_NAME(void)                                              
             else sw_framebuffer_write_color(cptr, srcColor);                    \
                                                                                 \
         discard:                                                                \
-            z += zDx;                                                           \
-            color[0] += cDx[0];                                                 \
-            color[1] += cDx[1];                                                 \
-            color[2] += cDx[2];                                                 \
-            color[3] += cDx[3];                                                 \
+            z += dZdx;                                                          \
+            color[0] += dCdx[0];                                                \
+            color[1] += dCdx[1];                                                \
+            color[2] += dCdx[2];                                                \
+            color[3] += dCdx[3];                                                \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
-                u += tcDx[0];                                                   \
-                v += tcDx[1];                                                   \
+                u += dUdx;                                                      \
+                v += dVdx;                                                      \
             }                                                                   \
                                                                                 \
             INC_COLOR_PTR(cptr);                                                \
             INC_DEPTH_PTR(dptr);                                                \
         }                                                                       \
                                                                                 \
-        zScanline += zDy;                                                       \
-        colorScanline[0] += cDy[0];                                             \
-        colorScanline[1] += cDy[1];                                             \
-        colorScanline[2] += cDy[2];                                             \
-        colorScanline[3] += cDy[3];                                             \
+        zScanline += dZdy;                                                      \
+        colorScanline[0] += dCdy[0];                                            \
+        colorScanline[1] += dCdy[1];                                            \
+        colorScanline[2] += dCdy[2];                                            \
+        colorScanline[3] += dCdy[3];                                            \
                                                                                 \
         if (ENABLE_TEXTURE)                                                     \
         {                                                                       \
-            uScanline += tcDy[0];                                               \
-            vScanline += tcDy[1];                                               \
+            uScanline += dUdy;                                                  \
+            vScanline += dVdy;                                                  \
         }                                                                       \
     }                                                                           \
 }
