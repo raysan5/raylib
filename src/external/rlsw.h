@@ -819,8 +819,8 @@ typedef struct {
     float clearColor[4];            // Color used to clear the screen
     float clearDepth;               // Depth value used to clear the screen
 
-    int vpCenter[2];                // Viewport center
-    int vpHalfSize[2];              // Viewport half dimensions
+    float vpCenter[2];              // Viewport center
+    float vpHalf[2];                // Viewport half dimensions
     int vpSize[2];                  // Viewport dimensions (minus one)
     int vpMin[2];                   // Viewport minimum renderable point (top-left)
     int vpMax[2];                   // Viewport maximum renderable point (bottom-right)
@@ -1038,6 +1038,34 @@ static inline void sw_add_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const s
     out->homogeneous[1] += gradients->homogeneous[1];
     out->homogeneous[2] += gradients->homogeneous[2];
     out->homogeneous[3] += gradients->homogeneous[3];
+}
+
+static inline void sw_add_vertex_grad_scaled_PTCH(
+    sw_vertex_t *SW_RESTRICT out,
+    const sw_vertex_t *SW_RESTRICT gradients,
+    float scale)
+{
+    // Add gradients to Position
+    out->position[0] += gradients->position[0]*scale;
+    out->position[1] += gradients->position[1]*scale;
+    out->position[2] += gradients->position[2]*scale;
+    out->position[3] += gradients->position[3]*scale;
+
+    // Add gradients to Texture coordinates
+    out->texcoord[0] += gradients->texcoord[0]*scale;
+    out->texcoord[1] += gradients->texcoord[1]*scale;
+
+    // Add gradients to Color
+    out->color[0] += gradients->color[0]*scale;
+    out->color[1] += gradients->color[1]*scale;
+    out->color[2] += gradients->color[2]*scale;
+    out->color[3] += gradients->color[3]*scale;
+
+    // Add gradients to Homogeneous coordinates
+    out->homogeneous[0] += gradients->homogeneous[0]*scale;
+    out->homogeneous[1] += gradients->homogeneous[1]*scale;
+    out->homogeneous[2] += gradients->homogeneous[2]*scale;
+    out->homogeneous[3] += gradients->homogeneous[3]*scale;
 }
 
 static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
@@ -1977,18 +2005,18 @@ static inline void sw_texture_sample_linear(float *color, const sw_texture_t *te
     }
 }
 
-static inline void sw_texture_sample(float *color, const sw_texture_t *tex, float u, float v, float duDx, float duDy, float dvDx, float dvDy)
+static inline void sw_texture_sample(float *color, const sw_texture_t *tex, float u, float v, float dUdx, float dUdy, float dVdx, float dVdy)
 {
     // Previous method: There is no need to compute the square root
     // because using the squared value, the comparison remains `L2 > 1.0f*1.0f`
-    //float du = sqrtf(duDx*duDx + duDy*duDy);
-    //float dv = sqrtf(dvDx*dvDx + dvDy*dvDy);
+    //float du = sqrtf(dUdx*dUdx + dUdy*dUdy);
+    //float dv = sqrtf(dVdx*dVdx + dVdy*dVdy);
     //float L = (du > dv)? du : dv;
 
     // Calculate the derivatives for each axis
-    float du2 = duDx*duDx + duDy*duDy;
-    float dv2 = dvDx*dvDx + dvDy*dvDy;
-    float L2 = (du2 > dv2)? du2 : dv2;
+    float dU2 = dUdx*dUdx + dUdy*dUdy;
+    float dV2 = dVdx*dVdx + dVdy*dVdy;
+    float L2 = (dU2 > dV2)? dU2 : dV2;
 
     SWfilter filter = (L2 > 1.0f)? tex->minFilter : tex->magFilter;
 
@@ -2081,8 +2109,8 @@ static inline void sw_blend_colors(float *SW_RESTRICT dst/*[4]*/, const float *S
 //-------------------------------------------------------------------------------------------
 static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 {
-    screen[0] = RLSW.vpCenter[0] + ndc[0]*RLSW.vpHalfSize[0];
-    screen[1] = RLSW.vpCenter[1] - ndc[1]*RLSW.vpHalfSize[1];
+    screen[0] = RLSW.vpCenter[0] + ndc[0]*RLSW.vpHalf[0] + 0.5f;
+    screen[1] = RLSW.vpCenter[1] - ndc[1]*RLSW.vpHalf[1] + 0.5f;
 }
 //-------------------------------------------------------------------------------------------
 
@@ -2295,67 +2323,73 @@ static inline void sw_triangle_clip_and_project(void)
 
 #define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
 static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,     \
-                             const sw_vertex_t *end, float duDy, float dvDy)        \
+                             const sw_vertex_t *end, float dUdy, float dVdy)        \
 {                                                                                   \
-    /* Convert and center the screen coordinates */                                 \
-    int xStart = (int)(start->screen[0] + 0.5f);                                    \
-    int xEnd   = (int)(end->screen[0] + 0.5f);                                      \
-    int y      = (int)start->screen[1];                                             \
+    /* Gets the start and end coordinates */                                        \
+    int xStart = (int)start->screen[0];                                             \
+    int xEnd   = (int)end->screen[0];                                               \
+                                                                                    \
+    /* Avoid empty lines */                                                         \
+    if (xStart == xEnd) return;                                                     \
+                                                                                    \
+    /* Compute the subpixel distance to traverse before the first pixel */          \
+    float xSubstep = 1.0f - sw_fract(start->screen[0]);                             \
                                                                                     \
     /* Compute the inverse horizontal distance along the X axis */                  \
-    float dx = end->screen[0] - start->screen[0];                                   \
-    if (fabsf(dx) < 1e-6f) return;                                                  \
-    float dxRcp = 1.0f/dx;                                                          \
+    float dxRcp = 1.0f/(end->screen[0] - start->screen[0]);                         \
                                                                                     \
     /* Compute the interpolation steps along the X axis */                          \
-    float dzDx = (end->homogeneous[2] - start->homogeneous[2])*dxRcp;               \
-    float dwDx = (end->homogeneous[3] - start->homogeneous[3])*dxRcp;               \
+    float dZdx = (end->homogeneous[2] - start->homogeneous[2])*dxRcp;               \
+    float dWdx = (end->homogeneous[3] - start->homogeneous[3])*dxRcp;               \
                                                                                     \
-    float dcDx[4] = { 0 };                                                          \
-    dcDx[0] = (end->color[0] - start->color[0])*dxRcp;                              \
-    dcDx[1] = (end->color[1] - start->color[1])*dxRcp;                              \
-    dcDx[2] = (end->color[2] - start->color[2])*dxRcp;                              \
-    dcDx[3] = (end->color[3] - start->color[3])*dxRcp;                              \
+    float dCdx[4] = {                                                               \
+        (end->color[0] - start->color[0])*dxRcp,                                    \
+        (end->color[1] - start->color[1])*dxRcp,                                    \
+        (end->color[2] - start->color[2])*dxRcp,                                    \
+        (end->color[3] - start->color[3])*dxRcp                                     \
+    };                                                                              \
                                                                                     \
-    float duDx = 0.0f, dvDx = 0.0f;                                                 \
+    float dUdx = 0.0f;                                                              \
+    float dVdx = 0.0f;                                                              \
     if (ENABLE_TEXTURE) {                                                           \
-        duDx = (end->texcoord[0] - start->texcoord[0])*dxRcp;                       \
-        dvDx = (end->texcoord[1] - start->texcoord[1])*dxRcp;                       \
+        dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;                       \
+        dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;                       \
     }                                                                               \
                                                                                     \
     /* Initializing the interpolation starting values  */                           \
-    float z = start->homogeneous[2];                                                \
-    float w = start->homogeneous[3];                                                \
+    float z = start->homogeneous[2] + dZdx*xSubstep;                                \
+    float w = start->homogeneous[3] + dWdx*xSubstep;                                \
                                                                                     \
-    float color[4] = { 0 };                                                         \
-    color[0] = start->color[0];                                                     \
-    color[1] = start->color[1];                                                     \
-    color[2] = start->color[2];                                                     \
-    color[3] = start->color[3];                                                     \
+    float color[4] = {                                                              \
+        start->color[0] + dCdx[0]*xSubstep,                                         \
+        start->color[1] + dCdx[1]*xSubstep,                                         \
+        start->color[2] + dCdx[2]*xSubstep,                                         \
+        start->color[3] + dCdx[3]*xSubstep                                          \
+    };                                                                              \
                                                                                     \
-    float u = 0.0f, v = 0.0f;                                                       \
+    float u = 0.0f;                                                                 \
+    float v = 0.0f;                                                                 \
     if (ENABLE_TEXTURE) {                                                           \
-        u = start->texcoord[0];                                                     \
-        v = start->texcoord[1];                                                     \
+        u = start->texcoord[0] + dUdx*xSubstep;                                     \
+        v = start->texcoord[1] + dVdx*xSubstep;                                     \
     }                                                                               \
                                                                                     \
     /* Pre-calculate the starting pointers for the framebuffer row */               \
+    int y = (int)start->screen[1];                                                  \
     void *cptr = GET_COLOR_PTR(RLSW.framebuffer.color, y*RLSW.framebuffer.width + xStart);  \
     void *dptr = GET_DEPTH_PTR(RLSW.framebuffer.depth, y*RLSW.framebuffer.width + xStart);  \
                                                                                     \
     /* Scanline rasterization */                                                    \
     for (int x = xStart; x < xEnd; x++)                                             \
     {                                                                               \
-        /* Pixel color computation */                                               \
         float wRcp = 1.0f/w;                                                        \
         float srcColor[4] = {                                                       \
-        color[0]*wRcp,                                                              \
-        color[1]*wRcp,                                                              \
-        color[2]*wRcp,                                                              \
-        color[3]*wRcp                                                               \
+            color[0]*wRcp,                                                          \
+            color[1]*wRcp,                                                          \
+            color[2]*wRcp,                                                          \
+            color[3]*wRcp                                                           \
         };                                                                          \
                                                                                     \
-        /* Test and write depth */                                                  \
         if (ENABLE_DEPTH_TEST)                                                      \
         {                                                                           \
             /* TODO: Implement different depth funcs? */                            \
@@ -2363,6 +2397,7 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
+        /* TODO: Implement depth mask */                                            \
         sw_framebuffer_write_depth(dptr, z);                                        \
                                                                                     \
         if (ENABLE_TEXTURE)                                                         \
@@ -2370,7 +2405,7 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
             float texColor[4];                                                      \
             float s = u*wRcp;                                                       \
             float t = v*wRcp;                                                       \
-            sw_texture_sample(texColor, tex, s, t, duDx, duDy, dvDx, dvDy);         \
+            sw_texture_sample(texColor, tex, s, t, dUdx, dUdy, dVdx, dVdy);         \
             srcColor[0] *= texColor[0];                                             \
             srcColor[1] *= texColor[1];                                             \
             srcColor[2] *= texColor[2];                                             \
@@ -2391,16 +2426,16 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
                                                                                     \
         /* Increment the interpolation parameter, UVs, and pointers */              \
     discard:                                                                        \
-        z += dzDx;                                                                  \
-        w += dwDx;                                                                  \
-        color[0] += dcDx[0];                                                        \
-        color[1] += dcDx[1];                                                        \
-        color[2] += dcDx[2];                                                        \
-        color[3] += dcDx[3];                                                        \
+        z += dZdx;                                                                  \
+        w += dWdx;                                                                  \
+        color[0] += dCdx[0];                                                        \
+        color[1] += dCdx[1];                                                        \
+        color[2] += dCdx[2];                                                        \
+        color[3] += dCdx[3];                                                        \
         if (ENABLE_TEXTURE)                                                         \
         {                                                                           \
-            u += duDx;                                                              \
-            v += dvDx;                                                              \
+            u += dUdx;                                                              \
+            v += dVdx;                                                              \
         }                                                                           \
                                                                                     \
         INC_COLOR_PTR(cptr);                                                        \
@@ -2430,60 +2465,71 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1,      
     if (h02 < 1e-6f) return;                                                        \
                                                                                     \
     /* Precompute the inverse values without additional checks */                   \
-    float invH02 = 1.0f/h02;                                                        \
-    float invH01 = (h01 > 1e-6f)? 1.0f/h01 : 0.0f;                                  \
-    float invH12 = (h12 > 1e-6f)? 1.0f/h12 : 0.0f;                                  \
+    float h02Rcp = 1.0f/h02;                                                        \
+    float h01Rcp = (h01 > 1e-6f)? 1.0f/h01 : 0.0f;                                  \
+    float h12Rcp = (h12 > 1e-6f)? 1.0f/h12 : 0.0f;                                  \
                                                                                     \
     /* Pre-calculation of slopes */                                                 \
-    float dx02 = (x2 - x0)*invH02;                                                  \
-    float dx01 = (x1 - x0)*invH01;                                                  \
-    float dx12 = (x2 - x1)*invH12;                                                  \
+    float dXdy02 = (x2 - x0)*h02Rcp;                                                \
+    float dXdy01 = (x1 - x0)*h01Rcp;                                                \
+    float dXdy12 = (x2 - x1)*h12Rcp;                                                \
+                                                                                    \
+    /* Y subpixel correction */                                                     \
+    float y0Substep = 1.0f - sw_fract(y0);                                          \
+    float y1Substep = 1.0f - sw_fract(y1);                                          \
                                                                                     \
     /* Y bounds (vertical clipping) */                                              \
-    int yTop = (int)(y0 + 0.5f);                                                    \
-    int yMiddle = (int)(y1 + 0.5f);                                                 \
-    int yBottom = (int)(y2 + 0.5f);                                                 \
+    int yTop = (int)y0;                                                             \
+    int yMid = (int)y1;                                                             \
+    int yBot = (int)y2;                                                             \
                                                                                     \
     /* Compute gradients for each side of the triangle */                           \
-    sw_vertex_t vDy02, vDy01, vDy12;                                                \
-    sw_get_vertex_grad_PTCH(&vDy02, v0, v2, invH02);                                \
-    sw_get_vertex_grad_PTCH(&vDy01, v0, v1, invH01);                                \
-    sw_get_vertex_grad_PTCH(&vDy12, v1, v2, invH12);                                \
+    sw_vertex_t dVXdy02, dVXdy01, dVXdy12;                                          \
+    sw_get_vertex_grad_PTCH(&dVXdy02, v0, v2, h02Rcp);                              \
+    sw_get_vertex_grad_PTCH(&dVXdy01, v0, v1, h01Rcp);                              \
+    sw_get_vertex_grad_PTCH(&dVXdy12, v1, v2, h12Rcp);                              \
                                                                                     \
-    /* Initializing scanline variables */                                           \
-    sw_vertex_t vLeft = *v0;                                                        \
-    vLeft.screen[0] = x0;                                                           \
-    sw_vertex_t vRight = *v0;                                                       \
-    vRight.screen[0] = x0;                                                          \
+    /* Get a copy of vertices for interpolation and apply substep correction */     \
+    sw_vertex_t vLeft = *v0, vRight = *v0;                                          \
+    sw_add_vertex_grad_scaled_PTCH(&vLeft, &dVXdy02, y0Substep);                    \
+    sw_add_vertex_grad_scaled_PTCH(&vRight, &dVXdy01, y0Substep);                   \
+                                                                                    \
+    vLeft.screen[0] += dXdy02*y0Substep;                                            \
+    vRight.screen[0] += dXdy01*y0Substep;                                           \
                                                                                     \
     /* Scanline for the upper part of the triangle */                               \
-    for (int y = yTop; y < yMiddle; y++)                                            \
+    for (int y = yTop; y < yMid; y++)                                               \
     {                                                                               \
         vLeft.screen[1] = vRight.screen[1] = y;                                     \
                                                                                     \
-        if (vLeft.screen[0] < vRight.screen[0]) FUNC_SCANLINE(tex, &vLeft, &vRight, vDy02.texcoord[0], vDy02.texcoord[1]); \
-        else FUNC_SCANLINE(tex, &vRight, &vLeft, vDy02.texcoord[0], vDy02.texcoord[1]); \
+        if (vLeft.screen[0] < vRight.screen[0]) FUNC_SCANLINE(tex, &vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
+        else FUNC_SCANLINE(tex, &vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
                                                                                     \
-        sw_add_vertex_grad_PTCH(&vLeft, &vDy02);                                    \
-        vLeft.screen[0]  += dx02;                                                   \
-        sw_add_vertex_grad_PTCH(&vRight, &vDy01);                                   \
-        vRight.screen[0] += dx01;                                                   \
+        sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);                                  \
+        vLeft.screen[0] += dXdy02;                                                  \
+                                                                                    \
+        sw_add_vertex_grad_PTCH(&vRight, &dVXdy01);                                 \
+        vRight.screen[0] += dXdy01;                                                 \
     }                                                                               \
                                                                                     \
-    /* Scanline for the lower part of the triangle */                               \
-    vRight = *v1, vRight.screen[0] = x1;                                            \
+    /* Get a copy of next right for interpolation and apply substep correction */   \
+    vRight = *v1;                                                                   \
+    sw_add_vertex_grad_scaled_PTCH(&vRight, &dVXdy12, y1Substep);                   \
+    vRight.screen[0] += dXdy12*y1Substep;                                           \
                                                                                     \
-    for (int y = yMiddle; y < yBottom; y++)                                         \
+    /* Scanline for the lower part of the triangle */                               \
+    for (int y = yMid; y < yBot; y++)                                               \
     {                                                                               \
         vLeft.screen[1] = vRight.screen[1] = y;                                     \
                                                                                     \
-        if (vLeft.screen[0] < vRight.screen[0]) FUNC_SCANLINE(tex, &vLeft, &vRight, vDy02.texcoord[0], vDy02.texcoord[1]); \
-        else FUNC_SCANLINE(tex, &vRight, &vLeft, vDy02.texcoord[0], vDy02.texcoord[1]); \
+        if (vLeft.screen[0] < vRight.screen[0]) FUNC_SCANLINE(tex, &vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
+        else FUNC_SCANLINE(tex, &vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
                                                                                     \
-        sw_add_vertex_grad_PTCH(&vLeft, &vDy02);                                    \
-        vLeft.screen[0]  += dx02;                                                   \
-        sw_add_vertex_grad_PTCH(&vRight, &vDy12);                                   \
-        vRight.screen[0] += dx12;                                                   \
+        sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);                                  \
+        vLeft.screen[0] += dXdy02;                                                  \
+                                                                                    \
+        sw_add_vertex_grad_PTCH(&vRight, &dVXdy12);                                 \
+        vRight.screen[0] += dXdy12;                                                 \
     }                                                                               \
 }
 
@@ -2716,41 +2762,46 @@ static inline void FUNC_NAME(void)                                              
     const sw_vertex_t *v3 = sortedVerts[3];                                     \
                                                                                 \
     /* Screen bounds (axis-aligned) */                                          \
-    int xMin = (int)(v0->screen[0] + 0.5f);                                     \
-    int yMin = (int)(v0->screen[1] + 0.5f);                                     \
-    int xMax = (int)(v2->screen[0] + 0.5f);                                     \
-    int yMax = (int)(v2->screen[1] + 0.5f);                                     \
+    int xMin = (int)v0->screen[0];                                              \
+    int yMin = (int)v0->screen[1];                                              \
+    int xMax = (int)v2->screen[0];                                              \
+    int yMax = (int)v2->screen[1];                                              \
                                                                                 \
-    int width = xMax - xMin;                                                    \
-    int height = yMax - yMin;                                                   \
+    float w = v2->screen[0] - v0->screen[0];                                    \
+    float h = v2->screen[1] - v0->screen[1];                                    \
                                                                                 \
-    if ((width == 0) || (height == 0)) return;                                  \
+    if ((w == 0) || (h == 0)) return;                                           \
                                                                                 \
-    float wRcp = (width > 0.0f)? 1.0f/width : 0.0f;                             \
-    float hRcp = (height > 0.0f)? 1.0f/height : 0.0f;                           \
+    float wRcp = (w > 0.0f)? 1.0f/w : 0.0f;                                     \
+    float hRcp = (h > 0.0f)? 1.0f/h : 0.0f;                                     \
+                                                                                \
+    /* Subpixel corrections */                                                  \
+    float xSubstep = 1.0f - sw_fract(v0->screen[0]);                            \
+    float ySubstep = 1.0f - sw_fract(v0->screen[1]);                            \
                                                                                 \
     /* Calculation of vertex gradients in X and Y */                            \
-    float tcDx[2], tcDy[2];                                                     \
+    float dUdx, dVdx;                                                           \
+    float dUdy, dVdy;                                                           \
     if (ENABLE_TEXTURE) {                                                       \
-        tcDx[0] = (v1->texcoord[0] - v0->texcoord[0])*wRcp;                     \
-        tcDx[1] = (v1->texcoord[1] - v0->texcoord[1])*wRcp;                     \
-        tcDy[0] = (v3->texcoord[0] - v0->texcoord[0])*hRcp;                     \
-        tcDy[1] = (v3->texcoord[1] - v0->texcoord[1])*hRcp;                     \
+        dUdx = (v1->texcoord[0] - v0->texcoord[0])*wRcp;                        \
+        dVdx = (v1->texcoord[1] - v0->texcoord[1])*wRcp;                        \
+        dUdy = (v3->texcoord[0] - v0->texcoord[0])*hRcp;                        \
+        dVdy = (v3->texcoord[1] - v0->texcoord[1])*hRcp;                        \
     }                                                                           \
                                                                                 \
-    float cDx[4], cDy[4];                                                       \
-    cDx[0] = (v1->color[0] - v0->color[0])*wRcp;                                \
-    cDx[1] = (v1->color[1] - v0->color[1])*wRcp;                                \
-    cDx[2] = (v1->color[2] - v0->color[2])*wRcp;                                \
-    cDx[3] = (v1->color[3] - v0->color[3])*wRcp;                                \
-    cDy[0] = (v3->color[0] - v0->color[0])*hRcp;                                \
-    cDy[1] = (v3->color[1] - v0->color[1])*hRcp;                                \
-    cDy[2] = (v3->color[2] - v0->color[2])*hRcp;                                \
-    cDy[3] = (v3->color[3] - v0->color[3])*hRcp;                                \
+    float dCdx[4], dCdy[4];                                                     \
+    dCdx[0] = (v1->color[0] - v0->color[0])*wRcp;                               \
+    dCdx[1] = (v1->color[1] - v0->color[1])*wRcp;                               \
+    dCdx[2] = (v1->color[2] - v0->color[2])*wRcp;                               \
+    dCdx[3] = (v1->color[3] - v0->color[3])*wRcp;                               \
+    dCdy[0] = (v3->color[0] - v0->color[0])*hRcp;                               \
+    dCdy[1] = (v3->color[1] - v0->color[1])*hRcp;                               \
+    dCdy[2] = (v3->color[2] - v0->color[2])*hRcp;                               \
+    dCdy[3] = (v3->color[3] - v0->color[3])*hRcp;                               \
                                                                                 \
-    float zDx, zDy;                                                             \
-    zDx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;                       \
-    zDy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;                       \
+    float dZdx, dZdy;                                                           \
+    dZdx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;                      \
+    dZdy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;                      \
                                                                                 \
     /* Start of quad rasterization */                                           \
     const sw_texture_t *tex;                                                    \
@@ -2760,15 +2811,15 @@ static inline void FUNC_NAME(void)                                              
     void *dDstBase = RLSW.framebuffer.depth;                                    \
     int wDst = RLSW.framebuffer.width;                                          \
                                                                                 \
-    float zScanline = v0->homogeneous[2];                                       \
-    float uScanline = v0->texcoord[0];                                          \
-    float vScanline = v0->texcoord[1];                                          \
+    float zScanline = v0->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;       \
+    float uScanline = v0->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;          \
+    float vScanline = v0->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;          \
                                                                                 \
     float colorScanline[4] = {                                                  \
-        v0->color[0],                                                           \
-        v0->color[1],                                                           \
-        v0->color[2],                                                           \
-        v0->color[3]                                                            \
+        v0->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,                     \
+        v0->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,                     \
+        v0->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,                     \
+        v0->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep                      \
     };                                                                          \
                                                                                 \
     for (int y = yMin; y < yMax; y++)                                           \
@@ -2806,12 +2857,13 @@ static inline void FUNC_NAME(void)                                              
                 if (z > depth) goto discard;                                    \
             }                                                                   \
                                                                                 \
+            /* TODO: Implement depth mask */                                    \
             sw_framebuffer_write_depth(dptr, z);                                \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
                 float texColor[4];                                              \
-                sw_texture_sample(texColor, tex, u, v, tcDx[0], tcDy[0], tcDx[1], tcDy[1]); \
+                sw_texture_sample(texColor, tex, u, v, dUdx, dUdy, dVdx, dVdy); \
                 srcColor[0] *= texColor[0];                                     \
                 srcColor[1] *= texColor[1];                                     \
                 srcColor[2] *= texColor[2];                                     \
@@ -2828,32 +2880,32 @@ static inline void FUNC_NAME(void)                                              
             else sw_framebuffer_write_color(cptr, srcColor);                    \
                                                                                 \
         discard:                                                                \
-            z += zDx;                                                           \
-            color[0] += cDx[0];                                                 \
-            color[1] += cDx[1];                                                 \
-            color[2] += cDx[2];                                                 \
-            color[3] += cDx[3];                                                 \
+            z += dZdx;                                                          \
+            color[0] += dCdx[0];                                                \
+            color[1] += dCdx[1];                                                \
+            color[2] += dCdx[2];                                                \
+            color[3] += dCdx[3];                                                \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
-                u += tcDx[0];                                                   \
-                v += tcDx[1];                                                   \
+                u += dUdx;                                                      \
+                v += dVdx;                                                      \
             }                                                                   \
                                                                                 \
             INC_COLOR_PTR(cptr);                                                \
             INC_DEPTH_PTR(dptr);                                                \
         }                                                                       \
                                                                                 \
-        zScanline += zDy;                                                       \
-        colorScanline[0] += cDy[0];                                             \
-        colorScanline[1] += cDy[1];                                             \
-        colorScanline[2] += cDy[2];                                             \
-        colorScanline[3] += cDy[3];                                             \
+        zScanline += dZdy;                                                      \
+        colorScanline[0] += dCdy[0];                                            \
+        colorScanline[1] += dCdy[1];                                            \
+        colorScanline[2] += dCdy[2];                                            \
+        colorScanline[3] += dCdy[3];                                            \
                                                                                 \
         if (ENABLE_TEXTURE)                                                     \
         {                                                                       \
-            uScanline += tcDy[0];                                               \
-            vScanline += tcDy[1];                                               \
+            uScanline += dUdy;                                                  \
+            vScanline += dVdy;                                                  \
         }                                                                       \
     }                                                                           \
 }
@@ -3021,137 +3073,87 @@ static inline bool sw_line_clip_and_project(sw_vertex_t *v0, sw_vertex_t *v1)
 #define DEFINE_LINE_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
 static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
 {                                                                       \
-    int x1 = (int)(v0->screen[0] + 0.5f);                               \
-    int y1 = (int)(v0->screen[1] + 0.5f);                               \
-    int x2 = (int)(v1->screen[0] + 0.5f);                               \
-    int y2 = (int)(v1->screen[1] + 0.5f);                               \
+    float x0 = v0->screen[0];                                           \
+    float y0 = v0->screen[1];                                           \
+    float x1 = v1->screen[0];                                           \
+    float y1 = v1->screen[1];                                           \
                                                                         \
-    int dx = x2 - x1;                                                   \
-    int dy = y2 - y1;                                                   \
+    float dx = x1 - x0;                                                 \
+    float dy = y1 - y0;                                                 \
                                                                         \
-    /* Handling of lines that are more horizontal or vertical */        \
-    if ((dx == 0) && (dy == 0))                                         \
+    /* Compute dominant axis and subpixel offset */                     \
+    float steps, substep;                                               \
+    if (fabsf(dx) > fabsf(dy))                                          \
     {                                                                   \
-        /* TODO: A point should be rendered here */                     \
-        return;                                                         \
-    }                                                                   \
-                                                                        \
-    bool yLonger = (abs(dy) > abs(dx));                                 \
-    int longLen, shortLen;                                              \
-                                                                        \
-    if (yLonger)                                                        \
-    {                                                                   \
-        longLen = dy;                                                   \
-        shortLen = dx;                                                  \
+        steps = fabsf(dx);                                              \
+        if (steps < 1.0f) return;                                       \
+        substep = (dx >= 0.0f)? (1.0f - sw_fract(x0)) : sw_fract(x0);   \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        longLen = dx;                                                   \
-        shortLen = dy;                                                  \
+        steps = fabsf(dy);                                              \
+        if (steps < 1.0f) return;                                       \
+        substep = (dy >= 0.0f)? (1.0f - sw_fract(y0)) : sw_fract(y0);   \
     }                                                                   \
                                                                         \
-    /* Handling of traversal direction */                               \
-    int sgnInc = (longLen < 0)? -1 : 1;                                 \
-    int abslongLen = abs(longLen);                                      \
+    /* Compute per pixel increments */                                  \
+    float xInc = dx/steps;                                              \
+    float yInc = dy/steps;                                              \
+    float stepRcp = 1.0f/steps;                                         \
                                                                         \
-    /* Calculation of the increment step for the shorter coordinate */  \
-    int decInc = 0;                                                     \
-    if (abslongLen != 0) decInc = (shortLen << 16)/abslongLen;          \
+    float zInc = (v1->homogeneous[2] - v0->homogeneous[2])*stepRcp;     \
+    float rInc = (v1->color[0] - v0->color[0])*stepRcp;                 \
+    float gInc = (v1->color[1] - v0->color[1])*stepRcp;                 \
+    float bInc = (v1->color[2] - v0->color[2])*stepRcp;                 \
+    float aInc = (v1->color[3] - v0->color[3])*stepRcp;                 \
                                                                         \
-    float longLenRcp = (abslongLen != 0)? (1.0f/abslongLen) : 0.0f;     \
-                                                                        \
-    /* Calculation of interpolation steps */                            \
-    const float zStep = (v1->homogeneous[2] - v0->homogeneous[2])*longLenRcp; \
-    const float rStep = (v1->color[0] - v0->color[0])*longLenRcp;       \
-    const float gStep = (v1->color[1] - v0->color[1])*longLenRcp;       \
-    const float bStep = (v1->color[2] - v0->color[2])*longLenRcp;       \
-    const float aStep = (v1->color[3] - v0->color[3])*longLenRcp;       \
-                                                                        \
-    float z = v0->homogeneous[2];                                       \
-                                                                        \
-    float color[4] = {                                                  \
-        v0->color[0],                                                   \
-        v0->color[1],                                                   \
-        v0->color[2],                                                   \
-        v0->color[3]                                                    \
-    };                                                                  \
+    /* Initializing the interpolation starting values  */               \
+    float x = x0 + xInc*substep;                                        \
+    float y = y0 + yInc*substep;                                        \
+    float z = v0->homogeneous[2] + zInc*substep;                        \
+    float r = v0->color[0] + rInc*substep;                              \
+    float g = v0->color[1] + gInc*substep;                              \
+    float b = v0->color[2] + bInc*substep;                              \
+    float a = v0->color[3] + aInc*substep;                              \
                                                                         \
     const int fbWidth = RLSW.framebuffer.width;                         \
     void *cBuffer = RLSW.framebuffer.color;                             \
     void *dBuffer = RLSW.framebuffer.depth;                             \
                                                                         \
-    int j = 0;                                                          \
-    if (yLonger)                                                        \
+    int numPixels = (int)(steps - substep) + 1;                         \
+                                                                        \
+    for (int i = 0; i < numPixels; i++)                                 \
     {                                                                   \
-        for (int i = 0; i != longLen; i += sgnInc)                      \
+        /* REVIEW: May require reviewing projection details */          \
+        int px = (int)(x - 0.5f);                                       \
+        int py = (int)(y - 0.5f);                                       \
+                                                                        \
+        int offset = py*fbWidth + px;                                   \
+        void *dptr = GET_DEPTH_PTR(dBuffer, offset);                    \
+                                                                        \
+        if (ENABLE_DEPTH_TEST)                                          \
         {                                                               \
-            int offset = (y1 + i)*fbWidth + (x1 + (j >> 16));           \
-            void *dptr = GET_DEPTH_PTR(dBuffer, offset);                \
-            void *cptr = NULL;                                          \
-                                                                        \
-            if (ENABLE_DEPTH_TEST)                                      \
-            {                                                           \
-                float depth = sw_framebuffer_read_depth(dptr);          \
-                if (z > depth) goto discardA;                           \
-            }                                                           \
-                                                                        \
-            sw_framebuffer_write_depth(dptr, z);                        \
-                                                                        \
-            cptr = GET_COLOR_PTR(cBuffer, offset);                      \
-                                                                        \
-            if (ENABLE_COLOR_BLEND)                                     \
-            {                                                           \
-                float dstColor[4];                                      \
-                sw_framebuffer_read_color(dstColor, cptr);              \
-                sw_blend_colors(dstColor, color);                       \
-                sw_framebuffer_write_color(cptr, dstColor);             \
-            }                                                           \
-            else sw_framebuffer_write_color(cptr, color);               \
-                                                                        \
-        discardA:                                                       \
-            j += decInc;                                                \
-            z += zStep;                                                 \
-            color[0] += rStep;                                          \
-            color[1] += gStep;                                          \
-            color[2] += bStep;                                          \
-            color[3] += aStep;                                          \
+            float depth = sw_framebuffer_read_depth(dptr);              \
+            if (z > depth) goto discard;                                \
         }                                                               \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        for (int i = 0; i != longLen; i += sgnInc)                      \
+                                                                        \
+        sw_framebuffer_write_depth(dptr, z);                            \
+                                                                        \
+        void *cptr = GET_COLOR_PTR(cBuffer, offset);                    \
+        float color[4] = {r, g, b, a};                                  \
+                                                                        \
+        if (ENABLE_COLOR_BLEND)                                         \
         {                                                               \
-            int offset = (y1 + (j >> 16))*fbWidth + (x1 + i);           \
-            void *dptr = GET_DEPTH_PTR(dBuffer, offset);                \
-            void *cptr = NULL;                                          \
-                                                                        \
-            if (ENABLE_DEPTH_TEST)                                      \
-            {                                                           \
-                float depth = sw_framebuffer_read_depth(dptr);          \
-                if (z > depth) goto discardB;                           \
-            }                                                           \
-                                                                        \
-            sw_framebuffer_write_depth(dptr, z);                        \
-                                                                        \
-            cptr = GET_COLOR_PTR(cBuffer, offset);                      \
-                                                                        \
-            if (ENABLE_COLOR_BLEND)                                     \
-            {                                                           \
-                float dstColor[4];                                      \
-                sw_framebuffer_read_color(dstColor, cptr);              \
-                sw_blend_colors(dstColor, color);                       \
-                sw_framebuffer_write_color(cptr, dstColor);             \
-            }                                                           \
-            else sw_framebuffer_write_color(cptr, color);               \
-                                                                        \
-        discardB:                                                       \
-            j += decInc;                                                \
-            z += zStep;                                                 \
-            color[0] += rStep;                                          \
-            color[1] += gStep;                                          \
-            color[2] += bStep;                                          \
-            color[3] += aStep;                                          \
+            float dstColor[4];                                          \
+            sw_framebuffer_read_color(dstColor, cptr);                  \
+            sw_blend_colors(dstColor, color);                           \
+            sw_framebuffer_write_color(cptr, dstColor);                 \
         }                                                               \
+        else sw_framebuffer_write_color(cptr, color);                   \
+                                                                        \
+    discard:                                                            \
+        x += xInc; y += yInc; z += zInc;                                \
+        r += rInc; g += gInc; b += bInc; a += aInc;                     \
     }                                                                   \
 }
 
@@ -3857,11 +3859,11 @@ void swViewport(int x, int y, int width, int height)
     RLSW.vpSize[0] = width;
     RLSW.vpSize[1] = height;
 
-    RLSW.vpHalfSize[0] = (int)(width/2.0f + 0.5f);
-    RLSW.vpHalfSize[1] = (int)(height/2.0f + 0.5f);
+    RLSW.vpHalf[0] = width/2.0f;
+    RLSW.vpHalf[1] = height/2.0f;
 
-    RLSW.vpCenter[0] = x + RLSW.vpHalfSize[0];
-    RLSW.vpCenter[1] = y + RLSW.vpHalfSize[1];
+    RLSW.vpCenter[0] = (float)x + RLSW.vpHalf[0];
+    RLSW.vpCenter[1] = (float)y + RLSW.vpHalf[1];
 
     RLSW.vpMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
     RLSW.vpMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
