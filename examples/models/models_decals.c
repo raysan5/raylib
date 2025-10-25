@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - decals
 *
-*   Example complexity rating: [★★★☆] 3/4
+*   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 5.6-dev
 *
@@ -17,15 +17,19 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
-#include <string.h>
+#include <string.h>         // Required for: memcpy()
 
 #undef FLT_MAX
 #define FLT_MAX     340282346638528859811704183484516925440.0f     // Maximum value of a float, from bit pattern 01111111011111111111111111111111
 
 #define MAX_DECALS 256
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct MeshBuilder {
     int vertexCount;
     int vertexCapacity;
@@ -33,14 +37,14 @@ typedef struct MeshBuilder {
     Vector2 *uvs;
 } MeshBuilder;
 
-// Utility functions
-void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3]);
-void FreeMeshBuilder(MeshBuilder *mb);
-Mesh BuildMesh(MeshBuilder *mb);
-
-Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s);
-
-Mesh GenMeshDecal(Mesh inputMesh, Ray ray);
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
+static void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3]);
+static void FreeMeshBuilder(MeshBuilder *mb);
+static Mesh BuildMesh(MeshBuilder *mb);
+static Mesh GenMeshDecal(Mesh inputMesh, Ray ray);
+static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -67,11 +71,10 @@ int main(void)
     Model model = LoadModel("resources/models/obj/character.obj");
     
     // Apply character skin
-    Texture2D modelTexture = LoadTexture("resources/models/obj/character_diffuse.png"); // Load model texture
+    Texture2D modelTexture = LoadTexture("resources/models/obj/character_diffuse.png");
     SetTextureFilter(modelTexture, TEXTURE_FILTER_BILINEAR);
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = modelTexture;            // Set model diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = modelTexture;
     
-
     BoundingBox modelBBox = GetMeshBoundingBox(model.meshes[0]);    // Get mesh bounding box
     
     camera.target  = Vector3Lerp(modelBBox.min, modelBBox.max, 0.5f);
@@ -79,14 +82,12 @@ int main(void)
     camera.position.x *= 0.1f;
     
     float modelSize = fminf(
-        fminf(fabsf(modelBBox.max.x - modelBBox.min.x),
-              fabsf(modelBBox.max.y - modelBBox.min.y)),
-        fabsf(modelBBox.max.z - modelBBox.min.z)
-    );
+        fminf(fabsf(modelBBox.max.x - modelBBox.min.x), fabsf(modelBBox.max.y - modelBBox.min.y)),
+        fabsf(modelBBox.max.z - modelBBox.min.z));
     
-    camera.position = (Vector3){ 0, modelBBox.max.y * 1.2f, modelSize * 3.0f };
+    camera.position = (Vector3){ 0.0f, modelBBox.max.y*1.2f, modelSize*3.0f };
     
-    float decalSize = modelSize * .25f;
+    float decalSize = modelSize*0.25f;
     float decalOffset = 0.01f;
     
     Model placementCube = LoadModelFromMesh(GenMeshCube(decalSize, decalSize, decalSize));
@@ -96,7 +97,7 @@ int main(void)
     decalMaterial.maps[0].color = YELLOW;
     
     Image decalImage = LoadImage("resources/raylib_logo.png");
-    ImageResizeNN(&decalImage, decalImage.width / 4, decalImage.height / 4);
+    ImageResizeNN(&decalImage, decalImage.width/4, decalImage.height/4);
     Texture decalTexture = LoadTextureFromImage(decalImage);
     UnloadImage(decalImage);
     
@@ -106,28 +107,23 @@ int main(void)
     
     // We're going to use these to build up our decal meshes
     // They'll resize automatically as we go, we'll free them at the end
-    MeshBuilder mesh_builders[2] = { {0}, {0} };
+    MeshBuilder meshBuilders[2] = { 0 };
     
     bool showModel = true;
-    Model decalModels[MAX_DECALS] = {0};
+    Model decalModels[MAX_DECALS] = { 0 };
     int decalCount = 0;
     
-
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
+
     // Main game loop
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-            UpdateCamera(&camera, CAMERA_THIRD_PERSON);
-        }
-        
-        if (IsKeyPressed(KEY_SPACE)) {
-            showModel = !showModel;
-        }
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) UpdateCamera(&camera, CAMERA_THIRD_PERSON);
+
+        if (IsKeyPressed(KEY_SPACE)) showModel = !showModel;
 
         // Display information about closest hit
         RayCollision collision = { 0 };
@@ -140,7 +136,7 @@ int main(void)
         // Check ray collision against bounding box first, before trying the full ray-mesh test
         RayCollision boxHitInfo = GetRayCollisionBox(ray, modelBBox);
 
-        if ((boxHitInfo.hit) && decalCount < MAX_DECALS)
+        if ((boxHitInfo.hit) && (decalCount < MAX_DECALS))
         {
             // Check ray collision against model meshes
             RayCollision meshHitInfo = { 0 };
@@ -153,52 +149,47 @@ int main(void)
                 if (meshHitInfo.hit)
                 {
                     // Save the closest hit mesh
-                    if ((!collision.hit) || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
+                    if (!collision.hit || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
                 }
             }
 
-            if (meshHitInfo.hit)
-            {
-                collision = meshHitInfo;
-            }
+            if (meshHitInfo.hit) collision = meshHitInfo;
         }
         
-        // --------------
-        
-        if (collision.hit && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && decalCount < MAX_DECALS)
+        // Add decal to mesh on hit point
+        if (collision.hit && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (decalCount < MAX_DECALS))
         {
-            
             // Create the transformation to project the decal
             Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
-            Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){0,1,0});
+            Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){ 0.0f, 1.0f, 0.0f });
             
             // Spin the placement around a bit
-            splat = MatrixMultiply(splat, MatrixRotateZ(DEG2RAD * ((float)GetRandomValue(-180, 180))));
-            
+            splat = MatrixMultiply(splat, MatrixRotateZ(DEG2RAD*((float)GetRandomValue(-180, 180))));
             Matrix splatInv = MatrixInvert(splat);
             
             // Reset the mesh builders
-            mesh_builders[0].vertexCount = 0;
-            mesh_builders[1].vertexCount = 0;
+            meshBuilders[0].vertexCount = 0;
+            meshBuilders[1].vertexCount = 0;
             
             // We'll be flip-flopping between the two mesh builders
             // Reading from one and writing to the other, then swapping
-            int mb_index = 0;
+            int mbIndex = 0;
             
-            // First pass, just get any triangle inside the bounding box
-            // (for each mesh of the model)
-            for (int meshIndex = 0; meshIndex < model.meshCount; meshIndex++) {
+            // First pass, just get any triangle inside the bounding box (for each mesh of the model)
+            for (int meshIndex = 0; meshIndex < model.meshCount; meshIndex++)
+            {
                 Mesh mesh = model.meshes[meshIndex];
                 for (int tri = 0; tri < mesh.triangleCount; tri++)
                 {
-                    Vector3 vertices[3];
+                    Vector3 vertices[3] = { 0 };
                     
                     // The way we calculate the vertices of the mesh triangle
                     // depend on whether the mesh vertices are indexed or not
                     if (mesh.indices == 0)
                     {
-                        for (int v = 0; v < 3; v++) {
-                            vertices[v] = (Vector3) {
+                        for (int v = 0; v < 3; v++)
+                        {
+                            vertices[v] = (Vector3){
                                 mesh.vertices[3*3*tri + 3*v + 0],
                                 mesh.vertices[3*3*tri + 3*v + 1],
                                 mesh.vertices[3*3*tri + 3*v + 2]
@@ -209,7 +200,7 @@ int main(void)
                     {
                         for (int v = 0; v < 3; v++)
                         {
-                            vertices[v] = (Vector3) {
+                            vertices[v] = (Vector3){
                                 mesh.vertices[ 3*mesh.indices[3*tri+0] + v],
                                 mesh.vertices[ 3*mesh.indices[3*tri+1] + v],
                                 mesh.vertices[ 3*mesh.indices[3*tri+2] + v]
@@ -225,19 +216,14 @@ int main(void)
                         // To splat space
                         Vector3 v = Vector3Transform(vertices[i], splat);
                         
-                        if (fabsf(v.x)<decalSize || fabsf(v.y)<=decalSize || fabsf(v.z)<=decalSize) {
-                            insideCount++;
-                        }
+                        if ((fabsf(v.x) < decalSize) || (fabsf(v.y) <= decalSize) || (fabsf(v.z) <= decalSize)) insideCount++;
                         
                         // We need to keep the transformed vertex
                         vertices[i] = v;
                     }
                     
                     // If any of them are inside, we add the triangle - we'll clip it later
-                    if (insideCount > 0)
-                    {
-                        AddTriangleToMeshBuilder(&mesh_builders[mb_index], vertices);
-                    }
+                    if (insideCount > 0) AddTriangleToMeshBuilder(&meshBuilders[mbIndex], vertices);
                 }
             }
             
@@ -250,20 +236,21 @@ int main(void)
                {  0,  0,  1 }, 
                {  0,  0, -1 }
             };
+            
             for (int face = 0; face < 6; face++)
             {
                 // Swap current model builder (so we read from the one we just wrote to)
-                mb_index = 1 - mb_index;
+                mbIndex = 1 - mbIndex;
                 
-                MeshBuilder *inMesh = &mesh_builders[1-mb_index];
-                MeshBuilder *outMesh = &mesh_builders[mb_index];
+                MeshBuilder *inMesh = &meshBuilders[1 - mbIndex];
+                MeshBuilder *outMesh = &meshBuilders[mbIndex];
                 
                 // Reset write builder
                 outMesh->vertexCount = 0;
                 
-                float s = 0.5f * decalSize;
+                float s = 0.5f*decalSize;
                 
-                for (int i = 0; i < inMesh->vertexCount; i+=3)
+                for (int i = 0; i < inMesh->vertexCount; i += 3)
                 {
                     Vector3 nV1, nV2, nV3, nV4;
 
@@ -271,100 +258,101 @@ int main(void)
                     float d2 = Vector3DotProduct(inMesh->vertices[ i + 1 ], planes[face] ) - s;
                     float d3 = Vector3DotProduct(inMesh->vertices[ i + 2 ], planes[face] ) - s;
 
-                    int v1Out = d1 > 0;
-                    int v2Out = d2 > 0;
-                    int v3Out = d3 > 0;
+                    int v1Out = (d1 > 0);
+                    int v2Out = (d2 > 0);
+                    int v3Out = (d3 > 0);
 
-                    // calculate, how many vertices of the face lie outside of the clipping plane
+                    // Calculate, how many vertices of the face lie outside of the clipping plane
                     int total = v1Out + v2Out + v3Out;
 
-                    switch ( total ) {
-                        case 0: {
-                            // the entire face lies inside of the plane, no clipping needed
+                    switch (total)
+                    {
+                        case 0:
+                        {
+                            // The entire face lies inside of the plane, no clipping needed
                             AddTriangleToMeshBuilder(outMesh, (Vector3[3]){inMesh->vertices[i], inMesh->vertices[i+1], inMesh->vertices[i+2]});
-                            break;
-                        }
-
-                        case 1: {
-                            // one vertex lies outside of the plane, perform clipping
-
-                            if (v1Out) {
-                                nV1 = inMesh->vertices[ i + 1 ];
-                                nV2 = inMesh->vertices[ i + 2 ];
-                                nV3 = ClipSegment( inMesh->vertices[ i ], nV1, planes[face], s );
-                                nV4 = ClipSegment( inMesh->vertices[ i ], nV2, planes[face], s );
+                        } break;
+                        case 1:
+                        {
+                            // One vertex lies outside of the plane, perform clipping
+                            if (v1Out)
+                            {
+                                nV1 = inMesh->vertices[i + 1];
+                                nV2 = inMesh->vertices[i + 2];
+                                nV3 = ClipSegment(inMesh->vertices[i], nV1, planes[face], s);
+                                nV4 = ClipSegment(inMesh->vertices[i], nV2, planes[face], s);
                             }
 
-                            if (v2Out) {
-                                nV1 = inMesh->vertices[ i ];
-                                nV2 = inMesh->vertices[ i + 2 ];
-                                nV3 = ClipSegment( inMesh->vertices[ i + 1 ], nV1, planes[face], s );
-                                nV4 = ClipSegment( inMesh->vertices[ i + 1 ], nV2, planes[face], s );
+                            if (v2Out) 
+                            {
+                                nV1 = inMesh->vertices[i];
+                                nV2 = inMesh->vertices[i + 2];
+                                nV3 = ClipSegment(inMesh->vertices[i + 1], nV1, planes[face], s);
+                                nV4 = ClipSegment(inMesh->vertices[i + 1], nV2, planes[face], s);
 
                                 AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV3, nV2, nV1});
                                 AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV2, nV3, nV4});
                                 break;
                             }
 
-                            if (v3Out) {
-                                nV1 = inMesh->vertices[ i ];
-                                nV2 = inMesh->vertices[ i + 1 ];
-                                nV3 = ClipSegment( inMesh->vertices[ i + 2 ], nV1, planes[face], s );
-                                nV4 = ClipSegment( inMesh->vertices[ i + 2 ], nV2, planes[face], s );
+                            if (v3Out) 
+                            {
+                                nV1 = inMesh->vertices[i];
+                                nV2 = inMesh->vertices[i + 1];
+                                nV3 = ClipSegment(inMesh->vertices[i + 2], nV1, planes[face], s);
+                                nV4 = ClipSegment(inMesh->vertices[i + 2], nV2, planes[face], s);
                             }
                             
                             AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                             AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV4, nV3, nV2});
-
-                            break;
-                        }
-
-                        case 2: {
-                            // two vertices lies outside of the plane, perform clipping
-                            if (!v1Out) {
-                                nV1 = inMesh->vertices[ i ];
-                                nV2 = ClipSegment( nV1, inMesh->vertices[ i + 1 ], planes[face], s );
-                                nV3 = ClipSegment( nV1, inMesh->vertices[ i + 2 ], planes[face], s );
+                        } break;
+                        case 2: 
+                        {
+                            // Two vertices lies outside of the plane, perform clipping
+                            if (!v1Out)
+                            {
+                                nV1 = inMesh->vertices[i];
+                                nV2 = ClipSegment(nV1, inMesh->vertices[i + 1], planes[face], s);
+                                nV3 = ClipSegment(nV1, inMesh->vertices[i + 2], planes[face], s);
                                 AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                             }
-                            if (!v2Out) {
-                                nV1 = inMesh->vertices[ i + 1 ];
-                                nV2 = ClipSegment( nV1, inMesh->vertices[ i + 2 ], planes[face], s );
-                                nV3 = ClipSegment( nV1, inMesh->vertices[ i ], planes[face], s );
+                            
+                            if (!v2Out)
+                            {
+                                nV1 = inMesh->vertices[i + 1];
+                                nV2 = ClipSegment(nV1, inMesh->vertices[i + 2], planes[face], s);
+                                nV3 = ClipSegment(nV1, inMesh->vertices[i], planes[face], s);
                                 AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                             }
-                            if (!v3Out) {
-                                nV1 = inMesh->vertices[ i + 2 ];
-                                nV2 = ClipSegment( nV1, inMesh->vertices[ i ], planes[face], s );
-                                nV3 = ClipSegment( nV1, inMesh->vertices[ i + 1 ], planes[face], s );
+                            
+                            if (!v3Out)
+                            {
+                                nV1 = inMesh->vertices[i + 2];
+                                nV2 = ClipSegment(nV1, inMesh->vertices[i], planes[face], s);
+                                nV3 = ClipSegment(nV1, inMesh->vertices[i + 1], planes[face], s);
                                 AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                             }
-                            break;
-                        }
-
-                        case 3: {
-                            // the entire face lies outside of the plane, so let's discard the corresponding vertices
-                            break;
-                        }
-
+                        } break;
+                        case 3: // The entire face lies outside of the plane, so let's discard the corresponding vertices
+                        default: break;
                     }
                 }
             }
             
             // Now we just need to re-transform the vertices
-            MeshBuilder *theMesh = &mesh_builders[mb_index];
+            MeshBuilder *theMesh = &meshBuilders[mbIndex];
             
             // Allocate room for UVs
             if (theMesh->vertexCount > 0)
             {
-                theMesh->uvs = (Vector2*)MemAlloc(sizeof(Vector2)*theMesh->vertexCount);
+                theMesh->uvs = (Vector2 *)MemAlloc(sizeof(Vector2)*theMesh->vertexCount);
+                
                 for (int i = 0; i < theMesh->vertexCount; i++)
                 {
-                    
                     // Calculate the UVs based on the projected coords
                     // They are clipped to (-decalSize .. decalSize) and we want them (0..1)
-                    theMesh->uvs[i].x = (theMesh->vertices[i].x / decalSize + .5f);
-                    theMesh->uvs[i].y = (theMesh->vertices[i].y / decalSize + .5f);
+                    theMesh->uvs[i].x = (theMesh->vertices[i].x/decalSize + 0.5f);
+                    theMesh->uvs[i].y = (theMesh->vertices[i].y/decalSize + 0.5f);
                     
                     // From splat space to world space
                     theMesh->vertices[i] = Vector3Transform(theMesh->vertices[i], splatInv);
@@ -378,89 +366,73 @@ int main(void)
                 decalModels[decalIndex] = LoadModelFromMesh(BuildMesh(theMesh));
                 decalModels[decalIndex].materials[0] = decalMaterial;
             }
-            
         }
-        
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-
                 // Draw the model at the origin and default scale
-                if (showModel)
-                {
-                    DrawModel(model, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
-                }
+                if (showModel) DrawModel(model, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
                 
                 // Draw the decal models
-                for (int i = 0; i < decalCount; i++)
-                {
-                    DrawModel(decalModels[i], (Vector3){0}, 1.0f, WHITE);
-                }
+                for (int i = 0; i < decalCount; i++) DrawModel(decalModels[i], (Vector3){0}, 1.0f, WHITE);
 
                 // If we hit the mesh, draw the box for the decal 
                 if (collision.hit)
                 {
-                    
                     Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
                     Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){0,1,0});
-                    
                     placementCube.transform = MatrixInvert(splat);
                     DrawModel(placementCube, (Vector3){0}, 1.0f, Fade(WHITE, 0.5f));
                 }
 
                 DrawGrid(10, 10.0f);
-
             EndMode3D();
+
+            float yPos = 10;
+            float x0 = GetScreenWidth() - 300;
+            float x1 = x0 + 100;
+            float x2 = x1 + 100;
             
+            DrawText("Vertices", x1, yPos, 10, LIME);
+            DrawText("Triangles", x2, yPos, 10, LIME);
+            yPos += 15;
+            
+            int vertexCount = 0;
+            int triangleCount = 0;
+            
+            for (int i = 0; i < model.meshCount; i++)
             {
-                float yPos = 10;
-                float x0 = GetScreenWidth() - 300;
-                float x1 = x0 + 100;
-                float x2 = x1 + 100;
+                vertexCount += model.meshes[i].vertexCount;
+                triangleCount += model.meshes[i].triangleCount;
+            }
+            
+            DrawText("Main model", x0, yPos, 10, LIME);
+            DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
+            DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
+            yPos += 15;
+            
+            for (int i = 0; i < decalCount; i++)
+            {
+                DrawText(TextFormat("Decal #%d", i+1), x0, yPos, 10, LIME);
+                DrawText(TextFormat("%d", decalModels[i].meshes[0].vertexCount), x1, yPos, 10, LIME);
+                DrawText(TextFormat("%d", decalModels[i].meshes[0].triangleCount), x2, yPos, 10, LIME);
                 
-                DrawText("Vertices", x1, yPos, 10, LIME);
-                DrawText("Triangles", x2, yPos, 10, LIME);
-                yPos += 15;
-                
-                int vertexCount = 0;
-                int triangleCount = 0;
-                
-                for (int i = 0; i < model.meshCount; i++)
-                {
-                    vertexCount += model.meshes[i].vertexCount;
-                    triangleCount += model.meshes[i].triangleCount;
-                }
-                
-                DrawText("Main model", x0, yPos, 10, LIME);
-                DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
-                DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
-                yPos += 15;
-                
-                for (int i = 0; i < decalCount; i++)
-                {
-                    DrawText(TextFormat("Decal #%d", i+1), x0, yPos, 10, LIME);
-                    DrawText(TextFormat("%d", decalModels[i].meshes[0].vertexCount), x1, yPos, 10, LIME);
-                    DrawText(TextFormat("%d", decalModels[i].meshes[0].triangleCount), x2, yPos, 10, LIME);
-                    
-                    vertexCount += decalModels[i].meshes[0].vertexCount;
-                    triangleCount += decalModels[i].meshes[0].triangleCount;
-                    yPos += 15;
-                }
-                
-                DrawText("TOTAL", x0, yPos, 10, LIME);
-                DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
-                DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
+                vertexCount += decalModels[i].meshes[0].vertexCount;
+                triangleCount += decalModels[i].meshes[0].triangleCount;
                 yPos += 15;
             }
+            
+            DrawText("TOTAL", x0, yPos, 10, LIME);
+            DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
+            DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
+            yPos += 15;
 
             DrawText("Hold RMB to move camera", 10, 430, 10, GRAY);
-
             DrawText("(c) Character model and texture from kenney.nl", screenWidth - 260, screenHeight - 20, 10, GRAY);
 
             DrawFPS(10, 10);
@@ -474,15 +446,13 @@ int main(void)
     UnloadModel(model);
     UnloadTexture(modelTexture);
     
-    for (int i = 0; i < decalCount; i++)
-    {
-        UnloadModel(decalModels[i]);
-    }
-    
+    // TODO: WARNING: This line crashes program on closing
+    //for (int i = 0; i < decalCount; i++) UnloadModel(decalModels[i]);
+
     UnloadTexture(decalTexture);
     
-    FreeMeshBuilder(&mesh_builders[0]);
-    FreeMeshBuilder(&mesh_builders[1]);
+    FreeMeshBuilder(&meshBuilders[0]);
+    FreeMeshBuilder(&meshBuilders[1]);
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -490,18 +460,24 @@ int main(void)
     return 0;
 }
 
-// A really simple dynamic array manager
-void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3]) {
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
+// Add triangles to mesh builder (dynamic array manager)
+static void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3])
+{
     // Reallocate and copy if we need to
-    if (mb->vertexCapacity <= mb->vertexCount + 3 )
+    if (mb->vertexCapacity <= (mb->vertexCount + 3))
     {
-        int newVertexCapacity = (1 + (mb->vertexCapacity / 256)) * 256;
-        Vector3 *newVertices = (Vector3*)MemAlloc(newVertexCapacity * sizeof(Vector3));
+        int newVertexCapacity = (1 + (mb->vertexCapacity/256))*256;
+        Vector3 *newVertices = (Vector3 *)MemAlloc(newVertexCapacity*sizeof(Vector3));
+        
         if (mb->vertexCapacity > 0)
         {
-            memcpy(newVertices, mb->vertices, mb->vertexCount * sizeof(Vector3));
+            memcpy(newVertices, mb->vertices, mb->vertexCount*sizeof(Vector3));
             MemFree(mb->vertices);
         }
+        
         mb->vertices = newVertices;
         mb->vertexCapacity = newVertexCapacity;
     }
@@ -510,44 +486,33 @@ void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3]) {
     int index = mb->vertexCount;
     mb->vertexCount += 3;
     
-    for (int i = 0; i < 3; i++)
-    {
-        mb->vertices[index+i] = vertices[i];
-    }
+    for (int i = 0; i < 3; i++) mb->vertices[index+i] = vertices[i];
 }
 
-void FreeMeshBuilder(MeshBuilder *mb)
+// Free mesh builder
+static void FreeMeshBuilder(MeshBuilder *mb)
 {
     MemFree(mb->vertices);
-    
-    if (mb->uvs)
-    {
-        MemFree(mb->uvs);
-    }
-    
+    if (mb->uvs) MemFree(mb->uvs);
     *mb = (MeshBuilder){ 0 };
 }
 
-// Construct a Raylib Mesh from our MeshBuilder data
-Mesh BuildMesh(MeshBuilder *mb)
+// Build a Mesh from MeshBuilder data
+static Mesh BuildMesh(MeshBuilder *mb)
 {
     Mesh outMesh = { 0 };
     
     outMesh.vertexCount = mb->vertexCount;
-    outMesh.triangleCount = mb->vertexCount / 3;
-    
-    outMesh.vertices = MemAlloc(outMesh.vertexCount * 3 * sizeof(float));
-    
-    if (mb->uvs)
-    {
-        outMesh.texcoords = MemAlloc(outMesh.vertexCount * 2 * sizeof(float));
-    }
-    
+    outMesh.triangleCount = mb->vertexCount/3;
+    outMesh.vertices = MemAlloc(outMesh.vertexCount*3*sizeof(float));
+    if (mb->uvs) outMesh.texcoords = MemAlloc(outMesh.vertexCount*2*sizeof(float));
+
     for (int i = 0; i < mb->vertexCount; i++)
     {
         outMesh.vertices[3*i+0] = mb->vertices[i].x;
         outMesh.vertices[3*i+1] = mb->vertices[i].y;
         outMesh.vertices[3*i+2] = mb->vertices[i].z;
+        
         if (mb->uvs)
         {
             outMesh.texcoords[2*i+0] = mb->uvs[i].x;
@@ -560,12 +525,12 @@ Mesh BuildMesh(MeshBuilder *mb)
     return outMesh;
 }
 
-Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s)
+// Clip segment
+static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s)
 {
     float d0 = Vector3DotProduct(v0, p) - s;
     float d1 = Vector3DotProduct(v1, p) - s;
-
-    float s0 = d0 / ( d0 - d1 );
+    float s0 = d0/(d0 - d1);
 
     Vector3 position = Vector3Lerp(v0, v1, s0);
 
