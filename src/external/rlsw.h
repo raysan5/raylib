@@ -376,6 +376,7 @@ typedef double              GLclampd;
 #define glTexCoordPointer(sz, t, s, p)              swBindArray(SW_TEXTURE_COORD_ARRAY, (p))
 #define glColorPointer(sz, t, s, p)                 swBindArray(SW_COLOR_ARRAY, (p))
 #define glDrawArrays(m, o, c)                       swDrawArrays((m), (o), (c))
+#define glDrawElements(m,c,t,i)                     swDrawElements((m),(c),(t),(i))
 #define glGenTextures(c, v)                         swGenTextures((c), (v))
 #define glDeleteTextures(c, v)                      swDeleteTextures((c), (v))
 #define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D((w), (h), (f), (t), (p))
@@ -393,7 +394,6 @@ typedef double              GLclampd;
 #define glDepthFunc(X)                          ((void)(X))
 #define glTexSubImage2D(X,Y,Z,W,A,B,C,D,E)      ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A),(void)(B),(void)(C),(void)(D),(void)(E))
 #define glGetTexImage(X,Y,Z,W,A)                ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A))
-#define glDrawElements(X,Y,Z,W)                 ((void)(X),(void)(Y),(void)(Z),(void)(W))
 #define glNormal3f(X,Y,Z)                       ((void)(X),(void)(Y),(void)(Z))
 #define glNormal3fv(X)                          ((void)(X))
 #define glNormalPointer(X,Y,Z)                  ((void)(X),(void)(Y),(void)(Z))
@@ -589,6 +589,7 @@ SWAPI void swTexCoord2fv(const float *v);
 
 SWAPI void swBindArray(SWarray type, void *buffer);
 SWAPI void swDrawArrays(SWdraw mode, int offset, int count);
+SWAPI void swDrawElements(SWdraw mode, int count, int type, const void *indices);
 
 SWAPI void swGenTextures(int count, uint32_t *textures);
 SWAPI void swDeleteTextures(int count, uint32_t *textures);
@@ -4505,6 +4506,54 @@ void swDrawArrays(SWdraw mode, int offset, int count)
             if (RLSW.array.texcoords) swTexCoord2fv(RLSW.array.texcoords + 2*i);
             if (RLSW.array.colors) swColor4ubv(RLSW.array.colors + 4*i);
             swVertex3fv(RLSW.array.positions + 3*i);
+        }
+    }
+    swEnd();
+}
+
+void swDrawElements(SWdraw mode, int count, int type, const void *indices)
+{
+    if (RLSW.array.positions == 0)
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
+    if (count < 0)
+    {
+        RLSW.errCode = SW_INVALID_VALUE;
+        return;
+    }
+
+    swBegin(mode);
+    {
+        swTexCoord2f(0.0f, 0.0f);
+        swColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+        for (int i = 0; i < count; i++)
+        {
+            uint32_t index;
+
+            switch (type)
+            {
+                case SW_UNSIGNED_BYTE:
+                    index = ((uint8_t*)indices)[i];
+                    break;
+                case SW_UNSIGNED_SHORT:
+                    index = ((uint16_t*)indices)[i];
+                    break;
+                case SW_UNSIGNED_INT:
+                    index = ((uint32_t*)indices)[i];
+                    break;
+                default:
+                    RLSW.errCode = SW_INVALID_ENUM;
+                    swEnd();
+                    return;
+            }
+
+            if (RLSW.array.texcoords) swTexCoord2fv(RLSW.array.texcoords + 2*index);
+            if (RLSW.array.colors) swColor4ubv(RLSW.array.colors + 4*index);
+            swVertex3fv(RLSW.array.positions + 3*index);
         }
     }
     swEnd();
