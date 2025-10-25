@@ -1,17 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - geometry textures cube
+*   raylib [core] example - screen recording
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
-*   
-*   Example contributed by Jopestpe (@jopestpe)
+*
+*   Example contributed by Ramon Santamaria (@raysan5) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025 Jopestpe (@jopestpe)
+*   Copyright (c) 2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -27,29 +27,11 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - geometry textures cube");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - screen recording");
 
-    // Define the camera to look into our 3d world
-    Camera camera = { 0 };
-    camera.position = (Vector3){ 0.0f, 0.0f, 4.0f };
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    // TODO: Load resources / Initialize variables at this point
 
-    // Load image to create texture for the cube
-    Model model = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-    Image img = LoadImage("resources/cubicmap_atlas.png");
-    Image crop = ImageFromImage(img, (Rectangle){0, img.height/2, img.width/2, img.height/2});
-    Texture2D texture = LoadTextureFromImage(crop);
-    UnloadImage(img);
-    UnloadImage(crop);
-
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-
-    float rotation = 0.0f;
-    
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -57,21 +39,20 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        rotation += 1.0f;
-        
+        // TODO: Update variables / Implement example logic at this point
+        //----------------------------------------------------------------------------------
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
 
-            BeginMode3D(camera);
-            
-                DrawModelEx(model, (Vector3){0,0,0}, (Vector3){0.5f,1,0}, rotation, (Vector3){1,1,1}, WHITE);
-                
-            EndMode3D();
+            // TODO: Draw everything that requires to be drawn at this point
 
-            DrawFPS(10, 10);
+            DrawLineEx((Vector2){ 0, 0 }, (Vector2){ screenWidth, screenHeight }, 2.0f, RED);
+            DrawLineEx((Vector2){ 0, screenHeight }, (Vector2){ screenWidth, 0 }, 2.0f, RED);
+            DrawText("example base code template", 260, 400, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -79,9 +60,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texture); // Unload texture
-    UnloadModel(model);     // Unload model
-    CloseWindow();          // Close window and OpenGL context
+
+    // TODO: Unload all loaded resources at this point
+
+    CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -102,7 +102,7 @@ int main(void)
         BeginBlendMode(BLEND_ADDITIVE);
             DrawTexturePro(
                 light,
-                (Rectangle){ 0, 0, light.width, light.height },
+                (Rectangle){ 0, 0, (float)light.width, (float)light.height },
                 (Rectangle){ 0, 0, 20, 20 },
                 (Vector2){ 10.0, 10.0 },
                 0.0,
@@ -110,7 +110,7 @@ int main(void)
             );
             DrawTexturePro(
                 light,
-                (Rectangle){ 0, 0, light.width, light.height },
+                (Rectangle){ 0, 0, (float)light.width, (float)light.height },
                 (Rectangle){ 8, 4, 20, 20 },
                 (Vector2){ 10.0, 10.0 },
                 0.0,
@@ -118,7 +118,7 @@ int main(void)
             );
             DrawTexturePro(
                 light,
-                (Rectangle){ 0, 0, light.width, light.height },
+                (Rectangle){ 0, 0, (float)light.width, (float)light.height },
                 (Rectangle){ 8, 8, 10, 10 },
                 (Vector2){ 5.0, 5.0 },
                 0.0,
@@ -152,7 +152,7 @@ int main(void)
             DrawTexturePro(
                 lightmap.texture,
                 (Rectangle){ 0, 0, -MAP_SIZE, -MAP_SIZE },
-                (Rectangle){ GetRenderWidth() - MAP_SIZE*8 - 10, 10, MAP_SIZE*8, MAP_SIZE*8 },
+                (Rectangle){ (float)GetRenderWidth() - MAP_SIZE*8 - 10, 10, (float)MAP_SIZE*8, (float)MAP_SIZE*8 },
                 (Vector2){ 0.0, 0.0 },
                 0.0,
                 WHITE);

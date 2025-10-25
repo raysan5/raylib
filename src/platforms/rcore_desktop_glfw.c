@@ -56,10 +56,14 @@
 
 // Support retrieving native window handlers
 #if defined(_WIN32)
-    typedef void *PVOID;
-    typedef PVOID HANDLE;
-    #include "../external/win32_clipboard.h"
-    typedef HANDLE HWND;
+    #if !defined(HWND) && !defined(_MSVC_LANG)
+        #define HWND void*
+    #elif !defined(HWND) && defined(_MSVC_LANG)
+        typedef struct HWND__ *HWND;
+    #endif
+
+    #include "../external/win32_clipboard.h" // Clipboard image copy-paste
+
     #define GLFW_EXPOSE_NATIVE_WIN32
     #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
     #include "GLFW/glfw3native.h"
@@ -959,8 +963,11 @@ int GetMonitorRefreshRate(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        const GLFWvidmode *vidmode = glfwGetVideoMode(monitors[monitor]);
-        refresh = vidmode->refreshRate;
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+
+        if (mode) refresh = mode->refreshRate;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 
@@ -1025,10 +1032,10 @@ Image GetClipboardImage(void)
     int width = 0;
     int height = 0;
 
-    fileData  = (void*)Win32GetClipboardImageData(&width, &height, &dataSize);
+    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    else image = LoadImageFromMemory(".bmp", fileData, (int)dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif
@@ -1041,6 +1048,7 @@ Image GetClipboardImage(void)
 void ShowCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
@@ -1048,6 +1056,7 @@ void ShowCursor(void)
 void HideCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -1068,12 +1077,9 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     // Reset mouse position within the window area before disabling cursor
-    SetMousePosition(CORE.Window.screen.width, CORE.Window.screen.height);
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
@@ -1350,8 +1356,8 @@ int InitPlatform(void)
 
     const GLFWallocator allocator = {
         .allocate = AllocateWrapper,
-        .deallocate = DeallocateWrapper,
         .reallocate = ReallocateWrapper,
+        .deallocate = DeallocateWrapper,
         .user = NULL, // RL_*ALLOC macros are not capable of handling user-provided data
     };
 
