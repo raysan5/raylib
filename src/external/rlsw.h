@@ -3134,6 +3134,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
                                                                         \
     for (int i = 0; i < numPixels; i++)                                 \
     {                                                                   \
+        /* REVIEW: May require reviewing projection details */          \
         int px = (int)(x - 0.5f);                                       \
         int py = (int)(y - 0.5f);                                       \
                                                                         \
