@@ -3143,7 +3143,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         if (ENABLE_DEPTH_TEST)                                          \
         {                                                               \
             float depth = sw_framebuffer_read_depth(dptr);              \
-            if (z > depth) goto skip;                                   \
+            if (z > depth) goto discard;                                \
         }                                                               \
                                                                         \
         sw_framebuffer_write_depth(dptr, z);                            \
@@ -3160,7 +3160,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         }                                                               \
         else sw_framebuffer_write_color(cptr, color);                   \
                                                                         \
-    skip:                                                               \
+    discard:                                                            \
         x += xInc; y += yInc; z += zInc;                                \
         r += rInc; g += gInc; b += bInc; a += aInc;                     \
     }                                                                   \
