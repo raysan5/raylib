@@ -675,6 +675,7 @@ SWAPI void swBindTexture(uint32_t id);
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define SW_PI       3.14159265358979323846f
+#define SW_INV_255  0.00392156862745098f
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
@@ -1121,26 +1122,26 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     uint32x4_t ints = vmovl_u16(vget_low_u16(bytes16));
 
     float32x4_t floats = vcvtq_f32_u32(ints);
-    floats = vmulq_n_f32(floats, 1.0f/255.0f);
+    floats = vmulq_n_f32(floats, SW_INV_255);
     vst1q_f32(dst, floats);
 #elif defined(SW_HAS_SSE41)
     __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
     __m128i ints = _mm_cvtepu8_epi32(bytes);
     __m128 floats = _mm_cvtepi32_ps(ints);
-    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f/255.0f));
+    floats = _mm_mul_ps(floats, _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, floats);
 #elif defined(SW_HAS_SSE2)
     __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
     bytes = _mm_unpacklo_epi8(bytes, _mm_setzero_si128());
     __m128i ints = _mm_unpacklo_epi16(bytes, _mm_setzero_si128());
     __m128 floats = _mm_cvtepi32_ps(ints);
-    floats = _mm_mul_ps(floats, _mm_set1_ps(1.0f/255.0f));
+    floats = _mm_mul_ps(floats, _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, floats);
 #else
-    dst[0] = (float)src[0]/255.0f;
-    dst[1] = (float)src[1]/255.0f;
-    dst[2] = (float)src[2]/255.0f;
-    dst[3] = (float)src[3]/255.0f;
+    dst[0] = (float)src[0]*SW_INV_255;
+    dst[1] = (float)src[1]*SW_INV_255;
+    dst[2] = (float)src[2]*SW_INV_255;
+    dst[3] = (float)src[3]*SW_INV_255;
 #endif
 }
 
@@ -1895,7 +1896,7 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R16:
         {
             uint16_t val = ((const uint16_t*)pixels)[offset];
-            uint8_t gray = sw_half_to_float(val)/255.0f;
+            uint8_t gray = sw_half_to_float(val)*SW_INV_255;
             color[0] = gray;
             color[1] = gray;
             color[2] = gray;
@@ -1905,19 +1906,19 @@ static inline void sw_get_pixel(uint8_t *color, const void *pixels, uint32_t off
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         {
             const uint16_t *src = &((const uint16_t*)pixels)[offset*3];
-            color[0] = sw_half_to_float(src[0])/255.0f;
-            color[1] = sw_half_to_float(src[1])/255.0f;
-            color[2] = sw_half_to_float(src[2])/255.0f;
+            color[0] = sw_half_to_float(src[0])*SW_INV_255;
+            color[1] = sw_half_to_float(src[1])*SW_INV_255;
+            color[2] = sw_half_to_float(src[2])*SW_INV_255;
             color[3] = 255;
             break;
         }
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
         {
             const uint16_t *src = &((const uint16_t*)pixels)[offset*4];
-            color[0] = sw_half_to_float(src[0])/255.0f;
-            color[1] = sw_half_to_float(src[1])/255.0f;
-            color[2] = sw_half_to_float(src[2])/255.0f;
-            color[3] = sw_half_to_float(src[3])/255.0f;
+            color[0] = sw_half_to_float(src[0])*SW_INV_255;
+            color[1] = sw_half_to_float(src[1])*SW_INV_255;
+            color[2] = sw_half_to_float(src[2])*SW_INV_255;
+            color[3] = sw_half_to_float(src[3])*SW_INV_255;
             break;
         }
         case SW_PIXELFORMAT_UNKNOWN:
@@ -3439,6 +3440,43 @@ static inline void sw_poly_fill_render(void)
 }
 //-------------------------------------------------------------------------------------------
 
+// Immediate rendering logic
+//-------------------------------------------------------------------------------------------
+void sw_immediate_push_vertex(const float position[4], const float color[4], const float texcoord[2])
+{
+    // Copy the attributes in the current vertex
+    sw_vertex_t *vertex = &RLSW.vertexBuffer[RLSW.vertexCounter++];
+    for (int i = 0; i < 4; i++)
+    {
+        vertex->position[i] = position[i];
+        if (i < 2) vertex->texcoord[i] = texcoord[i];
+        vertex->color[i] = color[i];
+    }
+
+    // Calculate homogeneous coordinates
+    const float *m = RLSW.matMVP, *v = vertex->position;
+    vertex->homogeneous[0] = m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3];
+    vertex->homogeneous[1] = m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3];
+    vertex->homogeneous[2] = m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3];
+    vertex->homogeneous[3] = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3];
+
+    // Immediate rendering of the primitive if the required number is reached
+    if (RLSW.vertexCounter == RLSW.reqVertices)
+    {
+        switch (RLSW.polyMode)
+        {
+            case SW_FILL: sw_poly_fill_render(); break;
+            case SW_LINE: sw_poly_line_render(); break;
+            case SW_POINT: sw_poly_point_render(); break;
+            default: break;
+        }
+
+        RLSW.vertexCounter = 0;
+    }
+}
+
+//-------------------------------------------------------------------------------------------
+
 // Validity check helper functions
 //-------------------------------------------------------------------------------------------
 static inline bool sw_is_texture_valid(uint32_t id)
@@ -4303,89 +4341,62 @@ void swEnd(void)
 void swVertex2i(int x, int y)
 {
     const float v[4] = { (float)x, (float)y, 0.0f, 1.0f };
-    swVertex4fv(v);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex2f(float x, float y)
 {
     const float v[4] = { x, y, 0.0f, 1.0f };
-    swVertex4fv(v);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex2fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], 0.0f, 1.0f };
-    swVertex4fv(v4);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex3i(int x, int y, int z)
 {
     const float v[4] = { (float)x, (float)y, (float)z, 1.0f };
-    swVertex4fv(v);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex3f(float x, float y, float z)
 {
     const float v[4] = { x, y, z, 1.0f };
-    swVertex4fv(v);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex3fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], v[2], 1.0f };
-    swVertex4fv(v4);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex4i(int x, int y, int z, int w)
 {
     const float v[4] = { (float)x, (float)y, (float)z, (float)w };
-    swVertex4fv(v);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex4f(float x, float y, float z, float w)
 {
     const float v[4] = { x, y, z, w };
-    swVertex4fv(v);
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex4fv(const float *v)
 {
-    // Copy the position in the current vertex
-    sw_vertex_t *vertex = &RLSW.vertexBuffer[RLSW.vertexCounter++];
-    for (int i = 0; i < 4; i++) vertex->position[i] = v[i];
-
-    // Copy additonal vertex data
-    for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.current.texcoord[i];
-    for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.current.color[i];
-
-    // Calculation of homogeneous coordinates
-    const float *m = RLSW.matMVP;
-    vertex->homogeneous[0] = m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3];
-    vertex->homogeneous[1] = m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3];
-    vertex->homogeneous[2] = m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3];
-    vertex->homogeneous[3] = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3];
-
-    // Immediate rendering of the primitive if the required number is reached
-    if (RLSW.vertexCounter == RLSW.reqVertices)
-    {
-        switch (RLSW.polyMode)
-        {
-            case SW_FILL: sw_poly_fill_render(); break;
-            case SW_LINE: sw_poly_line_render(); break;
-            case SW_POINT: sw_poly_point_render(); break;
-            default: break;
-        }
-
-        RLSW.vertexCounter = 0;
-    }
+    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
 {
     float cv[4];
-    cv[0] = (float)r/255;
-    cv[1] = (float)g/255;
-    cv[2] = (float)b/255;
+    cv[0] = (float)r*SW_INV_255;
+    cv[1] = (float)g*SW_INV_255;
+    cv[2] = (float)b*SW_INV_255;
     cv[3] = 1.0f;
 
     swColor4fv(cv);
@@ -4394,9 +4405,9 @@ void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
 void swColor3ubv(const uint8_t *v)
 {
     float cv[4];
-    cv[0] = (float)v[0]/255;
-    cv[1] = (float)v[1]/255;
-    cv[2] = (float)v[2]/255;
+    cv[0] = (float)v[0]*SW_INV_255;
+    cv[1] = (float)v[1]*SW_INV_255;
+    cv[2] = (float)v[2]*SW_INV_255;
     cv[3] = 1.0f;
 
     swColor4fv(cv);
@@ -4427,10 +4438,10 @@ void swColor3fv(const float *v)
 void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     float cv[4];
-    cv[0] = (float)r/255;
-    cv[1] = (float)g/255;
-    cv[2] = (float)b/255;
-    cv[3] = (float)a/255;
+    cv[0] = (float)r*SW_INV_255;
+    cv[1] = (float)g*SW_INV_255;
+    cv[2] = (float)b*SW_INV_255;
+    cv[3] = (float)a*SW_INV_255;
 
     swColor4fv(cv);
 }
@@ -4438,10 +4449,10 @@ void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 void swColor4ubv(const uint8_t *v)
 {
     float cv[4];
-    cv[0] = (float)v[0]/255;
-    cv[1] = (float)v[1]/255;
-    cv[2] = (float)v[2]/255;
-    cv[3] = (float)v[3]/255;
+    cv[0] = (float)v[0]*SW_INV_255;
+    cv[1] = (float)v[1]*SW_INV_255;
+    cv[2] = (float)v[2]*SW_INV_255;
+    cv[3] = (float)v[3]*SW_INV_255;
 
     swColor4fv(cv);
 }
@@ -4499,14 +4510,60 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
     swBegin(mode);
     {
-        swTexCoord2f(0.0f, 0.0f);
-        swColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+        const float *defaultTexcoord = RLSW.current.texcoord;
+        const float *defaultColor = RLSW.current.color;
+        
+        const float *positions = RLSW.array.positions;
+        const float *texcoords = RLSW.array.texcoords;
+        const uint8_t *colors = RLSW.array.colors;
 
-        for (int i = offset; i < count; i++)
+        int end = offset + count;
+        
+        for (int i = offset; i < end; i++)
         {
-            if (RLSW.array.texcoords) swTexCoord2fv(RLSW.array.texcoords + 2*i);
-            if (RLSW.array.colors) swColor4ubv(RLSW.array.colors + 4*i);
-            swVertex3fv(RLSW.array.positions + 3*i);
+            float u, v;
+            if (texcoords)
+            {
+                int idx = 2 * i;
+                u = texcoords[idx];
+                v = texcoords[idx + 1];
+            }
+            else
+            {
+                u = defaultTexcoord[0];
+                v = defaultTexcoord[1];
+            }
+
+            float texcoord[2];
+            texcoord[0] = texMatrix[0] * u + texMatrix[4] * v + texMatrix[12];
+            texcoord[1] = texMatrix[1] * u + texMatrix[5] * v + texMatrix[13];
+
+            float color[4] = {
+                defaultColor[0],
+                defaultColor[1],
+                defaultColor[2],
+                defaultColor[3]
+            };
+
+            if (colors)
+            {
+                int idx = 4 * i;
+                color[0] *= (float)colors[idx]*SW_INV_255;
+                color[1] *= (float)colors[idx + 1]*SW_INV_255;
+                color[2] *= (float)colors[idx + 2]*SW_INV_255;
+                color[3] *= (float)colors[idx + 3]*SW_INV_255;
+            }
+
+            int idx = 3 * i;
+            float position[4] = {
+                positions[idx],
+                positions[idx + 1],
+                positions[idx + 2],
+                1.0f
+            };
+
+            sw_immediate_push_vertex(position, color, texcoord);
         }
     }
     swEnd();
@@ -4526,35 +4583,83 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
         return;
     }
 
+    const uint8_t *indicesUb = NULL;
+    const uint16_t *indicesUs = NULL;
+    const uint32_t *indicesUi = NULL;
+
+    switch (type)
+    {
+        case SW_UNSIGNED_BYTE:
+            indicesUb = (const uint8_t *)indices;
+            break;
+        case SW_UNSIGNED_SHORT:
+            indicesUs = (const uint16_t *)indices;
+            break;
+        case SW_UNSIGNED_INT:
+            indicesUi = (const uint32_t *)indices;
+            break;
+        default:
+            RLSW.errCode = SW_INVALID_ENUM;
+            return;
+    }
+
     swBegin(mode);
     {
-        swTexCoord2f(0.0f, 0.0f);
-        swColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
+        const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+        const float *defaultTexcoord = RLSW.current.texcoord;
+        const float *defaultColor = RLSW.current.color;
+        
+        const float *positions = RLSW.array.positions;
+        const float *texcoords = RLSW.array.texcoords;
+        const uint8_t *colors = RLSW.array.colors;
+        
         for (int i = 0; i < count; i++)
         {
-            uint32_t index;
-
-            switch (type)
+            int index = indicesUb ? indicesUb[i] : 
+                       (indicesUs ? indicesUs[i] : indicesUi[i]);
+            
+            float u, v;
+            if (texcoords)
             {
-                case SW_UNSIGNED_BYTE:
-                    index = ((uint8_t*)indices)[i];
-                    break;
-                case SW_UNSIGNED_SHORT:
-                    index = ((uint16_t*)indices)[i];
-                    break;
-                case SW_UNSIGNED_INT:
-                    index = ((uint32_t*)indices)[i];
-                    break;
-                default:
-                    RLSW.errCode = SW_INVALID_ENUM;
-                    swEnd();
-                    return;
+                int idx = 2 * index;
+                u = texcoords[idx];
+                v = texcoords[idx + 1];
+            }
+            else
+            {
+                u = defaultTexcoord[0];
+                v = defaultTexcoord[1];
             }
 
-            if (RLSW.array.texcoords) swTexCoord2fv(RLSW.array.texcoords + 2*index);
-            if (RLSW.array.colors) swColor4ubv(RLSW.array.colors + 4*index);
-            swVertex3fv(RLSW.array.positions + 3*index);
+            float texcoord[2];
+            texcoord[0] = texMatrix[0] * u + texMatrix[4] * v + texMatrix[12];
+            texcoord[1] = texMatrix[1] * u + texMatrix[5] * v + texMatrix[13];
+
+            float color[4] = {
+                defaultColor[0],
+                defaultColor[1],
+                defaultColor[2],
+                defaultColor[3]
+            };
+
+            if (colors)
+            {
+                int idx = 4 * index;
+                color[0] *= (float)colors[idx]*SW_INV_255;
+                color[1] *= (float)colors[idx + 1]*SW_INV_255;
+                color[2] *= (float)colors[idx + 2]*SW_INV_255;
+                color[3] *= (float)colors[idx + 3]*SW_INV_255;
+            }
+
+            int idx = 3 * index;
+            float position[4] = {
+                positions[idx],
+                positions[idx + 1],
+                positions[idx + 2],
+                1.0f
+            };
+
+            sw_immediate_push_vertex(position, color, texcoord);
         }
     }
     swEnd();
