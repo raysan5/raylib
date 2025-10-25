@@ -51,6 +51,7 @@ core;core_directory_files;★☆☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
 core;core_highdpi_testbed;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_screen_recording;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_clipboard_text;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
+core;core_text_file_loading;★☆☆☆;5.5;5.6;0;0;"Aanjishnu Bhattacharyya";@NimComPoo-04
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
@@ -161,6 +162,7 @@ shaders;shaders_texture_rendering;★★☆☆;2.0;3.7;2019;2025;"Michał Ciesie
 shaders;shaders_texture_outline;★★★☆;4.0;4.0;2021;2025;"Serenity Skiff";@GoldenThumbs
 shaders;shaders_texture_waves;★★☆☆;2.5;3.7;2019;2025;"Anata";@anatagawa
 shaders;shaders_julia_set;★★★☆;2.5;4.0;2019;2025;"Josh Colclough";@joshcol9232
+shaders;shaders_mandelbrot_set;★★★☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 shaders;shaders_eratosthenes_sieve;★★★☆;2.5;4.0;2019;2025;"ProfJski";@ProfJski
 shaders;shaders_fog_rendering;★★★☆;2.5;3.7;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_simple_mask;★★☆☆;2.5;3.7;2019;2025;"Chris Camacho";@chriscamacho

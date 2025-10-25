@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
         //    build <example_name>          : Build example for Desktop and Web platforms
         //    validate                      : Validate examples collection, generates report
         //    update                        : Validate and update examples collection, generates report
-        
+
         if (strcmp(argv[1], "create") == 0)
         {
             // Check for valid upcoming argument
@@ -394,8 +394,8 @@ int main(int argc, char *argv[])
             {
                 // Support building not only individual examples but categories and "ALL"
                 if ((strcmp(argv[2], "ALL") == 0) || TextInList(argv[2], exCategories, REXM_MAX_EXAMPLE_CATEGORIES))
-                { 
-                    // Category/ALL rebuilt requested 
+                {
+                    // Category/ALL rebuilt requested
                     strcpy(exRebuildRequested, argv[2]);
                 }
                 else
@@ -2432,7 +2432,7 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 static bool TextInList(const char *text, const char **list, int listCount)
 {
     bool result = false;
-    
+
     for (int i = 0; i < listCount; i++)
     {
         if (TextIsEqual(text, list[i])) { result = true; break; }

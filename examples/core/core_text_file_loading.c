@@ -64,7 +64,7 @@ int main(void)
             if (lines[i][j] == ' ')
             {
                 // Making a C Style string by adding a '\0' at the required location so that we can use the MeasureText function
-                lines[i][j] = '\0'; 
+                lines[i][j] = '\0';
 
                 // Checking if the text has crossed the wrapWidth, then going back and inserting a newline
                 if (MeasureText(lines[i] + lastWrapStart, fontSize) > wrapWidth)
@@ -88,16 +88,16 @@ int main(void)
 
     for (int i = 0; i < lineCount; i++)
     {
-        Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], fontSize, 2);
-        textHeight += size.y + 10;
+        Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], (float)fontSize, 2);
+        textHeight += (int)size.y + 10;
     }
 
     // A simple scrollbar on the side to show how far we have red into the file
     Rectangle scrollBar = {
-        .x = screenWidth - 5,
+        .x = (float)screenWidth - 5,
         .y = 0,
         .width = 5,
-        .height = screenHeight*100/(textHeight - screenHeight) // Scrollbar height is just a percentage
+        .height = screenHeight*100.0f/(textHeight - screenHeight) // Scrollbar height is just a percentage
     };
 
     SetTargetFPS(60);
@@ -112,13 +112,13 @@ int main(void)
         cam.target.y -= scroll*fontSize*1.5f;   // Choosing an arbitrary speed for scroll
 
         if (cam.target.y < 0) cam.target.y = 0;  // Snapping to 0 if we go too far back
-    
-        // Ensuring that the camera does not scroll past all text 
+
+        // Ensuring that the camera does not scroll past all text
         if (cam.target.y > textHeight - screenHeight + textTop)
-            cam.target.y = textHeight - screenHeight + textTop;
+            cam.target.y = (float)textHeight - screenHeight + textTop;
 
         // Computing the position of the scrollBar depending on the percentage of text covered
-        scrollBar.y = Lerp(textTop, screenHeight - scrollBar.height, (cam.target.y - textTop)/(textHeight - screenHeight));
+        scrollBar.y = Lerp((float)textTop, (float)screenHeight - scrollBar.height, (float)(cam.target.y - textTop)/(textHeight - screenHeight));
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -132,13 +132,13 @@ int main(void)
                 for (int i = 0, t = textTop; i < lineCount; i++)
                 {
                     // Each time we go through and calculate the height of the text to move the cursor appropriately
-                    Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], fontSize, 2);
-                    
+                    Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], (float)fontSize, 2);
+
                     DrawText(lines[i], 10, t, fontSize, RED);
 
-                    // Inserting extra space for real newlines, 
+                    // Inserting extra space for real newlines,
                     // wrapped lines are rendered closer together
-                    t += size.y + 10;
+                    t += (int)size.y + 10;
                 }
             EndMode2D();
 

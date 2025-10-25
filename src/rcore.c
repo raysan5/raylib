@@ -26,7 +26,8 @@
 *           - Linux DRM subsystem (KMS mode)
 *       > PLATFORM_ANDROID:
 *           - Android (ARM, ARM64)
-*
+*       > PLATFORM_DESKTOP_WIN32 (Native Win32):
+*           - Windows (Win32, Win64)
 *   CONFIGURATION:
 *       #define SUPPORT_DEFAULT_FONT (default)
 *           Default font is loaded on window initialization to be available for the user to render simple text.
@@ -161,7 +162,10 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if (defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)) || (defined(_MSC_VER) && defined(PLATFORM_DESKTOP_RGFW))
+#if defined(_WIN32)
+    #if !defined(MAX_PATH)
+        #define MAX_PATH 260
+    #endif
 
 struct HINSTANCE__;
 #if defined(__cplusplus)
@@ -679,12 +683,15 @@ void InitWindow(int width, int height, const char *title)
     // Initialize window data
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+    CORE.Window.currentFbo.width = CORE.Window.screen.width;
+    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+
     CORE.Window.eventWaiting = false;
-    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
+    CORE.Window.screenScale = MatrixIdentity(); // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
+    memset(&CORE.Input, 0, sizeof(CORE.Input)); // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
@@ -696,7 +703,7 @@ void InitWindow(int width, int height, const char *title)
 
     if (result != 0)
     {
-        TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize Platform");
+        TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize platform");
         return;
     }
     //--------------------------------------------------------------
@@ -2521,7 +2528,7 @@ int MakeDirectory(const char *dirPath)
     // Create final directory
     if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
     RL_FREE(pathcpy);
-    
+
     // In case something failed and requested directory
     // was not successfully created, return -1
     if (!DirectoryExists(dirPath)) return -1;
@@ -3145,7 +3152,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
         unsigned char *block = buffer + (blockN*64);
         unsigned int w[64];
         for (int i = 0; i < 16; i++)
-        {         
+        {
             w[i] =
                 ((unsigned int)block[i*4 + 0] << 24) |
                 ((unsigned int)block[i*4 + 1] << 16) |

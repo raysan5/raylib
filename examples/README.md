@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 186]
+## EXAMPLES COLLECTION [TOTAL: 187]
 
-### category: core [44]
+### category: core [45]
 
 Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
 
@@ -69,6 +69,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_highdpi_testbed](core/core_highdpi_testbed.c) | <img src="core/core_highdpi_testbed.png" alt="core_highdpi_testbed" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_screen_recording](core/core_screen_recording.c) | <img src="core/core_screen_recording.png" alt="core_screen_recording" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
+| [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
 
 ### category: shapes [32]
 
@@ -104,8 +105,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_pie_chart](shapes/shapes_pie_chart.c) | <img src="shapes/shapes_pie_chart.png" alt="shapes_pie_chart" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Gideon Serfontein](https://github.com/GideonSerf) |
 | [shapes_kaleidoscope](shapes/shapes_kaleidoscope.c) | <img src="shapes/shapes_kaleidoscope.png" alt="shapes_kaleidoscope" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 | [shapes_clock_of_clocks](shapes/shapes_clock_of_clocks.c) | <img src="shapes/shapes_clock_of_clocks.png" alt="shapes_clock_of_clocks" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
-| [shapes_math_sine_cosine](shapes/shapes_math_sine_cosine.c) | <img src="shapes/shapes_math_sine_cosine.png" alt="shapes_math_sine_cosine" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
-| [shapes_mouse_trail](shapes/shapes_mouse_trail.c) | <img src="shapes/shapes_mouse_trail.png" alt="shapes_mouse_trail" width="80"> | ⭐☆☆☆ | 5.6 | 5.6-dev | [[Balamurugan R]](https://github.com/[Bala050814]) |
+| [shapes_mouse_trail](shapes/shapes_mouse_trail.c) | <img src="shapes/shapes_mouse_trail.png" alt="shapes_mouse_trail" width="80"> | ⭐☆☆☆ | 5.6 | 5.6-dev | [Balamurugan R](https://github.com/Bala050814) |
 | [shapes_simple_particles](shapes/shapes_simple_particles.c) | <img src="shapes/shapes_simple_particles.png" alt="shapes_simple_particles" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 | [shapes_starfield_effect](shapes/shapes_starfield_effect.c) | <img src="shapes/shapes_starfield_effect.png" alt="shapes_starfield_effect" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 
@@ -196,7 +196,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_basic_voxel](models/models_basic_voxel.c) | <img src="models/models_basic_voxel.png" alt="models_basic_voxel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Tim Little](https://github.com/timlittle) |
 | [models_rotating_cube](models/models_rotating_cube.c) | <img src="models/models_rotating_cube.png" alt="models_rotating_cube" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 
-### category: shaders [30]
+### category: shaders [31]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
@@ -232,6 +232,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_lightmap_rendering](shaders/shaders_lightmap_rendering.c) | <img src="shaders/shaders_lightmap_rendering.png" alt="shaders_lightmap_rendering" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 | [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
+| [shaders_mandelbrot_set](shaders/shaders_mandelbrot_set.c) | <img src="shaders/shaders_mandelbrot_set.png" alt="shaders_mandelbrot_set" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 
 ### category: audio [8]
 

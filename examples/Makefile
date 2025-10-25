@@ -665,6 +665,7 @@ SHADERS = \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap_rendering \
+    shaders/shaders_mandelbrot_set \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
