@@ -3405,7 +3405,7 @@ static inline void sw_point_render(sw_vertex_t *v)
 }
 //-------------------------------------------------------------------------------------------
 
-// Polygon modes mendering logic
+// Polygon modes rendering logic
 //-------------------------------------------------------------------------------------------
 static inline void sw_poly_point_render(void)
 {
@@ -3437,9 +3437,10 @@ static inline void sw_poly_fill_render(void)
         case SW_QUADS: sw_quad_render(); break;
     }
 }
+//-------------------------------------------------------------------------------------------
 
 // Validity check helper functions
-
+//-------------------------------------------------------------------------------------------
 static inline bool sw_is_texture_valid(uint32_t id)
 {
     bool valid = true;
