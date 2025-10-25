@@ -71,7 +71,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
 
-### category: shapes [31]
+### category: shapes [32]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 

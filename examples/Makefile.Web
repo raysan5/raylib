@@ -564,6 +564,7 @@ SHAPES = \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
@@ -897,6 +898,9 @@ shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_math_sine_cosine: shapes/shapes_math_sine_cosine.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_mouse_trail: shapes/shapes_mouse_trail.c
