@@ -7800,6 +7800,27 @@ return {
       }
     },
     {
+      name = "UpdateModelAnimationBonesLerp",
+      description = "Update model animation mesh bone matrices with interpolation between two poses(GPU skinning)",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "ModelAnimation", name = "animA"},
+        {type = "int", name = "frameA"},
+        {type = "ModelAnimation", name = "animB"},
+        {type = "int", name = "frameB"},
+        {type = "float", name = "value"}
+      }
+    },
+    {
+      name = "UpdateModelVertsToCurrentBones",
+      description = "Update model vertices according to mesh bone matrices (CPU)",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"}
+      }
+    },
+    {
       name = "UnloadModelAnimation",
       description = "Unload animation data",
       returnType = "void",
