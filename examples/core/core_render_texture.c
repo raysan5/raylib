@@ -26,7 +26,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - render texture");
-    
+
     // Define a render texture to render
     int renderTextureWidth = 300;
     int renderTextureHeight = 300;
@@ -62,27 +62,29 @@ int main(void)
         //-----------------------------------------------------
         // Draw our scene to the render texture
         BeginTextureMode(target);
-        
+
             ClearBackground(SKYBLUE);
-            
+
+            DrawRectangle(0, 0, 20, 20, RED);
             DrawCircleV(ballPosition, (float)ballRadius, MAROON);
-        
+
         EndTextureMode();
-        
+
         // Draw render texture to main framebuffer
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
 
             // Draw our render texture with rotation applied
-            // NOTE: We set the origin of the texture to the center of the render texture
-            DrawTexturePro(target.texture, 
-                (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, 
-                (Rectangle){ screenWidth/2, screenHeight/2, target.texture.width, -target.texture.height }, 
-                (Vector2){ target.texture.width/2, target.texture.height/2 }, rotation, WHITE);
+            // NOTE 1: We set the origin of the texture to the center of the render texture
+            // NOTE 2: We flip vertically the texture setting negative source rectangle height
+            DrawTexturePro(target.texture,
+                (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height },
+                (Rectangle){ screenWidth/2.0f, screenHeight/2.0f, (float)target.texture.width, (float)target.texture.height },
+                (Vector2){ target.texture.width/2.0f, target.texture.height/2.0f }, rotation, WHITE);
 
             DrawText("DRAWING BOUNCING BALL INSIDE RENDER TEXTURE!", 10, screenHeight - 40, 20, BLACK);
-            
+
 
             DrawFPS(10, 10);
 

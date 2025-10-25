@@ -760,7 +760,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                         // NOTE: For optimum results, bitmap font should be generated at base pixel size
                         for (int p = 0; p < cpWidth*cpHeight; p++)
                         {
-                            if (((unsigned char *)glyphs[k].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) 
+                            if (((unsigned char *)glyphs[k].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD)
                                 ((unsigned char *)glyphs[k].image.data)[p] = 0;
                             else ((unsigned char *)glyphs[k].image.data)[p] = 255;
                         }
@@ -774,7 +774,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     // WARNING: Glyph not found on font, optionally use a fallback glyph
                 }
             }
-        
+
             if (glyphCounter < codepointCount) TRACELOG(LOG_WARNING, "FONT: Requested codepoints glyphs found: [%i/%i]", k, codepointCount);
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
@@ -1452,7 +1452,7 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 char **LoadTextLines(const char *text, int *count)
 {
     int lineCount = 1;
-    int textSize = strlen(text);
+    int textSize = (int)strlen(text);
 
     // Text pass to get required line count
     for (int i = 0; i < textSize; i++)
@@ -1649,34 +1649,79 @@ const char *TextSubtext(const char *text, int position, int length)
     return buffer;
 }
 
+// Remove text spaces, concat words
+const char *TextRemoveSpaces(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    if (text != NULL)
+    {
+        // Avoid copying the ' ' characters
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++)
+        {
+            if (text[i] != ' ') { buffer[j] = text[i]; j++; }
+        }
+    }
+
+    return buffer;
+}
+
+// Get text between two strings
+char *GetTextBetween(const char *text, const char *begin, const char *end)
+{
+    #define MAX_TEXT_BETWEEN_SIZE   1024
+
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int beginLen = (int)strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
+
+        if (endIndex > -1)
+        {
+            endIndex += (beginIndex + beginLen);
+            int len = (endIndex - beginIndex - beginLen);
+            if (len < (MAX_TEXT_BETWEEN_SIZE - 1)) strncpy(buffer, text + beginIndex + beginLen, len);
+            else strncpy(buffer, text + beginIndex + beginLen, MAX_TEXT_BETWEEN_SIZE - 1);
+        }
+    }
+
+    return buffer;
+}
+
 // Replace text string
 // REQUIRES: strstr(), strncpy(), strcpy()
+// TODO: If (replacement == NULL) remove "search" text
 // WARNING: Allocated memory must be manually freed
-char *TextReplace(const char *text, const char *replace, const char *by)
+char *TextReplace(const char *text, const char *search, const char *replacement)
 {
-    // Sanity checks and initialization
-    if (!text || !replace || !by) return NULL;
-
     char *result = NULL;
+
+    if (!text || !search) return NULL; // Sanity check
 
     char *insertPoint = NULL;   // Next insert point
     char *temp = NULL;          // Temp pointer
-    int replaceLen = 0;         // Replace string length of (the string to remove)
-    int byLen = 0;              // Replacement length (the string to replace by)
-    int lastReplacePos = 0;     // Distance between replace and end of last replace
+    int searchLen = 0;          // Search string length of (the string to remove)
+    int replaceLen = 0;         // Replacement length (the string to replace by)
+    int lastReplacePos = 0;     // Distance between next search and end of last replace
     int count = 0;              // Number of replacements
 
-    replaceLen = TextLength(replace);
-    if (replaceLen == 0) return NULL;  // Empty replace causes infinite loop during count
+    searchLen = TextLength(search);
+    if (searchLen == 0) return NULL;  // Empty search causes infinite loop during count
 
-    byLen = TextLength(by);
+    replaceLen = TextLength(replacement);
 
     // Count the number of replacements needed
     insertPoint = (char *)text;
-    for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
+    for (count = 0; (temp = strstr(insertPoint, search)); count++) insertPoint = temp + searchLen;
 
     // Allocate returning string and point temp to it
-    temp = result = (char *)RL_MALLOC(TextLength(text) + (byLen - replaceLen)*count + 1);
+    temp = result = (char *)RL_MALLOC(TextLength(text) + (replaceLen - searchLen)*count + 1);
 
     if (!result) return NULL;   // Memory could not be allocated
 
@@ -1686,15 +1731,50 @@ char *TextReplace(const char *text, const char *replace, const char *by)
     //  - 'text' points to the remainder of text after "end of replace"
     while (count--)
     {
-        insertPoint = strstr(text, replace);
+        insertPoint = (char *)strstr(text, search);
         lastReplacePos = (int)(insertPoint - text);
         temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
-        temp = strcpy(temp, by) + byLen;
-        text += lastReplacePos + replaceLen; // Move to next "end of replace"
+        temp = strcpy(temp, replacement) + replaceLen;
+        text += lastReplacePos + searchLen; // Move to next "end of replace"
     }
 
     // Copy remaind text part after replacement to result (pointed by moving temp)
     strcpy(temp, text);
+
+    return result;
+}
+
+// Replace text between two specific strings
+// REQUIRES: strlen(), strncpy()
+// NOTE: If (replacement == NULL) remove "begin"[ ]"end" text
+// WARNING: Returned string must be freed by user
+char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replacement)
+{
+    char *result = NULL;
+
+    if (!text || !begin || !end) return NULL; // Sanity check
+
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int beginLen = (int)strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
+
+        if (endIndex > -1)
+        {
+            endIndex += (beginIndex + beginLen);
+
+            int textLen = (int)strlen(text);
+            int replaceLen = (replacement == NULL)? 0 : (int)strlen(replacement);
+            int toreplaceLen = endIndex - beginIndex - beginLen;
+            result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
+
+            strncpy(result, text, beginIndex + beginLen); // Copy first text part
+            if (replacement != NULL) strncpy(result + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
+            strncpy(result + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+        }
+    }
 
     return result;
 }
@@ -1761,11 +1841,11 @@ char **TextSplit(const char *text, char delimiter, int *count)
     //      1. Maximum number of possible split strings is set by MAX_TEXTSPLIT_COUNT
     //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
 
-    static char *result[MAX_TEXTSPLIT_COUNT] = { NULL };
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static char *buffers[MAX_TEXTSPLIT_COUNT] = { NULL }; // Pointers to buffer[] text data
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 }; // Text data with '\0' separators
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    result[0] = buffer;
+    buffers[0] = buffer;
     int counter = 0;
 
     if (text != NULL)
@@ -1780,7 +1860,7 @@ char **TextSplit(const char *text, char delimiter, int *count)
             else if (buffer[i] == delimiter)
             {
                 buffer[i] = '\0';   // Set an end of string at this point
-                result[counter] = buffer + i + 1;
+                buffers[counter] = buffer + i + 1;
                 counter++;
 
                 if (counter == MAX_TEXTSPLIT_COUNT) break;
@@ -1789,7 +1869,7 @@ char **TextSplit(const char *text, char delimiter, int *count)
     }
 
     *count = counter;
-    return result;
+    return buffers;
 }
 
 // Append text at specific position and move cursor
@@ -1803,11 +1883,11 @@ void TextAppend(char *text, const char *append, int *position)
 
 // Find first text occurrence within a string
 // REQUIRES: strstr()
-int TextFindIndex(const char *text, const char *find)
+int TextFindIndex(const char *text, const char *search)
 {
     int position = -1;
 
-    char *ptr = strstr(text, find);
+    char *ptr = (char *)strstr(text, search);
 
     if (ptr != NULL) position = (int)(ptr - text);
 
@@ -1874,6 +1954,7 @@ char *TextToPascal(const char *text)
             {
                 j++;
                 if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
+                else if ((text[j] >= '0') && (text[j] <= '9')) buffer[i] = text[j];
             }
         }
     }
@@ -1885,7 +1966,7 @@ char *TextToPascal(const char *text)
 // WARNING: Limited functionality, only basic characters set
 char *TextToSnake(const char *text)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
@@ -1913,7 +1994,7 @@ char *TextToSnake(const char *text)
 // WARNING: Limited functionality, only basic characters set
 char *TextToCamel(const char *text)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)

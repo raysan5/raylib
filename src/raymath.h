@@ -2552,65 +2552,91 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
     return result;
 }
 
-// Decompose a transformation matrix into its rotational, translational and scaling components
+// Decompose a transformation matrix into its rotational, translational and scaling components and remove shear
 RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotation, Vector3 *scale)
 {
-    // Extract translation.
+    float eps = (float)1e-9;
+
+    // Extract Translation
     translation->x = mat.m12;
     translation->y = mat.m13;
     translation->z = mat.m14;
 
-    // Extract upper-left for determinant computation
-    const float a = mat.m0;
-    const float b = mat.m4;
-    const float c = mat.m8;
-    const float d = mat.m1;
-    const float e = mat.m5;
-    const float f = mat.m9;
-    const float g = mat.m2;
-    const float h = mat.m6;
-    const float i = mat.m10;
-    const float A = e*i - f*h;
-    const float B = f*g - d*i;
-    const float C = d*h - e*g;
+    // Matrix Columns - Rotation will be extracted into here.
+    Vector3 matColumns[3] = { { mat.m0, mat.m4, mat.m8 },
+                             { mat.m1, mat.m5, mat.m9 },
+                             { mat.m2, mat.m6, mat.m10 } };
 
-    // Extract scale
-    const float det = a*A + b*B + c*C;
-    Vector3 abc = { a, b, c };
-    Vector3 def = { d, e, f };
-    Vector3 ghi = { g, h, i };
+    // Shear Parameters XY, XZ, and YZ (extract and ignored)
+    float shear[3] = { 0 };
 
-    float scalex = Vector3Length(abc);
-    float scaley = Vector3Length(def);
-    float scalez = Vector3Length(ghi);
-    Vector3 s = { scalex, scaley, scalez };
+    // Normalized Scale Parameters
+    Vector3 scl = { 0 };
 
-    if (det < 0) s = Vector3Negate(s);
-
-    *scale = s;
-
-    // Remove scale from the matrix if it is not close to zero
-    Matrix clone = mat;
-    if (!FloatEquals(det, 0))
+    // Max-Normalizing helps numerical stability
+    float stabilizer = eps;
+    for (int i = 0; i < 3; i++)
     {
-        clone.m0 /= s.x;
-        clone.m4 /= s.x;
-        clone.m8 /= s.x;
-        clone.m1 /= s.y;
-        clone.m5 /= s.y;
-        clone.m9 /= s.y;
-        clone.m2 /= s.z;
-        clone.m6 /= s.z;
-        clone.m10 /= s.z;
+        stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].x));
+        stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].y));
+        stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].z));
+    };
+    matColumns[0] = Vector3Scale(matColumns[0], 1.0f / stabilizer);
+    matColumns[1] = Vector3Scale(matColumns[1], 1.0f / stabilizer);
+    matColumns[2] = Vector3Scale(matColumns[2], 1.0f / stabilizer);
 
-        // Extract rotation
-        *rotation = QuaternionFromMatrix(clone);
-    }
-    else
+    // X Scale
+    scl.x = Vector3Length(matColumns[0]);
+    if (scl.x > eps)
     {
-        // Set to identity if close to zero
-        *rotation = QuaternionIdentity();
+        matColumns[0] = Vector3Scale(matColumns[0], 1.0f / scl.x);
     }
+
+    // Compute XY shear and make col2 orthogonal
+    shear[0] = Vector3DotProduct(matColumns[0], matColumns[1]);
+    matColumns[1] = Vector3Subtract(matColumns[1], Vector3Scale(matColumns[0], shear[0]));
+
+    // Y Scale
+    scl.y = Vector3Length(matColumns[1]);
+    if (scl.y > eps)
+    {
+        matColumns[1] = Vector3Scale(matColumns[1], 1.0f / scl.y);
+        shear[0] /= scl.y; // Correct XY shear
+    }
+
+    // Compute XZ and YZ shears and make col3 orthogonal
+    shear[1] = Vector3DotProduct(matColumns[0], matColumns[2]);
+    matColumns[2] = Vector3Subtract(matColumns[2], Vector3Scale(matColumns[0], shear[1]));
+    shear[2] = Vector3DotProduct(matColumns[1], matColumns[2]);
+    matColumns[2] = Vector3Subtract(matColumns[2], Vector3Scale(matColumns[1], shear[2]));
+
+    // Z Scale
+    scl.z = Vector3Length(matColumns[2]);
+    if (scl.z > eps)
+    {
+        matColumns[2] = Vector3Scale(matColumns[2], 1.0f / scl.z);
+        shear[1] /= scl.z; // Correct XZ shear
+        shear[2] /= scl.z; // Correct YZ shear
+    }
+
+    // matColumns are now orthonormal in O(3). Now ensure its in SO(3) by enforcing det = 1.
+    if (Vector3DotProduct(matColumns[0], Vector3CrossProduct(matColumns[1], matColumns[2])) < 0)
+    {
+        scl = Vector3Negate(scl);
+        matColumns[0] = Vector3Negate(matColumns[0]);
+        matColumns[1] = Vector3Negate(matColumns[1]);
+        matColumns[2] = Vector3Negate(matColumns[2]);
+    }
+
+    // Set Scale
+    *scale = Vector3Scale(scl, stabilizer);
+
+    // Extract Rotation
+    Matrix rotationMatrix = { matColumns[0].x, matColumns[0].y, matColumns[0].z, 0,
+                             matColumns[1].x, matColumns[1].y, matColumns[1].z, 0,
+                             matColumns[2].x, matColumns[2].y, matColumns[2].z, 0,
+                             0, 0, 0, 1 };
+    *rotation = QuaternionFromMatrix(rotationMatrix);
 }
 
 #if defined(__cplusplus) && !defined(RAYMATH_DISABLE_CPP_OPERATORS)

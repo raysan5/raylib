@@ -6,19 +6,23 @@
 *       - Windows (Win32, Win64)
 *
 *   LIMITATIONS:
-*       - currently in initial development stage, alot is missing
-*       - unsure how to support MOUSE_BUTTON_FORWARD/MOUSE_BUTTON_BACK
+*       - Initial development stage, lot of functionality missing
+*       - No support for MOUSE_BUTTON_FORWARD/MOUSE_BUTTON_BACK
 *
 *   POSSIBLE IMPROVEMENTS:
+*       - Improvement 01
+*       - Improvement 02
 *
 *   ADDITIONAL NOTES:
+*       - TRACELOG() function is located in raylib [utils] module
 *
 *   CONFIGURATION:
 *       #define RCORE_PLATFORM_CUSTOM_FLAG
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - the win32 API, i.e. windows.h
+*       - Win32 API (windows.h)
+*
 *
 *   LICENSE: zlib/libpng
 *
@@ -41,12 +45,10 @@
 *
 **********************************************************************************************/
 
-// move windows.h functions to new names to avoid redefining the same functions as raylib
+// Move windows.h symbols to new names to avoid redefining the same names as raylib
 #define CloseWindow CloseWindowWin32
 #define Rectangle RectangleWin32
 #define ShowCursor ShowCursorWin32
-#define LoadImageA LoadImageAWin32
-#define LoadImageW LoadImageWin32
 #define DrawTextA DrawTextAWin32
 #define DrawTextW DrawTextWin32
 #define DrawTextExA DrawTextExAWin32
@@ -55,16 +57,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#undef CloseWindow
-#undef Rectangle
-#undef ShowCursor
-#undef LoadImage
-#undef LoadImageA
-#undef LoadImageW
-#undef DrawText
+#undef CloseWindow      // raylib symbol collision
+#undef Rectangle        // raylib symbol collision
+#undef ShowCursor       // raylib symbol collision
+#undef LoadImage        // raylib symbol collision
+#undef DrawText         // raylib symbol collision
 #undef DrawTextA
 #undef DrawTextW
-#undef DrawTextEx
+#undef DrawTextEx       // raylib symbol collision
 #undef DrawTextExA
 #undef DrawTextExW
 
@@ -72,305 +72,280 @@
 #include <shellscalingapi.h>
 #include <versionhelpers.h>
 
-#include <GL/gl.h>
-#include <GL/wglext.h>
+#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    #include <GL/gl.h>
+#endif
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+
+// NOTE: appScreenSize is the last screen size requested by the app,
+// the backend must keep the client area this size (after DPI scaling is applied)
+// when the window isn't fullscreen/maximized/minimized
+typedef struct {
+    HWND hwnd;              // Window handler
+    HDC hdc;                // Graphic context handler
+    HGLRC glContext;        // OpenGL context handler
+
+    // Software renderer variables
+    HDC hdcmem;             // Memory graphic context handler
+    HBITMAP hbitmap;        // GDI bitmap handler
+    unsigned int *pixels;   // Pointer to pixel data buffer (BGRA format)
+
+    unsigned int appScreenWidth;
+    unsigned int appScreenHeight;
+    unsigned int desiredFlags;
+
+    LARGE_INTEGER timerFrequency;
+} PlatformData;
+
+// Define WGL function pointer types (no wglext.h needed)
+typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int *);
+typedef BOOL (WINAPI *PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
+typedef BOOL (WINAPI *PFNWGLSWAPINTERVALEXTPROC)(int);
+typedef const char *(WINAPI *PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+extern CoreData CORE;                   // Global CORE state context
+
+static PlatformData platform = { 0 };   // Platform specific data
+
+// Required WGL functions
+static PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
+static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
+static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
+static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 
 // --------------------------------------------------------------------------------
-// This part of the file contains pure functions that never access global state.
+// This part of the file contains pure functions that never access global state
 // This distinction helps keep the backend maintainable as the inputs and outputs
-// of every function called in this section can be fully derived from the
-// call-site alone.
+// of every function called in this section can be fully derived from the call-site alone
 // --------------------------------------------------------------------------------
 
 // Prevent any code in this part of the file from accessing the global CORE state
 #define CORE DONT_USE_CORE_HERE
 
-static size_t AToWLen(const char *a)
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
+    size_t outLen = AToWLen(inAnsi);                            \
+    outWstr = (WCHAR *)alloca(sizeof(WCHAR)*(outLen + 1));      \
+    AToWCopy(inAnsi, outWstr, outLen);                          \
+    outWstr[outLen] = 0;                                        \
+} while (0)
+
+#define STYLE_MASK_ALL          0xffffffff
+#define STYLE_MASK_READONLY     (WS_MINIMIZE | WS_MAXIMIZE)
+#define STYLE_MASK_WRITABLE     (~STYLE_MASK_READONLY)
+
+#define STYLE_FLAGS_RESIZABLE   WS_THICKFRAME
+
+#define STYLE_FLAGS_UNDECORATED_OFF     (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
+#define STYLE_FLAGS_UNDECORATED_ON      WS_POPUP
+
+#define WINDOW_STYLE_EX         0
+
+#define CLASS_NAME              L"raylibWindow"
+
+#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT)
+#define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
+
+// Flags that have no operations to perform during an update
+#define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
+
+#define WM_APP_UPDATE_WINDOW_SIZE (WM_APP + 1)
+
+#define WGL_DRAW_TO_WINDOW_ARB              0x2001
+#define WGL_ACCELERATION_ARB                0x2003
+#define WGL_SUPPORT_OPENGL_ARB              0x2010
+#define WGL_DOUBLE_BUFFER_ARB               0x2011
+#define WGL_PIXEL_TYPE_ARB                  0x2013
+#define WGL_COLOR_BITS_ARB                  0x2014
+#define WGL_RED_BITS_ARB                    0x2015
+#define WGL_RED_SHIFT_ARB                   0x2016
+#define WGL_GREEN_BITS_ARB                  0x2017
+#define WGL_GREEN_SHIFT_ARB                 0x2018
+#define WGL_BLUE_BITS_ARB                   0x2019
+#define WGL_BLUE_SHIFT_ARB                  0x201a
+#define WGL_ALPHA_BITS_ARB                  0x201b
+#define WGL_ALPHA_SHIFT_ARB                 0x201c
+#define WGL_DEPTH_BITS_ARB                  0x2022
+#define WGL_STENCIL_BITS_ARB                0x2023
+#define WGL_TYPE_RGBA_ARB                   0x202b
+
+// Context acceleration types
+#define WGL_NO_ACCELERATION_ARB             0x2025      // OpenGL 1.1 GDI software rasterizer
+#define WGL_GENERIC_ACCELERATION_ARB        0x2026
+#define WGL_FULL_ACCELERATION_ARB           0x2027      // OpenGL hardware-accelerated, using GPU-drivers provided by vendor
+
+// WGL_ARB_multisample extension supported
+#define WGL_SAMPLE_BUFFERS_ARB              0x2041      // Multisampling: 1 if multisample buffers are supported
+#define WGL_SAMPLES_ARB                     0x2042      // Multisampling: Number of samples per pixel (4, 8, 16)
+
+// WGL_ARB_framebuffer_sRGB extension supported
+#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9      // GL_TRUE if the framebuffer can do sRGB conversion
+
+#define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
+#define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB       0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
+#define WGL_CONTEXT_ES_PROFILE_BIT_EXT		0x00000004
+#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT		0x00000004
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Maximize-minimize request types
+typedef enum {
+    MIZED_NONE,
+    MIZED_MIN,
+    MIZED_MAX
+} Mized;
+
+// Flag operations
+// NOTE: Some ops need to be deferred
+typedef struct {
+    DWORD set;
+    DWORD clear;
+} FlagsOp;
+
+// Monitor info type
+typedef struct {
+    HMONITOR needle;
+    int index;
+    int matchIndex;
+    RECT rect;
+} MonitorInfo;
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
+// Get ASCII to WCHAR length
+static size_t AToWLen(const char *ascii)
 {
-    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, a, -1, NULL, 0);
-    if (sizeNeeded < 0)
-    {
-        TRACELOG(LOG_ERROR, "failed to calculate wide length, result=%d, error=%u", sizeNeeded, GetLastError());
-        abort();
-    }
+    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, ascii, -1, NULL, 0);
+
+    if (sizeNeeded < 0) TRACELOG(LOG_ERROR, "WIN32: Failed to calculate wide length [ERROR: %u]", GetLastError());
 
     return sizeNeeded;
 }
-static void AToWCopy(wchar_t *outPtr, size_t outLen, const char *a)
-{
-    int size = MultiByteToWideChar(CP_UTF8, 0, a, -1, outPtr, outLen);
-    if (size != outLen)
-    {
-        TRACELOG(LOG_ERROR, "expected to convert %zu utf8 chars to wide but converted %zu", outLen, size);
-        abort();
-    }
-}
-#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
-    size_t len = AToWLen(inAnsi);                               \
-    outWstr = (WCHAR*)alloca(sizeof(WCHAR)*(len + 1));        \
-    AToWCopy(outWstr, len, inAnsi);                             \
-    outWstr[len] = 0;                                           \
-} while (0)
 
-static void LogFail(const char *what, DWORD error)
+// Copy ASCII to WCHAR string
+static void AToWCopy(const char *ascii, wchar_t *outPtr, size_t outLen)
 {
-    TRACELOG(LOG_ERROR, "%s failed, error=%lu", what, error);
-}
-static void LogFailHr(const char *what, HRESULT hr)
-{
-    TRACELOG(LOG_ERROR, "%s failed, hresult=0x%lx", what, (DWORD)hr);
+    int size = MultiByteToWideChar(CP_UTF8, 0, ascii, -1, outPtr, (int)outLen);
+    if (size != outLen) TRACELOG(LOG_WARNING, "WIN32: Failed to convert %i UTF-8 chars to WCHAR, converted %i chars", outLen, size);
 }
 
-#define STYLE_FLAGS_RESIZABLE  WS_THICKFRAME
-
-#define STYLE_FLAGS_UNDECORATED_OFF (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
-#define STYLE_FLAGS_UNDECORATED_ON  WS_POPUP
-
-static bool ResizableFromStyle(DWORD style)
-{
-    return 0 != (style & STYLE_FLAGS_RESIZABLE);
-}
 static bool DecoratedFromStyle(DWORD style)
 {
     if (style & STYLE_FLAGS_UNDECORATED_ON)
     {
-        if (style & STYLE_FLAGS_UNDECORATED_OFF)
-        {
-            TRACELOG(LOG_ERROR, "style 0x%x has both undecorated on/off flags", style);
-            abort();
-        }
-
-        return false; // not decorated
+        if (style & STYLE_FLAGS_UNDECORATED_OFF) TRACELOG(LOG_ERROR, "WIN32: FLAGS: Style 0x%x has both undecorated on/off flags", style);
+        return false; // Not decorated
     }
 
     DWORD masked = (style & STYLE_FLAGS_UNDECORATED_OFF);
-    if (STYLE_FLAGS_UNDECORATED_OFF != masked)
-    {
-        TRACELOG(LOG_ERROR, "style 0x%x is missing these flags 0x%x", masked, masked ^ STYLE_FLAGS_UNDECORATED_OFF);
-        abort();
-    }
+    if (STYLE_FLAGS_UNDECORATED_OFF != masked) TRACELOG(LOG_ERROR, "WIN32: FLAGS: Style 0x%x is missing flags 0x%x", masked, masked ^ STYLE_FLAGS_UNDECORATED_OFF);
 
-    return true; // decorated
-}
-static bool HiddenFromStyle(DWORD style)
-{
-    return 0 == (style & WS_VISIBLE);
+    return true; // Decorated
 }
 
-typedef enum { MIZED_NONE, MIZED_MIN, MIZED_MAX } Mized;
-Mized MizedFromStyle(DWORD style)
-{
-    // minimized takes precedence over maximized
-    if (style & WS_MINIMIZE) return MIZED_MIN;
-    if (style & WS_MAXIMIZE) return MIZED_MAX;
-    return MIZED_NONE;
-}
-Mized MizedFromFlags(unsigned flags)
-{
-    // minimized takes precedence over maximized
-    if (flags & FLAG_WINDOW_MINIMIZED) return MIZED_MIN;
-    if (flags & FLAG_WINDOW_MAXIMIZED) return MIZED_MAX;
-    return MIZED_NONE;
-}
-
+// Get window style from required flags
 static DWORD MakeWindowStyle(unsigned flags)
 {
-    DWORD style =
-        // we don't need this since we don't have any child windows, but I guess
-        // it improves efficiency, plus, windows adds this flag automatically anyway
-        // so it keeps our flags in sync with the OS.
-        WS_CLIPSIBLINGS
-        ;
+    // We don't need this since we don't have any child windows, but I guess
+    // it improves efficiency, plus, windows adds this flag automatically anyway
+    // so it keeps our flags in sync with the OS
+    DWORD style = WS_CLIPSIBLINGS;
+
     style |= (flags & FLAG_WINDOW_HIDDEN)? 0 : WS_VISIBLE;
     style |= (flags & FLAG_WINDOW_RESIZABLE)? STYLE_FLAGS_RESIZABLE : 0;
     style |= (flags & FLAG_WINDOW_UNDECORATED)? STYLE_FLAGS_UNDECORATED_ON : STYLE_FLAGS_UNDECORATED_OFF;
 
-    switch (MizedFromFlags(flags))
+    // Minimized takes precedence over maximized
+    int mized = MIZED_NONE;
+    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
+    if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
+
+    switch (mized)
     {
         case MIZED_NONE: break;
         case MIZED_MIN: style |= WS_MINIMIZE; break;
         case MIZED_MAX: style |= WS_MAXIMIZE; break;
-        default: abort();
+        default: break;
     }
-
-    // sanity checks, maybe remove later
-    if (ResizableFromStyle(style) != !!(flags & FLAG_WINDOW_RESIZABLE)) abort();
-    if (DecoratedFromStyle(style) != !(flags & FLAG_WINDOW_UNDECORATED)) abort();
-    if (HiddenFromStyle(style) != !!(flags & FLAG_WINDOW_HIDDEN)) abort();
-    if (MizedFromStyle(style) != MizedFromFlags(flags)) abort();
 
     return style;
 }
 
-static bool IsMinimized2(HWND hwnd)
+// Check flags state, enforces that the actual window/platform state is in sync with raylib's flags
+static void CheckFlags(const char *context, HWND hwnd, DWORD flags, DWORD expectedStyle, DWORD styleCheckMask)
 {
-    bool isIconic = IsIconic(hwnd);
-    bool styleMinimized = !!(WS_MINIMIZE & GetWindowLongPtrW(hwnd, GWL_STYLE));
-    if (isIconic != styleMinimized)
+    DWORD styleFromFlags = MakeWindowStyle(flags);
+    if ((styleFromFlags & styleCheckMask) != (expectedStyle & styleCheckMask))
     {
-        TRACELOG(LOG_ERROR, "IsIconic(%d) != WS_MINIMIZED(%d)", isIconic, styleMinimized);
-        abort();
-    }
-
-    return isIconic;
-}
-
-#define STYLE_MASK_ALL 0xffffffff
-#define STYLE_MASK_READONLY (WS_MINIMIZE | WS_MAXIMIZE)
-#define STYLE_MASK_WRITABLE (~STYLE_MASK_READONLY)
-
-// Enforces that the actual window/platform state is in sync with raylib's flags
-static void CheckFlags(
-    const char *context,
-    HWND hwnd,
-    DWORD flags,
-    DWORD expectedStyle,
-    DWORD styleCheckMask
-) {
-    //TRACELOG(LOG_INFO, "Verifying Flags 0x%x Style 0x%x Mask 0x%x", flags, expectedStyle & styleCheckMask, styleCheckMask);
-
-    {
-        DWORD styleFromFlags = MakeWindowStyle(flags);
-        if ((styleFromFlags & styleCheckMask) != (expectedStyle & styleCheckMask))
-        {
-            TRACELOG(
-                LOG_ERROR,
-                "%s: window flags (0x%x) produced style 0x%x which != expected 0x%x (diff=0x%x, mask=0x%x)",
-                context,
-                flags,
-                styleFromFlags & styleCheckMask,
-                expectedStyle & styleCheckMask,
-                (styleFromFlags & styleCheckMask) ^ (expectedStyle & styleCheckMask),
-                styleCheckMask
-            );
-            abort();
-        }
+        TRACELOG(LOG_ERROR, "WIN32: FLAGS: %s: window flags (0x%x) produced style 0x%x which != expected 0x%x (diff=0x%x, mask=0x%x)",
+            context, flags, styleFromFlags & styleCheckMask, expectedStyle & styleCheckMask,
+            (styleFromFlags & styleCheckMask) ^ (expectedStyle & styleCheckMask), styleCheckMask);
     }
 
     SetLastError(0);
-    LONG actualStyle = GetWindowLongPtrW(hwnd, GWL_STYLE);
+    LONG actualStyle = (LONG)GetWindowLongPtrW(hwnd, GWL_STYLE);
     if ((actualStyle & styleCheckMask) != (expectedStyle & styleCheckMask))
     {
-        TRACELOG(
-            LOG_ERROR,
-            "%s: expected style 0x%x but got 0x%x (diff=0x%x, mask=0x%x, lasterror=%lu)",
-            context,
-            expectedStyle & styleCheckMask,
-            actualStyle & styleCheckMask,
+        TRACELOG(LOG_ERROR, "WIN32: FLAGS: %s: expected style 0x%x but got 0x%x (diff=0x%x, mask=0x%x, lasterror=%lu)",
+            context, expectedStyle & styleCheckMask, actualStyle & styleCheckMask,
             (expectedStyle & styleCheckMask) ^ (actualStyle & styleCheckMask),
-            styleCheckMask,
-            GetLastError()
-        );
-        abort();
+            styleCheckMask, GetLastError());
     }
 
     if (styleCheckMask & WS_MINIMIZE)
     {
         bool isIconic = IsIconic(hwnd);
         bool styleMinimized = !!(WS_MINIMIZE & actualStyle);
-        if (isIconic != styleMinimized) {
-            TRACELOG(LOG_ERROR, "IsIconic(%d) != WS_MINIMIZED(%d)", isIconic, styleMinimized);
-            abort();
-        }
+        if (isIconic != styleMinimized) TRACELOG(LOG_ERROR, "WIN32: FLAGS: IsIconic(%d) != WS_MINIMIZED(%d)", isIconic, styleMinimized);
     }
 
     if (styleCheckMask & WS_MAXIMIZE)
     {
         WINDOWPLACEMENT placement;
         placement.length = sizeof(placement);
-        if (!GetWindowPlacement(hwnd, &placement)) {
-            LogFail("GetWindowPlacement", GetLastError());
-            abort();
+        if (!GetWindowPlacement(hwnd, &placement))
+        {
+            TRACELOG(LOG_ERROR, "WIN32: FLAGS: %s failed, error=%lu", "GetWindowPlacement", GetLastError());
         }
         bool placementMaximized = (placement.showCmd == SW_SHOWMAXIMIZED);
         bool styleMaximized = WS_MAXIMIZE & actualStyle;
         if (placementMaximized != styleMaximized)
         {
-            TRACELOG(
-                LOG_ERROR,
-                "maximized state desync, placement maximized=%d (showCmd=%lu) style maximized=%d",
-                placementMaximized,
-                placement.showCmd,
-                styleMaximized
-            );
-            abort();
+            TRACELOG(LOG_ERROR, "WIN32: FLAGS: Maximized state desync, placement maximized=%d (showCmd=%lu) style maximized=%d",
+                placementMaximized, placement.showCmd, styleMaximized);
         }
     }
 }
 
-static float PtFromPx(float dpiScale, bool highdpiEnabled, int pt)
-{
-    return highdpiEnabled? (((float)pt)/dpiScale) : pt;
-}
-static int PxFromPt(float dpiScale, bool highdpiEnabled, float pt)
-{
-    return highdpiEnabled? roundf(pt*dpiScale) : roundf(pt);
-}
-static SIZE PxFromPt2(float dpiScale, bool highdpiEnabled, Vector2 screenSize)
-{
-    return (SIZE){
-        PxFromPt(dpiScale, highdpiEnabled, screenSize.x),
-        PxFromPt(dpiScale, highdpiEnabled, screenSize.y),
-    };
-}
-
-static SIZE GetClientSize(HWND hwnd)
-{
-    RECT rect;
-    if (0 == GetClientRect(hwnd, &rect))
-    {
-        LogFail("GetClientRect", GetLastError());
-        abort();
-    }
-
-    if (rect.left != 0) abort(); // never happens AFAIK
-    if (rect.top != 0) abort(); // never happens AFAIK
-    return (SIZE){ rect.right, rect.bottom };
-}
-
-static UINT GetWindowDpi(HWND hwnd)
-{
-    UINT dpi = GetDpiForWindow(hwnd);
-    if (dpi == 0)
-    {
-        LogFail("GetWindowDpi", GetLastError());
-        abort();
-    }
-
-    return dpi;
-}
-
-static float ScaleFromDpi(UINT dpi)
-{
-    return ((float)dpi)/96.0f;
-}
-
-#define WINDOW_STYLE_EX 0
-
+// Calculate window size (with borders, title-bar...) from desired client size (framebuffer size)
 static SIZE CalcWindowSize(UINT dpi, SIZE clientSize, DWORD style)
 {
     RECT rect = { 0, 0, clientSize.cx, clientSize.cy };
-    if (!AdjustWindowRectExForDpi(&rect, style, 0, WINDOW_STYLE_EX, dpi))
-    {
-        LogFail("AdjustWindowRect", GetLastError());
-        abort();
-    }
+
+    int result = AdjustWindowRectExForDpi(&rect, style, 0, WINDOW_STYLE_EX, dpi);
+    if (result == 0) TRACELOG(LOG_ERROR, "WIN32: Failed to adjust window rect [ERROR: %lu]", GetLastError());
 
     return (SIZE){ rect.right - rect.left, rect.bottom - rect.top };
 }
 
-typedef enum {
-    UPDATE_WINDOW_FIRST,
-    UPDATE_WINDOW_NORMAL,
-} UpdateWindowKind;
-
-// returns true if the window size was updated, false otherwise
-static bool UpdateWindowSize(
-    UpdateWindowKind kind,
-    HWND hwnd,
-    Vector2 appScreenSize,
-    unsigned flags
-) {
+// Update window size if required
+// NOTE: Returns true if the window size was updated, false otherwise
+static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigned flags)
+{
     if (flags & FLAG_WINDOW_MINIMIZED) return false;
 
     if (flags & FLAG_WINDOW_MAXIMIZED)
@@ -381,79 +356,66 @@ static bool UpdateWindowSize(
 
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
+        MONITORINFO info = { 0 };
         HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-        MONITORINFO info;
         info.cbSize = sizeof(info);
-        if (!GetMonitorInfoW(monitor, &info))
-        {
-            LogFail("GetMonitorInfo", GetLastError());
-            abort();
-        }
+        if (!GetMonitorInfoW(monitor, &info)) TRACELOG(LOG_ERROR, "WIN32: Failed to get monitor info [ERROR: %lu]", GetLastError());
 
-        RECT windowRect;
-        if (!GetWindowRect(hwnd, &windowRect))
-        {
-            LogFail("GetWindowRect", GetLastError());
-            abort();
-        }
+        RECT windowRect = { 0 };
+        if (!GetWindowRect(hwnd, &windowRect)) TRACELOG(LOG_ERROR, "WIN32: Failed to get window rect [ERROR: %lu]", GetLastError());
 
-        if (
-            (windowRect.left == info.rcMonitor.left) &&
+        if ((windowRect.left == info.rcMonitor.left) &&
             (windowRect.top == info.rcMonitor.top) &&
             ((windowRect.right - windowRect.left) == (info.rcMonitor.right - info.rcMonitor.left)) &&
-            ((windowRect.bottom - windowRect.top) == (info.rcMonitor.bottom - info.rcMonitor.top))
-        ) return false;
+            ((windowRect.bottom - windowRect.top) == (info.rcMonitor.bottom - info.rcMonitor.top))) return false;
 
-        if (!SetWindowPos(
-            hwnd,
-            HWND_TOP,
+        if (!SetWindowPos(hwnd, HWND_TOP,
             info.rcMonitor.left, info.rcMonitor.top,
             info.rcMonitor.right - info.rcMonitor.left,
             info.rcMonitor.bottom - info.rcMonitor.top,
-            SWP_NOOWNERZORDER
-        )) {
-            LogFail("SetWindowPos", GetLastError());
-            abort();
+            SWP_NOOWNERZORDER))
+        {
+            TRACELOG(LOG_ERROR, "WIN32: Failed to set window position [ERROR: %lu]", GetLastError());
         }
 
         return true;
     }
 
-    UINT dpi = GetWindowDpi(hwnd);
-    float dpiScale = ScaleFromDpi(dpi);
+    // Get size in pixels from points, considering high-dpi
+    UINT dpi = GetDpiForWindow(hwnd);
+    float dpiScale = ((float)dpi)/96.0f;
     bool dpiScaling = flags & FLAG_WINDOW_HIGHDPI;
-    SIZE desired = PxFromPt2(dpiScale, dpiScaling, appScreenSize);
-    SIZE actual = GetClientSize(hwnd);
-    if (actual.cx == desired.cx || actual.cy == desired.cy)
-        return false;
+    SIZE desiredSize = {
+        .cx = dpiScaling? (int)((float)width*dpiScale) : width,
+        .cy = dpiScaling? (int)((float)height*dpiScale) : height
+    };
 
-    TRACELOG(
-        LOG_INFO,
-        "restoring client size from %dx%d to %dx%d (dpi=%lu dpiScaling=%d app=%fx%f)",
-        actual.cx, actual.cy,
-        desired.cx, desired.cy,
-        dpi, dpiScaling,
-        appScreenSize.x, appScreenSize.y
-    );
-    SIZE windowSize = CalcWindowSize(dpi, desired, MakeWindowStyle(flags));
-    POINT windowPos = (POINT){ 0, 0 };
+    // Get client size (framebuffer inside the window)
+    RECT rect = { 0 };
+    GetClientRect(hwnd, &rect);
+    SIZE clientSize = { rect.right, rect.bottom };
+
+    // If client size is alread desired size, no need to update
+    if ((clientSize.cx == desiredSize.cx) || (clientSize.cy == desiredSize.cy)) return false;
+
+    TRACELOG(LOG_INFO, "WIN32: Restoring client size from [%dx%d] to [%dx%d] (dpi:%lu dpiScaling:%d app:%ix%i)",
+        clientSize.cx, clientSize.cy, desiredSize.cx, desiredSize.cy, dpi, dpiScaling, width, height);
+
+    // Calculate window size from desired framebuffer size and window flags
+    SIZE windowSize = CalcWindowSize(dpi, desiredSize, MakeWindowStyle(flags));
+    POINT windowPos = { 0 };
     UINT swpFlags = SWP_NOZORDER | SWP_FRAMECHANGED;
-    if (kind == UPDATE_WINDOW_FIRST)
+
+    if (mode == 0) // UPDATE_WINDOW_FIRST
     {
         HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-        if (!monitor)
-        {
-            LogFail("MonitorFromWindow", GetLastError());
-            abort();
-        }
+        if (!monitor) TRACELOG(LOG_ERROR, "WIN32: Failed to get monitor from window [ERROR: %lu]", GetLastError());
 
-        MONITORINFO info;
+        MONITORINFO info = { 0 };
         info.cbSize = sizeof(info);
-        if (!GetMonitorInfoW(monitor, &info))
-        {
-            LogFail("GetMonitorInfo", GetLastError());
-            abort();
-        }
+        if (!GetMonitorInfoW(monitor, &info)) TRACELOG(LOG_ERROR, "WIN32: Failed to get monitor info [ERROR: %lu]", GetLastError());
+
+        #define MAX(a,b) (((a)>(b))? (a):(b))
 
         LONG monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
         LONG monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
@@ -461,54 +423,27 @@ static bool UpdateWindowSize(
             MAX(0, (monitorWidth - windowSize.cx)/2),
             MAX(0, (monitorHeight - windowSize.cy)/2),
         };
-    } else {
-        swpFlags |= SWP_NOMOVE;
     }
+    else swpFlags |= SWP_NOMOVE;
 
-    if (!SetWindowPos(
-        hwnd, NULL,
-        windowPos.x, windowPos.y,
-        windowSize.cx, windowSize.cy,
-        swpFlags
-    )) {
-        LogFail("SetWindowPos", GetLastError());
-        abort();
-    }
+    // WARNING: This code must be called after swInit() has been called, after InitPlatform() in [rcore]
+    //RECT rc = {0, 0, desired.cx, desired.cy};
+    //AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, FALSE, 0);
+    //SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOZORDER);
 
     return true;
 }
 
-#define CLASS_NAME L"RaylibWindow"
-
-static void CreateWindowAlloca(const char *title, DWORD style)
-{
-    WCHAR *titleWide;
-    A_TO_W_ALLOCA(titleWide, title);
-    CreateWindowExW(
-        WINDOW_STYLE_EX,
-        CLASS_NAME,
-        titleWide,
-        style,
-        0, 0,
-        0, 0,
-        NULL,
-        NULL,
-        GetModuleHandleW(NULL),
-        NULL
-    );
-}
-
+// Verify if we are running in Windows 10 version 1703 (Creators Update)
 static BOOL IsWindows10Version1703OrGreaterWin32(void)
 {
     HMODULE ntdll = LoadLibraryW(L"ntdll.dll");
-    DWORD (*Verify)(
-        RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG
-    ) = (DWORD (*)(
-        RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG
-    ))GetProcAddress(ntdll, "RtlVerifyVersionInfo");
+
+    DWORD (*Verify)(RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG) =
+        (DWORD (*)(RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG))GetProcAddress(ntdll, "RtlVerifyVersionInfo");
     if (!Verify)
     {
-        LogFail("GetProcAddress 'RtlVerifyVersionInfo'", GetLastError());
+        TRACELOG(LOG_ERROR, "WIN32: Failed to verify Windows version [ERROR: %lu]", GetLastError());
         return 0;
     }
 
@@ -517,49 +452,41 @@ static BOOL IsWindows10Version1703OrGreaterWin32(void)
     osvi.dwMajorVersion = 10;
     osvi.dwMinorVersion = 0;
     osvi.dwBuildNumber = 15063;  // Build 15063 corresponds to Windows 10 version 1703 (Creators Update)
+
     DWORDLONG cond = 0;
     VER_SET_CONDITION(cond, VER_MAJORVERSION, VER_GREATER_EQUAL);
     VER_SET_CONDITION(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
     VER_SET_CONDITION(cond, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+
     return 0 == (*Verify)(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, cond);
 }
 
-static void *FindProc(const char *name)
+// Get OpenGL function pointers
+static void *WglGetProcAddress(const char *procname)
 {
+    void *proc = (void *)wglGetProcAddress(procname);
+
+    if ((proc == NULL) ||
+        // NOTE: Some GPU drivers could return following
+        // invalid sentinel values instead of NULL
+        (proc == (void *)0x1) ||
+        (proc == (void *)0x2) ||
+        (proc == (void *)0x3) ||
+        (proc == (void *)-1))
     {
-        void *proc = wglGetProcAddress(name);
-        if (proc) return proc;
+        // TODO: Keep gl module pointer as global platform data?
+        HMODULE glModule = LoadLibraryW(L"opengl32.dll");
+        proc = (void *)GetProcAddress(glModule, procname);
+
+        //if (proc == NULL) TRACELOG(LOG_ERROR, "GL: GetProcAddress() failed to get %s [%p], error=%u", procname, proc, GetLastError());
+        //else TRACELOG(LOG_INFO, "GL: Found entry point for %s [%p]", procname, proc);
     }
 
-    static HMODULE opengl = NULL;
-    if (!opengl)
-    {
-        opengl = LoadLibraryW(L"opengl32");
-    }
-    if (opengl)
-    {
-        void *proc = GetProcAddress(opengl, name);
-        if (proc) return proc;
-    }
-
-    return NULL;
-}
-static void *WglGetProcAddress(const char *name)
-{
-    void *result = FindProc(name);
-    if (result)
-    {
-        //TRACELOG(LOG_DEBUG, "GetProcAddress '%s' > %p", name, result);
-    }
-    else
-    {
-        TRACELOG(LOG_ERROR, "GetProcAddress '%s' > %p failed, error=%u", name, result, GetLastError());
-    }
-
-    return result;
+    return proc;
 }
 
-static KeyboardKey KeyFromWparam(WPARAM wparam)
+// Get key from wparam (mapping)
+static KeyboardKey GetKeyFromWparam(WPARAM wparam)
 {
     switch (wparam)
     {
@@ -742,142 +669,102 @@ static KeyboardKey KeyFromWparam(WPARAM wparam)
     }
 }
 
+// Get cursor name
 static LPCWSTR GetCursorName(int cursor)
 {
+    LPCWSTR name = (LPCWSTR)IDC_ARROW;
+
     switch (cursor)
     {
-        case MOUSE_CURSOR_DEFAULT      : return (LPCWSTR)IDC_ARROW;
-        case MOUSE_CURSOR_ARROW        : return (LPCWSTR)IDC_ARROW;
-        case MOUSE_CURSOR_IBEAM        : return (LPCWSTR)IDC_IBEAM;
-        case MOUSE_CURSOR_CROSSHAIR    : return (LPCWSTR)IDC_CROSS;
-        case MOUSE_CURSOR_POINTING_HAND: return (LPCWSTR)IDC_HAND;
-        case MOUSE_CURSOR_RESIZE_EW    : return (LPCWSTR)IDC_SIZEWE;
-        case MOUSE_CURSOR_RESIZE_NS    : return (LPCWSTR)IDC_SIZENS;
-        case MOUSE_CURSOR_RESIZE_NWSE  : return (LPCWSTR)IDC_SIZENWSE;
-        case MOUSE_CURSOR_RESIZE_NESW  : return (LPCWSTR)IDC_SIZENESW;
-        case MOUSE_CURSOR_RESIZE_ALL   : return (LPCWSTR)IDC_SIZEALL;
-        case MOUSE_CURSOR_NOT_ALLOWED  : return (LPCWSTR)IDC_NO;
-        default: abort();
+        case MOUSE_CURSOR_DEFAULT: name = (LPCWSTR)IDC_ARROW; break;
+        case MOUSE_CURSOR_ARROW: name = (LPCWSTR)IDC_ARROW; break;
+        case MOUSE_CURSOR_IBEAM: name = (LPCWSTR)IDC_IBEAM; break;
+        case MOUSE_CURSOR_CROSSHAIR: name = (LPCWSTR)IDC_CROSS; break;
+        case MOUSE_CURSOR_POINTING_HAND: name = (LPCWSTR)IDC_HAND; break;
+        case MOUSE_CURSOR_RESIZE_EW: name = (LPCWSTR)IDC_SIZEWE; break;
+        case MOUSE_CURSOR_RESIZE_NS: name = (LPCWSTR)IDC_SIZENS; break;
+        case MOUSE_CURSOR_RESIZE_NWSE: name = (LPCWSTR)IDC_SIZENWSE; break;
+        case MOUSE_CURSOR_RESIZE_NESW: name = (LPCWSTR)IDC_SIZENESW; break;
+        case MOUSE_CURSOR_RESIZE_ALL: name = (LPCWSTR)IDC_SIZEALL; break;
+        case MOUSE_CURSOR_NOT_ALLOWED: name = (LPCWSTR)IDC_NO; break;
+        default: break;
     }
+
+    return name;
 }
 
-
-static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC _, LPRECT rect, LPARAM lparam)
+// Count monitors process
+// NOTE: Required by GetMonitorCount()
+static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
 {
-    int *count = (int*)lparam;
+    int *count = (int *)lparam;
     *count += 1;
-    // always return TRUE to continue the loop, otherwise, the caller
+
+    // Always return TRUE to continue the loop, otherwise, the caller
     // can't distinguish between stopping the loop and an error
     return TRUE;
 }
 
-typedef struct {
-    HMONITOR needle;
-    int index;
-    int matchIndex;
-    RECT rect;
-} FindMonitorContext;
-
-static BOOL CALLBACK FindMonitorProc(HMONITOR handle, HDC _, LPRECT rect, LPARAM lparam)
+// Find monitor process
+// NOTE: Required by GetCurrentMonitor()
+static BOOL CALLBACK FindMonitorProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
 {
-    FindMonitorContext *c = (FindMonitorContext*)lparam;
-    if (handle == c->needle)
+    MonitorInfo *monitor = (MonitorInfo *)lparam;
+
+    if (handle == monitor->needle)
     {
-        c->matchIndex = c->index;
-        c->rect = *rect;
+        monitor->matchIndex = monitor->index;
+        monitor->rect = *rect;
     }
 
-    c->index += 1;
-    // always return TRUE to continue the loop, otherwise, the caller
+    monitor->index += 1;
+
+    // Always return TRUE to continue the loop, otherwise, the caller
     // can't distinguish between stopping the loop and an error
     return TRUE;
 }
 
-typedef struct {
-    DWORD set;
-    DWORD clear;
-} FlagsOp;
-
-static void GetStyleChangeFlagOps(
-    DWORD coreWindowFlags,
-    STYLESTRUCT *ss,
-    FlagsOp *deferredFlags
-) {
+// Get style changed required operations flags
+// NOTE: Required for deferred operations
+static void GetStyleChangeFlagOps(DWORD coreWindowFlags, STYLESTRUCT *style, FlagsOp *deferredFlags)
+{
+    // Check window resizable flag change
+    bool resizable = (coreWindowFlags & FLAG_WINDOW_RESIZABLE);
+    bool resizableOld = ((style->styleOld & STYLE_FLAGS_RESIZABLE) != 0);
+    bool resizableNew = ((style->styleNew & STYLE_FLAGS_RESIZABLE) != 0);
+    if (resizable != resizableOld) TRACELOG(LOG_ERROR, "WIN32: Expected resizable %u but got %u", resizable, resizableOld);
+    if (resizableOld != resizableNew)
     {
-        bool resizable = (coreWindowFlags & FLAG_WINDOW_RESIZABLE);
-        bool resizableOld = ResizableFromStyle(ss->styleOld);
-        bool resizableNew = ResizableFromStyle(ss->styleNew);
-        if (resizable != resizableOld)
-        {
-            TRACELOG(LOG_ERROR, "expected resizable %u but got %u", resizable, resizableOld);
-            abort();
-        }
-
-        if (resizableOld != resizableNew)
-        {
-            //TRACELOG(LOG_INFO, "resizable = %u", resizableNew);
-            if (resizableNew)
-            {
-                deferredFlags->set |= FLAG_WINDOW_RESIZABLE;
-            }
-            else
-            {
-                deferredFlags->clear |= FLAG_WINDOW_RESIZABLE;
-            }
-        }
+        if (resizableNew) deferredFlags->set |= FLAG_WINDOW_RESIZABLE;
+        else deferredFlags->clear |= FLAG_WINDOW_RESIZABLE;
     }
 
+    // Check window decorated flag change
+    bool decorated = (0 == (coreWindowFlags & FLAG_WINDOW_UNDECORATED));
+    bool decoratedOld = DecoratedFromStyle(style->styleOld);
+    bool decoratedNew = DecoratedFromStyle(style->styleNew);
+    if (decorated != decoratedOld) TRACELOG(LOG_ERROR, "WIN32: Expected decorated %u but got %u", decorated, decoratedOld);
+    if (decoratedOld != decoratedNew)
     {
-        bool decorated = (0 == (coreWindowFlags & FLAG_WINDOW_UNDECORATED));
-        bool decoratedOld = DecoratedFromStyle(ss->styleOld);
-        bool decoratedNew = DecoratedFromStyle(ss->styleNew);
-        if (decorated != decoratedOld)
-        {
-            TRACELOG(LOG_ERROR, "expected decorated %u but got %u", decorated, decoratedOld);
-            abort();
-        }
-
-        if (decoratedOld != decoratedNew)
-        {
-            //TRACELOG(LOG_INFO, "decorated = %u", decoratedNew);
-            if (decoratedNew)
-            {
-                deferredFlags->clear |= FLAG_WINDOW_UNDECORATED;
-            }
-            else
-            {
-                deferredFlags->set |= FLAG_WINDOW_UNDECORATED;
-            }
-        }
+        if (decoratedNew) deferredFlags->clear |= FLAG_WINDOW_UNDECORATED;
+        else deferredFlags->set |= FLAG_WINDOW_UNDECORATED;
     }
 
+    // Check window hidden flag change
+    bool hidden = (coreWindowFlags & FLAG_WINDOW_HIDDEN);
+    bool hiddenOld = ((style->styleOld & WS_VISIBLE) == 0);
+    bool hiddenNew = ((style->styleNew & WS_VISIBLE) == 0);
+    if (hidden != hiddenOld) TRACELOG(LOG_ERROR, "WIN32: Expected hidden %u but got %u", hidden, hiddenOld);
+    if (hiddenOld != hiddenNew)
     {
-        bool hidden = (coreWindowFlags & FLAG_WINDOW_HIDDEN);
-        bool hiddenOld = HiddenFromStyle(ss->styleOld);
-        bool hiddenNew = HiddenFromStyle(ss->styleNew);
-        if (hidden != hiddenOld)
-        {
-            TRACELOG(LOG_ERROR, "expected hidden %u but got %u", hidden, hiddenOld);
-            abort();
-        }
-
-        if (hiddenOld != hiddenNew)
-        {
-            TRACELOG(LOG_INFO, "hidden = %u", hiddenNew);
-            if (hiddenNew)
-            {
-                deferredFlags->set |= FLAG_WINDOW_HIDDEN;
-            }
-            else
-            {
-                deferredFlags->clear |= FLAG_WINDOW_HIDDEN;
-            }
-        }
+        if (hiddenNew) deferredFlags->set |= FLAG_WINDOW_HIDDEN;
+        else deferredFlags->clear |= FLAG_WINDOW_HIDDEN;
     }
 }
 
-// call when the window is rezised, returns true if the new window size
-// should update the desired app size
+// Adopt window resize
+// NOTE: Call when the window is rezised, returns true
+// if the new window size should update the desired app size
 static bool AdoptWindowResize(unsigned flags)
 {
     if (flags & FLAG_WINDOW_MINIMIZED) return false;
@@ -885,314 +772,74 @@ static bool AdoptWindowResize(unsigned flags)
     if (flags & FLAG_FULLSCREEN_MODE) return false;
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE) return false;
     if (!(flags & FLAG_WINDOW_RESIZABLE)) return false;
+
     return true;
 }
 
-// --------------------------------------------------------------------------------
-// Here's the end of the "pure function section", the rest of the file can access
-// global state.
-// --------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------
+// Here's the end of the "pure function section", the rest of the file can access global state
+// ---------------------------------------------------------------------------------------------
 
-// unlock the ability to use CORE in the rest of the file
+// Unlock the ability to use CORE in the rest of the file
 #undef CORE
 
-// The last screen size requested by the app, the backend must keep the client area
-// this size (after DPI scaling is applied) when the window isn't fullscreen/maximized/minimized.
-static Vector2 globalAppScreenSize = (Vector2){0, 0};
-static unsigned globalDesiredFlags = 0;
-static HWND globalHwnd = NULL;
-static HDC globalHdc = NULL;
-static HGLRC globalGlContext = NULL;
-static LARGE_INTEGER globalTimerFrequency;
-static bool globalCursorEnabled = true;
+//----------------------------------------------------------------------------------
+// Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
+int InitPlatform(void);             // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);           // Close platform
 
-static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
-{
-    KeyboardKey key = KeyFromWparam(wparam);
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    /* BYTE scancode = lparam >> 16; */
-    /* TRACELOG(LOG_INFO, "KEY key=%d vk=%lu scan=%u = %u", key, wparam, scancode, state); */
-    if (key != KEY_NULL)
-    {
-        /* TRACELOG(LOG_INFO, "KEY[%d] = %d (old=%d)\n", key, state, CORE.Input.Keyboard.currentKeyState[key]); */
-        CORE.Input.Keyboard.currentKeyState[key] = state;
-        if (key == KEY_ESCAPE && state == 1)
-        {
-            CORE.Window.shouldClose = 1;
-        }
-    }
-    else
-    {
-        TRACELOG(LOG_WARNING, "unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
-    }
+// Win32 process messages management function
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-    // TODO: add it to the queue as well?
-}
-static void HandleMouseButton(int button, char state)
-{
-    CORE.Input.Mouse.currentButtonState[button] = state;
-    CORE.Input.Touch.currentTouchState[button] = state;
-}
+// Win32: Handle inputs functions
+static void HandleKey(WPARAM wparam, LPARAM lparam, char state);
+static void HandleMouseButton(int button, char state);
+static void HandleRawInput(LPARAM lparam);
+static void HandleWindowResize(HWND hwnd, int *width, int *height);
 
-static void HandleRawInput(LPARAM lparam)
-{
-    RAWINPUT input;
+static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags);
+static unsigned SanitizeFlags(int mode, unsigned flags);
+static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height); // Update window flags
 
-    {
-        UINT inputSize = sizeof(input);
-        UINT size = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &inputSize, sizeof(RAWINPUTHEADER));
-        if (size == (UINT)-1) {
-            LogFail("GetRawInputData", GetLastError());
-            abort();
-        }
-        if (size != inputSize) abort(); // bug?
-    }
+// Check if OpenGL extension is available
+static bool IsWglExtensionAvailable(HDC hdc, const char *extension);
 
-    if (input.header.dwType != RIM_TYPEMOUSE)
-    {
-        TRACELOG(LOG_ERROR, "Unexpected WM_INPUT type %lu", input.header.dwType);
-        abort();
-    }
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+// NOTE: Functions declaration is provided by raylib.h
 
-    if (input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
-    {
-        TRACELOG(LOG_ERROR, "TODO: handle absolute mouse inputs!");
-        abort();
-    }
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Window and Graphics Device
+//----------------------------------------------------------------------------------
 
-    if (input.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
-    {
-        TRACELOG(LOG_ERROR, "TODO: handle virtual desktop mouse inputs!");
-        abort();
-    }
-
-    // bit of a trick, we keep the mouse position at 0,0 and instead move
-    // the previous position so we can still get a proper mouse delta
-    CORE.Input.Mouse.previousPosition.x -= input.data.mouse.lLastX;
-    CORE.Input.Mouse.previousPosition.y -= input.data.mouse.lLastY;
-    if (CORE.Input.Mouse.currentPosition.x != 0) abort();
-    if (CORE.Input.Mouse.currentPosition.y != 0) abort();
-}
-
-static void HandleWindowResize(HWND hwnd, Vector2 *appScreenSizeRef)
-{
-    if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)
-        return;
-
-    SIZE clientSize = GetClientSize(hwnd);
-
-    // TODO: not sure if this function is doing what we need, leaving this disabled
-    //       call to workaround unused function error
-    if (0) SetupFramebuffer(0, 0);
-
-    TRACELOG(LOG_DEBUG, "NewClientSize %lux%lu", clientSize.cx, clientSize.cy);
-    /* CORE.Window.currentFbo.width = clientSize.cx; */
-    /* CORE.Window.currentFbo.height = clientSize.cy; */
-    /* glViewport(0, 0, clientSize.cx, clientSize.cy); */
-    SetupViewport(clientSize.cx, clientSize.cy);
-    CORE.Window.resizedLastFrame = true;
-    float dpiScale = ScaleFromDpi(GetWindowDpi(hwnd));
-    bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
-    Vector2 screenSize = (Vector2){
-        PtFromPx(dpiScale, highdpi, clientSize.cx),
-        PtFromPx(dpiScale, highdpi, clientSize.cy),
-    };
-    CORE.Window.screen.width = roundf(screenSize.x);
-    CORE.Window.screen.height = roundf(screenSize.y);
-    if (AdoptWindowResize(CORE.Window.flags))
-    {
-        TRACELOG(
-            LOG_DEBUG,
-            "updating app size to %fx%f from window resize",
-            screenSize.x, screenSize.y
-        );
-        *appScreenSizeRef = screenSize;
-    }
-
-    CORE.Window.screenScale = MatrixScale(
-        (float)CORE.Window.render.width/CORE.Window.screen.width,
-        (float)CORE.Window.render.height/CORE.Window.screen.height,
-        1.0f
-    );
-}
-
-static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
-{
-    {
-        DWORD current = STYLE_MASK_WRITABLE & MakeWindowStyle(CORE.Window.flags);
-        DWORD desired = STYLE_MASK_WRITABLE & MakeWindowStyle(desiredFlags);
-        if (current != desired)
-        {
-            SetLastError(0);
-            DWORD previous = STYLE_MASK_WRITABLE & SetWindowLongPtrW(hwnd, GWL_STYLE, desired);
-            if (previous != current)
-            {
-                TRACELOG(
-                    LOG_ERROR,
-                    "SetWindowLong returned writable flags 0x%x but expected 0x%x (diff=0x%x, error=%lu)",
-                    previous,
-                    current,
-                    previous ^ current,
-                    GetLastError()
-                );
-                abort();
-            }
-
-            CheckFlags("UpdateWindowStyle", hwnd, desiredFlags, desired, STYLE_MASK_WRITABLE);
-        }
-    }
-
-    Mized currentMized = MizedFromStyle(MakeWindowStyle(CORE.Window.flags));
-    Mized desiredMized = MizedFromStyle(MakeWindowStyle(desiredFlags));
-    if (currentMized != desiredMized)
-    {
-        switch (desiredMized)
-        {
-            case MIZED_NONE: ShowWindow(hwnd, SW_RESTORE); break;
-            case MIZED_MIN: ShowWindow(hwnd, SW_MINIMIZE); break;
-            case MIZED_MAX: ShowWindow(hwnd, SW_MAXIMIZE); break;
-        }
-    }
-}
-
-typedef enum {
-    SANITIZE_FLAGS_FIRST,
-    SANITIZE_FLAGS_NORMAL,
-} SanitizeFlagsKind;
-
-static unsigned SanitizeFlags(SanitizeFlagsKind kind, unsigned flags)
-{
-    if ((flags & FLAG_WINDOW_MAXIMIZED) && (flags & FLAG_BORDERLESS_WINDOWED_MODE))
-    {
-        TRACELOG(LOG_INFO, "borderless windows mode is overriding maximized");
-        flags &= ~FLAG_WINDOW_MAXIMIZED;
-    }
-
-    switch (kind)
-    {
-        case SANITIZE_FLAGS_FIRST: break;
-        case SANITIZE_FLAGS_NORMAL:
-            if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT)))
-            {
-                TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
-                flags &= ~FLAG_MSAA_4X_HINT;
-            }
-            break;
-    }
-
-    return flags;
-}
-
-#define FLAG_MASK_OPTIONAL (FLAG_VSYNC_HINT)
-#define FLAG_MASK_REQUIRED ~(FLAG_MASK_OPTIONAL)
-
-// flags that have no operations to perform during an update
-#define FLAG_MASK_NO_UPDATE (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
-
-
-// All window state changes from raylib flags go through this function. It performs
-// whatever operations are needed to update the window state to match the desired flags.
-// In most cases this function should not update CORE.Window.flags directly, instead,
-// the window itself should update CORE.Window.flags in response to actual state changes.
-// This means that CORE.Window.flags should always represent the actual state of the
-// window. This function will continue to perform these update operations so long as
-// the state continues to change.
-//
-// This design takes care of many odd corner cases. For example, if you want to restore
-// a window that was previously maximized AND minimized and you want to remove both these
-// flags, you actually need to call ShowWindow with SW_RESTORE twice. Another example is
-// if you have a maximized window, if the undecorated flag is modified then we'd need to
-// update the window style, but updating the style would mean the window size would change
-// causing the window to lose its Maximized state which would mean we'd need to update the
-// window size and then update the window style a second time to restore that maximized
-// state. This implementation is able to handle any/all of these special situations with a
-// retry loop that continues until we either reach the desired state or the state stops
-// changing.
-static void UpdateFlags(HWND hwnd, unsigned desiredFlags, Vector2 appScreenSize)
-{
-    // flags that just apply immediately without needing any operations
-    CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
-
-    {
-        int vsync = (CORE.Window.flags & FLAG_VSYNC_HINT)? 1 : 0;
-        PFNWGLSWAPINTERVALEXTPROC f = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-        if (f)
-        {
-            (*f)(vsync);
-            if (vsync)
-            {
-                CORE.Window.flags |= FLAG_VSYNC_HINT;
-            }
-            else
-            {
-                CORE.Window.flags &= ~FLAG_VSYNC_HINT;
-            }
-        }
-    }
-
-    DWORD previousStyle;
-    for (unsigned attempt = 1; ; attempt++)
-    {
-        CheckFlags("UpdateFlags", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), STYLE_MASK_ALL);
-
-        bool windowSizeUpdated = false;
-        if (MakeWindowStyle(CORE.Window.flags) == MakeWindowStyle(desiredFlags))
-        {
-            windowSizeUpdated = UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, appScreenSize, desiredFlags);
-            if ((FLAG_MASK_REQUIRED & desiredFlags) == (FLAG_MASK_REQUIRED & CORE.Window.flags))
-                break;
-        }
-
-        if (
-            (attempt > 1) &&
-            (previousStyle == MakeWindowStyle(CORE.Window.flags)) &&
-            !windowSizeUpdated
-        ) {
-            TRACELOG(
-                LOG_ERROR,
-                // TODO: print more information
-                "UpdateFlags failed after %u attempt(s) wanted 0x%x but is 0x%x (diff=0x%x)",
-                attempt,
-                desiredFlags,
-                CORE.Window.flags,
-                desiredFlags ^ CORE.Window.flags
-            );
-            abort();
-        }
-
-        previousStyle = MakeWindowStyle(CORE.Window.flags);
-        UpdateWindowStyle(hwnd, desiredFlags);
-    }
-}
-
+// Check if application should close
 bool WindowShouldClose(void)
 {
     return CORE.Window.shouldClose;
 }
 
+// Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    TRACELOG(LOG_WARNING, "ToggleFullscreen not implemented");
-    assert(0); // crash debug builds only
+    TRACELOG(LOG_WARNING, "WIN32: Toggle full screen functionality not implemented");
 }
 
+// Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE)
-    {
-        ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
-    }
-    else
-    {
-        SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
-    }
+    if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
+    else SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
 }
 
+// Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
     SetWindowState(FLAG_WINDOW_MAXIMIZED);
 }
 
+// Set window state: minimized
 void MinimizeWindow(void)
 {
     SetWindowState(FLAG_WINDOW_MINIMIZED);
@@ -1202,75 +849,136 @@ void MinimizeWindow(void)
 void RestoreWindow(void)
 {
     if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) &&
-        (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)
-    ) {
-        ClearWindowState(FLAG_WINDOW_MINIMIZED);
-    }
-    else
-    {
-        ClearWindowState(FLAG_WINDOW_MINIMIZED|FLAG_WINDOW_MAXIMIZED);
-    }
+        (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)) ClearWindowState(FLAG_WINDOW_MINIMIZED);
+    else ClearWindowState(FLAG_WINDOW_MINIMIZED | FLAG_WINDOW_MAXIMIZED);
 }
 
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    globalDesiredFlags = SanitizeFlags(SANITIZE_FLAGS_NORMAL, CORE.Window.flags | flags);
-    UpdateFlags(globalHwnd, globalDesiredFlags, globalAppScreenSize);
+    platform.desiredFlags = SanitizeFlags(1 /*SANITIZE_FLAGS_NORMAL*/, CORE.Window.flags | flags);
+    UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    globalDesiredFlags = SanitizeFlags(SANITIZE_FLAGS_NORMAL, CORE.Window.flags & ~flags);
-    UpdateFlags(globalHwnd, globalDesiredFlags, globalAppScreenSize);
+    platform.desiredFlags = SanitizeFlags(1 /*SANITIZE_FLAGS_NORMAL*/, CORE.Window.flags & ~flags);
+    UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 }
 
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcon not implemented");
-    assert(0); // crash debug builds only
+    if (!platform.hwnd || (image.data == NULL) || (image.width <= 0) || (image.height <= 0)) return;
+
+    HDC hdc = GetDC(platform.hwnd);
+
+    // Create 32-bit BGRA DIB for color
+    BITMAPV5HEADER bi = { 0 };
+    ZeroMemory(&bi, sizeof(bi));
+    bi.bV5Size = sizeof(bi);
+    bi.bV5Width = image.width;
+    bi.bV5Height = -image.height; // Negative = top-down bitmap
+    bi.bV5Planes = 1;
+    bi.bV5BitCount = 32;
+    bi.bV5Compression = BI_BITFIELDS;
+    bi.bV5RedMask = 0x00FF0000;
+    bi.bV5GreenMask = 0x0000FF00;
+    bi.bV5BlueMask = 0x000000FF;
+    bi.bV5AlphaMask = 0xFF000000;
+
+    unsigned char *targetBits = NULL;
+    HBITMAP hColorBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&targetBits, NULL, 0);
+    if (!hColorBitmap)
+    {
+        ReleaseDC(platform.hwnd, hdc);
+        return;
+    }
+
+    // Copy RGBA > BGRA (Win32 expects BGRA)
+    for (int y = 0; y < image.height; y++)
+    {
+        for (int x = 0; x < image.width; x++)
+        {
+            int i = (y*image.width + x)*4;
+            targetBits[i + 0] = ((unsigned char *)image.data)[i + 2]; // B
+            targetBits[i + 1] = ((unsigned char *)image.data)[i + 1]; // G
+            targetBits[i + 2] = ((unsigned char *)image.data)[i + 0]; // R
+            targetBits[i + 3] = ((unsigned char *)image.data)[i + 3]; // A
+        }
+    }
+
+    // Create mask bitmap (1-bit, all opaque)
+    HBITMAP hMaskBitmap = CreateBitmap(image.width, image.height, 1, 1, NULL);
+
+    // Build icon info
+    ICONINFO ii = { 0 };
+    ZeroMemory(&ii, sizeof(ii));
+    ii.fIcon = TRUE;
+    ii.hbmMask = hMaskBitmap;
+    ii.hbmColor = hColorBitmap;
+
+    HICON hIcon = CreateIconIndirect(&ii);
+
+    // Clean up GDI bitmaps (icon keeps copies internally)
+    DeleteObject(hColorBitmap);
+    DeleteObject(hMaskBitmap);
+    ReleaseDC(platform.hwnd, hdc);
+
+    if (hIcon)
+    {
+        // Set both large and small icons
+        SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+    }
 }
 
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcons not implemented");
-    assert(0); // crash debug builds only
+    // TODO.
 }
 
 void SetWindowTitle(const char *title)
 {
     CORE.Window.title = title;
-    WCHAR *titlew;
-    A_TO_W_ALLOCA(titlew, CORE.Window.title);
-    if (!SetWindowTextW(globalHwnd, titlew))
-    {
-        LogFail("SetWindowText", GetLastError());
-        abort();
-    }
+
+    WCHAR *titleWide = NULL;
+    A_TO_W_ALLOCA(titleWide, CORE.Window.title);
+
+    int result = SetWindowTextW(platform.hwnd, titleWide);
+    if (result == 0) TRACELOG(LOG_WARNING, "WIN32: Failed to set window title [ERROR: %lu]", GetLastError());
 }
 
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    TRACELOG(LOG_WARNING, "SetWindowPosition not implemented");
-    assert(0); // crash debug builds only
+    if (platform.hwnd != NULL)
+    {
+        RECT rect = { 0 };
+        if (GetWindowRect(platform.hwnd, &rect))
+        {
+            int width = rect.right - rect.left;
+            int height = rect.bottom - rect.top;
+
+            // Move the window to the new position (keeping size and z-order)
+            SetWindowPos(platform.hwnd, NULL, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+    }
 }
 
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
     TRACELOG(LOG_WARNING, "SetWindowMonitor not implemented");
-    assert(0); // crash debug builds only
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
     TRACELOG(LOG_WARNING, "SetWindowMinSize not implemented");
-    assert(0); // crash debug builds only
+
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
 }
@@ -1279,7 +987,7 @@ void SetWindowMinSize(int width, int height)
 void SetWindowMaxSize(int width, int height)
 {
     TRACELOG(LOG_WARNING, "SetWindowMaxSize not implemented");
-    assert(0); // crash debug builds only
+
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
 }
@@ -1288,36 +996,32 @@ void SetWindowMaxSize(int width, int height)
 void SetWindowSize(int width, int height)
 {
     TRACELOG(LOG_WARNING, "SetWindowSize not implemented");
-    assert(0); // crash debug builds only
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
     TRACELOG(LOG_WARNING, "SetWindowOpacity not implemented");
-    assert(0); // crash debug builds only
 }
 
+// Set window focused
 void SetWindowFocused(void)
 {
     TRACELOG(LOG_WARNING, "SetWindowFocused not implemented");
-    assert(0); // crash debug builds only
 }
 
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return globalHwnd;
+    return platform.hwnd;
 }
 
 int GetMonitorCount(void)
 {
     int count = 0;
-    if (!EnumDisplayMonitors(NULL, NULL, CountMonitorsProc, (LPARAM)&count))
-    {
-        LogFail("EnumDisplayMonitors", GetLastError());
-        abort();
-    }
+
+    int result = EnumDisplayMonitors(NULL, NULL, CountMonitorsProc, (LPARAM)&count);
+    if (result == 0) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "EnumDisplayMonitors", GetLastError());
 
     return count;
 }
@@ -1325,31 +1029,24 @@ int GetMonitorCount(void)
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    HMONITOR monitor = MonitorFromWindow(globalHwnd, MONITOR_DEFAULTTOPRIMARY);
-    if (!monitor)
-    {
-        LogFail("MonitorFromWindow", GetLastError());
-        abort();
-    }
+    HMONITOR monitor = MonitorFromWindow(platform.hwnd, MONITOR_DEFAULTTOPRIMARY);
+    if (!monitor) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "MonitorFromWindow", GetLastError());
 
-    FindMonitorContext context;
-    context.needle = monitor;
-    context.index = 0;
-    context.matchIndex = -1;
-    if (!EnumDisplayMonitors(NULL, NULL, FindMonitorProc, (LPARAM)&context))
-    {
-        LogFail("EnumDisplayMonitors", GetLastError());
-        abort();
-    }
+    MonitorInfo info = { 0 };
+    info.needle = monitor;
+    info.index = 0;
+    info.matchIndex = -1;
 
-    return context.matchIndex;
+    int result = EnumDisplayMonitors(NULL, NULL, FindMonitorProc, (LPARAM)&info);
+    if (result == 0) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "EnumDisplayMonitors", GetLastError());
+
+    return info.matchIndex;
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorPosition not implemented");
-    assert(0); // crash debug builds only
     return (Vector2){ 0, 0 };
 }
 
@@ -1357,7 +1054,6 @@ Vector2 GetMonitorPosition(int monitor)
 int GetMonitorWidth(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
-    assert(0); // crash debug builds only
     return 0;
 }
 
@@ -1365,7 +1061,6 @@ int GetMonitorWidth(int monitor)
 int GetMonitorHeight(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
-    assert(0); // crash debug builds only
     return 0;
 }
 
@@ -1373,7 +1068,6 @@ int GetMonitorHeight(int monitor)
 int GetMonitorPhysicalWidth(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth not implemented");
-    assert(0); // crash debug builds only
     return 0;
 }
 
@@ -1381,7 +1075,6 @@ int GetMonitorPhysicalWidth(int monitor)
 int GetMonitorPhysicalHeight(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight not implemented");
-    assert(0); // crash debug builds only
     return 0;
 }
 
@@ -1389,7 +1082,6 @@ int GetMonitorPhysicalHeight(int monitor)
 int GetMonitorRefreshRate(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorRefreshRate not implemented");
-    assert(0); // crash debug builds only
     return 0;
 }
 
@@ -1397,7 +1089,6 @@ int GetMonitorRefreshRate(int monitor)
 const char *GetMonitorName(int monitor)
 {
     TRACELOG(LOG_WARNING, "GetMonitorName not implemented");
-    assert(0); // crash debug builds only
     return 0;
 }
 
@@ -1405,179 +1096,147 @@ const char *GetMonitorName(int monitor)
 Vector2 GetWindowPosition(void)
 {
     TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
-    assert(0); // crash debug builds only
     return (Vector2){ 0, 0 };
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    float scale = ScaleFromDpi(GetWindowDpi(globalHwnd));
+    float scale = ((float)GetDpiForWindow(platform.hwnd))/96.0f;
     return (Vector2){ scale, scale };
 }
 
+// Set clipboard text content
 void SetClipboardText(const char *text)
 {
     TRACELOG(LOG_WARNING, "SetClipboardText not implemented");
-    assert(0); // crash debug builds only
 }
 
+// Get clipboard text content
 const char *GetClipboardText(void)
 {
     TRACELOG(LOG_WARNING, "GetClipboardText not implemented");
-    assert(0); // crash debug builds only
     return NULL;
 }
 
+// Get clipboard image
 Image GetClipboardImage(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText not implemented");
-    assert(0); // crash debug builds only
     Image image = { 0 };
+
+    TRACELOG(LOG_WARNING, "GetClipboardText not implemented");
+
     return image;
 }
 
 // Show mouse cursor
 void ShowCursor(void)
 {
-    CORE.Input.Mouse.cursorHidden = false;
     SetCursor(LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
+    CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
-    // NOTE: we use SetCursor instead of ShowCursor because it makes it easy
-    //       to only hide the cursor while it's inside the client area.
-    CORE.Input.Mouse.cursorHidden = true;
+    // NOTE: We use SetCursor() instead of ShowCursor() because 
+    // it makes it easy to only hide the cursor while it's inside the client area
     SetCursor(NULL);
+    CORE.Input.Mouse.cursorHidden = true;
 }
 
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    if (globalCursorEnabled)
+    if (CORE.Input.Mouse.cursorLocked)
     {
-        TRACELOG(LOG_INFO, "EnableCursor: already enabled");
-    }
-    else
-    {
-        if (!ClipCursor(NULL))
-        {
-            LogFail("ClipCursor", GetLastError());
-            abort();
-        }
+        if (!ClipCursor(NULL)) TRACELOG(LOG_WARNING, "WIN32: Failed to clip cursor [ERROR: %lu]", GetLastError());
 
-        {
-            RAWINPUTDEVICE rid;
-            rid.usUsagePage = 0x01; // HID_USAGE_PAGE_GENERIC
-            rid.usUsage = 0x02; // HID_USAGE_GENERIC_MOUSE
-            rid.dwFlags = RIDEV_REMOVE; // Add to this window even in background
-            rid.hwndTarget = NULL;
-            if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
-                LogFail("RegisterRawInputDevices", GetLastError());
-                abort();
-            }
-        }
+        RAWINPUTDEVICE rid = { 0 };
+        rid.usUsagePage = 0x01; // HID_USAGE_PAGE_GENERIC
+        rid.usUsage = 0x02; // HID_USAGE_GENERIC_MOUSE
+        rid.dwFlags = RIDEV_REMOVE; // Add to this window even in background
+        rid.hwndTarget = NULL;
+        int result = RegisterRawInputDevices(&rid, 1, sizeof(rid));
+        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: Failed to register raw input devices [ERROR: %lu]", GetLastError());
 
         ShowCursor();
-        globalCursorEnabled = true;
-        TRACELOG(LOG_INFO, "EnableCursor: enabled");
+        CORE.Input.Mouse.cursorLocked = false;
     }
 }
 
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    if (globalCursorEnabled)
+    if (!CORE.Input.Mouse.cursorLocked)
     {
+        RAWINPUTDEVICE rid = { 0 };
+        rid.usUsagePage = 0x01; // HID_USAGE_PAGE_GENERIC
+        rid.usUsage = 0x02; // HID_USAGE_GENERIC_MOUSE
+        rid.dwFlags = RIDEV_INPUTSINK; // Add to this window even in background
+        rid.hwndTarget = platform.hwnd;
+        int result = RegisterRawInputDevices(&rid, 1, sizeof(rid));
+        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: Failed to register raw input devices [ERROR: %lu]", GetLastError());
 
-        {
-            RAWINPUTDEVICE rid;
-            rid.usUsagePage = 0x01; // HID_USAGE_PAGE_GENERIC
-            rid.usUsage = 0x02; // HID_USAGE_GENERIC_MOUSE
-            rid.dwFlags = RIDEV_INPUTSINK; // Add to this window even in background
-            rid.hwndTarget = globalHwnd;
-            if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
-                LogFail("RegisterRawInputDevices", GetLastError());
-                abort();
-            }
-        }
-
-        RECT clientRect;
-        if (!GetClientRect(globalHwnd, &clientRect))
-        {
-            LogFail("GetClientRect", GetLastError());
-            abort();
-        }
+        RECT clientRect = { 0 };
+        if (!GetClientRect(platform.hwnd, &clientRect)) TRACELOG(LOG_WARNING, "WIN32: Failed to get client rectangle [ERROR: %lu]", GetLastError());
 
         POINT topleft = { clientRect.left, clientRect.top };
-        if (!ClientToScreen(globalHwnd, &topleft))
-        {
-            LogFail("ClientToScreen", GetLastError());
-            abort();
-        }
+        if (!ClientToScreen(platform.hwnd, &topleft)) TRACELOG(LOG_WARNING, "WIN32: Failed to get client to screen size [ERROR: %lu]", GetLastError());
 
         LONG width = clientRect.right - clientRect.left;
         LONG height = clientRect.bottom - clientRect.top;
 
-        TRACELOG(LOG_INFO, "ClipCursor client %d,%d %d,%d (topleft %d,%d)",
-            clientRect.left,
-            clientRect.top,
-            clientRect.right,
-            clientRect.bottom,
-            topleft.x,
-            topleft.y
-        );
+        TRACELOG(LOG_INFO, "WIN32: Clip cursor client rect: [%d,%d %d,%d], top-left: (%d,%d)",
+            clientRect.left, clientRect.top, clientRect.right, clientRect.bottom, topleft.x, topleft.y);
+
         LONG centerX = topleft.x + width/2;
         LONG centerY = topleft.y + height/2;
         RECT clipRect = { centerX, centerY, centerX + 1, centerY + 1 };
-        if (!ClipCursor(&clipRect))
-        {
-            LogFail("ClipCursor", GetLastError());
-            abort();
-        }
+        if (!ClipCursor(&clipRect)) TRACELOG(LOG_WARNING, "WIN32: Failed to clip cursor [ERROR: %lu]", GetLastError());
 
         CORE.Input.Mouse.previousPosition = (Vector2){ 0, 0 };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0, 0 };
         HideCursor();
 
-        globalCursorEnabled = false;
-        TRACELOG(LOG_INFO, "DisableCursor: disabled");
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "DisableCursor: already disabled");
+        CORE.Input.Mouse.cursorLocked = true;
     }
 }
 
+// Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    if (!globalHdc) abort();
-    if (!SwapBuffers(globalHdc))
-    {
-        LogFail("SwapBuffers", GetLastError());
-        abort();
-    }
+    if (!platform.hdc) abort();
 
-    if (!ValidateRect(globalHwnd, NULL))
-    {
-        LogFail("ValidateRect", GetLastError());
-        abort();
-    }
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Update framebuffer
+    rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
+
+    // Force redraw
+    InvalidateRect(platform.hwnd, NULL, FALSE);
+    UpdateWindow(platform.hwnd);
+#else
+    if (!SwapBuffers(platform.hdc)) TRACELOG(LOG_ERROR, "WIN32: Failed to swap buffers [ERROR: %lu]", GetLastError());
+    if (!ValidateRect(platform.hwnd, NULL)) TRACELOG(LOG_ERROR, "WIN32: Failed to validate screen rect [ERROR: %lu]", GetLastError());
+#endif
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
+// Get elapsed time measure in seconds
 double GetTime(void)
 {
     LARGE_INTEGER now;
     QueryPerformanceCounter(&now);
-    return (double)(now.QuadPart - CORE.Time.base)/(double)globalTimerFrequency.QuadPart;
+    return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
+// NOTE: This function is only safe to use if you control the URL given
+// A user could craft a malicious string performing another action
+// Only call this function yourself not with user input or make sure to check the string yourself
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1586,7 +1245,6 @@ void OpenURL(const char *url)
     else
     {
         TRACELOG(LOG_WARNING, "OpenURL not implemented");
-        assert(0); // crash debug builds only
     }
 }
 
@@ -1594,53 +1252,47 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
+// Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
     TRACELOG(LOG_WARNING, "SetGamepadMappings not implemented");
-    assert(0); // crash debug builds only
+
     return -1;
 }
 
+// Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
 {
     TRACELOG(LOG_WARNING, "SetGamepadVibration not implemented");
-    assert(0); // crash debug builds only
 }
 
+// Set mouse position XY
 void SetMousePosition(int x, int y)
 {
-    if (globalCursorEnabled)
+    if (!CORE.Input.Mouse.cursorLocked)
     {
         CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
         TRACELOG(LOG_WARNING, "SetMousePosition not implemented");
-        assert(0); // crash debug builds only
     }
-    else
-    {
-        TRACELOG(LOG_ERROR, "Possible? Should we allow this?");
-        abort();
-    }
+    else TRACELOG(LOG_WARNING, "INPUT: MOUSE: Cursor not enabled");
 }
 
+// Set mouse cursor
 void SetMouseCursor(int cursor)
 {
     LPCWSTR cursorName = GetCursorName(cursor);
     HCURSOR hcursor = LoadCursorW(NULL, cursorName);
-    if (!hcursor)
-    {
-        TRACELOG(LOG_ERROR, "LoadCursor %d (win32 %d) failed, error=%lu", cursor, (size_t)cursorName, GetLastError());
-        abort();
-    }
+    if (!hcursor) TRACELOG(LOG_ERROR, "WIN32: Failed to load requested cursor [ERROR: %lu]", GetLastError());
 
     SetCursor(hcursor);
     CORE.Input.Mouse.cursorHidden = false;
 }
 
+// Get physical key name
 const char *GetKeyName(int key)
 {
     TRACELOG(LOG_WARNING, "GetKeyName not implemented");
-    assert(0); // crash debug builds only
     return NULL;
 }
 
@@ -1666,11 +1318,7 @@ void PollInputEvents(void)
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
-    memcpy(
-        CORE.Input.Keyboard.previousKeyState,
-        CORE.Input.Keyboard.currentKeyState,
-        sizeof(CORE.Input.Keyboard.previousKeyState)
-    );
+    memcpy(CORE.Input.Keyboard.previousKeyState, CORE.Input.Keyboard.currentKeyState, sizeof(CORE.Input.Keyboard.previousKeyState));
     memset(CORE.Input.Keyboard.keyRepeatInFrame, 0, sizeof(CORE.Input.Keyboard.keyRepeatInFrame));
 
     // Register previous mouse wheel state
@@ -1680,11 +1328,10 @@ void PollInputEvents(void)
     // Register previous mouse position
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
-    MSG msg;
+    // Process windows messages
+    MSG msg = { 0 };
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
     {
-        if (msg.message == WM_PAINT)
-            return;
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
@@ -1694,457 +1341,287 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-#define WM_APP_UPDATE_WINDOW_SIZE (WM_APP + 1)
-
-static LRESULT WndProc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, FlagsOp *deferredFlags)
+// Initialize modern OpenGL context
+// NOTE: We need to create a dummy context first to query required extensions
+HGLRC InitOpenGL(HWND hwnd, HDC hdc)
 {
-    switch (msg)
+    // First, create a dummy context to get WGL extensions
+    PIXELFORMATDESCRIPTOR pixelFormatDesc = {
+        .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+        .nVersion = 1,
+        .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        .iPixelType = PFD_TYPE_RGBA,
+        .cColorBits = 32,
+        .cAlphaBits = 8,
+        .cDepthBits = 24,
+        .iLayerType = PFD_MAIN_PLANE
+    };
+
+    int pixelFormat = ChoosePixelFormat(hdc, &pixelFormatDesc);
+    SetPixelFormat(hdc, pixelFormat, &pixelFormatDesc);
+    //int pixelFormat = ChoosePixelFormat(platform.hdc, &pixelFormatDesc);
+    //if (!pixelFormat) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "ChoosePixelFormat", GetLastError()); return -1; }
+    //if (!SetPixelFormat(platform.hdc, pixelFormat, &pixelFormatDesc)) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "SetPixelFormat", GetLastError()); return -1; }
+
+    HGLRC tempContext = wglCreateContext(hdc);
+    //if (!tempContext) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "wglCreateContext", GetLastError()); return -1; }
+    BOOL result = wglMakeCurrent(hdc, tempContext);
+    //if (!result) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "wglMakeCurrent", GetLastError()); return -1; }
+
+    // Load WGL extension entry points
+    wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+    wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+    wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+    wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
+
+    // Setup modern pixel format if extension is available
+    if (wglChoosePixelFormatARB)
     {
-        case WM_CREATE:
+        int pixelFormatAttribs[] = {
+            WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+            WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+            WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+            WGL_COLOR_BITS_ARB, 32,
+            //WGL_RED_BITS_ARB, 8,
+            //WGL_GREEN_BITS_ARB, 8,
+            //WGL_BLUE_BITS_ARB, 8,
+            //WGL_ALPHA_BITS_ARB, 8,
+            WGL_DEPTH_BITS_ARB, 24,
+            WGL_STENCIL_BITS_ARB, 8,
+            0 // Terminator
+        };
+
+        int format = 0;
+        UINT numFormats = 0;
+        if (wglChoosePixelFormatARB(hdc, pixelFormatAttribs, NULL, 1, &format, &numFormats) && (numFormats > 0))
         {
-            globalHdc = GetDC(hwnd);
-            if (!globalHdc)
-            {
-                LogFail("GetDC", GetLastError());
-                return -1;
-            }
-
-            if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-            {
-                TRACELOG(LOG_ERROR, "TODO: implement FLAG_MSAA_4X_HINT");
-                assert(0);
-            }
-
-            PIXELFORMATDESCRIPTOR pixelFormatDesc = {0};
-            pixelFormatDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-            pixelFormatDesc.nVersion = 1;
-            pixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-            pixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-            pixelFormatDesc.cColorBits = 32;
-            pixelFormatDesc.cAlphaBits = 8;
-            pixelFormatDesc.cDepthBits = 24;
-
-            int pixelFormat = ChoosePixelFormat(globalHdc, &pixelFormatDesc);
-            if (!pixelFormat)
-            {
-                LogFail("ChoosePixelFormat", GetLastError());
-                return -1;
-            }
-
-            if (!SetPixelFormat(globalHdc, pixelFormat, &pixelFormatDesc))
-            {
-                LogFail("SetPixelFormat", GetLastError());
-                return -1;
-            }
-
-            globalGlContext = wglCreateContext(globalHdc);
-            if (!globalGlContext)
-            {
-                LogFail("wglCreateContext", GetLastError());
-                return -1;
-            }
-
-            if (!wglMakeCurrent(globalHdc, globalGlContext))
-            {
-                LogFail("wglMakeCurrent", GetLastError());
-                return -1;
-            }
-
-            rlLoadExtensions(WglGetProcAddress);
-
-            globalHwnd = hwnd;
-
-        } return 0;
-        case WM_DESTROY:
-            wglMakeCurrent(globalHdc, NULL);
-            if (globalGlContext)
-            {
-                if (!wglDeleteContext(globalGlContext)) abort();
-                globalGlContext = NULL;
-            }
-
-            if (globalHdc)
-            {
-                if (!ReleaseDC(hwnd, globalHdc)) abort();
-                globalHdc = NULL;
-            }
-
-            return 0;
-        case WM_CLOSE:
-            CORE.Window.shouldClose = true;
-            return 0;
-        case WM_KILLFOCUS:
-            memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
-            memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
-            return 0;
-        case WM_SIZING:
-            if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE) {
-                // TODO: enforce min/max size
-                TRACELOG(LOG_WARNING, "TODO: enforce min/max size!");
-            } else {
-                TRACELOG(LOG_WARNING, "non-resizable window is being resized");
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                abort(); // TODO
-            }
-            return TRUE;
-        case WM_STYLECHANGING:
-            if (wparam == GWL_STYLE)
-            {
-                STYLESTRUCT *ss = (STYLESTRUCT*)lparam;
-                GetStyleChangeFlagOps(CORE.Window.flags, ss, deferredFlags);
-
-                UINT dpi = GetWindowDpi(hwnd);
-                SIZE clientSize = GetClientSize(hwnd);
-                SIZE oldSize = CalcWindowSize(dpi, clientSize, ss->styleOld);
-                SIZE newSize = CalcWindowSize(dpi, clientSize, ss->styleNew);
-                if (oldSize.cx != newSize.cx || oldSize.cy != newSize.cy) {
-                    TRACELOG(
-                        LOG_INFO,
-                        "resize from style change: %dx%d to %dx%d",
-                        oldSize.cx, oldSize.cy,
-                        newSize.cx, newSize.cy
-                    );
-                    if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) {
-                        // looks like windows will automatically "unminimize" a window
-                        // if a style changes modifies it's size
-                        TRACELOG(LOG_INFO, "style change modifed window size, removing maximized flag");
-                        deferredFlags->clear |= FLAG_WINDOW_MAXIMIZED;
-                    }
-                }
-            }
-            return 0;
-        case WM_WINDOWPOSCHANGING:
-        {
-            WINDOWPOS *pos = (WINDOWPOS*)lparam;
-            if (pos->flags & SWP_SHOWWINDOW)
-            {
-                if (pos->flags & SWP_HIDEWINDOW) abort();
-                deferredFlags->clear |= FLAG_WINDOW_HIDDEN;
-            }
-            else if (pos->flags & SWP_HIDEWINDOW)
-            {
-                deferredFlags->set |= FLAG_WINDOW_HIDDEN;
-            }
-
-            Mized mized = MIZED_NONE;
-            if (IsMinimized2(hwnd))
-            {
-                mized = MIZED_MIN;
-            }
-            else
-            {
-                WINDOWPLACEMENT placement;
-                placement.length = sizeof(placement);
-                if (!GetWindowPlacement(hwnd, &placement))
-                {
-                    LogFail("GetWindowPlacement", GetLastError());
-                    abort();
-                }
-
-                if (placement.showCmd == SW_SHOWMAXIMIZED) {
-                    mized = MIZED_MAX;
-                }
-            }
-
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            /* TRACELOG(LOG_INFO, "window pos=%d,%d size=%dx%d", pos->x, pos->y, pos->cx, pos->cy); */
-
-            switch (mized)
-            {
-                case MIZED_NONE:
-                {
-                    deferredFlags->clear |= (
-                        FLAG_WINDOW_MINIMIZED |
-                        FLAG_WINDOW_MAXIMIZED
-                    );
-                    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-                    MONITORINFO info;
-                    info.cbSize = sizeof(info);
-                    if (!GetMonitorInfoW(monitor, &info))
-                    {
-                        LogFail("GetMonitorInfo", GetLastError());
-                        abort();
-                    }
-
-                    if (
-                        (pos->x == info.rcMonitor.left) &&
-                        (pos->y == info.rcMonitor.top) &&
-                        (pos->cx == (info.rcMonitor.right - info.rcMonitor.left)) &&
-                        (pos->cy == (info.rcMonitor.bottom - info.rcMonitor.top))
-                    ) {
-                        deferredFlags->set |= FLAG_BORDERLESS_WINDOWED_MODE;
-                    }
-                    else
-                    {
-                        deferredFlags->clear |= FLAG_BORDERLESS_WINDOWED_MODE;
-                    }
-
-                } break;
-                case MIZED_MIN:
-                    // !!! NOTE !!! Do not update the maximized/borderless
-                    // flags because when hwnd is minimized it temporarily overrides
-                    // the maximized state/flag which gets restored on SW_RESTORE
-                    deferredFlags->set |= FLAG_WINDOW_MINIMIZED;
-                    break;
-                case MIZED_MAX:
-                    deferredFlags->clear |= FLAG_WINDOW_MINIMIZED;
-                    deferredFlags->set |= FLAG_WINDOW_MAXIMIZED;
-                    break;
-            }
-
-            return 0;
+            PIXELFORMATDESCRIPTOR newPixelFormatDescriptor = { 0 };
+            DescribePixelFormat(hdc, format, sizeof(newPixelFormatDescriptor), &newPixelFormatDescriptor);
+            SetPixelFormat(hdc, format, &newPixelFormatDescriptor);
         }
-        case WM_SIZE:
-            // don't trust the docs, they say you won't get this message if you don't call DefWindowProc
-            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created you'll get this
-            // message without getting WM_WINDOWPOSCHANGED.
-            HandleWindowResize(hwnd, &globalAppScreenSize);
-            return 0;
-        case WM_WINDOWPOSCHANGED: {
-            WINDOWPOS *pos = (WINDOWPOS*)lparam;
-            if (!(pos->flags & SWP_NOSIZE))
-            {
-                HandleWindowResize(hwnd, &globalAppScreenSize);
-            }
-
-            return 0;
-        }
-        case WM_GETDPISCALEDSIZE:
-        {
-            SIZE *inoutSize = (SIZE*)lparam;
-            UINT newDpi = wparam;
-
-            // for any of these other cases, we might want to post a window
-            // resize event after the dpi changes?
-            if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
-            if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
-            if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) return TRUE;
-
-            float dpiScale = ScaleFromDpi(newDpi);
-            bool dpiScaling = CORE.Window.flags & FLAG_WINDOW_HIGHDPI;
-            SIZE desired = PxFromPt2(dpiScale, dpiScaling, globalAppScreenSize);
-            inoutSize->cx = desired.cx;
-            inoutSize->cy = desired.cy;
-        } return TRUE;
-        case WM_DPICHANGED:
-        {
-            RECT *suggestedRect = (RECT*)lparam;
-            // Never set the window size to anything other than the suggested rect here.
-            // Doing so can cause a window to stutter between monitors when transitioning
-            // between them.
-            if (!SetWindowPos(
-                hwnd,
-                NULL,
-                suggestedRect->left,
-                suggestedRect->top,
-                suggestedRect->right - suggestedRect->left,
-                suggestedRect->bottom - suggestedRect->top,
-                SWP_NOZORDER | SWP_NOACTIVATE
-            )) {
-                LogFail("SetWindowPos", GetLastError());
-                abort();
-            }
-
-        } return 0;
-        case WM_SETCURSOR:
-            if (LOWORD(lparam) == HTCLIENT)
-            {
-                SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
-                return 0;
-            }
-
-            return DefWindowProc(hwnd, msg, wparam, lparam);
-        case WM_INPUT:
-            if (globalCursorEnabled)
-            {
-                TRACELOG(LOG_ERROR, "Unexpected raw mouse input"); // impossible right?
-                abort();
-            }
-
-            HandleRawInput(lparam);
-            return 0;
-        case WM_MOUSEMOVE:
-            if (globalCursorEnabled)
-            {
-                CORE.Input.Mouse.currentPosition.x = (float)GET_X_LPARAM(lparam);
-                CORE.Input.Mouse.currentPosition.y = (float)GET_Y_LPARAM(lparam);
-                CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-            }
-
-            return 0;
-        case WM_KEYDOWN: HandleKey(wparam, lparam, 1); return 0;
-        case WM_KEYUP: HandleKey(wparam, lparam, 0); return 0;
-        case WM_LBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_LEFT, 1); return 0;
-        case WM_LBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_LEFT, 0); return 0;
-        case WM_RBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_RIGHT, 1); return 0;
-        case WM_RBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_RIGHT, 0); return 0;
-        case WM_MBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_MIDDLE, 1); return 0;
-        case WM_MBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_MIDDLE, 0); return 0;
-        case WM_XBUTTONDOWN: switch (HIWORD(wparam))
-        {
-            case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 1); return 0;
-            case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 1); return 0;
-            default:
-                TRACELOG(LOG_WARNING, "TODO: handle ex mouse button DOWN wparam=%u", HIWORD(wparam));
-                return 0;
-        }
-        case WM_XBUTTONUP: switch (HIWORD(wparam))
-        {
-            case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 0); return 0;
-            case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 0); return 0;
-            default:
-                TRACELOG(LOG_WARNING, "TODO: handle ex mouse button UP   wparam=%u", HIWORD(wparam));
-                return 0;
-        }
-        case WM_MOUSEWHEEL:
-            CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA;
-            return 0;
-        case WM_MOUSEHWHEEL:
-            CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA;
-            return 0;
-        case WM_APP_UPDATE_WINDOW_SIZE:
-            UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, globalAppScreenSize, CORE.Window.flags);
-            return 0;
-        default:
-            return DefWindowProcW(hwnd, msg, wparam, lparam);
     }
+
+    // Create real modern OpenGL context (3.3 core)
+    HGLRC realContext = NULL;
+    if (wglCreateContextAttribsARB)
+    {
+        int glContextVersionMajor = 1;
+        int glContextVersionMinor = 1;
+        int glContextProfile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+
+        if (rlGetVersion() == RL_OPENGL_21)         // Request OpenGL 2.1 context
+        {
+            glContextVersionMajor = 2;
+            glContextVersionMinor = 1;
+        }
+        else if (rlGetVersion() == RL_OPENGL_33)    // Request OpenGL 3.3 context
+        {
+            glContextVersionMajor = 3;
+            glContextVersionMinor = 3;
+        }
+        else if (rlGetVersion() == RL_OPENGL_43)    // Request OpenGL 4.3 context
+        {
+            glContextVersionMajor = 4;
+            glContextVersionMinor = 3;
+        }
+        else if (rlGetVersion() == RL_OPENGL_ES_20) // Request OpenGL ES 2.0 context
+        {
+            if (IsWglExtensionAvailable(platform.hdc, "WGL_EXT_create_context_es_profile") ||
+                IsWglExtensionAvailable(platform.hdc, "WGL_EXT_create_context_es2_profile"))
+            {
+                glContextVersionMajor = 2;
+                glContextVersionMinor = 0;
+                glContextProfile = WGL_CONTEXT_ES_PROFILE_BIT_EXT;
+            }
+            else TRACELOG(LOG_WARNING, "GL: OpenGL ES context not supported by GPU");
+        }
+        else if (rlGetVersion() == RL_OPENGL_ES_30) // Request OpenGL ES 3.0 context
+        {
+            if (IsWglExtensionAvailable(platform.hdc, "WGL_EXT_create_context_es_profile") ||
+                IsWglExtensionAvailable(platform.hdc, "WGL_EXT_create_context_es2_profile"))
+            {
+                glContextVersionMajor = 3;
+                glContextVersionMinor = 0;
+                glContextProfile = WGL_CONTEXT_ES_PROFILE_BIT_EXT;
+            }
+            else TRACELOG(LOG_WARNING, "GL: OpenGL ES context not supported by GPU");
+        }
+
+        int contextAttribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, glContextVersionMajor,
+            WGL_CONTEXT_MINOR_VERSION_ARB, glContextVersionMinor,
+            WGL_CONTEXT_PROFILE_MASK_ARB, glContextProfile, // WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, WGL_CONTEXT_ES_PROFILE_BIT_EXT (if supported)
+            //WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB [glDebugMessageCallback()]
+            0 // Terminator
+        };
+
+        // NOTE: We are not sharing context resources so, second parameters is NULL
+        realContext = wglCreateContextAttribsARB(hdc, NULL, contextAttribs);
+
+        // Check for error context creation errors
+        // ERROR_INVALID_VERSION_ARB (0x2095)
+        // ERROR_INVALID_PROFILE_ARB (0x2096)
+        if (realContext == NULL) TRACELOG(LOG_ERROR, "GL: Error creating requested context: %lu", GetLastError());
+    }
+
+    // Cleanup dummy temp context
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(tempContext);
+
+    // Activate real context
+    if (realContext) wglMakeCurrent(hdc, realContext);
+
+    // Once we got a real modern OpenGL context,
+    // we can load required extensions (function pointers)
+    rlLoadExtensions(WglGetProcAddress);
+
+    return realContext;
 }
 
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    // sanity check, should we remove this?
-    DWORD mask = STYLE_MASK_ALL;
-    if (globalHwnd == hwnd)
-    {
-        if (msg == WM_WINDOWPOSCHANGING) {
-            mask &= ~(WS_MINIMIZE | WS_MAXIMIZE);
-        }
-        CheckFlags("WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
-    }
-
-    FlagsOp flagsOp;
-    flagsOp.set = 0;
-    flagsOp.clear = 0;
-    LRESULT result = WndProc2(hwnd, msg, wparam, lparam, &flagsOp);
-
-    // sanity check, should we remove this?
-    if (globalHwnd == hwnd)
-     {
-        CheckFlags("After WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
-    }
-
-    // Operations to execute after the above check
-    if (flagsOp.set & flagsOp.clear)
-    {
-        TRACELOG(LOG_ERROR, "the flags 0x%x were both set and cleared!", flagsOp.set & flagsOp.clear);
-        abort();
-    }
-
-    {
-        DWORD save = CORE.Window.flags;
-        CORE.Window.flags |= flagsOp.set;
-        CORE.Window.flags &= ~flagsOp.clear;
-        if (save != CORE.Window.flags)
-        {
-            TRACELOG(
-                LOG_DEBUG,
-                "DeferredFlags: 0x%x > 0x%x (diff 0x%x)",
-                save,
-                CORE.Window.flags,
-                save ^ CORE.Window.flags
-            );
-        }
-    }
-
-    return result;
-}
-
-
+// Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
-    globalDesiredFlags = SanitizeFlags(SANITIZE_FLAGS_FIRST, CORE.Window.flags);
-    // from this point CORE.Window.flags should always reflect the actual state of the window
-    CORE.Window.flags = FLAG_WINDOW_HIDDEN | (globalDesiredFlags & FLAG_MASK_NO_UPDATE);
+    int result = 0;
 
-    globalAppScreenSize = (Vector2){ CORE.Window.screen.width, CORE.Window.screen.height };
+    platform.appScreenWidth = CORE.Window.screen.width;
+    platform.appScreenHeight = CORE.Window.screen.height;
+    platform.desiredFlags = SanitizeFlags(0 /*SANITIZE_FLAGS_FIRST*/, CORE.Window.flags);
 
+    // NOTE: From this point CORE.Window.flags should always reflect the actual state of the window
+    CORE.Window.flags = FLAG_WINDOW_HIDDEN | (platform.desiredFlags & FLAG_MASK_NO_UPDATE);
+
+/*
+    // TODO: Review SetProcessDpiAwarenessContext()
+    // NOTE: SetProcessDpiAwarenessContext() requires Windows 10, version 1703 and shcore.lib linkage
     if (IsWindows10Version1703OrGreaterWin32())
     {
         TRACELOG(LOG_INFO, "DpiAware: >=Win10Creators");
-        if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
-            LogFail("SetProcessDpiAwarenessContext", GetLastError());
-            abort();
-        }
+        if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2))
+            TRACELOG(LOG_ERROR, "%s failed, error %u", "SetProcessDpiAwarenessContext", GetLastError());
     }
     else
     {
         TRACELOG(LOG_INFO, "DpiAware: <Win10Creators");
         HRESULT hr = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-        if (hr < 0) {
-            LogFailHr("SetProcessDpiAwareness", hr);
-            abort();
-        }
+        if (hr < 0) TRACELOG(LOG_ERROR, "%s failed, hresult=0x%lx", "SetProcessDpiAwareness", (DWORD)hr);
     }
+*/
 
+    HINSTANCE hInstance = GetModuleHandleW(0);
+
+    // Define window class
+    WNDCLASSEXW windowClass = {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+        .lpfnWndProc = WndProc,                         // Custom procedure assigned
+        .cbWndExtra = sizeof(LONG_PTR),                 // extra space for the Tuple object ptr
+        .hInstance = hInstance,
+        .hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW), // TODO: Audit if we want to set this since we're implementing WM_SETCURSOR
+        .lpszClassName = CLASS_NAME                     // Class name: L"raylibWindow"
+    };
+
+    // Load user-provided icon if available
+    // NOTE: raylib resource file defaults to GLFW_ICON id, so looking for same identifier
+    windowClass.hIcon = LoadImageW(hInstance, L"GLFW_ICON", IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, (LPCWSTR)IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+
+    // Register window class
+    result = (int)RegisterClassExW(&windowClass);
+    if (result == 0) TRACELOG(LOG_ERROR, "WIN32: Failed to register window class [ERROR: %lu]", GetLastError());
+
+    // Get primary monitor info
+    POINT primaryTopLeft = { 0 };
+    HMONITOR monitor = MonitorFromPoint(primaryTopLeft, MONITOR_DEFAULTTOPRIMARY);
+    if (monitor != NULL)
     {
-        WNDCLASSEXW c = {0};
-        c.cbSize = sizeof(c);
-        c.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-        c.lpfnWndProc = WndProc;
-        c.cbWndExtra = sizeof(LONG_PTR); // extra space for the Tuple object ptr
-        c.hInstance = GetModuleHandleW(0);
-        // TODO: audit if we want to set this since we're implementing WM_SETCURSOR
-        c.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
-        c.lpszClassName = CLASS_NAME;
-        if (0 == RegisterClassExW(&c))
-        {
-            LogFail("RegisterClass", GetLastError());
-            return -1;
-        }
-    }
+        MONITORINFO info = { 0 };
+        info.cbSize = sizeof(info);
+        result = (int)GetMonitorInfoW(monitor, &info);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO: probably remove or at least move this code that sets the display size.
-    //       should maybe go somewhere in WndProc?
-    HMONITOR monitor;
-
-    {
-        POINT primaryTopLeft = {0, 0};
-        monitor = MonitorFromPoint(primaryTopLeft, MONITOR_DEFAULTTOPRIMARY);
-        if (!monitor)
-        {
-            LogFail("MonitorFromPoint", GetLastError());
-            // we'll keep going
-        }
+        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: DISPLAY: Failed to get monitor info [ERROR: %u]", GetLastError());
         else
         {
-            MONITORINFO info;
-            info.cbSize = sizeof(info);
-            if (!GetMonitorInfoW(monitor, &info))
-            {
-                LogFail("GetMonitorInfo", GetLastError());
-            }
-            else
-            {
-                CORE.Window.display.width = info.rcMonitor.right - info.rcMonitor.left;
-                CORE.Window.display.height = info.rcMonitor.bottom - info.rcMonitor.top;
-            }
+            CORE.Window.display.width = info.rcMonitor.right - info.rcMonitor.left;
+            CORE.Window.display.height = info.rcMonitor.bottom - info.rcMonitor.top;
         }
     }
+    else TRACELOG(LOG_WARNING, "WIN32: DISPLAY: Failed to get primary monitor from point [ERROR: %u]", GetLastError());
 
-    CreateWindowAlloca(CORE.Window.title, MakeWindowStyle(CORE.Window.flags));
-    if (!globalHwnd)
+    // Adjust the window rectangle so the *client area* matches desired size
+    // NOTE: Window width/height includes borders and title-bar
+    DWORD style = WS_OVERLAPPEDWINDOW;
+    RECT rect = { 0, 0, platform.appScreenWidth, platform.appScreenHeight };
+    AdjustWindowRect(&rect, style, FALSE);
+    //AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, WINDOW_STYLE_EX);
+    //AdjustWindowRectExForDpi(&rect, style, FALSE, WINDOW_STYLE_EX, dpi);
+    int windowWidth  = rect.right - rect.left;
+    int windowHeight = rect.bottom - rect.top;
+
+    // Create window
+    // NOTE: Title string needs to be converted to WCHAR
+    WCHAR *titleWide = NULL;
+    A_TO_W_ALLOCA(titleWide, CORE.Window.title);
+
+    // Create window and get handle
+    platform.hwnd = CreateWindowExW(
+        WINDOW_STYLE_EX,
+        CLASS_NAME,
+        titleWide,
+        MakeWindowStyle(CORE.Window.flags),     // WS_OVERLAPPEDWINDOW | WS_VISIBLE
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        windowWidth, windowHeight,  // TODO: Window size [width, height], needs to be updated?
+        NULL, NULL,
+        GetModuleHandleW(NULL), NULL);
+
+    if (!platform.hwnd)
     {
-        LogFail("CreateWindow", GetLastError());
+        TRACELOG(LOG_ERROR, "WIN32: WINDOW: Failed to create window [ERROR: %lu]", GetLastError());
         return -1;
     }
 
-    CORE.Window.ready = true;
-    UpdateWindowSize(UPDATE_WINDOW_FIRST, globalHwnd, globalAppScreenSize, globalDesiredFlags);
-    UpdateFlags(globalHwnd, globalDesiredFlags, globalAppScreenSize);
+    // Get handle to device drawing context
+    // NOTE: Windows GDI object that represents a drawing surface
+    platform.hdc = GetDC(platform.hwnd);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO: not sure why this needs to be here?
+    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+    {
+        //ShowWindow(platform.hwnd, SW_SHOWDEFAULT); //SW_SHOWNORMAL
+
+        // Initialize software framebuffer
+        BITMAPINFO bmi = { 0 };
+        ZeroMemory(&bmi, sizeof(bmi));
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = platform.appScreenWidth;
+        bmi.bmiHeader.biHeight = -(int)(platform.appScreenHeight); // Top-down bitmap
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        platform.hdcmem = CreateCompatibleDC(platform.hdc);
+
+        platform.hbitmap = CreateDIBSection(
+            platform.hdcmem, &bmi, DIB_RGB_COLORS,
+            (void **)&platform.pixels, NULL, 0);
+
+        SelectObject(platform.hdcmem, platform.hbitmap);
+
+        //ReleaseDC(platform.hwnd, platform.hdc); // Required?
+    }
+    else
+    {
+        // Init hardware-accelerated OpenGL modern context
+        platform.glContext = InitOpenGL(platform.hwnd, platform.hdc);
+    }
+
+    CORE.Window.ready = true;
+
+    // Update flags (in case of deferred state change required)
+    UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
+
+    CORE.Window.render.width = CORE.Window.screen.width;
+    CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
@@ -2153,31 +1630,560 @@ int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
-    CORE.Storage.basePath = GetWorkingDirectory();
-
-    QueryPerformanceFrequency(&globalTimerFrequency);
-
+    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
     {
-        LARGE_INTEGER time;
-        QueryPerformanceCounter(&time);
-        CORE.Time.base = time.QuadPart;
+        TRACELOG(LOG_INFO, "GL: OpenGL device information:");
+        TRACELOG(LOG_INFO, "    > Vendor:   %s", "raylib");
+        TRACELOG(LOG_INFO, "    > Renderer: %s", "rlsw - OpenGL 1.1 Software Renderer");
+        TRACELOG(LOG_INFO, "    > Version:  %s", "1.0");
+        TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
     }
+
+    // Initialize timming system
+    //----------------------------------------------------------------------------
+    LARGE_INTEGER time = { 0 };
+    QueryPerformanceCounter(&time);
+    QueryPerformanceFrequency(&platform.timerFrequency);
+    CORE.Time.base = time.QuadPart;
+
     InitTimer();
+    //----------------------------------------------------------------------------
+
+    // Initialize storage system
+    //----------------------------------------------------------------------------
+    CORE.Storage.basePath = GetWorkingDirectory();
+    //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP: WIN32: Initialized successfully");
+
     return 0;
 }
 
+// Close platform
 void ClosePlatform(void)
 {
-    if (globalHwnd)
+    if (platform.hwnd)
     {
-        if (0 == DestroyWindow(globalHwnd))
+        int result = DestroyWindow(platform.hwnd);
+        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
+        platform.hwnd = NULL;
+    }
+}
+
+// Window procedure, message processing callback
+// NOTE: All window event messages are processed here
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    LRESULT result = 0;
+
+    // Sanity check
+    DWORD mask = STYLE_MASK_ALL;
+    if (platform.hwnd == hwnd)
+    {
+        if (msg == WM_WINDOWPOSCHANGING) mask &= ~(WS_MINIMIZE | WS_MAXIMIZE);
+        CheckFlags("WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
+    }
+
+    FlagsOp flagsOp = { 0 };
+    FlagsOp *deferredFlags = &flagsOp;
+
+    // Message processing
+    //------------------------------------------------------------------------------------
+    switch (msg)
+    {
+        case WM_CREATE:
         {
-            LogFail("DestroyWindow", GetLastError());
-            abort();
+            // WARNING: Not recommended to do OpenGL intialization at this point
+
+        } break;
+        //case WM_ACTIVATE
+        case WM_DESTROY:
+        {
+            // Clean up for window destruction
+            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            {
+                if (platform.hdcmem)
+                {
+                    DeleteDC(platform.hdcmem);
+                    platform.hdcmem = NULL;
+                }
+
+                if (platform.hbitmap)
+                {
+                    DeleteObject(platform.hbitmap); // Clears platform.pixels data
+                    platform.hbitmap = NULL;
+                    platform.pixels = NULL; // NOTE: Pointer invalid after DeleteObject()
+                }
+            }
+            else // OpenGL hardware renderer
+            {
+                wglMakeCurrent(platform.hdc, NULL);
+                if (platform.glContext)
+                {
+                    if (!wglDeleteContext(platform.glContext)) abort();
+                    platform.glContext = NULL;
+                }
+            }
+
+            if (platform.hdc)
+            {
+                if (!ReleaseDC(hwnd, platform.hdc)) abort();
+                platform.hdc = NULL;
+            }
+
+            PostQuitMessage(0);
+
+        } break;
+        case WM_CLOSE: CORE.Window.shouldClose = true; break; // Window close button [x], ALT+F4
+        //case WM_QUIT: // Application closing, not related to window
+        case WM_KILLFOCUS:
+        {
+            memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
+            memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+        } break;
+        case WM_SIZING:
+        {
+            if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
+            {
+                // TODO: Enforce min/max size
+            }
+            else TRACELOG(LOG_WARNING, "WIN32: WINDOW: Trying to resize a non-resizable window");
+
+            result = TRUE;
+        } break;
+        case WM_STYLECHANGING:
+        {
+            if (wparam == GWL_STYLE)
+            {
+                STYLESTRUCT *ss = (STYLESTRUCT *)lparam;
+                GetStyleChangeFlagOps(CORE.Window.flags, ss, deferredFlags);
+
+                UINT dpi = GetDpiForWindow(hwnd);
+                // Get client size (framebuffer inside the window)
+                RECT rect = { 0 };
+                GetClientRect(hwnd, &rect);
+                SIZE clientSize = { rect.right, rect.bottom };
+                SIZE oldSize = CalcWindowSize(dpi, clientSize, ss->styleOld);
+                SIZE newSize = CalcWindowSize(dpi, clientSize, ss->styleNew);
+
+                if (oldSize.cx != newSize.cx || oldSize.cy != newSize.cy)
+                {
+                    TRACELOG(LOG_INFO, "WIN32: WINDOW: Resize from style change [%dx%d] to [%dx%d]", oldSize.cx, oldSize.cy, newSize.cx, newSize.cy);
+
+                    if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED)
+                    {
+                        // looks like windows will automatically "unminimize" a window
+                        // if a style changes modifies it's size
+                        TRACELOG(LOG_INFO, "WIN32: WINDOW: Style change modifed window size, removing maximized flag");
+                        deferredFlags->clear |= FLAG_WINDOW_MAXIMIZED;
+                    }
+                }
+            }
+        } break;
+        case WM_WINDOWPOSCHANGING:
+        {
+            WINDOWPOS *pos = (WINDOWPOS *)lparam;
+            if (pos->flags & SWP_SHOWWINDOW) deferredFlags->clear |= FLAG_WINDOW_HIDDEN;
+            else if (pos->flags & SWP_HIDEWINDOW) deferredFlags->set |= FLAG_WINDOW_HIDDEN;
+
+            Mized mized = MIZED_NONE;
+            bool isIconic = IsIconic(hwnd);
+            bool styleMinimized = !!(WS_MINIMIZE & GetWindowLongPtrW(hwnd, GWL_STYLE));
+            if (isIconic != styleMinimized) TRACELOG(LOG_WARNING, "WIN32: IsIconic state different from WS_MINIMIZED state");
+
+            if (isIconic) mized = MIZED_MIN;
+            else
+            {
+                WINDOWPLACEMENT placement;
+                placement.length = sizeof(placement);
+                if (!GetWindowPlacement(hwnd, &placement)) TRACELOG(LOG_ERROR, "WIN32: WINDOW: FAiled to get monitor placement [ERROR: %lu]", GetLastError());
+
+                if (placement.showCmd == SW_SHOWMAXIMIZED) mized = MIZED_MAX;
+            }
+
+            switch (mized)
+            {
+                case MIZED_NONE:
+                {
+                    deferredFlags->clear |= (FLAG_WINDOW_MINIMIZED | FLAG_WINDOW_MAXIMIZED);
+                    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+                    MONITORINFO info;
+                    info.cbSize = sizeof(info);
+                    if (!GetMonitorInfoW(monitor, &info)) TRACELOG(LOG_ERROR, "WIN32: MONITOR: Failed to get monitor info [ERROR: %lu]", GetLastError());
+
+                    if ((pos->x == info.rcMonitor.left) &&
+                        (pos->y == info.rcMonitor.top) &&
+                        (pos->cx == (info.rcMonitor.right - info.rcMonitor.left)) &&
+                        (pos->cy == (info.rcMonitor.bottom - info.rcMonitor.top))) deferredFlags->set |= FLAG_BORDERLESS_WINDOWED_MODE;
+                    else deferredFlags->clear |= FLAG_BORDERLESS_WINDOWED_MODE;
+
+                } break;
+                case MIZED_MIN:
+                {
+                    // !!! NOTE !!! Do not update the maximized/borderless
+                    // flags because when hwnd is minimized it temporarily overrides
+                    // the maximized state/flag which gets restored on SW_RESTORE
+                    deferredFlags->set |= FLAG_WINDOW_MINIMIZED;
+                } break;
+                case MIZED_MAX:
+                {
+                    deferredFlags->clear |= FLAG_WINDOW_MINIMIZED;
+                    deferredFlags->set |= FLAG_WINDOW_MAXIMIZED;
+                } break;
+                default: break;
+            }
+        } break;
+        case WM_SIZE:
+        {
+            // WARNING: Don't trust the docs, they say you won't get this message if you don't call DefWindowProc
+            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created you'll get this
+            // message without getting WM_WINDOWPOSCHANGED
+            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+        } break;
+        //case WM_MOVE
+        case WM_WINDOWPOSCHANGED:
+        {
+            WINDOWPOS *pos = (WINDOWPOS*)lparam;
+            if (!(pos->flags & SWP_NOSIZE)) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+        } break;
+        case WM_GETDPISCALEDSIZE:
+        {
+            SIZE *inoutSize = (SIZE *)lparam;
+            UINT newDpi = (UINT)wparam; // TODO: WARNING: Converting from WPARAM = UINT_PTR
+
+            // for any of these other cases, we might want to post a window
+            // resize event after the dpi changes?
+            if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
+            if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
+            if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) return TRUE;
+
+            float dpiScale = ((float)newDpi)/96.0f;
+            bool dpiScaling = CORE.Window.flags & FLAG_WINDOW_HIGHDPI;
+            // Get size in pixels from points
+            SIZE desired = {
+                .cx = dpiScaling? (int)((float)platform.appScreenWidth*dpiScale) : platform.appScreenWidth,
+                .cy = dpiScaling? (int)((float)platform.appScreenHeight*dpiScale) : platform.appScreenHeight
+            };
+            inoutSize->cx = desired.cx;
+            inoutSize->cy = desired.cy;
+
+            result = TRUE;
+        } break;
+        case WM_DPICHANGED:
+        {
+            RECT *suggestedRect = (RECT *)lparam;
+
+            // Never set the window size to anything other than the suggested rect here
+            // Doing so can cause a window to stutter between monitors when transitioning between them
+            int result = (int)SetWindowPos(hwnd, NULL, suggestedRect->left, suggestedRect->top,
+                suggestedRect->right - suggestedRect->left, suggestedRect->bottom - suggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+            if (result == 0) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+
+        } break;
+        case WM_SETCURSOR:
+        {
+            // Called when mouse moves, enters/leaves window...
+            if (LOWORD(lparam) == HTCLIENT)
+            {
+                SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
+                return 0;
+            }
+
+            result = DefWindowProc(hwnd, msg, wparam, lparam);
+        } break;
+        case WM_PAINT:
+        {
+            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            {
+                PAINTSTRUCT ps = { 0 };
+                HDC hdc = BeginPaint(hwnd, &ps);
+
+                // Blit from memory DC to window DC
+                BitBlt(hdc, 0, 0, platform.appScreenWidth, platform.appScreenHeight, platform.hdcmem, 0, 0, SRCCOPY);
+
+                EndPaint(hwnd, &ps);
+            }
+        }
+        case WM_INPUT:
+        {
+            //HandleRawInput(lparam);
+        } break;
+        case WM_MOUSEMOVE:
+        {
+            if (!CORE.Input.Mouse.cursorLocked)
+            {
+                CORE.Input.Mouse.currentPosition.x = (float)GET_X_LPARAM(lparam);
+                CORE.Input.Mouse.currentPosition.y = (float)GET_Y_LPARAM(lparam);
+                CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+            }
+        } break;
+        case WM_KEYDOWN: HandleKey(wparam, lparam, 1); break;
+        case WM_KEYUP: HandleKey(wparam, lparam, 0); break;
+        case WM_LBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_LEFT, 1); break;
+        case WM_LBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_LEFT, 0); break;
+        case WM_RBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_RIGHT, 1); break;
+        case WM_RBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_RIGHT, 0); break;
+        case WM_MBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_MIDDLE, 1); break;
+        case WM_MBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_MIDDLE, 0); break;
+        case WM_XBUTTONDOWN:
+        {
+            switch (HIWORD(wparam))
+            {
+                case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 1); break;
+                case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 1); break;
+                default: TRACELOG(LOG_WARNING, "TODO: handle ex mouse button DOWN wparam=%u", HIWORD(wparam)); break;
+            }
+        } break;
+        case WM_XBUTTONUP:
+        {
+            switch (HIWORD(wparam))
+            {
+                case XBUTTON1: HandleMouseButton(MOUSE_BUTTON_SIDE, 0); break;
+                case XBUTTON2: HandleMouseButton(MOUSE_BUTTON_EXTRA, 0); break;
+                default: TRACELOG(LOG_WARNING, "TODO: handle ex mouse button UP   wparam=%u", HIWORD(wparam)); break;
+            }
+        } break;
+        case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+        case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+        case WM_APP_UPDATE_WINDOW_SIZE:
+        {
+            //UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, platform.appScreenWidth, platform.appScreenHeight, CORE.Window.flags);
+        } break;
+
+        default: result = DefWindowProcW(hwnd, msg, wparam, lparam); // Message passed directly for execution (default behaviour)
+    }
+    //------------------------------------------------------------------------------------
+
+    // Sanity check for flags
+    if (platform.hwnd == hwnd) CheckFlags("After WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
+
+    // Operations to execute after the above check
+    if (flagsOp.set & flagsOp.clear) TRACELOG(LOG_WARNING, "WIN32: FLAGS: Flags 0x%x were both set and cleared", flagsOp.set & flagsOp.clear);
+
+    DWORD save = CORE.Window.flags;
+    CORE.Window.flags |= flagsOp.set;
+    CORE.Window.flags &= ~flagsOp.clear;
+    if (save != CORE.Window.flags) TRACELOG(LOG_DEBUG, "WIN32: FLAGS: Current deferred flags: 0x%x > 0x%x (diff 0x%x)", save, CORE.Window.flags, save ^ CORE.Window.flags);
+
+    return result;
+}
+
+// Handle keyboard input event
+static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
+{
+    KeyboardKey key = GetKeyFromWparam(wparam);
+
+    // TODO: Use scancode?
+    //BYTE scancode = lparam >> 16;
+    //TRACELOG(LOG_INFO, "KEY key=%d vk=%lu scan=%u = %u", key, wparam, scancode, state);
+
+    if (key != KEY_NULL)
+    {
+        CORE.Input.Keyboard.currentKeyState[key] = state;
+
+        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = 1;
+    }
+    else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
+
+    // TODO: Add key to the queue as well?
+}
+
+// Handle mouse button input event
+static void HandleMouseButton(int button, char state)
+{
+    // Register current mouse button state
+    CORE.Input.Mouse.currentButtonState[button] = state;
+    CORE.Input.Touch.currentTouchState[button] = state;
+}
+
+// Handle raw input event
+static void HandleRawInput(LPARAM lparam)
+{
+    RAWINPUT input = { 0 };
+
+    UINT inputSize = sizeof(input);
+    UINT size = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &inputSize, sizeof(RAWINPUTHEADER));
+
+    if (size == (UINT)-1) TRACELOG(LOG_ERROR, "WIN32: Failed to get raw input data [ERROR: %lu]", GetLastError());
+
+    if (input.header.dwType != RIM_TYPEMOUSE) TRACELOG(LOG_ERROR, "WIN32: Unexpected WM_INPUT type %lu", input.header.dwType);
+
+    if (input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) TRACELOG(LOG_ERROR, "TODO: handle absolute mouse inputs!");
+
+    if (input.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) TRACELOG(LOG_ERROR, "TODO: handle virtual desktop mouse inputs!");
+
+    // Trick to keep the mouse position at 0,0 and instead move
+    // the previous position so we can still get a proper mouse delta
+    //CORE.Input.Mouse.previousPosition.x -= input.data.mouse.lLastX;
+    //CORE.Input.Mouse.previousPosition.y -= input.data.mouse.lLastY;
+    //if (CORE.Input.Mouse.currentPosition.x != 0) abort();
+    //if (CORE.Input.Mouse.currentPosition.y != 0) abort();
+}
+
+// Handle window resizing event
+static void HandleWindowResize(HWND hwnd, int *width, int *height)
+{
+    if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return;
+
+    // Get client size (framebuffer inside the window)
+    RECT rect = { 0 };
+    GetClientRect(hwnd, &rect);
+    SIZE clientSize = { rect.right, rect.bottom };
+
+    // TODO: Update framebuffer on resize
+    CORE.Window.currentFbo.width = (int)clientSize.cx;
+    CORE.Window.currentFbo.height = (int)clientSize.cy;
+    //glViewport(0, 0, clientSize.cx, clientSize.cy);
+    //SetupFramebuffer(0, 0);
+
+    SetupViewport(clientSize.cx, clientSize.cy);
+    CORE.Window.resizedLastFrame = true;
+    float dpiScale = ((float)GetDpiForWindow(hwnd))/96.0f;
+    bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
+    unsigned int screenWidth = highdpi? (unsigned int)(((float)clientSize.cx)/dpiScale) : clientSize.cx;
+    unsigned int screenHeight = highdpi? (unsigned int)(((float)clientSize.cy)/dpiScale) : clientSize.cy;
+    CORE.Window.screen.width = screenWidth;
+    CORE.Window.screen.height = screenHeight;
+
+    if (AdoptWindowResize(CORE.Window.flags))
+    {
+        TRACELOG(LOG_DEBUG, "WIN32: WINDOW: Updating app size to [%ix%i] from window resize", screenWidth, screenHeight);
+        *width = screenWidth;
+        *height = screenHeight;
+    }
+
+    CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
+        (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
+}
+
+// Update window style
+static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
+{
+    DWORD current = STYLE_MASK_WRITABLE & MakeWindowStyle(CORE.Window.flags);
+    DWORD desired = STYLE_MASK_WRITABLE & MakeWindowStyle(desiredFlags);
+
+    if (current != desired)
+    {
+        SetLastError(0);
+        DWORD previous = STYLE_MASK_WRITABLE & SetWindowLongPtrW(hwnd, GWL_STYLE, desired);
+        if (previous != current)
+        {
+            TRACELOG(LOG_ERROR, "WIN32: WINDOW: SetWindowLongPtr() returned writable flags 0x%x but expected 0x%x (diff=0x%x, error=%lu)",
+                previous, current, previous ^ current, GetLastError());
         }
 
-        globalHwnd = NULL;
+        CheckFlags("UpdateWindowStyle", hwnd, desiredFlags, desired, STYLE_MASK_WRITABLE);
     }
+
+    // Minimized takes precedence over maximized
+    Mized currentMized = MIZED_NONE;
+    Mized desiredMized = MIZED_NONE;
+    if (CORE.Window.flags & WS_MINIMIZE) currentMized = MIZED_MIN;
+    else if (CORE.Window.flags & WS_MAXIMIZE) currentMized = MIZED_MAX;
+    if (desiredFlags & WS_MINIMIZE) currentMized = MIZED_MIN;
+    else if (desiredFlags & WS_MAXIMIZE) currentMized = MIZED_MAX;
+
+    if (currentMized != desiredMized)
+    {
+        switch (desiredMized)
+        {
+            case MIZED_NONE: ShowWindow(hwnd, SW_RESTORE); break;
+            case MIZED_MIN: ShowWindow(hwnd, SW_MINIMIZE); break;
+            case MIZED_MAX: ShowWindow(hwnd, SW_MAXIMIZE); break;
+        }
+    }
+}
+
+// Sanitize flags
+static unsigned SanitizeFlags(int mode, unsigned flags)
+{
+    if ((flags & FLAG_WINDOW_MAXIMIZED) && (flags & FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Borderless windows mode overriding maximized window flag");
+        flags &= ~FLAG_WINDOW_MAXIMIZED;
+    }
+
+    if (mode == 1)
+    {
+        if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT)))
+        {
+            TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
+            flags &= ~FLAG_MSAA_4X_HINT;
+        }
+    }
+
+    return flags;
+}
+
+// All window state changes from raylib flags go through this function. It performs
+// whatever operations are needed to update the window state to match the desired flags
+// In most cases this function should not update CORE.Window.flags directly, instead,
+// the window itself should update CORE.Window.flags in response to actual state changes
+// This means that CORE.Window.flags should always represent the actual state of the
+// window. This function will continue to perform these update operations so long as
+// the state continues to change
+//
+// This design takes care of many odd corner cases. For example, if you want to restore
+// a window that was previously maximized AND minimized and you want to remove both these
+// flags, you actually need to call ShowWindow with SW_RESTORE twice. Another example is
+// if you have a maximized window, if the undecorated flag is modified then we'd need to
+// update the window style, but updating the style would mean the window size would change
+// causing the window to lose its Maximized state which would mean we'd need to update the
+// window size and then update the window style a second time to restore that maximized
+// state. This implementation is able to handle any/all of these special situations with a
+// retry loop that continues until we either reach the desired state or the state stops changing
+static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
+{
+    // Flags that just apply immediately without needing any operations
+    CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
+
+    int vsync = (CORE.Window.flags & FLAG_VSYNC_HINT)? 1 : 0;
+    if (wglSwapIntervalEXT)
+    {
+        (*wglSwapIntervalEXT)(vsync);
+        if (vsync) CORE.Window.flags |= FLAG_VSYNC_HINT;
+        else CORE.Window.flags &= ~FLAG_VSYNC_HINT;
+    }
+
+    // TODO: Review all this code...
+    DWORD previousStyle = 0;
+    for (unsigned attempt = 1; ; attempt++)
+    {
+        CheckFlags("UpdateFlags", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), STYLE_MASK_ALL);
+
+        bool windowSizeUpdated = false;
+        if (MakeWindowStyle(CORE.Window.flags) == MakeWindowStyle(desiredFlags))
+        {
+            windowSizeUpdated = UpdateWindowSize(1, hwnd, width, height, desiredFlags);
+            if ((FLAG_MASK_REQUIRED & desiredFlags) == (FLAG_MASK_REQUIRED & CORE.Window.flags)) break;
+        }
+
+
+        if ((attempt > 1) && (previousStyle == MakeWindowStyle(CORE.Window.flags)) && !windowSizeUpdated)
+        {
+            TRACELOG(LOG_ERROR, "WIN32: WINDOW: UpdateFlags() failed after %u attempt(s) wanted 0x%x but is 0x%x (diff=0x%x)",
+                attempt, desiredFlags, CORE.Window.flags, desiredFlags ^ CORE.Window.flags);
+        }
+
+        previousStyle = MakeWindowStyle(CORE.Window.flags);
+        UpdateWindowStyle(hwnd, desiredFlags);
+    }
+}
+
+// Check if OpenGL extension is available
+static bool IsWglExtensionAvailable(HDC hdc, const char *extension)
+{
+    bool result = false;
+
+    if (wglGetExtensionsStringARB != NULL)
+    {
+        const char *extList = wglGetExtensionsStringARB(hdc);
+        if (extList != NULL)
+        {
+            // Simple substring search (could use strtok or strstr)
+            if (strstr(extList, extension) != NULL) result = true;
+        }
+    }
+
+    return result;
 }
