@@ -3097,34 +3097,34 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
     {                                                                   \
         steps = fabsf(dx);                                              \
         if (steps < 1.0f) return;                                       \
-        substep = (dx >= 0.0f) ? (1.0f - sw_fract(x0)) : sw_fract(x0);  \
+        substep = (dx >= 0.0f)? (1.0f - sw_fract(x0)) : sw_fract(x0);   \
     }                                                                   \
     else                                                                \
     {                                                                   \
         steps = fabsf(dy);                                              \
         if (steps < 1.0f) return;                                       \
-        substep = (dy >= 0.0f) ? (1.0f - sw_fract(y0)) : sw_fract(y0);  \
+        substep = (dy >= 0.0f)? (1.0f - sw_fract(y0)) : sw_fract(y0);   \
     }                                                                   \
                                                                         \
     /* Compute per pixel increments */                                  \
-    float xInc = dx / steps;                                            \
-    float yInc = dy / steps;                                            \
-    float stepRcp = 1.0f / steps;                                       \
+    float xInc = dx/steps;                                              \
+    float yInc = dy/steps;                                              \
+    float stepRcp = 1.0f/steps;                                         \
                                                                         \
-    float zInc = (v1->homogeneous[2] - v0->homogeneous[2]) * stepRcp;   \
-    float rInc = (v1->color[0] - v0->color[0]) * stepRcp;               \
-    float gInc = (v1->color[1] - v0->color[1]) * stepRcp;               \
-    float bInc = (v1->color[2] - v0->color[2]) * stepRcp;               \
-    float aInc = (v1->color[3] - v0->color[3]) * stepRcp;               \
+    float zInc = (v1->homogeneous[2] - v0->homogeneous[2])*stepRcp;     \
+    float rInc = (v1->color[0] - v0->color[0])*stepRcp;                 \
+    float gInc = (v1->color[1] - v0->color[1])*stepRcp;                 \
+    float bInc = (v1->color[2] - v0->color[2])*stepRcp;                 \
+    float aInc = (v1->color[3] - v0->color[3])*stepRcp;                 \
                                                                         \
     /* Initializing the interpolation starting values  */               \
-    float x = x0 + xInc * substep;                                      \
-    float y = y0 + yInc * substep;                                      \
-    float z = v0->homogeneous[2] + zInc * substep;                      \
-    float r = v0->color[0] + rInc * substep;                            \
-    float g = v0->color[1] + gInc * substep;                            \
-    float b = v0->color[2] + bInc * substep;                            \
-    float a = v0->color[3] + aInc * substep;                            \
+    float x = x0 + xInc*substep;                                        \
+    float y = y0 + yInc*substep;                                        \
+    float z = v0->homogeneous[2] + zInc*substep;                        \
+    float r = v0->color[0] + rInc*substep;                              \
+    float g = v0->color[1] + gInc*substep;                              \
+    float b = v0->color[2] + bInc*substep;                              \
+    float a = v0->color[3] + aInc*substep;                              \
                                                                         \
     const int fbWidth = RLSW.framebuffer.width;                         \
     void *cBuffer = RLSW.framebuffer.color;                             \
@@ -3138,7 +3138,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         int px = (int)(x - 0.5f);                                       \
         int py = (int)(y - 0.5f);                                       \
                                                                         \
-        int offset = py * fbWidth + px;                                 \
+        int offset = py*fbWidth + px;                                   \
         void *dptr = GET_DEPTH_PTR(dBuffer, offset);                    \
                                                                         \
         if (ENABLE_DEPTH_TEST)                                          \
@@ -3866,8 +3866,8 @@ void swViewport(int x, int y, int width, int height)
     RLSW.vpSize[0] = width;
     RLSW.vpSize[1] = height;
 
-    RLSW.vpHalf[0] = width / 2.0f;
-    RLSW.vpHalf[1] = height / 2.0f;
+    RLSW.vpHalf[0] = width/2.0f;
+    RLSW.vpHalf[1] = height/2.0f;
 
     RLSW.vpCenter[0] = (float)x + RLSW.vpHalf[0];
     RLSW.vpCenter[1] = (float)y + RLSW.vpHalf[1];
