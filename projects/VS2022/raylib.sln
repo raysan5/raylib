@@ -395,6 +395,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_text_file_loading", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_mandelbrot_set", "examples\shaders_mandelbrot_set.vcxproj", "{1C829D1A-892C-451C-AF0B-AC65C85F5CC6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_math_angle_rotation", "examples\shapes_math_angle_rotation.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.DLL|ARM64 = Debug.DLL|ARM64
