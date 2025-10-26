@@ -46,7 +46,7 @@ static Mesh BuildMesh(MeshBuilder *mb);
 static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, float decalOffset);
 static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s);
 #define FreeDecalMeshData() GenMeshDecal((Model){ .meshCount = -1.0f }, (Matrix){ 0 }, 0.0f, 0.0f)
-static bool Button(Rectangle rec, char *label);
+static bool GuiButton(Rectangle rec, const char *label);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -248,14 +248,12 @@ int main(void)
             DrawText("Hold RMB to move camera", 10, 430, 10, GRAY);
             DrawText("(c) Character model and texture from kenney.nl", screenWidth - 260, screenHeight - 20, 10, GRAY);
 
-            Rectangle rect = (Rectangle){ 10, screenHeight - 100, 100, 60 };
+            // UI elements
+            if (GuiButton((Rectangle){ 10, screenHeight - 100, 100, 60 }, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
 
-            if (Button(rect, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
-
-            rect.x += rect.width + 10;
-
-            if (Button(rect, "Clear Decals"))
+            if (GuiButton((Rectangle){ 10 + 110, screenHeight - 100, 100, 60 }, "Clear Decals"))
             {
+                // Clear decals, unload all decal models
                 for (int i = 0; i < decalCount; i++) UnloadModel(decalModels[i]);
                 decalCount = 0;
             }
@@ -362,14 +360,14 @@ static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s)
 }
 
 // Generate mesh decals for provided model
-static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, float decalOffset)
+static Mesh GenMeshDecal(Model target, Matrix projection, float decalSize, float decalOffset)
 {
     // We're going to use these to build up our decal meshes
     // They'll resize automatically as we go, we'll free them at the end
     static MeshBuilder meshBuilders[2] = { 0 };
 
     // Ugly way of telling us to free the static MeshBuilder data
-    if (inputModel.meshCount == -1)
+    if (target.meshCount == -1)
     {
         FreeMeshBuilder(&meshBuilders[0]);
         FreeMeshBuilder(&meshBuilders[1]);
@@ -388,9 +386,9 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
     int mbIndex = 0;
 
     // First pass, just get any triangle inside the bounding box (for each mesh of the model)
-    for (int meshIndex = 0; meshIndex < inputModel.meshCount; meshIndex++)
+    for (int meshIndex = 0; meshIndex < target.meshCount; meshIndex++)
     {
-        Mesh mesh = inputModel.meshes[meshIndex];
+        Mesh mesh = target.meshes[meshIndex];
         for (int tri = 0; tri < mesh.triangleCount; tri++)
         {
             Vector3 vertices[3] = { 0 };
@@ -584,7 +582,7 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
 }
 
 // Button UI element
-static bool Button(Rectangle rec, const char *label)
+static bool GuiButton(Rectangle rec, const char *label)
 {
     Color bgColor = GRAY;
     bool pressed = false;
