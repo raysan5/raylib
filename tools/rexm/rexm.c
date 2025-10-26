@@ -1176,8 +1176,8 @@ int main(int argc, char *argv[])
                     exInfo->status |= VALID_INCONSISTENT_INFO;
                 }
 
-                if (exInfo->status == 0) LOG("INFO: [%s] Validation result: OK", exInfo->name);
-                else LOG("WARNING: [%s] Validation result: ISSUES FOUND", exInfo->name);
+                if (exInfo->status == 0) LOG("INFO: [%s] Validation result: OK\n", exInfo->name);
+                else LOG("WARNING: [%s] Validation result: ISSUES FOUND\n", exInfo->name);
 
                 UnloadExampleInfo(exInfoHeader);
             }
