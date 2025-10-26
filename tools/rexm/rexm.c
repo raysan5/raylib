@@ -1003,6 +1003,9 @@ int main(int argc, char *argv[])
                 if (!TextIsEqual(GetFileNameWithoutExt(clist.paths[i]), "examples_template") &&
                     (TextFindIndex(exList, GetFileNameWithoutExt(clist.paths[i])) == -1))
                 {
+                    // TODO: Examples to be added in the list should be added at the end of their categories,
+                    // not at the end of the file...
+
                     // Add example to the examples collection list
                     // WARNING: Added to the end of the list, order must be set by users and
                     // defines placement on raylib webpage
