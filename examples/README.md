@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 187]
+## EXAMPLES COLLECTION [TOTAL: 188]
 
 ### category: core [45]
 
@@ -196,7 +196,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_basic_voxel](models/models_basic_voxel.c) | <img src="models/models_basic_voxel.png" alt="models_basic_voxel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Tim Little](https://github.com/timlittle) |
 | [models_rotating_cube](models/models_rotating_cube.c) | <img src="models/models_rotating_cube.png" alt="models_rotating_cube" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 
-### category: shaders [31]
+### category: shaders [32]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
@@ -233,6 +233,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 | [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
 | [shaders_mandelbrot_set](shaders/shaders_mandelbrot_set.c) | <img src="shaders/shaders_mandelbrot_set.png" alt="shaders_mandelbrot_set" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_color_correction](shaders/shaders_color_correction.c) | <img src="shaders/shaders_color_correction.png" alt="shaders_color_correction" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 
 ### category: audio [8]
 

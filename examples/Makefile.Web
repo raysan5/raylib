@@ -655,6 +655,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
@@ -1260,6 +1261,14 @@ shaders/shaders_basic_pbr: shaders/shaders_basic_pbr.c
     --preload-file shaders/resources/road_a.png@resources/road_a.png \
     --preload-file shaders/resources/road_mra.png@resources/road_mra.png \
     --preload-file shaders/resources/road_n.png@resources/road_n.png
+
+shapes/shapes_recursive_tree: shaders/shaders_color_correction.c
+    $(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/color_correction.fs@resources/shaders/glsl100/color_correction.fs \
+    --preload-file shaders/resources/parrots.png@resources/parrots.png \
+    --preload-file shaders/resources/cat.png@resources/cat.png \
+    --preload-file shaders/resources/mandrill.png@resources/mandrill.png \
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png
 
 shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
