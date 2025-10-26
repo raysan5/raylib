@@ -71,46 +71,46 @@ int main(void)
 
     // Load character model
     Model model = LoadModel("resources/models/obj/character.obj");
-    
+
     // Apply character skin
     Texture2D modelTexture = LoadTexture("resources/models/obj/character_diffuse.png");
     SetTextureFilter(modelTexture, TEXTURE_FILTER_BILINEAR);
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = modelTexture;
-    
+
     BoundingBox modelBBox = GetMeshBoundingBox(model.meshes[0]);    // Get mesh bounding box
-    
+
     camera.target  = Vector3Lerp(modelBBox.min, modelBBox.max, 0.5f);
     camera.position = Vector3Scale(modelBBox.max, 1.0f);
     camera.position.x *= 0.1f;
-    
+
     float modelSize = fminf(
         fminf(fabsf(modelBBox.max.x - modelBBox.min.x), fabsf(modelBBox.max.y - modelBBox.min.y)),
         fabsf(modelBBox.max.z - modelBBox.min.z));
-    
+
     camera.position = (Vector3){ 0.0f, modelBBox.max.y*1.2f, modelSize*3.0f };
-    
+
     float decalSize = modelSize*0.25f;
     float decalOffset = 0.01f;
-    
+
     Model placementCube = LoadModelFromMesh(GenMeshCube(decalSize, decalSize, decalSize));
     placementCube.materials[0].maps[0].color = LIME;
-    
+
     Material decalMaterial = LoadMaterialDefault();
     decalMaterial.maps[0].color = YELLOW;
-    
+
     Image decalImage = LoadImage("resources/raylib_logo.png");
     ImageResizeNN(&decalImage, decalImage.width/4, decalImage.height/4);
     Texture decalTexture = LoadTextureFromImage(decalImage);
     UnloadImage(decalImage);
-    
+
     SetTextureFilter(decalTexture, TEXTURE_FILTER_BILINEAR);
     decalMaterial.maps[MATERIAL_MAP_DIFFUSE].texture = decalTexture;
     decalMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
-    
+
     bool showModel = true;
     Model decalModels[MAX_DECALS] = { 0 };
     int decalCount = 0;
-    
+
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -151,19 +151,21 @@ int main(void)
 
             if (meshHitInfo.hit) collision = meshHitInfo;
         }
-        
+
         // Add decal to mesh on hit point
         if (collision.hit && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (decalCount < MAX_DECALS))
         {
             // Create the transformation to project the decal
             Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
             Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){ 0.0f, 1.0f, 0.0f });
-            
+
             // Spin the placement around a bit
             splat = MatrixMultiply(splat, MatrixRotateZ(DEG2RAD*((float)GetRandomValue(-180, 180))));
-            
+
             Mesh decalMesh = GenMeshDecal(model, splat, decalSize, decalOffset);
-            if (decalMesh.vertexCount > 0) {
+
+            if (decalMesh.vertexCount > 0)
+            {
                 int decalIndex = decalCount++;
                 decalModels[decalIndex] = LoadModelFromMesh(decalMesh);
                 decalModels[decalIndex].materials[0].maps[0] = decalMaterial.maps[0];
@@ -179,7 +181,7 @@ int main(void)
             BeginMode3D(camera);
                 // Draw the model at the origin and default scale
                 if (showModel) DrawModel(model, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
-                
+
                 // Draw the decal models
                 for (int i = 0; i < decalCount; i++) DrawModel(decalModels[i], (Vector3){0}, 1.0f, WHITE);
 
@@ -199,43 +201,45 @@ int main(void)
             float x0 = GetScreenWidth() - 300;
             float x1 = x0 + 100;
             float x2 = x1 + 100;
-            
+
             DrawText("Vertices", x1, yPos, 10, LIME);
             DrawText("Triangles", x2, yPos, 10, LIME);
             yPos += 15;
-            
+
             int vertexCount = 0;
             int triangleCount = 0;
-            
+
             for (int i = 0; i < model.meshCount; i++)
             {
                 vertexCount += model.meshes[i].vertexCount;
                 triangleCount += model.meshes[i].triangleCount;
             }
-            
+
             DrawText("Main model", x0, yPos, 10, LIME);
             DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
             DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
             yPos += 15;
-            
+
             for (int i = 0; i < decalCount; i++)
             {
-                if (i == 20) {
+                if (i == 20)
+                {
                     DrawText("...", x0, yPos, 10, LIME);
                     yPos += 15;
                 }
-                
-                if (i < 20) {
+
+                if (i < 20)
+                {
                     DrawText(TextFormat("Decal #%d", i+1), x0, yPos, 10, LIME);
                     DrawText(TextFormat("%d", decalModels[i].meshes[0].vertexCount), x1, yPos, 10, LIME);
                     DrawText(TextFormat("%d", decalModels[i].meshes[0].triangleCount), x2, yPos, 10, LIME);
                     yPos += 15;
                 }
-                
+
                 vertexCount += decalModels[i].meshes[0].vertexCount;
                 triangleCount += decalModels[i].meshes[0].triangleCount;
             }
-            
+
             DrawText("TOTAL", x0, yPos, 10, LIME);
             DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
             DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
@@ -243,23 +247,18 @@ int main(void)
 
             DrawText("Hold RMB to move camera", 10, 430, 10, GRAY);
             DrawText("(c) Character model and texture from kenney.nl", screenWidth - 260, screenHeight - 20, 10, GRAY);
-            
+
             Rectangle rect = (Rectangle){ 10, screenHeight - 100, 100, 60 };
-            
-            if (Button(rect, showModel ? "Hide Model" : "Show Model")) {
-                showModel = !showModel;
-            }
-            
+
+            if (Button(rect, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
+
             rect.x += rect.width + 10;
-            
-            if (Button(rect, "Clear Decals")) {
-                for (int i = 0; i < decalCount; i++)
-                {
-                    UnloadModel(decalModels[i]);
-                }
+
+            if (Button(rect, "Clear Decals"))
+            {
+                for (int i = 0; i < decalCount; i++) UnloadModel(decalModels[i]);
                 decalCount = 0;
             }
-            
 
             DrawFPS(10, 10);
 
@@ -271,15 +270,13 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModel(model);
     UnloadTexture(modelTexture);
-    
-    for (int i = 0; i < decalCount; i++) {
-        UnloadModel(decalModels[i]);
-    }
+
+    // Unload decal models
+    for (int i = 0; i < decalCount; i++) UnloadModel(decalModels[i]);
 
     UnloadTexture(decalTexture);
-    
-    // Free the data for decal generation
-    FreeDecalMeshData();
+
+    FreeDecalMeshData();        // Free the data for decal generation
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -298,21 +295,21 @@ static void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3])
     {
         int newVertexCapacity = (1 + (mb->vertexCapacity/256))*256;
         Vector3 *newVertices = (Vector3 *)MemAlloc(newVertexCapacity*sizeof(Vector3));
-        
+
         if (mb->vertexCapacity > 0)
         {
             memcpy(newVertices, mb->vertices, mb->vertexCount*sizeof(Vector3));
             MemFree(mb->vertices);
         }
-        
+
         mb->vertices = newVertices;
         mb->vertexCapacity = newVertexCapacity;
     }
-    
+
     // Add 3 vertices
     int index = mb->vertexCount;
     mb->vertexCount += 3;
-    
+
     for (int i = 0; i < 3; i++) mb->vertices[index+i] = vertices[i];
 }
 
@@ -328,7 +325,7 @@ static void FreeMeshBuilder(MeshBuilder *mb)
 static Mesh BuildMesh(MeshBuilder *mb)
 {
     Mesh outMesh = { 0 };
-    
+
     outMesh.vertexCount = mb->vertexCount;
     outMesh.triangleCount = mb->vertexCount/3;
     outMesh.vertices = MemAlloc(outMesh.vertexCount*3*sizeof(float));
@@ -339,16 +336,16 @@ static Mesh BuildMesh(MeshBuilder *mb)
         outMesh.vertices[3*i+0] = mb->vertices[i].x;
         outMesh.vertices[3*i+1] = mb->vertices[i].y;
         outMesh.vertices[3*i+2] = mb->vertices[i].z;
-        
+
         if (mb->uvs)
         {
             outMesh.texcoords[2*i+0] = mb->uvs[i].x;
             outMesh.texcoords[2*i+1] = mb->uvs[i].y;
         }
     }
-    
+
     UploadMesh(&outMesh, false);
-    
+
     return outMesh;
 }
 
@@ -364,22 +361,24 @@ static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s)
     return position;
 }
 
+// Generate mesh decals for provided model
 static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, float decalOffset)
 {
     // We're going to use these to build up our decal meshes
     // They'll resize automatically as we go, we'll free them at the end
     static MeshBuilder meshBuilders[2] = { 0 };
-    
+
     // Ugly way of telling us to free the static MeshBuilder data
-    if (inputModel.meshCount == -1) {
+    if (inputModel.meshCount == -1)
+    {
         FreeMeshBuilder(&meshBuilders[0]);
         FreeMeshBuilder(&meshBuilders[1]);
-        return (Mesh){0};
+        return (Mesh){ 0 };
     }
-    
+
     // We're going to need the inverse matrix
     Matrix invProj = MatrixInvert(projection);
-            
+
     // Reset the mesh builders
     meshBuilders[0].vertexCount = 0;
     meshBuilders[1].vertexCount = 0;
@@ -395,7 +394,7 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
         for (int tri = 0; tri < mesh.triangleCount; tri++)
         {
             Vector3 vertices[3] = { 0 };
-            
+
             // The way we calculate the vertices of the mesh triangle
             // depend on whether the mesh vertices are indexed or not
             if (mesh.indices == 0)
@@ -420,7 +419,7 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
                     };
                 }
             }
-            
+
             // Transform all 3 vertices of the triangle
             // and check if they are inside our decal box
             int insideCount = 0;
@@ -428,13 +427,13 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
             {
                 // To projection space
                 Vector3 v = Vector3Transform(vertices[i], projection);
-                
+
                 if ((fabsf(v.x) < decalSize) || (fabsf(v.y) <= decalSize) || (fabsf(v.z) <= decalSize)) insideCount++;
-                
+
                 // We need to keep the transformed vertex
                 vertices[i] = v;
             }
-            
+
             // If any of them are inside, we add the triangle - we'll clip it later
             if (insideCount > 0) AddTriangleToMeshBuilder(&meshBuilders[mbIndex], vertices);
         }
@@ -454,15 +453,15 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
     {
         // Swap current model builder (so we read from the one we just wrote to)
         mbIndex = 1 - mbIndex;
-        
+
         MeshBuilder *inMesh = &meshBuilders[1 - mbIndex];
         MeshBuilder *outMesh = &meshBuilders[mbIndex];
-        
+
         // Reset write builder
         outMesh->vertexCount = 0;
-        
+
         float s = 0.5f*decalSize;
-        
+
         for (int i = 0; i < inMesh->vertexCount; i += 3)
         {
             Vector3 nV1, nV2, nV3, nV4;
@@ -515,7 +514,7 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
                         nV3 = ClipSegment(inMesh->vertices[i + 2], nV1, planes[face], s);
                         nV4 = ClipSegment(inMesh->vertices[i + 2], nV2, planes[face], s);
                     }
-                    
+
                     AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                     AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV4, nV3, nV2});
                 } break;
@@ -529,7 +528,7 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
                         nV3 = ClipSegment(nV1, inMesh->vertices[i + 2], planes[face], s);
                         AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                     }
-                    
+
                     if (!v2Out)
                     {
                         nV1 = inMesh->vertices[i + 1];
@@ -537,7 +536,7 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
                         nV3 = ClipSegment(nV1, inMesh->vertices[i], planes[face], s);
                         AddTriangleToMeshBuilder(outMesh, (Vector3[3]){nV1, nV2, nV3});
                     }
-                    
+
                     if (!v3Out)
                     {
                         nV1 = inMesh->vertices[i + 2];
@@ -559,21 +558,21 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
     if (theMesh->vertexCount > 0)
     {
         theMesh->uvs = (Vector2 *)MemAlloc(sizeof(Vector2)*theMesh->vertexCount);
-        
+
         for (int i = 0; i < theMesh->vertexCount; i++)
         {
             // Calculate the UVs based on the projected coords
             // They are clipped to (-decalSize .. decalSize) and we want them (0..1)
             theMesh->uvs[i].x = (theMesh->vertices[i].x/decalSize + 0.5f);
             theMesh->uvs[i].y = (theMesh->vertices[i].y/decalSize + 0.5f);
-            
+
             // Tiny nudge in the normal direction so it renders properly over the mesh
             theMesh->vertices[i].z -= decalOffset;
-            
+
             // From projection space to world space
             theMesh->vertices[i] = Vector3Transform(theMesh->vertices[i], invProj);
         }
-        
+
         // Decal model data ready, create the mesh and return it
         return BuildMesh(theMesh);
     }
@@ -584,24 +583,25 @@ static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, f
     }
 }
 
-static bool Button(Rectangle rec, char *label)
+// Button UI element
+static bool Button(Rectangle rec, const char *label)
 {
     Color bgColor = GRAY;
     bool pressed = false;
-    if (CheckCollisionPointRec(GetMousePosition(), rec)) {
+
+    if (CheckCollisionPointRec(GetMousePosition(), rec))
+    {
         bgColor = LIGHTGRAY;
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            pressed = true;
-        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) pressed = true;
     }
-    
+
     DrawRectangleRec(rec, bgColor);
     DrawRectangleLinesEx(rec, 2.0f, DARKGRAY);
-    
+
     float fontSize = 10.0f;
     float textWidth = MeasureText(label, fontSize);
-    
+
     DrawText(label, (int)(rec.x + rec.width*0.5f - textWidth*0.5f), (int)(rec.y + rec.height*0.5f - fontSize*0.5f), fontSize, DARKGRAY);
-    
+
     return pressed;
 }
