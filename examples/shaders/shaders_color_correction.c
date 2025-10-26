@@ -29,7 +29,7 @@
     #define GLSL_VERSION            100
 #endif
 
-#define NUMBER_TEXTURES 4
+#define MAX_TEXTURES 4
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -43,7 +43,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic color correction");
 
-    Texture2D texture[NUMBER_TEXTURES] = {
+    Texture2D texture[MAX_TEXTURES] = {
         LoadTexture("resources/parrots.png"),
         LoadTexture("resources/cat.png"),
         LoadTexture("resources/mandrill.png"),
@@ -53,7 +53,6 @@ int main(void)
     Shader shdrColorCorrection = LoadShader(0, TextFormat("resources/shaders/glsl%i/color_correction.fs", GLSL_VERSION));
 
     int imageIndex = 0;
-
     int resetButtonClicked = 0;
 
     float contrast = 0.0f;
@@ -113,8 +112,8 @@ int main(void)
             DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
             DrawRectangle(580, 0, GetScreenWidth(), GetScreenHeight(), (Color){ 232, 232, 232, 255 });
 
-            // Draw some text
-            DrawText("Basic Color Correction", 585, 40, 19, GRAY);
+            // Draw UI info text
+            DrawText("Color Correction", 585, 40, 20, GRAY);
 
             DrawText("Picture", 602, 75, 10, GRAY);
             DrawText("Press [1] - [4] to Change Picture", 600, 230, 8, GRAY);
@@ -129,6 +128,7 @@ int main(void)
             GuiSliderBar((Rectangle){ 645, 160, 120, 20 }, "Brightness", TextFormat("%.0f", brightness), &brightness, -100.0f, 100.0f);
 
             resetButtonClicked = GuiButton((Rectangle){ 645, 190, 40, 20 }, "Reset");
+            //------------------------------------------------------------------------------
 
             DrawFPS(710, 10);
 
@@ -138,8 +138,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < NUMBER_TEXTURES; ++i)
-        UnloadTexture(texture[i]);
+    for (int i = 0; i < MAX_TEXTURES; ++i) UnloadTexture(texture[i]);
     UnloadShader(shdrColorCorrection);
 
     CloseWindow();        // Close window and OpenGL context
