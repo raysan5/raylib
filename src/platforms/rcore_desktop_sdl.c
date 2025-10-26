@@ -1243,7 +1243,7 @@ void EnableCursor(void)
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
 #if defined(USING_VERSION_SDL3)
-    // NOTE: SDL_ShowCursor() has been split into three functions: 
+    // NOTE: SDL_ShowCursor() has been split into three functions:
     // SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
     SDL_ShowCursor();
 #else

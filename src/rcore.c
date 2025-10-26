@@ -709,7 +709,7 @@ void InitWindow(int width, int height, const char *title)
     //--------------------------------------------------------------
 
     // Initialize rlgl default data (buffers and shaders)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    // NOTE: Current fbo size stored as globals in rlgl for convenience
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
     isGpuReady = true; // Flag to note GPU has been initialized successfully
 
