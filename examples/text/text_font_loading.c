@@ -9,7 +9,7 @@
 *     - TTF/OTF > Sprite font atlas is generated on loading, user can configure
 *                 some of the generation parameters (size, characters to include)
 *     - BMFonts > Angel code font fileformat, sprite font image must be provided
-*                 together with the .fnt file, font generation cna not be configured
+*                 together with the .fnt file, font generation can not be configured
 *     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
 *                 Characters in image must follow some spacing and order rules
 *
