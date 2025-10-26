@@ -562,8 +562,10 @@ SHAPES = \
     shapes/shapes_following_eyes \
     shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
+    shapes/shapes_lines_drawing \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_math_angle_rotation \
     shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
@@ -632,6 +634,7 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
+    models/models_decals \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_heightmap_rendering \

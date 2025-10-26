@@ -1,14 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - Math angle rotation lines
+*   raylib [shapes] example - math angle rotation
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.6
+*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6
 *
 *   Example contributed by Kris (@krispy-snacc) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Example licensed under an unmodified zlib/libpng license
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2025 Kris (@krispy-snacc)
 *
 ********************************************************************************************/
 
@@ -25,7 +28,7 @@ int main(void)
     const int screenWidth = 720;
     const int screenHeight = 400;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - angle rotation lines");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - math angle rotation");
     SetTargetFPS(60);
 
     Vector2 center = { screenWidth / 2.0f, screenHeight / 2.0f };

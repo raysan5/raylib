@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - basic color correction
+*   raylib [shaders] example - color correction
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -9,7 +9,7 @@
 *
 *   Example originally created with raylib 5.6, last time updated with raylib 5.6
 *
-*   Example contributed by Jordi Santonja (@JordSant)
+*   Example contributed by Jordi Santonja (@JordSant) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -41,7 +41,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic color correction");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color correction");
 
     Texture2D texture[MAX_TEXTURES] = {
         LoadTexture("resources/parrots.png"),
