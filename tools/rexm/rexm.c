@@ -926,12 +926,12 @@ int main(int argc, char *argv[])
                     system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
 #endif
                     // Update generated .html metadata
-                    LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exRebuildList[i].name)),
+                    LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exRebuildList[i].name));
                     UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
                         TextFormat("%s/%s/%s.c", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
 
                     // Copy results to web side
-                    LOG("INFO: [%s] Copy example build to raylib.com\n", exRebuildList[i].name),
+                    LOG("INFO: [%s] Copy example build to raylib.com\n", exRebuildList[i].name);
                     FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
                         TextFormat("%s/%s/%s.html", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
                     FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
