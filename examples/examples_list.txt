@@ -163,6 +163,7 @@ shaders;shaders_texture_outline;★★★☆;4.0;4.0;2021;2025;"Serenity Skiff";
 shaders;shaders_texture_waves;★★☆☆;2.5;3.7;2019;2025;"Anata";@anatagawa
 shaders;shaders_julia_set;★★★☆;2.5;4.0;2019;2025;"Josh Colclough";@joshcol9232
 shaders;shaders_mandelbrot_set;★★★☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
+shaders;shaders_color_correction;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 shaders;shaders_eratosthenes_sieve;★★★☆;2.5;4.0;2019;2025;"ProfJski";@ProfJski
 shaders;shaders_fog_rendering;★★★☆;2.5;3.7;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_simple_mask;★★☆☆;2.5;3.7;2019;2025;"Chris Camacho";@chriscamacho

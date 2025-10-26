@@ -655,6 +655,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
