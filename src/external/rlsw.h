@@ -198,6 +198,7 @@ typedef double              GLclampd;
 //#define GL_ATTRIB_STACK_DEPTH             0x0BB0
 //#define GL_CLIENT_ATTRIB_STACK_DEPTH      0x0BB1
 #define GL_COLOR_CLEAR_VALUE                0x0C22
+#define GL_DEPTH_CLEAR_VALUE                0x0B73
 //#define GL_COLOR_WRITEMASK                0x0C23
 //#define GL_CURRENT_INDEX                  0x0B01
 #define GL_CURRENT_COLOR                    0x0B00
@@ -332,6 +333,7 @@ typedef double              GLclampd;
 #define glViewport(x, y, w, h)                      swViewport((x), (y), (w), (h))
 #define glScissor(x, y, w, h)                       swScissor((x), (y), (w), (h))
 #define glClearColor(r, g, b, a)                    swClearColor((r), (g), (b), (a))
+#define glClearDepth(d)                             swClearDepth((d))
 #define glClear(bitmask)                            swClear((bitmask))
 #define glBlendFunc(sfactor, dfactor)               swBlendFunc((sfactor), (dfactor))
 #define glPolygonMode(face, mode)                   swPolygonMode((mode))
@@ -384,7 +386,6 @@ typedef double              GLclampd;
 #define glBindTexture(tr, id)                       swBindTexture((id))
 
 // OpenGL functions NOT IMPLEMENTED by rlsw
-#define glClearDepth(X)                         ((void)(X))
 #define glDepthMask(X)                          ((void)(X))
 #define glColorMask(X,Y,Z,W)                    ((void)(X),(void)(Y),(void)(Z),(void)(W))
 #define glPixelStorei(X,Y)                      ((void)(X),(void)(Y))
@@ -415,6 +416,7 @@ typedef enum {
     SW_VERSION = GL_VERSION,
     SW_EXTENSIONS = GL_EXTENSIONS,
     SW_COLOR_CLEAR_VALUE = GL_COLOR_CLEAR_VALUE,
+    SW_DEPTH_CLEAR_VALUE = GL_DEPTH_CLEAR_VALUE,
     SW_CURRENT_COLOR = GL_CURRENT_COLOR,
     SW_CURRENT_TEXTURE_COORDS = GL_CURRENT_TEXTURE_COORDS,
     SW_POINT_SIZE = GL_POINT_SIZE,
@@ -541,6 +543,7 @@ SWAPI void swViewport(int x, int y, int width, int height);
 SWAPI void swScissor(int x, int y, int width, int height);
 
 SWAPI void swClearColor(float r, float g, float b, float a);
+SWAPI void swClearDepth(float depth);
 SWAPI void swClear(uint32_t bitmask);
 
 SWAPI void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
@@ -822,8 +825,7 @@ typedef struct {
 
 typedef struct {
     sw_framebuffer_t framebuffer;   // Main framebuffer
-    float clearColor[4];            // Color used to clear the screen
-    float clearDepth;               // Depth value used to clear the screen
+    sw_pixel_t clearValue;          // Clear value of the framebuffer
 
     float vpCenter[2];              // Viewport center
     float vpHalf[2];                // Viewport half dimensions
@@ -1300,21 +1302,8 @@ static inline void sw_framebuffer_write_depth(sw_pixel_t *dst, float depth)
 #endif
 }
 
-static inline void sw_framebuffer_fill_color(sw_pixel_t *ptr, int size, const float color[4])
+static inline void sw_framebuffer_fill_color(sw_pixel_t *ptr, int size, const SW_COLOR_TYPE color[SW_COLOR_PACK_COMP])
 {
-#if SW_COLOR_IS_PACKED
-    SW_COLOR_TYPE value[1] = {
-        SW_PACK_COLOR(color[0], color[1], color[2])
-    };
-#else
-    SW_COLOR_TYPE value[4] = {
-        sw_clampi(color[0]*255, 0, 255),
-        sw_clampi(color[1]*255, 0, 255),
-        sw_clampi(color[2]*255, 0, 255),
-        sw_clampi(color[3]*255, 0, 255)
-    };
-#endif
-    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
@@ -1323,7 +1312,7 @@ static inline void sw_framebuffer_fill_color(sw_pixel_t *ptr, int size, const fl
             sw_pixel_t *row = ptr + y*RLSW.framebuffer.width + RLSW.scMin[0];
             for (int x = 0; x < w; x++, row++)
             {
-                for (int i = 0; i < SW_COLOR_PACK_COMP; i++) row->color[i] = value[i];
+                for (int i = 0; i < SW_COLOR_PACK_COMP; i++) row->color[i] = color[i];
             }
         }
     }
@@ -1331,25 +1320,13 @@ static inline void sw_framebuffer_fill_color(sw_pixel_t *ptr, int size, const fl
     {
         for (int i = 0; i < size; i++, ptr++)
         {
-            for (int j = 0; j < SW_COLOR_PACK_COMP; j++) ptr->color[j] = value[j];
+            for (int j = 0; j < SW_COLOR_PACK_COMP; j++) ptr->color[j] = color[j];
         }
     }
 }
 
-static inline void sw_framebuffer_fill_depth(sw_pixel_t *ptr, int size, float depth)
+static inline void sw_framebuffer_fill_depth(sw_pixel_t *ptr, int size, const SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP])
 {
-#if SW_DEPTH_IS_PACKED
-    SW_DEPTH_TYPE value[1] = {
-        SW_PACK_DEPTH(depth)
-    };
-#else
-    SW_DEPTH_TYPE value[3] = {
-        SW_PACK_DEPTH_0(depth),
-        SW_PACK_DEPTH_1(depth),
-        SW_PACK_DEPTH_2(depth)
-    };
-#endif
-    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
@@ -1358,7 +1335,7 @@ static inline void sw_framebuffer_fill_depth(sw_pixel_t *ptr, int size, float de
             sw_pixel_t *row = ptr + y*RLSW.framebuffer.width + RLSW.scMin[0];
             for (int x = 0; x < w; x++, row++)
             {
-                for (int i = 0; i < SW_DEPTH_PACK_COMP; i++) row->depth[i] = value[i];
+                for (int i = 0; i < SW_DEPTH_PACK_COMP; i++) row->depth[i] = depth[i];
             }
         }
     }
@@ -1366,32 +1343,13 @@ static inline void sw_framebuffer_fill_depth(sw_pixel_t *ptr, int size, float de
     {
         for (int i = 0; i < size; i++, ptr++)
         {
-            for (int j = 0; j < SW_DEPTH_PACK_COMP; j++) ptr->depth[j] = value[j];
+            for (int j = 0; j < SW_DEPTH_PACK_COMP; j++) ptr->depth[j] = depth[j];
         }
     }
 }
 
-static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, float color[4], float depth)
+static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, sw_pixel_t value)
 {
-    sw_pixel_t value = { 0 };
-
-#if SW_COLOR_IS_PACKED
-    value.color[0] = SW_PACK_COLOR(color[0], color[1], color[2]);
-#else
-    value.color[0] = sw_clampi(color[0]*255, 0, 255);
-    value.color[1] = sw_clampi(color[1]*255, 0, 255);
-    value.color[2] = sw_clampi(color[2]*255, 0, 255);
-    value.color[3] = sw_clampi(color[3]*255, 0, 255);
-#endif
-
-#if SW_DEPTH_IS_PACKED
-    value.depth[0] = SW_PACK_DEPTH(depth);
-#else
-    value.depth[0] = SW_PACK_DEPTH_0(depth);
-    value.depth[1] = SW_PACK_DEPTH_1(depth);
-    value.depth[2] = SW_PACK_DEPTH_2(depth);
-#endif
-    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
@@ -1411,7 +1369,7 @@ static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, float color[4]
 static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst) \
 {                                                                               \
     const int stride = RLSW.framebuffer.width;                                  \
-    const sw_pixel_t *src = RLSW.framebuffer.pixels + (y*stride + x);         \
+    const sw_pixel_t *src = RLSW.framebuffer.pixels + (y*stride + x);           \
                                                                                 \
     for (int iy = 0; iy < h; iy++) {                                            \
         const sw_pixel_t *line = src;                                           \
@@ -3502,11 +3460,9 @@ bool swInit(int w, int h)
     RLSW.freeTextureIds = (uint32_t *)SW_MALLOC(SW_MAX_TEXTURES*sizeof(uint32_t));
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
-    RLSW.clearColor[0] = 0.0f;
-    RLSW.clearColor[1] = 0.0f;
-    RLSW.clearColor[2] = 0.0f;
-    RLSW.clearColor[3] = 1.0f;
-    RLSW.clearDepth = 1.0f;
+    const float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    sw_framebuffer_write_color(&RLSW.clearValue, clearColor);
+    sw_framebuffer_write_depth(&RLSW.clearValue, 1.0f);
 
     RLSW.currentMatrixMode = SW_MODELVIEW;
     RLSW.currentMatrix = &RLSW.stackModelview[0];
@@ -3716,10 +3672,11 @@ void swGetFloatv(SWget name, float *v)
     {
         case SW_COLOR_CLEAR_VALUE:
         {
-            v[0] = RLSW.clearColor[0];
-            v[1] = RLSW.clearColor[1];
-            v[2] = RLSW.clearColor[2];
-            v[3] = RLSW.clearColor[3];
+            sw_framebuffer_read_color(v, &RLSW.clearValue);
+        } break;
+        case SW_DEPTH_CLEAR_VALUE:
+        {
+            v[0] = sw_framebuffer_read_depth(&RLSW.clearValue);
         } break;
         case SW_CURRENT_COLOR:
         {
@@ -3827,10 +3784,13 @@ void swScissor(int x, int y, int width, int height)
 
 void swClearColor(float r, float g, float b, float a)
 {
-    RLSW.clearColor[0] = r;
-    RLSW.clearColor[1] = g;
-    RLSW.clearColor[2] = b;
-    RLSW.clearColor[3] = a;
+    float v[4] = { r, g, b, a };
+    sw_framebuffer_write_color(&RLSW.clearValue, v);
+}
+
+void swClearDepth(float depth)
+{
+    sw_framebuffer_write_depth(&RLSW.clearValue, depth);
 }
 
 void swClear(uint32_t bitmask)
@@ -3839,15 +3799,15 @@ void swClear(uint32_t bitmask)
 
     if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT))
     {
-        sw_framebuffer_fill(RLSW.framebuffer.pixels, size, RLSW.clearColor, RLSW.clearDepth);
+        sw_framebuffer_fill(RLSW.framebuffer.pixels, size, RLSW.clearValue);
     }
     else if (bitmask & (SW_COLOR_BUFFER_BIT))
     {
-        sw_framebuffer_fill_color(RLSW.framebuffer.pixels, size, RLSW.clearColor);
+        sw_framebuffer_fill_color(RLSW.framebuffer.pixels, size, RLSW.clearValue.color);
     }
     else if (bitmask & SW_DEPTH_BUFFER_BIT)
     {
-        sw_framebuffer_fill_depth(RLSW.framebuffer.pixels, size, RLSW.clearDepth);
+        sw_framebuffer_fill_depth(RLSW.framebuffer.pixels, size, RLSW.clearValue.depth);
     }
 }
 
