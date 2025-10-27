@@ -1313,7 +1313,7 @@ int InitPlatform(void)
         CORE.Window.screen.height = CORE.Window.display.height;
     }
 
-    const bool allowInterlaced = FLAG_IS_SET(CORE.Window.flags. FLAG_INTERLACED_HINT);
+    const bool allowInterlaced = FLAG_IS_SET(CORE.Window.flags, FLAG_INTERLACED_HINT);
     const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
 
     // Try to find an exact matching mode

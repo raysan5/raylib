@@ -1368,7 +1368,7 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if ((CORE.Window.eventWaiting) || FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) && !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN))
+    if ((CORE.Window.eventWaiting) || (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) && !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN)))
     {
         SDL_WaitEvent(NULL);
         CORE.Time.previous = GetTime();
@@ -1902,9 +1902,9 @@ int InitPlatform(void)
 
     //if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN))   FLAG_SET(flags, SDL_WINDOW_HIDDEN);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, SDL_WINDOW_BORDERLESS);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE))   FLAG_SET(flags, SDL_WINDOW_RESIZABLE);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED))   FLAG_SET(flags, SDL_WINDOW_MINIMIZED);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))   FLAG_SET(flags, SDL_WINDOW_MAXIMIZED);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) FLAG_SET(flags, SDL_WINDOW_RESIZABLE);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) FLAG_SET(flags, SDL_WINDOW_MINIMIZED);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(flags, SDL_WINDOW_MAXIMIZED);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED))
     {
         FLAG_CLEAR(flags, SDL_WINDOW_INPUT_FOCUS);

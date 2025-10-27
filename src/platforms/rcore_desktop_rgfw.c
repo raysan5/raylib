@@ -1281,11 +1281,11 @@ int InitPlatform(void)
     }
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, RGFW_windowNoBorder);
-    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE))  FLAG_SET(flags, RGFW_windowNoResize);
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) FLAG_SET(flags, RGFW_windowNoResize);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) FLAG_SET(flags, RGFW_windowTransparent);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))    FLAG_SET(flags, RGFW_windowFullscreen);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN))      FLAG_SET(flags, RGFW_windowHide);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))   FLAG_SET(flags, RGFW_windowMaximize);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) FLAG_SET(flags, RGFW_windowFullscreen);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, RGFW_windowHide);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(flags, RGFW_windowMaximize);
 
     // NOTE: Some OpenGL context attributes must be set before window creation
     // Check selection OpenGL version
