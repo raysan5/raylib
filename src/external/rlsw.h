@@ -1271,12 +1271,32 @@ static inline void sw_framebuffer_read_color8(uint8_t dst[4], const sw_pixel_t *
 #endif
 }
 
+static inline float sw_framebuffer_read_depth(const sw_pixel_t *src)
+{
+#if SW_DEPTH_IS_PACKED
+    return src->depth[0]*SW_DEPTH_SCALE;
+#else
+    return SW_UNPACK_DEPTH(src->depth)*SW_DEPTH_SCALE;
+#endif
+}
+
 static inline void sw_framebuffer_write_color(sw_pixel_t *dst, const float src[4])
 {
 #if SW_COLOR_IS_PACKED
     dst->color[0] = SW_PACK_COLOR(src[0], src[1], src[2]);
 #else
     sw_float_to_unorm8_simd(dst->color, src);
+#endif
+}
+
+static inline void sw_framebuffer_write_depth(sw_pixel_t *dst, float depth)
+{
+#if SW_DEPTH_IS_PACKED
+    dst->depth[0] = SW_PACK_DEPTH(depth);
+#else
+    dst->depth[0] = SW_PACK_DEPTH_0(depth);
+    dst->depth[1] = SW_PACK_DEPTH_1(depth);
+    dst->depth[2] = SW_PACK_DEPTH_2(depth);
 #endif
 }
 
@@ -1314,26 +1334,6 @@ static inline void sw_framebuffer_fill_color(sw_pixel_t *ptr, int size, const fl
             for (int j = 0; j < SW_COLOR_PACK_COMP; j++) ptr->color[j] = value[j];
         }
     }
-}
-
-static inline float sw_framebuffer_read_depth(const sw_pixel_t *src)
-{
-#if SW_DEPTH_IS_PACKED
-    return src->depth[0]*SW_DEPTH_SCALE;
-#else
-    return SW_UNPACK_DEPTH(src->depth)*SW_DEPTH_SCALE;
-#endif
-}
-
-static inline void sw_framebuffer_write_depth(sw_pixel_t *dst, float depth)
-{
-#if SW_DEPTH_IS_PACKED
-    dst->depth[0] = SW_PACK_DEPTH(depth);
-#else
-    dst->depth[0] = SW_PACK_DEPTH_0(depth);
-    dst->depth[1] = SW_PACK_DEPTH_1(depth);
-    dst->depth[2] = SW_PACK_DEPTH_2(depth);
-#endif
 }
 
 static inline void sw_framebuffer_fill_depth(sw_pixel_t *ptr, int size, float depth)
@@ -1411,7 +1411,7 @@ static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, float color[4]
 static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst) \
 {                                                                               \
     const int stride = RLSW.framebuffer.width;                                  \
-    const sw_pixel_t *src = RLSW.framebuffer.pixels + (y * stride + x);         \
+    const sw_pixel_t *src = RLSW.framebuffer.pixels + (y*stride + x);         \
                                                                                 \
     for (int iy = 0; iy < h; iy++) {                                            \
         const sw_pixel_t *line = src;                                           \
@@ -1539,17 +1539,17 @@ static inline void sw_framebuffer_blit_to_##name(                               
     const sw_pixel_t *srcBase = RLSW.framebuffer.pixels;                        \
     const int fbWidth = RLSW.framebuffer.width;                                 \
                                                                                 \
-    const uint32_t xScale = ((uint32_t)wSrc << 16) / (uint32_t)wDst;            \
-    const uint32_t yScale = ((uint32_t)hSrc << 16) / (uint32_t)hDst;            \
+    const uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;              \
+    const uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;              \
                                                                                 \
     for (int dy = 0; dy < hDst; dy++) {                                         \
-        uint32_t yFix = ((uint32_t)ySrc << 16) + dy * yScale;                   \
+        uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                     \
         int sy = yFix >> 16;                                                    \
-        const sw_pixel_t *srcLine = srcBase + sy * fbWidth + xSrc;              \
+        const sw_pixel_t *srcLine = srcBase + sy*fbWidth + xSrc;                \
                                                                                 \
         const sw_pixel_t *srcPtr = srcLine;                                     \
         for (int dx = 0; dx < wDst; dx++) {                                     \
-            uint32_t xFix = dx * xScale;                                        \
+            uint32_t xFix = dx*xScale;                                          \
             int sx = xFix >> 16;                                                \
             const sw_pixel_t *pixel = srcPtr + sx;                              \
             uint8_t color[4];                                                   \
@@ -4420,7 +4420,7 @@ void swDrawArrays(SWdraw mode, int offset, int count)
             float u, v;
             if (texcoords)
             {
-                int idx = 2 * i;
+                int idx = 2*i;
                 u = texcoords[idx];
                 v = texcoords[idx + 1];
             }
@@ -4431,8 +4431,8 @@ void swDrawArrays(SWdraw mode, int offset, int count)
             }
 
             float texcoord[2];
-            texcoord[0] = texMatrix[0] * u + texMatrix[4] * v + texMatrix[12];
-            texcoord[1] = texMatrix[1] * u + texMatrix[5] * v + texMatrix[13];
+            texcoord[0] = texMatrix[0]*u + texMatrix[4]*v + texMatrix[12];
+            texcoord[1] = texMatrix[1]*u + texMatrix[5]*v + texMatrix[13];
 
             float color[4] = {
                 defaultColor[0],
@@ -4443,14 +4443,14 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
             if (colors)
             {
-                int idx = 4 * i;
+                int idx = 4*i;
                 color[0] *= (float)colors[idx]*SW_INV_255;
                 color[1] *= (float)colors[idx + 1]*SW_INV_255;
                 color[2] *= (float)colors[idx + 2]*SW_INV_255;
                 color[3] *= (float)colors[idx + 3]*SW_INV_255;
             }
 
-            int idx = 3 * i;
+            int idx = 3*i;
             float position[4] = {
                 positions[idx],
                 positions[idx + 1],
@@ -4516,7 +4516,7 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
             float u, v;
             if (texcoords)
             {
-                int idx = 2 * index;
+                int idx = 2*index;
                 u = texcoords[idx];
                 v = texcoords[idx + 1];
             }
@@ -4527,8 +4527,8 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
             }
 
             float texcoord[2];
-            texcoord[0] = texMatrix[0] * u + texMatrix[4] * v + texMatrix[12];
-            texcoord[1] = texMatrix[1] * u + texMatrix[5] * v + texMatrix[13];
+            texcoord[0] = texMatrix[0]*u + texMatrix[4]*v + texMatrix[12];
+            texcoord[1] = texMatrix[1]*u + texMatrix[5]*v + texMatrix[13];
 
             float color[4] = {
                 defaultColor[0],
@@ -4539,14 +4539,14 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 
             if (colors)
             {
-                int idx = 4 * index;
+                int idx = 4*index;
                 color[0] *= (float)colors[idx]*SW_INV_255;
                 color[1] *= (float)colors[idx + 1]*SW_INV_255;
                 color[2] *= (float)colors[idx + 2]*SW_INV_255;
                 color[3] *= (float)colors[idx + 3]*SW_INV_255;
             }
 
-            int idx = 3 * index;
+            int idx = 3*index;
             float position[4] = {
                 positions[idx],
                 positions[idx + 1],
