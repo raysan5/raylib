@@ -1365,6 +1365,31 @@ static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, sw_pixel_t val
     }
 }
 
+static inline void sw_framebuffer_copy_fast(void* dst)
+{
+    int size = RLSW.framebuffer.width * RLSW.framebuffer.height;
+    const sw_pixel_t *pixels = RLSW.framebuffer.pixels;
+
+#if SW_COLOR_BUFFER_BITS == 8
+    uint8_t *dst8 = (uint8_t*)dst;
+    for (int i = 0; i < size; i++) dst8[i] = pixels[i].color[0];
+#elif SW_COLOR_BUFFER_BITS == 16
+    uint16_t *dst16 = (uint16_t*)dst;
+    for (int i = 0; i < size; i++) dst16[i] = *(uint16_t*)pixels[i].color;
+#else // 32 bits
+    uint32_t *dst32 = (uint32_t*)dst;
+    #if SW_GL_FRAMEBUFFER_COPY_BGRA
+        for (int i = 0; i < size; i++)
+        {
+            const uint8_t *c = pixels[i].color;
+            dst32[i] = (uint32_t)c[2] | ((uint32_t)c[1] << 8) | ((uint32_t)c[0] << 16) | ((uint32_t)c[3] << 24);
+        }
+    #else // RGBA
+        for (int i = 0; i < size; i++) dst32[i] = *(uint32_t*)pixels[i].color;
+    #endif
+#endif
+}
+
 #define DEFINE_FRAMEBUFFER_COPY_BEGIN(name, DST_PTR_T)                          \
 static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst) \
 {                                                                               \
@@ -3545,23 +3570,33 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
 {
     sw_pixelformat_t pFormat = (sw_pixelformat_t)sw_get_pixel_format(format, type);
 
-    if (w <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
-
-    if (h <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
+    if (w <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
+    if (h <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
     if (w > RLSW.framebuffer.width) w = RLSW.framebuffer.width;
     if (h > RLSW.framebuffer.height) h = RLSW.framebuffer.height;
 
     x = sw_clampi(x, 0, w);
     y = sw_clampi(y, 0, h);
+
+    if (x >= w || y >= h) return;
+
+    if (x == 0 && y == 0 && w == RLSW.framebuffer.width && h == RLSW.framebuffer.height)
+    {
+        #if SW_COLOR_BUFFER_BITS == 32
+            if (pFormat == SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+            {
+                sw_framebuffer_copy_fast(pixels);
+                return;
+            }
+        #elif SW_COLOR_BUFFER_BITS == 16
+            if (pFormat == SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5)
+            {
+                sw_framebuffer_copy_fast(pixels);
+                return;
+            }
+        #endif
+    }
 
     switch (pFormat)
     {
@@ -3589,17 +3624,13 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
 {
     sw_pixelformat_t pFormat = (sw_pixelformat_t)sw_get_pixel_format(format, type);
 
-    if (wSrc <= 0)
+    if (xDst == xSrc && yDst == ySrc && wDst == wSrc && hDst == hSrc)
     {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
+        swCopyFramebuffer(xSrc, ySrc, wSrc, hSrc, format, type, pixels);
     }
 
-    if (hSrc <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
+    if (wSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
+    if (hSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
     if (wSrc > RLSW.framebuffer.width) wSrc = RLSW.framebuffer.width;
     if (hSrc > RLSW.framebuffer.height) hSrc = RLSW.framebuffer.height;
