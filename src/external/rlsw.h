@@ -531,6 +531,7 @@ SWAPI void swClose(void);
 SWAPI bool swResizeFramebuffer(int w, int h);
 SWAPI void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
+SWAPI void *swGetColorBuffer(int *w, int *h);
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -610,10 +611,18 @@ SWAPI void swBindTexture(uint32_t id);
 #define RLSW_IMPLEMENTATION
 #if defined(RLSW_IMPLEMENTATION)
 
-#include <stdalign.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <math.h>           // Required for: floorf(), fabsf()
+
+#if defined(_MSC_VER)
+    #define ALIGNAS(x) __declspec(align(x))
+#elif defined(__GNUC__) || defined(__clang__)
+    #define ALIGNAS(x) __attribute__((aligned(x)))
+#else
+    #include <stdalign.h>
+    #define ALIGNAS(x) alignas(x)
+#endif
 
 #if defined(__FMA__) && defined(__AVX2__)
     #define SW_HAS_FMA_AVX2
@@ -687,8 +696,8 @@ SWAPI void swBindTexture(uint32_t id);
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
-#define SW_COLOR_PIXEL_SIZE     (SW_COLOR_BUFFER_BITS/8)
-#define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS/8)
+#define SW_COLOR_PIXEL_SIZE     4  //(SW_COLOR_BUFFER_BITS >> 3)
+#define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS >> 3)
 
 #if (SW_COLOR_BUFFER_BITS == 8)
     #define SW_COLOR_TYPE uint8_t
@@ -817,14 +826,15 @@ typedef struct {
     float ty;                   // Texel height
 } sw_texture_t;
 
-typedef struct {
-    alignas(SW_COLOR_PIXEL_SIZE)
+// Pixel data type
+// WARNING: ALIGNAS() macro requires a constant value (not operand)
+typedef ALIGNAS(SW_COLOR_PIXEL_SIZE) struct {
     SW_COLOR_TYPE color[SW_COLOR_PACK_COMP];
     SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP];
 } sw_pixel_t;
 
 typedef struct {
-    sw_pixel_t* pixels;
+    sw_pixel_t *pixels;
     int width;
     int height;
     int allocSz;
@@ -3684,6 +3694,14 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
             RLSW.errCode = SW_INVALID_ENUM;
             break;
     }
+}
+
+void *swGetColorBuffer(int *w, int *h)
+{
+    if (w) *w = RLSW.framebuffer.width;
+    if (h) *h = RLSW.framebuffer.height;
+
+    return (void *)RLSW.framebuffer.pixels->color;
 }
 
 void swEnable(SWstate state)
