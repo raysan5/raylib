@@ -2624,25 +2624,38 @@ static inline void sw_quad_clip_and_project(void)
 
 static inline bool sw_quad_is_axis_aligned(void)
 {
-    int horizontal = 0;
-    int vertical = 0;
-
+    // Reject quads with perspective projection
+    // The fast path assumes affine (non-perspective) quads,
+    // so we require all vertices to have homogeneous w = 1.0
     for (int i = 0; i < 4; i++)
     {
         if (RLSW.vertexBuffer[i].homogeneous[3] != 1.0f) return false;
-
-        const float *v0 = RLSW.vertexBuffer[i].position;
-        const float *v1 = RLSW.vertexBuffer[(i + 1)%4].position;
-
-        float dx = v1[0] - v0[0];
-        float dy = v1[1] - v0[1];
-
-        if ((fabsf(dx) > 1e-6f) && (fabsf(dy) < 1e-6f)) horizontal++;
-        else if ((fabsf(dy) > 1e-6f) && (fabsf(dx) < 1e-6f)) vertical++;
-        else return false; // Diagonal edge -> not axis-aligned
     }
 
-    return ((horizontal == 2) && (vertical == 2));
+    // Epsilon tolerance in screen space (pixels)
+    const float epsilon = 0.5f;
+
+    // Fetch screen-space positions for the four quad vertices
+    const float *p0 = RLSW.vertexBuffer[0].screen;
+    const float *p1 = RLSW.vertexBuffer[1].screen;
+    const float *p2 = RLSW.vertexBuffer[2].screen;
+    const float *p3 = RLSW.vertexBuffer[3].screen;
+
+    // Compute edge vectors between consecutive vertices
+    // These define the four sides of the quad in screen space
+    float dx01 = p1[0] - p0[0], dy01 = p1[1] - p0[1];
+    float dx12 = p2[0] - p1[0], dy12 = p2[1] - p1[1];
+    float dx23 = p3[0] - p2[0], dy23 = p3[1] - p2[1];
+    float dx30 = p0[0] - p3[0], dy30 = p0[1] - p3[1];
+
+    // Each edge must be either horizontal or vertical within epsilon tolerance
+    // If any edge deviates significantly from either axis, the quad is not axis-aligned
+    if (!((fabsf(dy01) < epsilon) || (fabsf(dx01) < epsilon))) return false;
+    if (!((fabsf(dy12) < epsilon) || (fabsf(dx12) < epsilon))) return false;
+    if (!((fabsf(dy23) < epsilon) || (fabsf(dx23) < epsilon))) return false;
+    if (!((fabsf(dy30) < epsilon) || (fabsf(dx30) < epsilon))) return false;
+
+    return true;
 }
 
 static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
