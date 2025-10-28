@@ -262,16 +262,16 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # On DRM OpenGL ES 2.0 must be used
-    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+    GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
-    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+    GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_ES3
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
-    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+    GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
 endif
 
 # Define default C compiler and archiver to pack library: CC, AR
