@@ -531,6 +531,7 @@ SWAPI void swClose(void);
 SWAPI bool swResizeFramebuffer(int w, int h);
 SWAPI void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
+SWAPI void *swGetColorBuffer(int *w, int *h);
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -3693,6 +3694,14 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
             RLSW.errCode = SW_INVALID_ENUM;
             break;
     }
+}
+
+void *swGetColorBuffer(int *w, int *h)
+{
+    if (w) *w = RLSW.framebuffer.width;
+    if (h) *h = RLSW.framebuffer.height;
+
+    return (void *)RLSW.framebuffer.pixels->color;
 }
 
 void swEnable(SWstate state)
