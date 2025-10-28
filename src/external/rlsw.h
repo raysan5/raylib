@@ -1092,15 +1092,15 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
     __m128i clamped = _mm_cvtps_epi32(scaled);      // f32 -> s32 (truncated)
-    clamped = _mm_packus_epi32(clamped, clamped);   // s32 -> u16 (saturated < 0 à 0)
-    clamped = _mm_packus_epi16(clamped, clamped);   // u16 -> u8 (saturated > 255 à 255)
+    clamped = _mm_packus_epi32(clamped, clamped);   // s32 -> u16 (saturated < 0 to 0)
+    clamped = _mm_packus_epi16(clamped, clamped);   // u16 -> u8 (saturated > 255 to 255)
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 #elif defined(SW_HAS_SSE2)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
     __m128i clamped = _mm_cvtps_epi32(scaled);      // f32 -> s32 (truncated)
     clamped = _mm_packs_epi32(clamped, clamped);    // s32 -> s16 (saturated)
-    clamped = _mm_packus_epi16(clamped, clamped);   // s16 -> u8 (saturated < 0 à 0)
+    clamped = _mm_packus_epi16(clamped, clamped);   // s16 -> u8 (saturated < 0 to 0)
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 #else
     for (int i = 0; i < 4; i++)
