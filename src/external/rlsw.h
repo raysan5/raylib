@@ -813,6 +813,7 @@ typedef struct {
 } sw_texture_t;
 
 typedef struct {
+    alignas(SW_COLOR_PIXEL_SIZE)
     SW_COLOR_TYPE color[SW_COLOR_PACK_COMP];
     SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP];
 } sw_pixel_t;
@@ -1358,7 +1359,7 @@ static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, sw_pixel_t val
 
 static inline void sw_framebuffer_copy_fast(void* dst)
 {
-    int size = RLSW.framebuffer.width * RLSW.framebuffer.height;
+    int size = RLSW.framebuffer.width*RLSW.framebuffer.height;
     const sw_pixel_t *pixels = RLSW.framebuffer.pixels;
 
 #if SW_COLOR_BUFFER_BITS == 8
