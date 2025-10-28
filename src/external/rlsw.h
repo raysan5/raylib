@@ -531,7 +531,6 @@ SWAPI void swClose(void);
 SWAPI bool swResizeFramebuffer(int w, int h);
 SWAPI void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
-SWAPI void *swGetColorBuffer(int *w, int *h);
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -3671,11 +3670,6 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
 {
     sw_pixelformat_t pFormat = (sw_pixelformat_t)sw_get_pixel_format(format, type);
 
-    if (xDst == xSrc && yDst == ySrc && wDst == wSrc && hDst == hSrc)
-    {
-        swCopyFramebuffer(xSrc, ySrc, wSrc, hSrc, format, type, pixels);
-    }
-
     if (wSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
     if (hSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
@@ -3684,6 +3678,13 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
 
     xSrc = sw_clampi(xSrc, 0, wSrc);
     ySrc = sw_clampi(ySrc, 0, hSrc);
+
+    // Check if the sizes are identical after clamping the source to avoid unexpected issues
+    // REVIEW: This repeats the operations if true, so we could make a copy function without these checks
+    if (xDst == xSrc && yDst == ySrc && wDst == wSrc && hDst == hSrc)
+    {
+        swCopyFramebuffer(xSrc, ySrc, wSrc, hSrc, format, type, pixels);
+    }
 
     switch (pFormat)
     {
@@ -3705,14 +3706,6 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
             RLSW.errCode = SW_INVALID_ENUM;
             break;
     }
-}
-
-void *swGetColorBuffer(int *w, int *h)
-{
-    if (w) *w = RLSW.framebuffer.width;
-    if (h) *h = RLSW.framebuffer.height;
-
-    return (void *)RLSW.framebuffer.pixels->color;
 }
 
 void swEnable(SWstate state)
