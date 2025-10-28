@@ -1096,6 +1096,7 @@ RLAPI int *LoadRandomSequence(unsigned int count, int min, int max); // Load ran
 RLAPI void UnloadRandomSequence(int *sequence);                   // Unload random values sequence
 
 // Misc. functions
+RLAPI void SetMediaPath(char *path);                        // Set media path for external files loading
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)

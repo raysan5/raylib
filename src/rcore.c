@@ -317,7 +317,8 @@ typedef struct CoreData {
 
     } Window;
     struct {
-        const char *basePath;               // Base path for data storage
+        const char *basePath;                 // Base path for data storage
+        char mediaPath[MAX_FILEPATH_LENGTH];  // Media path for data storage
 
     } Storage;
     struct {
@@ -1011,7 +1012,7 @@ void EndDrawing(void)
 
                 MsfGifResult result = msf_gif_end(&gifState);
 
-                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, (unsigned int)result.dataSize);
+                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.mediaPath, screenshotCounter), result.data, (unsigned int)result.dataSize);
                 msf_gif_free(result);
 
                 TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
@@ -1909,7 +1910,7 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.mediaPath, fileName));
 
     ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
@@ -1919,6 +1920,11 @@ void TakeScreenshot(const char *fileName)
 #else
     TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
 #endif
+}
+
+void SetMediaPath(char *path)
+{
+    snprintf(CORE.Storage.mediaPath, MAX_FILEPATH_LENGTH, "%s", path);
 }
 
 // Setup window configuration flags (view FLAGS)

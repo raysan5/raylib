@@ -818,6 +818,7 @@ int InitPlatform(void)
     InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);   // Initialize assets manager
 
     CORE.Storage.basePath = platform.app->activity->internalDataPath;   // Define base path for storage
+    strncpy(CORE.Storage.mediaPath, CORE.Storage.basePath, MAX_FILEPATH_LENGTH - 1);   // Define base path for media storage
     //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Initialized successfully");

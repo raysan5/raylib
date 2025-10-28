@@ -2116,6 +2116,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     // Define base path for storage
     CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();
+    strncpy(CORE.Storage.mediaPath, CORE.Storage.basePath, MAX_FILEPATH_LENGTH - 1);
     //----------------------------------------------------------------------------
 
 #if defined(USING_VERSION_SDL3)

@@ -1394,6 +1394,7 @@ int InitPlatform(void)
     // Initialize storage system
     //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
+    strncpy(CORE.Storage.mediaPath, CORE.Storage.basePath, MAX_FILEPATH_LENGTH - 1);
     //----------------------------------------------------------------------------
 
 #if defined(RGFW_WAYLAND)

@@ -597,6 +597,7 @@ int InitPlatform(void)
     // TODO: Initialize storage system
     //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
+    strncpy(CORE.Storage.mediaPath, CORE.Storage.basePath, MAX_FILEPATH_LENGTH - 1);
     //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
