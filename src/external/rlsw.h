@@ -622,6 +622,18 @@ SWAPI void swBindTexture(uint32_t id);
     #define SW_ALIGN(x) // Do nothing if not available
 #endif
 
+#if defined(_M_X64) || defined(__x86_64__)
+    #define SW_ARCH_X86_64
+#elif defined(_M_IX86) || defined(__i386__)
+    #define SW_ARCH_X86
+#elif defined(_M_ARM) || defined(__arm__)
+    #define SW_ARCH_ARM32
+#elif defined(_M_ARM64) || defined(__aarch64__)
+    #define SW_ARCH_ARM64
+#elif defined(__riscv)
+    #define SW_ARCH_RISCV
+#endif
+
 #if defined(__FMA__) && defined(__AVX2__)
     #define SW_HAS_FMA_AVX2
     #include <immintrin.h>
@@ -696,6 +708,13 @@ SWAPI void swBindTexture(uint32_t id);
 
 #define SW_COLOR_PIXEL_SIZE     (SW_COLOR_BUFFER_BITS >> 3)
 #define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS >> 3)
+#define SW_PIXEL_SIZE           (SW_COLOR_PIXEL_SIZE + SW_DEPTH_PIXEL_SIZE)
+
+#if (SW_PIXEL_SIZE <= 4)
+    #define SW_PIXEL_ALIGNMENT 4
+#else // if (SW_PIXEL_SIZE <= 8)
+    #define SW_PIXEL_ALIGNMENT 8
+#endif
 
 #if (SW_COLOR_BUFFER_BITS == 8)
     #define SW_COLOR_TYPE uint8_t
@@ -825,9 +844,12 @@ typedef struct {
 } sw_texture_t;
 
 // Pixel data type
-typedef SW_ALIGN(SW_COLOR_PIXEL_SIZE) struct {
+typedef SW_ALIGN(SW_PIXEL_ALIGNMENT) struct {
     SW_COLOR_TYPE color[SW_COLOR_PACK_COMP];
     SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP];
+#if (SW_PIXEL_SIZE % SW_PIXEL_ALIGNMENT != 0)
+    uint8_t padding[SW_PIXEL_ALIGNMENT - SW_PIXEL_SIZE % SW_PIXEL_ALIGNMENT];
+#endif
 } sw_pixel_t;
 
 typedef struct {
