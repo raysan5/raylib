@@ -64,6 +64,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.5 | [Jonathan Marler](https://github.com/marler8997) |
 | [core_render_texture](core/core_render_texture.c) | <img src="core/core_render_texture.png" alt="core_render_texture" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_viewport_scaling](core/core_viewport_scaling.c) | <img src="core/core_viewport_scaling.png" alt="core_viewport_scaling" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Agnis Aldins](https://github.com/nezvers) |
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
 | [core_directory_files](core/core_directory_files.c) | <img src="core/core_directory_files.png" alt="core_directory_files" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 | [core_highdpi_testbed](core/core_highdpi_testbed.c) | <img src="core/core_highdpi_testbed.png" alt="core_highdpi_testbed" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |

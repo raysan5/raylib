@@ -46,6 +46,7 @@ core;core_automation_events;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";@r
 core;core_high_dpi;★★☆☆;5.0;5.5;2025;2025;"Jonathan Marler";@marler8997
 core;core_render_texture;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
+core;core_viewport_scaling;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldins";@nezvers
 core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoom
 core;core_directory_files;★☆☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
 core;core_highdpi_testbed;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
