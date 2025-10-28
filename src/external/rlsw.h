@@ -610,6 +610,7 @@ SWAPI void swBindTexture(uint32_t id);
 #define RLSW_IMPLEMENTATION
 #if defined(RLSW_IMPLEMENTATION)
 
+#include <stdalign.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <math.h>           // Required for: floorf(), fabsf()
@@ -1081,30 +1082,24 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
 #if defined(SW_HAS_NEON)
     float32x4_t values = vld1q_f32(src);
     float32x4_t scaled = vmulq_n_f32(values, 255.0f);
-    scaled = vminq_f32(vmaxq_f32(scaled, vdupq_n_f32(0.0f)), vdupq_n_f32(255.0f));
-    uint32x4_t clamped = vcvtq_u32_f32(scaled);
-
-    uint16x4_t narrow16 = vmovn_u32(clamped);
-    uint8x8_t narrow8 = vmovn_u16(vcombine_u16(narrow16, narrow16));
-
-    vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8), 0);
+    int32x4_t clamped_s32 = vcvtq_s32_f32(scaled);  // f32 -> s32 (truncated)
+    int16x4_t narrow16_s = vqmovn_s32(clamped_s32); 
+    int16x8_t combined16_s = vcombine_s16(narrow16_s, narrow16_s);
+    uint8x8_t narrow8_u = vqmovun_s16(combined16_s); 
+    vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8_u), 0);
 #elif defined(SW_HAS_SSE41)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
-    scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
-    __m128i clamped = _mm_cvtps_epi32(scaled);
-
-    clamped = _mm_packus_epi32(clamped, clamped);
-    clamped = _mm_packus_epi16(clamped, clamped);
+    __m128i clamped = _mm_cvtps_epi32(scaled);      // f32 -> s32 (truncated)
+    clamped = _mm_packus_epi32(clamped, clamped);   // s32 -> u16 (saturated < 0 à 0)
+    clamped = _mm_packus_epi16(clamped, clamped);   // u16 -> u8 (saturated > 255 à 255)
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 #elif defined(SW_HAS_SSE2)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
-    scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
-    __m128i clamped = _mm_cvtps_epi32(scaled);
-
-    clamped = _mm_packs_epi32(clamped, clamped);
-    clamped = _mm_packus_epi16(clamped, clamped);
+    __m128i clamped = _mm_cvtps_epi32(scaled);      // f32 -> s32 (truncated)
+    clamped = _mm_packs_epi32(clamped, clamped);    // s32 -> s16 (saturated)
+    clamped = _mm_packus_epi16(clamped, clamped);   // s16 -> u8 (saturated < 0 à 0)
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 #else
     for (int i = 0; i < 4; i++)
@@ -1112,7 +1107,7 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
         float val = src[i]*255.0f;
         val = (val > 255.0f)? 255.0f : val;
         val = (val < 0.0f)? 0.0f : val;
-        dst[i] = (uint8_t)(val + 0.5f);
+        dst[i] = (uint8_t)val;
     }
 #endif
 }
@@ -1120,13 +1115,9 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
 static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
 {
 #if defined(SW_HAS_NEON)
-    uint32x4_t bytes = vdupq_n_u32(0);
-    bytes = vld1q_lane_u32((const uint32_t*)src, bytes, 0);
-
-    uint8x8_t bytes8 = vreinterpret_u8_u32(vget_low_u32(bytes));
+    uint8x8_t bytes8 = vld1_u8(src); //< Read 8 bytes, faster, but let's hope we're not at the end of the page (unlikely)...
     uint16x8_t bytes16 = vmovl_u8(bytes8);
     uint32x4_t ints = vmovl_u16(vget_low_u16(bytes16));
-
     float32x4_t floats = vcvtq_f32_u32(ints);
     floats = vmulq_n_f32(floats, SW_INV_255);
     vst1q_f32(dst, floats);
