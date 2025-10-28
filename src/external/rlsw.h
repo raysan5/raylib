@@ -616,12 +616,11 @@ SWAPI void swBindTexture(uint32_t id);
 #include <math.h>           // Required for: floorf(), fabsf()
 
 #if defined(_MSC_VER)
-    #define ALIGNAS(x) __declspec(align(x))
+    #define SW_ALIGN(x) __declspec(align(x))
 #elif defined(__GNUC__) || defined(__clang__)
-    #define ALIGNAS(x) __attribute__((aligned(x)))
+    #define SW_ALIGN(x) __attribute__((aligned(x)))
 #else
-    #include <stdalign.h>
-    #define ALIGNAS(x) alignas(x)
+    #define SW_ALIGN(x) // Do nothing if not available
 #endif
 
 #if defined(__FMA__) && defined(__AVX2__)
@@ -696,7 +695,7 @@ SWAPI void swBindTexture(uint32_t id);
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
-#define SW_COLOR_PIXEL_SIZE     4  //(SW_COLOR_BUFFER_BITS >> 3)
+#define SW_COLOR_PIXEL_SIZE     (SW_COLOR_BUFFER_BITS >> 3)
 #define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS >> 3)
 
 #if (SW_COLOR_BUFFER_BITS == 8)
@@ -827,8 +826,7 @@ typedef struct {
 } sw_texture_t;
 
 // Pixel data type
-// WARNING: ALIGNAS() macro requires a constant value (not operand)
-typedef ALIGNAS(SW_COLOR_PIXEL_SIZE) struct {
+typedef SW_ALIGN(SW_COLOR_PIXEL_SIZE) struct {
     SW_COLOR_TYPE color[SW_COLOR_PACK_COMP];
     SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP];
 } sw_pixel_t;
