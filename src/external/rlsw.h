@@ -1346,7 +1346,7 @@ static inline void sw_framebuffer_write_color(sw_pixel_t *dst, const float src[4
 
 static inline void sw_framebuffer_write_depth(sw_pixel_t *dst, float depth)
 {
-    depth = sw_saturate(depth);
+    depth = sw_saturate(depth); // REVIEW: An overflow can occur in certain circumstances with clipping, and needs to be reviewed...
 
 #if SW_DEPTH_IS_PACKED
     dst->depth[0] = SW_PACK_DEPTH(depth);
