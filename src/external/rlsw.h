@@ -3613,7 +3613,7 @@ bool swInit(int w, int h)
 #if defined(SW_HAS_AVX) || defined(SW_HAS_AVX2)
     SW_LOG("INFO: RLSW: Using SIMD instructions: AVX\n");
 #endif
-#if defined(SW_HAS_SSE) || defined(SW_HAS_SSE2) || defined(SW_HAS_SSE3) || defined(SW_HAS_SSE41) || defined(SW_HAS_SSE42)
+#if defined(SW_HAS_SSE) || defined(SW_HAS_SSE2) || defined(SW_HAS_SSE3) || defined(SW_HAS_SSSE3) || defined(SW_HAS_SSE41) || defined(SW_HAS_SSE42)
     SW_LOG("INFO: RLSW: Using SIMD instructions: SSE\n");
 #endif
 #if defined(SW_HAS_NEON_FMA) || defined(SW_HAS_NEON)
