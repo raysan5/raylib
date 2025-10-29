@@ -486,7 +486,19 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
+    LDLIBS = -lraylib -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl -latomic
+    # TODO: Examples compilation does not define GRAPHICS, is it required?
+    #ifeq ($(GRAPHICS),GRAPHICS_API_OPENGL_ES2)
+    #    LDLIBS += -lGLESv2 -lEGL
+    #endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
+    # Libraries for Windows desktop compilation
+    LDFLAGS += -L..\src
+    LDLIBS = -lraylib -lgdi32 -lwinmm -lshcore
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+        LDLIBS += -lopengl32
+    endif
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Libraries for web (HTML5) compiling
