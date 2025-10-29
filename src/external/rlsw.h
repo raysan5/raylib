@@ -114,11 +114,11 @@
 #endif
 
 #ifndef SW_COLOR_BUFFER_BITS
-    #define SW_COLOR_BUFFER_BITS            32  //< 32 (rgba), 16 (rgb packed) or 8 (rgb packed) 
+    #define SW_COLOR_BUFFER_BITS            32  //< 32 (rgba), 16 (rgb packed) or 8 (rgb packed)
 #endif
 
 #ifndef SW_DEPTH_BUFFER_BITS
-    #define SW_DEPTH_BUFFER_BITS            16  //< 24, 16 or 8
+    #define SW_DEPTH_BUFFER_BITS            16  //< 32, 24 or 16
 #endif
 
 #ifndef SW_MAX_PROJECTION_STACK_SIZE
@@ -748,32 +748,32 @@ SWAPI void swBindTexture(uint32_t id);
     #define SW_COLOR_PACK_COMP  4
 #endif
 
-#if (SW_DEPTH_BUFFER_BITS == 8)
-    #define SW_DEPTH_TYPE       uint8_t
-    #define SW_DEPTH_IS_PACKED  1
-    #define SW_DEPTH_PACK_COMP  1
-    #define SW_DEPTH_MAX        UINT8_MAX
-    #define SW_DEPTH_SCALE      (1.0f/UINT8_MAX)
-    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
-    #define SW_UNPACK_DEPTH(p)  (p)
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-    #define SW_DEPTH_TYPE       uint16_t
-    #define SW_DEPTH_IS_PACKED  1
-    #define SW_DEPTH_PACK_COMP  1
-    #define SW_DEPTH_MAX        UINT16_MAX
-    #define SW_DEPTH_SCALE      (1.0f/UINT16_MAX)
-    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
-    #define SW_UNPACK_DEPTH(p)  (p)
-#else // 24 bits
-    #define SW_DEPTH_TYPE       uint8_t
-    #define SW_DEPTH_IS_PACKED  0
-    #define SW_DEPTH_PACK_COMP  3
-    #define SW_DEPTH_MAX        0xFFFFFF
-    #define SW_DEPTH_SCALE      (1.0f/0xFFFFFF)
-    #define SW_PACK_DEPTH_0(d)  (((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFF)
-    #define SW_PACK_DEPTH_1(d)  (((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFF)
-    #define SW_PACK_DEPTH_2(d)  ((uint32_t)((d)*SW_DEPTH_MAX)&0xFF)
-    #define SW_UNPACK_DEPTH(p)  (((p)[0]<<16)|((p)[1]<<8)|(p)[2])
+#if (SW_DEPTH_BUFFER_BITS == 16)
+    #define SW_DEPTH_TYPE uint16_t
+    #define SW_DEPTH_IS_PACKED 1
+    #define SW_DEPTH_PACK_COMP 1
+    #define SW_DEPTH_MAX UINT16_MAX
+    #define SW_DEPTH_SCALE (1.0f/UINT16_MAX)
+    #define SW_PACK_DEPTH(d) ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
+    #define SW_UNPACK_DEPTH(p) (p)
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+    #define SW_DEPTH_TYPE uint8_t
+    #define SW_DEPTH_IS_PACKED 0
+    #define SW_DEPTH_PACK_COMP 3
+    #define SW_DEPTH_MAX 0xFFFFFFU
+    #define SW_DEPTH_SCALE (1.0f/0xFFFFFFU)
+    #define SW_PACK_DEPTH_0(d) ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFFU))
+    #define SW_PACK_DEPTH_1(d) ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFFU))
+    #define SW_PACK_DEPTH_2(d) ((uint8_t)((uint32_t)((d)*SW_DEPTH_MAX)&0xFFU))
+    #define SW_UNPACK_DEPTH(p) ((((uint32_t)(p)[0]<<16)|((uint32_t)(p)[1]<<8)|(uint32_t)(p)[2]))
+#else // 32 bits
+    #define SW_DEPTH_TYPE float
+    #define SW_DEPTH_IS_PACKED 1
+    #define SW_DEPTH_PACK_COMP 1
+    #define SW_DEPTH_MAX 1.0f
+    #define SW_DEPTH_SCALE 1.0f
+    #define SW_PACK_DEPTH(d) ((SW_DEPTH_TYPE)(d))
+    #define SW_UNPACK_DEPTH(p) (p)
 #endif
 
 #define SW_STATE_CHECK(flags)   (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
@@ -1346,6 +1346,8 @@ static inline void sw_framebuffer_write_color(sw_pixel_t *dst, const float src[4
 
 static inline void sw_framebuffer_write_depth(sw_pixel_t *dst, float depth)
 {
+    depth = sw_saturate(depth);
+
 #if SW_DEPTH_IS_PACKED
     dst->depth[0] = SW_PACK_DEPTH(depth);
 #else
