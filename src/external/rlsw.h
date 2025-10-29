@@ -94,11 +94,9 @@
 #ifndef SW_MALLOC
     #define SW_MALLOC(sz) malloc(sz)
 #endif
-
 #ifndef SW_REALLOC
     #define SW_REALLOC(ptr, newSz) realloc(ptr, newSz)
 #endif
-
 #ifndef SW_FREE
     #define SW_FREE(ptr) free(ptr)
 #endif
@@ -150,12 +148,6 @@
 
 #ifndef SW_CLIP_EPSILON
     #define SW_CLIP_EPSILON                 1e-4f
-#endif
-
-#ifdef __cplusplus
-    #define CURLY_INIT(name) name
-#else
-    #define CURLY_INIT(name) (name)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -610,9 +602,19 @@ SWAPI void swBindTexture(uint32_t id);
 #define RLSW_IMPLEMENTATION
 #if defined(RLSW_IMPLEMENTATION)
 
-#include <stdlib.h>
-#include <stddef.h>
-#include <math.h>           // Required for: floorf(), fabsf()
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <stddef.h>         // Required for: NULL, size_t, uint8_t, uint16_t, uint32_t...
+#include <math.h>           // Required for: sinf(), cosf(), floorf(), fabsf(), sqrtf(), roundf()
+
+// Simple log system to avoid printf() calls if required
+// NOTE: Avoiding those calls, also avoids const strings memory usage
+#define SW_SUPPORT_LOG_INFO
+#if defined(SW_SUPPORT_LOG_INFO) //&& defined(_DEBUG)      // WARNING: LOG() output required for this tool
+    #include <stdio.h>
+    #define SW_LOG(...) printf(__VA_ARGS__)
+#else
+    #define SW_LOG(...)
+#endif
 
 #if defined(_MSC_VER)
     #define SW_ALIGN(x) __declspec(align(x))
@@ -634,56 +636,47 @@ SWAPI void swBindTexture(uint32_t id);
     #define SW_ARCH_RISCV
 #endif
 
+// Check for SIMD vector instructions
 #if defined(__FMA__) && defined(__AVX2__)
     #define SW_HAS_FMA_AVX2
     #include <immintrin.h>
 #endif
-
 #if defined(__FMA__) && defined(__AVX__)
     #define SW_HAS_FMA_AVX
     #include <immintrin.h>
 #endif
-
 #if defined(__AVX2__)
     #define SW_HAS_AVX2
     #include <immintrin.h>
 #endif
-
 #if defined(__AVX__)
     #define SW_HAS_AVX
     #include <immintrin.h>
 #endif
-
 #if defined(__SSE4_2__)
     #define SW_HAS_SSE42
     #include <nmmintrin.h>
 #endif
-
 #if defined(__SSE4_1__)
     #define SW_HAS_SSE41
     #include <smmintrin.h>
 #endif
-
 #if defined(__SSSE3__)
     #define SW_HAS_SSSE3
     #include <tmmintrin.h>
 #endif
-
 #if defined(__SSE3__)
     #define SW_HAS_SSE3
     #include <pmmintrin.h>
 #endif
-
-#if defined(__SSE2__)
+#if defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
     #define SW_HAS_SSE2
     #include <emmintrin.h>
 #endif
-
 #if defined(__SSE__)
     #define SW_HAS_SSE
     #include <xmmintrin.h>
 #endif
-
 #if defined(__ARM_NEON) || defined(__aarch64__)
     #if defined(__ARM_FEATURE_FMA)
         #define SW_HAS_NEON_FMA
@@ -692,10 +685,15 @@ SWAPI void swBindTexture(uint32_t id);
     #endif
     #include <arm_neon.h>
 #endif
-
-#ifdef __riscv_vector
+#if defined(__riscv_vector)
     #define SW_HAS_RVV
     #include <riscv_vector.h>
+#endif
+
+#ifdef __cplusplus
+    #define SW_CURLY_INIT(name) name
+#else
+    #define SW_CURLY_INIT(name) (name)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -717,68 +715,68 @@ SWAPI void swBindTexture(uint32_t id);
 #endif
 
 #if (SW_COLOR_BUFFER_BITS == 8)
-    #define SW_COLOR_TYPE uint8_t
-    #define SW_COLOR_IS_PACKED 1
-    #define SW_COLOR_PACK_COMP 1
+    #define SW_COLOR_TYPE       uint8_t
+    #define SW_COLOR_IS_PACKED  1
+    #define SW_COLOR_PACK_COMP  1
     #define SW_PACK_COLOR(r,g,b) ((((uint8_t)((r)*7+0.5f))&0x07)<<5 | (((uint8_t)((g)*7+0.5f))&0x07)<<2 | ((uint8_t)((b)*3+0.5f))&0x03)
-    #define SW_UNPACK_R(p) (((p)>>5)&0x07)
-    #define SW_UNPACK_G(p) (((p)>>2)&0x07)
-    #define SW_UNPACK_B(p) ((p)&0x03)
-    #define SW_SCALE_R(v) ((v)*255+3)/7
-    #define SW_SCALE_G(v) ((v)*255+3)/7
-    #define SW_SCALE_B(v) ((v)*255+1)/3
-    #define SW_TO_FLOAT_R(v) ((v)*(1.0f/7.0f))
-    #define SW_TO_FLOAT_G(v) ((v)*(1.0f/7.0f))
-    #define SW_TO_FLOAT_B(v) ((v)*(1.0f/3.0f))
+    #define SW_UNPACK_R(p)      (((p)>>5)&0x07)
+    #define SW_UNPACK_G(p)      (((p)>>2)&0x07)
+    #define SW_UNPACK_B(p)      ((p)&0x03)
+    #define SW_SCALE_R(v)       ((v)*255+3)/7
+    #define SW_SCALE_G(v)       ((v)*255+3)/7
+    #define SW_SCALE_B(v)       ((v)*255+1)/3
+    #define SW_TO_FLOAT_R(v)    ((v)*(1.0f/7.0f))
+    #define SW_TO_FLOAT_G(v)    ((v)*(1.0f/7.0f))
+    #define SW_TO_FLOAT_B(v)    ((v)*(1.0f/3.0f))
 #elif (SW_COLOR_BUFFER_BITS == 16)
-    #define SW_COLOR_TYPE uint16_t
-    #define SW_COLOR_IS_PACKED 1
-    #define SW_COLOR_PACK_COMP 1
+    #define SW_COLOR_TYPE       uint16_t
+    #define SW_COLOR_IS_PACKED  1
+    #define SW_COLOR_PACK_COMP  1
     #define SW_PACK_COLOR(r,g,b) ((((uint16_t)((r)*31+0.5f))&0x1F)<<11 | (((uint16_t)((g)*63+0.5f))&0x3F)<<5 | ((uint16_t)((b)*31+0.5f))&0x1F)
-    #define SW_UNPACK_R(p) (((p)>>11)&0x1F)
-    #define SW_UNPACK_G(p) (((p)>>5)&0x3F)
-    #define SW_UNPACK_B(p) ((p)&0x1F)
-    #define SW_SCALE_R(v) ((v)*255+15)/31
-    #define SW_SCALE_G(v) ((v)*255+31)/63
-    #define SW_SCALE_B(v) ((v)*255+15)/31
-    #define SW_TO_FLOAT_R(v) ((v)*(1.0f/31.0f))
-    #define SW_TO_FLOAT_G(v) ((v)*(1.0f/63.0f))
-    #define SW_TO_FLOAT_B(v) ((v)*(1.0f/31.0f))
+    #define SW_UNPACK_R(p)      (((p)>>11)&0x1F)
+    #define SW_UNPACK_G(p)      (((p)>>5)&0x3F)
+    #define SW_UNPACK_B(p)      ((p)&0x1F)
+    #define SW_SCALE_R(v)       ((v)*255+15)/31
+    #define SW_SCALE_G(v)       ((v)*255+31)/63
+    #define SW_SCALE_B(v)       ((v)*255+15)/31
+    #define SW_TO_FLOAT_R(v)    ((v)*(1.0f/31.0f))
+    #define SW_TO_FLOAT_G(v)    ((v)*(1.0f/63.0f))
+    #define SW_TO_FLOAT_B(v)    ((v)*(1.0f/31.0f))
 #else // 32 bits
-    #define SW_COLOR_TYPE uint8_t
-    #define SW_COLOR_IS_PACKED 0
-    #define SW_COLOR_PACK_COMP 4
+    #define SW_COLOR_TYPE       uint8_t
+    #define SW_COLOR_IS_PACKED  0
+    #define SW_COLOR_PACK_COMP  4
 #endif
 
 #if (SW_DEPTH_BUFFER_BITS == 8)
-    #define SW_DEPTH_TYPE uint8_t
-    #define SW_DEPTH_IS_PACKED 1
-    #define SW_DEPTH_PACK_COMP 1
-    #define SW_DEPTH_MAX UINT8_MAX
-    #define SW_DEPTH_SCALE (1.0f/UINT8_MAX)
-    #define SW_PACK_DEPTH(d) ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
-    #define SW_UNPACK_DEPTH(p) (p)
+    #define SW_DEPTH_TYPE       uint8_t
+    #define SW_DEPTH_IS_PACKED  1
+    #define SW_DEPTH_PACK_COMP  1
+    #define SW_DEPTH_MAX        UINT8_MAX
+    #define SW_DEPTH_SCALE      (1.0f/UINT8_MAX)
+    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
+    #define SW_UNPACK_DEPTH(p)  (p)
 #elif (SW_DEPTH_BUFFER_BITS == 16)
-    #define SW_DEPTH_TYPE uint16_t
-    #define SW_DEPTH_IS_PACKED 1
-    #define SW_DEPTH_PACK_COMP 1
-    #define SW_DEPTH_MAX UINT16_MAX
-    #define SW_DEPTH_SCALE (1.0f/UINT16_MAX)
-    #define SW_PACK_DEPTH(d) ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
-    #define SW_UNPACK_DEPTH(p) (p)
+    #define SW_DEPTH_TYPE       uint16_t
+    #define SW_DEPTH_IS_PACKED  1
+    #define SW_DEPTH_PACK_COMP  1
+    #define SW_DEPTH_MAX        UINT16_MAX
+    #define SW_DEPTH_SCALE      (1.0f/UINT16_MAX)
+    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
+    #define SW_UNPACK_DEPTH(p)  (p)
 #else // 24 bits
-    #define SW_DEPTH_TYPE uint8_t
-    #define SW_DEPTH_IS_PACKED 0
-    #define SW_DEPTH_PACK_COMP 3
-    #define SW_DEPTH_MAX 0xFFFFFF
-    #define SW_DEPTH_SCALE (1.0f/0xFFFFFF)
-    #define SW_PACK_DEPTH_0(d) (((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFF)
-    #define SW_PACK_DEPTH_1(d) (((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFF)
-    #define SW_PACK_DEPTH_2(d) ((uint32_t)((d)*SW_DEPTH_MAX)&0xFF)
-    #define SW_UNPACK_DEPTH(p) (((p)[0]<<16)|((p)[1]<<8)|(p)[2])
+    #define SW_DEPTH_TYPE       uint8_t
+    #define SW_DEPTH_IS_PACKED  0
+    #define SW_DEPTH_PACK_COMP  3
+    #define SW_DEPTH_MAX        0xFFFFFF
+    #define SW_DEPTH_SCALE      (1.0f/0xFFFFFF)
+    #define SW_PACK_DEPTH_0(d)  (((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFF)
+    #define SW_PACK_DEPTH_1(d)  (((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFF)
+    #define SW_PACK_DEPTH_2(d)  ((uint32_t)((d)*SW_DEPTH_MAX)&0xFF)
+    #define SW_UNPACK_DEPTH(p)  (((p)[0]<<16)|((p)[1]<<8)|(p)[2])
 #endif
 
-#define SW_STATE_CHECK(flags)           (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
+#define SW_STATE_CHECK(flags)   (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
 #define SW_STATE_CHECK_EX(state, flags) (((state) & (flags)) == (flags))
 
 #define SW_STATE_SCISSOR_TEST   (1 << 0)
@@ -3607,6 +3605,23 @@ bool swInit(int w, int h)
     RLSW.loadedTextures[0].ty = 0.5f;
 
     RLSW.loadedTextureCount = 1;
+    
+    SW_LOG("INFO: RLSW: Software renderer initialized successfully\n");
+#if defined(SW_HAS_FMA_AVX) && defined(SW_HAS_FMA_AVX2)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: FMA AVX\n");
+#endif
+#if defined(SW_HAS_AVX) || defined(SW_HAS_AVX2)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: AVX\n");
+#endif
+#if defined(SW_HAS_SSE) || defined(SW_HAS_SSE2) || defined(SW_HAS_SSE3) || defined(SW_HAS_SSE41) || defined(SW_HAS_SSE42)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: SSE\n");
+#endif
+#if defined(SW_HAS_NEON_FMA) || defined(SW_HAS_NEON)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: NEON\n");
+#endif
+#if defined(SW_HAS_RVV)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: RVV\n");
+#endif
 
     return true;
 }
@@ -3626,7 +3641,7 @@ void swClose(void)
     SW_FREE(RLSW.loadedTextures);
     SW_FREE(RLSW.freeTextureIds);
 
-    RLSW = CURLY_INIT(sw_context_t) { 0 };
+    RLSW = SW_CURLY_INIT(sw_context_t) { 0 };
 }
 
 bool swResizeFramebuffer(int w, int h)
