@@ -3076,6 +3076,15 @@ return {
       }
     },
     {
+      name = "TraceLogCallback2",
+      description = "Logging: Redirect trace log messages 2",
+      returnType = "void",
+      params = {
+        {type = "int", name = "logLevel"},
+        {type = "const char *", name = "text"}
+      }
+    },
+    {
       name = "LoadFileDataCallback",
       description = "FileIO: Load binary data",
       returnType = "unsigned char *",
@@ -3913,6 +3922,14 @@ return {
       returnType = "void",
       params = {
         {type = "TraceLogCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetTraceLogCallback2",
+      description = "Set custom trace log 2",
+      returnType = "void",
+      params = {
+        {type = "TraceLogCallback2", name = "callback"}
       }
     },
     {

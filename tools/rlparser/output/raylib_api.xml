@@ -652,11 +652,15 @@
             <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="Npatch layout: 3x1 tiles" />
         </Enum>
     </Enums>
-    <Callbacks count="6">
+    <Callbacks count="7">
         <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
             <Param type="int" name="logLevel" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="va_list" name="args" desc="" />
+        </Callback>
+        <Callback name="TraceLogCallback2" retType="void" paramCount="2" desc="Logging: Redirect trace log messages 2">
+            <Param type="int" name="logLevel" desc="" />
+            <Param type="const char *" name="text" desc="" />
         </Callback>
         <Callback name="LoadFileDataCallback" retType="unsigned char *" paramCount="2" desc="FileIO: Load binary data">
             <Param type="const char *" name="fileName" desc="" />
@@ -679,7 +683,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="597">
+    <Functions count="598">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1008,6 +1012,9 @@
         </Function>
         <Function name="SetTraceLogCallback" retType="void" paramCount="1" desc="Set custom trace log">
             <Param type="TraceLogCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetTraceLogCallback2" retType="void" paramCount="1" desc="Set custom trace log 2">
+            <Param type="TraceLogCallback2" name="callback" desc="" />
         </Function>
         <Function name="SetLoadFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data loader">
             <Param type="LoadFileDataCallback" name="callback" desc="" />
