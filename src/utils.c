@@ -62,6 +62,7 @@
 static int logTypeLevel = LOG_INFO;                 // Minimum log type level
 
 static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
+static TraceLogCallback2 traceLog2 = NULL;          // TraceLog callback function pointer 2
 static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
 static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
 static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
@@ -70,7 +71,8 @@ static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback fun
 //----------------------------------------------------------------------------------
 // Functions to set internal callbacks
 //----------------------------------------------------------------------------------
-void SetTraceLogCallback(TraceLogCallback callback) { traceLog = callback; }              // Set custom trace log
+void SetTraceLogCallback(TraceLogCallback callback) { traceLog = callback; traceLog2 = NULL; } // Set custom trace log
+void SetTraceLogCallback2(TraceLogCallback2 callback) { traceLog2 = callback; traceLog = NULL; } // Set custom trace log
 void SetLoadFileDataCallback(LoadFileDataCallback callback) { loadFileData = callback; }  // Set custom file data loader
 void SetSaveFileDataCallback(SaveFileDataCallback callback) { saveFileData = callback; }  // Set custom file data saver
 void SetLoadFileTextCallback(LoadFileTextCallback callback) { loadFileText = callback; }  // Set custom file text loader
@@ -114,6 +116,21 @@ void TraceLog(int logType, const char *text, ...)
     {
         traceLog(logType, text, args);
         va_end(args);
+        return;
+    }
+    else if (traceLog2)
+    {
+        // Does NOT include null terminator.
+        int requiredByteCount = vsnprintf(NULL, 0, text, args);
+        va_end(args);
+        // Error from vsnprintf()
+        if (requiredByteCount < 0) return;
+        char *buffer = RL_CALLOC(requiredByteCount + 1, sizeof(char));
+        va_start(args, text);
+        vsnprintf(buffer, requiredByteCount + 1, text, args);
+        va_end(args);
+        traceLog2(logType, buffer);
+        RL_FREE(buffer);
         return;
     }
 

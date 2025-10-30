@@ -951,6 +951,7 @@ typedef enum {
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
+typedef void (*TraceLogCallback2)(int logLevel, const char *text);  // Logging: Redirect trace log messages 2
 typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
 typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
@@ -1111,6 +1112,7 @@ RLAPI void MemFree(void *ptr);                                    // Internal me
 // Set custom callbacks
 // WARNING: Callbacks setup is intended for advanced users
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);          // Set custom trace log
+RLAPI void SetTraceLogCallback2(TraceLogCallback2 callback);        // Set custom trace log 2
 RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file binary data loader
 RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file binary data saver
 RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
