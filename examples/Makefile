@@ -486,7 +486,19 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
+    LDLIBS = -lraylib -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl -latomic
+    # TODO: Examples compilation does not define GRAPHICS, is it required?
+    #ifeq ($(GRAPHICS),GRAPHICS_API_OPENGL_ES2)
+    #    LDLIBS += -lGLESv2 -lEGL
+    #endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
+    # Libraries for Windows desktop compilation
+    LDFLAGS += -L..\src
+    LDLIBS = -lraylib -lgdi32 -lwinmm -lshcore
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+        LDLIBS += -lopengl32
+    endif
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Libraries for web (HTML5) compiling
@@ -562,8 +574,11 @@ SHAPES = \
     shapes/shapes_following_eyes \
     shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
+    shapes/shapes_lines_drawing \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_math_angle_rotation \
+    shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
@@ -631,6 +646,7 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
+    models/models_decals \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_heightmap_rendering \
@@ -654,6 +670,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
@@ -664,6 +681,7 @@ SHADERS = \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap_rendering \
+    shaders/shaders_mandelbrot_set \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \

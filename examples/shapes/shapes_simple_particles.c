@@ -74,7 +74,7 @@ int main(void)
     // Definition of particles
     Particle *particles = (Particle*)RL_CALLOC(MAX_PARTICLES, sizeof(Particle)); // Particle array
 	CircularBuffer circularBuffer = { 0, 0, particles };
-    
+
 	// Particle emitter parameters
     int emissionRate = -2;          // Negative: on average every -X frames. Positive: particles per frame
 	ParticleType currentType = WATER;
@@ -100,7 +100,7 @@ int main(void)
 
 		// Update the parameters of each particle
         UpdateParticles(&circularBuffer, screenWidth, screenHeight);
-        
+
         // Remove dead particles from the circular buffer
         UpdateCircularBuffer(&circularBuffer);
 
@@ -252,10 +252,10 @@ static void UpdateParticles(CircularBuffer *circularBuffer, int screenWidth, int
 		// Disable particle when out of screen
         Vector2 center = circularBuffer->buffer[i].position;
 		float radius = circularBuffer->buffer[i].radius;
-        
+
         if ((center.x < -radius) || (center.x > (screenWidth + radius)) ||
             (center.y < -radius) || (center.y > (screenHeight + radius)))
-        {    
+        {
             circularBuffer->buffer[i].alive = false;
         }
     }

@@ -14,6 +14,9 @@
 *   Copyright (c) 2025 JP Mortiboys (@themushroompirates)
 *
 ********************************************************************************************/
+#if defined(WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "raylib.h"
 

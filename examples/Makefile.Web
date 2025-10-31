@@ -562,8 +562,11 @@ SHAPES = \
     shapes/shapes_following_eyes \
     shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
+    shapes/shapes_lines_drawing \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_math_angle_rotation \
+    shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
@@ -631,6 +634,7 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
+    models/models_decals \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_heightmap_rendering \
@@ -654,6 +658,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
@@ -664,6 +669,7 @@ SHADERS = \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap_rendering \
+    shaders/shaders_mandelbrot_set \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
@@ -892,10 +898,19 @@ shapes/shapes_kaleidoscope: shapes/shapes_kaleidoscope.c
 shapes/shapes_lines_bezier: shapes/shapes_lines_bezier.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_lines_drawing: shapes/shapes_lines_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_math_angle_rotation: shapes/shapes_math_angle_rotation.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_math_sine_cosine: shapes/shapes_math_sine_cosine.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_mouse_trail: shapes/shapes_mouse_trail.c
@@ -1151,6 +1166,12 @@ models/models_cubicmap_rendering: models/models_cubicmap_rendering.c
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
+models/models_decals: models/models_decals.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/obj/character.obj@resources/models/obj/character.obj \
+    --preload-file models/resources/models/obj/character_diffuse.png@resources/models/obj/character_diffuse.png \
+    --preload-file models/resources/raylib_logo.png@resources/raylib_logo.png
+
 models/models_first_person_maze: models/models_first_person_maze.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
@@ -1256,6 +1277,14 @@ shaders/shaders_basic_pbr: shaders/shaders_basic_pbr.c
     --preload-file shaders/resources/road_mra.png@resources/road_mra.png \
     --preload-file shaders/resources/road_n.png@resources/road_n.png
 
+shaders/shaders_color_correction: shaders/shaders_color_correction.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/parrots.png@resources/parrots.png \
+    --preload-file shaders/resources/cat.png@resources/cat.png \
+    --preload-file shaders/resources/mandrill.png@resources/mandrill.png \
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
+    --preload-file shaders/resources/shaders/glsl100/color_correction.fs@resources/shaders/glsl100/color_correction.fs
+
 shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/models/barracks.obj@resources/models/barracks.obj \
@@ -1306,6 +1335,10 @@ shaders/shaders_lightmap_rendering: shaders/shaders_lightmap_rendering.c
     --preload-file shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
     --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
     --preload-file shaders/resources/spark_flame.png@resources/spark_flame.png
+
+shaders/shaders_mandelbrot_set: shaders/shaders_mandelbrot_set.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/mandelbrot_set.fs@resources/shaders/glsl100/mandelbrot_set.fs
 
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

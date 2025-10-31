@@ -1048,6 +1048,7 @@ Image GetClipboardImage(void)
 void ShowCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
@@ -1055,6 +1056,7 @@ void ShowCursor(void)
 void HideCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -1076,12 +1078,9 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     // Reset mouse position within the window area before disabling cursor
-    SetMousePosition(CORE.Window.screen.width, CORE.Window.screen.height);
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 

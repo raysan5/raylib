@@ -197,7 +197,7 @@ int main(void)
                             bullets[i].color);
                     }
                 }
-            } 
+            }
             else
             {
                 // Draw bullets using DrawCircle(), less performant
