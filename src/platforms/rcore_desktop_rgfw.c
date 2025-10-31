@@ -843,8 +843,9 @@ void EnableCursor(void)
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
-    RGFW_window_showMouse(platform.window, true);
-    CORE.Input.Mouse.cursorHidden = false;
+    ShowCursor();
+
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 // Disables cursor (lock cursor)
@@ -853,6 +854,8 @@ void DisableCursor(void)
     RGFW_disableCursor = true;
     RGFW_window_mouseHold(platform.window, RGFW_AREA(0, 0));
     HideCursor();
+
+    CORE.Input.Mouse.cursorLocked = true;
 }
 
 // Swap back buffer with front buffer (screen drawing)

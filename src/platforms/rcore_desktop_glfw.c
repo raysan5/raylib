@@ -1068,6 +1068,7 @@ void EnableCursor(void)
 
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 
+    CORE.Input.Mouse.cursorHidden = false;
     CORE.Input.Mouse.cursorLocked = false;
 }
 
@@ -1084,6 +1085,7 @@ void DisableCursor(void)
 
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(platform.handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
+    CORE.Input.Mouse.cursorHidden = true;
     CORE.Input.Mouse.cursorLocked = true;
 }
 

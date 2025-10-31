@@ -1208,12 +1208,7 @@ void EnableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
-#if defined(USING_VERSION_SDL3)
-    // SDL_ShowCursor() has been split into three functions: SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
-    SDL_ShowCursor();
-#else
-    SDL_ShowCursor(SDL_ENABLE);
-#endif
+    ShowCursor();
 
     platform.cursorRelative = false;
     CORE.Input.Mouse.cursorLocked = false;
@@ -1223,6 +1218,8 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_TRUE);
+
+    HideCursor();
 
     platform.cursorRelative = true;
     CORE.Input.Mouse.cursorLocked = true;
