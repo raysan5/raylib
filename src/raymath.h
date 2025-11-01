@@ -2552,6 +2552,38 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
     return result;
 }
 
+// Compose a transformation matrix from rotational, translational and scaling components
+RMAPI Matrix MatrixCompose( Vector3 translation, Quaternion rotation, Vector3 scale )
+{
+
+    //Initialize Vectors
+    Vector3 right   = { 1, 0, 0 };
+    Vector3 up      = { 0, 1, 0 };
+    Vector3 forward = { 0, 0, 1 };
+
+    //Scale Vectors
+    right   = Vector3Scale( right   , scale.x  );
+    up      = Vector3Scale( up      , scale.y  );
+    forward = Vector3Scale( forward , scale.z  );
+
+    //Rotate Vectors
+    right   = Vector3RotateByQuaternion( right  , rotation );
+    up      = Vector3RotateByQuaternion( up     , rotation );
+    forward = Vector3RotateByQuaternion( forward, rotation );
+    
+    // Set matrix output
+	Matrix result = {
+		right.x, up.x, forward.x, position.x,
+		right.y, up.y, forward.y, position.y,
+		right.z, up.z, forward.z, position.z,
+		      0,    0,         0,          1
+	};
+
+    // Return matrix output
+	return result;
+	
+}
+
 // Decompose a transformation matrix into its rotational, translational and scaling components and remove shear
 RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotation, Vector3 *scale)
 {
