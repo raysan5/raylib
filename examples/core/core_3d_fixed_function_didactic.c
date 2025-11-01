@@ -21,7 +21,7 @@
 *
 ********************************************************************************************/
 // TODO list:
-//  1. add proper clipping to the target meshes to show intuition there (e.g. move mesh out of clip planes or allow moving the main camera's target away from the meshes)
+//  1. finish proper clipping toggle with some sort of visibility mask to geometry outside clip volume (also enable moving mesh out of clip planes more clear/allow moving the main camera's target away from the meshes)
 //  2. improve didactic annotations (ideally with spatial labeling rather than simple flat screen overlay)
 //  3. improve code didactic, code should read in order of fixed function staging... difficult but long term goal...
 //  4. add scripted toggling/navigation of ordered fixed function staging visualization (a "play button"-like thing)
@@ -53,15 +53,19 @@ typedef unsigned short Triangle[3];
 enum Flags
 {
     FLAG_NDC = 1u<<0,
-    FLAG_REFLECT_Y = 1u<<1,
-    FLAG_ASPECT = 1u<<2,
+    FLAG_REFLECT_Y = 1u<<1, FLAG_ASPECT = 1u<<2,
     FLAG_PERSPECTIVE_CORRECT = 1u<<3,
     FLAG_PAUSE = 1u<<4,
-    FLAG_COLOR_MODE = 1u<<5,
-    FLAG_TEXTURE_MODE = 1u<<6
+    FLAG_COLOR_MODE = 1u<<5, FLAG_TEXTURE_MODE = 1u<<6,
+    FLAG_JUGEMU = 1u<<7,
+    FLAG_ORTHO = 1u<<8,
+    FLAG_CLIP = 1u<<9,
+    GEN_CUBE = 1u<<10, LOAD_CUBE = 1u<<11,
+    GEN_SPHERE = 1u<<12, LOAD_SPHERE = 1u<<13,
+    GEN_KNOT = 1u<<14
 };
 
-static unsigned int gflags = FLAG_ASPECT | FLAG_COLOR_MODE;
+static unsigned int gflags = FLAG_ASPECT | FLAG_COLOR_MODE | FLAG_JUGEMU | GEN_CUBE;
 
 #define NDC_SPACE() ((gflags & FLAG_NDC) != 0)
 #define REFLECT_Y() ((gflags & FLAG_REFLECT_Y) != 0)
@@ -70,11 +74,24 @@ static unsigned int gflags = FLAG_ASPECT | FLAG_COLOR_MODE;
 #define PAUSED() ((gflags & FLAG_PAUSE) != 0)
 #define COLOR_MODE() ((gflags & FLAG_COLOR_MODE) != 0)
 #define TEXTURE_MODE() ((gflags & FLAG_TEXTURE_MODE) != 0)
+#define JUGEMU_MODE() ((gflags & FLAG_JUGEMU) != 0)
+#define ORTHO_MODE() ((gflags & FLAG_ORTHO) != 0)
+#define CLIP_MODE() ((gflags & FLAG_CLIP) != 0)
 #define TOGGLE(K, F) do { if (IsKeyPressed(K)) { gflags ^= (F); } } while (0)
+
+static unsigned int targetMesh = 0;
+#define NUM_MODELS  5
+#define TARGET_GEN_CUBE() ((gflags & GEN_CUBE) != 0)
+#define TARGET_LOAD_CUBE() ((gflags & LOAD_CUBE) != 0)
+#define TARGET_GEN_SPHERE() ((gflags & GEN_SPHERE) != 0)
+#define TARGET_LOAD_SPHERE() ((gflags & LOAD_SPHERE) != 0)
+#define TARGET_GEN_KNOT() ((gflags & GEN_KNOT) != 0)
+#define CYCLE_MESH(K, I, F) do { if (IsKeyPressed(K)) { targetMesh = (I); gflags = (gflags & ~(GEN_CUBE|LOAD_CUBE|GEN_SPHERE|LOAD_SPHERE|GEN_KNOT)) | (F); } } while (0)
 
 static int fontSize = 20;
 static float angularVelocity = 1.25f;
-static float fovy = 60.0f;
+static float fovyPerspective = 60.0f;
+static float nearPlaneHeightOrthographic = 1.0f;
 static float blendScalar = 5.0f;
 static Vector3 yAxis = { 0.0f, 1.0f, 0.0f };
 static Vector3 modelPos = { 0.0f, 0.0f, 0.0f };
@@ -90,7 +107,7 @@ static void DrawModelWiresAndPoints(Model *model, float rotation);
 static void DrawNearPlanePoints(Camera3D *main, float aspect, float near, Model *nearPlanePointsModel, Mesh *mesh, float rotation);
 
 static void UpdateSpatialFrame(Camera3D *main, float aspect, float near, float far, Mesh *spatialFrame);
-static void DrawSpatialFrame(Mesh spatialFrame);
+static void DrawSpatialFrame(Mesh *spatialFrame);
 
 static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near, Mesh *mesh, Texture2D meshTexture, float rotation);
 static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D meshTexture, Texture2D *perspectiveCorrectTexture, float rotation);
@@ -104,6 +121,7 @@ static Vector3 Intersect(Camera3D *main, float near, Vector3 worldCoord);
 static float SpaceBlendFactor(float dt);
 static float AspectBlendFactor(float dt);
 static float ReflectBlendFactor(float dt);
+static float OrthoBlendFactor(float dt);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -116,64 +134,87 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - fixed function didactic");
-
+    float near = 1.0f;
+    float far = 3.0f;
     float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
+    nearPlaneHeightOrthographic = 2.0f*near*tanf(DEG2RAD*fovyPerspective*0.5f);
     float meshRotation = 0.0f;
 
     Camera3D main = { 0 };
     main.position = mainPos;
     main.target = modelPos;
     main.up = yAxis;
-    main.fovy = fovy;
-    main.projection = CAMERA_PERSPECTIVE;
+    main.projection = (ORTHO_MODE())? CAMERA_ORTHOGRAPHIC : CAMERA_PERSPECTIVE;
+    main.fovy = (ORTHO_MODE())? nearPlaneHeightOrthographic: fovyPerspective;
 
     Camera3D jugemu = (Camera3D){ 0 };
     jugemu.position = jugemuPosIso;
     jugemu.target = modelPos;
     jugemu.up = yAxis;
-    jugemu.fovy = fovy;
+    jugemu.fovy = fovyPerspective;
     jugemu.projection = CAMERA_PERSPECTIVE;
 
-    // Model worldModel = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-    // Image textureImage = GenImageChecked(4, 4, 1, 1, BLACK, WHITE);
+    Model worldModels[NUM_MODELS] = { 0 };
+    Model ndcModels[NUM_MODELS] = { 0 };
+    Model nearPlanePointsModels[NUM_MODELS] = { 0 };
+    Texture2D meshTextures[NUM_MODELS] = { 0 };
+    int textureConfig[NUM_MODELS] = { 4, 4, 16, 16, 32 };
 
-    // Model worldModel = LoadModelFromMesh(GenMeshSphere(0.5f, 8, 8));
-    // Image textureImage = GenImageChecked(16, 16, 1, 1, BLACK, WHITE);
-
-    // Model worldModel = LoadModelFromMesh(GenMeshKnot(1.0f, 1.0f, 8, 64));
-    Model worldModel = LoadModelFromMesh(GenMeshKnot(1.0f, 1.0f, 16, 128));
-    Image textureImage = GenImageChecked(32, 32, 1, 1, BLACK, WHITE);
-
-    Texture2D meshTexture = LoadTextureFromImage(textureImage);
-    UnloadImage(textureImage);
-
-    if (!worldModel.meshes[0].indices)
+    for (int i = 0; i < NUM_MODELS; i++)
     {
-        worldModel.meshes[0].indices = RL_CALLOC(worldModel.meshes[0].vertexCount, sizeof(unsigned short));
-        for (int i = 0; i < worldModel.meshes[0].vertexCount; i++) worldModel.meshes[0].indices[i] = (unsigned short)i;
-        worldModel.meshes[0].triangleCount = worldModel.meshes[0].vertexCount/3;
+        if (i == 0) worldModels[0] = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+        if (i == 1) worldModels[1] = LoadModel("resources/models/unit_cube.obj");
+        if (i == 2) worldModels[2] = LoadModelFromMesh(GenMeshSphere(0.5f, 8, 8));
+        if (i == 3) worldModels[3] = LoadModel("resources/models/unit_sphere.obj");
+        if (i == 4) worldModels[4] = LoadModelFromMesh(GenMeshKnot(1.0f, 1.0f, 16, 128));
+
+        Mesh *worldMesh = &worldModels[i].meshes[0];
+
+        if (!worldMesh->indices)
+        {
+            worldMesh->indices = RL_CALLOC(worldMesh->vertexCount, sizeof(unsigned short));
+            for (int j = 0; j < worldMesh->vertexCount; j++) worldMesh->indices[j] = (unsigned short)j;
+            worldMesh->triangleCount = worldMesh->vertexCount/3;
+        }
+        if (!worldMesh->texcoords)
+        {
+            worldMesh->texcoords = (float *)MemAlloc(sizeof(float)*worldMesh->vertexCount*2);
+            // Demonstrate planar mapping ("reasonable" default): https://en.wikipedia.org/wiki/Planar_projection.
+            BoundingBox bounds = GetMeshBoundingBox(*worldMesh);
+            Vector3 extents = Vector3Subtract(bounds.max, bounds.min);
+            for (int j = 0; j < worldMesh->vertexCount; j++)
+            {
+                float x = ((Vector3 *)worldMesh->vertices)[j].x;
+                float y = ((Vector3 *)worldMesh->vertices)[j].y;
+                ((Vector2 *)worldMesh->texcoords)[j].x = (x - bounds.min.x)/extents.x;
+                ((Vector2 *)worldMesh->texcoords)[j].y = (y - bounds.min.y)/extents.y;
+            }
+        }
+        FillVertexColors(worldMesh);
+
+        Image textureImage = GenImageChecked(textureConfig[i], textureConfig[i], 1, 1, BLACK, WHITE);
+        meshTextures[i] = LoadTextureFromImage(textureImage);
+        UnloadImage(textureImage);
+        worldModels[i].materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTextures[i];
+
+        Mesh ndcMesh = (Mesh){ 0 };
+        ndcMesh.vertexCount = worldMesh->vertexCount;
+        ndcMesh.triangleCount = worldMesh->triangleCount;
+        ndcMesh.vertices = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector3));
+        ndcMesh.texcoords = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector2));
+        ndcMesh.indices = RL_CALLOC(ndcMesh.triangleCount, sizeof(Triangle));
+        ndcMesh.colors = RL_CALLOC(ndcMesh.vertexCount, sizeof(Color));
+        memcpy(ndcMesh.colors, worldMesh->colors, ndcMesh.vertexCount*sizeof(Color));
+        memcpy(ndcMesh.texcoords, worldMesh->texcoords, ndcMesh.vertexCount*sizeof(Vector2));
+        memcpy(ndcMesh.indices, worldMesh->indices, ndcMesh.triangleCount*sizeof(Triangle));
+        ndcModels[i] = LoadModelFromMesh(ndcMesh);
+        ndcModels[i].materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTextures[i];
+
+        Mesh nearPlanePoints = (Mesh){ 0 };
+        nearPlanePoints.vertexCount = worldMesh->triangleCount*3;
+        nearPlanePoints.vertices = RL_CALLOC(nearPlanePoints.vertexCount, sizeof(Vector3));
+        nearPlanePointsModels[i] = LoadModelFromMesh(nearPlanePoints);
     }
-    FillVertexColors(&worldModel.meshes[0]);
-
-    Mesh ndcMesh = (Mesh){ 0 };
-    ndcMesh.vertexCount = worldModel.meshes[0].vertexCount;
-    ndcMesh.triangleCount = worldModel.meshes[0].triangleCount;
-    ndcMesh.vertices = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector3));
-    ndcMesh.texcoords = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector2));
-    ndcMesh.indices = RL_CALLOC(ndcMesh.triangleCount, sizeof(Triangle));
-    ndcMesh.colors = RL_CALLOC(ndcMesh.vertexCount, sizeof(Color));
-    memcpy(ndcMesh.colors, worldModel.meshes[0].colors, ndcMesh.vertexCount*sizeof(Color));
-    memcpy(ndcMesh.texcoords, worldModel.meshes[0].texcoords, ndcMesh.vertexCount*sizeof(Vector2));
-    memcpy(ndcMesh.indices, worldModel.meshes[0].indices, ndcMesh.triangleCount*sizeof(Triangle));
-    Model ndcModel = LoadModelFromMesh(ndcMesh);
-
-    Mesh nearPlanePoints = (Mesh){ 0 };
-    nearPlanePoints.vertexCount = worldModel.meshes[0].triangleCount*3;
-    nearPlanePoints.vertices = RL_CALLOC(nearPlanePoints.vertexCount, sizeof(Vector3));
-    Model nearPlanePointsModel = LoadModelFromMesh(nearPlanePoints);
-
-    worldModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTexture;
-    ndcModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTexture;
 
     Texture2D perspectiveCorrectTexture = (Texture2D){ 0 };
     Mesh spatialFrame = GenMeshCube(1.0f, 1.0f, 1.0f);
@@ -189,8 +230,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        float far = 3.0f;
-        float near = 1.0f;
         aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
         TOGGLE(KEY_N, FLAG_NDC);
         if (NDC_SPACE()) TOGGLE(KEY_F, FLAG_REFLECT_Y);
@@ -199,32 +238,42 @@ int main(void)
         TOGGLE(KEY_SPACE, FLAG_PAUSE);
         TOGGLE(KEY_C, FLAG_COLOR_MODE);
         TOGGLE(KEY_T, FLAG_TEXTURE_MODE);
+        TOGGLE(KEY_J, FLAG_JUGEMU);
+        TOGGLE(KEY_O, FLAG_ORTHO);
+        TOGGLE(KEY_X, FLAG_CLIP);
+        CYCLE_MESH(KEY_ONE, 0, GEN_CUBE);
+        CYCLE_MESH(KEY_TWO, 1, LOAD_CUBE);
+        CYCLE_MESH(KEY_THREE, 2, GEN_SPHERE);
+        CYCLE_MESH(KEY_FOUR, 3, LOAD_SPHERE);
+        CYCLE_MESH(KEY_FIVE, 4, GEN_KNOT);
 
         float sBlend = SpaceBlendFactor(GetFrameTime());
         AspectBlendFactor(GetFrameTime());
         ReflectBlendFactor(GetFrameTime());
+        OrthoBlendFactor(GetFrameTime());
 
         if (!PAUSED()) meshRotation -= angularVelocity*GetFrameTime();
 
         OrbitSpace(&jugemu, GetFrameTime());
+        main.projection = (ORTHO_MODE())? CAMERA_ORTHOGRAPHIC : CAMERA_PERSPECTIVE;
+        main.fovy = (ORTHO_MODE())? nearPlaneHeightOrthographic : fovyPerspective;
+        WorldToNDCSpace(&main, aspect, near, far, &worldModels[targetMesh], &ndcModels[targetMesh], meshRotation);
 
-        WorldToNDCSpace(&main, aspect, near, far, &worldModel, &ndcModel, meshRotation);
-
-        for (int i = 0; i < ndcModel.meshes[0].vertexCount; i++)
+        for (int i = 0; i < ndcModels[targetMesh].meshes[0].vertexCount; i++)
         {
-            Vector3 *worldVertices = (Vector3 *)worldModel.meshes[0].vertices;
-            Vector3 *ndcVertices = (Vector3 *)ndcModel.meshes[0].vertices;
+            Vector3 *worldVertices = (Vector3 *)worldModels[targetMesh].meshes[0].vertices;
+            Vector3 *ndcVertices = (Vector3 *)ndcModels[targetMesh].meshes[0].vertices;
             ndcVertices[i].x = Lerp(worldVertices[i].x, ndcVertices[i].x, sBlend);
             ndcVertices[i].y = Lerp(worldVertices[i].y, ndcVertices[i].y, sBlend);
             ndcVertices[i].z = Lerp(worldVertices[i].z, ndcVertices[i].z, sBlend);
         }
 
-        Model *displayModel = &ndcModel;
-        Mesh *displayMesh = &ndcModel.meshes[0];
+        Model *displayModel = &ndcModels[targetMesh];
+        Mesh *displayMesh = &ndcModels[targetMesh].meshes[0];
 
         if (PERSPECTIVE_CORRECT() && TEXTURE_MODE())
         {
-            PerspectiveCorrectCapture(&main, displayModel, meshTexture, &perspectiveCorrectTexture, meshRotation);
+            PerspectiveCorrectCapture(&main, displayModel, meshTextures[targetMesh], &perspectiveCorrectTexture, meshRotation);
         }
 
         UpdateSpatialFrame(&main, aspect, near, far, &spatialFrame);
@@ -235,8 +284,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(BLACK);
-
-            BeginMode3D(jugemu);
+            if (JUGEMU_MODE()) BeginMode3D(jugemu); else BeginMode3D(main);
                 Vector3 depth, right, up;
                 BasisVector(&main, &depth, &right, &up);
 
@@ -244,26 +292,30 @@ int main(void)
                 DrawLine3D(main.position, Vector3Add(main.position, up), LILAC);
                 DrawLine3D(main.position, Vector3Add(main.position, depth), MARINER);
 
-                DrawSpatialFrame(spatialFrame);
+                if (JUGEMU_MODE()) DrawSpatialFrame(&spatialFrame);
 
-                DrawModelFilled(displayModel, meshTexture, meshRotation);
+                DrawModelFilled(displayModel, meshTextures[targetMesh], meshRotation);
                 DrawModelWiresAndPoints(displayModel, meshRotation);
 
-                DrawNearPlanePoints(&main, aspect, near, &nearPlanePointsModel, displayMesh, meshRotation);
+                if (JUGEMU_MODE()) DrawNearPlanePoints(&main, aspect, near, &nearPlanePointsModels[targetMesh], displayMesh, meshRotation);
 
                 if (PERSPECTIVE_CORRECT() && TEXTURE_MODE())
                 {
                     spatialFrameModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = perspectiveCorrectTexture;
-                    DrawModel(spatialFrameModel, modelPos, 1.0f, WHITE);
+                    if (JUGEMU_MODE()) DrawModel(spatialFrameModel, modelPos, 1.0f, WHITE);
                 }
                 else
                 {
-                    PerspectiveIncorrectCapture(&main, aspect, near, displayMesh, meshTexture, meshRotation);
+                    if (JUGEMU_MODE()) PerspectiveIncorrectCapture(&main, aspect, near, displayMesh, meshTextures[targetMesh], meshRotation);
                 }
             EndMode3D();
 
-            DrawText("ARROWS: MOVE | SPACEBAR: PAUSE", 12, 12, fontSize, NEON_CARROT);
-            DrawText("W A : ZOOM", 12, 38, fontSize, NEON_CARROT);
+            DrawText("[1-2]: CUBE [3-4]: SPHERE [5]: KNOT", 12, 12, fontSize, NEON_CARROT);
+            DrawText("ARROWS: MOVE | SPACEBAR: PAUSE", 12, 38, fontSize, NEON_CARROT);
+            DrawText("W A : ZOOM ", 12, 64, fontSize, NEON_CARROT);
+            DrawText("CLIP [ X ]:", 12, 94, fontSize, SUNFLOWER);
+            DrawText((CLIP_MODE())? "ON" : "OFF", 120, 94, fontSize, (CLIP_MODE())? BAHAMA_BLUE : ANAKIWA);
+            DrawText((targetMesh == 0)? "GEN_CUBE" : (targetMesh == 1)? "LOAD_CUBE" : (targetMesh == 2)? "GEN_SPHERE" : (targetMesh == 3)? "LOAD_SPHERE" : "GEN_KNOT", 12, 205, fontSize, NEON_CARROT);
             DrawText("TEXTURE [ T ]:", 570, 12, fontSize, SUNFLOWER);
             DrawText((TEXTURE_MODE())? "ON" : "OFF", 740, 12, fontSize, (TEXTURE_MODE())? ANAKIWA : CHESTNUT_ROSE);
             DrawText("COLORS [ C ]:", 570, 38, fontSize, SUNFLOWER);
@@ -272,8 +324,10 @@ int main(void)
             DrawText((ASPECT_CORRECT())? "CORRECT" : "INCORRECT", 230, 392, fontSize, (ASPECT_CORRECT())? ANAKIWA : CHESTNUT_ROSE);
             DrawText("PERSPECTIVE [ P ]:", 12, 418, fontSize, SUNFLOWER);
             DrawText((PERSPECTIVE_CORRECT())? "CORRECT" : "INCORRECT", 230, 418, fontSize, (PERSPECTIVE_CORRECT())? ANAKIWA : CHESTNUT_ROSE);
-            DrawText("SPACE [ N ]:", 530, 392, fontSize, SUNFLOWER);
-            DrawText((NDC_SPACE())? "NDC" : "WORLD", 665, 392, fontSize, (NDC_SPACE())? BAHAMA_BLUE : ANAKIWA);
+            DrawText("LENS [ O ]:", 510, 366, fontSize, SUNFLOWER);
+            DrawText((ORTHO_MODE())? "ORTHOGRAPHIC" : "PERSPECTIVE", 630, 366, fontSize, (ORTHO_MODE())? BAHAMA_BLUE : ANAKIWA);
+            DrawText("SPACE [ N ]:", 520, 392, fontSize, SUNFLOWER);
+            DrawText((NDC_SPACE())? "NDC" : "WORLD", 655, 392, fontSize, (NDC_SPACE())? BAHAMA_BLUE : ANAKIWA);
             if (NDC_SPACE())
             {
                 DrawText("REFLECT [ F ]:", 530, 418, fontSize, SUNFLOWER);
@@ -286,11 +340,14 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(worldModel);
-    UnloadModel(ndcModel);
-    UnloadModel(nearPlanePointsModel);
+    for (int i = 0; i < NUM_MODELS; i++)
+    {
+        UnloadModel(worldModels[i]);
+        UnloadModel(ndcModels[i]);
+        UnloadModel(nearPlanePointsModels[i]);
+        if (meshTextures[i].id) UnloadTexture(meshTextures[i]);
+    }
     UnloadModel(spatialFrameModel);
-    UnloadTexture(meshTexture);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -312,9 +369,9 @@ static void WorldToNDCSpace(Camera3D *main, float aspect, float near, float far,
 {
     Vector3 depth, right, up;
     BasisVector(main, &depth, &right, &up);
-    float halfHNear = near*tanf(DEG2RAD*main->fovy*0.5f);
+    float halfHNear = Lerp(near*tanf(DEG2RAD*fovyPerspective*0.5f), 0.5f*nearPlaneHeightOrthographic, OrthoBlendFactor(0.0f));
     float halfWNear = Lerp(halfHNear, halfHNear*aspect, AspectBlendFactor(0.0f));
-    float halfDepthNDC = Lerp(halfHNear, 0.5f*(far - near), AspectBlendFactor(0.0f));
+    float halfDepthNDC = Lerp(halfHNear, 0.5f*(far - near), Lerp(AspectBlendFactor(0.0f), 0.0f, OrthoBlendFactor(0.0f)));
     Vector3 centerNearPlane = Vector3Add(main->position, Vector3Scale(depth, near));
     Vector3 centerNDCCube = Vector3Add(centerNearPlane, Vector3Scale(depth, halfDepthNDC));
 
@@ -326,7 +383,7 @@ static void WorldToNDCSpace(Camera3D *main, float aspect, float near, float far,
         Vector3 clipPlaneVector = Vector3Subtract(intersectionCoord, centerNearPlane);
         float xNDC = Vector3DotProduct(clipPlaneVector, right)/halfWNear;
         float yNDC = Vector3DotProduct(clipPlaneVector, up)/halfHNear;
-        float zNDC = (far + near - 2.0f*far*near/signedDepth)/(far - near);
+        float zNDC = Lerp((far + near - 2.0f*far*near/signedDepth)/(far - near), 2.0f*(signedDepth - near)/(far - near) - 1.0f, OrthoBlendFactor(0.0f));
         Vector3 scaledRight = Vector3Scale(right, xNDC*halfWNear);
         Vector3 scaledUp = Vector3Scale(up, yNDC*halfHNear);
         Vector3 scaledDepth = Vector3Scale(depth, zNDC*halfDepthNDC);
@@ -341,7 +398,6 @@ static void DrawModelFilled(Model *model, Texture2D texture, float rotation)
     if (!(COLOR_MODE() || TEXTURE_MODE())) return;
     Color *cacheColors = (Color *)model->meshes[0].colors;
     if (TEXTURE_MODE() && !COLOR_MODE()) model->meshes[0].colors = NULL;
-
     model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = (TEXTURE_MODE())? texture.id : 0;
     DrawModelEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, WHITE);
     model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = 0;
@@ -353,9 +409,8 @@ static void DrawModelWiresAndPoints(Model *model, float rotation)
 {
     Color *cacheColors = (Color *)model->meshes[0].colors;
     unsigned int cacheID = model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id;
-    model->meshes[0].colors = NULL;
+    if (!CLIP_MODE()) model->meshes[0].colors = NULL;
     model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = 0;
-
     DrawModelWiresEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, MARINER);
     rlSetPointSize(4.0f);
     DrawModelPointsEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, LILAC);
@@ -368,11 +423,11 @@ static void UpdateSpatialFrame(Camera3D *main, float aspect, float near, float f
 {
     Vector3 depth, right, up;
     BasisVector(main, &depth, &right, &up);
-    float halfHNear = near*tanf(DEG2RAD*main->fovy*0.5f);
+    float halfHNear = Lerp(near*tanf(DEG2RAD*fovyPerspective*0.5f), 0.5f*nearPlaneHeightOrthographic, OrthoBlendFactor(0.0f));
     float halfWNear = Lerp(halfHNear, halfHNear*aspect, AspectBlendFactor(0.0f));
-    float halfHFar = far*tanf(DEG2RAD*main->fovy*0.5f);
+    float halfHFar = Lerp(far*tanf(DEG2RAD*fovyPerspective*0.5f), 0.5f*nearPlaneHeightOrthographic, OrthoBlendFactor(0.0f));
     float halfWFar = Lerp(halfHFar, halfHFar*aspect, AspectBlendFactor(0.0f));
-    float halfDepthNdc = Lerp(halfHNear, 0.5f*(far - near), AspectBlendFactor(0.0f));
+    float halfDepthNdc = Lerp(halfHNear, 0.5f*(far - near), Lerp(AspectBlendFactor(0.0f), 0.0f, OrthoBlendFactor(0.0f)));
     float halfDepth = Lerp(0.5f*(far - near), halfDepthNdc, SpaceBlendFactor(0.0f));
     float farHalfW = Lerp(halfWFar, halfWNear, SpaceBlendFactor(0.0f));
     float farHalfH = Lerp(halfHFar, halfHNear, SpaceBlendFactor(0.0f));
@@ -391,7 +446,7 @@ static void UpdateSpatialFrame(Camera3D *main, float aspect, float near, float f
     }
 }
 
-static void DrawSpatialFrame(Mesh spatialFrame)
+static void DrawSpatialFrame(Mesh *spatialFrame)
 {
     static int frontFaces[4][2] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 } };
     static int backFaces[4][2] = { { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 } };
@@ -401,8 +456,8 @@ static void DrawSpatialFrame(Mesh spatialFrame)
     for (int i = 0; i < 3; i++)
         for (int j = 0; j < 4; j++)
         {
-            Vector3 startPosition = ((Vector3 *)spatialFrame.vertices)[faces[i][j][0]];
-            Vector3 endPosition = ((Vector3 *)spatialFrame.vertices)[faces[i][j][1]];
+            Vector3 startPosition = ((Vector3 *)spatialFrame->vertices)[faces[i][j][0]];
+            Vector3 endPosition = ((Vector3 *)spatialFrame->vertices)[faces[i][j][1]];
             DrawLine3D(startPosition, endPosition, (i == 0)? NEON_CARROT : (i == 1)? EGGPLANT : HOPBUSH);
         }
 }
@@ -552,12 +607,12 @@ static void OrbitSpace(Camera3D *jugemu, float dt)
     float azimuth = atan2f(jugemu->position.z, jugemu->position.x);
     float horizontalRadius = sqrtf(jugemu->position.x*jugemu->position.x + jugemu->position.z*jugemu->position.z);
     float elevation = atan2f(jugemu->position.y, horizontalRadius);
-    if (IsKeyDown(KEY_LEFT)) azimuth += 1.5f*dt;
-    if (IsKeyDown(KEY_RIGHT)) azimuth -= 1.5f*dt;
+    if (IsKeyDown(KEY_LEFT)) azimuth += 1.0f*dt;
+    if (IsKeyDown(KEY_RIGHT)) azimuth -= 1.0f*dt;
     if (IsKeyDown(KEY_UP)) elevation += 1.0f*dt;
     if (IsKeyDown(KEY_DOWN)) elevation -= 1.0f*dt;
-    if (IsKeyDown(KEY_W)) radius -= 2.0f*dt;
-    if (IsKeyDown(KEY_S)) radius += 2.0f*dt;
+    if (IsKeyDown(KEY_W)) radius -= 1.0f*dt;
+    if (IsKeyDown(KEY_S)) radius += 1.0f*dt;
     elevation = Clamp(elevation, -M_PI_2 + 0.1f, M_PI_2 - 0.1f);
     jugemu->position.x = Clamp(radius, 0.25f, 10.0f)*cosf(elevation)*cosf(azimuth);
     jugemu->position.y = Clamp(radius, 0.25f, 10.0f)*sinf(elevation);
@@ -614,9 +669,13 @@ static Vector3 Intersect(Camera3D *main, float near, Vector3 worldCoord)
     Vector3 viewDir = Vector3Normalize(Vector3Subtract(main->target, main->position));
     Vector3 mainCameraToPoint = Vector3Subtract(worldCoord, main->position);
     float depthAlongView = Vector3DotProduct(mainCameraToPoint, viewDir);
-    if (depthAlongView <= 0.0f) return Vector3Add(main->position, Vector3Scale(viewDir, near));
+    Vector3 centerNearPlane = Vector3Add(main->position, Vector3Scale(viewDir, near));
+    if (depthAlongView <= 0.0f) return centerNearPlane;
     float scaleToNear = near/depthAlongView;
-    return Vector3Add(main->position, Vector3Scale(mainCameraToPoint, scaleToNear));
+    Vector3 resultPerspective = Vector3Add(main->position, Vector3Scale(mainCameraToPoint, scaleToNear));
+    Vector3 resultOrtho = Vector3Add(worldCoord, Vector3Scale(viewDir, Vector3DotProduct(Vector3Subtract(centerNearPlane, worldCoord), viewDir)));
+    Vector3 result = Vector3Lerp(resultPerspective,resultOrtho, OrthoBlendFactor(0.0f));
+    return result;
 }
 
 static float SpaceBlendFactor(float dt)
@@ -642,5 +701,12 @@ static float ReflectBlendFactor(float dt)
         float direction = (blend < target)? 1.0f : (blend > target)? -1.0f : 0.0f;
         blend = Clamp(blend + direction*blendScalar*dt, 0.0f, 1.0f);
     }
+    return blend;
+}
+
+static float OrthoBlendFactor(float dt)
+{
+    static float blend = 0.0f;
+    if (dt > 0.0f) blend = Clamp(blend + ((ORTHO_MODE())? 1.0f : -1.0f)*blendScalar*dt, 0.0f, 1.0f);
     return blend;
 }
