@@ -31,7 +31,6 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -613,7 +612,7 @@ static void OrbitSpace(Camera3D *jugemu, float dt)
     if (IsKeyDown(KEY_DOWN)) elevation -= 1.0f*dt;
     if (IsKeyDown(KEY_W)) radius -= 1.0f*dt;
     if (IsKeyDown(KEY_S)) radius += 1.0f*dt;
-    elevation = Clamp(elevation, -M_PI_2 + 0.1f, M_PI_2 - 0.1f);
+    elevation = Clamp(elevation, -PI/2 + 0.1f, PI/2 - 0.1f);
     jugemu->position.x = Clamp(radius, 0.25f, 10.0f)*cosf(elevation)*cosf(azimuth);
     jugemu->position.y = Clamp(radius, 0.25f, 10.0f)*sinf(elevation);
     jugemu->position.z = Clamp(radius, 0.25f, 10.0f)*cosf(elevation)*sinf(azimuth);
