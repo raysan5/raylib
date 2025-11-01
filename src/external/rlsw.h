@@ -40,6 +40,14 @@
 *           If not defined, the library is in header only mode and can be included in other headers
 *           or source files without problems. But only ONE file should hold the implementation
 *
+*       #define RLSW_USE_SIMD_INTRINSICS
+*           Detect and use SIMD intrinsics on the host compilation platform
+*           SIMD could improve rendering considerable vectorizing some raster operations
+*           but the target platforms running the compiled program with SIMD enabled
+*           must support the SIMD the program has been built for, making them only
+*           recommended under specific situations and only if the developers know
+*           what are they doing; this flag is not defined by default
+*
 *       rlsw capabilities could be customized just defining some internal
 *       values before library inclusion (default values listed):
 * 
@@ -636,59 +644,58 @@ SWAPI void swBindTexture(uint32_t id);
     #define SW_ARCH_RISCV
 #endif
 
-// Check for SIMD vector instructions
-#if defined(__FMA__) && defined(__AVX2__)
-    #define SW_HAS_FMA_AVX2
-    #include <immintrin.h>
-#endif
-#if defined(__FMA__) && defined(__AVX__)
-    #define SW_HAS_FMA_AVX
-    #include <immintrin.h>
-#endif
-#if defined(__AVX2__)
-    #define SW_HAS_AVX2
-    #include <immintrin.h>
-#endif
-#if defined(__AVX__)
-    #define SW_HAS_AVX
-    #include <immintrin.h>
-#endif
-#if defined(__SSE4_2__)
-    #define SW_HAS_SSE42
-    #include <nmmintrin.h>
-#endif
-#if defined(__SSE4_1__)
-    #define SW_HAS_SSE41
-    #include <smmintrin.h>
-#endif
-#if defined(__SSSE3__)
-    #define SW_HAS_SSSE3
-    #include <tmmintrin.h>
-#endif
-#if defined(__SSE3__)
-    #define SW_HAS_SSE3
-    #include <pmmintrin.h>
-#endif
-#if defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
-    #define SW_HAS_SSE2
-    #include <emmintrin.h>
-#endif
-#if defined(__SSE__)
-    #define SW_HAS_SSE
-    #include <xmmintrin.h>
-#endif
-#if defined(__ARM_NEON) || defined(__aarch64__)
-    #if defined(__ARM_FEATURE_FMA)
-        #define SW_HAS_NEON_FMA
-    #else
-        #define SW_HAS_NEON
+#if defined(RLSW_USE_SIMD_INTRINSICS)
+    // Check for SIMD vector instructions
+    // NOTE: Compiler is responsible to enable required flags for host device,
+    // supported features are detected at compiler init but varies depending on compiler
+    // TODO: This logic must be reviewed to avoid the inclusion of multiple headers 
+    // and enable the higher level of SIMD available
+    #if defined(__FMA__) && defined(__AVX2__)
+        #define SW_HAS_FMA_AVX2
+        #include <immintrin.h>
+    #elif defined(__FMA__) && defined(__AVX__)
+        #define SW_HAS_FMA_AVX
+        #include <immintrin.h>
+    #elif defined(__AVX2__)
+        #define SW_HAS_AVX2
+        #include <immintrin.h>
+    #elif defined(__AVX__)
+        #define SW_HAS_AVX
+        #include <immintrin.h>
     #endif
-    #include <arm_neon.h>
-#endif
-#if defined(__riscv_vector)
-    #define SW_HAS_RVV
-    #include <riscv_vector.h>
-#endif
+    #if defined(__SSE4_2__)
+        #define SW_HAS_SSE42
+        #include <nmmintrin.h>
+    #elif defined(__SSE4_1__)
+        #define SW_HAS_SSE41
+        #include <smmintrin.h>
+    #elif defined(__SSSE3__)
+        #define SW_HAS_SSSE3
+        #include <tmmintrin.h>
+    #elif defined(__SSE3__)
+        #define SW_HAS_SSE3
+        #include <pmmintrin.h>
+    #elif defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
+        #define SW_HAS_SSE2
+        #include <emmintrin.h>
+    #elif defined(__SSE__)
+        #define SW_HAS_SSE
+        #include <xmmintrin.h>
+    #endif
+    #if defined(__ARM_NEON) || defined(__aarch64__)
+        #if defined(__ARM_FEATURE_FMA)
+            #define SW_HAS_NEON_FMA
+        #else
+            #define SW_HAS_NEON
+        #endif
+        #include <arm_neon.h>
+    #endif
+    #if defined(__riscv_vector)
+        // NOTE: Requires compilation flags: -march=rv64gcv -mabi=lp64d
+        #define SW_HAS_RVV
+        #include <riscv_vector.h>
+    #endif
+#endif  // RLSW_USE_SIMD_INTRINSICS
 
 #ifdef __cplusplus
     #define SW_CURLY_INIT(name) name
@@ -749,31 +756,31 @@ SWAPI void swBindTexture(uint32_t id);
 #endif
 
 #if (SW_DEPTH_BUFFER_BITS == 16)
-    #define SW_DEPTH_TYPE uint16_t
-    #define SW_DEPTH_IS_PACKED 1
-    #define SW_DEPTH_PACK_COMP 1
-    #define SW_DEPTH_MAX UINT16_MAX
-    #define SW_DEPTH_SCALE (1.0f/UINT16_MAX)
-    #define SW_PACK_DEPTH(d) ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
-    #define SW_UNPACK_DEPTH(p) (p)
+    #define SW_DEPTH_TYPE       uint16_t
+    #define SW_DEPTH_IS_PACKED  1
+    #define SW_DEPTH_PACK_COMP  1
+    #define SW_DEPTH_MAX        UINT16_MAX
+    #define SW_DEPTH_SCALE      (1.0f/UINT16_MAX)
+    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
+    #define SW_UNPACK_DEPTH(p)  (p)
 #elif (SW_DEPTH_BUFFER_BITS == 24)
-    #define SW_DEPTH_TYPE uint8_t
-    #define SW_DEPTH_IS_PACKED 0
-    #define SW_DEPTH_PACK_COMP 3
-    #define SW_DEPTH_MAX 0xFFFFFFU
-    #define SW_DEPTH_SCALE (1.0f/0xFFFFFFU)
-    #define SW_PACK_DEPTH_0(d) ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFFU))
-    #define SW_PACK_DEPTH_1(d) ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFFU))
-    #define SW_PACK_DEPTH_2(d) ((uint8_t)((uint32_t)((d)*SW_DEPTH_MAX)&0xFFU))
-    #define SW_UNPACK_DEPTH(p) ((((uint32_t)(p)[0]<<16)|((uint32_t)(p)[1]<<8)|(uint32_t)(p)[2]))
+    #define SW_DEPTH_TYPE       uint8_t
+    #define SW_DEPTH_IS_PACKED  0
+    #define SW_DEPTH_PACK_COMP  3
+    #define SW_DEPTH_MAX        0xFFFFFFU
+    #define SW_DEPTH_SCALE      (1.0f/0xFFFFFFU)
+    #define SW_PACK_DEPTH_0(d)  ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFFU))
+    #define SW_PACK_DEPTH_1(d)  ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFFU))
+    #define SW_PACK_DEPTH_2(d)  ((uint8_t)((uint32_t)((d)*SW_DEPTH_MAX)&0xFFU))
+    #define SW_UNPACK_DEPTH(p)  ((((uint32_t)(p)[0]<<16)|((uint32_t)(p)[1]<<8)|(uint32_t)(p)[2]))
 #else // 32 bits
-    #define SW_DEPTH_TYPE float
-    #define SW_DEPTH_IS_PACKED 1
-    #define SW_DEPTH_PACK_COMP 1
-    #define SW_DEPTH_MAX 1.0f
-    #define SW_DEPTH_SCALE 1.0f
-    #define SW_PACK_DEPTH(d) ((SW_DEPTH_TYPE)(d))
-    #define SW_UNPACK_DEPTH(p) (p)
+    #define SW_DEPTH_TYPE       float
+    #define SW_DEPTH_IS_PACKED  1
+    #define SW_DEPTH_PACK_COMP  1
+    #define SW_DEPTH_MAX        1.0f
+    #define SW_DEPTH_SCALE      1.0f
+    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)(d))
+    #define SW_UNPACK_DEPTH(p)  (p)
 #endif
 
 #define SW_STATE_CHECK(flags)   (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
@@ -1136,25 +1143,26 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 #elif defined(SW_HAS_RVV)
     // TODO: Sample code generated by AI, needs testing and review
-    size_t vl = vsetvl_e32m1(4); // Load up to 4 floats into a vector register
-    vfloat32m1_t vsrc = vle32_v_f32m1(src, vl); // Load float32 values
+    // NOTE: RVV 1.0 specs define the use of __riscv_ prefix for instrinsic functions
+    size_t vl = __riscv_vsetvl_e32m1(4); // Load up to 4 floats into a vector register
+    vfloat32m1_t vsrc = __riscv_vle32_v_f32m1(src, vl); // Load float32 values
 
     // Clamp to [0.0f, 1.0f]
-    vfloat32m1_t vzero = vfmv_v_f_f32m1(0.0f, vl);
-    vfloat32m1_t vone  = vfmv_v_f_f32m1(1.0f, vl);
-    vsrc = vfmin_vv_f32m1(vsrc, vone, vl);
-    vsrc = vfmax_vv_f32m1(vsrc, vzero, vl);
+    vfloat32m1_t vzero = __riscv_vfmv_v_f_f32m1(0.0f, vl);
+    vfloat32m1_t vone  = __riscv_vfmv_v_f_f32m1(1.0f, vl);
+    vsrc = __riscv_vfmin_vv_f32m1(vsrc, vone, vl);
+    vsrc = __riscv_vfmax_vv_f32m1(vsrc, vzero, vl);
 
     // Multiply by 255.0f and add 0.5f for rounding
-    vfloat32m1_t vscaled = vfmul_vf_f32m1(vsrc, 255.0f, vl);
-    vscaled = vfadd_vf_f32m1(vscaled, 0.5f, vl);
+    vfloat32m1_t vscaled = __riscv_vfmul_vf_f32m1(vsrc, 255.0f, vl);
+    vscaled = __riscv_vfadd_vf_f32m1(vscaled, 0.5f, vl);
 
     // Convert to unsigned integer (truncate toward zero)
-    vuint32m1_t vu32 = vfcvt_xu_f_v_u32m1(vscaled, vl);
+    vuint32m1_t vu32 = __riscv_vfcvt_xu_f_v_u32m1(vscaled, vl);
 
     // Narrow from u32 -> u8
-    vuint8m1_t vu8 = vnclipu_wx_u8m1(vu32, 0, vl); // Round toward zero
-    vse8_v_u8m1(dst, vu8, vl); // Store result
+    vuint8m1_t vu8 = __riscv_vnclipu_wx_u8m1(vu32, 0, vl); // Round toward zero
+    __riscv_vse8_v_u8m1(dst, vu8, vl); // Store result
 #else
     for (int i = 0; i < 4; i++)
     {
@@ -1190,12 +1198,12 @@ static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
     _mm_storeu_ps(dst, floats);
 #elif defined(SW_HAS_RVV)
     // TODO: Sample code generated by AI, needs testing and review
-    size_t vl = vsetvl_e8m1(4); // Set vector length for 8-bit input elements
-    vuint8m1_t vsrc_u8 = vle8_v_u8m1(src, vl); // Load 4 unsigned 8-bit integers
-    vuint32m1_t vsrc_u32 = vwcvt_xu_u_v_u32m1(vsrc_u8, vl); // Widen to 32-bit unsigned integers
-    vfloat32m1_t vsrc_f32 = vfcvt_f_xu_v_f32m1(vsrc_u32, vl); // Convert to float32
-    vfloat32m1_t vnorm = vfmul_vf_f32m1(vsrc_f32, SW_INV_255, vl); // Multiply by 1/255.0 to normalize
-    vse32_v_f32m1(dst, vnorm, vl); // Store result
+    size_t vl = __riscv_vsetvl_e8m1(4); // Set vector length for 8-bit input elements
+    vuint8m1_t vsrc_u8 = __riscv_vle8_v_u8m1(src, vl); // Load 4 unsigned 8-bit integers
+    vuint32m1_t vsrc_u32 = __riscv_vwcvt_xu_u_v_u32m1(vsrc_u8, vl); // Widen to 32-bit unsigned integers
+    vfloat32m1_t vsrc_f32 = __riscv_vfcvt_f_xu_v_f32m1(vsrc_u32, vl); // Convert to float32
+    vfloat32m1_t vnorm = __riscv_vfmul_vf_f32m1(vsrc_f32, SW_INV_255, vl); // Multiply by 1/255.0 to normalize
+    __riscv_vse32_v_f32m1(dst, vnorm, vl); // Store result
 #else
     dst[0] = (float)src[0]*SW_INV_255;
     dst[1] = (float)src[1]*SW_INV_255;
