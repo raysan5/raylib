@@ -2573,9 +2573,9 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     
     // Set result matrix output
 	Matrix result = {
-		right.x, up.x, forward.x, position.x,
-		right.y, up.y, forward.y, position.y,
-		right.z, up.z, forward.z, position.z,
+		right.x, up.x, forward.x, translation.x,
+		right.y, up.y, forward.y, translation.y,
+		right.z, up.z, forward.z, translation.z,
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
 
