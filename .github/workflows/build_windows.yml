@@ -40,10 +40,10 @@ jobs:
           ziptarget: "win64"
         - compiler: msvc16
           ARCH: "x86"
-          VSARCHPATH: "Win32" 
+          VSARCHPATH: "Win32"
           ziptarget: "win32"
         - compiler: msvc16
-          ARCH: "x64" 
+          ARCH: "x64"
           VSARCHPATH: "x64"
           ziptarget: "win64"
         - compiler: msvc16
@@ -61,7 +61,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
-    
+
     - name: Setup Release Version
       run: |
         echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_${{ matrix.ziptarget }}_${{ matrix.compiler }}" >> $GITHUB_ENV
@@ -69,7 +69,7 @@ jobs:
       if: github.event_name == 'release' && github.event.action == 'published'
 
     - name: Setup Environment
-      run: | 
+      run: |
         dir
         mkdir build
         cd build
@@ -98,7 +98,7 @@ jobs:
       if: |
         matrix.compiler == 'mingw-w64' &&
         matrix.arch == 'i686'
-        
+
     - name: Build Library (MinGW-w64 64bit)
       run: |
         cd src
@@ -144,7 +144,7 @@ jobs:
       with:
         name: ${{ env.RELEASE_NAME }}.zip
         path: ./build/${{ env.RELEASE_NAME }}.zip
-        
+
     - name: Upload Artifact to Release
       uses: softprops/action-gh-release@v1
       with:

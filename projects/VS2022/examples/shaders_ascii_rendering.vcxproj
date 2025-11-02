@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9DB1F875-6E65-4195-B23F-ED8095C0B99C}</ProjectGuid>
+    <ProjectGuid>{5F4B766F-DD52-4B53-B6C3-BC7611E17F20}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shaders_ascii_rendering</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

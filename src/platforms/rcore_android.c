@@ -461,7 +461,7 @@ int GetCurrentMonitor(void)
     if (display == NULL)
     {
         TRACELOG(LOG_ERROR, "GetCurrentMonitor() couldn't get the display object");
-    } 
+    }
     else
     {
         jclass displayClass = (*env)->FindClass(env, "android/view/Display");

@@ -59,7 +59,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader");
 
-    const Vector2 resolution = { screenWidth, screenHeight };
+    const Vector2 resolution = { (float)screenWidth, (float)screenHeight };
     unsigned int brushSize = 8;
 
     // Game of Life logic compute shader

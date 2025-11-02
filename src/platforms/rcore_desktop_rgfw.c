@@ -80,10 +80,17 @@ void CloseWindow(void);
     #define CloseWindow CloseWindow_win32
     #define ShowCursor __imp_ShowCursor
     #define _APISETSTRING_
-    
+
     #undef MAX_PATH
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
     __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
+#if defined(__cplusplus)
+}
+#endif
+
 #endif
 
 #if defined(__APPLE__)
@@ -134,7 +141,6 @@ static bool RGFW_disableCursor = false;
 
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_keyNULL] = KEY_NULL,
-    [RGFW_return] = KEY_ENTER,
     [RGFW_return] = KEY_ENTER,
     [RGFW_apostrophe] = KEY_APOSTROPHE,
     [RGFW_comma] = KEY_COMMA,
@@ -256,7 +262,7 @@ static int RGFW_gpConvTable[18] = {
     [RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
     [RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
     [RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,    
+    [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,
     [RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
 };
 
@@ -556,7 +562,7 @@ int RGFW_formatToChannels(int format)
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    RGFW_window_setIcon(platform.window, image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
+    RGFW_window_setIcon(platform.window, (u8 *)image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
 }
 
 // Set icon for window
@@ -577,8 +583,8 @@ void SetWindowIcons(Image *images, int count)
             if ((smallIcon == NULL) || ((images[i].width < smallIcon->width) && (images[i].height > smallIcon->height))) smallIcon = &images[i];
         }
 
-        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
-        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
+        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
+        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
     }
 }
 
@@ -797,7 +803,7 @@ Image GetClipboardImage(void)
     fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
-    else image = LoadImageFromMemory(".bmp", fileData, dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, dataSize);
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
 #endif
@@ -918,7 +924,7 @@ void PollInputEvents(void)
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
 #endif
-    
+
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1010,7 +1016,7 @@ void PollInputEvents(void)
 
                         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
                         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event->droppedFiles[i]);
-                        
+
                         CORE.Window.dropFileCount++;
                     }
                     else if (CORE.Window.dropFileCount < 1024)
@@ -1214,7 +1220,7 @@ void PollInputEvents(void)
                         int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event->gamepad][button] = pressed;
-                        
+
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
                         else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
                     }
@@ -1410,7 +1416,8 @@ void ClosePlatform(void)
 // Keycode mapping
 static KeyboardKey ConvertScancodeToKey(u32 keycode)
 {
-    if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return 0;
+    if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return KEY_NULL;
 
-    return keyMappingRGFW[keycode];
+    return (KeyboardKey)keyMappingRGFW[keycode];
 }
+

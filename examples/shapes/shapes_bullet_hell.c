@@ -68,8 +68,8 @@ int main(void)
     // Draw circle to bullet texture, then draw bullet using DrawTexture()
     // NOTE: This is done to improve the performance, since DrawCircle() is very slow
     BeginTextureMode(bulletTexture);
-        DrawCircle(12, 12, bulletRadius, WHITE);
-        DrawCircleLines(12, 12, bulletRadius, BLACK);
+        DrawCircle(12, 12, (float)bulletRadius, WHITE);
+        DrawCircleLines(12, 12, (float)bulletRadius, BLACK);
     EndTextureMode();
 
     bool drawInPerformanceMode = true; // Switch between DrawCircle() and DrawTexture()
@@ -192,12 +192,12 @@ int main(void)
                     if (!bullets[i].disabled)
                     {
                         DrawTexture(bulletTexture.texture,
-                            bullets[i].position.x - bulletTexture.texture.width*0.5f,
-                            bullets[i].position.y - bulletTexture.texture.height*0.5f,
+                            (int)(bullets[i].position.x - bulletTexture.texture.width*0.5f),
+                            (int)(bullets[i].position.y - bulletTexture.texture.height*0.5f),
                             bullets[i].color);
                     }
                 }
-            } 
+            }
             else
             {
                 // Draw bullets using DrawCircle(), less performant
@@ -206,8 +206,8 @@ int main(void)
                     // Do not draw disabled bullets (out of screen)
                     if (!bullets[i].disabled)
                     {
-                        DrawCircleV(bullets[i].position, bulletRadius, bullets[i].color);
-                        DrawCircleLinesV(bullets[i].position, bulletRadius, BLACK);
+                        DrawCircleV(bullets[i].position, (float)bulletRadius, bullets[i].color);
+                        DrawCircleLinesV(bullets[i].position, (float)bulletRadius, BLACK);
                     }
                 }
             }

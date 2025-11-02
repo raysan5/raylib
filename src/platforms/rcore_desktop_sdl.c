@@ -104,7 +104,6 @@ typedef struct {
     SDL_GameController *gamepad[MAX_GAMEPADS];
     SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids, they do not start from 0
     SDL_Cursor *cursor;
-    bool cursorRelative;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -829,7 +828,11 @@ void SetWindowPosition(int x, int y)
 void SetWindowMonitor(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         // NOTE:
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
@@ -953,7 +956,11 @@ int GetCurrentMonitor(void)
 Vector2 GetMonitorPosition(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         SDL_Rect displayBounds;
 
@@ -977,7 +984,11 @@ int GetMonitorWidth(int monitor)
     int width = 0;
 
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
@@ -994,7 +1005,11 @@ int GetMonitorHeight(int monitor)
     int height = 0;
 
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
@@ -1011,7 +1026,11 @@ int GetMonitorPhysicalWidth(int monitor)
     int width = 0;
 
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         float ddpi = 0.0f;
         SDL_GetDisplayDPI(monitor, &ddpi, NULL, NULL);
@@ -1031,7 +1050,11 @@ int GetMonitorPhysicalHeight(int monitor)
     int height = 0;
 
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         float ddpi = 0.0f;
         SDL_GetDisplayDPI(monitor, &ddpi, NULL, NULL);
@@ -1051,7 +1074,11 @@ int GetMonitorRefreshRate(int monitor)
     int refresh = 0;
 
     const int monitorCount = SDL_GetNumVideoDisplays();
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
     if ((monitor >= 0) && (monitor < monitorCount))
+#endif
     {
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
@@ -1067,7 +1094,14 @@ const char *GetMonitorName(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
 
-    if ((monitor >= 0) && (monitor < monitorCount)) return SDL_GetDisplayName(monitor);
+#if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
+    if ((monitor > 0) && (monitor <= monitorCount))
+#else
+    if ((monitor >= 0) && (monitor < monitorCount))
+#endif
+    {
+        return SDL_GetDisplayName(monitor);
+    }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
     return "";
@@ -1200,13 +1234,13 @@ void EnableCursor(void)
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
 #if defined(USING_VERSION_SDL3)
-    // SDL_ShowCursor() has been split into three functions: SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
+    // NOTE: SDL_ShowCursor() has been split into three functions:
+    // SDL_ShowCursor(), SDL_HideCursor(), and SDL_CursorVisible()
     SDL_ShowCursor();
 #else
     SDL_ShowCursor(SDL_ENABLE);
 #endif
 
-    platform.cursorRelative = false;
     CORE.Input.Mouse.cursorLocked = false;
 }
 
@@ -1215,7 +1249,6 @@ void DisableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    platform.cursorRelative = true;
     CORE.Input.Mouse.cursorLocked = true;
 }
 
@@ -1323,7 +1356,7 @@ void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove.y = 0;
 
     // Register previous mouse position
-    if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+    if (CORE.Input.Mouse.cursorLocked) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
     else CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     // Reset last gamepad button/axis registered state
@@ -1625,7 +1658,7 @@ void PollInputEvents(void)
             } break;
             case SDL_MOUSEMOTION:
             {
-                if (platform.cursorRelative)
+                if (CORE.Input.Mouse.cursorLocked)
                 {
                     CORE.Input.Mouse.currentPosition.x = (float)event.motion.xrel;
                     CORE.Input.Mouse.currentPosition.y = (float)event.motion.yrel;
