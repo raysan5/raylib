@@ -551,6 +551,7 @@ CORE = \
     core/core_storage_values \
     core/core_text_file_loading \
     core/core_undo_redo \
+    core/core_viewport_scaling \
     core/core_vr_simulator \
     core/core_window_flags \
     core/core_window_letterbox \
