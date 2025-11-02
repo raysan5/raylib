@@ -50,12 +50,12 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // Required for: NULL, calloc(), free()
 #include <stdio.h>      // Required for: rename(), remove()
 #include <string.h>     // Required for: strcmp(), strcpy()
 
 #define SUPPORT_LOG_INFO
-#if defined(SUPPORT_LOG_INFO) && defined(_DEBUG)
+#if defined(SUPPORT_LOG_INFO) //&& defined(_DEBUG)
     #define LOG(...) printf("REXM: "__VA_ARGS__)
 #else
     #define LOG(...)
