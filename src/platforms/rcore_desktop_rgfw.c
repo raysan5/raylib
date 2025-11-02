@@ -423,6 +423,10 @@ void SetWindowState(unsigned int flags)
     {
         RGFW_window_setFloating(platform.window, RGFW_TRUE);
     }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
+    }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");

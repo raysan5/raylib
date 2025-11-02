@@ -588,6 +588,10 @@ void SetWindowState(unsigned int flags)
     {
         SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
     }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN)
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
+    }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
     {
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
@@ -1933,7 +1937,7 @@ int InitPlatform(void)
         FLAG_SET(flags, SDL_WINDOW_FULLSCREEN);
     }
 
-    //if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN))   FLAG_SET(flags, SDL_WINDOW_HIDDEN);
+    //if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, SDL_WINDOW_HIDDEN);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, SDL_WINDOW_BORDERLESS);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) FLAG_SET(flags, SDL_WINDOW_RESIZABLE);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) FLAG_SET(flags, SDL_WINDOW_MINIMIZED);
@@ -1943,9 +1947,9 @@ int InitPlatform(void)
         FLAG_CLEAR(flags, SDL_WINDOW_INPUT_FOCUS);
         FLAG_CLEAR(flags, SDL_WINDOW_MOUSE_FOCUS);
     }
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TOPMOST))           FLAG_SET(flags, SDL_WINDOW_ALWAYS_ON_TOP);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TOPMOST)) FLAG_SET(flags, SDL_WINDOW_ALWAYS_ON_TOP);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MOUSE_PASSTHROUGH)) FLAG_CLEAR(flags, SDL_WINDOW_MOUSE_CAPTURE);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))           FLAG_SET(flags, SDL_WINDOW_ALLOW_HIGHDPI);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) FLAG_SET(flags, SDL_WINDOW_ALLOW_HIGHDPI);
 
     //if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) FLAG_SET(flags, SDL_WINDOW_TRANSPARENT);     // Alternative: SDL_GL_ALPHA_SIZE = 8
     //if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_DESKTOP)) FLAG_SET(flags, SDL_WINDOW_FULLSCREEN_DESKTOP);
