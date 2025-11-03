@@ -177,7 +177,7 @@ int main(void)
         }
         if (!worldMesh->texcoords)
         {
-            worldMesh->texcoords = (float *)MemAlloc(sizeof(float)*worldMesh->vertexCount*2);
+            worldMesh->texcoords = (float *)RL_CALLOC(worldMesh->vertexCount, sizeof(Vector2));
             // Demonstrate planar mapping ("reasonable" default): https://en.wikipedia.org/wiki/Planar_projection.
             BoundingBox bounds = GetMeshBoundingBox(*worldMesh);
             Vector3 extents = Vector3Subtract(bounds.max, bounds.min);
@@ -200,12 +200,13 @@ int main(void)
         ndcMesh.vertexCount = worldMesh->vertexCount;
         ndcMesh.triangleCount = worldMesh->triangleCount;
         ndcMesh.vertices = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector3));
-        ndcMesh.texcoords = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector2));
         ndcMesh.indices = RL_CALLOC(ndcMesh.triangleCount, sizeof(Triangle));
-        ndcMesh.colors = RL_CALLOC(ndcMesh.vertexCount, sizeof(Color));
-        memcpy(ndcMesh.colors, worldMesh->colors, ndcMesh.vertexCount*sizeof(Color));
-        memcpy(ndcMesh.texcoords, worldMesh->texcoords, ndcMesh.vertexCount*sizeof(Vector2));
         memcpy(ndcMesh.indices, worldMesh->indices, ndcMesh.triangleCount*sizeof(Triangle));
+        //NOTE: test things by toggling through the LOADED MESHES VS GEN MESHES when removing planar texcoord fill above
+        if (worldMesh->texcoords) ndcMesh.texcoords = RL_CALLOC(ndcMesh.vertexCount, sizeof(Vector2));
+        if (worldMesh->texcoords) memcpy(ndcMesh.texcoords, worldMesh->texcoords, ndcMesh.vertexCount*sizeof(Vector2));
+        if (worldMesh->colors) ndcMesh.colors = RL_CALLOC(ndcMesh.vertexCount, sizeof(Color));
+        if (worldMesh->colors) memcpy(ndcMesh.colors, worldMesh->colors, ndcMesh.vertexCount*sizeof(Color));
         ndcModels[i] = LoadModelFromMesh(ndcMesh);
         ndcModels[i].materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTextures[i];
 
@@ -508,7 +509,7 @@ static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near
     float yReflect = Lerp(1.0f, -1.0f, ReflectBlendFactor(0.0f));
 
     rlColor4ub(WHITE.r, WHITE.g, WHITE.b, WHITE.a); // just to emphasize raylib Colors are ub 0~255 not floats
-    if (TEXTURE_MODE())
+    if (TEXTURE_MODE() && mesh->texcoords)
         rlEnableTexture(meshTexture.id);
     else
         rlDisableTexture();
@@ -535,20 +536,20 @@ static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near
         b = AspectCorrectAndReflectNearPlane(Intersect(main, near, b), centerNearPlane, right, up, xAspect, yReflect);
         c = AspectCorrectAndReflectNearPlane(Intersect(main, near, c), centerNearPlane, right, up, xAspect, yReflect);
 
-        if (COLOR_MODE()) rlColor4ub(colors[triangles[i][0]].r, colors[triangles[i][0]].g, colors[triangles[i][0]].b, colors[triangles[i][0]].a);
-        if (TEXTURE_MODE()) rlTexCoord2f(texcoords[triangles[i][0]].x, texcoords[triangles[i][0]].y);
+        if (COLOR_MODE() && mesh->colors) rlColor4ub(colors[triangles[i][0]].r, colors[triangles[i][0]].g, colors[triangles[i][0]].b, colors[triangles[i][0]].a);
+        if (TEXTURE_MODE() && mesh->texcoords) rlTexCoord2f(texcoords[triangles[i][0]].x, texcoords[triangles[i][0]].y);
         rlVertex3f(a.x, a.y, a.z);
         // vertex winding!! to account for reflection toggle (will draw the inside of the geometry otherwise)
         int secondIndex = (NDC_SPACE() && REFLECT_Y())? triangles[i][2] : triangles[i][1];
         Vector3 secondVertex = (NDC_SPACE() && REFLECT_Y())? c : b;
-        if (COLOR_MODE()) rlColor4ub(colors[secondIndex].r, colors[secondIndex].g, colors[secondIndex].b, colors[secondIndex].a);
-        if (TEXTURE_MODE()) rlTexCoord2f(texcoords[secondIndex].x, texcoords[secondIndex].y);
+        if (COLOR_MODE() && mesh->colors) rlColor4ub(colors[secondIndex].r, colors[secondIndex].g, colors[secondIndex].b, colors[secondIndex].a);
+        if (TEXTURE_MODE() && mesh->texcoords) rlTexCoord2f(texcoords[secondIndex].x, texcoords[secondIndex].y);
         rlVertex3f(secondVertex.x, secondVertex.y, secondVertex.z);
 
         int thirdIndex = (NDC_SPACE() && REFLECT_Y())? triangles[i][1] : triangles[i][2];
         Vector3 thirdVertex = (NDC_SPACE() && REFLECT_Y())? b : c;
-        if (COLOR_MODE()) rlColor4ub(colors[thirdIndex].r, colors[thirdIndex].g, colors[thirdIndex].b, colors[thirdIndex].a);
-        if (TEXTURE_MODE()) rlTexCoord2f(texcoords[thirdIndex].x, texcoords[thirdIndex].y);
+        if (COLOR_MODE() && mesh->colors) rlColor4ub(colors[thirdIndex].r, colors[thirdIndex].g, colors[thirdIndex].b, colors[thirdIndex].a);
+        if (TEXTURE_MODE() && mesh->texcoords) rlTexCoord2f(texcoords[thirdIndex].x, texcoords[thirdIndex].y);
         rlVertex3f(thirdVertex.x, thirdVertex.y, thirdVertex.z);
     }
 
