@@ -463,7 +463,8 @@ void ToggleFullscreen(void)
     const int monitorCount = SDL_GetNumVideoDisplays();
 
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -491,7 +492,8 @@ void ToggleBorderlessWindowed(void)
     const int monitorCount = SDL_GetNumVideoDisplays();
 
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -548,7 +550,8 @@ void SetWindowState(unsigned int flags)
         const int monitorCount = SDL_GetNumVideoDisplays();
 
     #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-        if ((monitor > 0) && (monitor <= monitorCount))
+        SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+        if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
     #else
         if ((monitor >= 0) && (monitor < monitorCount))
     #endif
@@ -612,7 +615,8 @@ void SetWindowState(unsigned int flags)
         const int monitorCount = SDL_GetNumVideoDisplays();
 
     #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-        if ((monitor > 0) && (monitor <= monitorCount))
+        SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+        if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
     #else
         if ((monitor >= 0) && (monitor < monitorCount))
     #endif
@@ -833,7 +837,8 @@ void SetWindowMonitor(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -849,7 +854,8 @@ void SetWindowMonitor(int monitor)
         SDL_Rect usableBounds;
 
     #if defined(USING_VERSION_SDL3) // Different style for success checking
-        if (SDL_GetDisplayUsableBounds(monitor, &usableBounds))
+        SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+        if (SDL_GetDisplayUsableBounds(monitor, &usableBounds)) // Returns true on success, which confirms that the monitor is valid
     #else
         if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
     #endif
@@ -961,7 +967,8 @@ Vector2 GetMonitorPosition(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -989,7 +996,8 @@ int GetMonitorWidth(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -1010,7 +1018,8 @@ int GetMonitorHeight(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -1031,7 +1040,8 @@ int GetMonitorPhysicalWidth(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -1055,7 +1065,8 @@ int GetMonitorPhysicalHeight(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -1079,7 +1090,8 @@ int GetMonitorRefreshRate(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
@@ -1099,7 +1111,8 @@ const char *GetMonitorName(int monitor)
     const int monitorCount = SDL_GetNumVideoDisplays();
 
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if ((monitor > 0) && (monitor <= monitorCount))
+    SDL_Rect displayBoundsRect; // Different SDL_Rect variable from displayBounds to avoid overwriting it
+    if (SDL_GetDisplayUsableBounds(monitor,  &displayBoundsRect)) // Returns true on success, which confirms that the monitor is valid
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
 #endif
