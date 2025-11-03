@@ -588,7 +588,7 @@ void SetWindowState(unsigned int flags)
     {
         SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
     }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN)
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
     {
         FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
     }
@@ -1249,7 +1249,9 @@ void DisableCursor(void)
 
     HideCursor();
 
-    platform.cursorRelative = true;
+    // ????
+    //platform.cursorRelative = true;
+    CORE.Input.Mouse.cursorHidden = true;
     CORE.Input.Mouse.cursorLocked = true;
 }
 
