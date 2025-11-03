@@ -1238,7 +1238,6 @@ void EnableCursor(void)
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
     ShowCursor();
-
     CORE.Input.Mouse.cursorLocked = false;
 }
 
@@ -1248,10 +1247,6 @@ void DisableCursor(void)
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     HideCursor();
-
-    // ????
-    //platform.cursorRelative = true;
-    CORE.Input.Mouse.cursorHidden = true;
     CORE.Input.Mouse.cursorLocked = true;
 }
 
