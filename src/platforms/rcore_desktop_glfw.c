@@ -1863,8 +1863,8 @@ static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
-    if (focused) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);    // The window was focused
-    else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);          // The window lost focus
+    if (focused) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);    // The window was focused
+    else FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);          // The window lost focus
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
