@@ -513,6 +513,7 @@ CORE = \
     core/core_basic_screen_manager \
     core/core_basic_window \
     core/core_clipboard_text \
+    core/core_compute_hash \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
@@ -753,6 +754,9 @@ core/core_basic_window: core/core_basic_window.c
 core/core_clipboard_text: core/core_clipboard_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_compute_hash: core/core_compute_hash.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_custom_frame_control: core/core_custom_frame_control.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -832,6 +836,9 @@ core/core_text_file_loading: core/core_text_file_loading.c
     --preload-file core/resources/text_file.txt@resources/text_file.txt
 
 core/core_undo_redo: core/core_undo_redo.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_viewport_scaling: core/core_viewport_scaling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_vr_simulator: core/core_vr_simulator.c
