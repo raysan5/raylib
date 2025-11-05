@@ -31,14 +31,14 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - clipboard text");
 
-    const char* clipboardText = NULL;
+    const char *clipboardText = NULL;
 
     // List of text the user can switch through and copy
-    const char* copyableText[] = {"raylib is fun", "hello, clipboard!", "potato chips"};
+    const char *copyableText[] = { "raylib is fun", "hello, clipboard!", "potato chips" };
 
     unsigned int textIndex = 0;
 
-    const char* popupText = NULL;
+    const char *popupText = NULL;
 
     // Initialize timers
     // The amount of time the pop-up text is on screen, before fading
@@ -53,6 +53,8 @@ int main(void)
     float textAlpha = 0.0f;
     // Offset amount for animations
     const int offsetAmount = -4;
+
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -70,7 +72,6 @@ int main(void)
         if (copyAnim > 0) copyAnim -= GetFrameTime();
         if (textAnim > 0) textAnim -= GetFrameTime();
 
-        // React to the user pressing paste
         if (pastePressed)
         {
             // Most operating systems hide this information until the user presses Ctrl-V on the window.
@@ -81,17 +82,13 @@ int main(void)
             
             if (IsImageValid(image))
             {
-                // Unload the image
                 UnloadImage(image);
-                // Update visuals
                 popupText = "clipboard contains image";
             }
             else
             {
-                // Get text from the user's clipboard
                 clipboardText = GetClipboardText();
                 
-                // Update visuals
                 popupText = "text pasted";
                 pasteAnim = animMaxTime;
             }
@@ -114,7 +111,6 @@ int main(void)
             copyAnim = animMaxTime;
             copyAnimMult = 1;
             textAlpha = 1;
-            // Update the text that pops up at the bottom of the screen
             popupText = "text copied";
         }
 
@@ -141,15 +137,8 @@ int main(void)
             copyAnim = animMaxTime;
             copyAnimMult = -1;
 
-            if (textIndex == 0)
-            {
-                // Loop back to the other end
-                textIndex = (sizeof(copyableText) / sizeof(const char*)) - 1; // Length of array minus one
-            } 
-            else
-            {
-                textIndex -= 1;
-            }
+            if (textIndex == 0) textIndex = (sizeof(copyableText)/sizeof(const char*)) - 1;
+            else textIndex -= 1;
         }
         //----------------------------------------------------------------------------------
 
@@ -189,10 +178,7 @@ int main(void)
 				DrawText(popupText, 10, 425 + offset, 20, ColorAlpha(DARKGREEN, textAlpha));
 
 				// Fade-out animation
-				if (textTimer < 0)
-				{
-					textAlpha -= GetFrameTime();
-				}
+				if (textTimer < 0) textAlpha -= GetFrameTime();
 			}
 
         EndDrawing();
