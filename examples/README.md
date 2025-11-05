@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 192]
+## EXAMPLES COLLECTION [TOTAL: 194]
 
-### category: core [45]
+### category: core [47]
 
 Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
 
@@ -71,6 +71,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_screen_recording](core/core_screen_recording.c) | <img src="core/core_screen_recording.png" alt="core_screen_recording" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
+| [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
 ### category: shapes [34]
 
