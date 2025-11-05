@@ -92,7 +92,7 @@ int main(void)
     enum ViewportType viewportType = KEEP_ASPECT_INTEGER;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - Viewport Scaling");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - viewport scaling");
     ResizeRenderSize(viewportType, &screenWidth, &screenHeight, gameWidth, gameHeight, &sourceRect, &destRect, &target);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
