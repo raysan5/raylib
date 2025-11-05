@@ -887,11 +887,14 @@ int main(int argc, char *argv[])
         case OP_BUILD:
         {
             LOG("INFO: Command requested: BUILD\n");
-            LOG("INFO: Example to be built: %s\n", exRebuildRequested);
+            LOG("INFO: Example to be built: %s\n", exName);
 
-            if ((strcmp(exRebuildRequested, "others") != 0) &&
+            if ((exRebuildRequested[0] != '\0') &&
+                (strcmp(exRebuildRequested, "others") != 0) &&
                 (strcmp(exCategory, "others") != 0)) // Skipping "others" category for rebuild: Special needs
             {
+                // TODO: Support building full categories: exRebuildRequested
+
                 int exRebuildCount = 0;
                 rlExampleInfo *exRebuildList = LoadExamplesData(exCollectionFilePath, exRebuildRequested, false, &exRebuildCount);
 
@@ -944,7 +947,54 @@ int main(int argc, char *argv[])
 
                 UnloadExamplesData(exRebuildList);
             }
-            else LOG("WARNING: [others] category examples should be build manually, they could have specific build requirements\n");
+            else  // Build a single example
+            {
+                // Build: raylib.com/examples/<category>/<category>_example_name.html
+                // Build: raylib.com/examples/<category>/<category>_example_name.data
+                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
+                // Build: raylib.com/examples/<category>/<category>_example_name.js
+#if defined(_WIN32)
+                // Set required environment variables
+                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+                _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                //putenv("MAKE=mingw32-make");
+                //ChangeDirectory(exBasePath);
+#endif
+
+                // Build example for PLATFORM_DESKTOP
+#if defined(_WIN32)
+                LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#else
+                LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#endif
+
+                // Build example for PLATFORM_WEB
+#if defined(_WIN32)
+                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#else
+                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#endif
+                // Update generated .html metadata
+                LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
+                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+                // Copy results to web side
+                LOG("INFO: [%s] Copy example build to raylib.com\n", exName);
+                FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.html", exWebPath, exCategory, exName));
+                FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.data", exWebPath, exCategory, exName));
+                FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
+                FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+            }
+                //LOG("WARNING: [others] category examples should be build manually, they could have specific build requirements\n");
 
         } break;
         case OP_VALIDATE:     // Validate: report and actions
@@ -1909,10 +1959,13 @@ static void UnloadExamplesData(rlExampleInfo *exInfo)
 // WARNING: Expecting the example to follow raylib_example_template.c
 static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 {
-    rlExampleInfo *exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
+    rlExampleInfo *exInfo = NULL;
 
     if (FileExists(exFileName) && IsFileExtension(exFileName, ".c"))
     {
+        // Example found in collection
+        exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
+
         strcpy(exInfo->name, GetFileNameWithoutExt(exFileName));
         strncpy(exInfo->category, exInfo->name, TextFindIndex(exInfo->name, "_"));
 
