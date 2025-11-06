@@ -115,7 +115,8 @@ build-*/
 docgen_tmp/
 
 # Tools stuff
-tools/parser/raylib_parser
+tools/parser/rlparser.exe
+tools/parser/rlparser
 tools/rexm/rexm.exe
 tools/rexm/rexm
 
