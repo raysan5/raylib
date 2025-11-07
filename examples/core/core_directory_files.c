@@ -74,7 +74,7 @@ int main(void)
             {
                 Color color = Fade(LIGHTGRAY, 0.3f);
 
-                if (!IsPathFile(files.paths[i]))
+                if (!IsPathFile(files.paths[i]) && DirectoryExists(files.paths[i]))
                 {
                     if (GuiButton((Rectangle){0.0f, 85.0f + 40.0f*(float)i, screenWidth, 40}, ""))
                     {
