@@ -320,6 +320,15 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Calculate a vector with a distance and angle
+// Angle is in radians (full rotation is 2.0f * PI), starts up and goes clockwise
+RMAPI Vector2 Vector2DistanceAngle(float distance, float angle)
+{
+    Vector2 result = { distance*cosf(-(angle - (PI*0.5f))), distance*-sinf(-(angle - (PI*0.5f))) };
+
+    return result;
+}
+
 // Calculate square distance between two vectors
 RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 {
