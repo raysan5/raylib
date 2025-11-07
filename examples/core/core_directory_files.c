@@ -69,7 +69,7 @@ int main(void)
             DrawText(directory, 100, 40, 20, DARKGRAY);
 
             btnBackPressed = GuiButton((Rectangle){ 40.0f, 40.0f, 20, 20 }, "<");
-            
+
             for (int i = 0; i < (int)files.count; i++)
             {
                 Color color = Fade(LIGHTGRAY, 0.3f);
@@ -81,6 +81,7 @@ int main(void)
                         strcpy(directory, files.paths[i]);
                         UnloadDirectoryFiles(files);
                         files = LoadDirectoryFiles(directory);
+                        continue;
                     }
                 }
 
