@@ -2118,12 +2118,12 @@ static inline int sw_clip_##name(                                               
 // Frustum cliping functions
 //-------------------------------------------------------------------------------------------
 #define IS_INSIDE_PLANE_W(h) ((h)[3] >= SW_CLIP_EPSILON)
-#define IS_INSIDE_PLANE_X_POS(h) ((h)[0] <= (h)[3])
-#define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <= (h)[3])
-#define IS_INSIDE_PLANE_Y_POS(h) ((h)[1] <= (h)[3])
-#define IS_INSIDE_PLANE_Y_NEG(h) (-(h)[1] <= (h)[3])
-#define IS_INSIDE_PLANE_Z_POS(h) ((h)[2] <= (h)[3])
-#define IS_INSIDE_PLANE_Z_NEG(h) (-(h)[2] <= (h)[3])
+#define IS_INSIDE_PLANE_X_POS(h) ( (h)[0] <  (h)[3])        // Exclusive for +X
+#define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <  (h)[3])        // Exclusive for -X
+#define IS_INSIDE_PLANE_Y_POS(h) ( (h)[1] <  (h)[3])        // Exclusive for +Y
+#define IS_INSIDE_PLANE_Y_NEG(h) (-(h)[1] <  (h)[3])        // Exclusive for -Y
+#define IS_INSIDE_PLANE_Z_POS(h) ( (h)[2] <= (h)[3])        // Inclusive for +Z
+#define IS_INSIDE_PLANE_Z_NEG(h) (-(h)[2] <= (h)[3])        // Inclusive for -Z
 
 #define COMPUTE_T_PLANE_W(hPrev, hCurr) ((SW_CLIP_EPSILON - (hPrev)[3])/((hCurr)[3] - (hPrev)[3]))
 #define COMPUTE_T_PLANE_X_POS(hPrev, hCurr) (((hPrev)[3] - (hPrev)[0])/(((hPrev)[3] - (hPrev)[0]) - ((hCurr)[3] - (hCurr)[0])))
