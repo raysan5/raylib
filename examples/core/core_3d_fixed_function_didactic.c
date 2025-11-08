@@ -35,6 +35,49 @@
 #include <string.h>
 #include <stdbool.h>
 
+#if defined(GRAPHICS_API_OPENGL_33)
+static const char *vert =
+    "#version 330\n"
+    "in vec3 vertexPosition;\n"
+    "in vec2 vertexTexCoord;\n"
+    "in vec3 vertexNormal;\n"
+    "in vec4 vertexColor;\n"
+    "uniform mat4 mvp;\n"
+    "out vec2 fragTexCoord;\n"
+    "out vec4 fragColor;\n"
+    "uniform int useVertexColors;\n"
+    "uniform int flipTexcoordY;\n"
+    "void main()\n"
+    "{\n"
+    "    if (useVertexColors == 1) {\n"
+    "        fragColor = vertexColor;\n"
+    "    } else {\n"
+    "        fragColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+    "    }\n"
+    "    fragTexCoord = vec2(vertexTexCoord.x, (flipTexcoordY == 1)? (1.0 - vertexTexCoord.y) : vertexTexCoord.y);\n"
+    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
+    "}\n";
+
+static const char *frag =
+    "#version 330\n"
+    "in vec2 fragTexCoord;\n"
+    "in vec4 fragColor;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec4 colDiffuse;\n"
+    "out vec4 finalColor;\n"
+    "void main()\n"
+    "{\n"
+    "    vec4 texelColor = texture(texture0, fragTexCoord);\n"
+    "    vec4 outColor = texelColor*fragColor*colDiffuse;\n"
+    "    if (outColor.a <= 0.0) discard; \n"
+    "    finalColor = outColor;\n"
+    "}\n";
+
+static Shader customShader = { 0 };
+static int useVertexColorsLoc = -1;
+static int flipTexcoordYLoc = -1;
+#endif
+
 #define BAHAMA_BLUE CLITERAL(Color){ 0, 102, 153, 255 }
 #define SUNFLOWER CLITERAL(Color){ 255, 204, 153, 255 }
 #define PALE_CANARY CLITERAL(Color){ 255, 255, 153, 255 }
@@ -103,15 +146,19 @@ static void WorldToNDCSpace(Camera3D *main, float aspect, float near, float far,
 
 static void DrawModelFilled(Model *model, Texture2D texture, float rotation);
 static void DrawModelWiresAndPoints(Model *model, float rotation);
-static void DrawNearPlanePoints(Camera3D *main, float aspect, float near, Model *nearPlanePointsModel, Mesh *mesh, float rotation);
+static void DrawNearPlanePoints(Camera3D *main, float aspect, float near, Model *nearPlanePointsModel, Model *displayModel, float rotation);
 
 static void UpdateSpatialFrame(Camera3D *main, float aspect, float near, float far, Mesh *spatialFrame);
 static void DrawSpatialFrame(Mesh *spatialFrame);
 
-static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near, Mesh *mesh, Texture2D meshTexture, float rotation);
+static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near, Model *displayModel, Texture2D meshTexture, float rotation);
+#if defined(GRAPHICS_API_OPENGL_33)
+static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D meshTexture, RenderTexture2D *perspectiveCorrectRenderTexture, float rotation);
+#else
 static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D meshTexture, Texture2D *perspectiveCorrectTexture, float rotation);
-
+#endif
 static void AlphaMaskPunchOut(Image *rgba, Image *mask, unsigned char threshold);
+static void FillPlanarTexCoords(Mesh *mesh);
 static void FillVertexColors(Mesh *mesh);
 static void OrbitSpace(Camera3D *jugemu, float dt);
 static Vector3 AspectCorrectAndReflectNearPlane(Vector3 intersect, Vector3 center, Vector3 right, Vector3 up, float xAspect, float yReflect);
@@ -133,6 +180,14 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - fixed function didactic");
+#if defined(GRAPHICS_API_OPENGL_33)
+    customShader = LoadShaderFromMemory(vert, frag);
+    useVertexColorsLoc = GetShaderLocation(customShader, "useVertexColors");
+    flipTexcoordYLoc = GetShaderLocation(customShader, "flipTexcoordY");
+    RenderTexture2D perspectiveCorrectRenderTexture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+#else
+    Texture2D perspectiveCorrectTexture = (Texture2D){ 0 };
+#endif
     float near = 1.0f;
     float far = 3.0f;
     float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
@@ -168,27 +223,13 @@ int main(void)
         if (i == 4) worldModels[4] = LoadModelFromMesh(GenMeshKnot(1.0f, 1.0f, 16, 128));
 
         Mesh *worldMesh = &worldModels[i].meshes[0];
-
         if (!worldMesh->indices)
         {
             worldMesh->indices = RL_CALLOC(worldMesh->vertexCount, sizeof(unsigned short));
             for (int j = 0; j < worldMesh->vertexCount; j++) worldMesh->indices[j] = (unsigned short)j;
             worldMesh->triangleCount = worldMesh->vertexCount/3;
         }
-        if (!worldMesh->texcoords)
-        {
-            worldMesh->texcoords = (float *)RL_CALLOC(worldMesh->vertexCount, sizeof(Vector2));
-            // Demonstrate planar mapping ("reasonable" default): https://en.wikipedia.org/wiki/Planar_projection.
-            BoundingBox bounds = GetMeshBoundingBox(*worldMesh);
-            Vector3 extents = Vector3Subtract(bounds.max, bounds.min);
-            for (int j = 0; j < worldMesh->vertexCount; j++)
-            {
-                float x = ((Vector3 *)worldMesh->vertices)[j].x;
-                float y = ((Vector3 *)worldMesh->vertices)[j].y;
-                ((Vector2 *)worldMesh->texcoords)[j].x = (x - bounds.min.x)/extents.x;
-                ((Vector2 *)worldMesh->texcoords)[j].y = (y - bounds.min.y)/extents.y;
-            }
-        }
+        FillPlanarTexCoords(worldMesh);
         FillVertexColors(worldMesh);
 
         Image textureImage = GenImageChecked(textureConfig[i], textureConfig[i], 1, 1, BLACK, WHITE);
@@ -207,22 +248,42 @@ int main(void)
         if (worldMesh->texcoords) memcpy(ndcMesh.texcoords, worldMesh->texcoords, ndcMesh.vertexCount*sizeof(Vector2));
         if (worldMesh->colors) ndcMesh.colors = RL_CALLOC(ndcMesh.vertexCount, sizeof(Color));
         if (worldMesh->colors) memcpy(ndcMesh.colors, worldMesh->colors, ndcMesh.vertexCount*sizeof(Color));
+        UploadMesh(&ndcMesh, true); //this allows for UpdateMeshBuffer later on, but its rought just to work around genmesh upload being static
         ndcModels[i] = LoadModelFromMesh(ndcMesh);
         ndcModels[i].materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTextures[i];
 
+#if defined(GRAPHICS_API_OPENGL_33)
+        worldModels[i].materials[0].shader = customShader;
+        ndcModels[i].materials[0].shader = customShader;
+#endif
         Mesh nearPlanePoints = (Mesh){ 0 };
         nearPlanePoints.vertexCount = worldMesh->triangleCount*3;
         nearPlanePoints.vertices = RL_CALLOC(nearPlanePoints.vertexCount, sizeof(Vector3));
+        UploadMesh(&nearPlanePoints, true);
         nearPlanePointsModels[i] = LoadModelFromMesh(nearPlanePoints);
     }
 
-    Texture2D perspectiveCorrectTexture = (Texture2D){ 0 };
-    Mesh spatialFrame = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Mesh tempCube = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Mesh spatialFrame = { 0 };
+    spatialFrame.vertexCount = tempCube.vertexCount;
+    spatialFrame.triangleCount = tempCube.triangleCount;
+    spatialFrame.vertices = RL_MALLOC(spatialFrame.vertexCount * 3 * sizeof(float));
+    spatialFrame.normals = RL_MALLOC(spatialFrame.vertexCount * 3 * sizeof(float));
+    spatialFrame.texcoords = RL_MALLOC(spatialFrame.vertexCount * 2 * sizeof(float));
+    spatialFrame.indices = RL_MALLOC(spatialFrame.triangleCount * 3 * sizeof(unsigned short));
     spatialFrame.colors = RL_CALLOC(spatialFrame.vertexCount, sizeof(Color));
+    memcpy(spatialFrame.vertices, tempCube.vertices, spatialFrame.vertexCount * 3 * sizeof(float));
+    memcpy(spatialFrame.normals, tempCube.normals, spatialFrame.vertexCount * 3 * sizeof(float));
+    memcpy(spatialFrame.texcoords, tempCube.texcoords, spatialFrame.vertexCount * 2 * sizeof(float));
+    memcpy(spatialFrame.indices, tempCube.indices, spatialFrame.triangleCount * 3 * sizeof(unsigned short));
     for (int i = 0; i < spatialFrame.vertexCount; i++) ((Color *)spatialFrame.colors)[i] = (Color){ 255, 255, 255, 0 };
     for (int i = 0; i < 4; i++) ((Color *)spatialFrame.colors)[i].a = 255;
+    UnloadMesh(tempCube); //NOTE: to  clean up static mesh -- better would be to allow for gen mesh to have option for dynamic or static
+    UploadMesh(&spatialFrame, true);
     Model spatialFrameModel = LoadModelFromMesh(spatialFrame);
-
+#if defined(GRAPHICS_API_OPENGL_33)
+    spatialFrameModel.materials[0].shader = customShader;
+#endif
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -268,15 +329,20 @@ int main(void)
             ndcVertices[i].z = Lerp(worldVertices[i].z, ndcVertices[i].z, sBlend);
         }
 
+        UpdateMeshBuffer(ndcModels[targetMesh].meshes[0], RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, ndcModels[targetMesh].meshes[0].vertices, ndcModels[targetMesh].meshes[0].vertexCount*sizeof(Vector3), 0);
         Model *displayModel = &ndcModels[targetMesh];
-        Mesh *displayMesh = &ndcModels[targetMesh].meshes[0];
 
         if (PERSPECTIVE_CORRECT() && TEXTURE_MODE())
         {
+        #if defined(GRAPHICS_API_OPENGL_33)
+            PerspectiveCorrectCapture(&main, displayModel, meshTextures[targetMesh], &perspectiveCorrectRenderTexture, meshRotation);
+        #else
             PerspectiveCorrectCapture(&main, displayModel, meshTextures[targetMesh], &perspectiveCorrectTexture, meshRotation);
+        #endif
         }
 
         UpdateSpatialFrame(&main, aspect, near, far, &spatialFrame);
+        UpdateMeshBuffer(spatialFrameModel.meshes[0], RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, spatialFrame.vertices, spatialFrame.vertexCount*sizeof(Vector3), 0);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -297,16 +363,29 @@ int main(void)
                 DrawModelFilled(displayModel, meshTextures[targetMesh], meshRotation);
                 DrawModelWiresAndPoints(displayModel, meshRotation);
 
-                if (JUGEMU_MODE()) DrawNearPlanePoints(&main, aspect, near, &nearPlanePointsModels[targetMesh], displayMesh, meshRotation);
+                if (JUGEMU_MODE()) DrawNearPlanePoints(&main, aspect, near, &nearPlanePointsModels[targetMesh], displayModel, meshRotation);
 
                 if (PERSPECTIVE_CORRECT() && TEXTURE_MODE())
                 {
+                #if defined(GRAPHICS_API_OPENGL_33)
+                    spatialFrameModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = perspectiveCorrectRenderTexture.texture;
+                    int useColors = 1;
+                    SetShaderValue(spatialFrameModel.materials[0].shader, useVertexColorsLoc, &useColors, SHADER_UNIFORM_INT);
+                    int flipTexcoordYValue = (NDC_SPACE() && REFLECT_Y())? 1 : 0;
+                    SetShaderValue(spatialFrameModel.materials[0].shader, flipTexcoordYLoc, &flipTexcoordYValue, SHADER_UNIFORM_INT);
+
+                    if (JUGEMU_MODE()) DrawModel(spatialFrameModel, modelPos, 1.0f, WHITE);
+
+                    flipTexcoordYValue = 0;
+                    SetShaderValue(spatialFrameModel.materials[0].shader, flipTexcoordYLoc, &flipTexcoordYValue, SHADER_UNIFORM_INT);
+                #else
                     spatialFrameModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = perspectiveCorrectTexture;
                     if (JUGEMU_MODE()) DrawModel(spatialFrameModel, modelPos, 1.0f, WHITE);
+                #endif
                 }
                 else
                 {
-                    if (JUGEMU_MODE()) PerspectiveIncorrectCapture(&main, aspect, near, displayMesh, meshTextures[targetMesh], meshRotation);
+                    if (JUGEMU_MODE()) PerspectiveIncorrectCapture(&main, aspect, near, displayModel, meshTextures[targetMesh], meshRotation);
                 }
             EndMode3D();
 
@@ -348,7 +427,10 @@ int main(void)
         if (meshTextures[i].id) UnloadTexture(meshTextures[i]);
     }
     UnloadModel(spatialFrameModel);
-
+#if defined(GRAPHICS_API_OPENGL_33)
+    if (perspectiveCorrectRenderTexture.id) UnloadRenderTexture(perspectiveCorrectRenderTexture);
+    UnloadShader(customShader);
+#endif
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
@@ -396,27 +478,42 @@ static void WorldToNDCSpace(Camera3D *main, float aspect, float near, float far,
 static void DrawModelFilled(Model *model, Texture2D texture, float rotation)
 {
     if (!(COLOR_MODE() || TEXTURE_MODE())) return;
+#if defined(GRAPHICS_API_OPENGL_33)
+    int useColors = COLOR_MODE() ? 1 : 0;
+    SetShaderValue(model->materials[0].shader, useVertexColorsLoc, &useColors, SHADER_UNIFORM_INT);
+#else
     Color *cacheColors = (Color *)model->meshes[0].colors;
     if (TEXTURE_MODE() && !COLOR_MODE()) model->meshes[0].colors = NULL;
-    model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = (TEXTURE_MODE())? texture.id : 0;
+#endif
+    model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = (TEXTURE_MODE())? texture.id : rlGetTextureIdDefault();
     DrawModelEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, WHITE);
-    model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = 0;
+    model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = rlGetTextureIdDefault();
 
+#if defined(GRAPHICS_API_OPENGL_11)
     model->meshes[0].colors = (unsigned char *)cacheColors;
+#endif
 }
 
 static void DrawModelWiresAndPoints(Model *model, float rotation)
 {
+#if defined(GRAPHICS_API_OPENGL_33)
+    int useColors = (CLIP_MODE())? 1 : 0;
+    SetShaderValue(model->materials[0].shader, useVertexColorsLoc, &useColors, SHADER_UNIFORM_INT);
+#else
     Color *cacheColors = (Color *)model->meshes[0].colors;
-    unsigned int cacheID = model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id;
     if (!CLIP_MODE()) model->meshes[0].colors = NULL;
-    model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = 0;
+#endif
+    unsigned int cacheID = model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id;
+    model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = rlGetTextureIdDefault();
+
     DrawModelWiresEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, MARINER);
     rlSetPointSize(4.0f);
     DrawModelPointsEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, LILAC);
 
     model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture.id = cacheID;
+#if defined(GRAPHICS_API_OPENGL_11)
     model->meshes[0].colors = (unsigned char *)cacheColors;
+#endif
 }
 
 static void UpdateSpatialFrame(Camera3D *main, float aspect, float near, float far, Mesh *spatialFrame)
@@ -462,21 +559,22 @@ static void DrawSpatialFrame(Mesh *spatialFrame)
         }
 }
 
-static void DrawNearPlanePoints(Camera3D *main, float aspect, float near, Model *nearPlanePointsModel, Mesh *mesh, float rotation)
+static void DrawNearPlanePoints(Camera3D *main, float aspect, float near, Model *nearPlanePointsModel, Model *displayModel, float rotation)
 {
     Vector3 depth, right, up;
     BasisVector(main, &depth, &right, &up);
+    Mesh *displayMesh = &displayModel->meshes[0];
     int nearPlaneVertexCount = 0;
-    int capacity = mesh->triangleCount*3;
+    int capacity = displayMesh->triangleCount*3;
     Mesh *nearPlanePointsMesh = &nearPlanePointsModel->meshes[0];
     Vector3 centerNearPlane = Vector3Add(main->position, Vector3Scale(depth, near));
     float xAspect = Lerp(1.0f/aspect, 1.0f, AspectBlendFactor(0.0f));
     float yReflect = Lerp(1.0f, -1.0f, ReflectBlendFactor(0.0f));
 
-    for (int i = 0; i < mesh->triangleCount; i++)
+    for (int i = 0; i < displayMesh->triangleCount; i++)
     {
-        Vector3 *vertices = (Vector3 *)mesh->vertices;
-        Triangle *triangles = (Triangle *)mesh->indices;
+        Vector3 *vertices = (Vector3 *)displayMesh->vertices;
+        Triangle *triangles = (Triangle *)displayMesh->indices;
 
         Vector3 a = TranslateRotateScale(0, vertices[triangles[i][0]], modelPos, modelScale, rotation);
         Vector3 b = TranslateRotateScale(0, vertices[triangles[i][1]], modelPos, modelScale, rotation);
@@ -496,24 +594,29 @@ static void DrawNearPlanePoints(Camera3D *main, float aspect, float near, Model 
     }
 
     nearPlanePointsMesh->vertexCount = nearPlaneVertexCount;
+    UpdateMeshBuffer(*nearPlanePointsMesh, RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, nearPlanePointsMesh->vertices, nearPlanePointsMesh->vertexCount*sizeof(Vector3), 0);
     rlSetPointSize(3.0f);
     DrawModelPoints(*nearPlanePointsModel, modelPos, 1.0f, LILAC);
 }
 
-static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near, Mesh *mesh, Texture2D meshTexture, float rotation)
+static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near, Model *displayModel, Texture2D meshTexture, float rotation)
 {
     Vector3 depth, right, up;
     BasisVector(main, &depth, &right, &up);
+    Mesh *displayMesh = &displayModel->meshes[0];
     Vector3 centerNearPlane = Vector3Add(main->position, Vector3Scale(depth, near));
     float xAspect = Lerp(1.0f/aspect, 1.0f, AspectBlendFactor(0.0f));
     float yReflect = Lerp(1.0f, -1.0f, ReflectBlendFactor(0.0f));
-
     rlColor4ub(WHITE.r, WHITE.g, WHITE.b, WHITE.a); // just to emphasize raylib Colors are ub 0~255 not floats
-    if (TEXTURE_MODE() && mesh->texcoords)
+    if (TEXTURE_MODE() && displayMesh->texcoords)
+    {
+        rlSetTexture(meshTexture.id);
         rlEnableTexture(meshTexture.id);
+    }
     else
+    {
         rlDisableTexture();
-
+    }
     if (!TEXTURE_MODE() && !COLOR_MODE())
     {
         rlEnableWireMode();
@@ -521,12 +624,12 @@ static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near
     }
     rlBegin(RL_TRIANGLES);
 
-    for (int i = 0; i < mesh->triangleCount; i++)
+    for (int i = 0; i < displayMesh->triangleCount; i++)
     {
-        Triangle *triangles = (Triangle *)mesh->indices;
-        Vector3 *vertices = (Vector3 *)mesh->vertices;
-        Color *colors = (Color *)mesh->colors;
-        Vector2 *texcoords = (Vector2 *)mesh->texcoords;
+        Triangle *triangles = (Triangle *)displayMesh->indices;
+        Vector3 *vertices = (Vector3 *)displayMesh->vertices;
+        Color *colors = (Color *)displayMesh->colors;
+        Vector2 *texcoords = (Vector2 *)displayMesh->texcoords;
 
         Vector3 a = TranslateRotateScale(0, vertices[triangles[i][0]], modelPos, modelScale, rotation);
         Vector3 b = TranslateRotateScale(0, vertices[triangles[i][1]], modelPos, modelScale, rotation);
@@ -536,28 +639,46 @@ static void PerspectiveIncorrectCapture(Camera3D *main, float aspect, float near
         b = AspectCorrectAndReflectNearPlane(Intersect(main, near, b), centerNearPlane, right, up, xAspect, yReflect);
         c = AspectCorrectAndReflectNearPlane(Intersect(main, near, c), centerNearPlane, right, up, xAspect, yReflect);
 
-        if (COLOR_MODE() && mesh->colors) rlColor4ub(colors[triangles[i][0]].r, colors[triangles[i][0]].g, colors[triangles[i][0]].b, colors[triangles[i][0]].a);
-        if (TEXTURE_MODE() && mesh->texcoords) rlTexCoord2f(texcoords[triangles[i][0]].x, texcoords[triangles[i][0]].y);
+        if (COLOR_MODE() && displayMesh->colors) rlColor4ub(colors[triangles[i][0]].r, colors[triangles[i][0]].g, colors[triangles[i][0]].b, colors[triangles[i][0]].a);
+        if (TEXTURE_MODE() && displayMesh->texcoords) rlTexCoord2f(texcoords[triangles[i][0]].x, texcoords[triangles[i][0]].y);
         rlVertex3f(a.x, a.y, a.z);
         // vertex winding!! to account for reflection toggle (will draw the inside of the geometry otherwise)
         int secondIndex = (NDC_SPACE() && REFLECT_Y())? triangles[i][2] : triangles[i][1];
         Vector3 secondVertex = (NDC_SPACE() && REFLECT_Y())? c : b;
-        if (COLOR_MODE() && mesh->colors) rlColor4ub(colors[secondIndex].r, colors[secondIndex].g, colors[secondIndex].b, colors[secondIndex].a);
-        if (TEXTURE_MODE() && mesh->texcoords) rlTexCoord2f(texcoords[secondIndex].x, texcoords[secondIndex].y);
+        if (COLOR_MODE() && displayMesh->colors) rlColor4ub(colors[secondIndex].r, colors[secondIndex].g, colors[secondIndex].b, colors[secondIndex].a);
+        if (TEXTURE_MODE() && displayMesh->texcoords) rlTexCoord2f(texcoords[secondIndex].x, texcoords[secondIndex].y);
         rlVertex3f(secondVertex.x, secondVertex.y, secondVertex.z);
 
         int thirdIndex = (NDC_SPACE() && REFLECT_Y())? triangles[i][1] : triangles[i][2];
         Vector3 thirdVertex = (NDC_SPACE() && REFLECT_Y())? b : c;
-        if (COLOR_MODE() && mesh->colors) rlColor4ub(colors[thirdIndex].r, colors[thirdIndex].g, colors[thirdIndex].b, colors[thirdIndex].a);
-        if (TEXTURE_MODE() && mesh->texcoords) rlTexCoord2f(texcoords[thirdIndex].x, texcoords[thirdIndex].y);
+        if (COLOR_MODE() && displayMesh->colors) rlColor4ub(colors[thirdIndex].r, colors[thirdIndex].g, colors[thirdIndex].b, colors[thirdIndex].a);
+        if (TEXTURE_MODE() && displayMesh->texcoords) rlTexCoord2f(texcoords[thirdIndex].x, texcoords[thirdIndex].y);
         rlVertex3f(thirdVertex.x, thirdVertex.y, thirdVertex.z);
     }
 
     rlEnd();
+    rlDrawRenderBatchActive(); //NOTE: this is what allows lines in opengl33
+    rlSetTexture(rlGetTextureIdDefault());
     rlDisableTexture();
     rlDisableWireMode();
 }
 
+#if defined(GRAPHICS_API_OPENGL_33)
+static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D meshTexture, RenderTexture2D *perspectiveCorrectRenderTexture, float rotation)
+{
+    BeginTextureMode(*perspectiveCorrectRenderTexture);
+        ClearBackground(BLANK);
+        BeginMode3D(*main);
+            int useColors = (COLOR_MODE())? 1 : 0;
+            SetShaderValue(model->materials[0].shader, useVertexColorsLoc, &useColors, SHADER_UNIFORM_INT);
+            model->materials[0].maps[MATERIAL_MAP_ALBEDO].texture = meshTexture;
+            DrawModelEx(*model, modelPos, yAxis, RAD2DEG*rotation, modelScale, WHITE);
+        EndMode3D();
+    EndTextureMode();
+}
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_11)
 static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D meshTexture, Texture2D *perspectiveCorrectTexture, float rotation)
 {
     unsigned char *cacheColors = model->meshes[0].colors;
@@ -575,7 +696,6 @@ static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D me
     Image rgba = LoadImageFromScreen();
     ImageFormat(&rgba, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
     model->meshes[0].colors = cacheColors;
-
     ClearBackground(BLACK);
 
     BeginMode3D(*main);
@@ -596,10 +716,10 @@ static void PerspectiveCorrectCapture(Camera3D *main, Model *model, Texture2D me
         UpdateTexture(*perspectiveCorrectTexture, rgba.data);
     else
         *perspectiveCorrectTexture = LoadTextureFromImage(rgba);
-
     UnloadImage(mask);
     UnloadImage(rgba);
 }
+#endif
 
 static void OrbitSpace(Camera3D *jugemu, float dt)
 {
@@ -629,6 +749,26 @@ static void AlphaMaskPunchOut(Image *rgba, Image *mask, unsigned char threshold)
     int pixelCount = rgba->width*rgba->height;
     for (size_t i = 0; i < pixelCount; ++i) colors[i].a = (maskGrayScale[i] > threshold)? 255 : 0;
     UnloadImage(maskCopy);
+}
+
+static void FillPlanarTexCoords(Mesh *mesh)
+{
+    //NOTE: opengl33, please just always provide texcoords for the obj, opengl11 allows null because its easy and works with ps2 isolation tests,
+    // but otherwise they are always assumed to exist
+    if (!mesh->texcoords)
+    {
+        mesh->texcoords = RL_CALLOC(mesh->vertexCount, sizeof(Vector2));
+        // Demonstrate planar mapping ("reasonable" default): https://en.wikipedia.org/wiki/Planar_projection.
+        BoundingBox bounds = GetMeshBoundingBox(*mesh);
+        Vector3 extents = Vector3Subtract(bounds.max, bounds.min);
+        for (int j = 0; j < mesh->vertexCount; j++)
+        {
+            float x = ((Vector3 *)mesh->vertices)[j].x;
+            float y = ((Vector3 *)mesh->vertices)[j].y;
+            ((Vector2 *)mesh->texcoords)[j].x = (x - bounds.min.x)/extents.x;
+            ((Vector2 *)mesh->texcoords)[j].y = (y - bounds.min.y)/extents.y;
+        }
+    }
 }
 
 static void FillVertexColors(Mesh *mesh)
