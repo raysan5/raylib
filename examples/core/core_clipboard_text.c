@@ -2,22 +2,23 @@
 *
 *   raylib [core] example - clipboard text
 *
-*   Example complexity rating: [★☆☆☆] 1/4
-*
 *   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
 *
-*   Example contributed by Robin (@RobinsAviary) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Ananth S (@Ananth1839) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025 Robin (@RobinsAviary)
+*   Copyright (c) 2025 Ananth S (@Ananth1839)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include <stdio.h>
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+
+#define MAX_TEXT_SAMPLES    5
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -31,30 +32,32 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - clipboard text");
 
-    const char *clipboardText = NULL;
+    // Define some sample texts
+    const char *sampleTexts[MAX_TEXT_SAMPLES] = {
+        "Hello from raylib!",
+        "The quick brown fox jumps over the lazy dog",
+        "Clipboard operations are useful!",
+        "raylib is a simple and easy-to-use library",
+        "Copy and paste me!"
+    };
 
-    // List of text the user can switch through and copy
-    const char *copyableText[] = { "raylib is fun", "hello, clipboard!", "potato chips" };
+    char *clipboardText = NULL;
+    char inputBuffer[256] = "Hello from raylib!"; // Random initial string
 
-    unsigned int textIndex = 0;
+    // UI required variables
+    bool textBoxEditMode = false;
 
-    const char *popupText = NULL;
+    bool btnCutPressed = false;
+    bool btnCopyPressed = false;
+    bool btnPastePressed = false;
+    bool btnClearPressed = false;
+    bool btnRandomPressed = false;
 
-    // Initialize timers
-    // The amount of time the pop-up text is on screen, before fading
-    const float maxTime = 3.0f;
-    float textTimer = 0.0f;
-    // The length of time text is offset
-    const float animMaxTime = 0.1f;
-    float pasteAnim = 0.0f;
-    float copyAnim = 0.0f;
-    int copyAnimMult = 1;
-    float textAnim = 0.0f;
-    float textAlpha = 0.0f;
-    // Offset amount for animations
-    const int offsetAmount = -4;
+    // Set UI style
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+    GuiSetIconScale(2);
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -62,83 +65,56 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // Check if the user has pressed the copy/paste key combinations
-        bool pastePressed = (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_V));
-        bool copyPressed = (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C));
-
-        // Update animation timers
-        if (textTimer > 0) textTimer -= GetFrameTime();
-        if (pasteAnim > 0) pasteAnim -= GetFrameTime();
-        if (copyAnim > 0) copyAnim -= GetFrameTime();
-        if (textAnim > 0) textAnim -= GetFrameTime();
-
-        if (pastePressed)
+        // Handle button interactions
+        if (btnCutPressed)
         {
-            // Most operating systems hide this information until the user presses Ctrl-V on the window.
+            SetClipboardText(inputBuffer);
+            clipboardText = GetClipboardText();
+            inputBuffer[0] = '\0'; // Quick solution to clear text
+            //memset(inputBuffer, 0, 256); // Clear full buffer properly
+        }
 
-            // Check to see if the clipboard contains an image
-            // This function does nothing outside of Windows, as it directly calls the Windows API
-            Image image = GetClipboardImage();
-            
-            if (IsImageValid(image))
+        if (btnCopyPressed)
+        {
+            SetClipboardText(inputBuffer); // Copy text to clipboard
+            clipboardText = GetClipboardText(); // Get text from clipboard
+        }
+
+        if (btnPastePressed)
+        {
+            // Paste text from clipboard
+            clipboardText = GetClipboardText();
+            if (clipboardText != NULL) TextCopy(inputBuffer, clipboardText);
+        }
+
+        if (btnClearPressed)
+        {
+            inputBuffer[0] = '\0'; // Quick solution to clear text
+            //memset(inputBuffer, 0, 256); // Clear full buffer properly
+        }
+
+        if (btnRandomPressed)
+        {
+            // Get random text from sample list
+            TextCopy(inputBuffer, sampleTexts[GetRandomValue(0, MAX_TEXT_SAMPLES - 1)]);
+        }
+
+        // Quick cut/copy/paste with keyboard shortcuts
+        if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL))
+        {
+            if (IsKeyPressed(KEY_X))
             {
-                UnloadImage(image);
-                popupText = "clipboard contains image";
+                SetClipboardText(inputBuffer);
+                inputBuffer[0] = '\0'; // Quick solution to clear text
             }
-            else
+
+            if (IsKeyPressed(KEY_C)) SetClipboardText(inputBuffer);
+
+            if (IsKeyPressed(KEY_V))
             {
                 clipboardText = GetClipboardText();
-                
-                popupText = "text pasted";
-                pasteAnim = animMaxTime;
+                if (clipboardText != NULL) TextCopy(inputBuffer, clipboardText);
             }
-
-            // Reset animation values
-            textTimer = maxTime;
-            textAnim = animMaxTime;
-            textAlpha = 1;
-        }
-
-        // React to the user pressing copy
-        if (copyPressed)
-        {
-            // Set the text on the user's clipboard
-            SetClipboardText(copyableText[textIndex]);
-
-            // Reset values
-            textTimer = maxTime;
-            textAnim = animMaxTime;
-            copyAnim = animMaxTime;
-            copyAnimMult = 1;
-            textAlpha = 1;
-            popupText = "text copied";
-        }
-
-        // Switch to the next item in the list when the user presses up
-        if (IsKeyPressed(KEY_UP))
-        {
-            // Reset animation
-            copyAnim = animMaxTime;
-            copyAnimMult = 1;
-
-            textIndex += 1;
-
-            if (textIndex >= sizeof(copyableText) / sizeof(const char*)) // Length of array
-            { 
-                // Loop back to the other end
-                textIndex = 0;
-            }
-        }
-
-        // Switch to the previous item in the list when the user presses down
-        if (IsKeyPressed(KEY_DOWN))
-        {
-            // Reset animation
-            copyAnim = animMaxTime;
-            copyAnimMult = -1;
-
-            if (textIndex == 0) textIndex = (sizeof(copyableText)/sizeof(const char*)) - 1;
-            else textIndex -= 1;
         }
         //----------------------------------------------------------------------------------
 
@@ -146,40 +122,32 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-			ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-			// Draw the user's pasted text, if there is any yet
-			if (clipboardText)
-			{
-				// Offset animation
-				int offset = 0;
-				if (pasteAnim > 0) offset = offsetAmount;
+        // Draw instructions
+        GuiLabel((Rectangle){ 50, 20, 700, 36 }, "Use the BUTTONS or KEY SHORTCUTS:");
+        DrawText("[CTRL+X] - CUT | [CTRL+C] COPY | [CTRL+V] | PASTE", 50, 60, 20, MAROON);
 
-				// Draw the pasted text
-				DrawText("pasted clipboard:", 10, 10 + offset, 20, DARKGREEN);
-				DrawText(clipboardText, 10, 30 + offset, 20, DARKGRAY);
-			}
+        // Draw text box
+        if (GuiTextBox((Rectangle){ 50, 120, 652, 40 }, inputBuffer, 256, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
-			// Offset animation
-			int textOffset = 0;
-			if (copyAnim > 0) textOffset = offsetAmount;
+        // Random text button
+        btnRandomPressed = GuiButton((Rectangle){ 50 + 652 + 8, 120, 40, 40 }, "#77#");
 
-			// Draw copyable text and controls
-			DrawText(copyableText[textIndex], 10, 330 + (textOffset * copyAnimMult), 20, MAROON);
-			DrawText("up/down to change string, ctrl-c to copy, ctrl-v to paste", 10, 355, 20, DARKGRAY);
+        // Draw buttons
+        btnCutPressed = GuiButton((Rectangle){ 50, 180, 158, 40 }, "#17#CUT");
+        btnCopyPressed = GuiButton((Rectangle){ 50 + 165, 180, 158, 40 }, "#16#COPY");
+        btnPastePressed = GuiButton((Rectangle){ 50 + 165*2, 180, 158, 40 }, "#18#PASTE");
+        btnClearPressed = GuiButton((Rectangle){ 50 + 165*3, 180, 158, 40 }, "#143#CLEAR");
 
-			// Alpha / Offset animation
-			if (textAlpha > 0)
-			{
-				// Offset animation
-				int offset = 0;
-				if (textAnim > 0) offset = offsetAmount;
-				// Draw pop up text
-				DrawText(popupText, 10, 425 + offset, 20, ColorAlpha(DARKGREEN, textAlpha));
-
-				// Fade-out animation
-				if (textTimer < 0) textAlpha -= GetFrameTime();
-			}
+        // Draw clipboard status
+        GuiSetState(STATE_DISABLED);
+        GuiLabel((Rectangle){ 50, 260, 700, 40 }, "Clipboard current text data:");
+        GuiSetStyle(TEXTBOX, TEXT_READONLY, 1);
+        GuiTextBox((Rectangle){ 50, 300, 700, 40 }, clipboardText, 256, false);
+        GuiSetStyle(TEXTBOX, TEXT_READONLY, 0);
+        GuiLabel((Rectangle){ 50, 360, 700, 40 }, "Try copying text from other applications and pasting here!");
+        GuiSetState(STATE_NORMAL);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
