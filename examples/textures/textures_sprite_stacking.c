@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Redbooth model (c) 2017-2025 @kluchek under https://creativecommons.org/licenses/by/4.0/
+*   Redbooth model (c) 2017-2025 @kluchek under https://creativecommons.org/licenses/by/4.0/ https://github.com/kluchek/vox-models/
 *   Copyright (c) 2025-2025 Robin (@RobinsAviary)
 *
 ********************************************************************************************/
