@@ -57,11 +57,13 @@ int main(void)
         stackSpacing = Clamp(stackSpacing, 0.0f, 5.0f);
 
         // Add a positive/negative offset to spin right/left at different speeds
-        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
+        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+        {
             rotationSpeed -= speedChange;
         }
 
-        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
+        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        {
             rotationSpeed += speedChange;
         }
 
@@ -82,7 +84,8 @@ int main(void)
             float scaledHeight = frameHeight*stackScale;
 
             // Draw the stacked sprite, rotated to the correct angle, with an vertical offset applied based on its y location
-            for (int i = stackCount - 1; i >= 0; i--) {
+            for (int i = stackCount - 1; i >= 0; i--)
+            {
                 Rectangle source = { 0.0f, (float)i*frameHeight, frameWidth, frameHeight };
                 // Center vertically
                 Rectangle dest = { screenWidth/2.0f, (screenHeight/2.0f) + (i*stackSpacing) - (stackSpacing*stackCount/2.0f), scaledWidth, scaledHeight };
@@ -103,7 +106,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
     UnloadTexture(booth);
 
     CloseWindow();        // Close window and OpenGL context
