@@ -523,7 +523,7 @@ CORE = \
     core/core_3d_picking \
     core/core_3d_fixed_function_didactic \
     core/core_3d_camera_view_opengl11 \
-    core/core_3d_camera_view_opengl33 \
+    core/core_3d_camera_view \
     core/core_automation_events \
     core/core_basic_screen_manager \
     core/core_basic_window \
