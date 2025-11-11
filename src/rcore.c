@@ -3041,7 +3041,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
     {
         buffer[(paddedSize - sizeof(bitLen)) + (i - 1)] = (bitLen >> (8*(sizeof(bitLen) - i))) & 0xFF;
     }
-    
+
     for (unsigned long long int blockN = 0; blockN < paddedSize/64; blockN++)
     {
         unsigned int a = hash[0];
@@ -3092,9 +3092,9 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
         hash[6] += g;
         hash[7] += h;
     }
-    
+
     RL_FREE(buffer);
-    
+
     return hash;
 }
 

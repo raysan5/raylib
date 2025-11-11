@@ -1343,7 +1343,7 @@ int InitPlatform(void)
     // TODO: Is this needed by raylib now?
     // If so, rcore_desktop_sdl should be updated too
     //SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-    
+
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_VSYNC_HINT)) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 
