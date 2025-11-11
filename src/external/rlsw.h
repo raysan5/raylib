@@ -7,7 +7,7 @@
 *       functionality available on rlgl.h library used by raylib, becoming a direct software
 *       rendering replacement for OpenGL 1.1 backend and allowing to run raylib on GPU-less
 *       devices when required
-* 
+*
 *   FEATURES:
 *       - Rendering to custom internal framebuffer with multiple color modes supported:
 *           - Color buffer: RGB - 8-bit (3:3:2) | RGB - 16-bit (5:6:5) | RGB - 24-bit (8:8:8)
@@ -50,7 +50,7 @@
 *
 *       rlsw capabilities could be customized just defining some internal
 *       values before library inclusion (default values listed):
-* 
+*
 *           #define SW_GL_FRAMEBUFFER_COPY_BGRA     true
 *           #define SW_GL_BINDING_COPY_TEXTURE      true
 *           #define SW_COLOR_BUFFER_BITS            24
@@ -60,7 +60,7 @@
 *           #define SW_MAX_TEXTURE_STACK_SIZE       2
 *           #define SW_MAX_TEXTURES                 128
 *
-* 
+*
 *   LICENSE: MIT
 *
 *   Copyright (c) 2025-2026 Le Juez Victor (@Bigfoot71), reviewed by Ramon Santamaria (@raysan5)
@@ -71,10 +71,10 @@
 *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 *   copies of the Software, and to permit persons to whom the Software is
 *   furnished to do so, subject to the following conditions:
-*   
+*
 *   The above copyright notice and this permission notice shall be included in all
 *   copies or substantial portions of the Software.
-*   
+*
 *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -648,7 +648,7 @@ SWAPI void swBindTexture(uint32_t id);
     // Check for SIMD vector instructions
     // NOTE: Compiler is responsible to enable required flags for host device,
     // supported features are detected at compiler init but varies depending on compiler
-    // TODO: This logic must be reviewed to avoid the inclusion of multiple headers 
+    // TODO: This logic must be reviewed to avoid the inclusion of multiple headers
     // and enable the higher level of SIMD available
     #if defined(__FMA__) && defined(__AVX2__)
         #define SW_HAS_FMA_AVX2
@@ -896,7 +896,7 @@ typedef struct {
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
     SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
-    SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles) 
+    SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles)
     int reqVertices;                                            // Number of vertices required for the primitive being drawn
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
@@ -1123,9 +1123,9 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
     float32x4_t values = vld1q_f32(src);
     float32x4_t scaled = vmulq_n_f32(values, 255.0f);
     int32x4_t clamped_s32 = vcvtq_s32_f32(scaled);  // f32 -> s32 (truncated)
-    int16x4_t narrow16_s = vqmovn_s32(clamped_s32); 
+    int16x4_t narrow16_s = vqmovn_s32(clamped_s32);
     int16x8_t combined16_s = vcombine_s16(narrow16_s, narrow16_s);
-    uint8x8_t narrow8_u = vqmovun_s16(combined16_s); 
+    uint8x8_t narrow8_u = vqmovun_s16(combined16_s);
     vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8_u), 0);
 #elif defined(SW_HAS_SSE41)
     __m128 values = _mm_loadu_ps(src);
@@ -2690,9 +2690,9 @@ static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
     const sw_vertex_t *input = RLSW.vertexBuffer;
 
     // Calculate the centroid of the quad
-    float cx = (input[0].screen[0] + input[1].screen[0] + 
+    float cx = (input[0].screen[0] + input[1].screen[0] +
                 input[2].screen[0] + input[3].screen[0])*0.25f;
-    float cy = (input[0].screen[1] + input[1].screen[1] + 
+    float cy = (input[0].screen[1] + input[1].screen[1] +
                 input[2].screen[1] + input[3].screen[1])*0.25f;
 
     // Calculate the angle of each vertex relative to the center
@@ -3615,7 +3615,7 @@ bool swInit(int w, int h)
     RLSW.loadedTextures[0].ty = 0.5f;
 
     RLSW.loadedTextureCount = 1;
-    
+
     SW_LOG("INFO: RLSW: Software renderer initialized successfully\n");
 #if defined(SW_HAS_FMA_AVX) && defined(SW_HAS_FMA_AVX2)
     SW_LOG("INFO: RLSW: Using SIMD instructions: FMA AVX\n");
@@ -4494,13 +4494,13 @@ void swDrawArrays(SWdraw mode, int offset, int count)
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         const float *defaultTexcoord = RLSW.current.texcoord;
         const float *defaultColor = RLSW.current.color;
-        
+
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
         const uint8_t *colors = RLSW.array.colors;
 
         int end = offset + count;
-        
+
         for (int i = offset; i < end; i++)
         {
             float u, v;
@@ -4589,16 +4589,16 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         const float *defaultTexcoord = RLSW.current.texcoord;
         const float *defaultColor = RLSW.current.color;
-        
+
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
         const uint8_t *colors = RLSW.array.colors;
-        
+
         for (int i = 0; i < count; i++)
         {
-            int index = indicesUb ? indicesUb[i] : 
+            int index = indicesUb ? indicesUb[i] :
                        (indicesUs ? indicesUs[i] : indicesUi[i]);
-            
+
             float u, v;
             if (texcoords)
             {
