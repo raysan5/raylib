@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
-*   Example originally created with raylib 1.6, last time updated with raylib 4.2
+*   Example originally created with raylib 1.6, last time updated with raylib 6.0
 *
 *   Example created by Ramon Santamaria (@raysan5) and reviewed by James Hofmann (@triplefox)
 *
@@ -23,34 +23,6 @@
 
 #define MAX_SAMPLES               512
 #define MAX_SAMPLES_PER_UPDATE   4096
-
-// Cycles per second (hz)
-float frequency = 440.0f;
-
-// Audio frequency, for smoothing
-float audioFrequency = 440.0f;
-
-// Previous value, used to test if sine needs to be rewritten, and to smoothly modulate frequency
-float oldFrequency = 1.0f;
-
-// Index for audio rendering
-float sineIdx = 0.0f;
-
-// Audio input processing callback
-void AudioInputCallback(void *buffer, unsigned int frames)
-{
-    audioFrequency = frequency + (audioFrequency - frequency)*0.95f;
-
-    float incr = audioFrequency/44100.0f;
-    short *d = (short *)buffer;
-
-    for (unsigned int i = 0; i < frames; i++)
-    {
-        d[i] = (short)(32000.0f*sinf(2*PI*sineIdx));
-        sineIdx += incr;
-        if (sineIdx > 1.0f) sineIdx -= 1.0f;
-    }
-}
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -71,8 +43,6 @@ int main(void)
     // Init raw audio stream (sample rate: 44100, sample size: 16bit-short, channels: 1-mono)
     AudioStream stream = LoadAudioStream(44100, 16, 1);
 
-    SetAudioStreamCallback(stream, AudioInputCallback);
-
     // Buffer for the single cycle waveform we are synthesizing
     short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);
 
@@ -84,7 +54,6 @@ int main(void)
     // Position read in to determine next frequency
     Vector2 mousePosition = { -100.0f, -100.0f };
 
-    /*
     // Cycles per second (hz)
     float frequency = 440.0f;
 
@@ -93,7 +62,6 @@ int main(void)
 
     // Cursor to read and copy the samples of the sine wave buffer
     int readCursor = 0;
-    */
 
     // Computed size in samples of the sine wave
     int waveLength = 1;
@@ -124,8 +92,8 @@ int main(void)
         if (frequency != oldFrequency)
         {
             // Compute wavelength. Limit size in both directions
-            //int oldWavelength = waveLength;
-            waveLength = (int)(22050/frequency);
+            int oldWavelength = waveLength;
+            waveLength = (int)(stream.sampleRate/frequency);
             if (waveLength > MAX_SAMPLES/2) waveLength = MAX_SAMPLES/2;
             if (waveLength < 1) waveLength = 1;
 
@@ -141,11 +109,10 @@ int main(void)
             }
 
             // Scale read cursor's position to minimize transition artifacts
-            //readCursor = (int)(readCursor*((float)waveLength/(float)oldWavelength));
+            readCursor = (int)(readCursor*((float)waveLength/(float)oldWavelength));
             oldFrequency = frequency;
         }
 
-        /*
         // Refill audio stream if required
         if (IsAudioStreamProcessed(stream))
         {
@@ -174,7 +141,6 @@ int main(void)
             // Copy finished frame to audio stream
             UpdateAudioStream(stream, writeBuf, MAX_SAMPLES_PER_UPDATE);
         }
-        */
         //----------------------------------------------------------------------------------
 
         // Draw
