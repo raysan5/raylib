@@ -18,7 +18,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
-#include <math.h>
+#include <stdlib.h>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
