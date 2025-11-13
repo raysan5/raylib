@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
                     char *exColInfo = LoadFileText(exCollectionFilePath);
                     if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                     {
-                        strcpy(exName, argv[2]); // Register example name for removal
+                        strcpy(exName, argv[2]); // Register example name
                         strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                         opCode = OP_BUILD;
                     }
@@ -2155,11 +2155,13 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
             int functionIndex02 = TextFindIndex(ptr - 10, "TraceLog");          // Check TraceLog()
             int functionIndex03 = TextFindIndex(ptr - 40, "TakeScreenshot");    // Check TakeScreenshot()
             int functionIndex04 = TextFindIndex(ptr - 40, "SaveFileData");      // Check SaveFileData()
+            int functionIndex05 = TextFindIndex(ptr - 40, "SaveFileText");      // Check SaveFileText()
 
             if (!((functionIndex01 != -1) && (functionIndex01 < 40)) &&  // Not found ExportImage() before ""
                 !((functionIndex02 != -1) && (functionIndex02 < 10)) &&  // Not found TraceLog() before ""
                 !((functionIndex03 != -1) && (functionIndex03 < 40)) &&  // Not found TakeScreenshot() before ""
-                !((functionIndex04 != -1) && (functionIndex04 < 40)))    // Not found SaveFileData() before ""
+                !((functionIndex04 != -1) && (functionIndex04 < 40)) &&  // Not found TakeScreenshot() before ""
+                !((functionIndex05 != -1) && (functionIndex05 < 40)))    // Not found SaveFileText() before ""
             {
                 int len = (int)(end - start);
                 if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
