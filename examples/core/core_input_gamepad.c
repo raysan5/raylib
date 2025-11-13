@@ -196,7 +196,6 @@ int main(void)
                 }
                 else
                 {
-
                     // Draw background: generic
                     DrawRectangleRounded((Rectangle){ 175, 110, 460, 220}, 0.3f, 16, DARKGRAY);
 
@@ -269,7 +268,6 @@ int main(void)
             else
             {
                 DrawText(TextFormat("GP%d: NOT DETECTED", gamepad), 10, 10, 10, GRAY);
-
                 DrawTexture(texXboxPad, 0, 0, LIGHTGRAY);
             }
 
