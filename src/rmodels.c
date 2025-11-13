@@ -2444,6 +2444,32 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
+static Mesh BuildMeshFromParShapesMesh(par_shapes_mesh *plane) {
+    Mesh mesh = { 0 };
+    mesh.vertices = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)RL_MALLOC(plane->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = plane->ntriangles*3;
+    mesh.triangleCount = plane->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = plane->points[plane->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = plane->points[plane->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = plane->points[plane->triangles[k]*3 + 2];
+
+        mesh.normals[k*3] = plane->normals[plane->triangles[k]*3];
+        mesh.normals[k*3 + 1] = plane->normals[plane->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = plane->normals[plane->triangles[k]*3 + 2];
+
+        mesh.texcoords[k*2] = plane->tcoords[plane->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = plane->tcoords[plane->triangles[k]*2 + 1];
+    }
+
+    return mesh;
+}
+
 // Generate polygonal mesh
 Mesh GenMeshPoly(int sides, float radius)
 {
@@ -2516,10 +2542,10 @@ Mesh GenMeshPoly(int sides, float radius)
 // Generate plane mesh (with subdivisions)
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 {
-    Mesh mesh = { 0 };
-
 #define CUSTOM_MESH_GEN_PLANE
 #if defined(CUSTOM_MESH_GEN_PLANE)
+    Mesh mesh = { 0 };
+
     resX++;
     resZ++;
 
@@ -2616,26 +2642,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     par_shapes_rotate(plane, -PI/2.0f, (float[]){ 1, 0, 0 });
     par_shapes_translate(plane, -width/2, 0.0f, length/2);
 
-    mesh.vertices = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(plane->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = plane->ntriangles*3;
-    mesh.triangleCount = plane->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
-    {
-        mesh.vertices[k*3] = plane->points[plane->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = plane->points[plane->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = plane->points[plane->triangles[k]*3 + 2];
-
-        mesh.normals[k*3] = plane->normals[plane->triangles[k]*3];
-        mesh.normals[k*3 + 1] = plane->normals[plane->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = plane->normals[plane->triangles[k]*3 + 2];
-
-        mesh.texcoords[k*2] = plane->tcoords[plane->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = plane->tcoords[plane->triangles[k]*2 + 1];
-    }
+    Mesh mesh = BuildMeshFromParShapesMesh(plane);
 
     par_shapes_free_mesh(plane);
 #endif
@@ -2649,10 +2656,10 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 // Generated cuboid mesh
 Mesh GenMeshCube(float width, float height, float length)
 {
-    Mesh mesh = { 0 };
-
 #define CUSTOM_MESH_GEN_CUBE
 #if defined(CUSTOM_MESH_GEN_CUBE)
+    Mesh mesh = { 0 };
+
     float vertices[] = {
         -width/2, -height/2, length/2,
         width/2, -height/2, length/2,
@@ -2781,26 +2788,7 @@ par_shapes_mesh *par_shapes_create_icosahedron();       // 20 sides polyhedron
     par_shapes_translate(cube, -width/2, 0.0f, -length/2);
     par_shapes_compute_normals(cube);
 
-    mesh.vertices = (float *)RL_MALLOC(cube->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(cube->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(cube->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = cube->ntriangles*3;
-    mesh.triangleCount = cube->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
-    {
-        mesh.vertices[k*3] = cube->points[cube->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = cube->points[cube->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = cube->points[cube->triangles[k]*3 + 2];
-
-        mesh.normals[k*3] = cube->normals[cube->triangles[k]*3];
-        mesh.normals[k*3 + 1] = cube->normals[cube->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = cube->normals[cube->triangles[k]*3 + 2];
-
-        mesh.texcoords[k*2] = cube->tcoords[cube->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = cube->tcoords[cube->triangles[k]*2 + 1];
-    }
+    Mesh mesh = BuildMeshFromParShapesMesh(cube);
 
     par_shapes_free_mesh(cube);
 #endif
@@ -2931,26 +2919,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
         par_shapes_merge_and_free(cylinder, capTop);
         par_shapes_merge_and_free(cylinder, capBottom);
 
-        mesh.vertices = (float *)RL_MALLOC(cylinder->ntriangles*3*3*sizeof(float));
-        mesh.texcoords = (float *)RL_MALLOC(cylinder->ntriangles*3*2*sizeof(float));
-        mesh.normals = (float *)RL_MALLOC(cylinder->ntriangles*3*3*sizeof(float));
-
-        mesh.vertexCount = cylinder->ntriangles*3;
-        mesh.triangleCount = cylinder->ntriangles;
-
-        for (int k = 0; k < mesh.vertexCount; k++)
-        {
-            mesh.vertices[k*3] = cylinder->points[cylinder->triangles[k]*3];
-            mesh.vertices[k*3 + 1] = cylinder->points[cylinder->triangles[k]*3 + 1];
-            mesh.vertices[k*3 + 2] = cylinder->points[cylinder->triangles[k]*3 + 2];
-
-            mesh.normals[k*3] = cylinder->normals[cylinder->triangles[k]*3];
-            mesh.normals[k*3 + 1] = cylinder->normals[cylinder->triangles[k]*3 + 1];
-            mesh.normals[k*3 + 2] = cylinder->normals[cylinder->triangles[k]*3 + 2];
-
-            mesh.texcoords[k*2] = cylinder->tcoords[cylinder->triangles[k]*2];
-            mesh.texcoords[k*2 + 1] = cylinder->tcoords[cylinder->triangles[k]*2 + 1];
-        }
+        mesh = BuildMeshFromParShapesMesh(cylinder);
 
         par_shapes_free_mesh(cylinder);
 
@@ -2986,26 +2955,7 @@ Mesh GenMeshCone(float radius, float height, int slices)
 
         par_shapes_merge_and_free(cone, capBottom);
 
-        mesh.vertices = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
-        mesh.texcoords = (float *)RL_MALLOC(cone->ntriangles*3*2*sizeof(float));
-        mesh.normals = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
-
-        mesh.vertexCount = cone->ntriangles*3;
-        mesh.triangleCount = cone->ntriangles;
-
-        for (int k = 0; k < mesh.vertexCount; k++)
-        {
-            mesh.vertices[k*3] = cone->points[cone->triangles[k]*3];
-            mesh.vertices[k*3 + 1] = cone->points[cone->triangles[k]*3 + 1];
-            mesh.vertices[k*3 + 2] = cone->points[cone->triangles[k]*3 + 2];
-
-            mesh.normals[k*3] = cone->normals[cone->triangles[k]*3];
-            mesh.normals[k*3 + 1] = cone->normals[cone->triangles[k]*3 + 1];
-            mesh.normals[k*3 + 2] = cone->normals[cone->triangles[k]*3 + 2];
-
-            mesh.texcoords[k*2] = cone->tcoords[cone->triangles[k]*2];
-            mesh.texcoords[k*2 + 1] = cone->tcoords[cone->triangles[k]*2 + 1];
-        }
+        mesh = BuildMeshFromParShapesMesh(cone);
 
         par_shapes_free_mesh(cone);
 
@@ -3032,26 +2982,7 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
         par_shapes_mesh *torus = par_shapes_create_torus(radSeg, sides, radius);
         par_shapes_scale(torus, size/2, size/2, size/2);
 
-        mesh.vertices = (float *)RL_MALLOC(torus->ntriangles*3*3*sizeof(float));
-        mesh.texcoords = (float *)RL_MALLOC(torus->ntriangles*3*2*sizeof(float));
-        mesh.normals = (float *)RL_MALLOC(torus->ntriangles*3*3*sizeof(float));
-
-        mesh.vertexCount = torus->ntriangles*3;
-        mesh.triangleCount = torus->ntriangles;
-
-        for (int k = 0; k < mesh.vertexCount; k++)
-        {
-            mesh.vertices[k*3] = torus->points[torus->triangles[k]*3];
-            mesh.vertices[k*3 + 1] = torus->points[torus->triangles[k]*3 + 1];
-            mesh.vertices[k*3 + 2] = torus->points[torus->triangles[k]*3 + 2];
-
-            mesh.normals[k*3] = torus->normals[torus->triangles[k]*3];
-            mesh.normals[k*3 + 1] = torus->normals[torus->triangles[k]*3 + 1];
-            mesh.normals[k*3 + 2] = torus->normals[torus->triangles[k]*3 + 2];
-
-            mesh.texcoords[k*2] = torus->tcoords[torus->triangles[k]*2];
-            mesh.texcoords[k*2 + 1] = torus->tcoords[torus->triangles[k]*2 + 1];
-        }
+        mesh = BuildMeshFromParShapesMesh(torus);
 
         par_shapes_free_mesh(torus);
 
@@ -3076,26 +3007,7 @@ Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
         par_shapes_mesh *knot = par_shapes_create_trefoil_knot(radSeg, sides, radius);
         par_shapes_scale(knot, size, size, size);
 
-        mesh.vertices = (float *)RL_MALLOC(knot->ntriangles*3*3*sizeof(float));
-        mesh.texcoords = (float *)RL_MALLOC(knot->ntriangles*3*2*sizeof(float));
-        mesh.normals = (float *)RL_MALLOC(knot->ntriangles*3*3*sizeof(float));
-
-        mesh.vertexCount = knot->ntriangles*3;
-        mesh.triangleCount = knot->ntriangles;
-
-        for (int k = 0; k < mesh.vertexCount; k++)
-        {
-            mesh.vertices[k*3] = knot->points[knot->triangles[k]*3];
-            mesh.vertices[k*3 + 1] = knot->points[knot->triangles[k]*3 + 1];
-            mesh.vertices[k*3 + 2] = knot->points[knot->triangles[k]*3 + 2];
-
-            mesh.normals[k*3] = knot->normals[knot->triangles[k]*3];
-            mesh.normals[k*3 + 1] = knot->normals[knot->triangles[k]*3 + 1];
-            mesh.normals[k*3 + 2] = knot->normals[knot->triangles[k]*3 + 2];
-
-            mesh.texcoords[k*2] = knot->tcoords[knot->triangles[k]*2];
-            mesh.texcoords[k*2 + 1] = knot->tcoords[knot->triangles[k]*2 + 1];
-        }
+        mesh = BuildMeshFromParShapesMesh(knot);
 
         par_shapes_free_mesh(knot);
 
