@@ -95,39 +95,38 @@ int main(void)
         {
             // Draw triangle with lines
             rlBegin(RL_LINES);
-            // Three lines, six points
+				// Three lines, six points
+				// Define color for next vertex
+				rlColor4ub(255, 0, 0, 255);
+				// Define vertex
+				rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
+				rlColor4ub(0, 255, 0, 255);
+				rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
 
-            // Define color for next vertex
-            rlColor4ub(255, 0, 0, 255);
-            // Define vertex
-            rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
-            rlColor4ub(0, 255, 0, 255);
-            rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
+				rlColor4ub(0, 255, 0, 255);
+				rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
+				rlColor4ub(0, 0, 255, 255);
+				rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
 
-            rlColor4ub(0, 255, 0, 255);
-            rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
-            rlColor4ub(0, 0, 255, 255);
-            rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
-
-            rlColor4ub(0, 0, 255, 255);
-            rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
-            rlColor4ub(255, 0, 0, 255);
-            rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
+				rlColor4ub(0, 0, 255, 255);
+				rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
+				rlColor4ub(255, 0, 0, 255);
+				rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
             rlEnd();
         }
         else
         {
             // Draw triangle as a triangle
             rlBegin(RL_TRIANGLES);
-            // One triangle, three points
-            // Define color for next vertex
-            rlColor4ub(255, 0, 0, 255);
-            // Define vertex
-            rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
-            rlColor4ub(0, 255, 0, 255);
-            rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
-            rlColor4ub(0, 0, 255, 255);
-            rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
+				// One triangle, three points
+				// Define color for next vertex
+				rlColor4ub(255, 0, 0, 255);
+				// Define vertex
+				rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
+				rlColor4ub(0, 255, 0, 255);
+				rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
+				rlColor4ub(0, 0, 255, 255);
+				rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
             rlEnd();
         }
 
