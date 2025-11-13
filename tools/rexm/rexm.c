@@ -121,6 +121,7 @@ typedef enum {
     OP_VALIDATE = 5,        // Validate examples, using [examples_list.txt] as main source by default
     OP_UPDATE   = 6,        // Validate and update required examples (as far as possible)
     OP_BUILD    = 7,        // Build example for desktop and web, copy web output
+    OP_TEST     = 8,        // Test example: check output LOG WARNINGS
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
@@ -409,6 +410,36 @@ int main(int argc, char *argv[])
                         opCode = OP_BUILD;
                     }
                     else LOG("WARNING: BUILD: Example requested not available in the collection\n");
+                    UnloadFileText(exColInfo);
+                }
+            }
+        }
+        else if (strcmp(argv[1], "test") == 0)
+        {
+            // Build and test example for PLATFORM_DESKTOP
+            // NOTE: Build outputs to default directory, usually where the .c file is located,
+            // to avoid issues with copying resources (at least on Desktop)
+            if (argc == 2) LOG("WARNING: No example name provided to test\n");
+            else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
+            else
+            {
+                // Support building not only individual examples but categories and "ALL"
+                if ((strcmp(argv[2], "ALL") == 0) || TextInList(argv[2], exCategories, REXM_MAX_EXAMPLE_CATEGORIES))
+                {
+                    // Category/ALL rebuilt requested
+                    strcpy(exRebuildRequested, argv[2]);
+                }
+                else
+                {
+                    // Verify example exists in collection to be removed
+                    char *exColInfo = LoadFileText(exCollectionFilePath);
+                    if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                    {
+                        strcpy(exName, argv[2]); // Register example name
+                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                        opCode = OP_TEST;
+                    }
+                    else LOG("WARNING: TEST: Example requested not available in the collection\n");
                     UnloadFileText(exColInfo);
                 }
             }
@@ -1486,6 +1517,94 @@ int main(int argc, char *argv[])
 
             UnloadExamplesData(exCollection);
             //------------------------------------------------------------------------------------------------
+
+        } break;
+        case OP_TEST:
+        {
+            LOG("INFO: Command requested: TEST\n");
+            LOG("INFO: Example to be built and tested: %s\n", exName);
+
+            // Steps to follow
+            // STEP 1: Load example.c and replace required code to inject basic testing code: frames to run
+            //    OPTION 1: Code injection required multiple changes for testing but it does not require raylib changes!
+            //    OPTION 2: Support testing on raylib side: Args processing and events injection: SUPPORT_AUTOMATD_TESTING_SYSTEM, EVENTS_TESTING_MODE
+            // STEP 2: Build example (PLATFORM_DESKTOP)
+            // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
+            // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
+            // STEP 5: Generate report with results
+
+            // STEP 1: Load example and inject required code
+            //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
+            //      WARNING: If we make a copy and something fails, it could not be restored at the end
+            //    PROBLEM: Trying to build a copy won't work because Makefile is setup to look for specific example on specific path -> No output dir config
+            //    IDEA: Create directory for testing data -> It implies moving files and set working dir...
+            //    SOLUTION: Make a copy of original file -> Modify original -> Build -> Rename to <example>.test.exe
+            FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), 
+                TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
+            char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+            static const char *mainReplaceText =
+                "#include <string.h>\n"
+                "#include <stdlib.h>\n"
+                "int main(int argc, char *argv[])\n{\n"
+                "    int requestedTestFrames = 0;\n"
+                "    int testFramesCount = 0;\n"
+                "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+
+            char *srcTextUpdated[3] = { 0 };
+            srcTextUpdated[0] = TextReplace(srcText, "int main(void)\n{", mainReplaceText);
+            srcTextUpdated[1] = TextReplace(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
+            srcTextUpdated[2] = TextReplace(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
+            UnloadFileText(srcText);
+
+            SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
+            for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
+
+            // STEP 2: Build example for DESKTOP platform
+#if defined(_WIN32)
+            // Set required environment variables
+            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            //putenv("MAKE=mingw32-make");
+            //ChangeDirectory(exBasePath);
+#endif
+            // Build example for PLATFORM_DESKTOP
+#if defined(_WIN32)
+            LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
+            system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#else
+            LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
+            system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#endif
+            // Restore original source code before continue
+            FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName), 
+                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
+
+            // STEP 3: Run example with required arguments
+            ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
+            system(TextFormat("%s --frames 2 > %s.log", exName, exName));
+
+            // STEP 4: Load and validate log -> WARNINGS
+            char *exTestLog = LoadFileText(TextFormat("%s/%s/%s.log", exBasePath, exCategory, exName));
+            int exTestLogLinesCount = 0;
+            char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
+            UnloadFileText(exTestLog);
+
+            int issueCounter = false;
+            for (int i = 0; i < exTestLogLinesCount; i++)
+            {
+                if (TextFindIndex(exTestLogLines[i], "WARNING") >= 0)
+                {
+                    LOG("TEST: [%s] %s\n", exName, exTestLogLines[i]);
+                    issueCounter++;
+                }
+            }
+
+            UnloadTextLines(exTestLogLines, exTestLogLinesCount);
+
+            // STEP 5: Generate auto-test report
+            //if (issueCounter > 0)
 
         } break;
         default:    // Help
