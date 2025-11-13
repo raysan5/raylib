@@ -60,7 +60,7 @@
 #define SUPPORT_PARTIALBUSY_WAIT_LOOP    1
 // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 // WARNING: It also requires SUPPORT_IMAGE_EXPORT and SUPPORT_FILEFORMAT_PNG flags
-#define SUPPORT_SCREEN_CAPTURE          1
+//#define SUPPORT_SCREEN_CAPTURE          1
 // Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API         1
 // Support automatic generated events, loading and recording of those events when required
