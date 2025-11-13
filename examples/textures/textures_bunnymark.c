@@ -45,7 +45,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - bunnymark");
 
     // Load bunny texture
-    Texture2D texBunny = LoadTexture("resources/wabbit_alpha.png");
+    Texture2D texBunny = LoadTexture("resources/raybunny.png");
 
     Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
 
