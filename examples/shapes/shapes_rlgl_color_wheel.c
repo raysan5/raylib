@@ -238,8 +238,8 @@ int main(void)
         DrawCircleLinesV(circlePosition, 4.0f, handleColor);
 
         // Draw the color in a preview, with a darkened outline.
-        DrawRectangleV((Vector2){8.0f, 8.0f}, (Vector2){64.0f, 64.0f}, color);
-        DrawRectangleLinesEx((Rectangle){8.0f, 8.0f, 64.0f, 64.0f}, 2.0f, ColorLerp(color, BLACK, 0.5f));
+        DrawRectangleV((Vector2){ 8.0f, 8.0f }, (Vector2){ 64.0f, 64.0f }, color);
+        DrawRectangleLinesEx((Rectangle){ 8.0f, 8.0f, 64.0f, 64.0f }, 2.0f, ColorLerp(color, BLACK, 0.5f));
 
         // Draw current color as hex and decimal
         DrawText(TextFormat("#%02X%02X%02X\n(%d, %d, %d)", color.r, color.g, color.b, color.r, color.g, color.b), 8, 8 + 64 + 8, 20, DARKGRAY);
