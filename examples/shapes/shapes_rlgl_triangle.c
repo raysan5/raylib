@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - rlgl triangle
+*   raylib [shapes] example - rlgl beginner triangle
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -30,7 +30,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rlgl triangle");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rlgl beginner triangle");
 
     // Starting postions and rendered triangle positions
     Vector2 startingPositions[] = {{ 400.0f, 150.0f }, { 300.0f, 300.0f }, { 500.0f, 300.0f }};
