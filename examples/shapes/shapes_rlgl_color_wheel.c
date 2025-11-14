@@ -46,7 +46,7 @@ int main(void)
     float value = 1.0f;
 
     // The center of the screen
-    Vector2 center = { (float)screenWidth / 2.0f, (float)screenHeight / 2.0f };
+    Vector2 center = { (float)screenWidth/2.0f, (float)screenHeight/2.0f };
     // The location of the color wheel
     Vector2 circlePosition = center;
 
@@ -121,12 +121,12 @@ int main(void)
                 circlePosition = Vector2Add(Vector2Multiply(Vector2Subtract(circlePosition, center), (Vector2){ 0.975f, 0.975f }), center);
             }
 
-            float distance = Vector2Distance(center, circlePosition) / pointScale;
-            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition)) / PI + 1.0f) / 2.0f);
+            float distance = Vector2Distance(center, circlePosition)/pointScale;
+            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f) / 2.0f);
 
             if (distance > 1.0f)
             {
-                circlePosition = Vector2Add((Vector2){ sinf(angle * (PI * 2.0f)) * pointScale, -cosf(angle * (PI * 2.0f)) * pointScale }, center);
+                circlePosition = Vector2Add((Vector2){ sinf(angle*(PI * 2.0f)) * pointScale, -cosf(angle*(PI*2.0f))*pointScale }, center);
             }
         }
 
@@ -150,17 +150,17 @@ int main(void)
             circlePosition = GetMousePosition();
 
             float distance = Vector2Distance(center, circlePosition) / pointScale;
-            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition)) / PI + 1.0f) / 2.0f);
-            float angle360 = angle * 360.0f;
+            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f)/2.0f);
+            float angle360 = angle*360.0f;
 
             if (distance > 1.0f)
             {
-                circlePosition = Vector2Add((Vector2){ sinf(angle * (PI * 2.0f)) * pointScale, -cosf(angle * (PI * 2.0f)) * pointScale }, center);
+                circlePosition = Vector2Add((Vector2){ sinf(angle*(PI*2.0f))*pointScale, -cosf(angle*(PI* 2.0f))*pointScale }, center);
             }
 
             float valueActual = Clamp(distance, 0.0f, 1.0f);
 
-            color = ColorLerp((Color){ (int)(value * 255.0f), (int)(value * 255.0f), (int)(value * 255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
+            color = ColorLerp((Color){ (int)(value*255.0f), (int)(value*255.0f), (int)(value*255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
         }
 
         // Update render mode accordingly
@@ -179,9 +179,9 @@ int main(void)
         rlBegin(renderType);
             for (unsigned int i = 0; i < triangleCount; i++)
             {
-                float angleOffset = ((PI * 2.0f) / (float)triangleCount);
-                float angle = angleOffset * (float)i;
-                float angleOffsetCalculated = ((float)i + 1) * angleOffset;
+                float angleOffset = ((PI*2.0f)/(float)triangleCount);
+                float angle = angleOffset*(float)i;
+                float angleOffsetCalculated = ((float)i + 1)*angleOffset;
                 Vector2 scale = (Vector2){ pointScale, pointScale };
 
                 Vector2 offset = Vector2Multiply((Vector2){ sinf(angle), -cosf(angle) }, scale);
@@ -190,8 +190,8 @@ int main(void)
                 Vector2 position = Vector2Add(center, offset);
                 Vector2 position2 = Vector2Add(center, offset2);
 
-                float angleNonRadian = (angle / (2.0f * PI)) * 360.0f;
-                float angleNonRadianOffset = (angleOffset / (2.0f * PI)) * 360.0f;
+                float angleNonRadian = (angle/(2.0f*PI))*360.0f;
+                float angleNonRadianOffset = (angleOffset/(2.0f*PI))*360.0f;
 
                 Color currentColor = ColorFromHSV(angleNonRadian, 1.0f, 1.0f);
                 Color offsetColor = ColorFromHSV(angleNonRadian + angleNonRadianOffset, 1.0f, 1.0f);
@@ -229,7 +229,7 @@ int main(void)
         // Make the handle slightly more visible overtop darker colors
         Color handleColor = BLACK;
 
-        if (Vector2Distance(center, circlePosition) / pointScale <= 0.5f && value <= 0.5f)
+        if (Vector2Distance(center, circlePosition)/pointScale <= 0.5f && value <= 0.5f)
         {
             handleColor = DARKGRAY;
         }
@@ -265,13 +265,13 @@ int main(void)
         // If the slider was clicked, update the current color
         if (sliderClicked)
         {
-            float distance = Vector2Distance(center, circlePosition) / pointScale;
-            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition)) / PI + 1.0f) / 2.0f);
-            float angle360 = angle * 360.0f;
+            float distance = Vector2Distance(center, circlePosition)/pointScale;
+            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f)/2.0f);
+            float angle360 = angle*360.0f;
 
             float valueActual = Clamp(distance, 0.0f, 1.0f);
 
-            color = ColorLerp((Color){ (int)(value * 255.0f), (int)(value * 255.0f), (int)(value * 255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
+            color = ColorLerp((Color){ (int)(value*255.0f), (int)(value*255.0f), (int)(value*255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
         }
 
         // Draw FPS next to outlined color preview
