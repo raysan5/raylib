@@ -84,8 +84,10 @@ int main(void)
         bool sliderHover = (mousePosition.x >= sliderRectangle.x && mousePosition.y >= sliderRectangle.y && mousePosition.x < sliderRectangle.x + sliderRectangle.width && mousePosition.y < sliderRectangle.y + sliderRectangle.height);
 
         // Copy color as hex
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyDown(KEY_C)) {
-            if (IsKeyPressed(KEY_C)) {
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyDown(KEY_C))
+        {
+            if (IsKeyPressed(KEY_C))
+            {
                 SetClipboardText(TextFormat("#%02X%02X%02X", color.r, color.g, color.b));
             }
         }
@@ -128,7 +130,8 @@ int main(void)
         }
 
         // Checks if the user clicked on the color wheel
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && Vector2Distance(GetMousePosition(), center) <= pointScale + 10.0f) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && Vector2Distance(GetMousePosition(), center) <= pointScale + 10.0f)
+        {
             settingColor = true;
         }
 
@@ -259,7 +262,8 @@ int main(void)
         GuiSliderBar(sliderRectangle, "value: ", "", &value, 0.0f, 1.0f);
 
         // If the slider was clicked, update the current color
-        if (sliderClicked) {
+        if (sliderClicked)
+        {
             float distance = Vector2Distance(center, circlePosition) / pointScale;
             float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition)) / PI + 1.0f) / 2.0f);
             float angle360 = angle * 360.0f;
