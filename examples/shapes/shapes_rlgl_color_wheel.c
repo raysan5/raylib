@@ -189,14 +189,14 @@ int main(void)
                 float angleNonRadian = (angle / (2.0f * PI)) * 360.0f;
                 float angleNonRadianOffset = (angleOffset / (2.0f * PI)) * 360.0f;
 
-                Color color = ColorFromHSV(angleNonRadian, 1.0f, 1.0f);
+                Color currentColor = ColorFromHSV(angleNonRadian, 1.0f, 1.0f);
                 Color offsetColor = ColorFromHSV(angleNonRadian + angleNonRadianOffset, 1.0f, 1.0f);
                 
                 // Input vertices differently depending on mode
                 if (renderType == RL_TRIANGLES)
                 {
                     // RL_TRIANGLES expects three vertices per triangle
-                    rlColor4ub(color.r, color.g, color.b, color.a);
+                    rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
                     rlVertex2f(position.x, position.y);
                     rlColor4f(value, value, value, 1.0f);
                     rlVertex2f(center.x, center.y);
@@ -206,7 +206,7 @@ int main(void)
                 else if (renderType == RL_LINES)
                 {
                     // RL_LINES expects two vertices per line
-                    rlColor4ub(color.r, color.g, color.b, color.a);
+                    rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
                     rlVertex2f(position.x, position.y);
                     rlColor4ub(WHITE.r, WHITE.g, WHITE.b, WHITE.a);
                     rlVertex2f(center.x, center.y);
@@ -216,7 +216,7 @@ int main(void)
                     rlVertex2f(position2.x, position2.y);
 
                     rlVertex2f(position2.x, position2.y);
-                    rlColor4ub(color.r, color.g, color.b, color.a);
+                    rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
                     rlVertex2f(position.x, position.y);
                 }
             }
