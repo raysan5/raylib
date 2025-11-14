@@ -112,7 +112,8 @@ int main(void)
         {
             pointScale *= 0.975f;
 
-            if (pointScale < 32.0f) {
+            if (pointScale < 32.0f)
+            {
                 pointScale = 32.0f;
             }
             else
