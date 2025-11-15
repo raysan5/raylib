@@ -607,6 +607,7 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
+    textures/textures_screen_buffer \
     textures/textures_textured_curve \
     textures/textures_tiled_drawing \
     textures/textures_to_image
@@ -1057,6 +1058,10 @@ textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
 textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/scarfy.png@resources/scarfy.png
+
+textures/textures_screen_buffer: textures/textures_screen_buffer.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/road.png@resources/road.png
 
 textures/textures_textured_curve: textures/textures_textured_curve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
