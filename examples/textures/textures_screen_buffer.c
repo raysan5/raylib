@@ -83,7 +83,8 @@ int main(void)
         }
 
         // Skip top row, it is already cleared
-        for (int y = 1; y < imageHeight; ++y){
+        for (int y = 1; y < imageHeight; ++y)
+        {
             for (int x = 0; x < imageWidth; ++x)
             {
                 unsigned i = x + y * imageWidth;
@@ -104,7 +105,8 @@ int main(void)
         }
 
         // Update screenImage with palette colors
-        for (int y = 1; y < imageHeight; ++y){
+        for (int y = 1; y < imageHeight; ++y)
+        {
             for (int x = 0; x < imageWidth; ++x)
             {
                 unsigned i = x + y * imageWidth;
