@@ -1060,8 +1060,7 @@ textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
     --preload-file textures/resources/scarfy.png@resources/scarfy.png
 
 textures/textures_screen_buffer: textures/textures_screen_buffer.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/road.png@resources/road.png
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_textured_curve: textures/textures_textured_curve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
