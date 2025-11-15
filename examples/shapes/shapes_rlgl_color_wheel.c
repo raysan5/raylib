@@ -37,7 +37,7 @@ int main(void)
     // The minimum/maximum points the circle can have
     const unsigned int pointsMin = 3;
     const unsigned int pointsMax = 256;
-    
+
     // The current number of points and the radius of the circle
     unsigned int triangleCount = 64;
     float pointScale = 150.0f;
@@ -144,25 +144,6 @@ int main(void)
 
         if (sliderClicked && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) sliderClicked = false;
 
-        // Update the current color based on the handle position
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && settingColor)
-        {
-            circlePosition = GetMousePosition();
-
-            float distance = Vector2Distance(center, circlePosition) / pointScale;
-            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f)/2.0f);
-            float angle360 = angle*360.0f;
-
-            if (distance > 1.0f)
-            {
-                circlePosition = Vector2Add((Vector2){ sinf(angle*(PI*2.0f))*pointScale, -cosf(angle*(PI* 2.0f))*pointScale }, center);
-            }
-
-            float valueActual = Clamp(distance, 0.0f, 1.0f);
-
-            color = ColorLerp((Color){ (int)(value*255.0f), (int)(value*255.0f), (int)(value*255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
-        }
-
         // Update render mode accordingly
         if (IsKeyPressed(KEY_SPACE)) renderType = RL_LINES;
 
@@ -177,55 +158,55 @@ int main(void)
 
         // Begin rendering color wheel
         rlBegin(renderType);
-            for (unsigned int i = 0; i < triangleCount; i++)
+        for (unsigned int i = 0; i < triangleCount; i++)
+        {
+            float angleOffset = ((PI*2.0f)/(float)triangleCount);
+            float angle = angleOffset*(float)i;
+            float angleOffsetCalculated = ((float)i + 1)*angleOffset;
+            Vector2 scale = (Vector2){ pointScale, pointScale };
+
+            Vector2 offset = Vector2Multiply((Vector2){ sinf(angle), -cosf(angle) }, scale);
+            Vector2 offset2 = Vector2Multiply((Vector2){ sinf(angleOffsetCalculated), -cosf(angleOffsetCalculated) }, scale);
+
+            Vector2 position = Vector2Add(center, offset);
+            Vector2 position2 = Vector2Add(center, offset2);
+
+            float angleNonRadian = (angle/(2.0f*PI))*360.0f;
+            float angleNonRadianOffset = (angleOffset/(2.0f*PI))*360.0f;
+
+            Color currentColor = ColorFromHSV(angleNonRadian, 1.0f, 1.0f);
+            Color offsetColor = ColorFromHSV(angleNonRadian + angleNonRadianOffset, 1.0f, 1.0f);
+
+            // Input vertices differently depending on mode
+            if (renderType == RL_TRIANGLES)
             {
-                float angleOffset = ((PI*2.0f)/(float)triangleCount);
-                float angle = angleOffset*(float)i;
-                float angleOffsetCalculated = ((float)i + 1)*angleOffset;
-                Vector2 scale = (Vector2){ pointScale, pointScale };
-
-                Vector2 offset = Vector2Multiply((Vector2){ sinf(angle), -cosf(angle) }, scale);
-                Vector2 offset2 = Vector2Multiply((Vector2){ sinf(angleOffsetCalculated), -cosf(angleOffsetCalculated) }, scale);
-
-                Vector2 position = Vector2Add(center, offset);
-                Vector2 position2 = Vector2Add(center, offset2);
-
-                float angleNonRadian = (angle/(2.0f*PI))*360.0f;
-                float angleNonRadianOffset = (angleOffset/(2.0f*PI))*360.0f;
-
-                Color currentColor = ColorFromHSV(angleNonRadian, 1.0f, 1.0f);
-                Color offsetColor = ColorFromHSV(angleNonRadian + angleNonRadianOffset, 1.0f, 1.0f);
-                
-                // Input vertices differently depending on mode
-                if (renderType == RL_TRIANGLES)
-                {
-                    // RL_TRIANGLES expects three vertices per triangle
-                    rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
-                    rlVertex2f(position.x, position.y);
-                    rlColor4f(value, value, value, 1.0f);
-                    rlVertex2f(center.x, center.y);
-                    rlColor4ub(offsetColor.r, offsetColor.g, offsetColor.b, offsetColor.a);
-                    rlVertex2f(position2.x, position2.y);
-                }
-                else if (renderType == RL_LINES)
-                {
-                    // RL_LINES expects two vertices per line
-                    rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
-                    rlVertex2f(position.x, position.y);
-                    rlColor4ub(WHITE.r, WHITE.g, WHITE.b, WHITE.a);
-                    rlVertex2f(center.x, center.y);
-
-                    rlVertex2f(center.x, center.y);
-                    rlColor4ub(offsetColor.r, offsetColor.g, offsetColor.b, offsetColor.a);
-                    rlVertex2f(position2.x, position2.y);
-
-                    rlVertex2f(position2.x, position2.y);
-                    rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
-                    rlVertex2f(position.x, position.y);
-                }
+                // RL_TRIANGLES expects three vertices per triangle
+                rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
+                rlVertex2f(position.x, position.y);
+                rlColor4f(value, value, value, 1.0f);
+                rlVertex2f(center.x, center.y);
+                rlColor4ub(offsetColor.r, offsetColor.g, offsetColor.b, offsetColor.a);
+                rlVertex2f(position2.x, position2.y);
             }
+            else if (renderType == RL_LINES)
+            {
+                // RL_LINES expects two vertices per line
+                rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
+                rlVertex2f(position.x, position.y);
+                rlColor4ub(WHITE.r, WHITE.g, WHITE.b, WHITE.a);
+                rlVertex2f(center.x, center.y);
+
+                rlVertex2f(center.x, center.y);
+                rlColor4ub(offsetColor.r, offsetColor.g, offsetColor.b, offsetColor.a);
+                rlVertex2f(position2.x, position2.y);
+
+                rlVertex2f(position2.x, position2.y);
+                rlColor4ub(currentColor.r, currentColor.g, currentColor.b, currentColor.a);
+                rlVertex2f(position.x, position.y);
+            }
+        }
         rlEnd();
-        
+
         // Make the handle slightly more visible overtop darker colors
         Color handleColor = BLACK;
 
@@ -262,11 +243,20 @@ int main(void)
         // Slider to change color's value
         GuiSliderBar(sliderRectangle, "value: ", "", &value, 0.0f, 1.0f);
 
-        // If the slider was clicked, update the current color
-        if (sliderClicked)
+        // If the slider or the wheel was clicked, update the current color
+        if (settingColor || sliderClicked)
         {
-            float distance = Vector2Distance(center, circlePosition)/pointScale;
+            if (settingColor) {
+                circlePosition = GetMousePosition();
+            }
+
+            float distance = Vector2Distance(center, circlePosition) / pointScale;
+
             float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f)/2.0f);
+            if (settingColor && distance > 1.0f) {
+                circlePosition = Vector2Add((Vector2){ sinf(angle*(PI*2.0f))*pointScale, -cosf(angle*(PI* 2.0f))*pointScale }, center);
+            }
+            
             float angle360 = angle*360.0f;
 
             float valueActual = Clamp(distance, 0.0f, 1.0f);
