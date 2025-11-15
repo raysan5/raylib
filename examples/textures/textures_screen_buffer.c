@@ -1,17 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [<module>] example - <name/short description>
+*   raylib [textures] example - screen buffer / update Image as screen buffer and display with texture
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 5.5, last time updated with raylib 5.6
 *
-*   Example contributed by <author_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Agnis Aldiņš (@nezvers) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) <year_created>-<year_updated> <author_name> (@<user_github>)
+*   Copyright (c) 2025 Agnis Aldiņš (@nezvers)
 *
 ********************************************************************************************/
 
