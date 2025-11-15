@@ -148,6 +148,27 @@ int main(void)
         if (IsKeyPressed(KEY_SPACE)) renderType = RL_LINES;
 
         if (IsKeyReleased(KEY_SPACE)) renderType = RL_TRIANGLES;
+
+        // If the slider or the wheel was clicked, update the current color
+        if (settingColor || sliderClicked)
+        {
+            if (settingColor) {
+                circlePosition = GetMousePosition();
+            }
+
+            float distance = Vector2Distance(center, circlePosition) / pointScale;
+
+            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f)/2.0f);
+            if (settingColor && distance > 1.0f) {
+                circlePosition = Vector2Add((Vector2){ sinf(angle*(PI*2.0f))*pointScale, -cosf(angle*(PI* 2.0f))*pointScale }, center);
+            }
+
+            float angle360 = angle*360.0f;
+
+            float valueActual = Clamp(distance, 0.0f, 1.0f);
+
+            color = ColorLerp((Color){ (int)(value*255.0f), (int)(value*255.0f), (int)(value*255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -242,27 +263,6 @@ int main(void)
 
         // Slider to change color's value
         GuiSliderBar(sliderRectangle, "value: ", "", &value, 0.0f, 1.0f);
-
-        // If the slider or the wheel was clicked, update the current color
-        if (settingColor || sliderClicked)
-        {
-            if (settingColor) {
-                circlePosition = GetMousePosition();
-            }
-
-            float distance = Vector2Distance(center, circlePosition) / pointScale;
-
-            float angle = ((Vector2Angle((Vector2){ 0.0f, -pointScale }, Vector2Subtract(center, circlePosition))/PI + 1.0f)/2.0f);
-            if (settingColor && distance > 1.0f) {
-                circlePosition = Vector2Add((Vector2){ sinf(angle*(PI*2.0f))*pointScale, -cosf(angle*(PI* 2.0f))*pointScale }, center);
-            }
-            
-            float angle360 = angle*360.0f;
-
-            float valueActual = Clamp(distance, 0.0f, 1.0f);
-
-            color = ColorLerp((Color){ (int)(value*255.0f), (int)(value*255.0f), (int)(value*255.0f), 255 }, ColorFromHSV(angle360, Clamp(distance, 0.0f, 1.0f), 1.0f), valueActual);
-        }
 
         // Draw FPS next to outlined color preview
         DrawFPS(64 + 16, 8);
