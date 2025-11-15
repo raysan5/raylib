@@ -1808,30 +1808,35 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     // WARNING: On window minimization, callback is called,
     // but we don't want to change internal screen values, it breaks things
     if ((width == 0) || (height == 0)) return;
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
 
     // Reset viewport and projection matrix for new size
-    SetupViewport(width, height);
+    SetupViewport(fbWidth, fbHeight);
 
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
     CORE.Window.resizedLastFrame = true;
 
     if (IsWindowFullscreen()) return;
+    int logicalWidth = width;
+    int logicalHeight = height;
 
     // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
     if (IsWindowState(FLAG_WINDOW_HIGHDPI))
     {
-        width = (int)(width/GetWindowScaleDPI().x);
-        height = (int)(height/GetWindowScaleDPI().y);
+        Vector2 dpiScale = GetWindowScaleDPI();
+        logicalWidth  = (int)(fbWidth / dpiScale.x);
+        logicalHeight = (int)(fbHeight / dpiScale.y);
     }
 
     // Set render size
-    CORE.Window.render.width = width;
-    CORE.Window.render.height = height;
+    CORE.Window.render.width = fbWidth;
+    CORE.Window.render.height = fbHeight;
 
     // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    CORE.Window.screen.width = logicalWidth;
+    CORE.Window.screen.height = logicalHeight;
 
     // WARNING: If using a render texture, it is not scaled to new size
 }
