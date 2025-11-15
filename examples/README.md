@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 194]
+## EXAMPLES COLLECTION [TOTAL: 195]
 
 ### category: core [47]
 
@@ -114,7 +114,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_lines_drawing](shapes/shapes_lines_drawing.c) | <img src="shapes/shapes_lines_drawing.png" alt="shapes_lines_drawing" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6 | [Robin](https://github.com/RobinsAviary) |
 | [shapes_math_angle_rotation](shapes/shapes_math_angle_rotation.c) | <img src="shapes/shapes_math_angle_rotation.png" alt="shapes_math_angle_rotation" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6 | [Kris](https://github.com/krispy-snacc) |
 
-### category: textures [26]
+### category: textures [27]
 
 Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.
 
@@ -145,6 +145,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | [textures_image_kernel](textures/textures_image_kernel.c) | <img src="textures/textures_image_kernel.png" alt="textures_image_kernel" width="80"> | ⭐⭐⭐⭐️ | 1.3 | 1.3 | [Karim Salem](https://github.com/kimo-s) |
 | [textures_image_channel](textures/textures_image_channel.c) | <img src="textures/textures_image_channel.png" alt="textures_image_channel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Bruno Cabral](https://github.com/brccabral) |
 | [textures_image_rotate](textures/textures_image_rotate.c) | <img src="textures/textures_image_rotate.png" alt="textures_image_rotate" width="80"> | ⭐⭐☆☆ | 1.0 | 1.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [textures_screen_buffer](textures/textures_screen_buffer.c) | <img src="textures/textures_screen_buffer.png" alt="textures_screen_buffer" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Agnis Aldins](https://github.com/nezvers) |
 | [textures_textured_curve](textures/textures_textured_curve.c) | <img src="textures/textures_textured_curve.png" alt="textures_textured_curve" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jeffery Myers](https://github.com/JeffM2501) |
 
 ### category: text [15]

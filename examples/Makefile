@@ -619,6 +619,7 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
+    textures/textures_screen_buffer \
     textures/textures_textured_curve \
     textures/textures_tiled_drawing \
     textures/textures_to_image
