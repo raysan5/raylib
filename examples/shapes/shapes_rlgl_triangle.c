@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "rlgl.h"
 #include "raymath.h"
 
@@ -33,11 +34,13 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - rlgl triangle");
 
     // Starting postions and rendered triangle positions
-    Vector2 startingPositions[] = {{ 400.0f, 150.0f }, { 300.0f, 300.0f }, { 500.0f, 300.0f }};
-    Vector2 trianglePositions[] = { startingPositions[0], startingPositions[1], startingPositions[2] };
+    Vector2 startingPositions[3] = {{ 400.0f, 150.0f }, { 300.0f, 300.0f }, { 500.0f, 300.0f }};
+    Vector2 trianglePositions[3] = { startingPositions[0], startingPositions[1], startingPositions[2] };
 
     // Currently selected vertex, -1 means none
     int triangleIndex = -1;
+    bool linesMode = false;
+    float handleRadius = 8.0f;
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -47,11 +50,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // Reset index on release
-        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-        {
-            triangleIndex = -1;
-        }
+        if (IsKeyPressed(KEY_SPACE)) linesMode = !linesMode;
 
         // If the user has selected a vertex, offset it by the mouse's delta this frame
         if (triangleIndex != -1)
@@ -62,17 +61,13 @@ int main(void)
             position->x += mouseDelta.x;
             position->y += mouseDelta.y;
         }
+        
+        // Reset index on release
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) triangleIndex = -1;
 
         // Enable/disable backface culling (2-sided triangles, slower to render)
-        if (IsKeyPressed(KEY_LEFT))
-        {
-            rlEnableBackfaceCulling();
-        }
-
-        if (IsKeyPressed(KEY_RIGHT))
-        {
-            rlDisableBackfaceCulling();
-        }
+        if (IsKeyPressed(KEY_LEFT)) rlEnableBackfaceCulling();
+        if (IsKeyPressed(KEY_RIGHT)) rlDisableBackfaceCulling();
 
         // Reset triangle vertices to starting positions and reset backface culling
         if (IsKeyPressed(KEY_R))
@@ -89,92 +84,79 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
-        if (IsKeyDown(KEY_SPACE))
-        {
-            // Draw triangle with lines
-            rlBegin(RL_LINES);
-				// Three lines, six points
-				// Define color for next vertex
-				rlColor4ub(255, 0, 0, 255);
-				// Define vertex
-				rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
-				rlColor4ub(0, 255, 0, 255);
-				rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
-
-				rlColor4ub(0, 255, 0, 255);
-				rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
-				rlColor4ub(0, 0, 255, 255);
-				rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
-
-				rlColor4ub(0, 0, 255, 255);
-				rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
-				rlColor4ub(255, 0, 0, 255);
-				rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
-            rlEnd();
-        }
-        else
-        {
-            // Draw triangle as a triangle
-            rlBegin(RL_TRIANGLES);
-				// One triangle, three points
-				// Define color for next vertex
-				rlColor4ub(255, 0, 0, 255);
-				// Define vertex
-				rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
-				rlColor4ub(0, 255, 0, 255);
-				rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
-				rlColor4ub(0, 0, 255, 255);
-				rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
-            rlEnd();
-        }
-
-        // Render the vertex handles, reacting to mouse movement/input
-        for (unsigned int i = 0; i < 3; i++)
-        {
-            Vector2 position = trianglePositions[i];
-
-            float size = 4.0f;
-
-            Vector2 mousePosition = GetMousePosition();
-
-            // If the cursor is within the handle circle
-            if (Vector2Distance(mousePosition, position) < size)
+            if (linesMode)
             {
-                float fillAlpha = 0.0f;
-                if (triangleIndex == -1)
-                {
-                    fillAlpha = 0.5f;
-                }
+                // Draw triangle with lines
+                rlBegin(RL_LINES);
+                    // Three lines, six points
+                    // Define color for next vertex
+                    rlColor4ub(255, 0, 0, 255);
+                    // Define vertex
+                    rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
+                    rlColor4ub(0, 255, 0, 255);
+                    rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
 
-                // If handle selected/clicked
-                if (i == triangleIndex)
-                {
-                    fillAlpha = 1.0f;
-                }
+                    rlColor4ub(0, 255, 0, 255);
+                    rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
+                    rlColor4ub(0, 0, 255, 255);
+                    rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
 
-                // If clicked, set selected index to handle index
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-                {
-                    triangleIndex = i;
-                }
-
-                // If visible, draw DARKGRAY circle with varying alpha.
-                if (fillAlpha > 0.0f)
-                {
-                    Color fillColor = ColorAlpha(DARKGRAY, fillAlpha);
-
-                    DrawCircleV(position, size, fillColor);
-                }
+                    rlColor4ub(0, 0, 255, 255);
+                    rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
+                    rlColor4ub(255, 0, 0, 255);
+                    rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
+                rlEnd();
+            }
+            else
+            {
+                // Draw triangle as a triangle
+                rlBegin(RL_TRIANGLES);
+                    // One triangle, three points
+                    // Define color for next vertex
+                    rlColor4ub(255, 0, 0, 255);
+                    // Define vertex
+                    rlVertex2f(trianglePositions[0].x, trianglePositions[0].y);
+                    rlColor4ub(0, 255, 0, 255);
+                    rlVertex2f(trianglePositions[1].x, trianglePositions[1].y);
+                    rlColor4ub(0, 0, 255, 255);
+                    rlVertex2f(trianglePositions[2].x, trianglePositions[2].y);
+                rlEnd();
             }
 
-            // Draw handle outline
-            DrawCircleLinesV(position, size, BLACK);
-        }
+            // Render the vertex handles, reacting to mouse movement/input
+            // TODO: Vertex selection can be moved to update logic
+            for (unsigned int i = 0; i < 3; i++)
+            {
+                Vector2 position = trianglePositions[i];
+                Vector2 mousePosition = GetMousePosition();
 
-        // Draw controls
-        DrawText("space for lines\nleft for backface culling\nright for no backface culling\nclick and drag points\nr to reset", 10, 10, 20, DARKGRAY);
+                // If the cursor is within the handle circle
+                if (Vector2Distance(mousePosition, position) < handleRadius)
+                {
+                    float fillAlpha = 0.0f;
+                    if (triangleIndex == -1) fillAlpha = 0.5f;
+
+                    // If handle selected/clicked
+                    if (i == triangleIndex) fillAlpha = 1.0f;
+
+                    // If clicked, set selected index to handle index
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) triangleIndex = i;
+
+                    // If visible, draw DARKGRAY circle with varying alpha.
+                    if (fillAlpha > 0.0f) DrawCircleV(position, handleRadius, ColorAlpha(DARKGRAY, fillAlpha));
+                }
+
+                // Draw handle outline
+                DrawCircleLinesV(position, handleRadius, BLACK);
+            }
+
+            // Draw controls
+            DrawText("SPACE: Toggle lines mode", 10, 10, 20, DARKGRAY);
+            DrawText("LEFT-RIGHT: Toggle backface culling", 10, 40, 20, DARKGRAY);
+            DrawText("MOUSE: Click and drag vertex points", 10, 70, 20, DARKGRAY);
+            DrawText("R: Reset triangle to start positions", 10, 100, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
