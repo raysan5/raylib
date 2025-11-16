@@ -92,6 +92,12 @@ typedef struct {
     char **resPaths;        // Example resources paths (MAX: 256)
 } rlExampleInfo;
 
+// Automated testing data
+typedef struct {
+    int warnings;           // Warnings counter           
+    int status;             // Testing status result flags
+} rlExampleTesting;
+
 // Validation status for a single example
 typedef enum {
     VALID_OK                    = 0,        // All required files and entries are present
@@ -111,6 +117,18 @@ typedef enum {
     VALID_INVALID_CATEGORY      = 1 << 13,  // Not a recognized category
     VALID_UNKNOWN_ERROR         = 1 << 14   // Unknown failure case (fallback)
 } rlExampleValidationStatus;
+
+typedef enum {
+    TESTING_OK                  = 0,        // All automated testing ok
+    TESTING_FAIL_INIT           = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
+    TESTING_FAIL_CLOSE          = 1 << 1,   // Closing (CloseWindow())          -> "INFO: Window closed successfully"
+    TESTING_FAIL_ASSETS         = 1 << 2,   // Assets loading (WARNING: FILE:)  -> "WARNING: FILEIO:"
+    TESTING_FAIL_RLGL           = 1 << 3,   // OpenGL-wrapped initialization    -> "INFO: RLGL: Default OpenGL state initialized successfully"
+    TESTING_FAIL_PLATFORM       = 1 << 4,   // Platform initialization          -> "INFO: PLATFORM: DESKTOP (GLFW - Win32): Initialized successfully"
+    TESTING_FAIL_FONT           = 1 << 5,   // Font deefault initialization     -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
+    TESTING_FAIL_TIMER          = 1 << 6,   // Timer initialization             -> "INFO: TIMER: Target time per frame: 16.667 milliseconds"
+    TESTING_FAIL_OTHER          = 1 << 7,   // Other types of warnings (WARNING:)
+} rlExampleTestingStatus;
 
 // Example management operations
 typedef enum {
@@ -146,8 +164,8 @@ static int UpdateRequiredFiles(void);
 // Load examples collection information
 // NOTE 1: Load by category: "ALL", "core", "shapes", "textures", "text", "models", "shaders", others"
 // NOTE 2: Sort examples list on request flag
-static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount);
-static void UnloadExamplesData(rlExampleInfo *exInfo);
+static rlExampleInfo *LoadExampleData(const char *filter, bool sort, int *exCount);
+static void UnloadExampleData(rlExampleInfo *exInfo);
 
 // Load example info from file header
 static rlExampleInfo *LoadExampleInfo(const char *exFileName);
@@ -162,10 +180,10 @@ static int ParseExampleInfoLine(const char *line, rlExampleInfo *entry);
 static void SortExampleByName(rlExampleInfo *items, int count);
 
 // Scan resource paths in example file
-static char **ScanExampleResources(const char *filePath, int *resPathCount);
+static char **LoadExampleResourcePaths(const char *filePath, int *resPathCount);
 
 // Clear resource paths scanned
-static void ClearExampleResources(char **resPaths);
+static void UnloadExampleResourcePaths(char **resPaths);
 
 // Add/remove VS project (.vcxproj) tofrom existing VS solution (.sln)
 static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category);
@@ -223,7 +241,8 @@ int main(int argc, char *argv[])
     char exRecategory[32] = { 0 };  // Example re-name category: shapes
     char exRename[64] = { 0 };      // Example re-name, without extension
 
-    char exRebuildRequested[16] = { 0 }; // Example category/full rebuild request
+    char *exBuildList[256] = { 0 }; // Example build list for: ALL, <category>, single-example
+    int exBuildListCount = 0;       // Example build list file count
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
     bool showUsage = false;         // Flag to show usage help
@@ -383,80 +402,38 @@ int main(int argc, char *argv[])
 
             opCode = OP_UPDATE;
         }
-        else if (strcmp(argv[1], "build") == 0)
+        else if ((strcmp(argv[1], "build") == 0) || (strcmp(argv[1], "test") == 0))
         {
-            // Build example for PLATFORM_DESKTOP and PLATFORM_WEB
+            // Build/Test example(s) for PLATFORM_DESKTOP and PLATFORM_WEB
             // NOTE: Build outputs to default directory, usually where the .c file is located,
             // to avoid issues with copying resources (at least on Desktop)
             // Web build files (.html, .wasm, .js, .data) are copied to raylib.com/examples repo
             // Check for valid upcoming argument
-            if (argc == 2) LOG("WARNING: No example name provided to build\n");
+            if (argc == 2) LOG("WARNING: No example name/category provided\n");
             else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
             else
             {
-                // Support building not only individual examples but categories and "ALL"
-                if ((strcmp(argv[2], "ALL") == 0) || TextInList(argv[2], exCategories, REXM_MAX_EXAMPLE_CATEGORIES))
+                // Support building/testing not only individual examples but multiple: ALL/<category>
+                rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListCount);
+                    
+                for (int i = 0; i < exBuildListCount; i++)
                 {
-                    // Category/ALL rebuilt requested
-                    strcpy(exRebuildRequested, argv[2]);
+                    exBuildList[i] = (char *)RL_CALLOC(256, sizeof(char));
+                    strcpy(exBuildList[i], exBuildListInfo[i].name);
                 }
-                else
-                {
-                    // Verify example exists in collection to be removed
-                    char *exColInfo = LoadFileText(exCollectionFilePath);
-                    if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
-                    {
-                        strcpy(exName, argv[2]); // Register example name
-                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                        opCode = OP_BUILD;
-                    }
-                    else LOG("WARNING: BUILD: Example requested not available in the collection\n");
-                    UnloadFileText(exColInfo);
-                }
-            }
-        }
-        else if (strcmp(argv[1], "test") == 0)
-        {
-            // Build and test example for PLATFORM_DESKTOP
-            // NOTE: Build outputs to default directory, usually where the .c file is located,
-            // to avoid issues with copying resources (at least on Desktop)
-            if (argc == 2) LOG("WARNING: No example name provided to test\n");
-            else if (argc > 3) LOG("WARNING: Too many arguments provided\n");
-            else
-            {
-                // Support building not only individual examples but categories and "ALL"
-                if ((strcmp(argv[2], "ALL") == 0) || TextInList(argv[2], exCategories, REXM_MAX_EXAMPLE_CATEGORIES))
-                {
-                    // Category/ALL rebuilt requested
-                    strcpy(exRebuildRequested, argv[2]);
-                }
-                else
-                {
-                    // Verify example exists in collection to be removed
-                    char *exColInfo = LoadFileText(exCollectionFilePath);
-                    if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
-                    {
-                        strcpy(exName, argv[2]); // Register example name
-                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                        opCode = OP_TEST;
-                    }
-                    else LOG("WARNING: TEST: Example requested not available in the collection\n");
-                    UnloadFileText(exColInfo);
-                }
+                    
+                UnloadExampleData(exBuildListInfo);
+                
+                if (exBuildListCount == 0) LOG("WARNING: BUILD: Example requested not available in the collection\n");
+                else opCode = OP_TEST;
             }
         }
 
         // Process command line options arguments
         for (int i = 1; i < argc; i++)
         {
-            if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0))
-            {
-                showUsage = true;
-            }
-            else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0))
-            {
-                verbose = true;
-            }
+            if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0)) showUsage = true;
+            else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0)) verbose = true;
         }
     }
 
@@ -513,7 +490,7 @@ int main(int argc, char *argv[])
             // NOTE: resources path will be relative to example source file directory
             int resPathCount = 0;
             LOG("INFO: [%s] Scanning file for resources...\n", GetFileName(inFileName));
-            char **resPaths = ScanExampleResources(TextFormat("%s/%s.c", GetDirectoryPath(inFileName), exName), &resPathCount);
+            char **resPaths = LoadExampleResourcePaths(TextFormat("%s/%s.c", GetDirectoryPath(inFileName), exName), &resPathCount);
 
             if (resPathCount > 0)
             {
@@ -571,7 +548,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            ClearExampleResources(resPaths);
+            UnloadExampleResourcePaths(resPaths);
             // -----------------------------------------------------------------------------------------
 
             // Add example to the collection list, if not already there
@@ -727,13 +704,13 @@ int main(int argc, char *argv[])
 
                 // Edit: Update example source code metadata
                 int exListCount = 0;
-                rlExampleInfo *exList = LoadExamplesData(exCollectionFilePath, exCategory, false, &exListCount);
+                rlExampleInfo *exList = LoadExampleData(exCategory, false, &exListCount);
                 for (int i = 0; i < exListCount; i++)
                 {
                     if (strcmp(exList[i].name, exRename) == 0)
                         UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename), &exList[i]);
                 }
-                UnloadExamplesData(exList);
+                UnloadExampleData(exList);
 
                 // NOTE: Example resource files do not need to be changed...
                 // unless the example is moved from one caegory to another
@@ -919,79 +896,24 @@ int main(int argc, char *argv[])
         case OP_BUILD:
         {
             LOG("INFO: Command requested: BUILD\n");
-            LOG("INFO: Example to be built: %s\n", exName);
+            LOG("INFO: Example(s) to be built: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-            if ((exRebuildRequested[0] != '\0') &&
-                (strcmp(exRebuildRequested, "others") != 0) &&
-                (strcmp(exCategory, "others") != 0)) // Skipping "others" category for rebuild: Special needs
+#if defined(_WIN32)
+            // Set required environment variables
+            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            //putenv("MAKE=mingw32-make");
+            //ChangeDirectory(exBasePath);
+#endif
+            for (int i = 0; i < exBuildListCount; i++)
             {
-                // TODO: Support building full categories: exRebuildRequested
+                // Get example name and category
+                memset(exName, 0, 64);
+                strcpy(exName, exBuildList[i]);
+                memset(exCategory, 0, 32);
+                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
 
-                int exRebuildCount = 0;
-                rlExampleInfo *exRebuildList = LoadExamplesData(exCollectionFilePath, exRebuildRequested, false, &exRebuildCount);
-
-                // Build: raylib.com/examples/<category>/<category>_example_name.html
-                // Build: raylib.com/examples/<category>/<category>_example_name.data
-                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
-                // Build: raylib.com/examples/<category>/<category>_example_name.js
-#if defined(_WIN32)
-                // Set required environment variables
-                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-                _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                //putenv("MAKE=mingw32-make");
-                //ChangeDirectory(exBasePath);
-#endif
-                for (int i = 0; i < exRebuildCount; i++)
-                {
-                    // Build example for PLATFORM_DESKTOP
-#if defined(_WIN32)
-                    LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                    system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
-#else
-                    LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                    system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
-#endif
-
-                    // Build example for PLATFORM_WEB
-#if defined(_WIN32)
-                    LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                    system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
-#else
-                    LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
-                    system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
-#endif
-                    // Update generated .html metadata
-                    LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exRebuildList[i].name));
-                    UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
-                        TextFormat("%s/%s/%s.c", exBasePath, exRebuildList[i].category, exRebuildList[i].name));
-
-                    // Copy results to web side
-                    LOG("INFO: [%s] Copy example build to raylib.com\n", exRebuildList[i].name);
-                    FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
-                        TextFormat("%s/%s/%s.html", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
-                    FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
-                        TextFormat("%s/%s/%s.data", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
-                    FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
-                        TextFormat("%s/%s/%s.wasm", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
-                    FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRebuildList[i].category, exRebuildList[i].name),
-                        TextFormat("%s/%s/%s.js", exWebPath, exRebuildList[i].category, exRebuildList[i].name));
-                }
-
-                UnloadExamplesData(exRebuildList);
-            }
-            else  // Build a single example
-            {
-                // Build: raylib.com/examples/<category>/<category>_example_name.html
-                // Build: raylib.com/examples/<category>/<category>_example_name.data
-                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
-                // Build: raylib.com/examples/<category>/<category>_example_name.js
-#if defined(_WIN32)
-                // Set required environment variables
-                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-                _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                //putenv("MAKE=mingw32-make");
-                //ChangeDirectory(exBasePath);
-#endif
+                LOG("INFO: [%i/%i] Building example: [%s]\n", i + 1, exBuildListCount, exName);
 
                 // Build example for PLATFORM_DESKTOP
 #if defined(_WIN32)
@@ -1003,6 +925,10 @@ int main(int argc, char *argv[])
 #endif
 
                 // Build example for PLATFORM_WEB
+                // Build: raylib.com/examples/<category>/<category>_example_name.html
+                // Build: raylib.com/examples/<category>/<category>_example_name.data
+                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
+                // Build: raylib.com/examples/<category>/<category>_example_name.js
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
@@ -1025,8 +951,10 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
                 FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+
+                // Once example processed, free memory from list
+                RL_FREE(exBuildList[i]);
             }
-                //LOG("WARNING: [others] category examples should be build manually, they could have specific build requirements\n");
 
         } break;
         case OP_VALIDATE:     // Validate: report and actions
@@ -1129,7 +1057,7 @@ int main(int argc, char *argv[])
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             LOG("INFO: Validating examples in collection...\n");
             int exCollectionCount = 0;
-            rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
+            rlExampleInfo *exCollection = LoadExampleData("ALL", false, &exCollectionCount);
 
             // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
@@ -1174,7 +1102,7 @@ int main(int argc, char *argv[])
                 // Validate: raylib/examples/<category>/resources/..                    -> Example resources available?
                 // Scan resources used in example to check for missing resource files
                 // WARNING: Some paths could be for files to save, not files to load, verify it
-                char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name), &exInfo->resCount);
+                char **resPaths = LoadExampleResourcePaths(TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name), &exInfo->resCount);
                 if (exInfo->resCount > 0)
                 {
                     for (int r = 0; r < exInfo->resCount; r++)
@@ -1207,7 +1135,7 @@ int main(int argc, char *argv[])
                         }
                     }
                 }
-                ClearExampleResources(resPaths);
+                UnloadExampleResourcePaths(resPaths);
 
                 // Validate: raylib.com/examples/<category>/<category>_example_name.html -> File exists?
                 // Validate: raylib.com/examples/<category>/<category>_example_name.data -> File exists?
@@ -1337,8 +1265,8 @@ int main(int argc, char *argv[])
                             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                             system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #else
-                            LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
-                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                            LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->filter);
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->filter));
                         #endif
 
                             // Update generated .html metadata
@@ -1411,7 +1339,7 @@ int main(int argc, char *argv[])
             | shapes_colors_palette        |  ✘ |  ✔  |  ✘  |  ✔ |  ✘  |  ✔  |  ✔ |   ✘  |  ✔  |  ✔ |  ✔  |  ✔ |   ✔  |   ✔  |
             | text_format_text             |  ✘ |  ✘  |  ✘  |  ✘ |  ✘  |  ✘  |  ✘ |   ✘  |  ✔  |  ✘ |  ✔  |  ✔ |   ✔  |   ✔  |
             */
-            LOG("INFO: [examples_report.md] Generating examples validation report...\n");
+            LOG("INFO: [examples_validation.md] Generating examples validation report...\n");
 
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
@@ -1457,13 +1385,13 @@ int main(int argc, char *argv[])
                     (exCollection[i].status & VALID_MISSING_WEB_METADATA)? "❌" : "✔");
             }
 
-            SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report.md"), report);
+            SaveFileText(TextFormat("%s/../tools/rexm/reports/%s", exBasePath, "examples_validation.md"), report);
             RL_FREE(report);
             //-----------------------------------------------------------------------------------------------------
 
             // Generate a report with only the examples missing some elements
             //-----------------------------------------------------------------------------------------------------
-            LOG("INFO: [examples_report_issues.md] Generating examples issues report...\n");
+            LOG("INFO: [examples_issues.md] Generating examples issues report...\n");
 
             char *reportIssues = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
@@ -1512,100 +1440,193 @@ int main(int argc, char *argv[])
                 }
             }
 
-            SaveFileText(TextFormat("%s/../tools/rexm/%s", exBasePath, "examples_report_issues.md"), reportIssues);
+            SaveFileText(TextFormat("%s/../tools/rexm/reports/%s", exBasePath, "examples_issues.md"), reportIssues);
             RL_FREE(reportIssues);
             //-----------------------------------------------------------------------------------------------------
 
-            UnloadExamplesData(exCollection);
+            UnloadExampleData(exCollection);
             //------------------------------------------------------------------------------------------------
 
         } break;
         case OP_TEST:
         {
             LOG("INFO: Command requested: TEST\n");
-            LOG("INFO: Example to be built and tested: %s\n", exName);
+            LOG("INFO: Example(s) to be build and tested: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-            // Steps to follow
-            // STEP 1: Load example.c and replace required code to inject basic testing code: frames to run
-            //    OPTION 1: Code injection required multiple changes for testing but it does not require raylib changes!
-            //    OPTION 2: Support testing on raylib side: Args processing and events injection: SUPPORT_AUTOMATD_TESTING_SYSTEM, EVENTS_TESTING_MODE
-            // STEP 2: Build example (PLATFORM_DESKTOP)
-            // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
-            // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
-            // STEP 5: Generate report with results
+            rlExampleTesting *testing = (rlExampleTesting *)RL_CALLOC(exBuildListCount, sizeof(rlExampleTesting));
 
-            // STEP 1: Load example and inject required code
-            //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
-            //      WARNING: If we make a copy and something fails, it could not be restored at the end
-            //    PROBLEM: Trying to build a copy won't work because Makefile is setup to look for specific example on specific path -> No output dir config
-            //    IDEA: Create directory for testing data -> It implies moving files and set working dir...
-            //    SOLUTION: Make a copy of original file -> Modify original -> Build -> Rename to <example>.test.exe
-            FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), 
-                TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
-            char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-
-            static const char *mainReplaceText =
-                "#include <string.h>\n"
-                "#include <stdlib.h>\n"
-                "int main(int argc, char *argv[])\n{\n"
-                "    int requestedTestFrames = 0;\n"
-                "    int testFramesCount = 0;\n"
-                "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
-
-            char *srcTextUpdated[3] = { 0 };
-            srcTextUpdated[0] = TextReplace(srcText, "int main(void)\n{", mainReplaceText);
-            srcTextUpdated[1] = TextReplace(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
-            srcTextUpdated[2] = TextReplace(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
-            UnloadFileText(srcText);
-
-            SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
-            for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
-
-            // STEP 2: Build example for DESKTOP platform
-#if defined(_WIN32)
-            // Set required environment variables
-            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=mingw32-make");
-            //ChangeDirectory(exBasePath);
-#endif
-            // Build example for PLATFORM_DESKTOP
-#if defined(_WIN32)
-            LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-            system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-#else
-            LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-            system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-#endif
-            // Restore original source code before continue
-            FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName), 
-                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
-            FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
-
-            // STEP 3: Run example with required arguments
-            ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-            system(TextFormat("%s --frames 2 > %s.log", exName, exName));
-
-            // STEP 4: Load and validate log -> WARNINGS
-            char *exTestLog = LoadFileText(TextFormat("%s/%s/%s.log", exBasePath, exCategory, exName));
-            int exTestLogLinesCount = 0;
-            char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
-            UnloadFileText(exTestLog);
-
-            int issueCounter = false;
-            for (int i = 0; i < exTestLogLinesCount; i++)
+            for (int i = 0; i < exBuildListCount; i++)
             {
-                if (TextFindIndex(exTestLogLines[i], "WARNING") >= 0)
+                // Get example name and category
+                memset(exName, 0, 64);
+                strcpy(exName, exBuildList[i]);
+                memset(exCategory, 0, 32);
+                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+
+                LOG("INFO: [%i/%i] Testing example: [%s]\n", i + 1, exBuildListCount, exName);
+
+                // Steps to follow
+                // STEP 1: Load example.c and replace required code to inject basic testing code: frames to run
+                //    OPTION 1: Code injection required multiple changes for testing but it does not require raylib changes!
+                //    OPTION 2: Support testing on raylib side: Args processing and events injection: SUPPORT_AUTOMATD_TESTING_SYSTEM, EVENTS_TESTING_MODE
+                // STEP 2: Build example (PLATFORM_DESKTOP)
+                // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
+                // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
+                // STEP 5: Generate report with results
+
+                // STEP 1: Load example and inject required code
+                //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
+                //      WARNING: If we make a copy and something fails, it could not be restored at the end
+                //    PROBLEM: Trying to build a copy won't work because Makefile is setup to look for specific example on specific path -> No output dir config
+                //    IDEA: Create directory for testing data -> It implies moving files and set working dir...
+                //    SOLUTION: Make a copy of original file -> Modify original -> Build -> Rename to <example>.test.exe
+                FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
+                char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+                static const char *mainReplaceText =
+                    "#include <string.h>\n"
+                    "#include <stdlib.h>\n"
+                    "int main(int argc, char *argv[])\n{\n"
+                    "    int requestedTestFrames = 0;\n"
+                    "    int testFramesCount = 0;\n"
+                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+
+                char *srcTextUpdated[3] = { 0 };
+                srcTextUpdated[0] = TextReplace(srcText, "int main(void)\n{", mainReplaceText);
+                srcTextUpdated[1] = TextReplace(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
+                srcTextUpdated[2] = TextReplace(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
+                UnloadFileText(srcText);
+
+                SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
+                for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
+
+                // STEP 2: Build example for DESKTOP platform
+#if defined(_WIN32)
+                // Set required environment variables
+                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+                _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                //putenv("MAKE=mingw32-make");
+                //ChangeDirectory(exBasePath);
+#endif
+                // Build example for PLATFORM_DESKTOP
+#if defined(_WIN32)
+                LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#else
+                LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#endif
+                // Restore original source code before continue
+                FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
+
+                // STEP 3: Run example with required arguments
+                // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
+                ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
+                system(TextFormat("%s --frames 2 > %s.log", exName, exName));
+
+                // STEP 4: Load and validate log info
+                char *exTestLog = LoadFileText(TextFormat("%s/%s/%s.log", exBasePath, exCategory, exName));
+                int exTestLogLinesCount = 0;
+                char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
+                
+                /*
+                TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
+                TESTING_FAIL_CLOSE     = 1 << 1,   // Closing (CloseWindow())          -> "INFO: Window closed successfully"
+                TESTING_FAIL_ASSETS    = 1 << 2,   // Assets loading (WARNING: FILE:)  -> "WARNING: FILEIO:"
+                TESTING_FAIL_RLGL      = 1 << 3,   // OpenGL-wrapped initialization    -> "INFO: RLGL: Default OpenGL state initialized successfully"
+                TESTING_FAIL_PLATFORM  = 1 << 4,   // Platform initialization          -> "INFO: PLATFORM: DESKTOP (GLFW - Win32): Initialized successfully"
+                TESTING_FAIL_FONT      = 1 << 5,   // Font default initialization      -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
+                TESTING_FAIL_TIMER     = 1 << 6,   // Timer initialization             -> "INFO: TIMER: Target time per frame: 16.667 milliseconds"
+                */
+
+                if (TextFindIndex(exTestLog, "INFO: DISPLAY: Device initialized successfully") == -1) testing[i].status |= TESTING_FAIL_INIT;
+                if (TextFindIndex(exTestLog, "INFO: Window closed successfully") == -1) testing[i].status |= TESTING_FAIL_CLOSE;
+                if (TextFindIndex(exTestLog, "WARNING: FILEIO:") >= 0) testing[i].status |= TESTING_FAIL_ASSETS;
+                if (TextFindIndex(exTestLog, "INFO: RLGL: Default OpenGL state initialized successfully") == -1) testing[i].status |= TESTING_FAIL_RLGL;
+                if (TextFindIndex(exTestLog, "INFO: PLATFORM:") == -1) testing[i].status |= TESTING_FAIL_PLATFORM;
+                if (TextFindIndex(exTestLog, "INFO: FONT: Default font loaded successfully") == -1) testing[i].status |= TESTING_FAIL_FONT;
+                if (TextFindIndex(exTestLog, "INFO: TIMER: Target time per frame:") == -1) testing[i].status |= TESTING_FAIL_TIMER;
+
+                for (int k = 0, index = 0; k < exTestLogLinesCount; k++)
                 {
-                    LOG("TEST: [%s] %s\n", exName, exTestLogLines[i]);
-                    issueCounter++;
+                    if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
+                }
+
+                UnloadTextLines(exTestLogLines, exTestLogLinesCount);
+                UnloadFileText(exTestLog);
+            }
+
+            // STEP 5: Generate testing report/table with results (.md)
+            //-----------------------------------------------------------------------------------------------------
+            /*
+            Columns:
+             - [WARN]   : WARNING messages count
+             - [INIT]   : Initialization
+             - [CLOSE]  : Closing
+             - [ASSETS] : Assets loading
+             - [RLGL]   : OpenGL-wrapped initialization
+             - [PLAT]   : Platform initialization
+             - [FONT]   : Font default initialization
+             - [TIMER]  : Timer initialization
+
+            | **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
+            |:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
+            | core_basic window                |    0   |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
+            */
+            LOG("INFO: [examples_testing.md] Generating examples testing report...\n");
+
+            char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+            int repIndex = 0;
+            repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION - TESTING REPORT\n\n");
+            repIndex += sprintf(report + repIndex, "## Tested Platform: Windows\n\n");
+
+            repIndex += sprintf(report + repIndex, "```\nExample automated testing elements validated:\n");
+            repIndex += sprintf(report + repIndex, " - [WARN]   : WARNING messages count\n");
+            repIndex += sprintf(report + repIndex, " - [INIT]   : Initialization\n");
+            repIndex += sprintf(report + repIndex, " - [CLOSE]  : Closing\n");
+            repIndex += sprintf(report + repIndex, " - [ASSETS] : Assets loading\n");
+            repIndex += sprintf(report + repIndex, " - [RLGL]   : OpenGL-wrapped initialization\n");
+            repIndex += sprintf(report + repIndex, " - [PLAT]   : Platform initialization\n");
+            repIndex += sprintf(report + repIndex, " - [FONT]   : Font default initialization\n");
+            repIndex += sprintf(report + repIndex, " - [TIMER]  : Timer initialization\n```\n");
+
+            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |\n");
+            repIndex += sprintf(report + repIndex, "|:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|\n");
+
+            /*
+            TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
+            TESTING_FAIL_CLOSE     = 1 << 1,   // Closing (CloseWindow())          -> "INFO: Window closed successfully"
+            TESTING_FAIL_ASSETS    = 1 << 2,   // Assets loading (WARNING: FILE:)  -> "WARNING: FILEIO:"
+            TESTING_FAIL_RLGL      = 1 << 3,   // OpenGL-wrapped initialization    -> "INFO: RLGL: Default OpenGL state initialized successfully"
+            TESTING_FAIL_PLATFORM  = 1 << 4,   // Platform initialization          -> "INFO: PLATFORM: DESKTOP (GLFW - Win32): Initialized successfully"
+            TESTING_FAIL_FONT      = 1 << 5,   // Font default initialization      -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
+            TESTING_FAIL_TIMER     = 1 << 6,   // Timer initialization             -> "INFO: TIMER: Target time per frame: 16.667 milliseconds"
+            */
+            for (int i = 0; i < exBuildListCount; i++)
+            {
+                if (testing[i].status > 0)
+                {
+                    repIndex += sprintf(report + repIndex, "| %-32s |   %i   |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
+                        exBuildList[i], testing[i].warnings,
+                        (testing[i].status & TESTING_FAIL_INIT)? "✔" : "❌",
+                        (testing[i].status & TESTING_FAIL_CLOSE)? "✔" : "❌",
+                        (testing[i].status & TESTING_FAIL_ASSETS)? "✔" : "❌",
+                        (testing[i].status & TESTING_FAIL_RLGL)? "✔" : "❌",
+                        (testing[i].status & TESTING_FAIL_PLATFORM)? "✔" : "❌",
+                        (testing[i].status & TESTING_FAIL_FONT)? "✔" : "❌",
+                        (testing[i].status & TESTING_FAIL_TIMER)? "✔" : "❌");
                 }
             }
 
-            UnloadTextLines(exTestLogLines, exTestLogLinesCount);
+            repIndex += sprintf(report + repIndex, "\n");
 
-            // STEP 5: Generate auto-test report
-            //if (issueCounter > 0)
+            SaveFileText(TextFormat("%s/../tools/rexm/reports/%s", exBasePath, "examples_testing_windows.md"), report);
+            RL_FREE(report);
+            //-----------------------------------------------------------------------------------------------------
 
         } break;
         default:    // Help
@@ -1668,13 +1689,13 @@ static int UpdateRequiredFiles(void)
     //------------------------------------------------------------------------------------------------
     LOG("INFO: Updating all examples metadata...\n");
     int exListCount = 0;
-    rlExampleInfo *exList = LoadExamplesData(exCollectionFilePath, "ALL", true, &exListCount);
+    rlExampleInfo *exList = LoadExampleData("ALL", true, &exListCount);
     for (int i = 0; i < exListCount; i++)
     {
         rlExampleInfo *info = &exList[i];
         UpdateSourceMetadata(TextFormat("%s/%s/%s.c", exBasePath, info->category, info->name), info);
     }
-    UnloadExamplesData(exList);
+    UnloadExampleData(exList);
     //------------------------------------------------------------------------------------------------
 
     // Edit: raylib/examples/Makefile --> Update from collection
@@ -1695,12 +1716,12 @@ static int UpdateRequiredFiles(void)
         mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
         int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], true, &exCollectionCount);
+        rlExampleInfo *exCollection = LoadExampleData(exCategories[i], true, &exCollectionCount);
 
         for (int x = 0; x < exCollectionCount - 1; x++) mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s \\\n", exCollection[x].category, exCollection[x].name));
         mkIndex += sprintf(mkTextUpdated + mkListStartIndex + mkIndex, TextFormat("    %s/%s\n\n", exCollection[exCollectionCount - 1].category, exCollection[exCollectionCount - 1].name));
 
-        UnloadExamplesData(exCollection);
+        UnloadExampleData(exCollection);
     }
 
     // Add the remaining part of the original file
@@ -1732,12 +1753,12 @@ static int UpdateRequiredFiles(void)
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
         int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], true, &exCollectionCount);
+        rlExampleInfo *exCollection = LoadExampleData(exCategories[i], true, &exCollectionCount);
 
         for (int x = 0; x < exCollectionCount - 1; x++) mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s \\\n", exCollection[x].category, exCollection[x].name));
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("    %s/%s\n\n", exCollection[exCollectionCount - 1].category, exCollection[exCollectionCount - 1].name));
 
-        UnloadExamplesData(exCollection);
+        UnloadExampleData(exCollection);
     }
 
     // Add examples individual targets, considering every example resources
@@ -1758,13 +1779,13 @@ static int UpdateRequiredFiles(void)
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("# Compile %s examples\n", TextToUpper(exCategories[i])));
 
         int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], true, &exCollectionCount);
+        rlExampleInfo *exCollection = LoadExampleData(exCategories[i], true, &exCollectionCount);
 
         for (int x = 0; x < exCollectionCount; x++)
         {
             // Scan resources used in example to list
             int resPathCount = 0;
-            char **resPaths = ScanExampleResources(TextFormat("%s/%s/%s.c", exBasePath, exCollection[x].category, exCollection[x].name), &resPathCount);
+            char **resPaths = LoadExampleResourcePaths(TextFormat("%s/%s/%s.c", exBasePath, exCollection[x].category, exCollection[x].name), &resPathCount);
 
             if (resPathCount > 0)
             {
@@ -1817,10 +1838,10 @@ static int UpdateRequiredFiles(void)
                 mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)\n\n");
             }
 
-            ClearExampleResources(resPaths);
+            UnloadExampleResourcePaths(resPaths);
         }
 
-        UnloadExamplesData(exCollection);
+        UnloadExampleData(exCollection);
     }
 
     // Add the remaining part of the original file
@@ -1846,8 +1867,8 @@ static int UpdateRequiredFiles(void)
     memcpy(mdTextUpdated, mdText, mdListStartIndex);
 
     int exCollectionFullCount = 0;
-    rlExampleInfo *exCollectionFull = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionFullCount);
-    UnloadExamplesData(exCollectionFull);
+    rlExampleInfo *exCollectionFull = LoadExampleData("ALL", false, &exCollectionFullCount);
+    UnloadExampleData(exCollectionFull);
 
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("## EXAMPLES COLLECTION [TOTAL: %i]\n", exCollectionFullCount));
 
@@ -1855,7 +1876,7 @@ static int UpdateRequiredFiles(void)
     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
     {
         int exCollectionCount = 0;
-        rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount);
+        rlExampleInfo *exCollection = LoadExampleData(exCategories[i], false, &exCollectionCount);
 
         // Every category includes some introductory text, as it is quite short, just copying it here
         if (i == 0)         // "core"
@@ -1926,7 +1947,7 @@ static int UpdateRequiredFiles(void)
                     starsText, exCollection[x].verCreated, exCollection[x].verUpdated, exCollection[x].author, exCollection[x].authorGitHub));
         }
 
-        UnloadExamplesData(exCollection);
+        UnloadExampleData(exCollection);
     }
 
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
@@ -1972,7 +1993,7 @@ static int UpdateRequiredFiles(void)
             for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
             {
                 int exCollectionCount = 0;
-                rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, exCategories[i], false, &exCollectionCount);
+                rlExampleInfo *exCollection = LoadExampleData(exCategories[i], false, &exCollectionCount);
                 for (int x = 0; x < exCollectionCount; x++)
                 {
                     for (int s = 0; s < 4; s++)
@@ -1994,7 +2015,7 @@ static int UpdateRequiredFiles(void)
                     }
                 }
 
-                UnloadExamplesData(exCollection);
+                UnloadExampleData(exCollection);
             }
 
             // Add the remaining part of the original file
@@ -2011,8 +2032,8 @@ static int UpdateRequiredFiles(void)
     return result;
 }
 
-// Load examples collection information
-static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount)
+// Load examples information from collection data
+static rlExampleInfo *LoadExampleData(const char *filter, bool sort, int *exCount)
 {
     #define MAX_EXAMPLES_INFO   256
 
@@ -2020,7 +2041,8 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
     int exCounter = 0;
     *exCount = 0;
 
-    char *text = LoadFileText(fileName);
+    // Load main collection list file: "raylib/examples/examples_list.txt"
+    char *text = LoadFileText(exCollectionFilePath);
 
     if (text != NULL)
     {
@@ -2042,17 +2064,24 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
                 int result = ParseExampleInfoLine(lines[i], &info);
                 if (result == 1) // Success on parsing
                 {
-                    if (strcmp(category, "ALL") == 0)
+                    if (strcmp(filter, "ALL") == 0)
                     {
                         // Add all examples to the list
                         memcpy(&exInfo[exCounter], &info, sizeof(rlExampleInfo));
                         exCounter++;
                     }
-                    else if (strcmp(info.category, category) == 0)
+                    else if (strcmp(info.category, filter) == 0)
                     {
                         // Get only specific category examples
                         memcpy(&exInfo[exCounter], &info, sizeof(rlExampleInfo));
                         exCounter++;
+                    }
+                    else if (strcmp(info.name, filter) == 0)
+                    {
+                        // Get only requested example
+                        memcpy(&exInfo[exCounter], &info, sizeof(rlExampleInfo));
+                        exCounter++;
+                        break;
                     }
                 }
             }
@@ -2070,7 +2099,7 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
 }
 
 // Unload examples collection data
-static void UnloadExamplesData(rlExampleInfo *exInfo)
+static void UnloadExampleData(rlExampleInfo *exInfo)
 {
     RL_FREE(exInfo);
 }
@@ -2160,7 +2189,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 
         UnloadFileText(exText);
 
-        exInfo->resPaths = ScanExampleResources(exFileName, &exInfo->resCount);
+        exInfo->resPaths = LoadExampleResourcePaths(exFileName, &exInfo->resCount);
     }
 
     return exInfo;
@@ -2169,7 +2198,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
 // Unload example information
 static void UnloadExampleInfo(rlExampleInfo *exInfo)
 {
-    ClearExampleResources(exInfo->resPaths);
+    UnloadExampleResourcePaths(exInfo->resPaths);
     RL_FREE(exInfo);
 }
 
@@ -2245,7 +2274,7 @@ static void SortExampleByName(rlExampleInfo *items, int count)
 // but new examples could require other file extensions to be added,
 // maybe it should look for '.xxx")' patterns instead
 // TODO: WARNING: Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png, ...
-static char **ScanExampleResources(const char *filePath, int *resPathCount)
+static char **LoadExampleResourcePaths(const char *filePath, int *resPathCount)
 {
     #define REXM_MAX_RESOURCE_PATH_LEN    256
 
@@ -2327,7 +2356,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
 }
 
 // Clear resource paths scanned
-static void ClearExampleResources(char **resPaths)
+static void UnloadExampleResourcePaths(char **resPaths)
 {
     for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) RL_FREE(resPaths[i]);
 
