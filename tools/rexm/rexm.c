@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rexm [raylib examples manager] - A simple command-line tool to manage raylib examples
+*   rexm [raylib examples manager] - A simple and easy-to-use raylib examples collection manager
 *
 *   Supported processes:
 *    - create <new_example_name>
@@ -8,8 +8,9 @@
 *    - rename <old_examples_name> <new_example_name>
 *    - remove <example_name>
 *    - build <example_name>
-*    - validate
-*    - update
+*    - test <example_name>
+*    - validate                 // All examples
+*    - update                   // All examples
 *
 *   Files involved in the processes:
 *    - raylib/examples/<category>/<category>_example_name.c
@@ -86,7 +87,7 @@ typedef struct {
     char author[64];        // Example author
     char authorGitHub[64];  // Example author, GitHub user name
 
-    int status;             // Example validation status info
+    int status;             // Example validation status flags
     int resCount;           // Example resources counter
     char **resPaths;        // Example resources paths (MAX: 256)
 } rlExampleInfo;
@@ -119,9 +120,9 @@ typedef enum {
     OP_RENAME   = 3,        // Rename existing example
     OP_REMOVE   = 4,        // Remove existing example
     OP_VALIDATE = 5,        // Validate examples, using [examples_list.txt] as main source by default
-    OP_UPDATE   = 6,        // Validate and update required examples (as far as possible)
-    OP_BUILD    = 7,        // Build example for desktop and web, copy web output
-    OP_TEST     = 8,        // Test example: check output LOG WARNINGS
+    OP_UPDATE   = 6,        // Validate and update required examples (as far as possible): ALL
+    OP_BUILD    = 7,        // Build example(s) for desktop and web, copy web output - Multiple examples supported
+    OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiplee examples supported
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
