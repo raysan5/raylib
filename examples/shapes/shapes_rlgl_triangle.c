@@ -18,7 +18,6 @@
 #include "raylib.h"
 
 #include "rlgl.h"
-#include "raymath.h"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -51,6 +50,18 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) linesMode = !linesMode;
+        
+        // Check selected vertex
+        for (unsigned int i = 0; i < 3; i++)
+        {
+            // If the mouse is within the handle circle
+            if (CheckCollisionPointCircle(GetMousePosition(), trianglePositions[i], handleRadius) &&
+                IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+            {
+                triangleIndex = i;
+                break;
+            }
+        }
 
         // If the user has selected a vertex, offset it by the mouse's delta this frame
         if (triangleIndex != -1)
@@ -126,30 +137,17 @@ int main(void)
             }
 
             // Render the vertex handles, reacting to mouse movement/input
-            // TODO: Vertex selection can be moved to update logic
             for (unsigned int i = 0; i < 3; i++)
             {
-                Vector2 position = trianglePositions[i];
-                Vector2 mousePosition = GetMousePosition();
-
-                // If the cursor is within the handle circle
-                if (Vector2Distance(mousePosition, position) < handleRadius)
-                {
-                    float fillAlpha = 0.0f;
-                    if (triangleIndex == -1) fillAlpha = 0.5f;
-
-                    // If handle selected/clicked
-                    if (i == triangleIndex) fillAlpha = 1.0f;
-
-                    // If clicked, set selected index to handle index
-                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) triangleIndex = i;
-
-                    // If visible, draw DARKGRAY circle with varying alpha.
-                    if (fillAlpha > 0.0f) DrawCircleV(position, handleRadius, ColorAlpha(DARKGRAY, fillAlpha));
-                }
-
+                // Draw handle fill focused by mouse                
+                if (CheckCollisionPointCircle(GetMousePosition(), trianglePositions[i], handleRadius))
+                    DrawCircleV(trianglePositions[i], handleRadius, ColorAlpha(DARKGRAY, 0.5f));
+                
+                // Draw handle fill selected
+                if (i == triangleIndex) DrawCircleV(trianglePositions[i], handleRadius, DARKGRAY);
+                
                 // Draw handle outline
-                DrawCircleLinesV(position, handleRadius, BLACK);
+                DrawCircleLinesV(trianglePositions[i], handleRadius, BLACK); 
             }
 
             // Draw controls
