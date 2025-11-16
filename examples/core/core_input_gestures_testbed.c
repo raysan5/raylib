@@ -69,7 +69,6 @@ int main(void)
     float angleLength = 90.0f;
     float currentAngleDegrees = 0.0f;
     Vector2 finalVector = { 0.0f, 0.0f };
-    char currentAngleStr[7] = "";
     Vector2 protractorPosition = { 266.0f, 315.0f };
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
