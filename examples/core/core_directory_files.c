@@ -20,9 +20,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"                 // Required for GUI controls
 
-#include <string.h>                 // Required for: strcpy()
-
-#define MAX_FILEPATH_SIZE       2048
+#define MAX_FILEPATH_SIZE       1024
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -53,12 +51,10 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (btnBackPressed)
         {
-            strcpy(directory, GetPrevDirectoryPath(directory));
+            TextCopy(directory, GetPrevDirectoryPath(directory));
             UnloadDirectoryFiles(files);
             files = LoadDirectoryFiles(directory);
         }
-
-
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -68,7 +64,7 @@ int main(void)
 
             DrawText(directory, 100, 40, 20, DARKGRAY);
 
-            btnBackPressed = GuiButton((Rectangle){ 40.0f, 40.0f, 20, 20 }, "<");
+            btnBackPressed = GuiButton((Rectangle){ 40.0f, 38.0f, 48, 24 }, "<");
 
             for (int i = 0; i < (int)files.count; i++)
             {
@@ -78,7 +74,7 @@ int main(void)
                 {
                     if (GuiButton((Rectangle){0.0f, 85.0f + 40.0f*(float)i, screenWidth, 40}, ""))
                     {
-                        strcpy(directory, files.paths[i]);
+                        TextCopy(directory, files.paths[i]);
                         UnloadDirectoryFiles(files);
                         files = LoadDirectoryFiles(directory);
                         continue;

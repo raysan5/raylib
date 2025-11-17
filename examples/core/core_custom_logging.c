@@ -17,11 +17,11 @@
 
 #include "raylib.h"
 
-#include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
-#include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
+#include <stdio.h>          // Required for: printf(), vprintf(), fprintf()
+#include <time.h>           // Required for: time_t, tm, time(), localtime(), strftime()
 
 // Custom logging function
-void CustomLog(int msgType, const char *text, va_list args)
+void CustomTraceLog(int msgType, const char *text, va_list args)
 {
     char timeStr[64] = { 0 };
     time_t now = time(NULL);
@@ -54,7 +54,7 @@ int main(void)
     const int screenHeight = 450;
 
     // Set custom logger
-    SetTraceLogCallback(CustomLog);
+    SetTraceLogCallback(CustomTraceLog);
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 

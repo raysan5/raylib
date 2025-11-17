@@ -22,9 +22,9 @@
 #define GESTURE_LOG_SIZE    20
 #define MAX_TOUCH_COUNT     32
 
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 // Module Functions Declaration
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 static char const *GetGestureName(int gesture); // Get text string for gesture value
 static Color GetGestureColor(int gesture); // Get color for gesture value
 
