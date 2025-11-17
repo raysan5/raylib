@@ -1456,6 +1456,21 @@ int main(int argc, char *argv[])
 
             rlExampleTesting *testing = (rlExampleTesting *)RL_CALLOC(exBuildListCount, sizeof(rlExampleTesting));
 
+#if defined(_WIN32)
+            // Set required environment variables
+            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+            //_putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            //putenv("MAKE=mingw32-make");
+            //ChangeDirectory(exBasePath);
+            //_putenv("MAKE_PATH=C:\\raylib\\w64devkit\\bin");
+            //_putenv("EMSDK_PATH = C:\\raylib\\emsdk");
+            //_putenv("PYTHON_PATH=$(EMSDK_PATH)\\python\\3.9.2-nuget_64bit");
+            //_putenv("NODE_PATH=$(EMSDK_PATH)\\node\\20.18.0_64bit\\bin");
+            //_putenv("PATH=%PATH%;$(MAKE_PATH);$(EMSDK_PATH);$(NODE_PATH);$(PYTHON_PATH)");
+
+            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin;C:\\raylib\\emsdk\\python\\3.9.2-nuget_64bit;C:\\raylib\\emsdk\\node\\20.18.0_64bit\\bin");
+#endif
+
             for (int i = 0; i < exBuildListCount; i++)
             {
                 // Get example name and category
@@ -1474,7 +1489,7 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
                 // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
                 // STEP 5: Generate report with results
-
+                
                 // STEP 1: Load example and inject required code
                 //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
                 //      WARNING: If we make a copy and something fails, it could not be restored at the end
@@ -1484,6 +1499,71 @@ int main(int argc, char *argv[])
                 FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
                 char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+#define BUILD_TESTING_WEB
+#if defined(BUILD_TESTING_WEB)
+                static const char *mainReplaceText =
+                    "#include <stdio.h>\n"
+                    "#include <string.h>\n"
+                    "#include <stdlib.h>\n"
+                    "#include <emscripten/emscripten.h>\n\n"
+                    "static char logText[1024] = {0};\n"
+                    "static int logTextOffset = 0;\n\n"
+                    "void CustomTraceLog(int msgType, const char *text, va_list args)\n{\n"
+                    "    switch (msgType)\n    {\n"
+                    "        case LOG_INFO: logTextOffset += sprintf(logText + logTextOffset, \"INFO: \"); break;\n"
+                    "        case LOG_ERROR: logTextOffset += sprintf(logText + logTextOffset, \"ERROR: \"); break;\n"
+                    "        case LOG_WARNING: logTextOffset += sprintf(logText + logTextOffset, \"WARNING: \"); break;\n"
+                    "        case LOG_DEBUG: logTextOffset += sprintf(logText + logTextOffset, \"DEBUG: \"); break;\n"
+                    "        default: break;\n    }\n"
+                    "    logTextOffset += vsprintf(logText + logTextOffset, text, args);\n"
+                    "    logTextOffset += sprintf(logText + logTextOffset, \"\\n\");\n}\n\n"
+                    "int main(int argc, char *argv[])\n{\n"
+                    "    SetTraceLogCallback(CustomTraceLog);\n"
+                    "    int requestedTestFrames = 0;\n"
+                    "    int testFramesCount = 0;\n"
+                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+
+                static const char *returnReplaceText =
+                    "    char outputLogFile[256] = { 0 };\n"
+                    "    TextCopy(outputLogFile, GetFileNameWithoutExt(argv[0]));\n"
+                    "    SaveFileText(outputLogFile, logText);\n"
+                    "    emscripten_run_script(TextFormat(\"saveFileFromMEMFSToDisk('%s','%s')\", outputLogFile, GetFileName(outputLogFile)));\n\n"
+                    "    return 0";
+
+                char *srcTextUpdated[4] = { 0 };
+                srcTextUpdated[0] = TextReplace(srcText, "int main(void)\n{", mainReplaceText);
+                srcTextUpdated[1] = TextReplace(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
+                srcTextUpdated[2] = TextReplace(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
+                srcTextUpdated[3] = TextReplace(srcTextUpdated[2], "    return 0", returnReplaceText);
+                UnloadFileText(srcText);
+
+                //SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[3]);
+                for (int i = 0; i < 4; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
+
+                // Build example for PLATFORM_WEB
+                // Build: raylib.com/examples/<category>/<category>_example_name.html
+                // Build: raylib.com/examples/<category>/<category>_example_name.data
+                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
+                // Build: raylib.com/examples/<category>/<category>_example_name.js
+#if defined(_WIN32)
+                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#else
+                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#endif
+                // Restore original source code before continue
+                FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
+
+                // STEP 3: Run example on browser
+                ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
+                system("start python -m http.server 8080");
+                system(TextFormat("start explorer \"http:\\localhost:8080/%s.html", exName));
+
+#else // BUILD_TESTING_DESKTOP
 
                 static const char *mainReplaceText =
                     "#include <string.h>\n"
