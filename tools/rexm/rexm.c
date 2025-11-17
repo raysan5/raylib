@@ -94,8 +94,9 @@ typedef struct {
 
 // Automated testing data
 typedef struct {
-    int warnings;           // Warnings counter           
-    int status;             // Testing status result flags
+    int buildwarns;         // Example building warnings count (by GCC compiler)
+    int warnings;           // Example run output log warnings count
+    int status;             // Example run testing status flags (>0 = FAILS)
 } rlExampleTesting;
 
 // Validation status for a single example
@@ -1501,6 +1502,8 @@ int main(int argc, char *argv[])
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
                 for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
+                MakeDirectory(TextFormat("%s/%s/logs", exBasePath, exCategory));
+
                 // STEP 2: Build example for DESKTOP platform
 #if defined(_WIN32)
                 // Set required environment variables
@@ -1512,7 +1515,8 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
@@ -1525,10 +1529,24 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with required arguments
                 // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-                system(TextFormat("%s --frames 2 > %s.log", exName, exName));
+                system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
 
                 // STEP 4: Load and validate log info
-                char *exTestLog = LoadFileText(TextFormat("%s/%s/%s.log", exBasePath, exCategory, exName));
+                //---------------------------------------------------------------------------------------------
+                // Load <example_name>.build.log to check for compilation warnings
+                char *exTestBuildLog = LoadFileText(TextFormat("%s/%s/logs/%s.build.log", exBasePath, exCategory, exName));
+                int exTestBuildLogLinesCount = 0;
+                char **exTestBuildLogLines = LoadTextLines(exTestBuildLog, &exTestBuildLogLinesCount);
+
+                for (int k = 0, index = 0; k < exTestBuildLogLinesCount; k++)
+                {
+                    if (TextFindIndex(exTestBuildLogLines[k], "warning:") >= 0) testing[i].buildwarns++;
+                }
+
+                UnloadTextLines(exTestBuildLogLines, exTestBuildLogLinesCount);
+                UnloadFileText(exTestBuildLog);
+
+                char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
                 int exTestLogLinesCount = 0;
                 char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
                 
@@ -1557,6 +1575,8 @@ int main(int argc, char *argv[])
 
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
                 UnloadFileText(exTestLog);
+                //---------------------------------------------------------------------------------------------
+#endif
             }
 
             // STEP 5: Generate testing report/table with results (.md)
