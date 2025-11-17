@@ -261,6 +261,7 @@ static void ConfigureEvdevDevice(char *device); // Identifies a input device and
 static void PollKeyboardEvents(void);           // Process evdev keyboard events
 static void PollGamepadEvents(void);            // Process evdev gamepad events
 static void PollMouseEvents(void);              // Process evdev mouse events
+static void CompactTouchPoints(void);           // Compact touch points array after touch removal
 
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
@@ -1899,6 +1900,9 @@ static void InitEvdevInput(void)
         CORE.Input.Touch.position[i].y = -1;
         platform.touchActive[i] = false;
     }
+    
+    // Initialize touch slot
+    platform.touchSlot = 0;
 
     // Reset keyboard key state
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -2291,7 +2295,17 @@ static void PollMouseEvents(void)
             if (event.code == ABS_X)
             {
                 CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
-                if (platform.touchActive[0]) CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;        // Scale according to absRange
+                
+                bool hasMultitouch = false;
+                for (int i = 1; i < MAX_TOUCH_POINTS; i++) {
+                    if (platform.touchActive[i]) {
+                        hasMultitouch = true;
+                        break;
+                    }
+                }
+                if (!hasMultitouch && platform.touchActive[0]) {
+                    CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                }
 
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
@@ -2299,7 +2313,17 @@ static void PollMouseEvents(void)
             if (event.code == ABS_Y)
             {
                 CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
-                if (platform.touchActive[0]) CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;      // Scale according to absRange
+                
+                bool hasMultitouch = false;
+                for (int i = 1; i < MAX_TOUCH_POINTS; i++) {
+                    if (platform.touchActive[i]) {
+                        hasMultitouch = true;
+                        break;
+                    }
+                }
+                if (!hasMultitouch && platform.touchActive[0]) {
+                    CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                }
 
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
@@ -2309,12 +2333,16 @@ static void PollMouseEvents(void)
 
             if (event.code == ABS_MT_POSITION_X)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
+                if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
+                    CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                }
             }
 
             if (event.code == ABS_MT_POSITION_Y)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
+                if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
+                    CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                }
             }
 
             if (event.code == ABS_MT_TRACKING_ID)
@@ -2332,6 +2360,8 @@ static void PollMouseEvents(void)
                         platform.touchActive[platform.touchSlot] = false;
                         CORE.Input.Touch.position[platform.touchSlot].x = -1;
                         CORE.Input.Touch.position[platform.touchSlot].y = -1;
+                        
+                        CompactTouchPoints();
                     }
                 }
             }
@@ -2341,20 +2371,30 @@ static void PollMouseEvents(void)
             {
                 int previousMouseLeftButtonState = platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT];
 
-                if (!event.value && previousMouseLeftButtonState)
-                {
-                    platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
-                    platform.touchActive[0] = false;
-                    CORE.Input.Touch.position[0].x = -1;
-                    CORE.Input.Touch.position[0].y = -1;
-                    touchAction = 0;    // TOUCH_ACTION_UP
+                bool hasMultitouch = false;
+                for (int i = 1; i < MAX_TOUCH_POINTS; i++) {
+                    if (platform.touchActive[i]) {
+                        hasMultitouch = true;
+                        break;
+                    }
                 }
+                
+                if (!hasMultitouch) {
+                    if (!event.value && previousMouseLeftButtonState)
+                    {
+                        platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
+                        platform.touchActive[0] = false;
+                        CORE.Input.Touch.position[0].x = -1;
+                        CORE.Input.Touch.position[0].y = -1;
+                        touchAction = 0;    // TOUCH_ACTION_UP
+                    }
 
-                if (event.value && !previousMouseLeftButtonState)
-                {
-                    platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
-                    platform.touchActive[0] = true;
-                    touchAction = 1;    // TOUCH_ACTION_DOWN
+                    if (event.value && !previousMouseLeftButtonState)
+                    {
+                        platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
+                        platform.touchActive[0] = true;
+                        touchAction = 1;    // TOUCH_ACTION_DOWN
+                    }
                 }
             }
 
@@ -2368,17 +2408,27 @@ static void PollMouseEvents(void)
             {
                 platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
 
-                if (event.value > 0)
-                {
-                    platform.touchActive[0] = true;
-                    touchAction = 1;   // TOUCH_ACTION_DOWN
+                bool hasMultitouch = false;
+                for (int i = 1; i < MAX_TOUCH_POINTS; i++) {
+                    if (platform.touchActive[i]) {
+                        hasMultitouch = true;
+                        break;
+                    }
                 }
-                else
-                {
-                    platform.touchActive[0] = false;
-                    CORE.Input.Touch.position[0].x = -1;
-                    CORE.Input.Touch.position[0].y = -1;
-                    touchAction = 0;       // TOUCH_ACTION_UP
+                
+                if (!hasMultitouch) {
+                    if (event.value > 0)
+                    {
+                        platform.touchActive[0] = true;
+                        touchAction = 1;   // TOUCH_ACTION_DOWN
+                    }
+                    else
+                    {
+                        platform.touchActive[0] = false;
+                        CORE.Input.Touch.position[0].x = -1;
+                        CORE.Input.Touch.position[0].y = -1;
+                        touchAction = 0;       // TOUCH_ACTION_UP
+                    }
                 }
             }
 
@@ -2406,6 +2456,14 @@ static void PollMouseEvents(void)
         {
             if (platform.touchActive[i]) CORE.Input.Touch.pointCount++;
         }
+        
+        // Debug logging for touch state (can be removed later)
+        if (touchAction > -1) {
+            TRACELOG(LOG_DEBUG, "TOUCH: Action=%d, Count=%d, Active=[%d,%d,%d,%d,%d,%d,%d,%d]", 
+                touchAction, CORE.Input.Touch.pointCount,
+                platform.touchActive[0], platform.touchActive[1], platform.touchActive[2], platform.touchActive[3],
+                platform.touchActive[4], platform.touchActive[5], platform.touchActive[6], platform.touchActive[7]);
+        }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
         if (touchAction > -1)
@@ -2426,6 +2484,33 @@ static void PollMouseEvents(void)
             touchAction = -1;
         }
 #endif
+    }
+}
+
+// Compact touch points to remove gaps when touches are removed
+static void CompactTouchPoints(void)
+{
+    // This function ensures that active touch points are contiguous
+    // starting from index 0, which helps with proper touch counting
+    int writeIndex = 0;
+    
+    for (int readIndex = 0; readIndex < MAX_TOUCH_POINTS; readIndex++)
+    {
+        if (platform.touchActive[readIndex])
+        {
+            if (writeIndex != readIndex)
+            {
+                // Move the active touch point to fill the gap
+                platform.touchActive[writeIndex] = true;
+                CORE.Input.Touch.position[writeIndex] = CORE.Input.Touch.position[readIndex];
+                
+                // Clear the old position
+                platform.touchActive[readIndex] = false;
+                CORE.Input.Touch.position[readIndex].x = -1;
+                CORE.Input.Touch.position[readIndex].y = -1;
+            }
+            writeIndex++;
+        }
     }
 }
 
