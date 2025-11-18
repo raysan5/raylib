@@ -1749,7 +1749,12 @@ int InitPlatform(void)
     {
         // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
         // we can get a not-NULL terminated string, so, we only copy up to (MAX_GAMEPAD_NAME_LENGTH - 1)
-        if (glfwJoystickPresent(i)) strncpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+        if (glfwJoystickPresent(i))
+        {
+          CORE.Input.Gamepad.ready[i] = true;
+          CORE.Input.Gamepad.axisCount[i] = GLFW_GAMEPAD_AXIS_LAST + 1;
+          strncpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+        }
     }
     //----------------------------------------------------------------------------
 
