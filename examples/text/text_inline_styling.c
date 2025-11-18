@@ -210,7 +210,7 @@ static Vector2 MeasureTextStyled(Font font, const char *text, float fontSize, fl
     if ((font.texture.id == 0) || (text == NULL) || (text[0] == '\0')) return textSize; // Security check
 
     int textLen = TextLength(text); // Get size in bytes of text
-    float textLineSpacing = fontSize*1.5f;
+    //float textLineSpacing = fontSize*1.5f; // Not used...
 
     float textWidth = 0.0f;
     float textHeight = fontSize;
