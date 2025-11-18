@@ -1266,8 +1266,8 @@ int main(int argc, char *argv[])
                             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                             system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #else
-                            LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->filter);
-                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->filter));
+                            LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #endif
 
                             // Update generated .html metadata
@@ -1538,7 +1538,7 @@ int main(int argc, char *argv[])
                 srcTextUpdated[3] = TextReplace(srcTextUpdated[2], "    return 0", returnReplaceText);
                 UnloadFileText(srcText);
 
-                //SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[3]);
+                SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[3]);
                 for (int i = 0; i < 4; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
                 // Build example for PLATFORM_WEB
