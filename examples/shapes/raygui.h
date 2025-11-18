@@ -77,7 +77,7 @@
 *
 *           static unsigned int guiStyle[RAYGUI_MAX_CONTROLS*(RAYGUI_MAX_PROPS_BASE + RAYGUI_MAX_PROPS_EXTENDED)];
 *
-*       guiStyle size is by default: 16*(16 + 8) = 384*4 = 1536 bytes = 1.5 KB
+*       guiStyle size is by default: 16*(16 + 8) = 384 int = 384*4 bytes = 1536 bytes = 1.5 KB
 *
 *       Note that the first set of BASE properties (by default guiStyle[0..15]) belong to the generic style
 *       used for all controls, when any of those base values is set, it is automatically populated to all
@@ -141,7 +141,7 @@
 *           Draw text bounds rectangles for debug
 *
 *   VERSIONS HISTORY:
-*       5.0-dev (2025)    Current dev version...
+*       5.0 (xx-Nov-2025) ADDED: Support up to 32 controls (v500)
 *                         ADDED: guiControlExclusiveMode and guiControlExclusiveRec for exclusive modes
 *                         ADDED: GuiValueBoxFloat()
 *                         ADDED: GuiDropdonwBox() properties: DROPDOWN_ARROW_HIDDEN, DROPDOWN_ROLL_UP
@@ -271,7 +271,7 @@
 *       0.8 (27-Aug-2015) Initial release. Implemented by Kevin Gato, Daniel Nicolás and Ramon Santamaria
 *
 *   DEPENDENCIES:
-*       raylib 5.0  - Inputs reading (keyboard/mouse), shapes drawing, font loading and text drawing
+*       raylib 5.6-dev  - Inputs reading (keyboard/mouse), shapes drawing, font loading and text drawing
 *
 *   STANDALONE MODE:
 *       By default raygui depends on raylib mostly for the inputs and the drawing functionality but that dependency can be disabled
@@ -1010,28 +1010,28 @@ typedef enum {
     ICON_SLICING                  = 231,
     ICON_MANUAL_CONTROL           = 232,
     ICON_COLLISION                = 233,
-    ICON_234                      = 234,
-    ICON_235                      = 235,
-    ICON_236                      = 236,
-    ICON_237                      = 237,
-    ICON_238                      = 238,
-    ICON_239                      = 239,
-    ICON_240                      = 240,
-    ICON_241                      = 241,
-    ICON_242                      = 242,
-    ICON_243                      = 243,
-    ICON_244                      = 244,
-    ICON_245                      = 245,
-    ICON_246                      = 246,
-    ICON_247                      = 247,
-    ICON_248                      = 248,
-    ICON_249                      = 249,
+    ICON_CIRCLE_ADD               = 234,
+    ICON_CIRCLE_ADD_FILL          = 235,
+    ICON_CIRCLE_WARNING           = 236,
+    ICON_CIRCLE_WARNING_FILL      = 237,
+    ICON_BOX_MORE                 = 238,
+    ICON_BOX_MORE_FILL            = 239,
+    ICON_BOX_MINUS                = 240,
+    ICON_BOX_MINUS_FILL           = 241,
+    ICON_UNION                    = 242,
+    ICON_INTERSECTION             = 243,
+    ICON_DIFFERENCE               = 244,
+    ICON_SPHERE                   = 245,
+    ICON_CYLINDER                 = 246,
+    ICON_CONE                     = 247,
+    ICON_ELLIPSOID                = 248,
+    ICON_CAPSULE                  = 249,
     ICON_250                      = 250,
     ICON_251                      = 251,
     ICON_252                      = 252,
     ICON_253                      = 253,
     ICON_254                      = 254,
-    ICON_255                      = 255,
+    ICON_255                      = 255
 } GuiIconName;
 #endif
 
@@ -1078,7 +1078,7 @@ typedef enum {
 
 // Check if two rectangles are equal, used to validate a slider bounds as an id
 #ifndef CHECK_BOUNDS_ID
-    #define CHECK_BOUNDS_ID(src, dst) ((src.x == dst.x) && (src.y == dst.y) && (src.width == dst.width) && (src.height == dst.height))
+    #define CHECK_BOUNDS_ID(src, dst) (((int)src.x == (int)dst.x) && ((int)src.y == (int)dst.y) && ((int)src.width == (int)dst.width) && ((int)src.height == (int)dst.height))
 #endif
 
 #if !defined(RAYGUI_NO_ICONS) && !defined(RAYGUI_CUSTOM_ICONS)
@@ -1341,22 +1341,22 @@ static unsigned int guiIcons[RAYGUI_ICON_MAX_ICONS*RAYGUI_ICON_DATA_ELEMENTS] = 
     0x7fe00000, 0x402e4020, 0x43ce5e0a, 0x40504078, 0x438e4078, 0x402e5e0a, 0x7fe04020, 0x00000000,      // ICON_SLICING
     0x00000000, 0x40027ffe, 0x47c24002, 0x55425d42, 0x55725542, 0x50125552, 0x10105016, 0x00001ff0,      // ICON_MANUAL_CONTROL
     0x7ffe0000, 0x43c24002, 0x48124422, 0x500a500a, 0x500a500a, 0x44224812, 0x400243c2, 0x00007ffe,      // ICON_COLLISION
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_234
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_235
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_236
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_237
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_238
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_239
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_240
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_241
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_242
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_243
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_244
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_245
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_246
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_247
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_248
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_249
+    0x03c00000, 0x10080c30, 0x21842184, 0x4ff24182, 0x41824ff2, 0x21842184, 0x0c301008, 0x000003c0,      // ICON_CIRCLE_ADD
+    0x03c00000, 0x1ff80ff0, 0x3e7c3e7c, 0x700e7e7e, 0x7e7e700e, 0x3e7c3e7c, 0x0ff01ff8, 0x000003c0,      // ICON_CIRCLE_ADD_FILL
+    0x03c00000, 0x10080c30, 0x21842184, 0x41824182, 0x40024182, 0x21842184, 0x0c301008, 0x000003c0,      // ICON_CIRCLE_WARNING
+    0x03c00000, 0x1ff80ff0, 0x3e7c3e7c, 0x7e7e7e7e, 0x7ffe7e7e, 0x3e7c3e7c, 0x0ff01ff8, 0x000003c0,      // ICON_CIRCLE_WARNING_FILL
+    0x00000000, 0x10041ffc, 0x10841004, 0x13e41084, 0x10841084, 0x10041004, 0x00001ffc, 0x00000000,      // ICON_BOX_MORE
+    0x00000000, 0x1ffc1ffc, 0x1f7c1ffc, 0x1c1c1f7c, 0x1f7c1f7c, 0x1ffc1ffc, 0x00001ffc, 0x00000000,      // ICON_BOX_MORE_FILL
+    0x00000000, 0x1ffc1ffc, 0x1ffc1ffc, 0x1c1c1ffc, 0x1ffc1ffc, 0x1ffc1ffc, 0x00001ffc, 0x00000000,      // ICON_BOX_MINUS
+    0x00000000, 0x10041ffc, 0x10041004, 0x13e41004, 0x10041004, 0x10041004, 0x00001ffc, 0x00000000,      // ICON_BOX_MINUS_FILL
+    0x07fe0000, 0x055606aa, 0x7ff606aa, 0x55766eba, 0x55766eaa, 0x55606ffe, 0x55606aa0, 0x00007fe0,      // ICON_UNION
+    0x07fe0000, 0x04020402, 0x7fe20402, 0x456246a2, 0x456246a2, 0x402047fe, 0x40204020, 0x00007fe0,      // ICON_INTERSECTION
+    0x07fe0000, 0x055606aa, 0x7ff606aa, 0x4436442a, 0x4436442a, 0x402047fe, 0x40204020, 0x00007fe0,      // ICON_DIFFERENCE
+    0x03c00000, 0x10080c30, 0x20042004, 0x60064002, 0x47e2581a, 0x20042004, 0x0c301008, 0x000003c0,      // ICON_SPHERE
+    0x03e00000, 0x08080410, 0x0c180808, 0x08080be8, 0x08080808, 0x08080808, 0x04100808, 0x000003e0,      // ICON_CYLINDER
+    0x00800000, 0x01400140, 0x02200220, 0x04100410, 0x08080808, 0x1c1c13e4, 0x08081004, 0x000007f0,      // ICON_CONE
+    0x00000000, 0x07e00000, 0x20841918, 0x40824082, 0x40824082, 0x19182084, 0x000007e0, 0x00000000,      // ICON_ELLIPSOID
+    0x00000000, 0x00000000, 0x20041ff8, 0x40024002, 0x40024002, 0x1ff82004, 0x00000000, 0x00000000,      // ICON_CAPSULE
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_250
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_251
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_252
@@ -1743,7 +1743,7 @@ int GuiPanel(Rectangle bounds, const char *text)
 // NOTE: Using GuiToggle() for the TABS
 int GuiTabBar(Rectangle bounds, const char **text, int count, int *active)
 {
-    #define RAYGUI_TABBAR_ITEM_WIDTH    160
+    #define RAYGUI_TABBAR_ITEM_WIDTH    148
 
     int result = -1;
     //GuiState state = guiState;
@@ -1776,12 +1776,12 @@ int GuiTabBar(Rectangle bounds, const char **text, int count, int *active)
             if (i == (*active))
             {
                 toggle = true;
-                GuiToggle(tabBounds, GuiIconText(12, text[i]), &toggle);
+                GuiToggle(tabBounds, text[i], &toggle);
             }
             else
             {
                 toggle = false;
-                GuiToggle(tabBounds, GuiIconText(12, text[i]), &toggle);
+                GuiToggle(tabBounds, text[i], &toggle);
                 if (toggle) *active = i;
             }
 
@@ -2590,7 +2590,7 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                     int pasteLength = 0;
                     int pasteCodepoint;
                     int pasteCodepointSize;
-                    
+
                     // Count how many codepoints to copy, stopping at the first unwanted control character
                     while (true)
                     {
@@ -2599,7 +2599,7 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                         if (!(multiline && (pasteCodepoint == (int)'\n')) && !(pasteCodepoint >= 32)) break;
                         pasteLength += pasteCodepointSize;
                     }
-                    
+
                     if (pasteLength > 0)
                     {
                         // Move forward data from cursor position
@@ -2662,7 +2662,7 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                 while (offset < textLength)
                 {
                     if (!isspace(nextCodepoint & 0xff)) break;
-                    
+
                     offset += nextCodepointSize;
                     accCodepointSize += nextCodepointSize;
                     nextCodepoint = GetCodepointNext(text + offset, &nextCodepointSize);
@@ -2673,11 +2673,11 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
 
                 textLength -= accCodepointSize;
             }
-            
+
             else if ((textLength > textBoxCursorIndex) && (IsKeyPressed(KEY_DELETE) || (IsKeyDown(KEY_DELETE) && autoCursorShouldTrigger)))
             {
                 // Delete single codepoint from text, after current cursor position
-                
+
                 int nextCodepointSize = 0;
                 GetCodepointNext(text + textBoxCursorIndex, &nextCodepointSize);
 
@@ -2704,7 +2704,7 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                     offset -= prevCodepointSize;
                     accCodepointSize += prevCodepointSize;
                 }
-                
+
                 // Check characters of the same type to delete (either ASCII punctuation or anything non-whitespace)
                 // Not using isalnum() since it only works on ASCII characters
                 bool puctuation = ispunct(prevCodepoint & 0xff);
@@ -2723,11 +2723,11 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                 textLength -= accCodepointSize;
                 textBoxCursorIndex -= accCodepointSize;
             }
-            
+
             else if ((textBoxCursorIndex > 0) && (IsKeyPressed(KEY_BACKSPACE) || (IsKeyDown(KEY_BACKSPACE) && autoCursorShouldTrigger)))
             {
                 // Delete single codepoint from text, before current cursor position
-                
+
                 int prevCodepointSize = 0;
 
                 GetCodepointPrevious(text + textBoxCursorIndex, &prevCodepointSize);
@@ -3033,7 +3033,7 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
     int result = 0;
     GuiState state = guiState;
 
-    char textValue[RAYGUI_VALUEBOX_MAX_CHARS + 1] = "\0";
+    char textValue[RAYGUI_VALUEBOX_MAX_CHARS + 1] = { 0 };
     snprintf(textValue, RAYGUI_VALUEBOX_MAX_CHARS + 1, "%i", *value);
 
     Rectangle textBounds = { 0 };
@@ -3051,7 +3051,6 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
     if ((state != STATE_DISABLED) && !guiLocked && !guiControlExclusiveMode)
     {
         Vector2 mousePoint = GetMousePosition();
-
         bool valueHasChanged = false;
 
         if (editMode)
@@ -3070,7 +3069,7 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
                     keyCount--;
                     valueHasChanged = true;
                 }
-                else if (keyCount < RAYGUI_VALUEBOX_MAX_CHARS -1)
+                else if (keyCount < RAYGUI_VALUEBOX_MAX_CHARS)
                 {
                     if (keyCount == 0)
                     {
@@ -3087,30 +3086,26 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
                 }
             }
 
-            // Only allow keys in range [48..57]
-            if (keyCount < RAYGUI_VALUEBOX_MAX_CHARS)
+            // Add new digit to text value
+            if ((keyCount >= 0) && (keyCount < RAYGUI_VALUEBOX_MAX_CHARS) && (GuiGetTextWidth(textValue) < bounds.width))
             {
-                if (GuiGetTextWidth(textValue) < bounds.width)
+                int key = GetCharPressed();
+                
+                // Only allow keys in range [48..57]
+                if ((key >= 48) && (key <= 57))
                 {
-                    int key = GetCharPressed();
-                    if ((key >= 48) && (key <= 57))
-                    {
-                        textValue[keyCount] = (char)key;
-                        keyCount++;
-                        valueHasChanged = true;
-                    }
+                    textValue[keyCount] = (char)key;
+                    keyCount++;
+                    valueHasChanged = true;
                 }
             }
 
             // Delete text
-            if (keyCount > 0)
+            if ((keyCount > 0) && IsKeyPressed(KEY_BACKSPACE))
             {
-                if (IsKeyPressed(KEY_BACKSPACE))
-                {
-                    keyCount--;
-                    textValue[keyCount] = '\0';
-                    valueHasChanged = true;
-                }
+                keyCount--;
+                textValue[keyCount] = '\0';
+                valueHasChanged = true;
             }
 
             if (valueHasChanged) *value = TextToInteger(textValue);
@@ -3224,9 +3219,9 @@ int GuiValueBoxFloat(Rectangle bounds, const char *text, char *textValue, float 
                         textValue[1] = '\0';
                         keyCount++;
                     }
-                    
+
                     for (int i = keyCount; i > -1; i--) textValue[i + 1] = textValue[i];
-                    
+
                     textValue[0] = '-';
                     keyCount++;
                     valueHasChanged = true;

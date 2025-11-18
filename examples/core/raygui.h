@@ -3026,9 +3026,9 @@ int GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, int
 // NOTE: Requires static variables: frameCounter
 int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode)
 {
-    //#if !defined(RAYGUI_VALUEBOX_MAX_CHARS)
+    #if !defined(RAYGUI_VALUEBOX_MAX_CHARS)
         #define RAYGUI_VALUEBOX_MAX_CHARS  32
-    //#endif
+    #endif
 
     int result = 0;
     GuiState state = guiState;
@@ -3087,7 +3087,7 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
             }
 
             // Add new digit to text value
-            if ((keyCount < RAYGUI_VALUEBOX_MAX_CHARS) && (GuiGetTextWidth(textValue) < bounds.width))
+            if ((keyCount >= 0) && (keyCount < RAYGUI_VALUEBOX_MAX_CHARS) && (GuiGetTextWidth(textValue) < bounds.width))
             {
                 int key = GetCharPressed();
                 
