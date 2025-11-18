@@ -1723,7 +1723,10 @@ void PollInputEvents(void)
                         CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                         CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
                         memset(CORE.Input.Gamepad.name[nextAvailableSlot], 0, MAX_GAMEPAD_NAME_LENGTH);
-                        strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], SDL_GameControllerNameForIndex(nextAvailableSlot), MAX_GAMEPAD_NAME_LENGTH - 1);
+                        if (SDL_GameControllerNameForIndex(nextAvailableSlot))
+                            strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], SDL_GameControllerNameForIndex(nextAvailableSlot), MAX_GAMEPAD_NAME_LENGTH - 1);
+                            else
+                            strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], "Noname", 6);
                     }
                     else
                     {
