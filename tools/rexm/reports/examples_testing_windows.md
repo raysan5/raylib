@@ -13,8 +13,16 @@ Example automated testing elements validated:
  - [FONT]   : Font default initialization
  - [TIMER]  : Timer initialization
 ```
-| **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
-|:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
-| core_custom_logging              |   0   |   ✔   |    ✔    |   ❌    |   ✔   |   ✔   |   ✔   |   ✔   |
-| core_custom_frame_control        |   0   |   ❌   |    ❌    |   ❌    |   ❌   |   ❌   |   ❌   |   ✔   |
+| **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
+|:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
+| shapes_recursive_tree            |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_ring_drawing              |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_circle_sector_drawing     |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_rounded_rectangle_drawing |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_splines_drawing           |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_digital_clock             |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_triangle_strip            |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_pie_chart                 |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_math_sine_cosine          |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| shapes_lines_drawing             |    0    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
 
