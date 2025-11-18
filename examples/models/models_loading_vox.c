@@ -67,7 +67,7 @@ int main(void)
 		models[i] = LoadModel(voxFileNames[i]);
 		double t1 = GetTime()*1000.0;
 
-		TraceLog(LOG_WARNING, TextFormat("[%s] File loaded in %.3f ms", voxFileNames[i], t1 - t0));
+		TraceLog(LOG_INFO, TextFormat("[%s] Model file loaded in %.3f ms", voxFileNames[i], t1 - t0));
 
 		// Compute model translation matrix to center model on draw position (0, 0 , 0)
 		BoundingBox bb = GetModelBoundingBox(models[i]);
@@ -80,6 +80,8 @@ int main(void)
 	}
 
 	int currentModel = 0;
+	Vector3 modelpos = { 0 };
+	Vector3 camerarot = { 0 };
 
 	// Load voxel shader
 	Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/voxel_lighting.vs", GLSL_VERSION),
@@ -98,11 +100,7 @@ int main(void)
 	// Assign out lighting shader to model
 	for (int i = 0; i < MAX_VOX_FILES; i++)
 	{
-		Model m = models[i];
-		for (int j = 0; j < m.materialCount; j++)
-		{
-			m.materials[j].shader = shader;
-		}
+		for (int j = 0; j < models[i].materialCount; j++) models[i].materials[j].shader = shader;
 	}
 
 	// Create lights
@@ -112,12 +110,8 @@ int main(void)
 	lights[2] = CreateLight(LIGHT_POINT, (Vector3) { -20, 20, 20 }, Vector3Zero(), GRAY, shader);
 	lights[3] = CreateLight(LIGHT_POINT, (Vector3) { 20, -20, -20 }, Vector3Zero(), GRAY, shader);
 
-
 	SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-
 	//--------------------------------------------------------------------------------------
-	Vector3 modelpos = { 0 };
-	Vector3 camerarot = { 0 };
 
 	// Main game loop
 	while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -137,15 +131,11 @@ int main(void)
 		}
 
 		UpdateCameraPro(&camera,
-			(Vector3) {
-			(IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f -      // Move forward-backward
-				(IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,
-				(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f -   // Move right-left
-				(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f,
-				0.0f                                                // Move up-down
-		},
-			camerarot,
-			GetMouseWheelMove()*-2.0f);                              // Move to target (zoom)
+			(Vector3){ (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f, // Move forward-backward
+                       (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f, // Move right-left
+                       0.0f }, // Move up-down
+			camerarot, // Camera rotation
+			GetMouseWheelMove()*-2.0f); // Move to target (zoom)
 
 		// Cycle between models on mouse click
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1) % MAX_VOX_FILES;
@@ -156,36 +146,34 @@ int main(void)
 
 		// Update light values (actually, only enable/disable them)
 		for (int i = 0; i < MAX_LIGHTS; i++) UpdateLightValues(shader, lights[i]);
-
 		//----------------------------------------------------------------------------------
+        
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 
-		ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
-		// Draw 3D model
-		BeginMode3D(camera);
+            // Draw 3D model
+            BeginMode3D(camera);
+                DrawModel(models[currentModel], modelpos, 1.0f, WHITE);
+                DrawGrid(10, 1.0);
 
-		DrawModel(models[currentModel], modelpos, 1.0f, WHITE);
-		DrawGrid(10, 1.0);
+                // Draw spheres to show where the lights are
+                for (int i = 0; i < MAX_LIGHTS; i++)
+                {
+                    if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
+                    else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
+                }
+            EndMode3D();
 
-		// Draw spheres to show where the lights are
-		for (int i = 0; i < MAX_LIGHTS; i++)
-		{
-			if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
-			else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
-		}
-
-		EndMode3D();
-
-		// Display info
-		DrawRectangle(10, 400, 340, 60, Fade(SKYBLUE, 0.5f));
-		DrawRectangleLines(10, 400, 340, 60, Fade(DARKBLUE, 0.5f));
-		DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, 410, 10, BLUE);
-		DrawText("MOUSE MIDDLE BUTTON to ZOOM OR ROTATE CAMERA", 40, 420, 10, BLUE);
-		DrawText("UP-DOWN-LEFT-RIGHT KEYS to MOVE CAMERA", 40, 430, 10, BLUE);
-		DrawText(TextFormat("File: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
+            // Display info
+            DrawRectangle(10, 40, 340, 70, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(10, 40, 340, 70, Fade(DARKBLUE, 0.5f));
+            DrawText("- MOUSE LEFT BUTTON: CYCLE VOX MODELS", 20, 50, 10, BLUE);
+            DrawText("- MOUSE MIDDLE BUTTON: ZOOM OR ROTATE CAMERA", 20, 70, 10, BLUE);
+            DrawText("- UP-DOWN-LEFT-RIGHT KEYS: MOVE CAMERA", 20, 90, 10, BLUE);
+            DrawText(TextFormat("Model file: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
 
 		EndDrawing();
 		//----------------------------------------------------------------------------------
@@ -201,5 +189,3 @@ int main(void)
 
 	return 0;
 }
-
-

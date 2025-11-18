@@ -40,7 +40,7 @@ int main(void)
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture texPattern = LoadTexture("resources/patterns.png");
-    SetTextureFilter(texPattern, TEXTURE_FILTER_TRILINEAR); // Makes the texture smoother when upscaled
+    SetTextureFilter(texPattern, TEXTURE_FILTER_BILINEAR); // Makes the texture smoother when upscaled
 
     // Coordinates for all patterns inside the texture
     const Rectangle recPattern[] = {
@@ -110,19 +110,17 @@ int main(void)
             }
         }
 
-        // Handle keys
-
-        // Change scale
+        // Handle keys: change scale
         if (IsKeyPressed(KEY_UP)) scale += 0.25f;
         if (IsKeyPressed(KEY_DOWN)) scale -= 0.25f;
         if (scale > 10.0f) scale = 10.0f;
         else if ( scale <= 0.0f) scale = 0.25f;
 
-        // Change rotation
+        // Handle keys: change rotation
         if (IsKeyPressed(KEY_LEFT)) rotation -= 25.0f;
         if (IsKeyPressed(KEY_RIGHT)) rotation += 25.0f;
 
-        // Reset
+        // Handle keys: reset
         if (IsKeyPressed(KEY_SPACE)) { rotation = 0.0f; scale = 1.0f; }
         //----------------------------------------------------------------------------------
 
@@ -165,7 +163,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texPattern);        // Unload texture
+    UnloadTexture(texPattern);  // Unload texture
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

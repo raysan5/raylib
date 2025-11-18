@@ -33,7 +33,7 @@
     #define GLSL_VERSION            100
 #endif
 
-#define MAP_SIZE 10
+#define MAP_SIZE 16
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -88,8 +88,6 @@ int main(void)
 
     RenderTexture lightmap = LoadRenderTexture(MAP_SIZE, MAP_SIZE);
 
-    SetTextureFilter(lightmap.texture, TEXTURE_FILTER_TRILINEAR);
-
     Material material = LoadMaterialDefault();
     material.shader = shader;
     material.maps[MATERIAL_MAP_ALBEDO].texture = texture;
@@ -103,29 +101,33 @@ int main(void)
             DrawTexturePro(
                 light,
                 (Rectangle){ 0, 0, (float)light.width, (float)light.height },
-                (Rectangle){ 0, 0, 20, 20 },
-                (Vector2){ 10.0, 10.0 },
+                (Rectangle){ 0, 0, 2.0f*MAP_SIZE, 2.0f*MAP_SIZE },
+                (Vector2){ (float)MAP_SIZE, (float)MAP_SIZE },
                 0.0,
                 RED
             );
             DrawTexturePro(
                 light,
                 (Rectangle){ 0, 0, (float)light.width, (float)light.height },
-                (Rectangle){ 8, 4, 20, 20 },
-                (Vector2){ 10.0, 10.0 },
+                (Rectangle){ (float)MAP_SIZE*0.8f, (float)MAP_SIZE/2.0f, 2.0f*MAP_SIZE, 2.0f*MAP_SIZE },
+                (Vector2){ (float)MAP_SIZE, (float)MAP_SIZE },
                 0.0,
                 BLUE
             );
             DrawTexturePro(
                 light,
                 (Rectangle){ 0, 0, (float)light.width, (float)light.height },
-                (Rectangle){ 8, 8, 10, 10 },
-                (Vector2){ 5.0, 5.0 },
+                (Rectangle){ (float)MAP_SIZE*0.8f, (float)MAP_SIZE*0.8f, (float)MAP_SIZE, (float)MAP_SIZE },
+                (Vector2){ (float)MAP_SIZE/2.0f, (float)MAP_SIZE/2.0f },
                 0.0,
                 GREEN
             );
         BeginBlendMode(BLEND_ALPHA);
     EndTextureMode();
+    
+    // NOTE: To enable trilinear filtering we need mipmaps available for texture
+    GenTextureMipmaps(&lightmap.texture);
+    SetTextureFilter(lightmap.texture, TEXTURE_FILTER_TRILINEAR);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -141,24 +143,20 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+        
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
                 DrawMesh(mesh, material, MatrixIdentity());
             EndMode3D();
 
-            DrawFPS(10, 10);
-
-            DrawTexturePro(
-                lightmap.texture,
-                (Rectangle){ 0, 0, -MAP_SIZE, -MAP_SIZE },
+            DrawTexturePro(lightmap.texture, (Rectangle){ 0, 0, -MAP_SIZE, -MAP_SIZE },
                 (Rectangle){ (float)GetRenderWidth() - MAP_SIZE*8 - 10, 10, (float)MAP_SIZE*8, (float)MAP_SIZE*8 },
-                (Vector2){ 0.0, 0.0 },
-                0.0,
-                WHITE);
+                (Vector2){ 0.0, 0.0 }, 0.0, WHITE);
 
-            DrawText("lightmap", GetRenderWidth() - 66, 16 + MAP_SIZE*8, 10, GRAY);
-            DrawText("10x10 pixels", GetRenderWidth() - 76, 30 + MAP_SIZE*8, 10, GRAY);
+            DrawText(TextFormat("LIGHTMAP: %ix%i pixels", MAP_SIZE, MAP_SIZE), GetRenderWidth() - 130, 20 + MAP_SIZE*8, 10, GREEN);
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
