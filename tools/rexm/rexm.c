@@ -1479,6 +1479,11 @@ int main(int argc, char *argv[])
                 memset(exCategory, 0, 32);
                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
 
+                // Skip some examples from building
+                if ((strcmp(exName, "others") == 0) || 
+                    (strcmp(exName, "core_custom_logging") == 0) || 
+                    (strcmp(exName, "core_window_should_close") == 0)) continue;
+
                 LOG("INFO: [%i/%i] Testing example: [%s]\n", i + 1, exBuildListCount, exName);
 
                 // Steps to follow
@@ -1500,7 +1505,7 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
                 char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
-#define BUILD_TESTING_WEB
+//#define BUILD_TESTING_WEB
 #if defined(BUILD_TESTING_WEB)
                 static const char *mainReplaceText =
                     "#include <stdio.h>\n"
@@ -1549,7 +1554,7 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1", exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
@@ -1561,8 +1566,10 @@ int main(int argc, char *argv[])
 
                 // STEP 3: Run example on browser
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-                system("start python -m http.server 8080");
+                system("start python -m http.server 8080"); // TODO: Init localhost just once!
                 system(TextFormat("start explorer \"http:\\localhost:8080/%s.html", exName));
+
+                // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
 
 #else // BUILD_TESTING_DESKTOP
 
@@ -1621,6 +1628,7 @@ int main(int argc, char *argv[])
 
                 for (int k = 0, index = 0; k < exTestBuildLogLinesCount; k++)
                 {
+                    // Checking compilation warnings generated
                     if (TextFindIndex(exTestBuildLogLines[k], "warning:") >= 0) testing[i].buildwarns++;
                 }
 
@@ -1664,7 +1672,8 @@ int main(int argc, char *argv[])
             //-----------------------------------------------------------------------------------------------------
             /*
             Columns:
-             - [WARN]   : WARNING messages count
+             - [CWARN]  : Compilation WARNING messages
+             - [LWARN]  : Log WARNING messages count
              - [INIT]   : Initialization
              - [CLOSE]  : Closing
              - [ASSETS] : Assets loading
@@ -1673,9 +1682,9 @@ int main(int argc, char *argv[])
              - [FONT]   : Font default initialization
              - [TIMER]  : Timer initialization
 
-            | **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
-            |:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
-            | core_basic window                |    0   |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
+            | **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
+            |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
+            | core_basic window                |    0    |    0    |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
             */
             LOG("INFO: [examples_testing.md] Generating examples testing report...\n");
 
@@ -1695,8 +1704,8 @@ int main(int argc, char *argv[])
             repIndex += sprintf(report + repIndex, " - [FONT]   : Font default initialization\n");
             repIndex += sprintf(report + repIndex, " - [TIMER]  : Timer initialization\n```\n");
 
-            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |\n");
-            repIndex += sprintf(report + repIndex, "|:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|\n");
+            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |\n");
+            repIndex += sprintf(report + repIndex, "|:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|\n");
 
             /*
             TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
@@ -1709,23 +1718,41 @@ int main(int argc, char *argv[])
             */
             for (int i = 0; i < exBuildListCount; i++)
             {
-                if (testing[i].status > 0)
+                if ((testing[i].buildwarns > 0) || (testing[i].warnings > 0) || (testing[i].status > 0))
                 {
-                    repIndex += sprintf(report + repIndex, "| %-32s |   %i   |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
-                        exBuildList[i], testing[i].warnings,
-                        (testing[i].status & TESTING_FAIL_INIT)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_CLOSE)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_ASSETS)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_RLGL)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_PLATFORM)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_FONT)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_TIMER)? "✔" : "❌");
+                    repIndex += sprintf(report + repIndex, "| %-32s |    %i    |    %i    |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
+                        exBuildList[i], 
+                        testing[i].buildwarns,
+                        testing[i].warnings,
+                        (testing[i].status & TESTING_FAIL_INIT)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_CLOSE)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_ASSETS)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_RLGL)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_PLATFORM)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_FONT)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_TIMER)? "❌" : "✔");
                 }
             }
 
             repIndex += sprintf(report + repIndex, "\n");
 
-            SaveFileText(TextFormat("%s/../tools/rexm/reports/%s", exBasePath, "examples_testing_windows.md"), report);
+#if defined(PLATFORM_DRM)
+            const char *osName = "drm";
+#elif defined(PLATFORM_WEB)
+            const char *osName = "web";
+#elif defined(PLATFORM_DESKTOP)
+    #if defined(_WIN32)
+            const char *osName = "windows";
+    #elif defined(__linux__)
+            const char *osName = "linux";
+    #elif defined(__FreeBSD__)
+            const char *osName = "freebsd";
+    #elif defined(__APPLE__)
+            const char *osName = "macos";
+    #endif // Desktop OSs
+#endif
+            SaveFileText(TextFormat("%s/../tools/rexm/reports/examples_testing_%s.md", exBasePath, osName), report);
+
             RL_FREE(report);
             //-----------------------------------------------------------------------------------------------------
 
