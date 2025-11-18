@@ -1507,9 +1507,10 @@ int main(int argc, char *argv[])
                     "#include <string.h>\n"
                     "#include <stdlib.h>\n"
                     "#include <emscripten/emscripten.h>\n\n"
-                    "static char logText[1024] = {0};\n"
+                    "static char logText[4096] = {0};\n"
                     "static int logTextOffset = 0;\n\n"
                     "void CustomTraceLog(int msgType, const char *text, va_list args)\n{\n"
+                    "    if (logTextOffset < 3800)\n    {\n"
                     "    switch (msgType)\n    {\n"
                     "        case LOG_INFO: logTextOffset += sprintf(logText + logTextOffset, \"INFO: \"); break;\n"
                     "        case LOG_ERROR: logTextOffset += sprintf(logText + logTextOffset, \"ERROR: \"); break;\n"
@@ -1517,7 +1518,7 @@ int main(int argc, char *argv[])
                     "        case LOG_DEBUG: logTextOffset += sprintf(logText + logTextOffset, \"DEBUG: \"); break;\n"
                     "        default: break;\n    }\n"
                     "    logTextOffset += vsprintf(logText + logTextOffset, text, args);\n"
-                    "    logTextOffset += sprintf(logText + logTextOffset, \"\\n\");\n}\n\n"
+                    "    logTextOffset += sprintf(logText + logTextOffset, \"\\n\");\n}\n}\n\n"
                     "int main(int argc, char *argv[])\n{\n"
                     "    SetTraceLogCallback(CustomTraceLog);\n"
                     "    int requestedTestFrames = 0;\n"
@@ -1525,17 +1526,17 @@ int main(int argc, char *argv[])
                     "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
 
                 static const char *returnReplaceText =
-                    "    char outputLogFile[256] = { 0 };\n"
-                    "    TextCopy(outputLogFile, GetFileNameWithoutExt(argv[0]));\n"
-                    "    SaveFileText(outputLogFile, logText);\n"
-                    "    emscripten_run_script(TextFormat(\"saveFileFromMEMFSToDisk('%s','%s')\", outputLogFile, GetFileName(outputLogFile)));\n\n"
+                    "    SaveFileText(\"outputLogFileName\", logText);\n"
+                    "    emscripten_run_script(\"saveFileFromMEMFSToDisk('outputLogFileName','outputLogFileName')\");\n\n"
                     "    return 0";
+                char *returnReplaceTextUpdated = TextReplace(returnReplaceText, "outputLogFileName", TextFormat("%s.log", exName));
 
                 char *srcTextUpdated[4] = { 0 };
                 srcTextUpdated[0] = TextReplace(srcText, "int main(void)\n{", mainReplaceText);
                 srcTextUpdated[1] = TextReplace(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
                 srcTextUpdated[2] = TextReplace(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
-                srcTextUpdated[3] = TextReplace(srcTextUpdated[2], "    return 0", returnReplaceText);
+                srcTextUpdated[3] = TextReplace(srcTextUpdated[2], "    return 0", returnReplaceTextUpdated);
+                MemFree(returnReplaceTextUpdated);
                 UnloadFileText(srcText);
 
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[3]);
