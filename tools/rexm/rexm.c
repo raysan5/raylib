@@ -1485,9 +1485,9 @@ int main(int argc, char *argv[])
                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
 
                 // Skip some examples from building
-                if ((strcmp(exName, "others") == 0) || 
-                    (strcmp(exName, "core_custom_logging") == 0) || 
-                    (strcmp(exName, "core_window_should_close") == 0)) continue;
+                if ((strcmp(exName, "core_custom_logging") == 0) || 
+                    (strcmp(exName, "core_window_should_close") == 0) ||
+                    (strcmp(exName, "core_custom_frame_control") == 0)) continue;
 
                 LOG("INFO: [%i/%i] Testing example: [%s]\n", i + 1, exBuildListCount, exName);
 
