@@ -71,6 +71,7 @@ int main(void)
     // Set default actions 
     char actionSet = 0;
     SetActionsDefault();
+    bool releaseAction = false;
 
     Vector2 position = (Vector2){ 400.0f, 200.0f };
     Vector2 size = (Vector2){ 40.0f, 40.0f };
@@ -83,7 +84,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        gamepadIndex = 0; //  set this to gamepad being checked
+        gamepadIndex = 0; //  Set gamepad being checked
+        
         if (IsActionDown(ACTION_UP)) position.y -= 2;
         if (IsActionDown(ACTION_DOWN)) position.y += 2;
         if (IsActionDown(ACTION_LEFT)) position.x -= 2;
@@ -93,6 +95,10 @@ int main(void)
             position.x = (screenWidth-size.x)/2;
             position.y = (screenHeight-size.y)/2;
         }
+        
+        // Register release action for one frame
+        releaseAction = false;
+        if (IsActionReleased(ACTION_FIRE)) releaseAction = true;
 
         // Switch control scheme by pressing TAB 
         if (IsKeyPressed(KEY_TAB))
@@ -109,7 +115,7 @@ int main(void)
 
             ClearBackground(GRAY);
 
-            DrawRectangleV(position, size, RED);
+            DrawRectangleV(position, size, releaseAction? BLUE : RED);
             
             DrawText((actionSet == 0)? "Current input set: WASD (default)" : "Current input set: Cursor", 10, 10, 20, WHITE);
             DrawText("Use TAB key to toggles Actions keyset", 10, 50, 20, GREEN);
