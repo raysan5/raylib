@@ -4,7 +4,8 @@
 
 ```
 Example automated testing elements validated:
- - [WARN]   : WARNING messages count
+ - [CWARN]  : Compilation WARNING messages
+ - [LWARN]  : Log WARNING messages count
  - [INIT]   : Initialization
  - [CLOSE]  : Closing
  - [ASSETS] : Assets loading
