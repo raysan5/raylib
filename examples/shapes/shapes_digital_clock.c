@@ -284,11 +284,13 @@ static void DrawDisplaySegment(Vector2 center, int length, int thick, bool verti
     if (!vertical)
     {
         // Horizontal segment points
-        //   3___________________________5
-        //  /                             \
-        // /1             x               6\
-        // \                               /
-        //  \2___________________________4/
+        /*
+             3___________________________5
+            /                             \
+           /1             x               6\
+           \                               /
+            \2___________________________4/
+        */
         Vector2 segmentPointsH[6] = {
             (Vector2){ center.x - length/2.0f - thick/2.0f,  center.y },  // Point 1
             (Vector2){ center.x - length/2.0f,  center.y + thick/2.0f },  // Point 2
