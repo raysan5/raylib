@@ -1723,15 +1723,11 @@ void PollInputEvents(void)
                         CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                         CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
                         memset(CORE.Input.Gamepad.name[nextAvailableSlot], 0, MAX_GAMEPAD_NAME_LENGTH);
-                        if (SDL_GameControllerNameForIndex(nextAvailableSlot))
-                            strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], SDL_GameControllerNameForIndex(nextAvailableSlot), MAX_GAMEPAD_NAME_LENGTH - 1);
-                            else
-                            strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], "Noname", 6);
+                        const char *controllerName = SDL_GameControllerNameForIndex(nextAvailableSlot);
+                        if (controllerName != NULL) strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], controllerName, MAX_GAMEPAD_NAME_LENGTH - 1);
+                        else strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], "noname", 6);
                     }
-                    else
-                    {
-                        TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
-                    }
+                    else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
                 }
             } break;
             case SDL_JOYDEVICEREMOVED:
