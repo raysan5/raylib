@@ -41,7 +41,7 @@ int main(void)
         "Copy and paste me!"
     };
 
-    char *clipboardText = NULL;
+    const char *clipboardText = NULL;
     char inputBuffer[256] = "Hello from raylib!"; // Random initial string
 
     // UI required variables
@@ -144,7 +144,7 @@ int main(void)
         GuiSetState(STATE_DISABLED);
         GuiLabel((Rectangle){ 50, 260, 700, 40 }, "Clipboard current text data:");
         GuiSetStyle(TEXTBOX, TEXT_READONLY, 1);
-        GuiTextBox((Rectangle){ 50, 300, 700, 40 }, clipboardText, 256, false);
+        GuiTextBox((Rectangle){ 50, 300, 700, 40 }, (char *)clipboardText, 256, false);
         GuiSetStyle(TEXTBOX, TEXT_READONLY, 0);
         GuiLabel((Rectangle){ 50, 360, 700, 40 }, "Try copying text from other applications and pasting here!");
         GuiSetState(STATE_NORMAL);
