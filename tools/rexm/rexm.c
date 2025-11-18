@@ -415,12 +415,17 @@ int main(int argc, char *argv[])
             else
             {
                 // Support building/testing not only individual examples but multiple: ALL/<category>
-                rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListCount);
+                int exBuildListInfoCount = 0;
+                rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListInfoCount);
                     
-                for (int i = 0; i < exBuildListCount; i++)
+                for (int i = 0; i < exBuildListInfoCount; i++)
                 {
-                    exBuildList[i] = (char *)RL_CALLOC(256, sizeof(char));
-                    strcpy(exBuildList[i], exBuildListInfo[i].name);
+                    if (!TextIsEqual(exBuildListInfo[i].category, "others"))
+                    {
+                        exBuildList[exBuildListCount] = (char *)RL_CALLOC(256, sizeof(char));
+                        strcpy(exBuildList[exBuildListCount], exBuildListInfo[i].name);
+                        exBuildListCount++;
+                    }
                 }
                     
                 UnloadExampleData(exBuildListInfo);
