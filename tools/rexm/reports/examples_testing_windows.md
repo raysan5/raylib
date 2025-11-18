@@ -16,11 +16,8 @@ Example automated testing elements validated:
 ```
 | **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
 |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
-| core_input_actions               |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_digital_clock             |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | text_font_loading                |    0    |    10    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | text_font_sdf                    |    0    |    73    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | text_codepoints_loading          |    0    |    1    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| text_inline_styling              |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | models_animation_playing         |    0    |    1    |   ✔   |    ✔    |   ❌    |   ✔   |   ✔   |   ✔   |   ✔   |
 
