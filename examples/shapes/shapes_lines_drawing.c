@@ -51,6 +51,8 @@ int main(void)
 	BeginTextureMode(canvas);
 		ClearBackground(backgroundColor);
 	EndTextureMode();
+    
+    SetTargetFPS(60);
 	//--------------------------------------------------------------------------------------
 
 	// Main game loop
@@ -59,10 +61,7 @@ int main(void)
 		// Update
 		//----------------------------------------------------------------------------------
 		// Disable the hint text once the user clicks
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && startText)
-		{
-			startText = false;
-		}
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && startText) startText = false;
 
 		// Clear the canvas when the user middle-clicks
 		if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE))
@@ -79,7 +78,7 @@ int main(void)
 		if (leftButtonDown || rightButtonDown)
 		{
 			// The color for the line
-			Color drawColor;
+			Color drawColor = WHITE;
 
 			if (leftButtonDown)
 			{
@@ -88,10 +87,7 @@ int main(void)
 
 				// While the hue is >=360, subtract it to bring it down into the range 0-360
 				// This is more visually accurate than resetting to zero
-				while (lineHue >= 360.0f)
-				{
-					lineHue -= 360.0f;
-				}
+				while (lineHue >= 360.0f) lineHue -= 360.0f;
 
 				// Create the final color
 				drawColor = ColorFromHSV(lineHue, 1.0f, 1.0f);
@@ -104,10 +100,12 @@ int main(void)
 
 			// Draw the line onto the canvas
 			BeginTextureMode(canvas);
+            
 				// Circles act as "caps", smoothing corners
 				DrawCircleV(mousePositionPrevious, lineThickness/2.0f, drawColor);
 				DrawCircleV(GetMousePosition(), lineThickness/2.0f, drawColor);
 				DrawLineEx(mousePositionPrevious, GetMousePosition(), lineThickness, drawColor);
+                
 			EndTextureMode();
 		}
 
