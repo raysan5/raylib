@@ -1700,7 +1700,8 @@ int main(int argc, char *argv[])
             repIndex += sprintf(report + repIndex, "## Tested Platform: Windows\n\n");
 
             repIndex += sprintf(report + repIndex, "```\nExample automated testing elements validated:\n");
-            repIndex += sprintf(report + repIndex, " - [WARN]   : WARNING messages count\n");
+            repIndex += sprintf(report + repIndex, " - [CWARN]  : Compilation WARNING messages\n");
+            repIndex += sprintf(report + repIndex, " - [LWARN]  : Log WARNING messages count\n");
             repIndex += sprintf(report + repIndex, " - [INIT]   : Initialization\n");
             repIndex += sprintf(report + repIndex, " - [CLOSE]  : Closing\n");
             repIndex += sprintf(report + repIndex, " - [ASSETS] : Assets loading\n");
