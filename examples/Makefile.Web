@@ -975,7 +975,7 @@ textures/textures_blend_modes: textures/textures_blend_modes.c
 
 textures/textures_bunnymark: textures/textures_bunnymark.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
+    --preload-file textures/resources/raybunny.png@resources/raybunny.png
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
