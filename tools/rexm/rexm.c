@@ -1677,7 +1677,8 @@ int main(int argc, char *argv[])
                 UnloadFileText(exTestBuildLog);
 
 #if defined(BUILD_TESTING_WEB)
-                char *exTestLog = LoadFileText(TextFormat("C:/Users/raysa/Downloads/%s.log", exName));
+                // TODO: REVIEW: Hardcoded path where web logs are copied after automatic download
+                char *exTestLog = LoadFileText(TextFormat("D:/testing_logs_web/%s.log", exName));
 #else
                 char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
 #endif
