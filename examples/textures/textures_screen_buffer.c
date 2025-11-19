@@ -45,7 +45,7 @@ int main(void)
     Color palette[MAX_COLORS] = {0};
     unsigned char indexBuffer[INDEX_BUFFER_SIZE] = {0};
     unsigned char flameRootBuffer[FLAME_WIDTH] = {0};
-    
+
     Image screenImage = GenImageColor(imageWidth, imageHeight, BLACK);
     Texture screenTexture = LoadTextureFromImage(screenImage);
     GeneretePalette(palette);
@@ -74,7 +74,7 @@ int main(void)
             int i = x + (imageHeight - 1) * imageWidth;
             indexBuffer[i] = flameRootBuffer[x];
         }
-        
+
         // Clear top row, because it can't move any higher
         for (int x = 0; x < imageWidth; ++x)
         {
@@ -90,7 +90,7 @@ int main(void)
                 unsigned i = x + y * imageWidth;
                 unsigned char colorIndex = indexBuffer[i];
                 if (colorIndex == 0) continue;
-                
+
                 // Move pixel a row above
                 indexBuffer[i] = 0;
                 int moveX = GetRandomValue(0, 2) - 1;
@@ -115,7 +115,7 @@ int main(void)
                 ImageDrawPixel(&screenImage, x, y, col);
             }
         }
-        
+
         UpdateTexture(screenTexture, screenImage.data);
         // Draw
         //----------------------------------------------------------------------------------

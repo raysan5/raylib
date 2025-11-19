@@ -51,13 +51,13 @@ int main(void)
     Vector2 prevMousePos = { 0 };
     Vector2 scaleVector = { 1.0f, -1.0f };
     Vector2 offset = { (float)screenWidth/2.0f, (float)screenHeight/2.0f };
-    
+
     Camera2D camera = { 0 };
     camera.target = (Vector2){ 0 };
     camera.offset = offset;
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
-    
+
     int lineCounter = 0;
 
     SetTargetFPS(20);
@@ -70,10 +70,10 @@ int main(void)
         //----------------------------------------------------------------------------------
         prevMousePos = mousePos;
         mousePos = GetMousePosition();
-        
+
         Vector2 lineStart = Vector2Subtract(mousePos, offset);
         Vector2 lineEnd = Vector2Subtract(prevMousePos, offset);
-        
+
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
         {
             for (int s = 0; (s < symmetry) && (lineCounter < (MAX_DRAW_LINES - 1)); s++)
@@ -88,7 +88,7 @@ int main(void)
                 // Store reflective line
                 lines[lineCounter + 1].start = Vector2Multiply(lineStart, scaleVector);
                 lines[lineCounter + 1].end = Vector2Multiply(lineEnd, scaleVector);
-                
+
                 lineCounter += 2;
             }
         }
@@ -97,9 +97,9 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-    
+
             BeginMode2D(camera);
                 for (int s = 0; s < symmetry; s++)
                 {
@@ -110,10 +110,10 @@ int main(void)
                     }
                 }
             EndMode2D();
-            
+
             DrawText(TextFormat("LINES: %i/%i", lineCounter, MAX_DRAW_LINES), 10, screenHeight - 30, 20, MAROON);
             DrawFPS(10, 10);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

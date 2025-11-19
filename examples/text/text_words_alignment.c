@@ -39,25 +39,25 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - words alignment");
-    
+
     // Define the rectangle we will draw the text in
     Rectangle textContainerRect = (Rectangle){ screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/3, screenWidth/2, screenHeight*2/3 };
 
     // Some text to display the current alignment
     const char *textAlignNameH[] = { "Left", "Centre", "Right" };
     const char *textAlignNameV[] = { "Top", "Middle", "Bottom" };
-    
+
     // Define the text we're going to draw in the rectangle
     int wordIndex = 0;
     int wordCount = 0;
     char **words = TextSplit("raylib is a simple and easy-to-use library to enjoy videogames programming", ' ', &wordCount);
-    
+
     // Initialize the font size we're going to use
     int fontSize = 40;
-    
+
     // And of course the font...
     Font font = GetFontDefault();
-    
+
     // Intialize the alignment variables
     TextAlignment hAlign = TEXT_ALIGN_CENTRE;
     TextAlignment vAlign = TEXT_ALIGN_MIDDLE;
@@ -70,7 +70,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        
+
         if (IsKeyPressed(KEY_LEFT)) {
             hAlign = hAlign - 1;
             if (hAlign < 0) hAlign = 0;
@@ -87,10 +87,10 @@ int main(void)
             vAlign = vAlign + 1;
             if (vAlign > 2) vAlign = 2;
         }
-        
+
         // One word per second
         wordIndex = (int)GetTime() % wordCount;
-        
+
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -103,16 +103,16 @@ int main(void)
             DrawText(TextFormat("Alignment: Horizontal = %s, Vertical = %s", textAlignNameH[hAlign], textAlignNameV[vAlign]), 20, 40, 20, LIGHTGRAY);
 
             DrawRectangleRec(textContainerRect, BLUE);
-            
+
             // Get the size of the text to draw
             Vector2 textSize = MeasureTextEx(font, words[wordIndex], fontSize, fontSize*.1f);
-            
+
             // Calculate the top-left text position based on the rectangle and alignment
             Vector2 textPos = (Vector2) {
                 textContainerRect.x + Lerp(0.0f, textContainerRect.width  - textSize.x, ((float)hAlign) * 0.5f),
                 textContainerRect.y + Lerp(0.0f, textContainerRect.height - textSize.y, ((float)vAlign) * 0.5f)
             };
-            
+
             // Draw the text
             DrawTextEx(font, words[wordIndex], textPos, fontSize, fontSize*.1f, RAYWHITE);
 

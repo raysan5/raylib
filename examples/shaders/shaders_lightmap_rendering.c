@@ -124,7 +124,7 @@ int main(void)
             );
         BeginBlendMode(BLEND_ALPHA);
     EndTextureMode();
-    
+
     // NOTE: To enable trilinear filtering we need mipmaps available for texture
     GenTextureMipmaps(&lightmap.texture);
     SetTextureFilter(lightmap.texture, TEXTURE_FILTER_TRILINEAR);
@@ -143,7 +143,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
@@ -155,7 +155,7 @@ int main(void)
                 (Vector2){ 0.0, 0.0 }, 0.0, WHITE);
 
             DrawText(TextFormat("LIGHTMAP: %ix%i pixels", MAP_SIZE, MAP_SIZE), GetRenderWidth() - 130, 20 + MAP_SIZE*8, 10, GREEN);
-            
+
             DrawFPS(10, 10);
 
         EndDrawing();

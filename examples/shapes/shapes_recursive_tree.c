@@ -45,7 +45,7 @@ int main(void)
 
     Vector2 start = { (screenWidth/2.0f) - 125.0f, (float)screenHeight };
     float angle = 40.0f;
-    float thick = 1.0f;   
+    float thick = 1.0f;
     float treeDepth = 10.0f;
     float branchDecay = 0.66f;
     float length = 120.0f;
@@ -67,21 +67,21 @@ int main(void)
         Vector2 initialEnd = { start.x + length*sinf(0.0f), start.y - length*cosf(0.0f) };
         branches[count++] = (Branch){start, initialEnd, 0.0f, length};
 
-        for (int i = 0; i < count; i++) 
+        for (int i = 0; i < count; i++)
         {
             Branch branch = branches[i];
             if (branch.length < 2) continue;
 
             float nextLength = branch.length*branchDecay;
 
-            if (count < maxBranches && nextLength >= 2) 
+            if (count < maxBranches && nextLength >= 2)
             {
                 Vector2 branchStart = branch.end;
 
                 float angle1 = branch.angle + theta;
                 Vector2 branchEnd1 = { branchStart.x + nextLength*sinf(angle1), branchStart.y - nextLength*cosf(angle1) };
                 branches[count++] = (Branch){branchStart, branchEnd1, angle1, nextLength};
-                
+
                 float angle2 = branch.angle - theta;
                 Vector2 branchEnd2 = { branchStart.x + nextLength*sinf(angle2), branchStart.y - nextLength*cosf(angle2) };
                 branches[count++] = (Branch){branchStart, branchEnd2, angle2, nextLength};
@@ -94,10 +94,10 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            for (int i = 0; i < count; i++) 
+            for (int i = 0; i < count; i++)
             {
                 Branch branch = branches[i];
-                if (branch.length >= 2) 
+                if (branch.length >= 2)
                 {
                     if (bezier) DrawLineBezier(branch.start, branch.end, thick, RED);
                     else DrawLineEx(branch.start, branch.end, thick, RED);

@@ -20,7 +20,7 @@
 // For itteration purposes and teaching example
 #define RESOLUTION_COUNT 4
 
-enum ViewportType 
+enum ViewportType
 {
     // Only upscale, useful for pixel art
     KEEP_ASPECT_INTEGER,
@@ -113,7 +113,7 @@ int main(void)
         }
         Vector2 mousePosition = GetMousePosition();
         bool mousePressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-        
+
         // Check buttons and rescale
         if (CheckCollisionPointRec(mousePosition, decreaseResolutionButton) && mousePressed){
             resolutionIndex = (resolutionIndex + RESOLUTION_COUNT - 1) % RESOLUTION_COUNT;

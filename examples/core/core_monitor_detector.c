@@ -66,25 +66,25 @@ int main(void)
         for (int i = 0; i < monitorCount; i++)
         {
             monitors[i] = (MonitorInfo){
-                GetMonitorPosition(i), 
-                GetMonitorName(i), 
+                GetMonitorPosition(i),
+                GetMonitorName(i),
                 GetMonitorWidth(i),
                 GetMonitorHeight(i),
                 GetMonitorPhysicalWidth(i),
                 GetMonitorPhysicalHeight(i),
                 GetMonitorRefreshRate(i)
             };
-            
+
             if (monitors[i].position.x < monitorOffsetX) monitorOffsetX = -(int)monitors[i].position.x;
 
             const int width = (int)monitors[i].position.x + monitors[i].width;
             const int height = (int)monitors[i].position.y + monitors[i].height;
-            
+
             if (maxWidth < width) maxWidth = width;
             if (maxHeight < height) maxHeight = height;
         }
 
-        if (IsKeyPressed(KEY_ENTER) && (monitorCount > 1)) 
+        if (IsKeyPressed(KEY_ENTER) && (monitorCount > 1))
         {
             currentMonitorIndex += 1;
 
@@ -95,8 +95,8 @@ int main(void)
         }
         else currentMonitorIndex = GetCurrentMonitor(); // Get currentMonitorIndex if manually moved
 
-        float monitorScale = 0.6f; 
-        
+        float monitorScale = 0.6f;
+
         if (maxHeight > (maxWidth + monitorOffsetX)) monitorScale *= ((float)screenHeight/(float)maxHeight);
         else monitorScale *= ((float)screenWidth/(float)(maxWidth + monitorOffsetX));
         //----------------------------------------------------------------------------------
@@ -125,9 +125,9 @@ int main(void)
                 // Draw monitor name and information inside the rectangle
                 DrawText(TextFormat("[%i] %s", i, monitors[i].name), (int)rec.x + 10, (int)rec.y + (int)(100*monitorScale), (int)(120*monitorScale), BLUE);
                 DrawText(
-                    TextFormat("Resolution: [%ipx x %ipx]\nRefreshRate: [%ihz]\nPhysical Size: [%imm x %imm]\nPosition: %3.0f x %3.0f", 
-                        monitors[i].width, 
-                        monitors[i].height, 
+                    TextFormat("Resolution: [%ipx x %ipx]\nRefreshRate: [%ihz]\nPhysical Size: [%imm x %imm]\nPosition: %3.0f x %3.0f",
+                        monitors[i].width,
+                        monitors[i].height,
                         monitors[i].refreshRate,
                         monitors[i].physicalWidth,
                         monitors[i].physicalHeight,

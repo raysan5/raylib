@@ -86,7 +86,7 @@ int main(void)
     Vector2 iResolution = { (float)screenWidth, (float)screenHeight };
 
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/fft.fs", GLSL_VERSION));
-    
+
     int iResolutionLocation = GetShaderLocation(shader, "iResolution");
     int iChannel0Location = GetShaderLocation(shader, "iChannel0");
     SetShaderValue(shader, iResolutionLocation, &iResolution, SHADER_UNIFORM_VEC2);
@@ -153,16 +153,16 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             BeginShaderMode(shader);
                 SetShaderValueTexture(shader, iChannel0Location, fftTexture);
                 DrawTextureRec(bufferA.texture,
                     (Rectangle){ 0, 0, (float)screenWidth, (float)-screenHeight },
                     (Vector2){ 0, 0 }, WHITE);
             EndShaderMode();
-            
+
         EndDrawing();
         //------------------------------------------------------------------------------
     }

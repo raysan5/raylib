@@ -35,7 +35,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT); 
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - math sine cosine");
 
     Vector2 sinePoints[WAVE_POINTS];
@@ -97,7 +97,7 @@ int main(void)
 
             // Base circle and axes
             DrawCircleLinesV(center, radius, GRAY);
-            DrawLineEx((Vector2){ center.x, limitMin.y }, (Vector2){ center.x, limitMax.y }, 1.0f, GRAY);      
+            DrawLineEx((Vector2){ center.x, limitMin.y }, (Vector2){ center.x, limitMax.y }, 1.0f, GRAY);
             DrawLineEx((Vector2){ limitMin.x, center.y }, (Vector2){ limitMax.x, center.y }, 1.f, GRAY);
 
             // Wave graph axes
@@ -110,17 +110,17 @@ int main(void)
             DrawText("0", start.x - 8,  start.y + start.height/2 - 6, 6, GRAY);
             DrawText("-1", start.x - 12, start.y + start.height - 8, 6, GRAY);
             DrawText("0", start.x - 2,  start.y + start.height + 4, 6, GRAY);
-            DrawText("360", start.x + start.width - 8,  start.y + start.height + 4, 6, GRAY);  
+            DrawText("360", start.x + start.width - 8,  start.y + start.height + 4, 6, GRAY);
 
             // Sine (red - vertical)
-            DrawLineEx((Vector2){ center.x, center.y }, (Vector2){ center.x, point.y }, 2.0f, RED);  
+            DrawLineEx((Vector2){ center.x, center.y }, (Vector2){ center.x, point.y }, 2.0f, RED);
             DrawLineDashed((Vector2){ point.x, center.y }, (Vector2){ point.x, point.y }, 10.0f, 4.0f, RED);
             DrawText(TextFormat("Sine %.2f", sinRad), 640, 190, 6, RED);
             DrawCircleV((Vector2){ start.x + (angle/360.0f)*start.width, start.y + ((-sinRad + 1)*start.height/2.0f) }, 4.0f, RED);
             DrawSplineLinear(sinePoints, WAVE_POINTS, 1.0f, RED);
 
             // Cosine (blue - horizontal)
-            DrawLineEx((Vector2){ center.x, center.y }, (Vector2){ point.x, center.y }, 2.0f, BLUE);         
+            DrawLineEx((Vector2){ center.x, center.y }, (Vector2){ point.x, center.y }, 2.0f, BLUE);
             DrawLineDashed((Vector2){ center.x , point.y }, (Vector2){ point.x, point.y }, 10.0f, 4.0f, BLUE);
             DrawText(TextFormat("Cosine %.2f", cosRad), 640, 210, 6, BLUE);
             DrawCircleV((Vector2){ start.x + (angle/360.0f)*start.width, start.y + ((-cosRad + 1)*start.height/2.0f) }, 4.0f, BLUE);
@@ -135,7 +135,7 @@ int main(void)
             DrawText(TextFormat("Cotangent %.2f", cotangent), 640, 250, 6, ORANGE);
 
             // Complementary angle (beige)
-            DrawCircleSectorLines(center, radius*0.6f , -angle, -90.f , 36.0f, BEIGE); 
+            DrawCircleSectorLines(center, radius*0.6f , -angle, -90.f , 36.0f, BEIGE);
             DrawText(TextFormat("Complementary  %0.f°",complementary), 640, 150, 6, BEIGE);
 
             // Supplementary angle (darkblue)
@@ -147,19 +147,19 @@ int main(void)
             DrawText(TextFormat("Explementary  %0.f°",explementary), 640, 170, 6, PINK);
 
             // Current angle - arc (lime), radius (black), endpoint (black)
-            DrawCircleSectorLines(center, radius*0.7f , -angle, 0.f, 36.0f, LIME); 
+            DrawCircleSectorLines(center, radius*0.7f , -angle, 0.f, 36.0f, LIME);
             DrawLineEx((Vector2){ center.x , center.y }, point, 2.0f, BLACK);
             DrawCircleV(point, 4.0f, BLACK);
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
             GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
-            GuiToggle((Rectangle){ 640, 70, 120, 20}, TextFormat("Pause"), &pause);   
+            GuiToggle((Rectangle){ 640, 70, 120, 20}, TextFormat("Pause"), &pause);
             GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(LIME));
             GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.0f°", angle), &angle, 0.0f, 360.f);
 
             // Angle values panel
-            GuiGroupBox((Rectangle){ 620, 110, 140, 170}, "Angle Values"); 
+            GuiGroupBox((Rectangle){ 620, 110, 140, 170}, "Angle Values");
             //------------------------------------------------------------------------------
             DrawFPS(10, 10);
 

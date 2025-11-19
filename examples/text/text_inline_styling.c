@@ -36,11 +36,11 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - inline styling");
-    
+
     Vector2 textSize = { 0 };   // Measure text box for provided font and text
     Color colRandom = RED;      // Random color used on text
     int frameCounter = 0;       // Used to generate a new random color every certain frames
-    
+
     SetTargetFPS(60);           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         frameCounter++;
-        
+
         if ((frameCounter%20) == 0)
         {
             colRandom.r = (unsigned char)GetRandomValue(0, 255);
@@ -67,12 +67,12 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Text inline styling strategy used: [ ] delimiters for format
-            // - Define foreground color:      [cRRGGBBAA] 
+            // - Define foreground color:      [cRRGGBBAA]
             // - Define background color:      [bRRGGBBAA]
             // - Reset formating:              [r]
             // Example: [bAA00AAFF][cFF0000FF]red text on gray background[r] normal text
-    
-            DrawTextStyled(GetFontDefault(), "This changes the [cFF0000FF]foreground color[r] of provided text!!!", 
+
+            DrawTextStyled(GetFontDefault(), "This changes the [cFF0000FF]foreground color[r] of provided text!!!",
                 (Vector2){ 100, 80 }, 20.0f, 2.0f, BLACK);
 
             DrawTextStyled(GetFontDefault(), "This changes the [bFF00FFFF]background color[r] of provided text!!!",
@@ -80,11 +80,11 @@ int main(void)
 
             DrawTextStyled(GetFontDefault(), "This changes the [c00ff00ff][bff0000ff]foreground and background colors[r]!!!",
                 (Vector2){ 100, 160 }, 20.0f, 2.0f, BLACK);
-                
+
             // Get pointer to formated text
             const char *text = TextFormat("Let's be [c%02x%02x%02xFF]CREATIVE[r] !!!", colRandom.r, colRandom.g, colRandom.b);
             DrawTextStyled(GetFontDefault(), text, (Vector2){ 100, 220 }, 40.0f, 2.0f, BLACK);
-                
+
             textSize = MeasureTextStyled(GetFontDefault(), text, 40.0f, 2.0f);
             DrawRectangleLines(100, 220, (int)textSize.x, (int)textSize.y, GREEN);
 
@@ -108,13 +108,13 @@ int main(void)
 static void DrawTextStyled(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color color)
 {
     // Text inline styling strategy used: [ ] delimiters for format
-    // - Define foreground color:      [cRRGGBBAA] 
+    // - Define foreground color:      [cRRGGBBAA]
     // - Define background color:      [bRRGGBBAA]
     // - Reset formating:              [r]
     // Example: [bAA00AAFF][cFF0000FF]red text on gray background[r] normal text
-    
+
     if (font.texture.id == 0) font = GetFontDefault();
-    
+
     int textLen = TextLength(text);
 
     Color colFront = color;
@@ -144,14 +144,14 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
                 {
                     colFront = color;
                     colBack = BLANK;
-                    
+
                     i += 3;     // Skip "[r]"
                     continue;   // Do not draw characters
                 }
                 else if (((i + 1) < textLen) && ((text[i + 1] == 'c') || (text[i + 1] == 'b')))
                 {
                     i += 2;     // Skip "[c" or "[b" to start parsing color
-                    
+
                     // Parse following color
                     char colHexText[9] = { 0 };
                     const char *textPtr = &text[i]; // Color should start here, let's see...
@@ -168,12 +168,12 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
                         }
                         else break; // Only affects while loop
                     }
-                    
+
                     // Convert hex color text into actual Color
                     unsigned int colHexValue = strtoul(colHexText, NULL, 16);
                     if (text[i - 1] == 'c') colFront = GetColor(colHexValue);
                     else if (text[i - 1] == 'b') colBack = GetColor(colHexValue);
-                    
+
                     i += (colHexCount + 1); // Skip color value retrieved and ']'
                     continue;   // Do not draw characters
                 }
@@ -249,7 +249,7 @@ static Vector2 MeasureTextStyled(Font font, const char *text, float fontSize, fl
                     }
                     else break; // Only affects while loop
                 }
-                
+
                 i += (colHexCount + 1); // Skip color value retrieved and ']'
                 continue;   // Do not measure characters
             }
@@ -260,7 +260,7 @@ static Vector2 MeasureTextStyled(Font font, const char *text, float fontSize, fl
 
             if (font.glyphs[index].advanceX > 0) textWidth += font.glyphs[index].advanceX;
             else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
-            
+
             validCodepointCounter++;
             i += codepointByteCount;
         }

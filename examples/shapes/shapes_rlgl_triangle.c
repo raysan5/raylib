@@ -50,7 +50,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) linesMode = !linesMode;
-        
+
         // Check selected vertex
         for (unsigned int i = 0; i < 3; i++)
         {
@@ -72,7 +72,7 @@ int main(void)
             position->x += mouseDelta.x;
             position->y += mouseDelta.y;
         }
-        
+
         // Reset index on release
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) triangleIndex = -1;
 
@@ -139,15 +139,15 @@ int main(void)
             // Render the vertex handles, reacting to mouse movement/input
             for (unsigned int i = 0; i < 3; i++)
             {
-                // Draw handle fill focused by mouse                
+                // Draw handle fill focused by mouse
                 if (CheckCollisionPointCircle(GetMousePosition(), trianglePositions[i], handleRadius))
                     DrawCircleV(trianglePositions[i], handleRadius, ColorAlpha(DARKGRAY, 0.5f));
-                
+
                 // Draw handle fill selected
                 if (i == triangleIndex) DrawCircleV(trianglePositions[i], handleRadius, DARKGRAY);
-                
+
                 // Draw handle outline
-                DrawCircleLinesV(trianglePositions[i], handleRadius, BLACK); 
+                DrawCircleLinesV(trianglePositions[i], handleRadius, BLACK);
             }
 
             // Draw controls

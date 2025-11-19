@@ -50,7 +50,7 @@ int main(void)
     const float rightStickDeadzoneY = 0.1f;
     const float leftTriggerDeadzone = -0.9f;
     const float rightTriggerDeadzone = -0.9f;
-    
+
     Rectangle vibrateButton = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -97,7 +97,7 @@ int main(void)
                 if (leftTrigger < leftTriggerDeadzone) leftTrigger = -1.0f;
                 if (rightTrigger < rightTriggerDeadzone) rightTrigger = -1.0f;
 
-                if ((TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_1) > -1) || 
+                if ((TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_1) > -1) ||
                     (TextFindIndex(TextToLower(GetGamepadName(gamepad)), XBOX_ALIAS_2) > -1))
                 {
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);

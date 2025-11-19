@@ -58,7 +58,7 @@ int main(void)
 
             // Load font with default Unicode range: Basic ASCII [32-127]
             font = LoadFont("resources/NotoSansTC-Regular.ttf");
-            
+
             // Add required ranges to loaded font
             switch (unicodeRange)
             {
@@ -128,11 +128,11 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             DrawText("ADD CODEPOINTS: [1][2][3][4]", 20, 20, 20, MAROON);
-            
+
             // Render test strings in different languages
             DrawTextEx(font, "> English: Hello World!", (Vector2){ 50, 70 }, 32, 1, DARKGRAY); // English
             DrawTextEx(font, "> Español: Hola mundo!", (Vector2){ 50, 120 }, 32, 1, DARKGRAY); // Spanish
@@ -141,7 +141,7 @@ int main(void)
             DrawTextEx(font, "> 中文: 你好世界!", (Vector2){ 50, 270 }, 32, 1, DARKGRAY);        // Chinese
             DrawTextEx(font, "> 日本語: こんにちは世界!", (Vector2){ 50, 320 }, 32, 1, DARKGRAY); // Japanese
             //DrawTextEx(font, "देवनागरी: होला मुंडो!", (Vector2){ 50, 350 }, 32, 1, DARKGRAY);     // Devanagari (glyphs not available in font)
-            
+
             // Draw font texture scaled to screen
             float atlasScale = 380.0f/font.texture.width;
             DrawRectangleRec((Rectangle) { 400.0f, 16.0f, font.texture.width* atlasScale, font.texture.height* atlasScale }, BLACK);
@@ -161,7 +161,7 @@ int main(void)
                 DrawRectangle(0, 125, screenWidth, 200, GRAY);
                 DrawText("GENERATING FONT ATLAS...", 120, 210, 40, BLACK);
             }
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -184,10 +184,10 @@ static void AddCodepointRange(Font *font, const char *fontPath, int start, int s
 {
     int rangeSize = stop - start + 1;
     int currentRangeSize = font->glyphCount;
-    
+
     // TODO: Load glyphs from provided vector font (if available),
     // add them to existing font, regenerating font image and texture
-    
+
     int updatedCodepointCount = currentRangeSize + rangeSize;
     int *updatedCodepoints = (int *)RL_CALLOC(updatedCodepointCount, sizeof(int));
 

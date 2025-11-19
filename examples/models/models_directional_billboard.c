@@ -62,7 +62,7 @@ int main(void)
         anim_timer += GetFrameTime();
 
         // Update frame index after a certain amount of time (half a second)
-        if (anim_timer > 0.5f) 
+        if (anim_timer > 0.5f)
         {
             anim_timer = 0.0f;
             anim += 1;

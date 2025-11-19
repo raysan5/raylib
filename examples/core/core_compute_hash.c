@@ -64,7 +64,7 @@ int main(void)
 
             // Encode data to Base64 string (includes NULL terminator), memory must be MemFree()
             base64Text = EncodeDataBase64((unsigned char *)textInput, textInputLen, &base64TextSize);
-            
+
             hashCRC32 = ComputeCRC32((unsigned char *)textInput, textInputLen);     // Compute CRC32 hash code (4 bytes)
             hashMD5 = ComputeMD5((unsigned char *)textInput, textInputLen);         // Compute MD5 hash code, returns static int[4] (16 bytes)
             hashSHA1 = ComputeSHA1((unsigned char *)textInput, textInputLen);       // Compute SHA1 hash code, returns static int[5] (20 bytes)

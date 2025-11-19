@@ -22,7 +22,7 @@
 
 #define MAX_UNDO_STATES             26      // Maximum undo states supported for the ring buffer
 
-#define GRID_CELL_SIZE              24      
+#define GRID_CELL_SIZE              24
 #define MAX_GRID_CELLS_X            30
 #define MAX_GRID_CELLS_Y            13
 
@@ -57,7 +57,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     // We have multiple options to implement an Undo/Redo system
     // Probably the most professional one is using the Command pattern to
     // define Actions and store those actions into an array as the events happen,
