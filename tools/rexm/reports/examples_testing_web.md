@@ -17,19 +17,7 @@ Example automated testing elements validated:
 | **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
 |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
 | core_monitor_detector            |    0    |    1    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| core_directory_files             |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| core_clipboard_text              |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| core_compute_hash                |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_recursive_tree            |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_ring_drawing              |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_circle_sector_drawing     |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_rounded_rectangle_drawing |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_splines_drawing           |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_triangle_strip            |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_pie_chart                 |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| shapes_math_sine_cosine          |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | shapes_lines_drawing             |    0    |    0    |   ❌   |    ❌    |   ❌    |   ❌   |   ❌   |   ❌   |   ❌   |
-| shapes_rlgl_color_wheel          |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | textures_screen_buffer           |    0    |    0    |   ❌   |    ❌    |   ❌    |   ❌   |   ❌   |   ❌   |   ❌   |
 | textures_sprite_stacking         |    0    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
 | text_sprite_fonts                |    0    |    0    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
@@ -43,7 +31,6 @@ Example automated testing elements validated:
 | models_bone_socket               |    0    |    0    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
 | models_decals                    |    0    |    0    |   ❌   |    ❌    |   ❌    |   ❌   |   ❌   |   ❌   |   ❌   |
 | shaders_postprocessing           |    0    |    0    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
-| shaders_color_correction         |    1    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | shaders_deferred_rendering       |    0    |    2    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
 | shaders_shadowmap_rendering      |    0    |    0    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
 | shaders_basic_pbr                |    0    |    0    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
