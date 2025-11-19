@@ -1491,6 +1491,9 @@ int main(int argc, char *argv[])
 
                 LOG("INFO: [%i/%i] Testing example: [%s]\n", i + 1, exBuildListCount, exName);
 
+                // Create directory for logs (build and run logs)
+                MakeDirectory(TextFormat("%s/%s/logs", exBasePath, exCategory));
+
                 // Steps to follow
                 // STEP 1: Load example.c and replace required code to inject basic testing code: frames to run
                 //    OPTION 1: Code injection required multiple changes for testing but it does not require raylib changes!
@@ -1510,7 +1513,7 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
                 char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
-//#define BUILD_TESTING_WEB
+#define BUILD_TESTING_WEB
 #if defined(BUILD_TESTING_WEB)
                 static const char *mainReplaceText =
                     "#include <stdio.h>\n"
@@ -1557,13 +1560,14 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.data
                 // Build: raylib.com/examples/<category>/<category>_example_name.wasm
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1", exBasePath, exCategory, exName));
-#else
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-#endif
+    #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
@@ -1571,7 +1575,7 @@ int main(int argc, char *argv[])
 
                 // STEP 3: Run example on browser
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-                system("start python -m http.server 8080"); // TODO: Init localhost just once!
+                if (i == 0) system("start python -m http.server 8080"); // TODO: Init localhost just once!
                 system(TextFormat("start explorer \"http:\\localhost:8080/%s.html", exName));
 
                 // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
@@ -1595,22 +1599,20 @@ int main(int argc, char *argv[])
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
                 for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
-                MakeDirectory(TextFormat("%s/%s/logs", exBasePath, exCategory));
-
                 // STEP 2: Build example for DESKTOP platform
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 // Set required environment variables
                 //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
                 _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                 //putenv("MAKE=mingw32-make");
                 //ChangeDirectory(exBasePath);
-#endif
+    #endif
                 // Build example for PLATFORM_DESKTOP
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
-#else
+    #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #endif
@@ -1623,7 +1625,7 @@ int main(int argc, char *argv[])
                 // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
                 system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
-
+#endif
                 // STEP 4: Load and validate log info
                 //---------------------------------------------------------------------------------------------
                 // Load <example_name>.build.log to check for compilation warnings
@@ -1640,7 +1642,11 @@ int main(int argc, char *argv[])
                 UnloadTextLines(exTestBuildLogLines, exTestBuildLogLinesCount);
                 UnloadFileText(exTestBuildLog);
 
+#if defined(BUILD_TESTING_WEB)
+                char *exTestLog = LoadFileText(TextFormat("C:/Users/raysa/Downloads/%s.log", exName));
+#else
                 char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
+#endif
                 int exTestLogLinesCount = 0;
                 char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
                 
@@ -1670,11 +1676,27 @@ int main(int argc, char *argv[])
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
                 UnloadFileText(exTestLog);
                 //---------------------------------------------------------------------------------------------
-#endif
             }
 
             // STEP 5: Generate testing report/table with results (.md)
             //-----------------------------------------------------------------------------------------------------
+#if defined(BUILD_TESTING_WEB)
+            const char *osName = "Web";
+#else
+    #if defined(PLATFORM_DRM)
+            const char *osName = "DRM";
+    #elif defined(PLATFORM_DESKTOP)
+        #if defined(_WIN32)
+            const char *osName = "Windows";
+        #elif defined(__linux__)
+            const char *osName = "Linux";
+        #elif defined(__FreeBSD__)
+            const char *osName = "FreeBSD";
+        #elif defined(__APPLE__)
+            const char *osName = "macOS";
+        #endif // Desktop OSs
+    #endif
+#endif
             /*
             Columns:
              - [CWARN]  : Compilation WARNING messages
@@ -1697,7 +1719,7 @@ int main(int argc, char *argv[])
 
             int repIndex = 0;
             repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION - TESTING REPORT\n\n");
-            repIndex += sprintf(report + repIndex, "## Tested Platform: Windows\n\n");
+            repIndex += sprintf(report + repIndex, TextFormat("## Tested Platform: %s\n\n", osName));
 
             repIndex += sprintf(report + repIndex, "```\nExample automated testing elements validated:\n");
             repIndex += sprintf(report + repIndex, " - [CWARN]  : Compilation WARNING messages\n");
@@ -1742,22 +1764,7 @@ int main(int argc, char *argv[])
 
             repIndex += sprintf(report + repIndex, "\n");
 
-#if defined(PLATFORM_DRM)
-            const char *osName = "drm";
-#elif defined(PLATFORM_WEB)
-            const char *osName = "web";
-#elif defined(PLATFORM_DESKTOP)
-    #if defined(_WIN32)
-            const char *osName = "windows";
-    #elif defined(__linux__)
-            const char *osName = "linux";
-    #elif defined(__FreeBSD__)
-            const char *osName = "freebsd";
-    #elif defined(__APPLE__)
-            const char *osName = "macos";
-    #endif // Desktop OSs
-#endif
-            SaveFileText(TextFormat("%s/../tools/rexm/reports/examples_testing_%s.md", exBasePath, osName), report);
+            SaveFileText(TextFormat("%s/../tools/rexm/reports/examples_testing_%s.md", exBasePath, TextToLower(osName)), report);
 
             RL_FREE(report);
             //-----------------------------------------------------------------------------------------------------
