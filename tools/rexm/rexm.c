@@ -1657,7 +1657,11 @@ int main(int argc, char *argv[])
 
                 // Load <example_name>.build.log to check for compilation warnings
                 char *exTestBuildLog = LoadFileText(TextFormat("%s/%s/logs/%s.build.log", exBasePath, exCategory, exName));
-                if (exTestBuildLog == NULL) continue;
+                if (exTestBuildLog == NULL)
+                {
+                    LOG("WARNING: [%s] Build log could not be loaded\n", exName);
+                    continue;
+                }
 
                 // Load build log text lines
                 int exTestBuildLogLinesCount = 0;
@@ -1677,11 +1681,12 @@ int main(int argc, char *argv[])
 #else
                 char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
 #endif
-                if (exTestLog == NULL) continue;
-
-                // Load build log text lines
-                int exTestLogLinesCount = 0;
-                char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
+                if (exTestLog == NULL)
+                {
+                    LOG("WARNING: [%s] Execution log could not be loaded\n", exName);
+                    testing[i].status = 0b1111111;
+                    continue;
+                }
 
                 /*
                 TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
@@ -1701,12 +1706,14 @@ int main(int argc, char *argv[])
                 if (TextFindIndex(exTestLog, "INFO: FONT: Default font loaded successfully") == -1) testing[i].status |= TESTING_FAIL_FONT;
                 if (TextFindIndex(exTestLog, "INFO: TIMER: Target time per frame:") == -1) testing[i].status |= TESTING_FAIL_TIMER;
 
+                // Load build log text lines
+                int exTestLogLinesCount = 0;
+                char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
                 for (int k = 0, index = 0; k < exTestLogLinesCount; k++)
                 {
                     if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore warning
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
                 }
-
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
                 UnloadFileText(exTestLog);
             }
