@@ -3043,7 +3043,7 @@
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (0.5 is center)">
+        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
@@ -3111,7 +3111,7 @@
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (0.5 is center)">
+        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>

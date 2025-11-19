@@ -4554,7 +4554,7 @@ Function 556: SetSoundPitch() (2 input parameters)
 Function 557: SetSoundPan() (2 input parameters)
   Name: SetSoundPan
   Return type: void
-  Description: Set pan for a sound (0.5 is center)
+  Description: Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)
   Param[1]: sound (type: Sound)
   Param[2]: pan (type: float)
 Function 558: WaveCopy() (1 input parameters)
@@ -4660,7 +4660,7 @@ Function 575: SetMusicPitch() (2 input parameters)
 Function 576: SetMusicPan() (2 input parameters)
   Name: SetMusicPan
   Return type: void
-  Description: Set pan for a music (0.5 is center)
+  Description: Set pan for a music (-1.0 left, 0.0 center, 1.0 right)
   Param[1]: music (type: Music)
   Param[2]: pan (type: float)
 Function 577: GetMusicTimeLength() (1 input parameters)
