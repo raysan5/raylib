@@ -141,7 +141,8 @@ typedef enum {
     OP_VALIDATE = 5,        // Validate examples, using [examples_list.txt] as main source by default
     OP_UPDATE   = 6,        // Validate and update required examples (as far as possible): ALL
     OP_BUILD    = 7,        // Build example(s) for desktop and web, copy web output - Multiple examples supported
-    OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiplee examples supported
+    OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiple examples supported
+    OP_TESTLOG  = 9,        // Process available examples logs to generate report
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
@@ -403,7 +404,7 @@ int main(int argc, char *argv[])
 
             opCode = OP_UPDATE;
         }
-        else if ((strcmp(argv[1], "build") == 0) || (strcmp(argv[1], "test") == 0))
+        else if ((strcmp(argv[1], "build") == 0) || (strcmp(argv[1], "test") == 0) || (strcmp(argv[1], "testlog") == 0))
         {
             // Build/Test example(s) for PLATFORM_DESKTOP and PLATFORM_WEB
             // NOTE: Build outputs to default directory, usually where the .c file is located,
@@ -431,7 +432,12 @@ int main(int argc, char *argv[])
                 UnloadExampleData(exBuildListInfo);
                 
                 if (exBuildListCount == 0) LOG("WARNING: BUILD: Example requested not available in the collection\n");
-                else opCode = OP_TEST;
+                else
+                {
+                    if (strcmp(argv[1], "build") == 0) opCode = OP_BUILD;
+                    else if (strcmp(argv[1], "test") == 0) opCode = OP_TEST;
+                    else if (strcmp(argv[1], "testlog") == 0) opCode = OP_TESTLOG;
+                }
             }
         }
 
@@ -1459,8 +1465,6 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: TEST\n");
             LOG("INFO: Example(s) to be build and tested: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-            rlExampleTesting *testing = (rlExampleTesting *)RL_CALLOC(exBuildListCount, sizeof(rlExampleTesting));
-
 #if defined(_WIN32)
             // Set required environment variables
             //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
@@ -1574,9 +1578,11 @@ int main(int argc, char *argv[])
                 FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
 
                 // STEP 3: Run example on browser
-                ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-                if (i == 0) system("start python -m http.server 8080"); // TODO: Init localhost just once!
-                system(TextFormat("start explorer \"http:\\localhost:8080/%s.html", exName));
+                // WARNING: Example download is asynchronous so reading fails on next step
+                // when looking for a file that could not have been downloaded yet
+                ChangeDirectory(TextFormat("%s", exBasePath));
+                if (i == 0) system("start python -m http.server 8080"); // Init localhost just once
+                system(TextFormat("start explorer \"http:\\localhost:8080/%s/%s.html", exCategory, exName));
 
                 // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
 
@@ -1626,10 +1632,34 @@ int main(int argc, char *argv[])
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
                 system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
 #endif
-                // STEP 4: Load and validate log info
-                //---------------------------------------------------------------------------------------------
+            }
+        } break;
+        case OP_TESTLOG:
+        {
+            // STEP 4: Load and validate available logs info
+            //---------------------------------------------------------------------------------------------
+            rlExampleTesting *testing = (rlExampleTesting *)RL_CALLOC(exBuildListCount, sizeof(rlExampleTesting));
+
+            for (int i = 0; i < exBuildListCount; i++)
+            {
+                // Get example name and category
+                memset(exName, 0, 64);
+                strcpy(exName, exBuildList[i]);
+                memset(exCategory, 0, 32);
+                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+
+                // Skip some examples from building
+                if ((strcmp(exName, "core_custom_logging") == 0) ||
+                    (strcmp(exName, "core_window_should_close") == 0) ||
+                    (strcmp(exName, "core_custom_frame_control") == 0)) continue;
+
+                LOG("INFO: [%i/%i] Checking example log: [%s]\n", i + 1, exBuildListCount, exName);
+
                 // Load <example_name>.build.log to check for compilation warnings
                 char *exTestBuildLog = LoadFileText(TextFormat("%s/%s/logs/%s.build.log", exBasePath, exCategory, exName));
+                if (exTestBuildLog == NULL) continue;
+
+                // Load build log text lines
                 int exTestBuildLogLinesCount = 0;
                 char **exTestBuildLogLines = LoadTextLines(exTestBuildLog, &exTestBuildLogLinesCount);
 
@@ -1647,9 +1677,12 @@ int main(int argc, char *argv[])
 #else
                 char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
 #endif
+                if (exTestLog == NULL) continue;
+
+                // Load build log text lines
                 int exTestLogLinesCount = 0;
                 char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
-                
+
                 /*
                 TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
                 TESTING_FAIL_CLOSE     = 1 << 1,   // Closing (CloseWindow())          -> "INFO: Window closed successfully"
@@ -1670,13 +1703,14 @@ int main(int argc, char *argv[])
 
                 for (int k = 0, index = 0; k < exTestLogLinesCount; k++)
                 {
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore warning
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
                 }
 
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
                 UnloadFileText(exTestLog);
-                //---------------------------------------------------------------------------------------------
             }
+            //---------------------------------------------------------------------------------------------
 
             // STEP 5: Generate testing report/table with results (.md)
             //-----------------------------------------------------------------------------------------------------
@@ -2024,7 +2058,7 @@ static int UpdateRequiredFiles(void)
         {
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: core [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                "Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.\n\n");
+                "Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.\n\n");
         }
         else if (i == 1)    // "shapes"
         {
