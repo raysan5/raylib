@@ -51,9 +51,9 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>     // Required for: NULL, calloc(), free()
 #include <stdio.h>      // Required for: rename(), remove()
 #include <string.h>     // Required for: strcmp(), strcpy()
+#include <stdlib.h>     // Required for: NULL, calloc(), free()
 
 #define SUPPORT_LOG_INFO
 #if defined(SUPPORT_LOG_INFO) //&& defined(_DEBUG)
@@ -1517,7 +1517,7 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
                 char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
-#define BUILD_TESTING_WEB
+//#define BUILD_TESTING_WEB
 #if defined(BUILD_TESTING_WEB)
                 static const char *mainReplaceText =
                     "#include <stdio.h>\n"
@@ -1620,8 +1620,9 @@ int main(int argc, char *argv[])
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-#endif
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
@@ -1630,7 +1631,7 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with required arguments
                 // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-                system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
+                system(TextFormat("./%s --frames 2 > logs/%s.log", exName, exName));
 #endif
             }
         } break;
@@ -1712,7 +1713,9 @@ int main(int argc, char *argv[])
                 char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
                 for (int k = 0; k < exTestLogLinesCount; k++)
                 {
-                    if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore warning
+#if defined(BUILD_TESTING_WEB)
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore web-specific warning
+#endif
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
                 }
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
@@ -1842,6 +1845,7 @@ int main(int argc, char *argv[])
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
             printf("    remove <example_name>         : Remove an existing example\n");
             printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
+            printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
             printf("    validate                      : Validate examples collection, generates report\n");
             printf("    update                        : Validate and update examples collection, generates report\n\n");
             printf("OPTIONS:\n\n");
