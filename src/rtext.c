@@ -1452,6 +1452,10 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 // NOTE: Returned lines end with null terminator '\0'
 char **LoadTextLines(const char *text, int *count)
 {
+    char **lines = NULL;
+
+    if (text == NULL) { *count = 0; return lines; }
+
     int lineCount = 1;
     int textSize = (int)strlen(text);
 
