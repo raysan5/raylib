@@ -40,10 +40,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    MonitorInfo monitors[MAX_MONITORS] = { 0 };
-
     InitWindow(screenWidth, screenHeight, "raylib [core] example - monitor detector");
 
+    MonitorInfo monitors[MAX_MONITORS] = { 0 };
     int currentMonitorIndex = GetCurrentMonitor();
     int monitorCount = 0;
 
@@ -55,7 +54,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
         // Variables to find the max x and Y to calculate the scale
         int maxWidth = 1;
         int maxHeight = 1;
@@ -76,7 +74,8 @@ int main(void)
                 GetMonitorPhysicalHeight(i),
                 GetMonitorRefreshRate(i)
             };
-            if (monitors[i].position.x < monitorOffsetX) monitorOffsetX = (int)monitors[i].position.x*-1;
+            
+            if (monitors[i].position.x < monitorOffsetX) monitorOffsetX = -(int)monitors[i].position.x;
 
             const int width = (int)monitors[i].position.x + monitors[i].width;
             const int height = (int)monitors[i].position.y + monitors[i].height;
@@ -85,25 +84,22 @@ int main(void)
             if (maxHeight < height) maxHeight = height;
         }
 
-        if (IsKeyPressed(KEY_ENTER) && monitorCount > 1) 
+        if (IsKeyPressed(KEY_ENTER) && (monitorCount > 1)) 
         {
             currentMonitorIndex += 1;
 
             // Set index to 0 if the last one
-            if(currentMonitorIndex == monitorCount) currentMonitorIndex = 0;
+            if (currentMonitorIndex == monitorCount) currentMonitorIndex = 0;
 
             SetWindowMonitor(currentMonitorIndex); // Move window to currentMonitorIndex
         }
-        else 
-        {
-            // Get currentMonitorIndex if manually moved
-            currentMonitorIndex = GetCurrentMonitor();
-        }
+        else currentMonitorIndex = GetCurrentMonitor(); // Get currentMonitorIndex if manually moved
 
         float monitorScale = 0.6f; 
-
-        if(maxHeight > maxWidth + monitorOffsetX) monitorScale *= ((float)screenHeight/(float)maxHeight);
+        
+        if (maxHeight > (maxWidth + monitorOffsetX)) monitorScale *= ((float)screenHeight/(float)maxHeight);
         else monitorScale *= ((float)screenWidth/(float)(maxWidth + monitorOffsetX));
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -120,10 +116,10 @@ int main(void)
             {
                 // Calculate retangle position and size using monitorScale
                 const Rectangle rec = (Rectangle){
-                    (monitors[i].position.x + monitorOffsetX) * monitorScale + 140,
-                    monitors[i].position.y * monitorScale + 80,
-                    monitors[i].width * monitorScale,
-                    monitors[i].height * monitorScale
+                    (monitors[i].position.x + monitorOffsetX)*monitorScale + 140,
+                    monitors[i].position.y*monitorScale + 80,
+                    monitors[i].width*monitorScale,
+                    monitors[i].height*monitorScale
                 };
 
                 // Draw monitor name and information inside the rectangle
@@ -148,13 +144,8 @@ int main(void)
                     // Draw window position based on monitors
                     DrawRectangleV(windowPosition, (Vector2){screenWidth * monitorScale, screenHeight * monitorScale}, Fade(GREEN, 0.5));
                 }
-                else
-                {
-                    DrawRectangleLinesEx(rec, 5, GRAY);
-                }
-
+                else DrawRectangleLinesEx(rec, 5, GRAY);
             }
-
 
         EndDrawing();
         //----------------------------------------------------------------------------------
