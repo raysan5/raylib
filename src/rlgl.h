@@ -1252,7 +1252,7 @@ void rlPushMatrix(void)
     RLGL.State.stackCounter++;
 }
 
-// Pop lattest inserted matrix from RLGL.State.stack
+// Pop latest inserted matrix from RLGL.State.stack
 void rlPopMatrix(void)
 {
     if (RLGL.State.stackCounter > 0)
