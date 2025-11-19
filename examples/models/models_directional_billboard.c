@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2025-2025 Robin (@RobinsAviary)
+*   Copyright (c) 2025 Robin (@RobinsAviary)
 *   Killbot art by patvanmackelberg https://opengameart.org/content/killbot-8-directional under CC0
 *
 ********************************************************************************************/

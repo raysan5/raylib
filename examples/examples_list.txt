@@ -25,7 +25,7 @@ core;core_3d_camera_mode;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@rays
 core;core_3d_camera_free;★☆☆☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 core;core_3d_camera_first_person;★★☆☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 core;core_3d_camera_split_screen;★★★☆;3.7;4.0;2021;2025;"Jeffery Myers";@JeffM2501
-core;core_3d_camera_fps;★★★☆;5.5;5.5;2025;2025;"Agnis Aldins";@nezvers
+core;core_3d_camera_fps;★★★☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
 core;core_3d_picking;★★☆☆;1.3;4.0;2015;2025;"Ramon Santamaria";@raysan5
 core;core_world_screen;★★☆☆;1.3;1.4;2015;2025;"Ramon Santamaria";@raysan5
 core;core_window_flags;★★★☆;3.5;3.5;2020;2025;"Ramon Santamaria";@raysan5
@@ -46,7 +46,7 @@ core;core_automation_events;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";@r
 core;core_high_dpi;★★☆☆;5.0;5.5;2025;2025;"Jonathan Marler";@marler8997
 core;core_render_texture;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
-core;core_viewport_scaling;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldins";@nezvers
+core;core_viewport_scaling;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
 core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoom
 core;core_directory_files;★☆☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
 core;core_highdpi_testbed;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
@@ -88,6 +88,8 @@ shapes;shapes_simple_particles;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@
 shapes;shapes_starfield_effect;★★☆☆;5.5;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
 shapes;shapes_lines_drawing;★☆☆☆;5.6-dev;5.6;2025;2025;"Robin";@RobinsAviary
 shapes;shapes_math_angle_rotation;★☆☆☆;5.6-dev;5.6;2025;2025;"Kris";@krispy-snacc
+shapes;shapes_rlgl_color_wheel;★★★☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
+shapes;shapes_rlgl_triangle;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -113,8 +115,9 @@ textures;textures_gif_player;★★★☆;4.2;4.2;2021;2025;"Ramon Santamaria";@
 textures;textures_image_kernel;★★★★;1.3;1.3;2015;2025;"Karim Salem";@kimo-s
 textures;textures_image_channel;★★☆☆;5.5;5.5;2024;2025;"Bruno Cabral";@brccabral
 textures;textures_image_rotate;★★☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
-textures;textures_screen_buffer;★★☆☆;5.5;5.5;2014;2025;"Agnis Aldins";@nezvers
+textures;textures_screen_buffer;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
 textures;textures_textured_curve;★★★☆;4.5;4.5;2022;2025;"Jeffery Myers";@JeffM2501
+textures;textures_sprite_stacking;★★☆☆;5.6-dev;6.0;2025;2025;"Robin";@RobinsAviary
 text;text_sprite_fonts;★☆☆☆;1.7;3.7;2017;2025;"Ramon Santamaria";@raysan5
 text;text_font_spritefont;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 text;text_font_filters;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
@@ -156,6 +159,7 @@ models;models_tesseract_view;★★☆☆;5.6-dev;5.6-dev;2024;2025;"Timothy van
 models;models_basic_voxel;★★☆☆;5.5;5.5;2025;2025;"Tim Little";@timlittle
 models;models_rotating_cube;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 models;models_decals;★★★★;5.6-dev;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
+models;models_directional_billboard;★★☆☆;5.6-dev;5.6;2025;2025;"Robin";@RobinsAviary
 shaders;shaders_ascii_rendering;★★☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
 shaders;shaders_basic_lighting;★★★★;3.0;4.2;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_model_shader;★★☆☆;1.3;3.7;2014;2025;"Ramon Santamaria";@raysan5
@@ -196,6 +200,7 @@ audio;audio_mixed_processor;★★★★;4.2;4.2;2023;2025;"hkc";@hatkidchan
 audio;audio_stream_effects;★★★★;4.2;5.0;2022;2025;"Ramon Santamaria";@raysan5
 audio;audio_sound_multi;★★☆☆;5.0;5.0;2023;2025;"Jeffery Myers";@JeffM2501
 audio;audio_sound_positioning;★★☆☆;5.5;5.5;2025;2025;"Le Juez Victor";@Bigfoot71
+audio;audio_fft_spectrum_visualizer;★★★☆;6.0;5.6-dev;2025;2025;"IANN";@meisei4
 others;rlgl_standalone;★★★★;1.6;4.0;2014;2025;"Ramon Santamaria";@raysan5
 others;rlgl_compute_shader;★★★★;4.0;4.0;2021;2025;"Teddy Astie";@tsnake41
 others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flashback-fx

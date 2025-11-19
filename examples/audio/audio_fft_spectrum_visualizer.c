@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
-*   Example originally created with raylib 6.0
+*   Example originally created with raylib 6.0, last time updated with raylib 5.6-dev
 *
 *   Inspired by Inigo Quilez's https://www.shadertoy.com/
 *   Resources/specification: https://gist.github.com/soulthreads/2efe50da4be1fb5f7ab60ff14ca434b8

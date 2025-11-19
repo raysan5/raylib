@@ -587,6 +587,8 @@ SHAPES = \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
+    shapes/shapes_rlgl_color_wheel \
+    shapes/shapes_rlgl_triangle \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
@@ -615,11 +617,12 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_polygon_drawing \
     textures/textures_raw_data \
+    textures/textures_screen_buffer \
     textures/textures_sprite_animation \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
+    textures/textures_sprite_stacking \
     textures/textures_srcrec_dstrec \
-    textures/textures_screen_buffer \
     textures/textures_textured_curve \
     textures/textures_tiled_drawing \
     textures/textures_to_image
@@ -650,6 +653,7 @@ MODELS = \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
     models/models_decals \
+    models/models_directional_billboard \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_heightmap_rendering \
@@ -704,7 +708,7 @@ SHADERS = \
     shaders/shaders_vertex_displacement
 
 AUDIO = \
-	audio/audio_fft_spectrum_visualizer \
+    audio/audio_fft_spectrum_visualizer \
     audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \

@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - screen buffer / update Image as screen buffer and display with texture
+*   raylib [textures] example - screen buffer
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.6
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
 *   Example contributed by Agnis Aldiņš (@nezvers) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -40,7 +40,7 @@ int main(void)
     const int pixelScale = SCALE_FACTOR;
     const int imageWidth = screenWidth / pixelScale;
     const int imageHeight = screenHeight / pixelScale;
-    InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - screen buffer");
 
     Color palette[MAX_COLORS] = {0};
     unsigned char indexBuffer[INDEX_BUFFER_SIZE] = {0};
