@@ -1459,13 +1459,13 @@ char **LoadTextLines(const char *text, int *count)
     int lineCount = 1;
     int textSize = (int)strlen(text);
 
-    // Text pass to get required line count
+    // First text scan pass to get required line count
     for (int i = 0; i < textSize; i++)
     {
         if (text[i] == '\n') lineCount++;
     }
 
-    char **lines = (char **)RL_CALLOC(lineCount, sizeof(char *));
+    lines = (char **)RL_CALLOC(lineCount, sizeof(char *));
     for (int i = 0, l = 0, lineLen = 0; i <= textSize; i++)
     {
         if ((text[i] == '\n') || (text[i] == '\0'))
