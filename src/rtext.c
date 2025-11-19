@@ -1891,6 +1891,7 @@ void TextAppend(char *text, const char *append, int *position)
 int TextFindIndex(const char *text, const char *search)
 {
     int position = -1;
+    if (text == NULL) return position;
 
     char *ptr = (char *)strstr(text, search);
 
