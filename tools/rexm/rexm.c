@@ -931,23 +931,28 @@ int main(int argc, char *argv[])
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#elif defined(PLATFORM_DRM)
+                LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #endif
 
+#if !defined(PLATFORM_DRM)
                 // Build example for PLATFORM_WEB
                 // Build: raylib.com/examples/<category>/<category>_example_name.html
                 // Build: raylib.com/examples/<category>/<category>_example_name.data
                 // Build: raylib.com/examples/<category>/<category>_example_name.wasm
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-#else
+    #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-#endif
+    #endif
                 // Update generated .html metadata
                 LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
                 UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -963,6 +968,7 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
                 FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+#endif // !PLATFORM_DRM
 
                 // Once example processed, free memory from list
                 RL_FREE(exBuildList[i]);
@@ -1618,6 +1624,10 @@ int main(int argc, char *argv[])
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #elif defined(PLATFORM_DRM)
+                LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
@@ -1631,7 +1641,12 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with required arguments
                 // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
+
+    #if defined(_WIN32)
+                system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
+    #else
                 system(TextFormat("./%s --frames 2 > logs/%s.log", exName, exName));
+    #endif
 #endif
             }
         } break;
@@ -1716,6 +1731,11 @@ int main(int argc, char *argv[])
 #if defined(BUILD_TESTING_WEB)
                     if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore web-specific warning
 #endif
+#if defined(PLATFORM_DRM)
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: DISPLAY: No graphic") >= 0) continue; // Ignore specific warning
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: GetCurrentMonitor()") >= 0) continue; // Ignore specific warning
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: SetWindowPosition()") >= 0) continue; // Ignore specific warning
+#endif
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
                 }
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
@@ -1758,7 +1778,7 @@ int main(int argc, char *argv[])
             |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
             | core_basic window                |    0    |    0    |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
             */
-            LOG("INFO: [examples_testing.md] Generating examples testing report...\n");
+            LOG("INFO: [examples_testing_os.md] Generating examples testing report...\n");
 
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
