@@ -1672,7 +1672,7 @@ RLAPI void ResumeSound(Sound sound);                                  // Resume 
 RLAPI bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 RLAPI void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 RLAPI void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
-RLAPI void SetSoundPan(Sound sound, float pan);                       // Set pan for a sound (0.5 is center)
+RLAPI void SetSoundPan(Sound sound, float pan);                       // Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)
 RLAPI Wave WaveCopy(Wave wave);                                       // Copy a wave to a new wave
 RLAPI void WaveCrop(Wave *wave, int initFrame, int finalFrame);       // Crop a wave to defined frames range
 RLAPI void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels); // Convert wave data to desired format
@@ -1693,7 +1693,7 @@ RLAPI void ResumeMusicStream(Music music);                            // Resume 
 RLAPI void SeekMusicStream(Music music, float position);              // Seek music to a position (in seconds)
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
-RLAPI void SetMusicPan(Music music, float pan);                       // Set pan for a music (0.5 is center)
+RLAPI void SetMusicPan(Music music, float pan);                       // Set pan for a music (-1.0 left, 0.0 center, 1.0 right)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
