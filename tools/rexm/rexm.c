@@ -1667,7 +1667,7 @@ int main(int argc, char *argv[])
                 int exTestBuildLogLinesCount = 0;
                 char **exTestBuildLogLines = LoadTextLines(exTestBuildLog, &exTestBuildLogLinesCount);
 
-                for (int k = 0, index = 0; k < exTestBuildLogLinesCount; k++)
+                for (int k = 0; k < exTestBuildLogLinesCount; k++)
                 {
                     // Checking compilation warnings generated
                     if (TextFindIndex(exTestBuildLogLines[k], "warning:") >= 0) testing[i].buildwarns++;
@@ -1710,7 +1710,7 @@ int main(int argc, char *argv[])
                 // Load build log text lines
                 int exTestLogLinesCount = 0;
                 char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
-                for (int k = 0, index = 0; k < exTestLogLinesCount; k++)
+                for (int k = 0; k < exTestLogLinesCount; k++)
                 {
                     if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore warning
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
@@ -2136,7 +2136,7 @@ static int UpdateRequiredFiles(void)
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
         "\nSome example missing? As always, contributions are welcome, feel free to send new examples!\n");
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-        "Here is an[examples template](examples_template.c) with instructions to start with!\n");
+        "Here is an [examples template](examples_template.c) with instructions to start with!\n");
 
     // Save updated file
     SaveFileText(TextFormat("%s/README.md", exBasePath), mdTextUpdated);
