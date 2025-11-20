@@ -72,6 +72,8 @@
 #include <shellscalingapi.h>
 #include <versionhelpers.h>
 
+#include <malloc.h>          // Required for alloca()
+
 #if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     #include <GL/gl.h>
 #endif
