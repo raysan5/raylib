@@ -35,10 +35,10 @@ int main(void)
 
     float timePlayed = 0.0f;        // Time played normalized [0.0f..1.0f]
     bool pause = false;             // Music playing paused
-    
+
     float pan = 0.0f;               // Default audio pan center [-1.0f..1.0f]
     SetMusicPan(music, pan);
-    
+
     float volume = 0.8f;            // Default audio volume [0.0f..1.0f]
     SetMusicVolume(music, volume);
 
@@ -67,29 +67,29 @@ int main(void)
             if (pause) PauseMusicStream(music);
             else ResumeMusicStream(music);
         }
-        
+
         // Set audio pan
-        if (IsKeyDown(KEY_LEFT)) 
+        if (IsKeyDown(KEY_LEFT))
         {
             pan -= 0.05f;
             if (pan < -1.0f) pan = -1.0f;
             SetMusicPan(music, pan);
         }
-        else if (IsKeyDown(KEY_RIGHT)) 
+        else if (IsKeyDown(KEY_RIGHT))
         {
             pan += 0.05f;
             if (pan > 1.0f) pan = 1.0f;
             SetMusicPan(music, pan);
         }
-        
+
         // Set audio volume
-        if (IsKeyDown(KEY_DOWN)) 
+        if (IsKeyDown(KEY_DOWN))
         {
             volume -= 0.05f;
             if (volume < 0.0f) volume = 0.0f;
             SetMusicVolume(music, volume);
         }
-        else if (IsKeyDown(KEY_UP)) 
+        else if (IsKeyDown(KEY_UP))
         {
             volume += 0.05f;
             if (volume > 1.0f) volume = 1.0f;
@@ -109,7 +109,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText("MUSIC SHOULD BE PLAYING!", 255, 150, 20, LIGHTGRAY);
-            
+
             DrawText("LEFT-RIGHT for PAN CONTROL", 320, 74, 10, DARKBLUE);
             DrawRectangle(300, 100, 200, 12, LIGHTGRAY);
             DrawRectangleLines(300, 100, 200, 12, GRAY);
@@ -121,7 +121,7 @@ int main(void)
 
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);
             DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 280, 20, LIGHTGRAY);
-            
+
             DrawText("UP-DOWN for VOLUME CONTROL", 320, 334, 10, DARKGREEN);
             DrawRectangle(300, 360, 200, 12, LIGHTGRAY);
             DrawRectangleLines(300, 360, 200, 12, GRAY);

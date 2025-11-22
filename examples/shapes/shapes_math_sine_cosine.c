@@ -40,8 +40,8 @@ int main(void)
 
     Vector2 sinePoints[WAVE_POINTS];
     Vector2 cosPoints[WAVE_POINTS];
-    Vector2 center = { (screenWidth/2.0f) - 30.f, screenHeight/2.0f };
-    Rectangle start = { 20.f, screenHeight - 120.f , 200.0f, 100.0f};
+    Vector2 center = { (screenWidth/2.0f) - 30.0f, screenHeight/2.0f };
+    Rectangle start = { 20.0f, screenHeight - 120.f , 200.0f, 100.0f};
     float radius = 130.0f;
     float angle = 0.0f;
     bool pause = false;
@@ -98,7 +98,7 @@ int main(void)
             // Base circle and axes
             DrawCircleLinesV(center, radius, GRAY);
             DrawLineEx((Vector2){ center.x, limitMin.y }, (Vector2){ center.x, limitMax.y }, 1.0f, GRAY);
-            DrawLineEx((Vector2){ limitMin.x, center.y }, (Vector2){ limitMax.x, center.y }, 1.f, GRAY);
+            DrawLineEx((Vector2){ limitMin.x, center.y }, (Vector2){ limitMax.x, center.y }, 1.0f, GRAY);
 
             // Wave graph axes
             DrawLineEx((Vector2){ start.x , start.y }, (Vector2){ start.x , start.y + start.height }, 2.0f, GRAY);
@@ -135,19 +135,19 @@ int main(void)
             DrawText(TextFormat("Cotangent %.2f", cotangent), 640, 250, 6, ORANGE);
 
             // Complementary angle (beige)
-            DrawCircleSectorLines(center, radius*0.6f , -angle, -90.f , 36.0f, BEIGE);
+            DrawCircleSectorLines(center, radius*0.6f , -angle, -90.0f , 36.0f, BEIGE);
             DrawText(TextFormat("Complementary  %0.f°",complementary), 640, 150, 6, BEIGE);
 
             // Supplementary angle (darkblue)
-            DrawCircleSectorLines(center, radius*0.5f , -angle, -180.f , 36.0f, DARKBLUE);
+            DrawCircleSectorLines(center, radius*0.5f , -angle, -180.0f , 36.0f, DARKBLUE);
             DrawText(TextFormat("Supplementary  %0.f°",supplementary), 640, 130, 6, DARKBLUE);
 
             // Explementary angle (pink)
-            DrawCircleSectorLines(center, radius*0.4f , -angle, -360.f , 36.0f, PINK);
+            DrawCircleSectorLines(center, radius*0.4f , -angle, -360.0f , 36.0f, PINK);
             DrawText(TextFormat("Explementary  %0.f°",explementary), 640, 170, 6, PINK);
 
             // Current angle - arc (lime), radius (black), endpoint (black)
-            DrawCircleSectorLines(center, radius*0.7f , -angle, 0.f, 36.0f, LIME);
+            DrawCircleSectorLines(center, radius*0.7f , -angle, 0.0f, 36.0f, LIME);
             DrawLineEx((Vector2){ center.x , center.y }, point, 2.0f, BLACK);
             DrawCircleV(point, 4.0f, BLACK);
 
@@ -156,11 +156,12 @@ int main(void)
             GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
             GuiToggle((Rectangle){ 640, 70, 120, 20}, TextFormat("Pause"), &pause);
             GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(LIME));
-            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.0f°", angle), &angle, 0.0f, 360.f);
+            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Angle", TextFormat("%.0f°", angle), &angle, 0.0f, 360.0f);
 
             // Angle values panel
             GuiGroupBox((Rectangle){ 620, 110, 140, 170}, "Angle Values");
             //------------------------------------------------------------------------------
+
             DrawFPS(10, 10);
 
         EndDrawing();

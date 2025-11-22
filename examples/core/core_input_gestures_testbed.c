@@ -202,7 +202,7 @@ int main(void)
             DrawText("Log", (int)gestureLogPosition.x, (int)gestureLogPosition.y, 20, BLACK);
 
             // Loop in both directions to print the gesture log array in the inverted order (and looping around if the index started somewhere in the middle)
-            for (i = 0, ii = gestureLogIndex; i < GESTURE_LOG_SIZE; i++, ii = (ii + 1) % GESTURE_LOG_SIZE) DrawText(gestureLog[ii], (int)gestureLogPosition.x, (int)gestureLogPosition.y + 410 - i*20, 20, (i == 0 ? gestureColor : LIGHTGRAY));
+            for (i = 0, ii = gestureLogIndex; i < GESTURE_LOG_SIZE; i++, ii = (ii + 1)%GESTURE_LOG_SIZE) DrawText(gestureLog[ii], (int)gestureLogPosition.x, (int)gestureLogPosition.y + 410 - i*20, 20, (i == 0 ? gestureColor : LIGHTGRAY));
             Color logButton1Color, logButton2Color;
             switch (logMode)
             {

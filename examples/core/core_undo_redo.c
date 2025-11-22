@@ -187,7 +187,7 @@ int main(void)
             if (lastUndoIndex > firstUndoIndex)
             {
                 for (int i = firstUndoIndex; i < currentUndoIndex; i++)
-                    DrawRectangleRec((Rectangle){gridPosition.x + states[i].cell.x * GRID_CELL_SIZE, gridPosition.y + states[i].cell.y * GRID_CELL_SIZE,
+                    DrawRectangleRec((Rectangle){gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
                         GRID_CELL_SIZE, GRID_CELL_SIZE }, LIGHTGRAY);
             }
             else if (firstUndoIndex > lastUndoIndex)
@@ -195,7 +195,7 @@ int main(void)
                 if ((currentUndoIndex < MAX_UNDO_STATES) && (currentUndoIndex > lastUndoIndex))
                 {
                     for (int i = firstUndoIndex; i < currentUndoIndex; i++)
-                        DrawRectangleRec((Rectangle) { gridPosition.x + states[i].cell.x * GRID_CELL_SIZE, gridPosition.y + states[i].cell.y * GRID_CELL_SIZE,
+                        DrawRectangleRec((Rectangle) { gridPosition.x + states[i].cell.x*GRID_CELL_SIZE, gridPosition.y + states[i].cell.y*GRID_CELL_SIZE,
                             GRID_CELL_SIZE, GRID_CELL_SIZE }, LIGHTGRAY);
                 }
                 else

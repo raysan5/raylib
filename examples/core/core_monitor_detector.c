@@ -142,7 +142,7 @@ int main(void)
                     Vector2 windowPosition = (Vector2){ (GetWindowPosition().x + monitorOffsetX)*monitorScale  + 140, GetWindowPosition().y*monitorScale + 80 };
 
                     // Draw window position based on monitors
-                    DrawRectangleV(windowPosition, (Vector2){screenWidth * monitorScale, screenHeight * monitorScale}, Fade(GREEN, 0.5));
+                    DrawRectangleV(windowPosition, (Vector2){screenWidth*monitorScale, screenHeight*monitorScale}, Fade(GREEN, 0.5));
                 }
                 else DrawRectangleLinesEx(rec, 5, GRAY);
             }

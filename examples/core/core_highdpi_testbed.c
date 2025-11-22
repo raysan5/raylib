@@ -27,9 +27,10 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - highdpi testbed");
 
-    // TODO: Load resources / Initialize variables at this point
+    int gridSpacing = 40;   // Grid spacing in pixels
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -48,11 +49,12 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // TODO: Draw everything that requires to be drawn at this point
+            // Draw grid
+            for (int h = 0; h < 20; h++) DrawLine(0, h*gridSpacing, GetRenderWidth(), h*gridSpacing, LIGHTGRAY);
+            for (int v = 0; v < 40; v++) DrawLine(v*gridSpacing, 0, v*gridSpacing, GetScreenHeight(), LIGHTGRAY);
 
-            DrawLineEx((Vector2){ 0, 0 }, (Vector2){ screenWidth, screenHeight }, 2.0f, RED);
-            DrawLineEx((Vector2){ 0, screenHeight }, (Vector2){ screenWidth, 0 }, 2.0f, RED);
-            DrawText("example base code template", 260, 400, 20, LIGHTGRAY);
+            // Draw UI info
+            DrawText(TextFormat("SCREEN SIZE: %ix%i", GetScreenWidth(), GetScreenHeight()), 10, 10, 20, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

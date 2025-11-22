@@ -56,7 +56,7 @@ int main(void)
         // Add a positive/negative offset to spin right/left at different speeds
         if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) rotationSpeed -= speedChange;
         if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) rotationSpeed += speedChange;
- 
+
         rotation += rotationSpeed*GetFrameTime();
         //----------------------------------------------------------------------------------
 

@@ -71,7 +71,7 @@ int main(void)
                 if ((trailPositions[i].x != 0.0f) || (trailPositions[i].y != 0.0f))
                 {
                     // Calculate relative trail strength (ratio is near 1.0 for new, near 0.0 for old)
-                    float ratio = (float)(MAX_TRAIL_LENGTH - i) / MAX_TRAIL_LENGTH;
+                    float ratio = (float)(MAX_TRAIL_LENGTH - i)/MAX_TRAIL_LENGTH;
 
                     // Fade effect: oldest positions are more transparent
                     // Fade (color, alpha) - alpha is 0.5 to 1.0 based on ratio

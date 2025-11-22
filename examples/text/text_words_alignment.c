@@ -70,27 +70,32 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
-        if (IsKeyPressed(KEY_LEFT)) {
+        if (IsKeyPressed(KEY_LEFT))
+        {
             hAlign = hAlign - 1;
             if (hAlign < 0) hAlign = 0;
         }
-        if (IsKeyPressed(KEY_RIGHT)) {
+
+        if (IsKeyPressed(KEY_RIGHT))
+        {
             hAlign = hAlign + 1;
             if (hAlign > 2) hAlign = 2;
         }
-        if (IsKeyPressed(KEY_UP)) {
+
+        if (IsKeyPressed(KEY_UP))
+        {
             vAlign = vAlign - 1;
             if (vAlign < 0) vAlign = 0;
         }
-        if (IsKeyPressed(KEY_DOWN)) {
+
+        if (IsKeyPressed(KEY_DOWN))
+        {
             vAlign = vAlign + 1;
             if (vAlign > 2) vAlign = 2;
         }
 
         // One word per second
-        wordIndex = (int)GetTime() % wordCount;
-
+        wordIndex = (int)GetTime()%wordCount;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -108,9 +113,9 @@ int main(void)
             Vector2 textSize = MeasureTextEx(font, words[wordIndex], fontSize, fontSize*.1f);
 
             // Calculate the top-left text position based on the rectangle and alignment
-            Vector2 textPos = (Vector2) {
-                textContainerRect.x + Lerp(0.0f, textContainerRect.width  - textSize.x, ((float)hAlign) * 0.5f),
-                textContainerRect.y + Lerp(0.0f, textContainerRect.height - textSize.y, ((float)vAlign) * 0.5f)
+            Vector2 textPos = (Vector2){
+                textContainerRect.x + Lerp(0.0f, textContainerRect.width  - textSize.x, ((float)hAlign)*0.5f),
+                textContainerRect.y + Lerp(0.0f, textContainerRect.height - textSize.y, ((float)vAlign)*0.5f)
             };
 
             // Draw the text

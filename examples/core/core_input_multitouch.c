@@ -46,7 +46,7 @@ int main(void)
         // Clamp touch points available ( set the maximum touch points allowed )
         if (tCount > MAX_TOUCH_POINTS) tCount = MAX_TOUCH_POINTS;
         // Get touch points positions
-        for (int i = 0; i < tCount; ++i) touchPositions[i] = GetTouchPosition(i);
+        for (int i = 0; i < tCount; i++) touchPositions[i] = GetTouchPosition(i);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -55,7 +55,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            for (int i = 0; i < tCount; ++i)
+            for (int i = 0; i < tCount; i++)
             {
                 // Make sure point is not (0, 0) as this means there is no touch for it
                 if ((touchPositions[i].x > 0) && (touchPositions[i].y > 0))

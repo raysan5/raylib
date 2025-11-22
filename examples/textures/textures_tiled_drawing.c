@@ -100,7 +100,7 @@ int main(void)
             }
 
             // Check to see which color was clicked and set it as the active color
-            for (int i = 0; i < MAX_COLORS; ++i)
+            for (int i = 0; i < MAX_COLORS; i++)
             {
                 if (CheckCollisionPointRec(mouse, colorRec[i]))
                 {

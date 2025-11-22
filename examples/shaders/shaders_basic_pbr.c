@@ -254,9 +254,9 @@ int main(void)
                 {
                     Color lightColor = (Color){
                         (unsigned char)(lights[i].color[0]*255),
-                        (unsigned char)(lights[i].color[1] * 255),
-                        (unsigned char)(lights[i].color[2] * 255),
-                        (unsigned char)(lights[i].color[3] * 255) };
+                        (unsigned char)(lights[i].color[1]*255),
+                        (unsigned char)(lights[i].color[2]*255),
+                        (unsigned char)(lights[i].color[3]*255) };
 
                     if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lightColor);
                     else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lightColor, 0.3f));

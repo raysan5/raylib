@@ -95,7 +95,7 @@ int main(void)
         }
         else
         {
-            for (int i = 0; i <= emissionRate; ++i) EmitParticle(&circularBuffer, emitterPosition, currentType);
+            for (int i = 0; i <= emissionRate; i++) EmitParticle(&circularBuffer, emitterPosition, currentType);
         }
 
         // Update the parameters of each particle

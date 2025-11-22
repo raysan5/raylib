@@ -34,7 +34,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - triangle strip");
 
     Vector2 points[122] = { 0 };
-    Vector2 center = { (screenWidth/2.0f) - 125.f, screenHeight/2.0f };
+    Vector2 center = { (screenWidth/2.0f) - 125.0f, screenHeight/2.0f };
     float segments = 6.0f;
     float insideRadius = 100.0f;
     float outsideRadius = 150.0f;
@@ -92,7 +92,7 @@ int main(void)
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Segments", TextFormat("%.0f", segments), &segments, 6.0f, 60.f);
+            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Segments", TextFormat("%.0f", segments), &segments, 6.0f, 60.0f);
             GuiCheckBox((Rectangle){ 640, 70, 20, 20 }, "Outline", &outline);
             //------------------------------------------------------------------------------
 

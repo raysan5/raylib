@@ -186,7 +186,7 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
             else increaseX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
 
             // Draw background rectangle color (if required)
-            if (colBack.a > 0) DrawRectangleRec((Rectangle) { position.x + textOffsetX, position.y + textOffsetY - backRecPadding, increaseX, fontSize + 2 * backRecPadding }, colBack);
+            if (colBack.a > 0) DrawRectangleRec((Rectangle) { position.x + textOffsetX, position.y + textOffsetY - backRecPadding, increaseX, fontSize + 2*backRecPadding }, colBack);
 
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
