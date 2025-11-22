@@ -138,7 +138,6 @@ typedef struct {
     Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
     bool touchActive[MAX_TOUCH_POINTS]; // Track which touch points are currently active
-    int touchLastUpdate[MAX_TOUCH_POINTS]; // Frame counter for last update (to detect stale touches)
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
@@ -165,7 +164,6 @@ static bool crtcSet = false;
 extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific data
-static int frameCounter = 0;            // Frame counter for touch cleanup
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -1071,27 +1069,6 @@ void PollInputEvents(void)
     UpdateGestures();
 #endif
 
-    // Periodic cleanup to prevent ghost touches (every 60 frames ~ 1 second at 60fps)
-    frameCounter++;
-    if (frameCounter > 3600) frameCounter = 1800; // Reset after 1 minute to prevent overflow, keeping reasonable gap
-    
-    if (frameCounter % 60 == 0) {
-        // Clean up stale touches that haven't been updated recently (likely ghost touches)
-        for (int i = 0; i < MAX_TOUCH_POINTS; i++) {
-            if (platform.touchActive[i]) {
-                // If a touch hasn't been updated in the last 30 frames (~0.5 sec), consider it stale
-                int framesSinceUpdate = frameCounter - platform.touchLastUpdate[i];
-                if (framesSinceUpdate > 30) {
-                    TRACELOG(LOG_DEBUG, "TOUCH: Cleaning up stale touch point %d (frames since update: %d)", i, framesSinceUpdate);
-                    platform.touchActive[i] = false;
-                    platform.touchLastUpdate[i] = 0;
-                    CORE.Input.Touch.position[i].x = -1;
-                    CORE.Input.Touch.position[i].y = -1;
-                }
-            }
-        }
-    }
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1906,7 +1883,6 @@ static void InitEvdevInput(void)
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
         platform.touchActive[i] = false;
-        platform.touchLastUpdate[i] = 0;
     }
     
     // Initialize touch slot
@@ -2329,7 +2305,6 @@ static void PollMouseEvents(void)
             {
                 if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
                     CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
-                    platform.touchLastUpdate[platform.touchSlot] = frameCounter;
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2338,7 +2313,6 @@ static void PollMouseEvents(void)
             {
                 if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
                     CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
-                    platform.touchLastUpdate[platform.touchSlot] = frameCounter;
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2351,14 +2325,12 @@ static void PollMouseEvents(void)
                     {
                         // Touch has started for this point
                         platform.touchActive[platform.touchSlot] = true;
-                        platform.touchLastUpdate[platform.touchSlot] = frameCounter;
                         touchAction = 1;    // TOUCH_ACTION_DOWN
                     }
                     else
                     {
                         // Touch has ended for this point
                         platform.touchActive[platform.touchSlot] = false;
-                        platform.touchLastUpdate[platform.touchSlot] = 0;
                         CORE.Input.Touch.position[platform.touchSlot].x = -1;
                         CORE.Input.Touch.position[platform.touchSlot].y = -1;
                         touchAction = 0;    // TOUCH_ACTION_UP
@@ -2405,9 +2377,21 @@ static void PollMouseEvents(void)
                 }
                 else
                 {
-                    platform.touchActive[0] = false;
-                    CORE.Input.Touch.position[0].x = -1;
-                    CORE.Input.Touch.position[0].y = -1;
+                    if (event.code == BTN_TOUCH)
+                    {
+                        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+                        {
+                            platform.touchActive[i] = false;
+                            CORE.Input.Touch.position[i].x = -1;
+                            CORE.Input.Touch.position[i].y = -1;
+                        }
+                    }
+                    else
+                    {
+                        platform.touchActive[0] = false;
+                        CORE.Input.Touch.position[0].x = -1;
+                        CORE.Input.Touch.position[0].y = -1;
+                    }
                     touchAction = 0;       // TOUCH_ACTION_UP
                 }
             }
@@ -2446,7 +2430,6 @@ static void PollMouseEvents(void)
                 if (platform.touchActive[i] || CORE.Input.Touch.position[i].x != -1) {
                     TRACELOG(LOG_DEBUG, "TOUCH: Force cleaning ghost touch at slot %d", i);
                     platform.touchActive[i] = false;
-                    platform.touchLastUpdate[i] = 0;
                     CORE.Input.Touch.position[i].x = -1;
                     CORE.Input.Touch.position[i].y = -1;
                 }
