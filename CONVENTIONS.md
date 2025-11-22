@@ -41,6 +41,7 @@ while (!WindowShouldClose())
 
 }
 
+// Always use accumulators as `x++` instead of `++x`
 for (int i = 0; i < NUM_VALUES; i++) printf("%i", i);
 
 // Be careful with the switch formatting!
