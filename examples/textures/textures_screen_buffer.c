@@ -17,16 +17,10 @@
 
 #include "raylib.h"
 
-#define MAX_COLORS 256
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 450
-#define SCALE_FACTOR 2
-// buffer size at least for screenImage pixel count
-#define INDEX_BUFFER_SIZE ((SCREEN_WIDTH * SCREEN_HEIGHT) / SCALE_FACTOR)
-#define FLAME_WIDTH (SCREEN_WIDTH / SCALE_FACTOR)
+#include <stdlib.h>     // Required for: calloc(), free()
 
-static void GeneretePalette(Color *palette);
-static void ClearIndexBuffer(unsigned char *buffer, int count);
+#define MAX_COLORS      256
+#define SCALE_FACTOR      2
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -35,22 +29,31 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = SCREEN_WIDTH;
-    const int screenHeight = SCREEN_HEIGHT;
-    const int pixelScale = SCALE_FACTOR;
-    const int imageWidth = screenWidth / pixelScale;
-    const int imageHeight = screenHeight / pixelScale;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - screen buffer");
 
-    Color palette[MAX_COLORS] = {0};
-    unsigned char indexBuffer[INDEX_BUFFER_SIZE] = {0};
-    unsigned char flameRootBuffer[FLAME_WIDTH] = {0};
+    int imageWidth = screenWidth/SCALE_FACTOR;
+    int imageHeight = screenHeight/SCALE_FACTOR;
+    int flameWidth = screenWidth/SCALE_FACTOR;
+
+    Color palette[MAX_COLORS] = { 0 };
+    unsigned char *indexBuffer = RL_CALLOC(imageWidth*imageWidth, sizeof(unsigned char));
+    unsigned char *flameRootBuffer = RL_CALLOC(flameWidth, sizeof(unsigned char));
 
     Image screenImage = GenImageColor(imageWidth, imageHeight, BLACK);
     Texture screenTexture = LoadTextureFromImage(screenImage);
-    GeneretePalette(palette);
-    ClearIndexBuffer(indexBuffer, INDEX_BUFFER_SIZE);
-    ClearIndexBuffer(flameRootBuffer, FLAME_WIDTH);
+
+    // Generate flame color palette
+    for (int i = 0; i < MAX_COLORS; i++)
+    {
+        float t = (float)i/(float)(MAX_COLORS - 1);
+        float hue = t*t;
+        float saturation = t;
+        float value = t;
+        palette[i] = ColorFromHSV(250.0f + 150.0f*hue, saturation, value);
+    }
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -58,8 +61,10 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        // Update
+        //----------------------------------------------------------------------------------
         // Grow flameRoot
-        for (int x = 2; x < FLAME_WIDTH; ++x)
+        for (int x = 2; x < flameWidth; x++)
         {
             unsigned short flame = flameRootBuffer[x];
             if (flame == 255) continue;
@@ -68,26 +73,26 @@ int main(void)
             flameRootBuffer[x] = flame;
         }
 
-        // transfer flameRoot to indexBuffer
-        for (int x = 0; x < FLAME_WIDTH; ++x)
+        // Transfer flameRoot to indexBuffer
+        for (int x = 0; x < flameWidth; x++)
         {
-            int i = x + (imageHeight - 1) * imageWidth;
+            int i = x + (imageHeight - 1)*imageWidth;
             indexBuffer[i] = flameRootBuffer[x];
         }
 
         // Clear top row, because it can't move any higher
-        for (int x = 0; x < imageWidth; ++x)
+        for (int x = 0; x < imageWidth; x++)
         {
             if (indexBuffer[x] == 0) continue;
             indexBuffer[x] = 0;
         }
 
         // Skip top row, it is already cleared
-        for (int y = 1; y < imageHeight; ++y)
+        for (int y = 1; y < imageHeight; y++)
         {
-            for (int x = 0; x < imageWidth; ++x)
+            for (int x = 0; x < imageWidth; x++)
             {
-                unsigned i = x + y * imageWidth;
+                unsigned int i = x + y*imageWidth;
                 unsigned char colorIndex = indexBuffer[i];
                 if (colorIndex == 0) continue;
 
@@ -97,19 +102,19 @@ int main(void)
                 int newX = x + moveX;
                 if (newX < 0 || newX >= imageWidth) continue;
 
-                unsigned i_above = i - imageWidth + moveX;
+                unsigned int iabove = i - imageWidth + moveX;
                 int decay = GetRandomValue(0, 3);
-                colorIndex -= (decay < colorIndex) ? decay : colorIndex;
-                indexBuffer[i_above] = colorIndex;
+                colorIndex -= (decay < colorIndex)? decay : colorIndex;
+                indexBuffer[iabove] = colorIndex;
             }
         }
 
         // Update screenImage with palette colors
-        for (int y = 1; y < imageHeight; ++y)
+        for (int y = 1; y < imageHeight; y++)
         {
-            for (int x = 0; x < imageWidth; ++x)
+            for (int x = 0; x < imageWidth; x++)
             {
-                unsigned i = x + y * imageWidth;
+                unsigned int i = x + y*imageWidth;
                 unsigned char colorIndex = indexBuffer[i];
                 Color col = palette[colorIndex];
                 ImageDrawPixel(&screenImage, x, y, col);
@@ -117,19 +122,24 @@ int main(void)
         }
 
         UpdateTexture(screenTexture, screenImage.data);
+        //----------------------------------------------------------------------------------
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-            const Vector2 origin = (Vector2){0, 0};
-            const float rotation = 0.f;
-            DrawTextureEx(screenTexture, origin, rotation, pixelScale, WHITE);
+            
+            ClearBackground(RAYWHITE);
+
+            DrawTextureEx(screenTexture, (Vector2){ 0, 0 }, 0.0f, 2.0f, WHITE);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
+    RL_FREE(indexBuffer);
+    RL_FREE(flameRootBuffer);
     UnloadTexture(screenTexture);
     UnloadImage(screenImage);
 
@@ -137,25 +147,4 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
-}
-
-static void GeneretePalette(Color *palette)
-{
-    for (int i = 0; i < MAX_COLORS; ++i)
-    {
-        float t = (float)i/(float)(MAX_COLORS - 1);
-        float hue = t * t;
-        float saturation = t;
-        float value = t;
-        palette[i] = ColorFromHSV(250.f + 150.f * hue, saturation, value);
-    }
-}
-
-static void ClearIndexBuffer(unsigned char *buffer, int count)
-{
-    // Use memset to set to ZERO, but for demonstration a plain for loop is used
-    for (int i = 0; i < count; ++i)
-    {
-        buffer[i] = 0;
-    }
 }
