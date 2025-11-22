@@ -17,6 +17,8 @@
 
 #include "raylib.h"
 
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 #include "raymath.h"
 
 #define MAX_DRAW_LINES  8192
@@ -47,6 +49,8 @@ int main(void)
     int symmetry = 6;
     float angle = 360.0f/(float)symmetry;
     float thickness = 3.0f;
+    Rectangle backButtonRec = { screenWidth - 55, screenHeight - 30, 25, 25 };
+    Rectangle nextButtonRec = { screenWidth - 30, screenHeight - 30, 25, 25 };
     Vector2 mousePos = { 0 };
     Vector2 prevMousePos = { 0 };
     Vector2 scaleVector = { 1.0f, -1.0f };
@@ -58,7 +62,10 @@ int main(void)
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    int lineCounter = 0;
+    int currentLineCounter = 0;
+    int totalLineCounter = 0;
+    int backButtonClicked = false;
+    int nextButtonClicked = false;
 
     SetTargetFPS(20);
     //--------------------------------------------------------------------------------------
@@ -74,23 +81,38 @@ int main(void)
         Vector2 lineStart = Vector2Subtract(mousePos, offset);
         Vector2 lineEnd = Vector2Subtract(prevMousePos, offset);
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (
+            IsMouseButtonDown(MOUSE_LEFT_BUTTON)
+            && (CheckCollisionPointRec(mousePos, backButtonRec) == false)
+            && (CheckCollisionPointRec(mousePos, nextButtonRec) == false)
+        )
         {
-            for (int s = 0; (s < symmetry) && (lineCounter < (MAX_DRAW_LINES - 1)); s++)
+            for (int s = 0; (s < symmetry) && (totalLineCounter < (MAX_DRAW_LINES - 1)); s++)
             {
                 lineStart = Vector2Rotate(lineStart, angle*DEG2RAD);
                 lineEnd = Vector2Rotate(lineEnd, angle*DEG2RAD);
 
                 // Store mouse line
-                lines[lineCounter].start = lineStart;
-                lines[lineCounter].end = lineEnd;
+                lines[totalLineCounter].start = lineStart;
+                lines[totalLineCounter].end = lineEnd;
 
                 // Store reflective line
-                lines[lineCounter + 1].start = Vector2Multiply(lineStart, scaleVector);
-                lines[lineCounter + 1].end = Vector2Multiply(lineEnd, scaleVector);
+                lines[totalLineCounter + 1].start = Vector2Multiply(lineStart, scaleVector);
+                lines[totalLineCounter + 1].end = Vector2Multiply(lineEnd, scaleVector);
 
-                lineCounter += 2;
+                totalLineCounter += 2;
+                currentLineCounter = totalLineCounter;
             }
+        }
+
+        if (backButtonClicked && (currentLineCounter > 0))
+        {
+            currentLineCounter -= 1;
+        }
+
+        if (nextButtonClicked && (currentLineCounter < MAX_DRAW_LINES) && ((currentLineCounter + 1) <= totalLineCounter))
+        {
+            currentLineCounter += 1;
         }
         //----------------------------------------------------------------------------------
 
@@ -103,7 +125,7 @@ int main(void)
             BeginMode2D(camera);
                 for (int s = 0; s < symmetry; s++)
                 {
-                    for (int i = 0; i < lineCounter; i += 2)
+                    for (int i = 0; i < currentLineCounter; i += 2)
                     {
                         DrawLineEx(lines[i].start, lines[i].end, thickness, BLACK);
                         DrawLineEx(lines[i + 1].start, lines[i + 1].end, thickness, BLACK);
@@ -111,7 +133,19 @@ int main(void)
                 }
             EndMode2D();
 
-            DrawText(TextFormat("LINES: %i/%i", lineCounter, MAX_DRAW_LINES), 10, screenHeight - 30, 20, MAROON);
+            if ((currentLineCounter - 1) < 0) {
+                GuiDisable();
+            }
+            backButtonClicked = GuiButton(backButtonRec, "<");
+            GuiEnable();
+
+            if ((currentLineCounter + 1) > totalLineCounter) {
+                GuiDisable();
+            }
+            nextButtonClicked = GuiButton(nextButtonRec, ">");
+            GuiEnable();
+
+            DrawText(TextFormat("LINES: %i/%i", currentLineCounter, MAX_DRAW_LINES), 10, screenHeight - 30, 20, MAROON);
             DrawFPS(10, 10);
 
         EndDrawing();
