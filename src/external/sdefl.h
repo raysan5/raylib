@@ -180,6 +180,14 @@ extern int zsdeflate(struct sdefl *s, void *o, const void *i, int n, int lvl);
 #include <string.h> /* memcpy */
 #include <limits.h> /* CHAR_BIT */
 
+/*
+ *  @ChrisGrams - In Windows, this header is required and was no longer
+ *  included in rcore.c after commit 0b4815b8fe861f8fbeac35f46f7e1ff78891b7b5.
+ */
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #define SDEFL_NIL               (-1)
 #define SDEFL_MAX_MATCH         258
 #define SDEFL_MAX_CODE_LEN      (15)
