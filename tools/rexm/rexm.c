@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
                 // Support building/testing not only individual examples but multiple: ALL/<category>
                 int exBuildListInfoCount = 0;
                 rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListInfoCount);
-                    
+
                 for (int i = 0; i < exBuildListInfoCount; i++)
                 {
                     if (!TextIsEqual(exBuildListInfo[i].category, "others"))
@@ -428,9 +428,9 @@ int main(int argc, char *argv[])
                         exBuildListCount++;
                     }
                 }
-                    
+
                 UnloadExampleData(exBuildListInfo);
-                
+
                 if (exBuildListCount == 0) LOG("WARNING: BUILD: Example requested not available in the collection\n");
                 else
                 {
@@ -933,7 +933,7 @@ int main(int argc, char *argv[])
                 system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
@@ -1495,7 +1495,7 @@ int main(int argc, char *argv[])
                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
 
                 // Skip some examples from building
-                if ((strcmp(exName, "core_custom_logging") == 0) || 
+                if ((strcmp(exName, "core_custom_logging") == 0) ||
                     (strcmp(exName, "core_window_should_close") == 0) ||
                     (strcmp(exName, "core_custom_frame_control") == 0)) continue;
 
@@ -1512,7 +1512,7 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
                 // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
                 // STEP 5: Generate report with results
-                
+
                 // STEP 1: Load example and inject required code
                 //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
                 //      WARNING: If we make a copy and something fails, it could not be restored at the end
@@ -1572,7 +1572,7 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
@@ -1622,15 +1622,15 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
@@ -1814,7 +1814,7 @@ int main(int argc, char *argv[])
                 if ((testing[i].buildwarns > 0) || (testing[i].warnings > 0) || (testing[i].status > 0))
                 {
                     repIndex += sprintf(report + repIndex, "| %-32s |    %i    |    %i    |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
-                        exBuildList[i], 
+                        exBuildList[i],
                         testing[i].buildwarns,
                         testing[i].warnings,
                         (testing[i].status & TESTING_FAIL_INIT)? "❌" : "✔",

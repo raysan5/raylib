@@ -3343,7 +3343,7 @@ void ImageClearBackground(Image *dst, Color color)
     int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
     int totalPixels = dst->width * dst->height;
 
-    // Repeat the first pixel data throughout the image, 
+    // Repeat the first pixel data throughout the image,
     // doubling the pixels copied on each iteration
     for (int i = 1; i < totalPixels; i *= 2)
     {
@@ -3727,7 +3727,7 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
 
     // Repeat the first pixel data throughout the row
-    for (int x = 1; x < (int)rec.width; x *= 2) 
+    for (int x = 1; x < (int)rec.width; x *= 2)
     {
         int pixelsToCopy = MIN(x, (int)rec.width - x);
         memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, pixelsToCopy * bytesPerPixel);

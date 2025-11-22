@@ -593,7 +593,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     // Init audio buffer values
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
-    audioBuffer->pan = 0.0f; // Center 
+    audioBuffer->pan = 0.0f; // Center
 
     audioBuffer->callback = NULL;
     audioBuffer->processor = NULL;
