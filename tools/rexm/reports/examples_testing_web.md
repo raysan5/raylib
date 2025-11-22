@@ -17,7 +17,6 @@ Example automated testing elements validated:
 | **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
 |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
 | core_monitor_detector            |    0    |    1    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
-| textures_screen_buffer           |    0    |    0    |   ❌   |    ❌    |   ❌    |   ❌   |   ❌   |   ❌   |   ❌   |
 | textures_sprite_stacking         |    0    |    0    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
 | text_sprite_fonts                |    0    |    0    |   ✔   |    ❌    |   ✔    |   ✔   |   ✔   |   ✔   |   ❌   |
 | text_font_loading                |    0    |    3    |   ✔   |    ✔    |   ❌    |   ✔   |   ✔   |   ✔   |   ✔   |
