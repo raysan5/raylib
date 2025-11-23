@@ -1188,7 +1188,7 @@ Image GetClipboardImage(void)
     size_t dataSize = 0;
     void  *fileData = NULL;
 
-    for (int i = 0; i < SDL_arraysize(imageFormats); ++i)
+    for (int i = 0; i < SDL_arraysize(imageFormats); i++)
     {
         // NOTE: This pointer should be free with SDL_free() at some point
         fileData = SDL_GetClipboardData(imageFormats[i], &dataSize);
@@ -1395,7 +1395,7 @@ void PollInputEvents(void)
     //-----------------------------------------------------------------------------
     // WARNING: Indexes into this array are obtained by using SDL_Scancode values, not SDL_Keycode values
     //const Uint8 *keys = SDL_GetKeyboardState(NULL);
-    //for (int i = 0; i < 256; ++i) CORE.Input.Keyboard.currentKeyState[i] = keys[i];
+    //for (int i = 0; i < 256; i++) CORE.Input.Keyboard.currentKeyState[i] = keys[i];
 
     CORE.Window.resizedLastFrame = false;
 
@@ -1562,7 +1562,7 @@ void PollInputEvents(void)
             case SDL_KEYDOWN:
             {
             #if defined(USING_VERSION_SDL3)
-                // SDL3 Migration: The following structures have been removed: * SDL_Keysym
+                // SDL3 Migration: The following structures have been removed: SDL_Keysym
                 KeyboardKey key = ConvertScancodeToKey(event.key.scancode);
             #else
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
@@ -1697,7 +1697,7 @@ void PollInputEvents(void)
                 int jid = event.jdevice.which; // Joystick device index
 
                 // check if already added at InitPlatform
-                for (int i = 0; i < MAX_GAMEPADS; ++i)
+                for (int i = 0; i < MAX_GAMEPADS; i++)
                 {
                     if (jid == platform.gamepadId[i])
                     {

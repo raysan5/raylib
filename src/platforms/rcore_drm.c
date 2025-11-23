@@ -1456,7 +1456,7 @@ int InitPlatform(void)
 
     // find the EGL config that matches the previously setup GBM format
     int found = 0;
-    for (EGLint i = 0; i < matchingNumConfigs; ++i)
+    for (EGLint i = 0; i < matchingNumConfigs; i++)
     {
         EGLint id = 0;
         if (!eglGetConfigAttrib(platform.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
@@ -1878,7 +1878,7 @@ static void InitEvdevInput(void)
     platform.mouseFd = -1;
 
     // Reset variables
-    for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
     {
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
@@ -2463,7 +2463,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
             continue;
         }
 
-        const int unusedPixels = (mode->hdisplay - width) * (mode->vdisplay - height);
+        const int unusedPixels = (mode->hdisplay - width)*(mode->vdisplay - height);
         const int fpsDiff = mode->vrefresh - fps;
 
         if ((unusedPixels < minUnusedPixels) ||

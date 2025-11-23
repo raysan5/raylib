@@ -3289,7 +3289,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     for (int z = 0; z < cubicmap.height; ++z)
     {
-        for (int x = 0; x < cubicmap.width; ++x)
+        for (int x = 0; x < cubicmap.width; x++)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
             Vector3 v1 = { w*(x - 0.5f), h2, h*(z - 0.5f) };
