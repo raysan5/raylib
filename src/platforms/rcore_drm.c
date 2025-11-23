@@ -138,6 +138,8 @@ typedef struct {
     Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
     bool touchActive[MAX_TOUCH_POINTS]; // Track which touch points are currently active
+    Vector2 touchPosition[MAX_TOUCH_POINTS]; // Track touch positions for each slot
+    int touchId[MAX_TOUCH_POINTS];      // Track touch IDs for each slot
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
@@ -261,7 +263,6 @@ static void ConfigureEvdevDevice(char *device); // Identifies a input device and
 static void PollKeyboardEvents(void);           // Process evdev keyboard events
 static void PollGamepadEvents(void);            // Process evdev gamepad events
 static void PollMouseEvents(void);              // Process evdev mouse events
-static void CompactTouchPoints(void);           // Compact touch points array after touch removal
 
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
@@ -1883,6 +1884,9 @@ static void InitEvdevInput(void)
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
         platform.touchActive[i] = false;
+        platform.touchPosition[i].x = -1;
+        platform.touchPosition[i].y = -1;
+        platform.touchId[i] = -1;
     }
     
     // Initialize touch slot
@@ -2282,7 +2286,7 @@ static void PollMouseEvents(void)
                 
                 // Update single touch position only if it's active and no MT events are being used
                 if (platform.touchActive[0]) {
-                    CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                    platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2293,7 +2297,7 @@ static void PollMouseEvents(void)
                 
                 // Update single touch position only if it's active and no MT events are being used
                 if (platform.touchActive[0]) {
-                    CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                    platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2304,7 +2308,7 @@ static void PollMouseEvents(void)
             if (event.code == ABS_MT_POSITION_X)
             {
                 if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
-                    CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                    platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2312,7 +2316,7 @@ static void PollMouseEvents(void)
             if (event.code == ABS_MT_POSITION_Y)
             {
                 if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
-                    CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                    platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2325,14 +2329,16 @@ static void PollMouseEvents(void)
                     {
                         // Touch has started for this point
                         platform.touchActive[platform.touchSlot] = true;
+                        platform.touchId[platform.touchSlot] = event.value;
                         touchAction = 1;    // TOUCH_ACTION_DOWN
                     }
                     else
                     {
                         // Touch has ended for this point
                         platform.touchActive[platform.touchSlot] = false;
-                        CORE.Input.Touch.position[platform.touchSlot].x = -1;
-                        CORE.Input.Touch.position[platform.touchSlot].y = -1;
+                        platform.touchPosition[platform.touchSlot].x = -1;
+                        platform.touchPosition[platform.touchSlot].y = -1;
+                        platform.touchId[platform.touchSlot] = -1;
                         touchAction = 0;    // TOUCH_ACTION_UP
                     }
                 }
@@ -2347,8 +2353,8 @@ static void PollMouseEvents(void)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
                     platform.touchActive[0] = false;
-                    CORE.Input.Touch.position[0].x = -1;
-                    CORE.Input.Touch.position[0].y = -1;
+                    platform.touchPosition[0].x = -1;
+                    platform.touchPosition[0].y = -1;
                     touchAction = 0;    // TOUCH_ACTION_UP
                 }
 
@@ -2382,15 +2388,16 @@ static void PollMouseEvents(void)
                         for (int i = 0; i < MAX_TOUCH_POINTS; i++)
                         {
                             platform.touchActive[i] = false;
-                            CORE.Input.Touch.position[i].x = -1;
-                            CORE.Input.Touch.position[i].y = -1;
+                            platform.touchPosition[i].x = -1;
+                            platform.touchPosition[i].y = -1;
+                            platform.touchId[i] = -1;
                         }
                     }
                     else
                     {
                         platform.touchActive[0] = false;
-                        CORE.Input.Touch.position[0].x = -1;
-                        CORE.Input.Touch.position[0].y = -1;
+                        platform.touchPosition[0].x = -1;
+                        platform.touchPosition[0].y = -1;
                     }
                     touchAction = 0;       // TOUCH_ACTION_UP
                 }
@@ -2414,26 +2421,25 @@ static void PollMouseEvents(void)
             if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
         }
 
-        // Clean up any invalid touch points
-        CompactTouchPoints();
-        
-        // Update touch point count
-        CORE.Input.Touch.pointCount = 0;
+        // Repack active touches into CORE.Input.Touch
+        int k = 0;
         for (int i = 0; i < MAX_TOUCH_POINTS; i++)
         {
-            if (platform.touchActive[i]) CORE.Input.Touch.pointCount++;
-        }
-        
-        // if no touches are active but positions exist, clean it up
-        if (CORE.Input.Touch.pointCount == 0) {
-            for (int i = 0; i < MAX_TOUCH_POINTS; i++) {
-                if (platform.touchActive[i] || CORE.Input.Touch.position[i].x != -1) {
-                    TRACELOG(LOG_DEBUG, "TOUCH: Force cleaning ghost touch at slot %d", i);
-                    platform.touchActive[i] = false;
-                    CORE.Input.Touch.position[i].x = -1;
-                    CORE.Input.Touch.position[i].y = -1;
-                }
+            if (platform.touchActive[i])
+            {
+                CORE.Input.Touch.position[k] = platform.touchPosition[i];
+                CORE.Input.Touch.pointId[k] = platform.touchId[i];
+                k++;
             }
+        }
+        CORE.Input.Touch.pointCount = k;
+        
+        // Clear remaining slots
+        for (int i = k; i < MAX_TOUCH_POINTS; i++)
+        {
+            CORE.Input.Touch.position[i].x = -1;
+            CORE.Input.Touch.position[i].y = -1;
+            CORE.Input.Touch.pointId[i] = -1;
         }
         
         // Debug logging 
@@ -2462,20 +2468,6 @@ static void PollMouseEvents(void)
             touchAction = -1;
         }
 #endif
-    }
-}
-
-// Clean up inactive touch points to prevent ghost touches
-static void CompactTouchPoints(void)
-{
-
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-    {
-        if (!platform.touchActive[i])
-        {
-            CORE.Input.Touch.position[i].x = -1;
-            CORE.Input.Touch.position[i].y = -1;
-        }
     }
 }
 
