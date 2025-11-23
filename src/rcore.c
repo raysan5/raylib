@@ -609,9 +609,7 @@ void InitWindow(int width, int height, const char *title)
 {
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
-#if defined(PLATFORM_MEM)
-    TRACELOG(LOG_INFO, "Platform backend: NONE (Memory Buffer)");
-#elif defined(PLATFORM_DESKTOP_GLFW)
+#if defined(PLATFORM_DESKTOP_GLFW)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (GLFW)");
 #elif defined(PLATFORM_DESKTOP_SDL)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
