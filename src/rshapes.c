@@ -1169,9 +1169,9 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 }
 
 // Draw rectangle with rounded edges
-// TODO: This function should be refactored to use RL_LINES, for consistency with other Draw*Lines()
 void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
 {
+    // NOTE: For line thicknes <=1.0f we use RL_LINES, otherwise wee use RL_QUADS/RL_TRIANGLES
     DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
 }
 
@@ -1395,7 +1395,6 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     {
         // Use LINES to draw the outline
         rlBegin(RL_LINES);
-
             // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
@@ -1418,7 +1417,6 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
                 rlVertex2f(point[i].x, point[i].y);
                 rlVertex2f(point[i + 1].x, point[i + 1].y);
             }
-
         rlEnd();
     }
 }

@@ -220,7 +220,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     248, 0,   0,   0,   0,   0,   0,   0,
 
     // Gamepads are mapped according to:
-    // https://www.kernel.org/doc/html/next/input/gamepad.html
+    // Ref: https://www.kernel.org/doc/html/next/input/gamepad.html
     // Those mappings are standardized, but that doesn't mean people follow
     // the standards, so this is more of an approximation
     [BTN_DPAD_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
@@ -637,7 +637,7 @@ static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo)
 }
 
 // Renders a blank frame to allocate initial buffers
-// TODO: WARNING: Platform layers do not include OpenGL code!
+// TODO: WARNING: Platform backend should not include OpenGL code
 void RenderBlankFrame()
 {
     glClearColor(0, 0, 0, 1);
@@ -1213,9 +1213,9 @@ int InitPlatform(void)
 
         TRACELOG(LOG_TRACE, "DISPLAY: Connector %i modes detected: %i", i, con->count_modes);
         TRACELOG(LOG_TRACE, "DISPLAY: Connector %i status: %s", i,
-                 (con->connection == DRM_MODE_CONNECTED) ? "CONNECTED" :
-                 (con->connection == DRM_MODE_DISCONNECTED) ? "DISCONNECTED" :
-                 (con->connection == DRM_MODE_UNKNOWNCONNECTION) ? "UNKNOWN" : "OTHER");
+                 (con->connection == DRM_MODE_CONNECTED)? "CONNECTED" :
+                 (con->connection == DRM_MODE_DISCONNECTED)? "DISCONNECTED" :
+                 (con->connection == DRM_MODE_UNKNOWNCONNECTION)? "UNKNOWN" : "OTHER");
 
         // In certain cases the status of the conneciton is reported as UKNOWN, but it is still connected
         // This might be a hardware or software limitation like on Raspberry Pi Zero with composite output
@@ -1298,7 +1298,7 @@ int InitPlatform(void)
     }
 
     const bool allowInterlaced = FLAG_IS_SET(CORE.Window.flags, FLAG_INTERLACED_HINT);
-    const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
+    const int fps = (CORE.Time.target > 0)? (1.0/CORE.Time.target) : 60;
 
     // Try to find an exact matching mode
     platform.modeIndex = FindExactConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
@@ -1345,7 +1345,7 @@ int InitPlatform(void)
                  platform.connector->modes[0].name,
                  platform.connector->modes[0].hdisplay,
                  platform.connector->modes[0].vdisplay,
-                 (platform.connector->modes[0].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
+                 (platform.connector->modes[0].flags & DRM_MODE_FLAG_INTERLACE)? 'i' : 'p',
                  platform.connector->modes[0].vrefresh);
     }
     else
@@ -1740,10 +1740,10 @@ static void InitKeyboard(void)
     else
     {
         // Reconfigure keyboard mode to get:
-        //    - scancodes (K_RAW)
-        //    - keycodes (K_MEDIUMRAW)
-        //    - ASCII chars (K_XLATE)
-        //    - UNICODE chars (K_UNICODE)
+        // - scancodes (K_RAW)
+        // - keycodes (K_MEDIUMRAW)
+        // - ASCII chars (K_XLATE)
+        // - UNICODE chars (K_UNICODE)
         ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);  // ASCII chars
     }
 

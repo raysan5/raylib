@@ -870,17 +870,27 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
-// Ref: https://github.com/raysan5/raylib/issues/686
+// NOTE: This function is only safe to use if you control the URL given
+// A user could craft a malicious string performing another action
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code on target platform
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        // TODO: Open URL implementation
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
+#if defined(_WIN32)
+        sprintf(cmd, "explorer \"%s\"", url);
+#endif
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+        sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
+#endif
+#if defined(__APPLE__)
+        sprintf(cmd, "open '%s'", url);
+#endif
+        int result = system(cmd);
+        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
+        RL_FREE(cmd);
     }
 }
 
@@ -915,7 +925,7 @@ void SetMouseCursor(int cursor)
     RGFW_window_setMouseStandard(platform.window, cursor);
 }
 
-// Get physical key name.
+// Get physical key name
 const char *GetKeyName(int key)
 {
     TRACELOG(LOG_WARNING, "GetKeyName() unsupported on target platform");
@@ -1095,11 +1105,7 @@ void PollInputEvents(void)
                     CORE.Input.Keyboard.currentKeyState[key] = 1;
                 }
 
-                // TODO: Put exitKey verification outside the switch?
-                if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey])
-                {
-                    CORE.Window.shouldClose = true;
-                }
+                if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) CORE.Window.shouldClose = true;
 
                 // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
                 // Check if there is space available in the queue

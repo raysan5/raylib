@@ -1701,7 +1701,7 @@ char *GetTextBetween(const char *text, const char *begin, const char *end)
 
 // Replace text string
 // REQUIRES: strstr(), strncpy(), strcpy()
-// TODO: If (replacement == NULL) remove "search" text
+// TODO: If (replacement == "") remove "search" text
 // WARNING: Allocated memory must be manually freed
 char *TextReplace(const char *text, const char *search, const char *replacement)
 {

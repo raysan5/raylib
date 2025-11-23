@@ -514,7 +514,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             image.data = qoi_decode(fileData, dataSize, &desc, (int) fileData[12]);
             image.width = desc.width;
             image.height = desc.height;
-            image.format = desc.channels == 4 ? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 : PIXELFORMAT_UNCOMPRESSED_R8G8B8;
+            image.format = (desc.channels == 4)? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 : PIXELFORMAT_UNCOMPRESSED_R8G8B8;
             image.mipmaps = 1;
         }
     }
@@ -4001,9 +4001,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         //    [x] Consider fast path: no alpha blending required cases (src has no alpha)
         //    [x] Consider fast path: same src/dst format with no alpha -> direct line copy
         //    [-] GetPixelColor(): Get Vector4 instead of Color, easier for ColorAlphaBlend()
-        //    [ ] Support f32bit channels drawing
-
-        // TODO: Support PIXELFORMAT_UNCOMPRESSED_R32G32B32A32 and PIXELFORMAT_UNCOMPRESSED_R1616B16A16
+        //    [ ] TODO: Support 16bit and 32bit (float) channels drawing
 
         Color colSrc, colDst, blend;
         bool blendRequired = true;
@@ -4201,7 +4199,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         }
         /*else if (layout == CUBEMAP_LAYOUT_PANORAMA)
         {
-            // TODO: implement panorama by converting image to square faces...
+            // TODO: Implement panorama by converting image to square faces...
             // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
         } */
         else
@@ -4227,6 +4225,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             }
 
             // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
+            // NOTE: Image formatting does not work with compressed textures
             faces = GenImageColor(size, size*6, MAGENTA);
             ImageFormat(&faces, image.format);
 
@@ -4238,8 +4237,6 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
                 ImageMipmaps(&faces);
             }
         #endif
-
-            // NOTE: Image formatting does not work with compressed textures
 
             for (int i = 0; i < 6; i++) ImageDraw(&faces, mipmapped, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
 
@@ -4309,13 +4306,11 @@ bool IsTextureValid(Texture2D texture)
 {
     bool result = false;
 
-    // TODO: Validate maximum texture size supported by GPU
-
     if ((texture.id > 0) &&         // Validate OpenGL id (texture uplaoded to GPU)
         (texture.width > 0) &&      // Validate texture width
         (texture.height > 0) &&     // Validate texture height
         (texture.format > 0) &&     // Validate texture pixel format
-        (texture.mipmaps > 0)) result = true;     // Validate texture mipmaps (at least 1 for basic mipmap level)
+        (texture.mipmaps > 0)) result = true; // Validate texture mipmaps (at least 1 for basic mipmap level)
 
     return result;
 }
@@ -5412,7 +5407,7 @@ int GetPixelDataSize(int width, int height, int format)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Convert half-float (stored as unsigned short) to float
-// REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
+// Ref: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
 static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;

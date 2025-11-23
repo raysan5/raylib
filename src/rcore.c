@@ -30,7 +30,7 @@
 *           - Windows (Win32, Win64)
 *   CONFIGURATION:
 *       #define SUPPORT_DEFAULT_FONT (default)
-*           Default font is loaded on window initialization to be available for the user to render simple text.
+*           Default font is loaded on window initialization to be available for the user to render simple text
 *           NOTE: If enabled, uses external module functions to load default raylib font (module: text)
 *
 *       #define SUPPORT_CAMERA_SYSTEM
@@ -41,7 +41,7 @@
 *           Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 *
 *       #define SUPPORT_MOUSE_GESTURES
-*           Mouse gestures are directly mapped like touches and processed by gestures system.
+*           Mouse gestures are directly mapped like touches and processed by gestures system
 *
 *       #define SUPPORT_BUSY_WAIT_LOOP
 *           Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
@@ -423,7 +423,7 @@ typedef enum AutomationEventType {
 } AutomationEventType;
 
 // Event type to config events flags
-// TODO: Not used at the moment
+// WARNING: Not used at the moment
 typedef enum {
     EVENT_INPUT_KEYBOARD    = 0,
     EVENT_INPUT_MOUSE       = 1,
@@ -534,12 +534,10 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     // Not needed because 'rtexture.c' will automatically defined STBI_REQUIRED when any SUPPORT_FILEFORMAT_* is defined
     // #if !defined(STBI_REQUIRED)
     //     #pragma message ("WARNING: "STBI_REQUIRED is not defined, that means we can't load images from clipbard"
-    // #endif
-
 #endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Include platform-specific submodules
-#if defined(PLATFORM_DESKTOP_GLFW)
+#if defined(PLATFORM_MEM)
     #include "platforms/rcore_desktop_glfw.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
@@ -611,7 +609,9 @@ void InitWindow(int width, int height, const char *title)
 {
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
-#if defined(PLATFORM_DESKTOP_GLFW)
+#if defined(PLATFORM_MEM)
+    TRACELOG(LOG_INFO, "Platform backend: NONE (Memory Buffer)");
+#elif defined(PLATFORM_DESKTOP_GLFW)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (GLFW)");
 #elif defined(PLATFORM_DESKTOP_SDL)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
@@ -1267,14 +1267,14 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     {
         // After custom shader loading, we TRY to set default location names
         // Default shader attribute locations have been binded before linking:
-        //          vertex position location    = 0
-        //          vertex texcoord location    = 1
-        //          vertex normal location      = 2
-        //          vertex color location       = 3
-        //          vertex tangent location     = 4
-        //          vertex texcoord2 location   = 5
-        //          vertex boneIds location     = 6
-        //          vertex boneWeights location = 7
+        //  - vertex position location    = 0
+        //  - vertex texcoord location    = 1
+        //  - vertex normal location      = 2
+        //  - vertex color location       = 3
+        //  - vertex tangent location     = 4
+        //  - vertex texcoord2 location   = 5
+        //  - vertex boneIds location     = 6
+        //  - vertex boneWeights location = 7
 
         // NOTE: If any location is not found, loc point becomes -1
 
@@ -1542,8 +1542,6 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
 
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-
-    // TODO: Why not use Vector3Transform(Vector3 v, Matrix mat)?
 
     // Convert world position vector to quaternion
     Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
@@ -2484,8 +2482,6 @@ bool IsFileNameValid(const char *fileName)
             // Check non-glyph characters
             if ((unsigned char)fileName[i] < 32) { valid = false; break; }
 
-            // TODO: Check trailing periods/spaces?
-
             // Check if filename is not all periods
             if (fileName[i] != '.') allPeriods = false;
         }
@@ -3210,7 +3206,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     */
 
     // Export events as text
-    // TODO: Save to memory buffer and SaveFileText()
+    // NOTE: Save to memory buffer and SaveFileText()
     char *txtData = (char *)RL_CALLOC(256*list.count + 2048, sizeof(char)); // 256 characters per line plus some header
 
     int byteCount = 0;
@@ -3279,7 +3275,7 @@ void PlayAutomationEvent(AutomationEvent event)
 #if defined(SUPPORT_AUTOMATION_EVENTS)
     // WARNING: When should event be played? After/before/replace PollInputEvents()? -> Up to the user!
 
-    if (!automationEventRecording)      // TODO: Allow recording events while playing?
+    if (!automationEventRecording)
     {
         switch (event.type)
         {
@@ -3716,7 +3712,6 @@ int GetTouchY(void)
 }
 
 // Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
 Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
@@ -4015,13 +4010,11 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
 // Automation event recording
+// Checking events in current frame and save them into currentEventList
 // NOTE: Recording is by default done at EndDrawing(), before PollInputEvents()
 static void RecordAutomationEvent(void)
 {
-    // Checking events in current frame and save them into currentEventList
-    // TODO: How important is the current frame? Could it be modified?
-
-    if (currentEventList->count == currentEventList->capacity) return;    // Security check
+    if (currentEventList->count == currentEventList->capacity) return;
 
     // Keyboard input events recording
     //-------------------------------------------------------------------------------------

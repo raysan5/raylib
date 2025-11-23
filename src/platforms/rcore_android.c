@@ -623,10 +623,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
-// Ref: https://github.com/raysan5/raylib/issues/686
+// NOTE: This function is only safe to use if you control the URL given
+// A user could craft a malicious string performing another action
+// Only call this function yourself not with user input or make sure to check the string yourself
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
@@ -687,7 +686,7 @@ void SetMouseCursor(int cursor)
     TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
 }
 
-// Get physical key name.
+// Get physical key name
 const char *GetKeyName(int key)
 {
     TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
@@ -748,9 +747,9 @@ void PollInputEvents(void)
         // Process this event
         if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-        // NOTE: Allow closing the window in case a configuration change happened.
+        // NOTE: Allow closing the window in case a configuration change happened
         // The android_main function should be allowed to return to its caller in order for the
-        // Android OS to relaunch the activity.
+        // Android OS to relaunch the activity
         if (platform.app->destroyRequested != 0)
         {
             CORE.Window.shouldClose = true;
@@ -829,13 +828,13 @@ int InitPlatform(void)
     // Wait for window to be initialized (display and context)
     while (!CORE.Window.ready)
     {
-        // Process events until we reach TIMEOUT, which indicates no more events queued.
+        // Process events until we reach TIMEOUT, which indicates no more events queued
         while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
         {
             // Process this event
             if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
-            // NOTE: It's highly likely destroyRequested will never be non-zero at the start of the activity lifecycle.
+            // NOTE: It's highly likely destroyRequested will never be non-zero at the start of the activity lifecycle
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
@@ -869,8 +868,9 @@ void ClosePlatform(void)
         platform.device = EGL_NO_DISPLAY;
     }
 
-    // NOTE: Reset global state in case the activity is being relaunched.
-    if (platform.app->destroyRequested != 0) {
+    // NOTE: Reset global state in case the activity is being relaunched
+    if (platform.app->destroyRequested != 0)
+    {
         CORE = (CoreData){0};
         platform = (PlatformData){0};
     }
@@ -925,7 +925,7 @@ static int InitGraphicsDevice(void)
     // Initialize the EGL device connection
     if (eglInitialize(platform.device, NULL, NULL) == EGL_FALSE)
     {
-        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
+        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
         return -1;
     }
@@ -1081,21 +1081,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
                     // Initialize random seed
                     SetRandomSeed((unsigned int)time(NULL));
-
-                    // TODO: GPU assets reload in case of lost focus (lost context)
-                    // NOTE: This problem has been solved just unbinding and rebinding context from display
-                    /*
-                    if (assetsReloadRequired)
-                    {
-                        for (int i = 0; i < assetCount; i++)
-                        {
-                            // TODO: Unload old asset if required
-
-                            // Load texture again to pointed texture
-                            (*textureAsset + i) = LoadTexture(assetPath[i]);
-                        }
-                    }
-                    */
                 }
             }
         } break;
@@ -1115,7 +1100,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_TERM_WINDOW:
         {
             // Detach OpenGL context and destroy display surface
-            // NOTE 1: This case is used when the user exits the app without closing it. We detach the context to ensure everything is recoverable upon resuming.
+            // NOTE 1: This case is used when the user exits the app without closing it, context is detached to ensure everything is recoverable upon resuming
             // NOTE 2: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
             // NOTE 3: In some cases (too many context loaded), OS could unload context automatically... :(
             if (platform.device != EGL_NO_DISPLAY)
@@ -1179,8 +1164,8 @@ static GamepadButton AndroidTranslateGamepadButton(int button)
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
     // If additional inputs are required check:
-    // https://developer.android.com/ndk/reference/group/input
-    // https://developer.android.com/training/game-controllers/controller-input
+    // Ref: https://developer.android.com/ndk/reference/group/input
+    // Ref: https://developer.android.com/training/game-controllers/controller-input
 
     int type = AInputEvent_getType(event);
     int source = AInputEvent_getSource(event);
@@ -1290,7 +1275,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         {
             // Let the OS handle input to avoid app stuck. Behaviour: CMD_PAUSE -> CMD_SAVE_STATE -> CMD_STOP -> CMD_CONFIG_CHANGED -> CMD_LOST_FOCUS
             // Resuming Behaviour: CMD_START -> CMD_RESUME -> CMD_CONFIG_CHANGED -> CMD_CONFIG_CHANGED -> CMD_GAINED_FOCUS
-            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected.
+            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected
             // NOTE: AndroidManifest.xml must have <activity android:configChanges="orientation|keyboardHidden|screenSize" >
             // Before that change, activity was calling CMD_TERM_WINDOW and CMD_DESTROY when locking mobile, so that was not a normal behaviour
             return 0;
@@ -1419,15 +1404,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
     else CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
 
-    // Stores the previous position of touch[0] only while it's active to calculate the delta.
-    if (flags == AMOTION_EVENT_ACTION_MOVE)
-    {
-        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-    }
-    else
-    {
-        CORE.Input.Mouse.previousPosition = CORE.Input.Touch.position[0];
-    }
+    // Stores the previous position of touch[0] only while it's active to calculate the delta
+    if (flags == AMOTION_EVENT_ACTION_MOVE) CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+    else CORE.Input.Mouse.previousPosition = CORE.Input.Touch.position[0];
 
     // Map touch[0] as mouse input for convenience
     CORE.Input.Mouse.currentPosition = CORE.Input.Touch.position[0];

@@ -49,10 +49,10 @@
 #define SUPPORT_RPRAND_GENERATOR        1
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES          1
-// Reconfigure standard input to receive key inputs, works with SSH connection.
+// Reconfigure standard input to receive key inputs, works with SSH connection
 #define SUPPORT_SSH_KEYBOARD_RPI        1
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions
+// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
 #define SUPPORT_WINMM_HIGHRES_TIMER     1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is set up and used
 //#define SUPPORT_BUSY_WAIT_LOOP          1
@@ -225,7 +225,7 @@
 
 // On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
 // at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-// drawing text and shapes with a single draw call [SetShapesTexture()].
+// drawing text and shapes with a single draw call [SetShapesTexture()]
 #define SUPPORT_FONT_ATLAS_WHITE_REC    1
 
 // Support conservative font atlas size estimation

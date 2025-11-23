@@ -145,7 +145,7 @@
     #define SW_MAX_TEXTURES                 128
 #endif
 
-// Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane.
+// Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane
 // Considering the largest polygon involved is a quadrilateral (4 vertices),
 // and that clipping occurs against both the frustum (6 planes) and the scissors (4 planes),
 // the maximum number of vertices after clipping is:
@@ -1530,7 +1530,7 @@ DEFINE_FRAMEBUFFER_COPY_BEGIN(R5G5B5A1, uint16_t)
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g5 = (color[1]*31 + 127)/255;
     uint8_t b5 = (color[2]*31 + 127)/255;
-    uint8_t a1 = color[3] >= 128 ? 1 : 0;
+    uint8_t a1 = (color[3] >= 128)? 1 : 0;
 
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     uint16_t pixel = (b5 << 11) | (g5 << 6) | (r5 << 1) | a1;
@@ -1661,7 +1661,7 @@ DEFINE_FRAMEBUFFER_BLIT_BEGIN(R5G5B5A1, uint16_t)
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g5 = (color[1]*31 + 127)/255;
     uint8_t b5 = (color[2]*31 + 127)/255;
-    uint8_t a1 = color[3] >= 128 ? 1 : 0;
+    uint8_t a1 = (color[3] >= 128)? 1 : 0;
 
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     uint16_t pixel = (b5 << 11) | (g5 << 6) | (r5 << 1) | a1;
@@ -1919,7 +1919,7 @@ static inline void sw_texture_sample_nearest(float *color, const sw_texture_t *t
 static inline void sw_texture_sample_linear(float *color, const sw_texture_t *tex, float u, float v)
 {
     // TODO: With a bit more cleverness we could clearly reduce the
-    // number of operations here, but for now it works fine.
+    // number of operations here, but for now it works fine
 
     float xf = (u*tex->width) - 0.5f;
     float yf = (v*tex->height) - 0.5f;
@@ -2203,13 +2203,13 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 //-------------------------------------------------------------------------------------------
 static inline bool sw_triangle_face_culling(void)
 {
-    // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+    // NOTE: Face culling is done before clipping to avoid unnecessary computations
     //       To handle triangles crossing the w=0 plane correctly,
     //       we perform the winding order test in homogeneous coordinates directly,
-    //       before the perspective division (division by w).
+    //       before the perspective division (division by w)
     //       This test determines the orientation of the triangle in the (x,y,w) plane,
     //       which corresponds to the projected 2D winding order sign,
-    //       even with negative w values.
+    //       even with negative w values
 
     // Preload homogeneous coordinates into local variables
     const float *h0 = RLSW.vertexBuffer[0].homogeneous;
@@ -2221,7 +2221,7 @@ static inline bool sw_triangle_face_culling(void)
     // This is the determinant of the matrix formed by the (x, y, w) components
     // of the vertices, which correctly captures the winding order in homogeneous
     // space and its relationship to the projected 2D winding order, even with
-    // negative w values.
+    // negative w values
     // The determinant formula used here is:
     // h0.x*(h1.y*h2.w - h2.y*h1.w) +
     // h1.x*(h2.y*h0.w - h0.y*h2.w) +
@@ -2233,20 +2233,18 @@ static inline bool sw_triangle_face_culling(void)
         h2[0]*(h0[1]*h1[3] - h1[1]*h0[3]);
 
     // Discard the triangle if its winding order (determined by the sign
-    // of the homogeneous area/determinant) matches the culled direction.
+    // of the homogeneous area/determinant) matches the culled direction
     // A positive hSgnArea typically corresponds to a counter-clockwise
     // winding in the projected space when all w > 0.
     // This test is robust for points with w > 0 or w < 0, correctly
-    // capturing the change in orientation when crossing the w=0 plane.
+    // capturing the change in orientation when crossing the w=0 plane
 
-    // The culling logic remains the same based on the signed area/determinant.
+    // The culling logic remains the same based on the signed area/determinant
     // A value of 0 for hSgnArea means the points are collinear in (x, y, w)
     // space, which corresponds to a degenerate triangle projection.
     // Such triangles are typically not culled by this test (0 < 0 is false, 0 > 0 is false)
-    // and should be handled by the clipper if necessary.
-    return (RLSW.cullFace == SW_FRONT)
-        ? (hSgnArea < 0) // Cull if winding is "clockwise" in the projected sense
-        : (hSgnArea > 0); // Cull if winding is "counter-clockwise" in the projected sense
+    // and should be handled by the clipper if necessary
+    return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0) : (hSgnArea > 0); // Cull if winding is "clockwise" : "counter-clockwise"
 }
 
 static inline void sw_triangle_clip_and_project(void)
@@ -2559,14 +2557,14 @@ static inline void sw_triangle_render(void)
 //-------------------------------------------------------------------------------------------
 static inline bool sw_quad_face_culling(void)
 {
-    // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+    // NOTE: Face culling is done before clipping to avoid unnecessary computations
     //       To handle quads crossing the w=0 plane correctly,
     //       we perform the winding order test in homogeneous coordinates directly,
-    //       before the perspective division (division by w).
+    //       before the perspective division (division by w)
     //       For a convex quad with vertices P0, P1, P2, P3 in sequential order,
     //       the winding order of the quad is the same as the winding order
     //       of the triangle P0 P1 P2. We use the homogeneous triangle
-    //       winding test on this first triangle.
+    //       winding test on this first triangle
 
     // Preload homogeneous coordinates into local variables
     const float *h0 = RLSW.vertexBuffer[0].homogeneous;
@@ -2578,11 +2576,11 @@ static inline bool sw_quad_face_culling(void)
 
     // Compute a value proportional to the signed area of the triangle P0 P1 P2
     // in the projected 2D plane, calculated directly using homogeneous coordinates
-    // BEFORE division by w.
+    // BEFORE division by w
     // This is the determinant of the matrix formed by the (x, y, w) components
     // of the vertices P0, P1, and P2. Its sign correctly indicates the winding order
     // in homogeneous space and its relationship to the projected 2D winding order,
-    // even with negative w values.
+    // even with negative w values
     // The determinant formula used here is:
     // h0.x*(h1.y*h2.w - h2.y*h1.w) +
     // h1.x*(h2.y*h0.w - h0.y*h2.w) +
@@ -2594,21 +2592,19 @@ static inline bool sw_quad_face_culling(void)
         h2[0]*(h0[1]*h1[3] - h1[1]*h0[3]);
 
     // Perform face culling based on the winding order determined by the sign
-    // of the homogeneous area/determinant of triangle P0 P1 P2.
+    // of the homogeneous area/determinant of triangle P0 P1 P2
     // This test is robust for points with w > 0 or w < 0 within the triangle,
-    // correctly capturing the change in orientation when crossing the w=0 plane.
+    // correctly capturing the change in orientation when crossing the w=0 plane
 
     // A positive hSgnArea typically corresponds to a counter-clockwise
-    // winding in the projected space when all w > 0.
+    // winding in the projected space when all w > 0
     // A value of 0 for hSgnArea means P0, P1, P2 are collinear in (x, y, w)
-    // space, which corresponds to a degenerate triangle projection.
+    // space, which corresponds to a degenerate triangle projection
     // Such quads might also be degenerate or non-planar. They are typically
     // not culled by this test (0 < 0 is false, 0 > 0 is false)
     // and should be handled by the clipper if necessary.
 
-    return (RLSW.cullFace == SW_FRONT)
-        ? (hSgnArea < 0.0f) // Cull if winding is "clockwise" in the projected sense
-        : (hSgnArea > 0.0f); // Cull if winding is "counter-clockwise" in the projected sense
+    return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0.0f) : (hSgnArea > 0.0f); // Cull if winding is "clockwise" : "counter-clockwise"
 }
 
 static inline void sw_quad_clip_and_project(void)
@@ -4596,8 +4592,8 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 
         for (int i = 0; i < count; i++)
         {
-            int index = indicesUb ? indicesUb[i] :
-                       (indicesUs ? indicesUs[i] : indicesUi[i]);
+            int index = indicesUb? indicesUb[i] :
+                       (indicesUs? indicesUs[i] : indicesUi[i]);
 
             float u, v;
             if (texcoords)

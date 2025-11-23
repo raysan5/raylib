@@ -903,6 +903,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
     // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
     // provided headers (despite being defined in official Khronos GLES2 headers)
+    // TODO: Avoid raylib platform-dependant code on rlgl, it should be a completely portable library
     #if defined(PLATFORM_DRM)
     typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDEXTPROC) (GLenum mode, GLint start, GLsizei count, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDEXTPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
@@ -2921,7 +2922,7 @@ rlRenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 
     batch.bufferCount = numBuffers;    // Record buffer count
     batch.drawCounter = 1;             // Reset draws counter
-    batch.currentDepth = -1.0f;         // Reset depth value
+    batch.currentDepth = -1.0f;        // Reset depth value
     //--------------------------------------------------------------------------------------------
 #endif
 
@@ -2982,7 +2983,8 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     // Update batch vertex buffers
     //------------------------------------------------------------------------------------------------------------
     // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
-    // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (use a change detector flag?)
+    // TODO: If no data changed on the CPU arrays there is no need to re-upload data to GPU,
+    // a flag can be used to detect changes but it would imply keeping a copy buffer and memcmp() both, does it worth it?
     if (RLGL.State.vertexCounter > 0)
     {
         // Activate elements VAO
@@ -3900,7 +3902,7 @@ void rlUnloadFramebuffer(unsigned int id)
 
     // TODO: Review warning retrieving object name in WebGL
     // WARNING: WebGL: INVALID_ENUM: getFramebufferAttachmentParameter: invalid parameter name
-    // https://registry.khronos.org/webgl/specs/latest/1.0/
+    // Ref: https://registry.khronos.org/webgl/specs/latest/1.0/
     glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depthId);
 
     unsigned int depthIdU = (unsigned int)depthId;
@@ -4427,8 +4429,6 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
     #endif
         case RL_SHADER_UNIFORM_SAMPLER2D: glUniform1iv(locIndex, count, (int *)value); break;
         default: TRACELOG(RL_LOG_WARNING, "SHADER: Failed to set uniform value, data type not recognized");
-
-        // TODO: Support glUniform1uiv(), glUniform2uiv(), glUniform3uiv(), glUniform4uiv()
     }
 #endif
 }
@@ -4469,7 +4469,7 @@ void rlSetUniformMatrices(int locIndex, const Matrix *matrices, int count)
     glUniformMatrix4fv(locIndex, count, true, (const float *)matrices);
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // WARNING: WebGL does not support Matrix transpose ("true" parameter)
-    // REF: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/uniformMatrix
+    // Ref: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/uniformMatrix
     glUniformMatrix4fv(locIndex, count, false, (const float *)matrices);
 #endif
 }

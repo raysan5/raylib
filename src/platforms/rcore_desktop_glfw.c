@@ -1220,9 +1220,9 @@ void PollInputEvents(void)
 
     // Map touch position to mouse position for convenience
     // WARNING: If the target desktop device supports touch screen, this behaviour should be reviewed!
-    // TODO: GLFW does not support multi-touch input just yet
-    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    // TODO: GLFW does not support multi-touch input yet
+    // Ref: https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // Ref: https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Check if gamepads are ready
@@ -1334,7 +1334,7 @@ void PollInputEvents(void)
 // Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
 // We need to provide these because GLFWallocator expects function pointers with specific signatures
 // Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch
-// https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
+// Ref: https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
 static void *AllocateWrapper(size_t size, void *user)
 {
     (void)user;
@@ -1592,8 +1592,8 @@ int InitPlatform(void)
         bool requestWindowedFullscreen = (CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0);
 
         // Default to at least one pixel in size, as creation with a zero dimension is not allowed
-        int creationWidth = CORE.Window.screen.width != 0 ? CORE.Window.screen.width : 1;
-        int creationHeight = CORE.Window.screen.height != 0 ? CORE.Window.screen.height : 1;
+        int creationWidth = (CORE.Window.screen.width != 0)? CORE.Window.screen.width : 1;
+        int creationHeight = (CORE.Window.screen.height != 0)? CORE.Window.screen.height : 1;
 
         platform.handle = glfwCreateWindow(creationWidth, creationHeight, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
         if (!platform.handle)
