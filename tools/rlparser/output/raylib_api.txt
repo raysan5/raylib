@@ -35,7 +35,7 @@ Define 007: RLAPI
   Name: RLAPI
   Type: UNKNOWN
   Value: __declspec(dllexport)
-  Description: We are building the library as a Win32 shared library (.dll)
+  Description: Building the library as a Win32 shared library (.dll)
 Define 008: PI
   Name: PI
   Type: FLOAT
