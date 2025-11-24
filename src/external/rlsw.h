@@ -3668,9 +3668,9 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
     x = sw_clampi(x, 0, w);
     y = sw_clampi(y, 0, h);
 
-    if (x >= w || y >= h) return;
+    if ((x >= w) || (y >= h)) return;
 
-    if (x == 0 && y == 0 && w == RLSW.framebuffer.width && h == RLSW.framebuffer.height)
+    if ((x == 0) && (y == 0) && (w == RLSW.framebuffer.width) && (h == RLSW.framebuffer.height))
     {
         #if SW_COLOR_BUFFER_BITS == 32
             if (pFormat == SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
@@ -3695,7 +3695,7 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
         case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_framebuffer_copy_to_R8G8B8(x, y, w, h, (uint8_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_copy_to_R5G5B5A1(x, y, w, h, (uint16_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_copy_to_R4G4B4A4(x, y, w, h, (uint16_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t *)pixels); break;
+        //case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t *)pixels); break;
         // Below: not implemented
         case SW_PIXELFORMAT_UNCOMPRESSED_R32:
         case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32:
@@ -3703,9 +3703,7 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
         case SW_PIXELFORMAT_UNCOMPRESSED_R16:
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
-        default:
-            RLSW.errCode = SW_INVALID_ENUM;
-            break;
+        default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
 
@@ -4330,7 +4328,7 @@ void swVertex2f(float x, float y)
 void swVertex2fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], 0.0f, 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v4, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex3i(int x, int y, int z)
@@ -4348,7 +4346,7 @@ void swVertex3f(float x, float y, float z)
 void swVertex3fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], v[2], 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v4, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex4i(int x, int y, int z, int w)

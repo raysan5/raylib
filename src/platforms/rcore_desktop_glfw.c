@@ -78,27 +78,26 @@
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
-#if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
+    #if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
                                         // Set appropriate expose macros based on available backends
-    #if defined(_GLFW_X11)
-        #define GLFW_EXPOSE_NATIVE_X11
-            #define Font X11Font        // Hack to fix 'Font' name collision
+        #if defined(_GLFW_X11)
+            #define GLFW_EXPOSE_NATIVE_X11
+                #define Font X11Font    // Hack to fix 'Font' name collision
                                         // The definition and references to the X11 Font type will be replaced by 'X11Font'
                                         // Works as long as the current file consistently references any X11 Font as X11Font
                                         // Since it is never referenced (as of writing), this does not pose an issue
-    #endif
+        #endif
 
-    #if defined(_GLFW_WAYLAND)
-        #define GLFW_EXPOSE_NATIVE_WAYLAND
-    #endif
+        #if defined(_GLFW_WAYLAND)
+            #define GLFW_EXPOSE_NATIVE_WAYLAND
+        #endif
 
-    #include "GLFW/glfw3native.h"       // Include native header only once, regardless of how many backends are defined
+        #include "GLFW/glfw3native.h"   // Include native header only once, regardless of how many backends are defined
                                         // Required for: glfwGetX11Window() and glfwGetWaylandWindow()
-
-    #if defined(_GLFW_X11)              // Clean up X11-specific hacks
-        #undef Font                     // Revert hack and allow normal raylib Font usage
+        #if defined(_GLFW_X11)          // Clean up X11-specific hacks
+            #undef Font                 // Revert hack and allow normal raylib Font usage
+        #endif
     #endif
-#endif
 #endif
 #if defined(__APPLE__)
     #include <unistd.h>                 // Required for: usleep()

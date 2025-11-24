@@ -75,7 +75,7 @@
 #define SUPPORT_CLIPBOARD_IMAGE    1
 
 // NOTE: Clipboard image loading requires support for some image file formats
-// TODO: Those defines should probably be removed from here, I prefer to let the user manage them
+// TODO: Those defines should probably be removed from here, letting the user manage them
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #ifndef SUPPORT_MODULE_RTEXTURES
         #define SUPPORT_MODULE_RTEXTURES 1

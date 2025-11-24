@@ -262,9 +262,9 @@ static bool DecoratedFromStyle(DWORD style)
 // Get window style from required flags
 static DWORD MakeWindowStyle(unsigned flags)
 {
-    // We don't need this since we don't have any child windows, but I guess
-    // it improves efficiency, plus, windows adds this flag automatically anyway
-    // so it keeps our flags in sync with the OS
+    // Flag is not needed because there are no child windows,
+    // but supposedly it improves efficiency, plus, windows adds this 
+    // flag automatically anyway so it keeps flags in sync with the OS
     DWORD style = WS_CLIPSIBLINGS;
 
     style |= (flags & FLAG_WINDOW_HIDDEN)? 0 : WS_VISIBLE;
@@ -1230,7 +1230,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    LARGE_INTEGER now;
+    LARGE_INTEGER now = 0;
     QueryPerformanceCounter(&now);
     return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 }
@@ -1987,7 +1987,7 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
     {
         CORE.Input.Keyboard.currentKeyState[key] = state;
 
-        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = 1;
+        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = true;
     }
     else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
 

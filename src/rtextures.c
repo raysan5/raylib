@@ -1099,7 +1099,7 @@ Image GenImageCellular(int width, int height, int tileSize)
                 }
             }
 
-            // I made this up, but it seems to give good results at all tile sizes
+            // This approach seems to give good results at all tile sizes
             int intensity = (int)(minDistance*256.0f/tileSize);
             if (intensity > 255) intensity = 255;
 
@@ -4600,7 +4600,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
         // the vertex positions manually, like done above
-        // I leave here the old implementation for educational purposes,
+        // Old implementation is left here for educational purposes,
         // just in case someone wants to do some performance test
         /*
         rlSetTexture(texture.id);

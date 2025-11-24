@@ -99,13 +99,13 @@
         #define __declspec(x) __attribute__((x))
     #endif
     #if defined(BUILD_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllexport)     // Building the library as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllimport)     // Using the library as a Win32 shared library (.dll)
     #endif
 #else
     #if defined(BUILD_LIBTYPE_SHARED)
-        #define RLAPI __attribute__((visibility("default"))) // We are building as a Unix shared library (.so/.dylib)
+        #define RLAPI __attribute__((visibility("default"))) // Building as a Unix shared library (.so/.dylib)
     #endif
 #endif
 
@@ -157,7 +157,7 @@
     #error "C++11 or later is required. Add -std=c++11"
 #endif
 
-// NOTE: We set some defines with some data types declared by raylib
+// NOTE: Set some defines with some data types declared by raylib
 // Other modules (raymath, rlgl) also require some of those types, so,
 // to be able to use those other modules as standalone (not depending on raylib)
 // this defines are very useful for internal check and avoid type (re)definitions
