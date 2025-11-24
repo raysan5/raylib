@@ -776,10 +776,9 @@ RLAPI unsigned int rlLoadFramebuffer(void);                               // Loa
 RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType, int mipLevel); // Attach texture/renderbuffer to a framebuffer
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+// WARNING: Copy and resize framebuffer functionality only defined for software backend
 RLAPI void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels); // Copy framebuffer pixel data to internal buffer
 RLAPI void rlResizeFramebuffer(int width, int height);                    // Resize internal framebuffer
-#endif
 
 // Shaders management
 RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    // Load shader from code strings
@@ -3750,21 +3749,23 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     return pixels;
 }
 
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
 // Copy framebuffer pixel data to internal buffer
 void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels)
 {
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType); // Get OpenGL texture format
     swCopyFramebuffer(x, y, width, height, glFormat, glType, pixels);
+#endif
 }
 
 // Resize internal framebuffer
 void rlResizeFramebuffer(int width, int height)
 {
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     swResizeFramebuffer(width, height);
-}
 #endif
+}
 
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
