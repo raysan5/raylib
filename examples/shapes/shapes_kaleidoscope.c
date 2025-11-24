@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <string.h>
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -49,6 +50,7 @@ int main(void)
     int symmetry = 6;
     float angle = 360.0f/(float)symmetry;
     float thickness = 3.0f;
+    Rectangle resetButtonRec = { screenWidth - 55, 5, 50, 25 };
     Rectangle backButtonRec = { screenWidth - 55, screenHeight - 30, 25, 25 };
     Rectangle nextButtonRec = { screenWidth - 30, screenHeight - 30, 25, 25 };
     Vector2 mousePos = { 0 };
@@ -64,6 +66,7 @@ int main(void)
 
     int currentLineCounter = 0;
     int totalLineCounter = 0;
+    int resetButtonClicked = false;
     int backButtonClicked = false;
     int nextButtonClicked = false;
 
@@ -83,6 +86,7 @@ int main(void)
 
         if (
             IsMouseButtonDown(MOUSE_LEFT_BUTTON)
+            && (CheckCollisionPointRec(mousePos, resetButtonRec) == false)
             && (CheckCollisionPointRec(mousePos, backButtonRec) == false)
             && (CheckCollisionPointRec(mousePos, nextButtonRec) == false)
         )
@@ -103,6 +107,13 @@ int main(void)
                 totalLineCounter += 2;
                 currentLineCounter = totalLineCounter;
             }
+        }
+
+        if (resetButtonClicked)
+        {
+            memset(&lines, 0, sizeof(Line) * MAX_DRAW_LINES);
+            currentLineCounter = 0;
+            totalLineCounter = 0;
         }
 
         if (backButtonClicked && (currentLineCounter > 0))
@@ -144,6 +155,8 @@ int main(void)
             }
             nextButtonClicked = GuiButton(nextButtonRec, ">");
             GuiEnable();
+
+            resetButtonClicked = GuiButton(resetButtonRec, "Reset");
 
             DrawText(TextFormat("LINES: %i/%i", currentLineCounter, MAX_DRAW_LINES), 10, screenHeight - 30, 20, MAROON);
             DrawFPS(10, 10);
