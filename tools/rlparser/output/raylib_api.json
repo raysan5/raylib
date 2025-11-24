@@ -40,7 +40,7 @@
       "name": "RLAPI",
       "type": "UNKNOWN",
       "value": "__declspec(dllexport)",
-      "description": "We are building the library as a Win32 shared library (.dll)"
+      "description": "Building the library as a Win32 shared library (.dll)"
     },
     {
       "name": "PI",
