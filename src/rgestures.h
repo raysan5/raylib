@@ -368,48 +368,60 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.current = GESTURE_HOLD;
             GESTURES.Hold.timeDuration = rgGetCurrentTime();
         }
-        else if (event.touchAction == TOUCH_ACTION_MOVE)
-        {
-            GESTURES.Pinch.distance = rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
+       else if (event.touchAction == TOUCH_ACTION_MOVE)
+{
+    GESTURES.Pinch.distance = rgVector2Distance(
+        GESTURES.Touch.moveDownPositionA,
+        GESTURES.Touch.moveDownPositionB
+    );
 
-            GESTURES.Touch.moveDownPositionA = event.position[0];
-            GESTURES.Touch.moveDownPositionB = event.position[1];
+    GESTURES.Touch.moveDownPositionA = event.position[0];
+    GESTURES.Touch.moveDownPositionB = event.position[1];
 
-            GESTURES.Pinch.vector.x = GESTURES.Touch.moveDownPositionB.x - GESTURES.Touch.moveDownPositionA.x;
-            GESTURES.Pinch.vector.y = GESTURES.Touch.moveDownPositionB.y - GESTURES.Touch.moveDownPositionA.y;
+    GESTURES.Pinch.vector.x = GESTURES.Touch.moveDownPositionB.x - GESTURES.Touch.moveDownPositionA.x;
+    GESTURES.Pinch.vector.y = GESTURES.Touch.moveDownPositionB.y - GESTURES.Touch.moveDownPositionA.y;
 
-            if ((rgVector2Distance(GESTURES.Touch.previousPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) || (rgVector2Distance(GESTURES.Touch.previousPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
-            {
-                if ( rgVector2Distance(GESTURES.Touch.previousPositionA, GESTURES.Touch.previousPositionB) > rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB) ) GESTURES.current = GESTURE_PINCH_IN;
-                else GESTURES.current = GESTURE_PINCH_OUT;
-            }
-            else
-            {
-                GESTURES.current = GESTURE_HOLD;
-                GESTURES.Hold.timeDuration = rgGetCurrentTime();
-            }
-
-            // NOTE: Angle should be inverted in Y
-            GESTURES.Pinch.angle = 360.0f - rgVector2Angle(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
-        }
-        else if (event.touchAction == TOUCH_ACTION_UP)
-        {
-            GESTURES.Pinch.distance = 0.0f;
-            GESTURES.Pinch.angle = 0.0f;
-            GESTURES.Pinch.vector = (Vector2){ 0.0f, 0.0f };
-            GESTURES.Touch.pointCount = 0;
-
-            GESTURES.current = GESTURE_NONE;
-        }
-    }
-         else if (GESTURES.Touch.pointCount == 0) // No touch points
-              {
-     GESTURES.current = GESTURE_NONE;
- }
-    else if (GESTURES.Touch.pointCount > 2)     // More than two touch points
+    if ((rgVector2Distance(GESTURES.Touch.previousPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) ||
+        (rgVector2Distance(GESTURES.Touch.previousPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
     {
-        // TODO: Process gesture events for more than two points
+        if (rgVector2Distance(GESTURES.Touch.previousPositionA, GESTURES.Touch.previousPositionB) >
+            rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB))
+        {
+            GESTURES.current = GESTURE_PINCH_IN;
+        }
+        else
+        {
+            GESTURES.current = GESTURE_PINCH_OUT;
+        }
     }
+    else
+    {
+        GESTURES.current = GESTURE_HOLD;
+        GESTURES.Hold.timeDuration = rgGetCurrentTime();
+    }
+
+    // NOTE: Angle should be inverted in Y
+    GESTURES.Pinch.angle = 360.0f - rgVector2Angle(
+        GESTURES.Touch.moveDownPositionA,
+        GESTURES.Touch.moveDownPositionB
+    );
+}
+else if (event.touchAction == TOUCH_ACTION_UP)
+{
+    GESTURES.Pinch.distance = 0.0f;
+    GESTURES.Pinch.angle = 0.0f;
+    GESTURES.Pinch.vector = (Vector2){ 0.0f, 0.0f };
+    GESTURES.Touch.pointCount = 0;
+
+    GESTURES.current = GESTURE_NONE;
+}
+else if (GESTURES.Touch.pointCount == 0) // No touch points
+{
+    GESTURES.current = GESTURE_NONE;
+}
+else if (GESTURES.Touch.pointCount > 2) // More than two touch points
+{
+    // TODO: Process gesture events for more than two points
 }
 
 // Update gestures detected (must be called every frame)
