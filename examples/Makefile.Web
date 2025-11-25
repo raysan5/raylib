@@ -696,7 +696,6 @@ SHADERS = \
     shaders/shaders_vertex_displacement
 
 AUDIO = \
-    audio/audio_fft_spectrum_visualizer \
     audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \
@@ -704,6 +703,7 @@ AUDIO = \
     audio/audio_sound_loading \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
+    audio/audio_spectrum_visualizer \
     audio/audio_stream_effects
 
 # Default target entry
@@ -1471,10 +1471,6 @@ shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
 
 # Compile AUDIO examples
-audio/audio_fft_spectrum_visualizer: audio/audio_fft_spectrum_visualizer.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/country.mp3@resources/country.mp3
-
 audio/audio_mixed_processor: audio/audio_mixed_processor.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/country.mp3@resources/country.mp3 \
@@ -1502,6 +1498,11 @@ audio/audio_sound_multi: audio/audio_sound_multi.c
 audio/audio_sound_positioning: audio/audio_sound_positioning.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/coin.wav@resources/coin.wav
+
+audio/audio_spectrum_visualizer: audio/audio_spectrum_visualizer.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file audio/resources/shaders/glsl100/fft.fs@resources/shaders/glsl100/fft.fs \
+    --preload-file audio/resources/country.mp3@resources/country.mp3
 
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

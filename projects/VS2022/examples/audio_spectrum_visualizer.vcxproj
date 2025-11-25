@@ -53,9 +53,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2B3CED91-973F-4936-9DD4-CC8B1C8ACC68}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>audio_fft_spectrum_visualizer</RootNamespace>
+    <RootNamespace>audio_spectrum_visualizer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>audio_fft_spectrum_visualizer</ProjectName>
+    <ProjectName>audio_spectrum_visualizer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\audio\audio_fft_spectrum_visualizer.c" />
+    <ClCompile Include="..\..\..\examples\audio\audio_spectrum_visualizer.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />

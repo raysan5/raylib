@@ -708,7 +708,6 @@ SHADERS = \
     shaders/shaders_vertex_displacement
 
 AUDIO = \
-    audio/audio_fft_spectrum_visualizer \
     audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \
@@ -716,6 +715,7 @@ AUDIO = \
     audio/audio_sound_loading \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
+    audio/audio_spectrum_visualizer \
     audio/audio_stream_effects
 
 OTHERS = \

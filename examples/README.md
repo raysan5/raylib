@@ -260,7 +260,7 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | [audio_stream_effects](audio/audio_stream_effects.c) | <img src="audio/audio_stream_effects.png" alt="audio_stream_effects" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Le Juez Victor](https://github.com/Bigfoot71) |
-| [audio_fft_spectrum_visualizer](audio/audio_fft_spectrum_visualizer.c) | <img src="audio/audio_fft_spectrum_visualizer.png" alt="audio_fft_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 5.6-dev | [IANN](https://github.com/meisei4) |
+| [audio_spectrum_visualizer](audio/audio_spectrum_visualizer.c) | <img src="audio/audio_spectrum_visualizer.png" alt="audio_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 5.6-dev | [IANN](https://github.com/meisei4) |
 
 ### category: others [6]
 
@@ -276,4 +276,4 @@ Examples showing raylib misc functionality that does not fit in other categories
 | [web_basic_window](others/web_basic_window.c) | <img src="others/web_basic_window.png" alt="web_basic_window" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
-Here is an[examples template](examples_template.c) with instructions to start with!
+Here is an [examples template](examples_template.c) with instructions to start with!

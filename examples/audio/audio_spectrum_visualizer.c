@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - fft spectrum visualizer
+*   raylib [audio] example - spectrum visualizer
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -78,7 +78,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - fft spectrum visualizer");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - spectrum visualizer");
 
     Image fftImage = GenImageColor(BUFFER_SIZE, TEXTURE_HEIGHT, WHITE);
     Texture2D fftTexture = LoadTextureFromImage(fftImage);

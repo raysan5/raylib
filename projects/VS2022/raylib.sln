@@ -411,7 +411,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_compute_hash", "exampl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_screen_buffer", "examples\textures_screen_buffer.vcxproj", "{4E9D2828-EE83-40C8-97E0-137EEDFBAAAD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_fft_spectrum_visualizer", "examples\audio_fft_spectrum_visualizer.vcxproj", "{2B3CED91-973F-4936-9DD4-CC8B1C8ACC68}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_spectrum_visualizer", "examples\audio_spectrum_visualizer.vcxproj", "{2B3CED91-973F-4936-9DD4-CC8B1C8ACC68}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_directional_billboard", "examples\models_directional_billboard.vcxproj", "{30011884-25EE-42C9-BB15-888CAFB1AA6E}"
 EndProject
