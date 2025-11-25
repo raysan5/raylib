@@ -111,7 +111,7 @@ int main(void)
 
         if (resetButtonClicked)
         {
-            memset(&lines, 0, sizeof(Line) * MAX_DRAW_LINES);
+            memset(&lines, 0, sizeof(Line)*MAX_DRAW_LINES);
             currentLineCounter = 0;
             totalLineCounter = 0;
         }
@@ -132,8 +132,8 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-
             BeginMode2D(camera);
+
                 for (int s = 0; s < symmetry; s++)
                 {
                     for (int i = 0; i < currentLineCounter; i += 2)
@@ -142,20 +142,18 @@ int main(void)
                         DrawLineEx(lines[i + 1].start, lines[i + 1].end, thickness, BLACK);
                     }
                 }
+
             EndMode2D();
 
-            if ((currentLineCounter - 1) < 0) {
-                GuiDisable();
-            }
+            if ((currentLineCounter - 1) < 0) GuiDisable();
+
             backButtonClicked = GuiButton(backButtonRec, "<");
             GuiEnable();
 
-            if ((currentLineCounter + 1) > totalLineCounter) {
-                GuiDisable();
-            }
+            if ((currentLineCounter + 1) > totalLineCounter) GuiDisable();
+
             nextButtonClicked = GuiButton(nextButtonRec, ">");
             GuiEnable();
-
             resetButtonClicked = GuiButton(resetButtonRec, "Reset");
 
             DrawText(TextFormat("LINES: %i/%i", currentLineCounter, MAX_DRAW_LINES), 10, screenHeight - 30, 20, MAROON);
