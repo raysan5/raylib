@@ -2315,8 +2315,7 @@ const char *GetApplicationDirectory(void)
     
 #elif defined(__FreeBSD__)
 
-    size_t size = sizeof(appD
-    ir);
+    size_t size = sizeof(appDir);
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
 
     if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
