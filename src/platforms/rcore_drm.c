@@ -2303,7 +2303,7 @@ static void PollMouseEvents(void)
                 // Update single touch position only if it's active and no MT events are being used
                 if (platform.touchActive[0]) {
                     platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
-                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
 
@@ -2314,7 +2314,7 @@ static void PollMouseEvents(void)
                 // Update single touch position only if it's active and no MT events are being used
                 if (platform.touchActive[0]) {
                     platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
-                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
 
@@ -2323,17 +2323,23 @@ static void PollMouseEvents(void)
 
             if (event.code == ABS_MT_POSITION_X)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
+                if (platform.touchSlot < MAX_TOUCH_POINTS) {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
-                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    
+                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
+                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
 
             if (event.code == ABS_MT_POSITION_Y)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS && platform.touchActive[platform.touchSlot]) {
+                if (platform.touchSlot < MAX_TOUCH_POINTS) {
                     platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
-                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    
+                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
+                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
 
@@ -2360,6 +2366,25 @@ static void PollMouseEvents(void)
                 }
             }
 
+            // Handle ABS_MT_PRESSURE (0x3a) if available, as some devices use it for lift-off
+            #ifndef ABS_MT_PRESSURE
+            #define ABS_MT_PRESSURE 0x3a
+            #endif
+            if (event.code == ABS_MT_PRESSURE)
+            {
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
+                {
+                    if (event.value <= 0) // Pressure 0 means lift
+                    {
+                        platform.touchActive[platform.touchSlot] = false;
+                        platform.touchPosition[platform.touchSlot].x = -1;
+                        platform.touchPosition[platform.touchSlot].y = -1;
+                        platform.touchId[platform.touchSlot] = -1;
+                        touchAction = 0;    // TOUCH_ACTION_UP
+                    }
+                }
+            }
+
             // Touchscreen tap
             if (event.code == ABS_PRESSURE)
             {
@@ -2368,9 +2393,15 @@ static void PollMouseEvents(void)
                 if (!event.value && previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
-                    platform.touchActive[0] = false;
-                    platform.touchPosition[0].x = -1;
-                    platform.touchPosition[0].y = -1;
+                    
+                    // Clear all touches if global pressure is 0 (safety net)
+                    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+                    {
+                        platform.touchActive[i] = false;
+                        platform.touchPosition[i].x = -1;
+                        platform.touchPosition[i].y = -1;
+                        platform.touchId[i] = -1;
+                    }
                     touchAction = 0;    // TOUCH_ACTION_UP
                 }
 
