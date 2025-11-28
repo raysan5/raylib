@@ -106,7 +106,7 @@
 #define MAX_GAMEPAD_AXES                8       // Maximum number of axes supported (per gamepad)
 #define MAX_GAMEPAD_BUTTONS            32       // Maximum number of buttons supported (per gamepad)
 #define MAX_GAMEPAD_VIBRATION_TIME      2.0f    // Maximum vibration time in seconds
-#define MAX_TOUCH_POINTS                8       // Maximum number of touch points supported
+#define MAX_TOUCH_POINTS               10       // Maximum number of touch points supported
 #define MAX_KEY_PRESSED_QUEUE          16       // Maximum number of keys in the key input queue
 #define MAX_CHAR_PRESSED_QUEUE         16       // Maximum number of characters in the char input queue
 
