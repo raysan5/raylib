@@ -23,7 +23,7 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main ()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -35,9 +35,9 @@ int main ()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
 
-    int zoomMode = 0;   // 0-Mouse Wheel, 1-Mouse Move
+    int zoomMode = 0;       // 0-Mouse Wheel, 1-Mouse Move
 
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -93,6 +93,7 @@ int main ()
                 // under the cursor to the screen space point under the cursor at any zoom
                 camera.target = mouseWorldPos;
             }
+
             if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             {
                 // Zoom increment
@@ -110,7 +111,6 @@ int main ()
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera);
-
                 // Draw the 3d grid, rotated 90 degrees and centered around 0,0
                 // just so we have something in the XY plane
                 rlPushMatrix();
@@ -121,7 +121,6 @@ int main ()
 
                 // Draw a reference circle
                 DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 50, MAROON);
-
             EndMode2D();
 
             // Draw mouse reference
@@ -142,5 +141,6 @@ int main ()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
+
     return 0;
 }

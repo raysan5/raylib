@@ -7,7 +7,7 @@
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
         <Define name="RAYLIB_VERSION" type="STRING" value="5.6-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
-        <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
+        <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="Building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
         <Define name="DEG2RAD" type="FLOAT_MATH" value="(PI/180.0f)" desc="" />
         <Define name="RAD2DEG" type="FLOAT_MATH" value="(180.0f/PI)" desc="" />
@@ -3043,7 +3043,7 @@
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (0.5 is center)">
+        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
@@ -3111,7 +3111,7 @@
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (0.5 is center)">
+        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>

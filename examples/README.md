@@ -17,11 +17,11 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 187]
+## EXAMPLES COLLECTION [TOTAL: 200]
 
-### category: core [45]
+### category: core [47]
 
-Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.
+Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.
 
 |  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
@@ -43,7 +43,7 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_3d_camera_free](core/core_3d_camera_free.c) | <img src="core/core_3d_camera_free.png" alt="core_3d_camera_free" width="80"> | ⭐☆☆☆ | 1.3 | 1.3 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_3d_camera_first_person](core/core_3d_camera_first_person.c) | <img src="core/core_3d_camera_first_person.png" alt="core_3d_camera_first_person" width="80"> | ⭐⭐☆☆ | 1.3 | 1.3 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_3d_camera_split_screen](core/core_3d_camera_split_screen.c) | <img src="core/core_3d_camera_split_screen.png" alt="core_3d_camera_split_screen" width="80"> | ⭐⭐⭐☆ | 3.7 | 4.0 | [Jeffery Myers](https://github.com/JeffM2501) |
-| [core_3d_camera_fps](core/core_3d_camera_fps.c) | <img src="core/core_3d_camera_fps.png" alt="core_3d_camera_fps" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Agnis Aldins](https://github.com/nezvers) |
+| [core_3d_camera_fps](core/core_3d_camera_fps.c) | <img src="core/core_3d_camera_fps.png" alt="core_3d_camera_fps" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Agnis Aldiņš](https://github.com/nezvers) |
 | [core_3d_picking](core/core_3d_picking.c) | <img src="core/core_3d_picking.png" alt="core_3d_picking" width="80"> | ⭐⭐☆☆ | 1.3 | 4.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_world_screen](core/core_world_screen.c) | <img src="core/core_world_screen.png" alt="core_world_screen" width="80"> | ⭐⭐☆☆ | 1.3 | 1.4 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_window_flags](core/core_window_flags.c) | <img src="core/core_window_flags.png" alt="core_window_flags" width="80"> | ⭐⭐⭐☆ | 3.5 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
@@ -64,14 +64,16 @@ Examples using raylib[core](../src/rcore.c) platform functionality like window c
 | [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.5 | [Jonathan Marler](https://github.com/marler8997) |
 | [core_render_texture](core/core_render_texture.c) | <img src="core/core_render_texture.png" alt="core_render_texture" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_viewport_scaling](core/core_viewport_scaling.c) | <img src="core/core_viewport_scaling.png" alt="core_viewport_scaling" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Agnis Aldiņš](https://github.com/nezvers) |
 | [core_input_actions](core/core_input_actions.c) | <img src="core/core_input_actions.png" alt="core_input_actions" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Jett](https://github.com/JettMonstersGoBoom) |
 | [core_directory_files](core/core_directory_files.c) | <img src="core/core_directory_files.png" alt="core_directory_files" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 | [core_highdpi_testbed](core/core_highdpi_testbed.c) | <img src="core/core_highdpi_testbed.png" alt="core_highdpi_testbed" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_screen_recording](core/core_screen_recording.c) | <img src="core/core_screen_recording.png" alt="core_screen_recording" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
+| [core_screen_recording](core/core_screen_recording.c) | <img src="core/core_screen_recording.png" alt="core_screen_recording" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ananth S](https://github.com/Ananth1839) |
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
+| [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
-### category: shapes [31]
+### category: shapes [36]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -105,11 +107,16 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_pie_chart](shapes/shapes_pie_chart.c) | <img src="shapes/shapes_pie_chart.png" alt="shapes_pie_chart" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Gideon Serfontein](https://github.com/GideonSerf) |
 | [shapes_kaleidoscope](shapes/shapes_kaleidoscope.c) | <img src="shapes/shapes_kaleidoscope.png" alt="shapes_kaleidoscope" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 | [shapes_clock_of_clocks](shapes/shapes_clock_of_clocks.c) | <img src="shapes/shapes_clock_of_clocks.png" alt="shapes_clock_of_clocks" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
+| [shapes_math_sine_cosine](shapes/shapes_math_sine_cosine.c) | <img src="shapes/shapes_math_sine_cosine.png" alt="shapes_math_sine_cosine" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [shapes_mouse_trail](shapes/shapes_mouse_trail.c) | <img src="shapes/shapes_mouse_trail.png" alt="shapes_mouse_trail" width="80"> | ⭐☆☆☆ | 5.6 | 5.6-dev | [Balamurugan R](https://github.com/Bala050814) |
 | [shapes_simple_particles](shapes/shapes_simple_particles.c) | <img src="shapes/shapes_simple_particles.png" alt="shapes_simple_particles" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 | [shapes_starfield_effect](shapes/shapes_starfield_effect.c) | <img src="shapes/shapes_starfield_effect.png" alt="shapes_starfield_effect" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
+| [shapes_lines_drawing](shapes/shapes_lines_drawing.c) | <img src="shapes/shapes_lines_drawing.png" alt="shapes_lines_drawing" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6 | [Robin](https://github.com/RobinsAviary) |
+| [shapes_math_angle_rotation](shapes/shapes_math_angle_rotation.c) | <img src="shapes/shapes_math_angle_rotation.png" alt="shapes_math_angle_rotation" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6 | [Kris](https://github.com/krispy-snacc) |
+| [shapes_rlgl_color_wheel](shapes/shapes_rlgl_color_wheel.c) | <img src="shapes/shapes_rlgl_color_wheel.png" alt="shapes_rlgl_color_wheel" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
+| [shapes_rlgl_triangle](shapes/shapes_rlgl_triangle.c) | <img src="shapes/shapes_rlgl_triangle.png" alt="shapes_rlgl_triangle" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 
-### category: textures [26]
+### category: textures [28]
 
 Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.
 
@@ -140,7 +147,9 @@ Examples using raylib textures functionality, including image/textures loading/g
 | [textures_image_kernel](textures/textures_image_kernel.c) | <img src="textures/textures_image_kernel.png" alt="textures_image_kernel" width="80"> | ⭐⭐⭐⭐️ | 1.3 | 1.3 | [Karim Salem](https://github.com/kimo-s) |
 | [textures_image_channel](textures/textures_image_channel.c) | <img src="textures/textures_image_channel.png" alt="textures_image_channel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Bruno Cabral](https://github.com/brccabral) |
 | [textures_image_rotate](textures/textures_image_rotate.c) | <img src="textures/textures_image_rotate.png" alt="textures_image_rotate" width="80"> | ⭐⭐☆☆ | 1.0 | 1.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [textures_screen_buffer](textures/textures_screen_buffer.c) | <img src="textures/textures_screen_buffer.png" alt="textures_screen_buffer" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Agnis Aldiņš](https://github.com/nezvers) |
 | [textures_textured_curve](textures/textures_textured_curve.c) | <img src="textures/textures_textured_curve.png" alt="textures_textured_curve" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jeffery Myers](https://github.com/JeffM2501) |
+| [textures_sprite_stacking](textures/textures_sprite_stacking.c) | <img src="textures/textures_sprite_stacking.png" alt="textures_sprite_stacking" width="80"> | ⭐⭐☆☆ | 5.6-dev | 6.0 | [Robin](https://github.com/RobinsAviary) |
 
 ### category: text [15]
 
@@ -164,7 +173,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_inline_styling](text/text_inline_styling.c) | <img src="text/text_inline_styling.png" alt="text_inline_styling" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Wagner Barongello](https://github.com/SultansOfCode) |
 | [text_words_alignment](text/text_words_alignment.c) | <img src="text/text_words_alignment.png" alt="text_words_alignment" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 
-### category: models [25]
+### category: models [27]
 
 Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.
 
@@ -195,8 +204,10 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_tesseract_view](models/models_tesseract_view.c) | <img src="models/models_tesseract_view.png" alt="models_tesseract_view" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Timothy van der Valk](https://github.com/arceryz) |
 | [models_basic_voxel](models/models_basic_voxel.c) | <img src="models/models_basic_voxel.png" alt="models_basic_voxel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Tim Little](https://github.com/timlittle) |
 | [models_rotating_cube](models/models_rotating_cube.c) | <img src="models/models_rotating_cube.png" alt="models_rotating_cube" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
+| [models_decals](models/models_decals.c) | <img src="models/models_decals.png" alt="models_decals" width="80"> | ⭐⭐⭐⭐️ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
+| [models_directional_billboard](models/models_directional_billboard.c) | <img src="models/models_directional_billboard.png" alt="models_directional_billboard" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6 | [Robin](https://github.com/RobinsAviary) |
 
-### category: shaders [31]
+### category: shaders [32]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
@@ -214,6 +225,8 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_texture_outline](shaders/shaders_texture_outline.c) | <img src="shaders/shaders_texture_outline.png" alt="shaders_texture_outline" width="80"> | ⭐⭐⭐☆ | 4.0 | 4.0 | [Serenity Skiff](https://github.com/GoldenThumbs) |
 | [shaders_texture_waves](shaders/shaders_texture_waves.c) | <img src="shaders/shaders_texture_waves.png" alt="shaders_texture_waves" width="80"> | ⭐⭐☆☆ | 2.5 | 3.7 | [Anata](https://github.com/anatagawa) |
 | [shaders_julia_set](shaders/shaders_julia_set.c) | <img src="shaders/shaders_julia_set.png" alt="shaders_julia_set" width="80"> | ⭐⭐⭐☆ | 2.5 | 4.0 | [Josh Colclough](https://github.com/joshcol9232) |
+| [shaders_mandelbrot_set](shaders/shaders_mandelbrot_set.c) | <img src="shaders/shaders_mandelbrot_set.png" alt="shaders_mandelbrot_set" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_color_correction](shaders/shaders_color_correction.c) | <img src="shaders/shaders_color_correction.png" alt="shaders_color_correction" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 | [shaders_eratosthenes_sieve](shaders/shaders_eratosthenes_sieve.c) | <img src="shaders/shaders_eratosthenes_sieve.png" alt="shaders_eratosthenes_sieve" width="80"> | ⭐⭐⭐☆ | 2.5 | 4.0 | [ProfJski](https://github.com/ProfJski) |
 | [shaders_fog_rendering](shaders/shaders_fog_rendering.c) | <img src="shaders/shaders_fog_rendering.png" alt="shaders_fog_rendering" width="80"> | ⭐⭐⭐☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_simple_mask](shaders/shaders_simple_mask.c) | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="80"> | ⭐⭐☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/chriscamacho) |
@@ -232,9 +245,8 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_lightmap_rendering](shaders/shaders_lightmap_rendering.c) | <img src="shaders/shaders_lightmap_rendering.png" alt="shaders_lightmap_rendering" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 | [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
-| [shaders_mandelbrot_set](shaders/shaders_mandelbrot_set.c) | <img src="shaders/shaders_mandelbrot_set.png" alt="shaders_mandelbrot_set" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 
-### category: audio [8]
+### category: audio [9]
 
 Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.
 
@@ -248,6 +260,7 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | [audio_stream_effects](audio/audio_stream_effects.c) | <img src="audio/audio_stream_effects.png" alt="audio_stream_effects" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Le Juez Victor](https://github.com/Bigfoot71) |
+| [audio_spectrum_visualizer](audio/audio_spectrum_visualizer.c) | <img src="audio/audio_spectrum_visualizer.png" alt="audio_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 5.6-dev | [IANN](https://github.com/meisei4) |
 
 ### category: others [6]
 
@@ -263,4 +276,4 @@ Examples showing raylib misc functionality that does not fit in other categories
 | [web_basic_window](others/web_basic_window.c) | <img src="others/web_basic_window.png" alt="web_basic_window" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
-Here is an[examples template](examples_template.c) with instructions to start with!
+Here is an [examples template](examples_template.c) with instructions to start with!

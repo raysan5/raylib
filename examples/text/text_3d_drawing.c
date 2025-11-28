@@ -231,7 +231,7 @@ int main(void)
             if (multicolor)
             {
                 // Fill color array with random colors
-                for (int i = 0; i < TEXT_MAX_LAYERS; ++i)
+                for (int i = 0; i < TEXT_MAX_LAYERS; i++)
                 {
                     multi[i] = GenerateRandomColor(0.5f, 0.8f);
                     multi[i].a = GetRandomValue(0, 255);
@@ -296,7 +296,7 @@ int main(void)
                         rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
                         rlRotatef(90.0f, 0.0f, 0.0f, -1.0f);
 
-                        for (int i = 0; i < layers; ++i)
+                        for (int i = 0; i < layers; i++)
                         {
                             Color clr = light;
                             if (multicolor) clr = multi[i];

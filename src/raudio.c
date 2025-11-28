@@ -593,7 +593,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     // Init audio buffer values
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
-    audioBuffer->pan = 0.5f;
+    audioBuffer->pan = 0.0f; // Center
 
     audioBuffer->callback = NULL;
     audioBuffer->processor = NULL;
@@ -720,7 +720,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 // Set pan for an audio buffer
 void SetAudioBufferPan(AudioBuffer *buffer, float pan)
 {
-    if (pan < 0.0f) pan = 0.0f;
+    if (pan < -1.0f) pan = -1.0f;
     else if (pan > 1.0f) pan = 1.0f;
 
     if (buffer != NULL)
@@ -985,10 +985,10 @@ Sound LoadSoundAlias(Sound source)
         audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
         audioBuffer->data = source.stream.buffer->data;
 
-        // initalize the buffer as if it was new
+        // Initalize the buffer as if it was new
         audioBuffer->volume = 1.0f;
         audioBuffer->pitch = 1.0f;
-        audioBuffer->pan = 0.5f;
+        audioBuffer->pan = 0.0f; // Center
 
         sound.frameCount = source.frameCount;
         sound.stream.sampleRate = AUDIO.System.device.sampleRate;
@@ -2092,9 +2092,7 @@ float GetMusicTimePlayed(Music music)
             int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
             int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
             int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
-            if ((unsigned int)framesInBuffers > music.frameCount) {
-                if (!music.looping) framesInBuffers = music.frameCount;
-            }
+            if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
             int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
             int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
             if (framesPlayed < 0) framesPlayed += music.frameCount;
@@ -2125,7 +2123,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     if (deviceBitsPerSample > 4)  deviceBitsPerSample = 4;
     deviceBitsPerSample *= AUDIO.System.device.playback.channels;
 
-    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0) ? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -2605,8 +2603,8 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
 
     if (channels == 2)  // We consider panning
     {
-        const float left = buffer->pan;
-        const float right = 1.0f - left;
+        const float right = (buffer->pan + 1.0f)/2.0f; // Normalize: [-1..1] -> [0..1]
+        const float left = 1.0f - right;
 
         // Fast sine approximation in [0..1] for pan law: y = 0.5f*x*(3 - x*x);
         const float levels[2] = { localVolume*0.5f*left*(3.0f - left*left), localVolume*0.5f*right*(3.0f - right*right) };

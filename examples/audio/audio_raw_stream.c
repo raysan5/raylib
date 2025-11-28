@@ -166,7 +166,7 @@ int main(void)
                 memcpy(writeBuf + writeCursor, data + readCursor, writeLength*sizeof(short));
 
                 // Update cursors and loop audio
-                readCursor = (readCursor + writeLength) % waveLength;
+                readCursor = (readCursor + writeLength)%waveLength;
 
                 writeCursor += writeLength;
             }

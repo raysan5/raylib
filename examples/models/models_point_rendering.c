@@ -32,7 +32,7 @@ static Mesh GenMeshPoints(int numPoints);
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ int main()
     Mesh mesh = GenMeshPoints(numPoints);
     Model model = LoadModelFromMesh(mesh);
 
-    //SetTargetFPS(60);
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -92,15 +92,12 @@ int main()
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+
             ClearBackground(BLACK);
 
             BeginMode3D(camera);
-
                 // The new method only uploads the points once to the GPU
-                if (useDrawModelPoints)
-                {
-                    DrawModelPoints(model, position, 1.0f, WHITE);
-                }
+                if (useDrawModelPoints) DrawModelPoints(model, position, 1.0f, WHITE);
                 else
                 {
                     // The old method must continually draw the "points" (lines)
@@ -124,17 +121,16 @@ int main()
 
                 // Draw a unit sphere for reference
                 DrawSphereWires(position, 1.0f, 10, 10, YELLOW);
-
             EndMode3D();
 
             // Draw UI text
-            DrawText(TextFormat("Point Count: %d", numPoints), 20, screenHeight - 50, 40, WHITE);
-            DrawText("Up - increase points", 20, 70, 20, WHITE);
-            DrawText("Down - decrease points", 20, 100, 20, WHITE);
-            DrawText("Space - drawing function", 20, 130, 20, WHITE);
+            DrawText(TextFormat("Point Count: %d", numPoints), 10, screenHeight - 50, 40, WHITE);
+            DrawText("UP - Increase points", 10, 40, 20, WHITE);
+            DrawText("DOWN - Decrease points", 10, 70, 20, WHITE);
+            DrawText("SPACE - Drawing function", 10, 100, 20, WHITE);
 
-            if (useDrawModelPoints) DrawText("Using: DrawModelPoints()", 20, 160, 20, GREEN);
-            else DrawText("Using: DrawPoint3D()", 20, 160, 20, RED);
+            if (useDrawModelPoints) DrawText("Using: DrawModelPoints()", 10, 130, 20, GREEN);
+            else DrawText("Using: DrawPoint3D()", 10, 130, 20, RED);
 
             DrawFPS(10, 10);
 

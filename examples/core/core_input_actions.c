@@ -17,7 +17,7 @@
 
 // Simple example for decoding input as actions, allowing remapping of input to different keys or gamepad buttons
 // For example instead of using `IsKeyDown(KEY_LEFT)`, you can use `IsActionDown(ACTION_LEFT)`
-// which can be reassigned to e.g. KEY_A and also assigned to a gamepad button. the action will trigger with either gamepad or keys 
+// which can be reassigned to e.g. KEY_A and also assigned to a gamepad button. the action will trigger with either gamepad or keys
 
 #include "raylib.h"
 
@@ -44,7 +44,7 @@ typedef struct ActionInput {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 static int gamepadIndex = 0; // Gamepad default index
-static ActionInput actionInputs[MAX_ACTION] = { 0 }; 
+static ActionInput actionInputs[MAX_ACTION] = { 0 };
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -67,14 +67,15 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input actions");
-    
-    // Set default actions 
+
+    // Set default actions
     char actionSet = 0;
     SetActionsDefault();
+    bool releaseAction = false;
 
     Vector2 position = (Vector2){ 400.0f, 200.0f };
     Vector2 size = (Vector2){ 40.0f, 40.0f };
-    
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -83,7 +84,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        gamepadIndex = 0; //  set this to gamepad being checked
+        gamepadIndex = 0; //  Set gamepad being checked
+
         if (IsActionDown(ACTION_UP)) position.y -= 2;
         if (IsActionDown(ACTION_DOWN)) position.y += 2;
         if (IsActionDown(ACTION_LEFT)) position.x -= 2;
@@ -94,7 +96,11 @@ int main(void)
             position.y = (screenHeight-size.y)/2;
         }
 
-        // Switch control scheme by pressing TAB 
+        // Register release action for one frame
+        releaseAction = false;
+        if (IsActionReleased(ACTION_FIRE)) releaseAction = true;
+
+        // Switch control scheme by pressing TAB
         if (IsKeyPressed(KEY_TAB))
         {
             actionSet = !actionSet;
@@ -109,8 +115,8 @@ int main(void)
 
             ClearBackground(GRAY);
 
-            DrawRectangleV(position, size, RED);
-            
+            DrawRectangleV(position, size, releaseAction? BLUE : RED);
+
             DrawText((actionSet == 0)? "Current input set: WASD (default)" : "Current input set: Cursor", 10, 10, 20, WHITE);
             DrawText("Use TAB key to toggles Actions keyset", 10, 50, 20, GREEN);
 
@@ -134,9 +140,9 @@ int main(void)
 static bool IsActionPressed(int action)
 {
     bool result = false;
-    
+
     if (action < MAX_ACTION) result = (IsKeyPressed(actionInputs[action].key) || IsGamepadButtonPressed(gamepadIndex, actionInputs[action].button));
-    
+
     return result;
 }
 
@@ -145,20 +151,20 @@ static bool IsActionPressed(int action)
 static bool IsActionReleased(int action)
 {
     bool result = false;
-    
+
     if (action < MAX_ACTION) result = (IsKeyReleased(actionInputs[action].key) || IsGamepadButtonReleased(gamepadIndex, actionInputs[action].button));
-    
+
     return result;
 }
 
 // Check action key/button down
 // NOTE: Combines key down and gamepad button down in one action
-static bool IsActionDown(int action) 
+static bool IsActionDown(int action)
 {
     bool result = false;
-    
+
     if (action < MAX_ACTION) result = (IsKeyDown(actionInputs[action].key) || IsGamepadButtonDown(gamepadIndex, actionInputs[action].button));
-    
+
     return result;
 }
 

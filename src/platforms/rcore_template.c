@@ -460,11 +460,11 @@ int InitPlatform(void)
     // Below example illustrates that process using EGL library
     //----------------------------------------------------------------------------
     CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
         samples = 4;
         sampleBuffer = 1;

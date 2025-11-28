@@ -35,7 +35,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - mouse trail");
 
     // Array to store the history of mouse positions (our fixed-size queue)
-    Vector2 trailPositions[MAX_TRAIL_LENGTH] = { 0 }; 
+    Vector2 trailPositions[MAX_TRAIL_LENGTH] = { 0 };
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -62,8 +62,8 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLACK); 
-            
+            ClearBackground(BLACK);
+
             // Draw the trail by looping through the history array
             for (int i = 0; i < MAX_TRAIL_LENGTH; i++)
             {
@@ -71,22 +71,22 @@ int main(void)
                 if ((trailPositions[i].x != 0.0f) || (trailPositions[i].y != 0.0f))
                 {
                     // Calculate relative trail strength (ratio is near 1.0 for new, near 0.0 for old)
-                    float ratio = (float)(MAX_TRAIL_LENGTH - i) / MAX_TRAIL_LENGTH; 
-                    
+                    float ratio = (float)(MAX_TRAIL_LENGTH - i)/MAX_TRAIL_LENGTH;
+
                     // Fade effect: oldest positions are more transparent
                     // Fade (color, alpha) - alpha is 0.5 to 1.0 based on ratio
-                    Color trailColor = Fade(SKYBLUE, ratio*0.5f + 0.5f); 
-                    
+                    Color trailColor = Fade(SKYBLUE, ratio*0.5f + 0.5f);
+
                     // Size effect: oldest positions are smaller
-                    float trailRadius = 15.0f*ratio; 
-                    
+                    float trailRadius = 15.0f*ratio;
+
                     DrawCircleV(trailPositions[i], trailRadius, trailColor);
                 }
             }
 
             // Draw a distinct white circle for the current mouse position (Index 0)
             DrawCircleV(mousePosition, 15.0f, WHITE);
-            
+
             DrawText("Move the mouse to see the trail effect!", 10, screenHeight - 30, 20, LIGHTGRAY);
 
         EndDrawing();

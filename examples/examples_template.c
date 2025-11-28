@@ -36,7 +36,7 @@
 
     10. Have fun!
 
-    The following files must be updated when adding a new example, 
+    The following files must be updated when adding a new example,
     but it can be automatically done using the raylib provided tool: rexm
     So, no worries if just the .c/.png are provided when adding the example.
 

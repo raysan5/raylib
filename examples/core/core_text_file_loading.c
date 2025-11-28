@@ -19,6 +19,8 @@
 
 #include "raymath.h"        // Required for: Lerp()
 
+#include <string.h>
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -59,10 +61,11 @@ int main(void)
         int lastSpace = 0;          // Keeping track of last valid space to insert '\n'
         int lastWrapStart = 0;      // Keeping track of the start of this wrapped line.
 
-        while (lines[i][j] != '\0')
+        while (j <= strlen(lines[i]))
         {
-            if (lines[i][j] == ' ')
+            if (lines[i][j] == ' ' || lines[i][j] == '\0')
             {
+                char before = lines[i][j];
                 // Making a C Style string by adding a '\0' at the required location so that we can use the MeasureText function
                 lines[i][j] = '\0';
 
@@ -75,7 +78,7 @@ int main(void)
                     lastWrapStart = lastSpace + 1;
                 }
 
-                lines[i][j] = ' ';  // Resetting the space back
+                if(before != '\0') lines[i][j] = ' ';  // Resetting the space back
                 lastSpace = j; // Since we encountered a new space we update our last encountered space location
             }
 
@@ -88,16 +91,16 @@ int main(void)
 
     for (int i = 0; i < lineCount; i++)
     {
-        Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], fontSize, 2);
-        textHeight += size.y + 10;
+        Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], (float)fontSize, 2);
+        textHeight += (int)size.y + 10;
     }
 
-    // A simple scrollbar on the side to show how far we have red into the file
+    // A simple scrollbar on the side to show how far we have read into the file
     Rectangle scrollBar = {
-        .x = screenWidth - 5,
+        .x = (float)screenWidth - 5,
         .y = 0,
         .width = 5,
-        .height = screenHeight*100/(textHeight - screenHeight) // Scrollbar height is just a percentage
+        .height = screenHeight*100.0f/(textHeight - screenHeight) // Scrollbar height is just a percentage
     };
 
     SetTargetFPS(60);
@@ -115,10 +118,10 @@ int main(void)
 
         // Ensuring that the camera does not scroll past all text
         if (cam.target.y > textHeight - screenHeight + textTop)
-            cam.target.y = textHeight - screenHeight + textTop;
+            cam.target.y = (float)textHeight - screenHeight + textTop;
 
         // Computing the position of the scrollBar depending on the percentage of text covered
-        scrollBar.y = Lerp(textTop, screenHeight - scrollBar.height, (cam.target.y - textTop)/(textHeight - screenHeight));
+        scrollBar.y = Lerp((float)textTop, (float)screenHeight - scrollBar.height, (float)(cam.target.y - textTop)/(textHeight - screenHeight));
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -132,13 +135,19 @@ int main(void)
                 for (int i = 0, t = textTop; i < lineCount; i++)
                 {
                     // Each time we go through and calculate the height of the text to move the cursor appropriately
-                    Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], fontSize, 2);
+                    Vector2 size;
+                    if(strcmp(lines[i], "")){
+                        // Fix for empty line in the text file
+                        size = MeasureTextEx( GetFontDefault(), lines[i], (float)fontSize, 2);
+                    }else{
+                        size = MeasureTextEx( GetFontDefault(), " ", (float)fontSize, 2);
+                    }
 
                     DrawText(lines[i], 10, t, fontSize, RED);
 
                     // Inserting extra space for real newlines,
                     // wrapped lines are rendered closer together
-                    t += size.y + 10;
+                    t += (int)size.y + 10;
                 }
             EndMode2D();
 

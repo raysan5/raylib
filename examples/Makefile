@@ -77,7 +77,7 @@ RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
-DESTDIR ?= /usr/local
+DESTDIR               ?= /usr/local
 RAYLIB_INCLUDE_PATH   ?= $(DESTDIR)/include
 RAYLIB_LIB_PATH       ?= $(DESTDIR)/lib
 
@@ -231,7 +231,7 @@ endif
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
+CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wno-unused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
@@ -486,7 +486,19 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
+    LDLIBS = -lraylib -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl -latomic
+    # TODO: Examples compilation does not define GRAPHICS, is it required?
+    #ifeq ($(GRAPHICS),GRAPHICS_API_OPENGL_ES2)
+    #    LDLIBS += -lGLESv2 -lEGL
+    #endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
+    # Libraries for Windows desktop compilation
+    LDFLAGS += -L..\src
+    LDLIBS = -lraylib -lgdi32 -lwinmm -lshcore
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+        LDLIBS += -lopengl32
+    endif
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Libraries for web (HTML5) compiling
@@ -513,6 +525,7 @@ CORE = \
     core/core_basic_screen_manager \
     core/core_basic_window \
     core/core_clipboard_text \
+    core/core_compute_hash \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
@@ -539,6 +552,7 @@ CORE = \
     core/core_storage_values \
     core/core_text_file_loading \
     core/core_undo_redo \
+    core/core_viewport_scaling \
     core/core_vr_simulator \
     core/core_window_flags \
     core/core_window_letterbox \
@@ -562,14 +576,19 @@ SHAPES = \
     shapes/shapes_following_eyes \
     shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
+    shapes/shapes_lines_drawing \
     shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_math_angle_rotation \
+    shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_recursive_tree \
     shapes/shapes_ring_drawing \
+    shapes/shapes_rlgl_color_wheel \
+    shapes/shapes_rlgl_triangle \
     shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_simple_particles \
     shapes/shapes_splines_drawing \
@@ -598,9 +617,11 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_polygon_drawing \
     textures/textures_raw_data \
+    textures/textures_screen_buffer \
     textures/textures_sprite_animation \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
+    textures/textures_sprite_stacking \
     textures/textures_srcrec_dstrec \
     textures/textures_textured_curve \
     textures/textures_tiled_drawing \
@@ -631,6 +652,8 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
+    models/models_decals \
+    models/models_directional_billboard \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_heightmap_rendering \
@@ -654,6 +677,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
     shaders/shaders_depth_rendering \
@@ -691,6 +715,7 @@ AUDIO = \
     audio/audio_sound_loading \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
+    audio/audio_spectrum_visualizer \
     audio/audio_stream_effects
 
 OTHERS = \

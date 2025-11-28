@@ -97,7 +97,8 @@ int main(void)
         if (IsWindowState(FLAG_WINDOW_MINIMIZED))
         {
             framesCounter++;
-            if (framesCounter >= 240) {
+            if (framesCounter >= 240)
+            {
                 RestoreWindow(); // Restore window after 3 seconds
                 framesCounter = 0;
             }

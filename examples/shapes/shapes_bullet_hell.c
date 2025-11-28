@@ -107,7 +107,7 @@ int main(void)
 
                     float bulletDirection = baseDirection + (degreesPerRow*row);
 
-                    // Bullet speed * bullet direction, this will determine how much pixels will be incremented/decremented
+                    // Bullet speed*bullet direction, this will determine how much pixels will be incremented/decremented
                     // from the bullet position every frame. Since the bullets doesn't change its direction and speed,
                     // only need to calculate it at the spawning time
                     // 0 degrees = right, 90 degrees = down, 180 degrees = left and 270 degrees = up, basically clockwise
@@ -197,7 +197,7 @@ int main(void)
                             bullets[i].color);
                     }
                 }
-            } 
+            }
             else
             {
                 // Draw bullets using DrawCircle(), less performant

@@ -76,7 +76,7 @@ int main(void)
         float step = dt/SIMULATION_STEPS, step2 = step*step;
 
         // Update Physics - larger steps = better approximation
-        for (int i = 0; i < SIMULATION_STEPS; ++i)
+        for (int i = 0; i < SIMULATION_STEPS; i++)
         {
             float delta = theta1 - theta2;
             float sinD = sinf(delta), cosD = cosf(delta), cos2D = cosf(2*delta);

@@ -40,7 +40,7 @@ return {
       name = "RLAPI",
       type = "UNKNOWN",
       value = "__declspec(dllexport)",
-      description = "We are building the library as a Win32 shared library (.dll)"
+      description = "Building the library as a Win32 shared library (.dll)"
     },
     {
       name = "PI",
@@ -8105,7 +8105,7 @@ return {
     },
     {
       name = "SetSoundPan",
-      description = "Set pan for a sound (0.5 is center)",
+      description = "Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"},
@@ -8268,7 +8268,7 @@ return {
     },
     {
       name = "SetMusicPan",
-      description = "Set pan for a music (0.5 is center)",
+      description = "Set pan for a music (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},

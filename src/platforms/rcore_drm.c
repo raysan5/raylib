@@ -220,7 +220,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     248, 0,   0,   0,   0,   0,   0,   0,
 
     // Gamepads are mapped according to:
-    // https://www.kernel.org/doc/html/next/input/gamepad.html
+    // Ref: https://www.kernel.org/doc/html/next/input/gamepad.html
     // Those mappings are standardized, but that doesn't mean people follow
     // the standards, so this is more of an approximation
     [BTN_DPAD_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
@@ -637,7 +637,7 @@ static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo)
 }
 
 // Renders a blank frame to allocate initial buffers
-// TODO: WARNING: Platform layers do not include OpenGL code!
+// TODO: WARNING: Platform backend should not include OpenGL code
 void RenderBlankFrame()
 {
     glClearColor(0, 0, 0, 1);
@@ -824,15 +824,6 @@ void SwapScreenBuffer(void)
         return;
     }
 
-    // Get the software rendered color buffer
-    int bufferWidth = 0, bufferHeight = 0;
-    void *colorBuffer = swGetColorBuffer(&bufferWidth, &bufferHeight);
-    if (!colorBuffer)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: Failed to get software color buffer");
-        return;
-    }
-
     // Retrieving the dimensions of the display mode used
     drmModeModeInfo *mode = &platform.connector->modes[platform.modeIndex];
     uint32_t width = mode->hdisplay;
@@ -900,16 +891,8 @@ void SwapScreenBuffer(void)
     }
 
     // Copy the software rendered buffer to the dumb buffer with scaling if needed
-    if (bufferWidth == width && bufferHeight == height)
-    {
-        // Direct copy if sizes match
-        swCopyFramebuffer(0, 0, bufferWidth, bufferHeight, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
-    }
-    else
-    {
-        // Scale the software buffer to match the display mode
-        swBlitFramebuffer(0, 0, width, height, 0, 0, bufferWidth, bufferHeight, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
-    }
+    // NOTE: RLSW will make a simple copy if the dimensions match
+    swBlitFramebuffer(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
 
     // Unmap the buffer
     munmap(dumbBuffer, creq.size);
@@ -1165,7 +1148,7 @@ int InitPlatform(void)
     // Initialize graphic device: display/window and graphic context
     //----------------------------------------------------------------------------
     CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     platform.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
@@ -1230,9 +1213,9 @@ int InitPlatform(void)
 
         TRACELOG(LOG_TRACE, "DISPLAY: Connector %i modes detected: %i", i, con->count_modes);
         TRACELOG(LOG_TRACE, "DISPLAY: Connector %i status: %s", i,
-                 (con->connection == DRM_MODE_CONNECTED) ? "CONNECTED" :
-                 (con->connection == DRM_MODE_DISCONNECTED) ? "DISCONNECTED" :
-                 (con->connection == DRM_MODE_UNKNOWNCONNECTION) ? "UNKNOWN" : "OTHER");
+                 (con->connection == DRM_MODE_CONNECTED)? "CONNECTED" :
+                 (con->connection == DRM_MODE_DISCONNECTED)? "DISCONNECTED" :
+                 (con->connection == DRM_MODE_UNKNOWNCONNECTION)? "UNKNOWN" : "OTHER");
 
         // In certain cases the status of the conneciton is reported as UKNOWN, but it is still connected
         // This might be a hardware or software limitation like on Raspberry Pi Zero with composite output
@@ -1314,8 +1297,8 @@ int InitPlatform(void)
         CORE.Window.screen.height = CORE.Window.display.height;
     }
 
-    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
-    const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
+    const bool allowInterlaced = FLAG_IS_SET(CORE.Window.flags, FLAG_INTERLACED_HINT);
+    const int fps = (CORE.Time.target > 0)? (1.0/CORE.Time.target) : 60;
 
     // Try to find an exact matching mode
     platform.modeIndex = FindExactConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
@@ -1345,7 +1328,7 @@ int InitPlatform(void)
 
     TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", platform.connector->modes[platform.modeIndex].name,
         platform.connector->modes[platform.modeIndex].hdisplay, platform.connector->modes[platform.modeIndex].vdisplay,
-        (platform.connector->modes[platform.modeIndex].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
+        FLAG_IS_SET(platform.connector->modes[platform.modeIndex].flags, DRM_MODE_FLAG_INTERLACE)? 'i' : 'p',
         platform.connector->modes[platform.modeIndex].vrefresh);
 
     drmModeFreeEncoder(enc);
@@ -1362,7 +1345,7 @@ int InitPlatform(void)
                  platform.connector->modes[0].name,
                  platform.connector->modes[0].hdisplay,
                  platform.connector->modes[0].vdisplay,
-                 (platform.connector->modes[0].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
+                 (platform.connector->modes[0].flags & DRM_MODE_FLAG_INTERLACE)? 'i' : 'p',
                  platform.connector->modes[0].vrefresh);
     }
     else
@@ -1401,7 +1384,7 @@ int InitPlatform(void)
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
         samples = 4;
         sampleBuffer = 1;
@@ -1473,7 +1456,7 @@ int InitPlatform(void)
 
     // find the EGL config that matches the previously setup GBM format
     int found = 0;
-    for (EGLint i = 0; i < matchingNumConfigs; ++i)
+    for (EGLint i = 0; i < matchingNumConfigs; i++)
     {
         EGLint id = 0;
         if (!eglGetConfigAttrib(platform.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
@@ -1578,17 +1561,17 @@ int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 #endif
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Set some default window flags
-    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_HIDDEN);       // false
+    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);    // false
+    FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);      // true
+    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);    // false
 
     //----------------------------------------------------------------------------
     // Initialize timing system
@@ -1737,8 +1720,8 @@ static void InitKeyboard(void)
 
     // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo and key processing
     // NOTE: ISIG controls if ^C and ^Z generate break signals or not
-    keyboardNewSettings.c_lflag &= ~(ICANON | ECHO | ISIG);
-    //keyboardNewSettings.c_iflag &= ~(ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
+    FLAG_CLEAR(keyboardNewSettings.c_lflag, ICANON | ECHO | ISIG);
+    //FLAG_CLEAR(keyboardNewSettings.c_iflag, ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
     keyboardNewSettings.c_cc[VMIN] = 1;
     keyboardNewSettings.c_cc[VTIME] = 0;
 
@@ -1757,10 +1740,10 @@ static void InitKeyboard(void)
     else
     {
         // Reconfigure keyboard mode to get:
-        //    - scancodes (K_RAW)
-        //    - keycodes (K_MEDIUMRAW)
-        //    - ASCII chars (K_XLATE)
-        //    - UNICODE chars (K_UNICODE)
+        // - scancodes (K_RAW)
+        // - keycodes (K_MEDIUMRAW)
+        // - ASCII chars (K_XLATE)
+        // - UNICODE chars (K_UNICODE)
         ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);  // ASCII chars
     }
 
@@ -1895,7 +1878,7 @@ static void InitEvdevInput(void)
     platform.mouseFd = -1;
 
     // Reset variables
-    for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
     {
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
@@ -2419,7 +2402,7 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
     for (size_t i = 0; i < connector->count_modes; i++)
     {
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, connector->modes[i].hdisplay, connector->modes[i].vdisplay,
-            connector->modes[i].vrefresh, (connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
+            connector->modes[i].vrefresh, (FLAG_IS_SET(connector->modes[i].flags, DRM_MODE_FLAG_INTERLACE) > 0)? "interlaced" : "progressive");
 
         if (0 == BINCMP(&platform.crtc->mode, &platform.connector->modes[i])) return i;
     }
@@ -2440,9 +2423,9 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
     {
         const drmModeModeInfo *const mode = &platform.connector->modes[i];
 
-        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
+        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0)? "interlaced" : "progressive");
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !allowInterlaced) continue;
+        if ((FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0) && !allowInterlaced) continue;
 
         if ((mode->hdisplay == width) && (mode->vdisplay == height) && (mode->vrefresh == fps)) return i;
     }
@@ -2466,7 +2449,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         const drmModeModeInfo *const mode = &platform.connector->modes[i];
 
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
-            (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
+            (FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0)? "interlaced" : "progressive");
 
         if ((mode->hdisplay < width) || (mode->vdisplay < height))
         {
@@ -2474,13 +2457,13 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
             continue;
         }
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !allowInterlaced)
+        if ((FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0) && !allowInterlaced)
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM shouldn't choose an interlaced mode");
             continue;
         }
 
-        const int unusedPixels = (mode->hdisplay - width) * (mode->vdisplay - height);
+        const int unusedPixels = (mode->hdisplay - width)*(mode->vdisplay - height);
         const int fpsDiff = mode->vrefresh - fps;
 
         if ((unusedPixels < minUnusedPixels) ||

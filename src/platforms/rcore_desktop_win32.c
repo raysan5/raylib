@@ -49,8 +49,6 @@
 #define CloseWindow CloseWindowWin32
 #define Rectangle RectangleWin32
 #define ShowCursor ShowCursorWin32
-#define LoadImageA LoadImageAWin32
-#define LoadImageW LoadImageWin32
 #define DrawTextA DrawTextAWin32
 #define DrawTextW DrawTextWin32
 #define DrawTextExA DrawTextExAWin32
@@ -63,8 +61,6 @@
 #undef Rectangle        // raylib symbol collision
 #undef ShowCursor       // raylib symbol collision
 #undef LoadImage        // raylib symbol collision
-#undef LoadImageA
-#undef LoadImageW
 #undef DrawText         // raylib symbol collision
 #undef DrawTextA
 #undef DrawTextW
@@ -75,6 +71,8 @@
 #include <windowsx.h>
 #include <shellscalingapi.h>
 #include <versionhelpers.h>
+
+#include <malloc.h>          // Required for alloca()
 
 #if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     #include <GL/gl.h>
@@ -199,8 +197,8 @@ static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 #define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#define WGL_CONTEXT_ES_PROFILE_BIT_EXT		0x00000004
-#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT		0x00000004
+#define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
+#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -264,9 +262,9 @@ static bool DecoratedFromStyle(DWORD style)
 // Get window style from required flags
 static DWORD MakeWindowStyle(unsigned flags)
 {
-    // We don't need this since we don't have any child windows, but I guess
-    // it improves efficiency, plus, windows adds this flag automatically anyway
-    // so it keeps our flags in sync with the OS
+    // Flag is not needed because there are no child windows,
+    // but supposedly it improves efficiency, plus, windows adds this 
+    // flag automatically anyway so it keeps flags in sync with the OS
     DWORD style = WS_CLIPSIBLINGS;
 
     style |= (flags & FLAG_WINDOW_HIDDEN)? 0 : WS_VISIBLE;
@@ -275,7 +273,7 @@ static DWORD MakeWindowStyle(unsigned flags)
 
     // Minimized takes precedence over maximized
     int mized = MIZED_NONE;
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
     if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
 
     switch (mized)
@@ -941,7 +939,7 @@ void SetWindowIcon(Image image)
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    // TODO.
+    // TODO: Implement SetWindowIcons()
 }
 
 void SetWindowTitle(const char *title)
@@ -1143,7 +1141,7 @@ void ShowCursor(void)
 // Hides mouse cursor
 void HideCursor(void)
 {
-    // NOTE: We use SetCursor() instead of ShowCursor() because 
+    // NOTE: We use SetCursor() instead of ShowCursor() because
     // it makes it easy to only hide the cursor while it's inside the client area
     SetCursor(NULL);
     CORE.Input.Mouse.cursorHidden = true;
@@ -1232,7 +1230,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    LARGE_INTEGER now;
+    LARGE_INTEGER now = 0;
     QueryPerformanceCounter(&now);
     return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 }
@@ -1248,7 +1246,11 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        TRACELOG(LOG_WARNING, "OpenURL not implemented");
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
+        sprintf(cmd, "explorer \"%s\"", url);
+        int result = system(cmd);
+        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
+        RL_FREE(cmd);
     }
 }
 
@@ -1529,7 +1531,7 @@ int InitPlatform(void)
     // Load user-provided icon if available
     // NOTE: raylib resource file defaults to GLFW_ICON id, so looking for same identifier
     windowClass.hIcon = LoadImageW(hInstance, L"GLFW_ICON", IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, (LPCWSTR)IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 
     // Register window class
     result = (int)RegisterClassExW(&windowClass);
@@ -1985,7 +1987,7 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
     {
         CORE.Input.Keyboard.currentKeyState[key] = state;
 
-        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = 1;
+        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = true;
     }
     else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
 
