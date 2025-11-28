@@ -135,6 +135,7 @@ typedef struct {
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
     bool cursorRelative;                // Relative cursor mode
     int mouseFd;                        // File descriptor for the evdev mouse/touch/gestures
+    bool mouseIsTouch;                  // Check if the current mouse device is actually a touchscreen
     Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
     bool touchActive[MAX_TOUCH_POINTS]; // Track which touch points are currently active
@@ -2054,17 +2055,49 @@ static void ConfigureEvdevDevice(char *device)
     const char *deviceKindStr = "unknown";
     if (isMouse || isTouch)
     {
-        deviceKindStr = "mouse";
-        if (platform.mouseFd != -1) close(platform.mouseFd);
-        platform.mouseFd = fd;
+        bool prioritize = false;
 
-        if (absAxisCount > 0)
+        // Priority logic: Touchscreens override Mice.
+        // 1. No device set yet? Take it.
+        if (platform.mouseFd == -1) prioritize = true;
+        // 2. Current is Mouse, New is Touch? Upgrade to Touch.
+        else if (isTouch && !platform.mouseIsTouch) prioritize = true;
+        // 3. Current is Touch, New is Touch? Use the new one (Last one found wins, standard behavior).
+        else if (isTouch && platform.mouseIsTouch) prioritize = true;
+        // 4. Current is Mouse, New is Mouse? Use the new one.
+        else if (!isTouch && !platform.mouseIsTouch) prioritize = true;
+        // 5. Current is Touch, New is Mouse? IGNORE the mouse. Keep the touchscreen.
+        else prioritize = false;
+
+        if (prioritize)
         {
-            platform.absRange.x = absinfo[ABS_X].info.minimum;
-            platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
+            deviceKindStr = isTouch ? "touchscreen" : "mouse";
+            
+            if (platform.mouseFd != -1) 
+            {
+                TRACELOG(LOG_INFO, "INPUT: Overwriting previous input device with new %s", deviceKindStr);
+                close(platform.mouseFd);
+            }
+            
+            platform.mouseFd = fd;
+            platform.mouseIsTouch = isTouch;
 
-            platform.absRange.y = absinfo[ABS_Y].info.minimum;
-            platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
+            if (absAxisCount > 0)
+            {
+                platform.absRange.x = absinfo[ABS_X].info.minimum;
+                platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
+
+                platform.absRange.y = absinfo[ABS_Y].info.minimum;
+                platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
+            }
+            
+            TRACELOG(LOG_INFO, "INPUT: Initialized input device %s as %s", device, deviceKindStr);
+        }
+        else
+        {
+            TRACELOG(LOG_INFO, "INPUT: Ignoring device %s (keeping higher priority %s device)", device, platform.mouseIsTouch ? "touchscreen" : "mouse");
+            close(fd);
+            return;
         }
     }
     else if (isGamepad && !isMouse && !isKeyboard && (platform.gamepadCount < MAX_GAMEPADS))
@@ -2334,8 +2367,13 @@ static void PollMouseEvents(void)
                     if (event.value >= 0)
                     {
                         // Touch has started for this point
+                        // If it was already active, it means we missed a lift event or the ID changed
+                        // We should treat it as a new touch
                         platform.touchActive[platform.touchSlot] = true;
                         platform.touchId[platform.touchSlot] = event.value;
+                        
+                        // Force DOWN action, even if we previously detected a MOVE or UP in this frame
+                        // A new touch is a significant state change that should take priority
                         touchAction = 1;    // TOUCH_ACTION_DOWN
                     }
                     else
@@ -2345,7 +2383,10 @@ static void PollMouseEvents(void)
                         platform.touchPosition[platform.touchSlot].x = -1;
                         platform.touchPosition[platform.touchSlot].y = -1;
                         platform.touchId[platform.touchSlot] = -1;
-                        touchAction = 0;    // TOUCH_ACTION_UP
+                        
+                        // Force UP action if we haven't already set a DOWN action
+                        // (DOWN takes priority over UP if both happen in one frame, though rare)
+                        if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
                     }
                 }
             }
@@ -2364,7 +2405,7 @@ static void PollMouseEvents(void)
                         platform.touchPosition[platform.touchSlot].x = -1;
                         platform.touchPosition[platform.touchSlot].y = -1;
                         platform.touchId[platform.touchSlot] = -1;
-                        touchAction = 0;    // TOUCH_ACTION_UP
+                        if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
                     }
                 }
             }
@@ -2386,7 +2427,7 @@ static void PollMouseEvents(void)
                         platform.touchPosition[i].y = -1;
                         platform.touchId[i] = -1;
                     }
-                    touchAction = 0;    // TOUCH_ACTION_UP
+                    if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
                 }
 
                 if (event.value && !previousMouseLeftButtonState)
