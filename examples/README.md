@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 200]
+## EXAMPLES COLLECTION [TOTAL: 201]
 
 ### category: core [47]
 
@@ -73,7 +73,7 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
 | [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
-### category: shapes [36]
+### category: shapes [37]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -115,6 +115,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_math_angle_rotation](shapes/shapes_math_angle_rotation.c) | <img src="shapes/shapes_math_angle_rotation.png" alt="shapes_math_angle_rotation" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6 | [Kris](https://github.com/krispy-snacc) |
 | [shapes_rlgl_color_wheel](shapes/shapes_rlgl_color_wheel.c) | <img src="shapes/shapes_rlgl_color_wheel.png" alt="shapes_rlgl_color_wheel" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 | [shapes_rlgl_triangle](shapes/shapes_rlgl_triangle.c) | <img src="shapes/shapes_rlgl_triangle.png" alt="shapes_rlgl_triangle" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
+| [shapes_ball_physics](shapes/shapes_ball_physics.c) | <img src="shapes/shapes_ball_physics.png" alt="shapes_ball_physics" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [David Buzatto](https://github.com/davidbuzatto) |
 
 ### category: textures [28]
 

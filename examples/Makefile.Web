@@ -548,6 +548,7 @@ CORE = \
     core/core_world_screen
 
 SHAPES = \
+    shapes/shapes_ball_physics \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
     shapes/shapes_bullet_hell \
@@ -864,6 +865,9 @@ core/core_world_screen: core/core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile SHAPES examples
+shapes/shapes_ball_physics: shapes/shapes_ball_physics.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 

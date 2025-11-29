@@ -560,6 +560,7 @@ CORE = \
     core/core_world_screen
 
 SHAPES = \
+    shapes/shapes_ball_physics \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
     shapes/shapes_bullet_hell \
