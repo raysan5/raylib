@@ -108,8 +108,9 @@ int main(void)
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-// Draw text using inline styling, using input color as the base alpha multiplied to inline styles
+// Draw text using inline styling
 // PARAM: color is the default text color, background color is BLANK by default
+// NOTE: Using input color as the base alpha multiplied to inline styles
 static void DrawTextStyled(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color color)
 {
     // Text inline styling strategy used: [ ] delimiters for format
@@ -179,12 +180,12 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
                     if (text[i - 1] == 'c')
 					{
 						colFront = GetColor(colHexValue);
-						colFront.a *= (float)color.a / 255.0f;
+						colFront.a *= (float)color.a/255.0f;
 					}
                     else if (text[i - 1] == 'b')
 					{
 						colBack = GetColor(colHexValue);
-						colBack.a *= (float)color.a / 255.0f;
+						colBack.a *= (float)color.a/255.0f;
 					}
 
                     i += (colHexCount + 1); // Skip color value retrieved and ']'
