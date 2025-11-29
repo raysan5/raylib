@@ -81,12 +81,15 @@ int main(void)
             DrawTextStyled(GetFontDefault(), "This changes the [c00ff00ff][bff0000ff]foreground and background colors[r]!!!",
                 (Vector2){ 100, 160 }, 20.0f, 2.0f, BLACK);
 
+            DrawTextStyled(GetFontDefault(), "This changes the [c00ff00ff]alpha[r] relative [cffffffff][b000000ff]from source[r] [cff000088]color[r]!!!",
+                (Vector2){ 100, 200 }, 20.0f, 2.0f, (Color){ 0, 0, 0, 100 });
+
             // Get pointer to formated text
             const char *text = TextFormat("Let's be [c%02x%02x%02xFF]CREATIVE[r] !!!", colRandom.r, colRandom.g, colRandom.b);
-            DrawTextStyled(GetFontDefault(), text, (Vector2){ 100, 220 }, 40.0f, 2.0f, BLACK);
+            DrawTextStyled(GetFontDefault(), text, (Vector2){ 100, 240 }, 40.0f, 2.0f, BLACK);
 
             textSize = MeasureTextStyled(GetFontDefault(), text, 40.0f, 2.0f);
-            DrawRectangleLines(100, 220, (int)textSize.x, (int)textSize.y, GREEN);
+            DrawRectangleLines(100, 240, (int)textSize.x, (int)textSize.y, GREEN);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -171,8 +174,16 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
 
                     // Convert hex color text into actual Color
                     unsigned int colHexValue = strtoul(colHexText, NULL, 16);
-                    if (text[i - 1] == 'c') colFront = GetColor(colHexValue);
-                    else if (text[i - 1] == 'b') colBack = GetColor(colHexValue);
+                    if (text[i - 1] == 'c')
+					{
+						colFront = GetColor(colHexValue);
+						colFront.a *= (float)color.a / 255.0f;
+					}
+                    else if (text[i - 1] == 'b')
+					{
+						colBack = GetColor(colHexValue);
+						colBack.a *= (float)color.a / 255.0f;
+					}
 
                     i += (colHexCount + 1); // Skip color value retrieved and ']'
                     continue;   // Do not draw characters
