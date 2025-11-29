@@ -371,7 +371,6 @@ double GetTime(void)
     QueryPerformanceCounter(&now);
     return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
-    double time = 0.0;
     struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
