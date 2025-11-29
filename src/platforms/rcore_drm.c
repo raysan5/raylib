@@ -2386,7 +2386,7 @@ static void PollMouseEvents(void)
                         // If it was already active, it means we missed a lift event or the ID changed
                         // We should treat it as a new touch
                         platform.touchActive[platform.touchSlot] = true;
-                        platform.touchId[platform.touchSlot] = event.value;
+                        platform.touchId[platform.touchSlot] = platform.touchSlot; // Use slot index as ID for stability
                         
                         // Force DOWN action, even if we previously detected a MOVE or UP in this frame
                         // A new touch is a significant state change that should take priority
@@ -2435,21 +2435,12 @@ static void PollMouseEvents(void)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
                     
-                    // Clear all touches if global pressure is 0 (safety net)
-                    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-                    {
-                        platform.touchActive[i] = false;
-                        platform.touchPosition[i].x = -1;
-                        platform.touchPosition[i].y = -1;
-                        platform.touchId[i] = -1;
-                    }
                     if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
                 }
 
                 if (event.value && !previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
-                    platform.touchActive[0] = true;
                     touchAction = 1;    // TOUCH_ACTION_DOWN
                 }
             }
@@ -2466,22 +2457,13 @@ static void PollMouseEvents(void)
 
                 if (event.value > 0)
                 {
-                    platform.touchActive[0] = true;
+                    // platform.touchActive[0] = true;
                     touchAction = 1;   // TOUCH_ACTION_DOWN
                 }
                 else
                 {
-                    if (event.code == BTN_TOUCH)
-                    {
-                        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-                        {
-                            platform.touchActive[i] = false;
-                            platform.touchPosition[i].x = -1;
-                            platform.touchPosition[i].y = -1;
-                            platform.touchId[i] = -1;
-                        }
-                    }
-                    else
+                    // Only clear touch 0 for actual mouse clicks (BTN_LEFT)
+                    if (event.code == BTN_LEFT)
                     {
                         platform.touchActive[0] = false;
                         platform.touchPosition[0].x = -1;
