@@ -70,6 +70,8 @@ int main(void)
             // - Define foreground color:      [cRRGGBBAA]
             // - Define background color:      [bRRGGBBAA]
             // - Reset formating:              [r]
+            // Colors defined with [cRRGGBBAA] or [bRRGGBBAA] are multiplied by the base color alpha
+            // This allows global transparency control while keeping per-section styling (ex. text fade effects)
             // Example: [bAA00AAFF][cFF0000FF]red text on gray background[r] normal text
 
             DrawTextStyled(GetFontDefault(), "This changes the [cFF0000FF]foreground color[r] of provided text!!!",
@@ -106,7 +108,7 @@ int main(void)
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-// Draw text using inline styling
+// Draw text using inline styling, using input color as the base alpha multiplied to inline styles
 // PARAM: color is the default text color, background color is BLANK by default
 static void DrawTextStyled(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color color)
 {
