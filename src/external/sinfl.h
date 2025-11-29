@@ -143,6 +143,14 @@ extern int zsinflate(void *out, int cap, const void *in, int size);
 #include <string.h> /* memcpy, memset */
 #include <assert.h> /* assert */
 
+/*
+ *  @ChrisGrams - In Windows, this header is required and was no longer
+ *  included in rcore.c after commit 0b4815b8fe861f8fbeac35f46f7e1ff78891b7b5.
+ */
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
 #define sinfl_likely(x)       __builtin_expect((x),1)
 #define sinfl_unlikely(x)     __builtin_expect((x),0)
