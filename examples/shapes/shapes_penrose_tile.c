@@ -22,7 +22,7 @@
 #include "raylib.h"
 
 #define STR_MAX_SIZE 10000
-#define TURTLE_STACK_MAX_SIZE 2500
+#define TURTLE_STACK_MAX_SIZE 50
 
 typedef struct TurtleState {
     Vector2 origin;
@@ -149,6 +149,9 @@ void DrawPenroseLSystem(PenroseLSystem *ls)
             repeats = (int) step - 48;
         }
     }
+
+    turtleTop = -1;
+
 }
 
 void BuildProductionStep(PenroseLSystem *ls)
@@ -187,7 +190,6 @@ void BuildProductionStep(PenroseLSystem *ls)
 void BuildPenroseLSystem(PenroseLSystem *ls, float drawLength, int generations)
 {
     *ls = CreatePenroseLSystem(drawLength);
-    turtleTop = -1;
     for (int i = 0; i < generations; i++)
     {
         BuildProductionStep(ls);
