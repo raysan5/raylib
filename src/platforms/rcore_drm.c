@@ -2441,7 +2441,27 @@ static void PollMouseEvents(void)
 
                 if (event.value > 0)
                 {
-                    // platform.touchActive[0] = true;
+                    bool activateSlot0 = false;
+                    
+                    if (event.code == BTN_LEFT) 
+                    {
+                        activateSlot0 = true; // Mouse click always activates
+                    }
+                    else if (event.code == BTN_TOUCH)
+                    {
+                        bool anyActive = false;
+                        for (int i = 0; i < MAX_TOUCH_POINTS; i++) {
+                            if (platform.touchActive[i]) { anyActive = true; break; }
+                        }
+                        if (!anyActive) activateSlot0 = true;
+                    }
+
+                    if (activateSlot0)
+                    {
+                        platform.touchActive[0] = true;
+                        platform.touchId[0] = 0;
+                    }
+
                     touchAction = 1;   // TOUCH_ACTION_DOWN
                 }
                 else
@@ -2452,6 +2472,10 @@ static void PollMouseEvents(void)
                         platform.touchActive[0] = false;
                         platform.touchPosition[0].x = -1;
                         platform.touchPosition[0].y = -1;
+                    }
+                    else if (event.code == BTN_TOUCH)
+                    {
+                        platform.touchSlot = 0;            // Reset slot index to 0
                     }
                     touchAction = 0;       // TOUCH_ACTION_UP
                 }
