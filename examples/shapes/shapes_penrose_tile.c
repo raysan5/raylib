@@ -81,7 +81,7 @@ PenroseLSystem CreatePenroseLSystem(float drawLength)
     };
     ls.production = (char*) malloc(sizeof(char) * STR_MAX_SIZE);
     ls.production[0] = '\0';
-    strcpy(ls.production, "[X]++[X]++[X]++[X]++[X]");
+    strncpy(ls.production, "[X]++[X]++[X]++[X]++[X]", STR_MAX_SIZE);
     return ls;
 }
 
@@ -95,7 +95,7 @@ void DrawPenroseLSystem(PenroseLSystem *ls)
     };
 
     int repeats = 1;
-    int productionLength = (int) strlen(ls->production);
+    int productionLength = (int) strnlen(ls->production, STR_MAX_SIZE);
     ls->steps += 12;
     
     if (ls->steps > productionLength)
@@ -159,22 +159,23 @@ void BuildProductionStep(PenroseLSystem *ls)
     char *newProduction = (char*) malloc(sizeof(char) * STR_MAX_SIZE);
     newProduction[0] = '\0';
 
-    int productionLength = strlen(ls->production);
+    int productionLength = strnlen(ls->production, STR_MAX_SIZE);
 
     for (int i = 0; i < productionLength; i++)
     {
         char step = ls->production[i];
+        int remaningSpace = STR_MAX_SIZE - strnlen(newProduction, STR_MAX_SIZE) - 1;
         switch (step)
         {
-            case 'W': strcat(newProduction, ls->ruleW); break;
-            case 'X': strcat(newProduction, ls->ruleX); break;
-            case 'Y': strcat(newProduction, ls->ruleY); break;
-            case 'Z': strcat(newProduction, ls->ruleZ); break;
+            case 'W': strncat(newProduction, ls->ruleW, remaningSpace); break;
+            case 'X': strncat(newProduction, ls->ruleX, remaningSpace); break;
+            case 'Y': strncat(newProduction, ls->ruleY, remaningSpace); break;
+            case 'Z': strncat(newProduction, ls->ruleZ, remaningSpace); break;
             default:
             {
                 if (step != 'F')
                 {
-                    int t = strlen(newProduction);
+                    int t = strnlen(newProduction, STR_MAX_SIZE);
                     newProduction[t] = step;
                     newProduction[t+1] = '\0';
                 }
@@ -183,7 +184,7 @@ void BuildProductionStep(PenroseLSystem *ls)
     }
 
     ls->drawLength *= 0.5f;
-    strcpy( ls->production, newProduction );
+    strncpy(ls->production, newProduction, STR_MAX_SIZE);
     free( newProduction );
 }
 
