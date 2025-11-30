@@ -2382,14 +2382,10 @@ static void PollMouseEvents(void)
                 {
                     if (event.value >= 0)
                     {
-                        // Touch has started for this point
-                        // If it was already active, it means we missed a lift event or the ID changed
-                        // We should treat it as a new touch
+
                         platform.touchActive[platform.touchSlot] = true;
-                        platform.touchId[platform.touchSlot] = platform.touchSlot; // Use slot index as ID for stability
+                        platform.touchId[platform.touchSlot] = event.value; // Use Tracking ID for unique IDs
                         
-                        // Force DOWN action, even if we previously detected a MOVE or UP in this frame
-                        // A new touch is a significant state change that should take priority
                         touchAction = 1;    // TOUCH_ACTION_DOWN
                     }
                     else
