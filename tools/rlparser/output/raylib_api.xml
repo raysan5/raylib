@@ -2998,7 +2998,7 @@
         <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Checks if a sound is valid (data loaded and buffers initialized)">
             <Param type="Sound" name="sound" desc="" />
         </Function>
-        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (data and frame count should fit in sound)">
+        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (default data format: 32 bit float, stereo)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="const void *" name="data" desc="" />
             <Param type="int" name="sampleCount" desc="" />

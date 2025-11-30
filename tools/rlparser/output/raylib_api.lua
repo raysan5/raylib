@@ -7995,7 +7995,7 @@ return {
     },
     {
       name = "UpdateSound",
-      description = "Update sound buffer with new data (data and frame count should fit in sound)",
+      description = "Update sound buffer with new data (default data format: 32 bit float, stereo)",
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"},

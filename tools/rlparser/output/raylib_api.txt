@@ -4483,7 +4483,7 @@ Function 543: IsSoundValid() (1 input parameters)
 Function 544: UpdateSound() (3 input parameters)
   Name: UpdateSound
   Return type: void
-  Description: Update sound buffer with new data (data and frame count should fit in sound)
+  Description: Update sound buffer with new data (default data format: 32 bit float, stereo)
   Param[1]: sound (type: Sound)
   Param[2]: data (type: const void *)
   Param[3]: sampleCount (type: int)
