@@ -164,13 +164,13 @@ void BuildProductionStep(PenroseLSystem *ls)
     for (int i = 0; i < productionLength; i++)
     {
         char step = ls->production[i];
-        int remaningSpace = STR_MAX_SIZE - strnlen(newProduction, STR_MAX_SIZE) - 1;
+        int remainingSpace = STR_MAX_SIZE - strnlen(newProduction, STR_MAX_SIZE) - 1;
         switch (step)
         {
-            case 'W': strncat(newProduction, ls->ruleW, remaningSpace); break;
-            case 'X': strncat(newProduction, ls->ruleX, remaningSpace); break;
-            case 'Y': strncat(newProduction, ls->ruleY, remaningSpace); break;
-            case 'Z': strncat(newProduction, ls->ruleZ, remaningSpace); break;
+            case 'W': strncat(newProduction, ls->ruleW, remainingSpace); break;
+            case 'X': strncat(newProduction, ls->ruleX, remainingSpace); break;
+            case 'Y': strncat(newProduction, ls->ruleY, remainingSpace); break;
+            case 'Z': strncat(newProduction, ls->ruleZ, remainingSpace); break;
             default:
             {
                 if (step != 'F')
