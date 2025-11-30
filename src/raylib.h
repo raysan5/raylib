@@ -1657,7 +1657,7 @@ RLAPI Sound LoadSound(const char *fileName);                          // Load so
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
 RLAPI Sound LoadSoundAlias(Sound source);                             // Create a new sound that shares the same sample data as the source sound, does not own the sound data
 RLAPI bool IsSoundValid(Sound sound);                                 // Checks if a sound is valid (data loaded and buffers initialized)
-RLAPI void UpdateSound(Sound sound, const void *data, int sampleCount); // Update sound buffer with new data (data and frame count should fit in sound)
+RLAPI void UpdateSound(Sound sound, const void *data, int sampleCount); // Update sound buffer with new data (default data format: 32 bit float, stereo)
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void UnloadSoundAlias(Sound alias);                             // Unload a sound alias (does not deallocate sample data)
