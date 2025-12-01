@@ -2287,6 +2287,7 @@ static void PollMouseEvents(void)
 
     struct input_event event = { 0 };
     int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+    static bool isMultitouch = false; // Detect if device supports MT events
 
     // Try to read data from the mouse/touch/gesture and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
@@ -2334,7 +2335,7 @@ static void PollMouseEvents(void)
                 CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
                 
                 // Update single touch position only if it's active and no MT events are being used
-                if (platform.touchActive[0]) {
+                if (platform.touchActive[0] && !isMultitouch) {
                     platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
@@ -2345,17 +2346,21 @@ static void PollMouseEvents(void)
                 CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
                 
                 // Update single touch position only if it's active and no MT events are being used
-                if (platform.touchActive[0]) {
+                if (platform.touchActive[0] && !isMultitouch) {
                     platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
 
             // Multitouch movement
-            if (event.code == ABS_MT_SLOT) platform.touchSlot = event.value;   // Remember the slot number for the folowing events
+            if (event.code == ABS_MT_SLOT) {
+                platform.touchSlot = event.value;  
+                isMultitouch = true;
+            }
 
             if (event.code == ABS_MT_POSITION_X)
             {
+                isMultitouch = true;
                 if (platform.touchSlot < MAX_TOUCH_POINTS) {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     
