@@ -2552,7 +2552,38 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
     return result;
 }
 
+// Compose a transformation matrix from rotational, translational and scaling components
+// TODO: This function is not following raymath conventions defined in header: NOT self-contained
+RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 scale)
+{
+    // Initialize vectors
+    Vector3 right = { 1.0f, 0.0f, 0.0f };
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+    Vector3 forward = { 0.0f, 0.0f, 1.0f };
+
+    // Scale vectors
+    right = Vector3Scale(right, scale.x);
+    up = Vector3Scale(up, scale.y);
+    forward = Vector3Scale(forward , scale.z);
+
+    // Rotate vectors
+    right = Vector3RotateByQuaternion(right, rotation);
+    up = Vector3RotateByQuaternion(up, rotation);
+    forward = Vector3RotateByQuaternion(forward, rotation);
+    
+    // Set result matrix output
+	Matrix result = {
+		right.x, up.x, forward.x, translation.x,
+		right.y, up.y, forward.y, translation.y,
+		right.z, up.z, forward.z, translation.z,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	return result;
+}
+
 // Decompose a transformation matrix into its rotational, translational and scaling components and remove shear
+// TODO: This function is not following raymath conventions defined in header: NOT self-contained
 RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotation, Vector3 *scale)
 {
     float eps = (float)1e-9;
@@ -2587,10 +2618,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
 
     // X Scale
     scl.x = Vector3Length(matColumns[0]);
-    if (scl.x > eps)
-    {
-        matColumns[0] = Vector3Scale(matColumns[0], 1.0f / scl.x);
-    }
+    if (scl.x > eps) matColumns[0] = Vector3Scale(matColumns[0], 1.0f / scl.x);
 
     // Compute XY shear and make col2 orthogonal
     shear[0] = Vector3DotProduct(matColumns[0], matColumns[1]);
