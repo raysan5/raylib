@@ -171,7 +171,7 @@ extern int zsinflate(void *out, int cap, const void *in, int size);
 
 static int
 sinfl_bsr(unsigned n) {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__llvm__) && !defined(__INTEL_COMPILER)   // @raysan5, address PR #5367
   unsigned long uln = 0;
   _BitScanReverse(&uln, n);
   return (int)(uln);
