@@ -563,7 +563,7 @@ void ClearWindowState(unsigned int flags)
 void SetWindowIcon(Image image)
 {
     #ifdef __APPLE__
-    CocoaSetWindowIcon(image.data, image.width, image.height);
+    CocoaSetDockIcon(image.data, image.width, image.height);
     #else
     if (image.data == NULL)
     {
