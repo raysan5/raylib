@@ -1,9 +1,14 @@
 #if defined(__APPLE__)
+
 #import <Cocoa/Cocoa.h>
 #import <objc/runtime.h>
 #include "_cocoalayer.h"
-// Example: make a global function you can call
-extern "C" void CocoaSetDockIcon(unsigned char* data, int width, int height)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void CocoaSetDockIcon(unsigned char* data, int width, int height)
 {
     NSImage *dockIcon = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
     CGDataProviderRef provider = CGDataProviderCreateWithData(nullptr, data, width*height*4, nullptr);
@@ -17,4 +22,10 @@ extern "C" void CocoaSetDockIcon(unsigned char* data, int width, int height)
     CGColorSpaceRelease(colorSpace);
     CGDataProviderRelease(provider);
 }
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
