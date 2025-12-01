@@ -101,7 +101,7 @@
 #endif
 #if defined(__APPLE__)
     #include <unistd.h>                 // Required for: usleep()
-
+    #include "_cocoalayer.h"
     //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
     void *glfwGetCocoaWindow(GLFWwindow* handle);
     #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
@@ -562,6 +562,9 @@ void ClearWindowState(unsigned int flags)
 // NOTE 2: Image is scaled by the OS for all required sizes
 void SetWindowIcon(Image image)
 {
+    #ifdef __APPLE__
+    CocoaSetWindowIcon(image.data, image.width, image.height);
+    #else
     if (image.data == NULL)
     {
         // Revert to the default window icon, pass in an empty image array
@@ -583,6 +586,7 @@ void SetWindowIcon(Image image)
         }
         else TRACELOG(LOG_WARNING, "GLFW: Window icon image must be in R8G8B8A8 pixel format");
     }
+    #endif
 }
 
 // Set icon for window, multiple images
