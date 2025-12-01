@@ -3,7 +3,7 @@
 #import <objc/runtime.h>
 #include "_cocoalayer.h"
 // Example: make a global function you can call
-extern "C" void _cocoasetdockicon(unsigned char* data, int width, int height)
+extern "C" void CocoaSetDockIcon(unsigned char* data, int width, int height)
 {
     NSImage *dockIcon = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
     CGDataProviderRef provider = CGDataProviderCreateWithData(nullptr, data, width*height*4, nullptr);
