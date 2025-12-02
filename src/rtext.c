@@ -1529,7 +1529,7 @@ const char *TextFormat(const char *text, ...)
     {
         // Inserting "..." at the end of the string to mark as truncated
         char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 4; // Adding 4 bytes = "...\0"
-        sprintf(truncBuffer, "...");
+        snprintf(truncBuffer, 4, "...");
     }
 
     index += 1;     // Move to next buffer for next function call
