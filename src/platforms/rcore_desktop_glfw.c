@@ -265,8 +265,18 @@ void ToggleBorderlessWindowed(void)
                 const int monitorHeight = mode->height;
 
                 // Set screen position and size
-                glfwSetWindowPos(platform.handle, monitorPosX, monitorPosY);
-                glfwSetWindowSize(platform.handle, monitorWidth, monitorHeight);
+            	glfwSetWindowMonitor(
+					platform.handle,
+					monitors[monitor],
+					monitorPosX,
+					monitorPosY,
+					monitorWidth,
+					monitorHeight,
+					mode->refreshRate
+				);
+
+                // glfwSetWindowPos(platform.handle, monitorPosX, monitorPosY);
+                // glfwSetWindowSize(platform.handle, monitorWidth, monitorHeight);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
