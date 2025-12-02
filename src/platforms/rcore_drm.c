@@ -1865,7 +1865,7 @@ static void ProcessKeyboard(void)
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
-// Initialise user input from evdev(/dev/input/event<N>)
+// Initialize user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
 {
@@ -1873,7 +1873,7 @@ static void InitEvdevInput(void)
     DIR *directory = NULL;
     struct dirent *entity = NULL;
 
-    // Initialise keyboard file descriptor
+    // Initialize keyboard file descriptor
     platform.keyboardFd = -1;
     platform.mouseFd = -1;
 
