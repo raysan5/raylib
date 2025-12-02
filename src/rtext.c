@@ -1524,7 +1524,7 @@ const char *TextFormat(const char *text, ...)
     int requiredByteCount = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
 
-    // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
+    // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occurred
     if (requiredByteCount >= MAX_TEXT_BUFFER_LENGTH)
     {
         // Inserting "..." at the end of the string to mark as truncated
