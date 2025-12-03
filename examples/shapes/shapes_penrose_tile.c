@@ -81,7 +81,7 @@ int main(void)
     PenroseLSystem ls = CreatePenroseLSystem(drawLength*(generations/(float)maxGenerations));
     for (int i = 0; i < generations; i++) BuildProductionStep(&ls);
 
-    SetTargetFPS(120);              // Set our game to run at 60 frames-per-second
+    SetTargetFPS(120);              // Set our game to run at 120 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
