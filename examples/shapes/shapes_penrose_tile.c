@@ -57,7 +57,6 @@ static void PushTurtleState(TurtleState state);
 static TurtleState PopTurtleState(void);
 static PenroseLSystem CreatePenroseLSystem(float drawLength);
 static void BuildProductionStep(PenroseLSystem *ls);
-static void BuildPenroseLSystem(PenroseLSystem *ls, float drawLength, int generations);
 static void DrawPenroseLSystem(PenroseLSystem *ls);
 
 //------------------------------------------------------------------------------------
@@ -78,10 +77,11 @@ int main(void)
     int maxGenerations = 4;
     int generations = 0;
 
-    PenroseLSystem ls = {0};
-    BuildPenroseLSystem(&ls, drawLength*(generations/(float)maxGenerations), generations);
+    // Initializee new penrose tile
+    PenroseLSystem ls = CreatePenroseLSystem(drawLength*(generations/(float)maxGenerations));
+    for (int i = 0; i < generations; i++) BuildProductionStep(&ls);
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(120);              // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
@@ -107,7 +107,12 @@ int main(void)
             }
         }
         
-        if (rebuild) BuildPenroseLSystem(&ls, drawLength*(generations/(float)maxGenerations), generations);
+        if (rebuild)
+        {
+            RL_FREE(ls.production); // Free previous production for re-creation
+            ls = CreatePenroseLSystem(drawLength*(generations/(float)maxGenerations));
+            for (int i = 0; i < generations; i++) BuildProductionStep(&ls);
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -137,13 +142,15 @@ int main(void)
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-void PushTurtleState(TurtleState state)
+// Push turtle state for next step
+static void PushTurtleState(TurtleState state)
 {
     if (turtleTop < (TURTLE_STACK_MAX_SIZE - 1)) turtleStack[++turtleTop] = state;
     else TraceLog(LOG_WARNING, "TURTLE STACK OVERFLOW!");
 }
 
-TurtleState PopTurtleState(void)
+// Pop turtle state step
+static TurtleState PopTurtleState(void)
 {
     if (turtleTop >= 0) return turtleStack[turtleTop--];
     else TraceLog(LOG_WARNING, "TURTLE STACK UNDERFLOW!");
@@ -151,8 +158,10 @@ TurtleState PopTurtleState(void)
     return (TurtleState){ 0 };
 }
 
-PenroseLSystem CreatePenroseLSystem(float drawLength)
+// Create a new penrose tile structure
+static PenroseLSystem CreatePenroseLSystem(float drawLength)
 {
+    // TODO: Review constant values assignment on recreation?
     PenroseLSystem ls = {
         .steps = 0,
         .ruleW = "YF++ZF4-XF[-YF4-WF]++",
@@ -170,7 +179,8 @@ PenroseLSystem CreatePenroseLSystem(float drawLength)
     return ls;
 }
 
-void BuildProductionStep(PenroseLSystem *ls)
+// Build next penrose step
+static void BuildProductionStep(PenroseLSystem *ls)
 {
     char *newProduction = (char *)RL_MALLOC(sizeof(char)*STR_MAX_SIZE);
     newProduction[0] = '\0';
@@ -205,18 +215,13 @@ void BuildProductionStep(PenroseLSystem *ls)
     RL_FREE(newProduction);
 }
 
-void BuildPenroseLSystem(PenroseLSystem *ls, float drawLength, int generations)
-{
-    *ls = CreatePenroseLSystem(drawLength);
-    for (int i = 0; i < generations; i++) BuildProductionStep(ls);
-}
-
-void DrawPenroseLSystem(PenroseLSystem *ls)
+// Draw penrose tile lines
+static void DrawPenroseLSystem(PenroseLSystem *ls)
 {
     Vector2 screenCenter = { GetScreenWidth()/2, GetScreenHeight()/2 };
 
     TurtleState turtle = {
-        .origin = {0},
+        .origin = { 0 },
         .angle = -90.0f
     };
 
@@ -257,18 +262,9 @@ void DrawPenroseLSystem(PenroseLSystem *ls)
 
             repeats = 1;
         } 
-        else if (step == '[')
-        {
-            PushTurtleState(turtle);
-        } 
-        else if (step == ']')
-        {
-            turtle = PopTurtleState();
-        } 
-        else if ((step >= 48) && (step <= 57))
-        {
-            repeats = (int) step - 48;
-        }
+        else if (step == '[') PushTurtleState(turtle);
+        else if (step == ']') turtle = PopTurtleState();
+        else if ((step >= 48) && (step <= 57)) repeats = (int) step - 48;
     }
 
     turtleTop = -1;
