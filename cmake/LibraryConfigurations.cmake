@@ -141,6 +141,8 @@ elseif ("${PLATFORM}" MATCHES "SDL")
 			add_compile_definitions(USING_SDL2_PACKAGE)
 		endif()
 	endif()	
+elseif ("${PLATFORM}" MATCHES "RGFW")
+    set(PLATFORM_CPP "PLATFORM_DESKTOP_RGFW")
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
