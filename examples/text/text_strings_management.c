@@ -19,10 +19,13 @@
 
 #include <stdlib.h>
 
-#define MAX_TEXT_LENGTH 100     // Maximum text particle text length
-#define MAX_TEXT_PARTICLES 100 // Maximum quantity of text particles
-#define FONT_SIZE 30
+#define MAX_TEXT_LENGTH      100
+#define MAX_TEXT_PARTICLES   100
+#define FONT_SIZE             30
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct TextParticle {
     char text[MAX_TEXT_LENGTH];
     Rectangle rect;    // Boundary
@@ -36,138 +39,16 @@ typedef struct TextParticle {
     bool grabbed;
 } TextParticle;
 
-TextParticle CreateTextParticle(const char *text, float x, float y, Color color)
-{
-    TextParticle tp = {
-        .text = "",
-        .rect = { x, y, 30, 30 },
-        .vel = { GetRandomValue(-200, 200), GetRandomValue(-200, 200) },
-        .ppos = { 0 },
-        .padding = 5.0f,
-        .borderWidth = 5.0f,
-        .friction = 0.99,
-        .elasticity = 0.9,
-        .color = color,
-        .grabbed = false
-    };
-
-    TextCopy(tp.text, text);
-    tp.rect.width = MeasureText(tp.text, FONT_SIZE)+tp.padding*2;
-    tp.rect.height = FONT_SIZE+tp.padding*2;
-    return tp;
-}
-
-void MoveTextParticles(TextParticle *tps, int particlePos, int *particleCount)
-{
-    for (int i = particlePos+1; i < *particleCount; i++)
-    {
-        tps[i-1] = tps[i];
-    }
-    (*particleCount)--;
-}
-
-void SliceTextParticle(TextParticle *tp, int particlePos, int sliceLength, TextParticle *tps, int *particleCount)
-{
-    int length = TextLength(tp->text);
-
-    if((length > 1) && ((*particleCount+length) < MAX_TEXT_PARTICLES))
-    {
-        // create new particles
-        for (int i = 0; i < length; i += sliceLength)
-        {
-            const char *text = sliceLength == 1 ? TextFormat("%c", tp->text[i]) : TextSubtext(tp->text, i, sliceLength);
-            tps[(*particleCount)++] = CreateTextParticle(
-                text,
-                tp->rect.x + i * tp->rect.width/length,
-                tp->rect.y,
-                (Color) { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 }
-            );
-        }
-        MoveTextParticles(tps, particlePos, particleCount);
-    }
-}
-
-bool SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *tps, int *particleCount)
-{
-    int tokenCount = 0;
-    const char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
-    
-    if (tokenCount > 1)
-    {
-        for (int i = 0; i < tokenCount; i++) {
-            int tokenLength = TextLength(tokens[i]);
-            tps[(*particleCount)++] = CreateTextParticle(
-                TextFormat("%s", tokens[i]),
-                tp->rect.x + i * tp->rect.width/tokenLength,
-                tp->rect.y,
-                (Color) { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 }
-            );
-        }
-        tps[(*particleCount)++] = CreateTextParticle(
-            TextFormat("%c", charToSlice),
-            tp->rect.x,
-            tp->rect.y,
-            (Color) { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 }
-        );
-        if (tokenCount)
-        {
-            MoveTextParticles(tps, 0, particleCount);
-        }
-        return true;
-    }
-
-    return false;
-}
-
-void ShatterTextParticle(TextParticle *tp, int particlePos, TextParticle *tps, int *particleCount)
-{
-    SliceTextParticle(tp, particlePos, 1, tps, particleCount);
-}
-
-void GlueTextParticles(TextParticle *grabbed, TextParticle *target, TextParticle *tps, int *particleCount)
-{
-    int p1 = -1;
-    int p2 = -1;
-
-    for (int i = 0; i < *particleCount; i++)
-    {
-        if (&tps[i] == grabbed) p1 = i;
-        if (&tps[i] == target) p2 = i;
-    }
-
-    if ((p1 != -1) && (p2 != -1))
-    {
-        TextParticle tp = CreateTextParticle(
-            TextFormat( "%s%s", grabbed->text, target->text),
-            grabbed->rect.x,
-            grabbed->rect.y,
-            RAYWHITE
-        );
-        tp.grabbed = true;
-        tps[(*particleCount)++] = tp;
-        grabbed->grabbed = false;
-        if (p1 < p2)
-        {
-            MoveTextParticles(tps, p2, particleCount);
-            MoveTextParticles(tps, p1, particleCount);
-        }
-        else
-        {
-            MoveTextParticles(tps, p1, particleCount);
-            MoveTextParticles(tps, p2, particleCount);
-        }
-    }
-}
-
-void ResetToUpper(const char* text, TextParticle *tps, int *particleCount) {
-    tps[0] = CreateTextParticle(
-        text, 
-        GetScreenWidth()/2, 
-        GetScreenHeight()/2, 
-        RAYWHITE
-    );
-    *particleCount = 1;
-}
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+void PrepareFirstTextParticle(const char* text, TextParticle *tps, int *particleCount);
+TextParticle CreateTextParticle(const char *text, float x, float y, Color color);
+void SliceTextParticle(TextParticle *tp, int particlePos, int sliceLength, TextParticle *tps, int *particleCount);
+void SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *tps, int *particleCount);
+void ShatterTextParticle(TextParticle *tp, int particlePos, TextParticle *tps, int *particleCount);
+void GlueTextParticles(TextParticle *grabbed, TextParticle *target, TextParticle *tps, int *particleCount);
+void RealocateTextParticles(TextParticle *tps, int particlePos, int *particleCount);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -181,20 +62,14 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - strings management");
 
-    TextParticle textParticles[MAX_TEXT_PARTICLES] = {
-        CreateTextParticle(
-            "raylib => fun videogames programming!", 
-            GetScreenWidth()/2, 
-            GetScreenHeight()/2, 
-            RAYWHITE
-        )
-    };
-    
-    int particleCount = 1;
+    TextParticle textParticles[MAX_TEXT_PARTICLES] = { 0 };
+    int particleCount = 0;
     TextParticle *grabbedTextParticle = NULL;
     Vector2 pressOffset = {0};
 
-    SetTargetFPS(60);           // Set our game to run at 60 frames-per-second
+    PrepareFirstTextParticle("raylib => fun videogames programming!", textParticles, &particleCount);
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
@@ -262,14 +137,13 @@ int main(void)
             }
         }
 
-
-        // Reset using TextTo functions
-        if (IsKeyPressed(KEY_ONE)) ResetToUpper("raylib => fun videogames programming!", textParticles, &particleCount);
-        if (IsKeyPressed(KEY_TWO)) ResetToUpper(TextToUpper("raylib => fun videogames programming!"), textParticles, &particleCount);
-        if (IsKeyPressed(KEY_THREE)) ResetToUpper(TextToLower("raylib => fun videogames programming!"), textParticles, &particleCount);
-        if (IsKeyPressed(KEY_FOUR)) ResetToUpper(TextToPascal("raylib_fun_videogames_programming"), textParticles, &particleCount);
-        if (IsKeyPressed(KEY_FIVE)) ResetToUpper(TextToSnake("RaylibFunVideogamesProgramming"), textParticles, &particleCount);
-        if (IsKeyPressed(KEY_SIX)) ResetToUpper(TextToCamel("raylib_fun_videogames_programming"), textParticles, &particleCount);
+        // Reset using TextTo* functions
+        if (IsKeyPressed(KEY_ONE)) PrepareFirstTextParticle("raylib => fun videogames programming!", textParticles, &particleCount);
+        if (IsKeyPressed(KEY_TWO)) PrepareFirstTextParticle(TextToUpper("raylib => fun videogames programming!"), textParticles, &particleCount);
+        if (IsKeyPressed(KEY_THREE)) PrepareFirstTextParticle(TextToLower("raylib => fun videogames programming!"), textParticles, &particleCount);
+        if (IsKeyPressed(KEY_FOUR)) PrepareFirstTextParticle(TextToPascal("raylib_fun_videogames_programming"), textParticles, &particleCount);
+        if (IsKeyPressed(KEY_FIVE)) PrepareFirstTextParticle(TextToSnake("RaylibFunVideogamesProgramming"), textParticles, &particleCount);
+        if (IsKeyPressed(KEY_SIX)) PrepareFirstTextParticle(TextToCamel("raylib_fun_videogames_programming"), textParticles, &particleCount);
 
         // Slice by char pressed only when we have one text particle
         char charPressed = GetCharPressed();
@@ -382,4 +256,145 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
+void PrepareFirstTextParticle(const char* text, TextParticle *tps, int *particleCount)
+{
+    tps[0] = CreateTextParticle(
+        text, 
+        GetScreenWidth()/2, 
+        GetScreenHeight()/2, 
+        RAYWHITE
+    );
+    *particleCount = 1;
+}
+
+TextParticle CreateTextParticle(const char *text, float x, float y, Color color)
+{
+    TextParticle tp = {
+        .text = "",
+        .rect = { x, y, 30, 30 },
+        .vel = { GetRandomValue(-200, 200), GetRandomValue(-200, 200) },
+        .ppos = { 0 },
+        .padding = 5.0f,
+        .borderWidth = 5.0f,
+        .friction = 0.99,
+        .elasticity = 0.9,
+        .color = color,
+        .grabbed = false
+    };
+
+    TextCopy(tp.text, text);
+    tp.rect.width = MeasureText(tp.text, FONT_SIZE)+tp.padding*2;
+    tp.rect.height = FONT_SIZE+tp.padding*2;
+    return tp;
+}
+
+void SliceTextParticle(TextParticle *tp, int particlePos, int sliceLength, TextParticle *tps, int *particleCount)
+{
+    int length = TextLength(tp->text);
+
+    if((length > 1) && ((*particleCount+length) < MAX_TEXT_PARTICLES))
+    {
+        for (int i = 0; i < length; i += sliceLength)
+        {
+            const char *text = sliceLength == 1 ? TextFormat("%c", tp->text[i]) : TextSubtext(tp->text, i, sliceLength);
+            tps[(*particleCount)++] = CreateTextParticle(
+                text,
+                tp->rect.x + i * tp->rect.width/length,
+                tp->rect.y,
+                (Color) { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 }
+            );
+        }
+        RealocateTextParticles(tps, particlePos, particleCount);
+    }
+}
+
+void SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *tps, int *particleCount)
+{
+    int tokenCount = 0;
+    const char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
+    
+    if (tokenCount > 1)
+    {
+        int textLength = TextLength(tp->text);
+        for (int i = 0; i < textLength; i++)
+        {
+            if (tp->text[i] == charToSlice)
+            {
+                tps[(*particleCount)++] = CreateTextParticle(
+                    TextFormat("%c", charToSlice),
+                    tp->rect.x,
+                    tp->rect.y,
+                    (Color) { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 }
+                );
+            }
+        }
+        for (int i = 0; i < tokenCount; i++)
+        {
+            int tokenLength = TextLength(tokens[i]);
+            tps[(*particleCount)++] = CreateTextParticle(
+                TextFormat("%s", tokens[i]),
+                tp->rect.x + i * tp->rect.width/tokenLength,
+                tp->rect.y,
+                (Color) { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 }
+            );
+        }
+        if (tokenCount)
+        {
+            RealocateTextParticles(tps, 0, particleCount);
+        }
+    }
+}
+
+void ShatterTextParticle(TextParticle *tp, int particlePos, TextParticle *tps, int *particleCount)
+{
+    SliceTextParticle(tp, particlePos, 1, tps, particleCount);
+}
+
+void GlueTextParticles(TextParticle *grabbed, TextParticle *target, TextParticle *tps, int *particleCount)
+{
+    int p1 = -1;
+    int p2 = -1;
+
+    for (int i = 0; i < *particleCount; i++)
+    {
+        if (&tps[i] == grabbed) p1 = i;
+        if (&tps[i] == target) p2 = i;
+    }
+
+    if ((p1 != -1) && (p2 != -1))
+    {
+        TextParticle tp = CreateTextParticle(
+            TextFormat( "%s%s", grabbed->text, target->text),
+            grabbed->rect.x,
+            grabbed->rect.y,
+            RAYWHITE
+        );
+        tp.grabbed = true;
+        tps[(*particleCount)++] = tp;
+        grabbed->grabbed = false;
+        if (p1 < p2)
+        {
+            RealocateTextParticles(tps, p2, particleCount);
+            RealocateTextParticles(tps, p1, particleCount);
+        }
+        else
+        {
+            RealocateTextParticles(tps, p1, particleCount);
+            RealocateTextParticles(tps, p2, particleCount);
+        }
+    }
+}
+
+void RealocateTextParticles(TextParticle *tps, int particlePos, int *particleCount)
+{
+    for (int i = particlePos+1; i < *particleCount; i++)
+    {
+        tps[i-1] = tps[i];
+    }
+    (*particleCount)--;
 }
