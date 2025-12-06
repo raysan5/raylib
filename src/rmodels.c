@@ -5589,7 +5589,7 @@ static Model LoadGLTF(const char *fileName)
                                 LOAD_ATTRIBUTE(attribute, 3, unsigned short, temp);
 
                                 // Convert data to raylib vertex data type (float) the matrix will scale it to the correct size as a float
-                                for (unsigned int t = 0; t < attribute->count 3; t++) model.meshes[meshIndex].vertices[t] = (float)temp[t];
+                                for (unsigned int t = 0; t < attribute->count*3; t++) model.meshes[meshIndex].vertices[t] = (float)temp[t];
 
                                 RL_FREE(temp);
 
