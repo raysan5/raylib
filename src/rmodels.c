@@ -5582,50 +5582,50 @@ static Model LoadGLTF(const char *fileName)
                             {
                                 // Init raylib mesh vertices to copy glTF attribute data
                                 model.meshes[meshIndex].vertexCount = (int)attribute->count;
-                                model.meshes[meshIndex].vertices = (float*)RL_MALLOC(attribute->count * 3 * sizeof(float));
+                                model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned short* temp = (unsigned short*)RL_MALLOC(attribute->count * 3 * sizeof(unsigned short));
+                                unsigned short *temp = (unsigned short *)RL_MALLOC(attribute->count*3*sizeof(unsigned short));
                                 LOAD_ATTRIBUTE(attribute, 3, unsigned short, temp);
 
                                 // Convert data to raylib vertex data type (float) the matrix will scale it to the correct size as a float
-                                for (unsigned int t = 0; t < attribute->count * 3; t++) model.meshes[meshIndex].vertices[t] = (float)temp[t];
+                                for (unsigned int t = 0; t < attribute->count 3; t++) model.meshes[meshIndex].vertices[t] = (float)temp[t];
 
                                 RL_FREE(temp);
 
                                 // Transform the vertices
-                                float* vertices = model.meshes[meshIndex].vertices;
+                                float *vertices = model.meshes[meshIndex].vertices;
                                 for (unsigned int k = 0; k < attribute->count; k++)
                                 {
-                                    Vector3 vt = Vector3Transform((Vector3) { vertices[3 * k], vertices[3 * k + 1], vertices[3 * k + 2] }, worldMatrix);
-                                    vertices[3 * k] = vt.x;
-                                    vertices[3 * k + 1] = vt.y;
-                                    vertices[3 * k + 2] = vt.z;
+                                    Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k + 1], vertices[3*k + 2] }, worldMatrix);
+                                    vertices[3*k] = vt.x;
+                                    vertices[3*k + 1] = vt.y;
+                                    vertices[3*k + 2] = vt.z;
                                 }
                             }
                             else if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_16))
                             {
                                 // Init raylib mesh vertices to copy glTF attribute data
                                 model.meshes[meshIndex].vertexCount = (int)attribute->count;
-                                model.meshes[meshIndex].vertices = (float*)RL_MALLOC(attribute->count * 3 * sizeof(float));
+                                model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                short* temp =  (short*)RL_MALLOC(attribute->count * 3 * sizeof(short));
+                                short *temp = (short *)RL_MALLOC(attribute->count*3*sizeof(short));
                                 LOAD_ATTRIBUTE(attribute, 3, short, temp);
 
                                 // Convert data to raylib vertex data type (float) the matrix will scale it to the correct size as a float
-                                for (unsigned int t = 0; t < attribute->count * 3; t++) model.meshes[meshIndex].vertices[t] = (float)temp[t];
+                                for (unsigned int t = 0; t < attribute->count*3; t++) model.meshes[meshIndex].vertices[t] = (float)temp[t];
 
                                 RL_FREE(temp);
 
                                 // Transform the vertices
-                                float* vertices = model.meshes[meshIndex].vertices;
+                                float *vertices = model.meshes[meshIndex].vertices;
                                 for (unsigned int k = 0; k < attribute->count; k++)
                                 {
-                                    Vector3 vt = Vector3Transform((Vector3) { vertices[3 * k], vertices[3 * k + 1], vertices[3 * k + 2] }, worldMatrix);
-                                    vertices[3 * k] = vt.x;
-                                    vertices[3 * k + 1] = vt.y;
-                                    vertices[3 * k + 2] = vt.z;
+                                    Vector3 vt = Vector3Transform((Vector3){ vertices[3*k], vertices[3*k + 1], vertices[3*k + 2] }, worldMatrix);
+                                    vertices[3*k] = vt.x;
+                                    vertices[3*k + 1] = vt.y;
+                                    vertices[3*k + 2] = vt.z;
                                 }
                             }
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data format not supported, use vec3 float", fileName);
@@ -5659,73 +5659,73 @@ static Model LoadGLTF(const char *fileName)
                             else if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_16))
                             {
                                 // Init raylib mesh normals to copy glTF attribute data
-                                model.meshes[meshIndex].normals = (float*)RL_MALLOC(attribute->count * 3 * sizeof(float));
+                                model.meshes[meshIndex].normals = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                short* temp = (short*)RL_MALLOC(attribute->count * 3 * sizeof(short));
+                                short *temp = (short *)RL_MALLOC(attribute->count*3*sizeof(short));
                                 LOAD_ATTRIBUTE(attribute, 3, short, temp);
 
                                 // Convert data to raylib normal data type (float)
-                                for (unsigned int t = 0; t < attribute->count * 3; t++) model.meshes[meshIndex].normals[t] = (float)temp[t];
+                                for (unsigned int t = 0; t < attribute->count*3; t++) model.meshes[meshIndex].normals[t] = (float)temp[t];
 
                                 RL_FREE(temp);
 
                                 // Transform the normals
-                                float* normals = model.meshes[meshIndex].normals;
+                                float *normals = model.meshes[meshIndex].normals;
                                 for (unsigned int k = 0; k < attribute->count; k++)
                                 {
-                                    Vector3 nt = Vector3Normalize(Vector3Transform((Vector3) { normals[3 * k], normals[3 * k + 1], normals[3 * k + 2] }, worldMatrixNormals));
-                                    normals[3 * k] = nt.x;
-                                    normals[3 * k + 1] = nt.y;
-                                    normals[3 * k + 2] = nt.z;
+                                    Vector3 nt = Vector3Normalize(Vector3Transform((Vector3){ normals[3*k], normals[3*k + 1], normals[3*k + 2] }, worldMatrixNormals));
+                                    normals[3*k] = nt.x;
+                                    normals[3*k + 1] = nt.y;
+                                    normals[3*k + 2] = nt.z;
                                 }
                             }
                             else if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_8u))
                             {
                                 // Init raylib mesh normals to copy glTF attribute data
-                                model.meshes[meshIndex].normals = (float*)RL_MALLOC(attribute->count * 3 * sizeof(float));
+                                model.meshes[meshIndex].normals = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                unsigned char* temp = (unsigned char*)RL_MALLOC(attribute->count * 3 * sizeof(unsigned char));
+                                unsigned char *temp = (unsigned char *)RL_MALLOC(attribute->count*3*sizeof(unsigned char));
                                 LOAD_ATTRIBUTE(attribute, 3, unsigned char, temp);
 
                                 // Convert data to raylib normal data type (float)
-                                for (unsigned int t = 0; t < attribute->count * 3; t++) model.meshes[meshIndex].normals[t] = (float)temp[t];
+                                for (unsigned int t = 0; t < attribute->count*3; t++) model.meshes[meshIndex].normals[t] = (float)temp[t];
 
                                 RL_FREE(temp);
 
                                 // Transform the normals
-                                float* normals = model.meshes[meshIndex].normals;
+                                float *normals = model.meshes[meshIndex].normals;
                                 for (unsigned int k = 0; k < attribute->count; k++)
                                 {
-                                    Vector3 nt = Vector3Normalize(Vector3Transform((Vector3) { normals[3 * k], normals[3 * k + 1], normals[3 * k + 2] }, worldMatrixNormals));
-                                    normals[3 * k] = nt.x;
-                                    normals[3 * k + 1] = nt.y;
-                                    normals[3 * k + 2] = nt.z;
+                                    Vector3 nt = Vector3Normalize(Vector3Transform((Vector3){ normals[3*k], normals[3*k + 1], normals[3*k + 2] }, worldMatrixNormals));
+                                    normals[3*k] = nt.x;
+                                    normals[3*k + 1] = nt.y;
+                                    normals[3*k + 2] = nt.z;
                                 }
                             }
                             else if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_8))
                             {
                                 // Init raylib mesh normals to copy glTF attribute data
-                                model.meshes[meshIndex].normals = (float*)RL_MALLOC(attribute->count * 3 * sizeof(float));
+                                model.meshes[meshIndex].normals = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
                                 // Load data into a temp buffer to be converted to raylib data type
-                                char* temp = (char*)RL_MALLOC(attribute->count * 3 * sizeof(char));
+                                char *temp = (char *)RL_MALLOC(attribute->count*3*sizeof(char));
                                 LOAD_ATTRIBUTE(attribute, 3, char, temp);
 
                                 // Convert data to raylib normal data type (float)
-                                for (unsigned int t = 0; t < attribute->count * 3; t++) model.meshes[meshIndex].normals[t] = (float)temp[t];
+                                for (unsigned int t = 0; t < attribute->count*3; t++) model.meshes[meshIndex].normals[t] = (float)temp[t];
 
                                 RL_FREE(temp);
 
                                 // Transform the normals
-                                float* normals = model.meshes[meshIndex].normals;
+                                float *normals = model.meshes[meshIndex].normals;
                                 for (unsigned int k = 0; k < attribute->count; k++)
                                 {
-                                    Vector3 nt = Vector3Normalize(Vector3Transform((Vector3) { normals[3 * k], normals[3 * k + 1], normals[3 * k + 2] }, worldMatrixNormals));
-                                    normals[3 * k] = nt.x;
-                                    normals[3 * k + 1] = nt.y;
-                                    normals[3 * k + 2] = nt.z;
+                                    Vector3 nt = Vector3Normalize(Vector3Transform((Vector3){ normals[3*k], normals[3*k + 1], normals[3*k + 2] }, worldMatrixNormals));
+                                    normals[3*k] = nt.x;
+                                    normals[3*k + 1] = nt.y;
+                                    normals[3*k + 2] = nt.z;
                                 }
                             }
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Normals attribute data format not supported, use vec3 float", fileName);
