@@ -1045,6 +1045,8 @@ RLAPI void EndShaderMode(void);                                   // End custom 
 RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied, subtract, custom)
 RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
 RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
+RLAPI void BeginScissorModeV(Vector2 position, Vector2 size);     // Begin scissor mode (define screen area for following drawing with vectors)
+RLAPI void BeginScissorModeRec(Rectangle rec);                    // Begin scissor mode (define screen area for following drawing with a rectangle)
 RLAPI void EndScissorMode(void);                                  // End scissor mode
 RLAPI void BeginVrStereoMode(VrStereoConfig config);              // Begin stereo rendering (requires VR simulator)
 RLAPI void EndVrStereoMode(void);                                 // End stereo rendering (requires VR simulator)

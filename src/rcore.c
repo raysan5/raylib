@@ -1137,6 +1137,16 @@ void BeginScissorMode(int x, int y, int width, int height)
     }
 }
 
+void BeginScissorModeV(Vector2 position, Vector2 size)
+{
+    BeginScissorMode((int)position.x, (int)position.y, (int)size.x, (int)size.y);
+}
+
+void BeginScissorModeRec(Rectangle rec)
+{
+    BeginScissorMode((int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height);
+}
+
 // End scissor mode
 void EndScissorMode(void)
 {
