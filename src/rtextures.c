@@ -4866,6 +4866,7 @@ Rectangle ExpandRectangle(Rectangle rec, float expand)
     rec.y -= expand / 2.0f;
     rec.width += expand;
     rec.height += expand;
+    return rec;
 }
 
 // Shrink a rectangle uniformly
@@ -4875,6 +4876,7 @@ Rectangle ShrinkRectangle(Rectangle rec, float shrink)
     rec.y += shrink / 2.0f;
     rec.width -= shrink;
     rec.height -= shrink;
+    return rec;
 }
 
 // Get hexadecimal value for a Color
