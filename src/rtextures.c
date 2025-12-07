@@ -4859,6 +4859,24 @@ Color Fade(Color color, float alpha)
     return result;
 }
 
+// Expand a rectangle uniformly
+Rectangle ExpandRectangle(Rectangle rec, float expand)
+{
+    rec.x -= expand / 2.0f;
+    rec.y -= expand / 2.0f;
+    rec.width += expand;
+    rec.height += expand;
+}
+
+// Shrink a rectangle uniformly
+Rectangle ShrinkRectangle(Rectangle rec, float shrink)
+{
+    rec.x += shrink / 2.0f;
+    rec.y += shrink / 2.0f;
+    rec.width -= shrink;
+    rec.height -= shrink;
+}
+
 // Get hexadecimal value for a Color
 int ColorToInt(Color color)
 {
