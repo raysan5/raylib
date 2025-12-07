@@ -1002,6 +1002,7 @@ RLAPI void SetWindowFocused(void);                                // Set window 
 RLAPI void *GetWindowHandle(void);                                // Get native window handle
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
+RLAPI Vector2 GetScreenCenter(void);                              // Get the center of the current screen
 RLAPI int GetRenderWidth(void);                                   // Get current render width (it considers HiDPI)
 RLAPI int GetRenderHeight(void);                                  // Get current render height (it considers HiDPI)
 RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors

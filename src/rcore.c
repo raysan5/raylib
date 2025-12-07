@@ -819,6 +819,17 @@ int GetScreenHeight(void)
     return CORE.Window.screen.height;
 }
 
+// Get the center of the current screen
+Vector2 GetScreenCenter(void)
+{
+    Vector2 center = (Vector2)
+    {
+        GetScreenWidth() / 2.0f,
+        GetScreenHeight() / 2.0f
+    };
+    return center;
+}
+
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
