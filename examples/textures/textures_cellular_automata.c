@@ -125,7 +125,7 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (mouseInCell >= 0))
         {
             // Rule changed both by selecting a preset or toggling a bit
-            if ((mouseInCell >= 0) && (mouseInCell < 8))
+            if (mouseInCell < 8)
                 rule ^= (1 << mouseInCell);
             else
                 rule = presetValues[mouseInCell - 8];
