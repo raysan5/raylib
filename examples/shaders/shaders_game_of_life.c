@@ -92,7 +92,7 @@ int main(void)
 
     int preset = -1;            // No button pressed for preset 
     int mode = MODE_RUN;        // Starting mode: running
-	bool buttonZoomIn = false;  // Button states: false not pressed
+    bool buttonZoomIn = false;  // Button states: false not pressed
     bool buttonZomOut = false;
     bool buttonFaster = false;
     bool buttonSlower = false;
@@ -107,18 +107,18 @@ int main(void)
     const float resolution[2] = { (float)worldWidth, (float)worldHeight };
     SetShaderValue(shdrGameOfLife, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
 
-	// Define two textures: the current world and the previous world
+    // Define two textures: the current world and the previous world
     RenderTexture2D world1 = LoadRenderTexture(worldWidth, worldHeight);
     RenderTexture2D world2 = LoadRenderTexture(worldWidth, worldHeight);
     BeginTextureMode(world2);
         ClearBackground(RAYWHITE);
     EndTextureMode();
 
-    Image pattern = LoadImage("resources/game_of_life/r_pentomino.png");
-    UpdateTextureRec(world2.texture, (Rectangle){ worldWidth/2.0f, worldHeight/2.0f, (float)(pattern.width), (float)(pattern.height) }, pattern.data);
-    UnloadImage(pattern);
+    Image startPattern = LoadImage("resources/game_of_life/r_pentomino.png");
+    UpdateTextureRec(world2.texture, (Rectangle) { worldWidth / 2.0f, worldHeight / 2.0f, (float)(startPattern.width), (float)(startPattern.height) }, startPattern.data);
+    UnloadImage(startPattern);
 
-	// Pointers to the two textures, to be swapped
+    // Pointers to the two textures, to be swapped
     RenderTexture2D *currentWorld = &world2;
     RenderTexture2D *previousWorld = &world1;
 
@@ -135,11 +135,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         frame++;
 
-		// Change zoom: both by buttons or by mouse wheel
+        // Change zoom: both by buttons or by mouse wheel
         float mouseWheelMove = GetMouseWheelMove();
         if (buttonZoomIn || (buttonZomOut && (zoom > 1)) || (mouseWheelMove != 0.0f))
         {
-			FreeImageToDraw(&imageToDraw);  // Zoom change: free the image to draw to be recreated again
+            FreeImageToDraw(&imageToDraw);  // Zoom change: free the image to draw to be recreated again
 
             const float centerX = offsetX + (windowWidth/2.0f)/zoom;
             const float centerY = offsetY + (windowHeight/2.0f)/zoom;
@@ -159,9 +159,9 @@ int main(void)
         //----------------------------------------------------------------------------------
         if ((mode == MODE_RUN) || (mode == MODE_PAUSE))
         {
-			FreeImageToDraw(&imageToDraw);  // Free the image to draw: no longer needed in these modes
+            FreeImageToDraw(&imageToDraw);  // Free the image to draw: no longer needed in these modes
 
-			// Pan with mouse left button
+            // Pan with mouse left button
             static Vector2 previousMousePosition = { 0.0f, 0.0f };
             const Vector2 mousePosition = GetMousePosition();
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && (mousePosition.x < windowWidth))
@@ -182,7 +182,7 @@ int main(void)
             if (offsetY + sizeInWorldY >= worldHeight)
                 sizeInWorldY = worldHeight - (int)floorf(offsetY);
 
-			// Create image to draw if not created yet
+            // Create image to draw if not created yet
             if (imageToDraw == NULL)
             {
                 RenderTexture2D worldOnScreen = LoadRenderTexture(sizeInWorldX, sizeInWorldY);
