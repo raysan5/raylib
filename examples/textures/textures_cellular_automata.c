@@ -78,8 +78,8 @@ int main(void)
     const int presetsCount = sizeof(presetValues)/sizeof(presetValues[0]);
 
     // Variables
-	int rule = 30;  // Starting rule
-	int line = 1;   // Line to compute, starting from line 1. One point in line 0 is already set
+    int rule = 30;  // Starting rule
+    int line = 1;   // Line to compute, starting from line 1. One point in line 0 is already set
 
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         // Handle mouse
         const Vector2 mouse = GetMousePosition();
-		int mouseInCell = -1;   // -1: outside any button; 0-7: rule cells; 8+: preset cells
+        int mouseInCell = -1;   // -1: outside any button; 0-7: rule cells; 8+: preset cells
 
         // Check mouse on rule cells
         for (int i = 0; i < 8; i++)
