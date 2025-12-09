@@ -1758,11 +1758,12 @@ int GetRandomValue(int min, int max)
         unsigned long t = c - (c % m);                    // largest multiple of m <= c
         unsigned long r;
 
-        do
+        for (;;)
         {
             r = (unsigned long)rand();
+            if (r < t) break;   // Only accept values within the fair region
         }
-        while (r >= t);
+
 
         value = min + (int)(r % m);
     }
