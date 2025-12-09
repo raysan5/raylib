@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - one-dimensional elementary cellular automata
+*   raylib [textures] example - cellular automata
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -64,7 +64,7 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - elementary cellular automata");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - cellular automata");
 
     // Image that contains the cellular automaton
     Image image = GenImageColor(imageWidth, imageHeight, RAYWHITE);

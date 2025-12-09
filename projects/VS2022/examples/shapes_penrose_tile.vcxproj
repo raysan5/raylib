@@ -51,11 +51,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0653AFAF-5578-4C02-AF29-0C873E7634AE}</ProjectGuid>
+    <ProjectGuid>{7883D076-CA8F-4FF7-8B5D-0DFF41CEF8FC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>shapes_ball_physics</RootNamespace>
+    <RootNamespace>shapes_penrose_tile</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shapes_ball_physics</ProjectName>
+    <ProjectName>shapes_penrose_tile</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shapes\shapes_ball_physics.c" />
+    <ClCompile Include="..\..\..\examples\shapes\shapes_penrose_tile.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />

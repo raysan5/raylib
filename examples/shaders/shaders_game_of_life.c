@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Conway's Game of Life with shaders
+*   raylib [shaders] example - game of life
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
@@ -97,7 +97,7 @@ int main(void)
     bool buttonFaster = false;
     bool buttonSlower = false;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - conway's game of life");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - game of life");
 
     // Load shader
     Shader shdrGameOfLife = LoadShader(0, TextFormat("resources/shaders/glsl%i/game_of_life.fs", GLSL_VERSION));

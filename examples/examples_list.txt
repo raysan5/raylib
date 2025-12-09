@@ -208,3 +208,7 @@ others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flas
 others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@arkanis
 others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
 others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5
+shaders;shaders_game_of_life;★★★☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
+shapes;shapes_penrose_tile;★★★★;5.5;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
+text;text_strings_management;★★★☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
+textures;textures_cellular_automata;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant

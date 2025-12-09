@@ -571,6 +571,7 @@ SHAPES = \
     shapes/shapes_math_angle_rotation \
     shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
+    shapes/shapes_penrose_tile \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
@@ -590,6 +591,7 @@ TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
+    textures/textures_cellular_automata \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
     textures/textures_image_channel \
@@ -628,6 +630,7 @@ TEXT = \
     text/text_input_box \
     text/text_rectangle_bounds \
     text/text_sprite_fonts \
+    text/text_strings_management \
     text/text_unicode_emojis \
     text/text_unicode_ranges \
     text/text_words_alignment \
@@ -673,6 +676,7 @@ SHADERS = \
     shaders/shaders_depth_writing \
     shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
+    shaders/shaders_game_of_life \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
@@ -934,6 +938,9 @@ shapes/shapes_math_sine_cosine: shapes/shapes_math_sine_cosine.c
 shapes/shapes_mouse_trail: shapes/shapes_mouse_trail.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_penrose_tile: shapes/shapes_penrose_tile.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_pie_chart: shapes/shapes_pie_chart.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -991,6 +998,9 @@ textures/textures_blend_modes: textures/textures_blend_modes.c
 textures/textures_bunnymark: textures/textures_bunnymark.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/raybunny.png@resources/raybunny.png
+
+textures/textures_cellular_automata: textures/textures_cellular_automata.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1142,6 +1152,9 @@ text/text_sprite_fonts: text/text_sprite_fonts.c
     --preload-file text/resources/sprite_fonts/pixantiqua.png@resources/sprite_fonts/pixantiqua.png \
     --preload-file text/resources/sprite_fonts/alpha_beta.png@resources/sprite_fonts/alpha_beta.png \
     --preload-file text/resources/sprite_fonts/jupiter_crash.png@resources/sprite_fonts/jupiter_crash.png
+
+text/text_strings_management: text/text_strings_management.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_unicode_emojis: text/text_unicode_emojis.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1350,6 +1363,12 @@ shaders/shaders_fog_rendering: shaders/shaders_fog_rendering.c
     --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
     --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs \
     --preload-file shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs
+
+shaders/shaders_game_of_life: shaders/shaders_game_of_life.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/game_of_life.fs@resources/shaders/glsl100/game_of_life.fs \
+    --preload-file shaders/resources/game_of_life/r_pentomino.png@resources/game_of_life/r_pentomino.png \
+    --preload-file shaders/resources/game_of_life/.png@resources/game_of_life/.png
 
 shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
