@@ -2926,8 +2926,15 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 
-    unsigned int bitsLen = 8*dataSize;
-    msg[newDataSize-1] = bitsLen;
+    unsigned long long bitsLen = 8ULL * dataSize;
+    msg[newDataSize-1] = (unsigned char)(bitsLen);
+    msg[newDataSize-2] = (unsigned char)(bitsLen >> 8);
+    msg[newDataSize-3] = (unsigned char)(bitsLen >> 16);
+    msg[newDataSize-4] = (unsigned char)(bitsLen >> 24);
+    msg[newDataSize-5] = (unsigned char)(bitsLen >> 32);
+    msg[newDataSize-6] = (unsigned char)(bitsLen >> 40);
+    msg[newDataSize-7] = (unsigned char)(bitsLen >> 48);
+    msg[newDataSize-8] = (unsigned char)(bitsLen >> 56);
 
     // Process the message in successive 512-bit chunks
     for (int offset = 0; offset < newDataSize; offset += (512/8))
