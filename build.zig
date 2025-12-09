@@ -155,7 +155,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         );
     }
 
-    // Sets a flag indiciating the use of a custom `config.h`
+    // Sets a flag indicating the use of a custom `config.h`
     try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
     if (options.config.len > 0) {
         // Splits a space-separated list of config flags into multiple flags
@@ -187,7 +187,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             try raylib_flags_arr.append(b.allocator, flag);
         }
     } else {
-        // Set default config if no custome config got set
+        // Set default config if no custom config got set
         try raylib_flags_arr.appendSlice(b.allocator, &config_h_flags);
     }
 
@@ -438,7 +438,7 @@ pub const Options = struct {
 
     pub fn getOptions(b: *std.Build) Options {
         return .{
-            .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
+            .platform = b.option(PlatformBackend, "platform", "Choose the platform backend for desktop target") orelse defaults.platform,
             .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
             .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
             .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
