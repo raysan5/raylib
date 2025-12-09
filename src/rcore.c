@@ -1765,7 +1765,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 
     for (int i = 0; i < (int)count;)
     {
-        value = (rand()%(abs(max - min) + 1) + min);
+        value = GetRandomValue(min, max);
         dupValue = false;
 
         for (int j = 0; j < i; j++)
