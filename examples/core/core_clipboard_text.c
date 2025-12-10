@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - clipboard text
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
 *
 *   Example contributed by Ananth S (@Ananth1839) and reviewed by Ramon Santamaria (@raysan5)
