@@ -1743,7 +1743,30 @@ int GetRandomValue(int min, int max)
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
 
-    value = (rand()%(abs(max - min) + 1) + min);
+    int range = (max - min) + 1;
+
+    // Degenerate/overflow case: fall back to min (same behavior as "always min" instead of UB)
+    if (range <= 0)
+    {
+        value = min;
+    }
+    else
+    {
+        // Rejection sampling to get a uniform integer in [min, max]
+        unsigned long c = (unsigned long)RAND_MAX + 1UL;  // number of possible rand() results
+        unsigned long m = (unsigned long)range;           // size of the target interval
+        unsigned long t = c - (c % m);                    // largest multiple of m <= c
+        unsigned long r;
+
+        for (;;)
+        {
+            r = (unsigned long)rand();
+            if (r < t) break;   // Only accept values within the fair region
+        }
+
+
+        value = min + (int)(r % m);
+    }
 #endif
     return value;
 }
