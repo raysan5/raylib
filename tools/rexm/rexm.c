@@ -72,6 +72,12 @@
 // Create local commit with changes on example renaming
 //#define RENAME_AUTO_COMMIT_CREATION
 
+#if defined(__GNUC__) // GCC and Clang
+    #pragma GCC diagnostic push
+    // Avoid GCC/Clang complaining about sprintf() second parameter not being a string literal (being TextFormat())
+    #pragma GCC diagnostic ignored "-Wformat-security"
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -2917,3 +2923,6 @@ static bool TextInList(const char *text, const char **list, int listCount)
     return result;
 }
 
+#if defined(__GNUC__) // GCC and Clang
+    #pragma GCC diagnostic pop
+#endif
