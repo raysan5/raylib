@@ -42,7 +42,6 @@ typedef enum {
 // Struct to store example preset patterns
 typedef struct {
     char *name;
-    char *fileName;
     Vector2 position;
 } PresetPattern;
 
@@ -75,10 +74,10 @@ int main(void)
     const Rectangle textureOnScreen = { 0, 0, (float)windowWidth, (float)windowHeight };
 
     const PresetPattern presetPatterns[] = {
-        { "Glider", "glider", { 0.5f, 0.5f } }, { "R-pentomino", "r_pentomino", { 0.5f, 0.5f } }, { "Acorn", "acorn", { 0.5f,0.5f } },
-        { "Spaceships", "spaceships", { 0.1f, 0.5f } }, { "Still lifes", "still_lifes", { 0.5f, 0.5f } }, { "Oscillators", "oscillators", { 0.5f, 0.5f } },
-        { "Puffer train", "puffer_train", { 0.1f, 0.5f } }, { "Glider Gun", "glider_gun", { 0.2f, 0.2f } }, { "Breeder", "breeder", { 0.1f, 0.5f } },
-        { "Random", "", { 0.5f, 0.5f } }
+        { "Glider", { 0.5f, 0.5f } }, { "R-pentomino", { 0.5f, 0.5f } }, { "Acorn", { 0.5f,0.5f } },
+        { "Spaceships", { 0.1f, 0.5f } }, { "Still lifes", { 0.5f, 0.5f } }, { "Oscillators", { 0.5f, 0.5f } },
+        { "Puffer train", { 0.1f, 0.5f } }, { "Glider Gun", { 0.2f, 0.2f } }, { "Breeder", { 0.1f, 0.5f } },
+        { "Random", { 0.5f, 0.5f } }
     };
     const int numberOfPresets = sizeof(presetPatterns) / sizeof(presetPatterns[0]);
 
@@ -223,7 +222,18 @@ int main(void)
             Image pattern;
             if (preset < numberOfPresets - 1)   // Preset with pattern image lo load
             {
-                pattern = LoadImage(TextFormat("resources/game_of_life/%s.png", presetPatterns[preset].fileName));
+                switch (preset)
+                {
+                    case 0: pattern = LoadImage("resources/game_of_life/glider.png"); break;
+                    case 1: pattern = LoadImage("resources/game_of_life/r_pentomino.png"); break;
+                    case 2: pattern = LoadImage("resources/game_of_life/acorn.png"); break;
+                    case 3: pattern = LoadImage("resources/game_of_life/spaceships.png"); break;
+                    case 4: pattern = LoadImage("resources/game_of_life/still_lifes.png"); break;
+                    case 5: pattern = LoadImage("resources/game_of_life/oscillators.png"); break;
+                    case 6: pattern = LoadImage("resources/game_of_life/puffer_train.png"); break;
+                    case 7: pattern = LoadImage("resources/game_of_life/glider_gun.png"); break;
+                    case 8: pattern = LoadImage("resources/game_of_life/breeder.png"); break;
+                }
                 BeginTextureMode(*currentWorld);
                     ClearBackground(RAYWHITE);
                 EndTextureMode();
