@@ -2770,9 +2770,9 @@ static const char *GetFileNameWithoutExt(const char *filePath)
 
     if (filePath != NULL) strncpy(fileName, GetFileName(filePath), MAX_FILENAMEWITHOUTEXT_LENGTH - 1); // Get filename with extension
 
-    int size = (int)strlen(fileName);   // Get size in bytes
+    int fileNameLength = (int)strlen(fileName); // Get size in bytes
 
-    for (int i = 0; (i < size) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
+    for (int i = 0; (i < fileNameLength) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
     {
         if (fileName[i] == '.')
         {

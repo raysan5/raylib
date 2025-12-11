@@ -142,8 +142,8 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 
-    unsigned int textSize = (unsigned int)strlen(text);
-    memcpy(buffer + strlen(buffer), text, (textSize < (MAX_TRACELOG_MSG_LENGTH - 12))? textSize : (MAX_TRACELOG_MSG_LENGTH - 12));
+    unsigned int textLength = (unsigned int)strlen(text);
+    memcpy(buffer + strlen(buffer), text, (textLength < (MAX_TRACELOG_MSG_LENGTH - 12))? textLength : (MAX_TRACELOG_MSG_LENGTH - 12));
     strcat(buffer, "\n");
     vprintf(buffer, args);
     fflush(stdout);

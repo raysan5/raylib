@@ -2009,10 +2009,10 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if (fileExt != NULL)
     {
-        int fileExtLen = (int)strlen(fileExt);
+        int fileExtLength = (int)strlen(fileExt);
         char fileExtLower[16] = { 0 };
         char *fileExtLowerPtr = fileExtLower;
-        for (int i = 0; (i < fileExtLen) && (i < 16); i++)
+        for (int i = 0; (i < fileExtLength) && (i < 16); i++)
         {
             // Copy and convert to lower-case
             if ((fileExt[i] >= 'A') && (fileExt[i] <= 'Z')) fileExtLower[i] =  fileExt[i] + 32;
@@ -2020,13 +2020,13 @@ bool IsFileExtension(const char *fileName, const char *ext)
         }
 
         int extCount = 1;
-        int extLen = (int)strlen(ext);
-        char *extList = (char *)RL_CALLOC(extLen + 1, 1);
+        int extLength = (int)strlen(ext);
+        char *extList = (char *)RL_CALLOC(extLength + 1, 1);
         char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
-        strncpy(extList, ext, extLen);
+        strncpy(extList, ext, extLength);
         extListPtrs[0] = extList;
 
-        for (int i = 0; i < extLen; i++)
+        for (int i = 0; i < extLength; i++)
         {
             // Convert to lower-case if extension is upper-case
             if ((extList[i] >= 'A') && (extList[i] <= 'Z')) extList[i] += 32;
@@ -2163,9 +2163,9 @@ const char *GetFileNameWithoutExt(const char *filePath)
     if (filePath != NULL)
     {
         strncpy(fileName, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
-        int size = (int)strlen(fileName); // Get size in bytes
+        int fileNameLenght = (int)strlen(fileName); // Get size in bytes
 
-        for (int i = size; i > 0; i--) // Reverse search '.'
+        for (int i = fileNameLenght; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
             {
@@ -2232,11 +2232,11 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 {
     static char prevDirPath[MAX_FILEPATH_LENGTH] = { 0 };
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
-    int pathLen = (int)strlen(dirPath);
+    int dirPathLength = (int)strlen(dirPath);
 
-    if (pathLen <= 3) strncpy(prevDirPath, dirPath, MAX_FILEPATH_LENGTH  - 1);
+    if (dirPathLength <= 3) strncpy(prevDirPath, dirPath, MAX_FILEPATH_LENGTH  - 1);
 
-    for (int i = (pathLen - 1); (i >= 0) && (pathLen > 3); i--)
+    for (int i = (dirPathLength - 1); (i >= 0) && (dirPathLength > 3); i--)
     {
         if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
         {
@@ -2323,8 +2323,8 @@ const char *GetApplicationDirectory(void)
 
     if (_NSGetExecutablePath(appDir, &size) == 0)
     {
-        int len = strlen(appDir);
-        for (int i = len; i >= 0; --i)
+        int appDirLength = (int)strlen(appDir);
+        for (int i = appDirLength; i >= 0; --i)
         {
             if (appDir[i] == '/')
             {
@@ -2346,8 +2346,8 @@ const char *GetApplicationDirectory(void)
 
     if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
     {
-        int len = strlen(appDir);
-        for (int i = len; i >= 0; --i)
+        int appDirLength = (int)strlen(appDir);
+        for (int i = appDirLength; i >= 0; --i)
         {
             if (appDir[i] == '/')
             {
@@ -2442,12 +2442,12 @@ int MakeDirectory(const char *dirPath)
     if (DirectoryExists(dirPath)) return 0; // Path already exists (is valid)
 
     // Copy path string to avoid modifying original
-    int len = (int)strlen(dirPath) + 1;
-    char *pathcpy = (char *)RL_CALLOC(len, 1);
-    memcpy(pathcpy, dirPath, len);
+    int dirPathLength = (int)strlen(dirPath) + 1;
+    char *pathcpy = (char *)RL_CALLOC(dirPathLength, 1);
+    memcpy(pathcpy, dirPath, dirPathLength);
 
     // Iterate over pathcpy, create each subdirectory as needed
-    for (int i = 0; (i < len) && (pathcpy[i] != '\0'); i++)
+    for (int i = 0; (i < dirPathLength) && (pathcpy[i] != '\0'); i++)
     {
         if (pathcpy[i] == ':') i++;
         else
@@ -2499,10 +2499,10 @@ bool IsFileNameValid(const char *fileName)
 
     if ((fileName != NULL) && (fileName[0] != '\0'))
     {
-        int length = (int)strlen(fileName);
+        int fileNameLength = (int)strlen(fileName);
         bool allPeriods = true;
 
-        for (int i = 0; i < length; i++)
+        for (int i = 0; i < fileNameLength; i++)
         {
             // Check invalid characters
             if ((fileName[i] == '<') ||
@@ -2528,7 +2528,7 @@ bool IsFileNameValid(const char *fileName)
         if (valid)
         {
             // Check invalid DOS names
-            if (length >= 3)
+            if (fileNameLength >= 3)
             {
                 if (((fileName[0] == 'C') && (fileName[1] == 'O') && (fileName[2] == 'N')) ||   // CON
                     ((fileName[0] == 'P') && (fileName[1] == 'R') && (fileName[2] == 'N')) ||   // PRN
@@ -2536,7 +2536,7 @@ bool IsFileNameValid(const char *fileName)
                     ((fileName[0] == 'N') && (fileName[1] == 'U') && (fileName[2] == 'L'))) valid = false; // NUL
             }
 
-            if (length >= 4)
+            if (fileNameLength >= 4)
             {
                 if (((fileName[0] == 'C') && (fileName[1] == 'O') && (fileName[2] == 'M') && ((fileName[3] >= '0') && (fileName[3] <= '9'))) ||  // COM0-9
                     ((fileName[0] == 'L') && (fileName[1] == 'P') && (fileName[2] == 'T') && ((fileName[3] >= '0') && (fileName[3] <= '9')))) valid = false; // LPT0-9

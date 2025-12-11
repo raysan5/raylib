@@ -2496,12 +2496,12 @@ void rlLoadExtensions(void *loader)
     const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
 
     // NOTE: We have to duplicate string because glGetString() returns a const string
-    int extSize = (int)strlen(extensions); // Get extensions string size in bytes
-    char *extensionsDup = (char *)RL_CALLOC(extSize + 1, sizeof(char)); // Allocate space for copy with additional EOL byte
-    strncpy(extensionsDup, extensions, extSize);
+    int extensionsLength = (int)strlen(extensions); // Get extensions string size in bytes
+    char *extensionsDup = (char *)RL_CALLOC(extensionsLength + 1, sizeof(char)); // Allocate space for copy with additional EOL byte
+    strncpy(extensionsDup, extensions, extensionsLength);
     extList[numExt] = extensionsDup;
 
-    for (int i = 0; i < extSize; i++)
+    for (int i = 0; i < extensionsLength; i++)
     {
         if (extensionsDup[i] == ' ')
         {

@@ -1488,7 +1488,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 #if defined(SUPPORT_MODULE_RTEXT)
     if (text == NULL) return imText;
     
-    int size = (int)strlen(text);   // Get size in bytes of text
+    int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
 
@@ -1499,7 +1499,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Create image to store text
     imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
 
-    for (int i = 0; i < size;)
+    for (int i = 0; i < textLength;)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
