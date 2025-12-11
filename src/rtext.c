@@ -423,6 +423,22 @@ Font LoadFontEx(const char *fileName, int fontSize, const int *codepoints, int c
     return font;
 }
 
+Font LoadFontExBitmap(const char *fileName, int fontSize, const int *codepoints, int codepointCount)
+{
+    Font font = { 0 };
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+
+    if (fileData != NULL)
+    {
+        font = LoadFontFromMemoryBitmap(GetFileExtension(fileName), fileData, dataSize,
+                                        fontSize, codepoints, codepointCount);
+        UnloadFileData(fileData);
+    }
+
+    return font;
+}
+
 // Load an Image font file (XNA style)
 Font LoadFontFromImage(Image image, Color key, int firstChar)
 {
@@ -548,8 +564,9 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     return font;
 }
 
-// Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
-Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, const int *codepoints, int codepointCount)
+static Font LoadFontFromMemoryInternal(const char *fileType, const unsigned char *fileData, int dataSize,
+                                       int fontSize, const int *codepoints, int codepointCount,
+                                       bool antialias)
 {
     Font font = { 0 };
 
@@ -563,14 +580,21 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     if (TextIsEqual(fileExtLower, ".ttf") ||
         TextIsEqual(fileExtLower, ".otf"))
     {
-        font.glyphs = LoadFontData(fileData, dataSize, font.baseSize, codepoints, (codepointCount > 0)? codepointCount : 95, FONT_DEFAULT, &font.glyphCount);
+        int fontType = antialias ? FONT_DEFAULT : FONT_BITMAP;
+
+        font.glyphs = LoadFontData(fileData, dataSize, font.baseSize,
+            codepoints,
+            (codepointCount > 0)? codepointCount : 95,
+            fontType,
+            &font.glyphCount);
     }
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
     if (TextIsEqual(fileExtLower, ".bdf"))
     {
-        font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, (codepointCount > 0)? codepointCount : 95, &font.baseSize);
+        font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints,
+            (codepointCount > 0)? codepointCount : 95, &font.baseSize);
         font.glyphCount = (codepointCount > 0)? codepointCount : 95;
     }
     else
@@ -584,7 +608,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         font.glyphPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
 
-        Image atlas = GenImageFontAtlas(font.glyphs, &font.recs, font.glyphCount, font.baseSize, font.glyphPadding, 0);
+        Image atlas = GenImageFontAtlas(font.glyphs, &font.recs, font.glyphCount,
+                                        font.baseSize, font.glyphPadding, 0);
         if (isGpuReady) font.texture = LoadTextureFromImage(atlas);
 
         // Update glyphs[i].image to use alpha, required to be used on ImageDrawText()
@@ -596,7 +621,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         UnloadImage(atlas);
 
-        TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
+        TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)",
+            font.baseSize, font.glyphCount);
     }
     else font = GetFontDefault();
 #else
@@ -604,6 +630,23 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 #endif
 
     return font;
+}
+
+// Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
+Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize,
+                        int fontSize, const int *codepoints, int codepointCount)
+{
+    return LoadFontFromMemoryInternal(fileType, fileData, dataSize,
+                                      fontSize, codepoints, codepointCount,
+                                      true);     // AA ON 
+}
+
+Font LoadFontFromMemoryBitmap(const char *fileType, const unsigned char *fileData, int dataSize,
+                              int fontSize, const int *codepoints, int codepointCount)
+{
+    return LoadFontFromMemoryInternal(fileType, fileData, dataSize,
+                                      fontSize, codepoints, codepointCount,
+                                      false);    // AA OFF 
 }
 
 // Check if a font is valid (font data loaded)
