@@ -1367,8 +1367,15 @@ shaders/shaders_fog_rendering: shaders/shaders_fog_rendering.c
 shaders/shaders_game_of_life: shaders/shaders_game_of_life.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/game_of_life.fs@resources/shaders/glsl100/game_of_life.fs \
+    --preload-file shaders/resources/game_of_life/acorn.png@resources/game_of_life/acorn.png \
+    --preload-file shaders/resources/game_of_life/breeder.png@resources/game_of_life/breeder.png \
+    --preload-file shaders/resources/game_of_life/glider.png@resources/game_of_life/glider.png \
+    --preload-file shaders/resources/game_of_life/glider_gun.png@resources/game_of_life/glider_gun.png \
+    --preload-file shaders/resources/game_of_life/oscillators.png@resources/game_of_life/oscillators.png \
+    --preload-file shaders/resources/game_of_life/puffer_train.png@resources/game_of_life/puffer_train.png \
     --preload-file shaders/resources/game_of_life/r_pentomino.png@resources/game_of_life/r_pentomino.png \
-    --preload-file shaders/resources/game_of_life/.png@resources/game_of_life/.png
+    --preload-file shaders/resources/game_of_life/spaceships.png@resources/game_of_life/spaceships.png \
+    --preload-file shaders/resources/game_of_life/still_lifes.png@resources/game_of_life/still_lifes.png
 
 shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
