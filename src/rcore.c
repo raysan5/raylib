@@ -113,7 +113,7 @@
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strlen(), strcpy(), strcmp(), strrchr(), memset()
+#include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
@@ -1837,8 +1837,8 @@ void TakeScreenshot(const char *fileName)
     unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
-    char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+    char path[MAX_FILEPATH_LENGTH] = { 0 };
+    strncpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName), MAX_FILEPATH_LENGTH - 1);
 
     ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
@@ -2022,7 +2022,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         int extLen = (int)strlen(ext);
         char *extList = (char *)RL_CALLOC(extLen + 1, 1);
         char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
-        strcpy(extList, ext);
+        strncpy(extList, ext, extLen);
         extListPtrs[0] = extList;
 
         for (int i = 0; i < extLen; i++)
@@ -2130,11 +2130,11 @@ const char *GetFileExtension(const char *fileName)
 }
 
 // String pointer reverse break: returns right-most occurrence of charset in s
-static const char *strprbrk(const char *s, const char *charset)
+static const char *strprbrk(const char *text, const char *charset)
 {
     const char *latestMatch = NULL;
 
-    for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+    for (; (text != NULL) && (text = strpbrk(text, charset)); latestMatch = text++) { }
 
     return latestMatch;
 }
@@ -2161,7 +2161,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     if (filePath != NULL)
     {
-        strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
+        strncpy(fileName, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
         int size = (int)strlen(fileName); // Get size in bytes
 
         for (int i = size; i > 0; i--) // Reverse search '.'
@@ -2233,7 +2233,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
     int pathLen = (int)strlen(dirPath);
 
-    if (pathLen <= 3) strcpy(prevDirPath, dirPath);
+    if (pathLen <= 3) strncpy(prevDirPath, dirPath, MAX_FILEPATH_LENGTH  - 1);
 
     for (int i = (pathLen - 1); (i >= 0) && (pathLen > 3); i--)
     {
@@ -2472,12 +2472,12 @@ int MakeDirectory(const char *dirPath)
 }
 
 // Change working directory, returns true on success
-bool ChangeDirectory(const char *dir)
+bool ChangeDirectory(const char *dirPath)
 {
-    bool result = CHDIR(dir);
+    bool result = CHDIR(dirPath);
 
-    if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dir);
-    else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dir);
+    if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dirPath);
+    else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dirPath);
 
     return (result == 0);
 }
@@ -2708,6 +2708,9 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
         ['0'] = 52, ['1'] = 53, ['2'] = 54, ['3'] = 55, ['4'] = 56, ['5'] = 57, ['6'] = 58, ['7'] = 59,
         ['8'] = 60, ['9'] = 61, ['+'] = 62, ['/'] = 63
     };
+ 
+    *outputSize = 0;
+    if (text == NULL) return NULL;
 
     // Compute expected size and padding
     int dataSize = (int)strlen(text); // WARNING: Expecting NULL terminated strings!
@@ -3952,7 +3955,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                     {
                         if (IsFileExtension(path, filter))
                         {
-                            strcpy(files->paths[files->count], path);
+                            strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                             files->count++;
                         }
                     }
@@ -3960,14 +3963,14 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                     {
                         if (strstr(filter, DIRECTORY_FILTER_TAG) != NULL)
                         {
-                            strcpy(files->paths[files->count], path);
+                            strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                             files->count++;
                         }
                     }
                 }
                 else
                 {
-                    strcpy(files->paths[files->count], path);
+                    strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                     files->count++;
                 }
             }
@@ -4011,13 +4014,13 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                     {
                         if (IsFileExtension(path, filter))
                         {
-                            strcpy(files->paths[files->count], path);
+                            strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                             files->count++;
                         }
                     }
                     else
                     {
-                        strcpy(files->paths[files->count], path);
+                        strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                         files->count++;
                     }
 
@@ -4031,7 +4034,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                 {
                     if ((filter != NULL) && (strstr(filter, DIRECTORY_FILTER_TAG) != NULL))
                     {
-                        strcpy(files->paths[files->count], path);
+                        strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                         files->count++;
                     }
 
@@ -4334,22 +4337,25 @@ const char *TextFormat(const char *text, ...)
 
     char *currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
-
-    va_list args;
-    va_start(args, text);
-    int requiredByteCount = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
-    va_end(args);
-
-    // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occurred
-    if (requiredByteCount >= MAX_TEXT_BUFFER_LENGTH)
+    
+    if (text != NULL)
     {
-        // Inserting "..." at the end of the string to mark as truncated
-        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 4; // Adding 4 bytes = "...\0"
-        snprintf(truncBuffer, 4, "...");
-    }
+        va_list args;
+        va_start(args, text);
+        int requiredByteCount = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+        va_end(args);
 
-    index += 1;     // Move to next buffer for next function call
-    if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
+        // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occurred
+        if (requiredByteCount >= MAX_TEXT_BUFFER_LENGTH)
+        {
+            // Inserting "..." at the end of the string to mark as truncated
+            char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 4; // Adding 4 bytes = "...\0"
+            snprintf(truncBuffer, 4, "...");
+        }
+
+        index += 1; // Move to next buffer for next function call
+        if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
+    }
 
     return currentBuffer;
 }

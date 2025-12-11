@@ -771,7 +771,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
@@ -1125,17 +1125,19 @@ Image GenImageCellular(int width, int height, int tileSize)
 Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
-
-    int textLength = (int)strlen(text);
-    int imageViewSize = width*height;
-
+    
+    int imageSize = width*height;
     image.width = width;
     image.height = height;
     image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-    image.data = RL_CALLOC(imageViewSize, 1);
+    image.data = RL_CALLOC(imageSize, 1);
     image.mipmaps = 1;
 
-    memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
+    if (text != NULL)
+    {
+        int textLength = (int)strlen(text);
+        memcpy(image.data, text, (textLength > imageSize)? imageSize : textLength);
+    }
 
     return image;
 }
@@ -1484,8 +1486,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 {
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
+    if (text == NULL) return imText;
+    
     int size = (int)strlen(text);   // Get size in bytes of text
-
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
 

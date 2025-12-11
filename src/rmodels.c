@@ -2060,7 +2060,7 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
@@ -4306,8 +4306,8 @@ static Model LoadOBJ(const char *fileName)
         return model;
     }
 
-    char currentDir[1024] = { 0 };
-    strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
+    char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
+    strncpy(currentDir, GetWorkingDirectory(), MAX_FILEPATH_LENGTH - 1); // Save current working directory
     const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
     if (CHDIR(workingDir) != 0) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
 
@@ -5025,10 +5025,8 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
             // If animations and skeleton are in the same file, copy bone names to anim
-            if (iqmHeader->num_joints > 0)
-                memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
-            else
-                strcpy(animations[a].bones[j].name, "ANIMJOINTNAME"); // Default bone name otherwise
+            if (iqmHeader->num_joints > 0) memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
+            else memcpy(animations[a].bones[j].name, "ANIMJOINTNAME", 13); // Default bone name otherwise
             animations[a].bones[j].parent = poses[j].parent;
         }
 
@@ -6970,7 +6968,7 @@ static Model LoadM3D(const char *fileName)
 
             // Add a special "no bone" bone
             model.bones[i].parent = -1;
-            strcpy(model.bones[i].name, "NO BONE");
+            memcpy(model.bones[i].name, "NO BONE", 7);
             model.bindPose[i].translation.x = 0.0f;
             model.bindPose[i].translation.y = 0.0f;
             model.bindPose[i].translation.z = 0.0f;
@@ -7062,7 +7060,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 
             // A special, never transformed "no bone" bone, used for boneless vertices
             animations[a].bones[i].parent = -1;
-            strcpy(animations[a].bones[i].name, "NO BONE");
+            memcpy(animations[a].bones[i].name, "NO BONE", 7);
 
             // M3D stores frames at arbitrary intervals with sparse skeletons. We need full skeletons at
             // regular intervals, so let the M3D SDK do the heavy lifting and calculate interpolated bones

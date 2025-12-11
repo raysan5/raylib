@@ -105,7 +105,7 @@ void TraceLog(int logType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     // Message has level below current threshold, don't emit
-    if (logType < logTypeLevel) return;
+    if ((logType < logTypeLevel) || (text == NULL)) return;
 
     va_list args;
     va_start(args, text);
@@ -313,7 +313,7 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
 
     // Get file name from path
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
     for (int i = 0; varFileName[i] != '\0'; i++)
     {
         // Convert variable name to uppercase

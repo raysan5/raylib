@@ -1145,7 +1145,7 @@ RLAPI const char *GetPrevDirectoryPath(const char *dirPath);        // Get previ
 RLAPI const char *GetWorkingDirectory(void);                        // Get current working directory (uses static string)
 RLAPI const char *GetApplicationDirectory(void);                    // Get the directory of the running application (uses static string)
 RLAPI int MakeDirectory(const char *dirPath);                       // Create directories (including full path requested), returns 0 on success
-RLAPI bool ChangeDirectory(const char *dir);                        // Change working directory, return true on success
+RLAPI bool ChangeDirectory(const char *dirPath);                    // Change working directory, return true on success
 RLAPI bool IsPathFile(const char *path);                            // Check if a given path is a file or a directory
 RLAPI bool IsFileNameValid(const char *fileName);                   // Check if fileName is valid for the platform/OS
 RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);         // Load directory filepaths
