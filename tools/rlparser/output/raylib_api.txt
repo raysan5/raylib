@@ -399,10 +399,10 @@ Struct 13: Camera3D (5 fields)
 Struct 14: Camera2D (4 fields)
   Name: Camera2D
   Description: Camera2D, defines position/orientation in 2d space
-  Field[1]: Vector2 offset // Camera offset (displacement from target)
-  Field[2]: Vector2 target // Camera target (rotation and zoom origin)
-  Field[3]: float rotation // Camera rotation in degrees
-  Field[4]: float zoom // Camera zoom (scaling), should be 1.0f by default
+  Field[1]: Vector2 offset // Camera offset (screen space offset from window origin)
+  Field[2]: Vector2 target // Camera target (world space target point that is mapped to screen space offset)
+  Field[3]: float rotation // Camera rotation in degrees (pivots around target)
+  Field[4]: float zoom // Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale
 Struct 15: Mesh (17 fields)
   Name: Mesh
   Description: Mesh, vertex data and vao/vbo
