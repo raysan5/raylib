@@ -1008,6 +1008,7 @@ int main(int argc, char *argv[])
             LOG("INFO: Scanning available example (.c) files to be added to collection...\n");
             FilePathList clist = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
+            // Load examples collection list file (raylib/examples/examples_list.txt)
             char *exList = LoadFileText(exCollectionFilePath);
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
@@ -1024,7 +1025,7 @@ int main(int argc, char *argv[])
 
             for (int i = 1; i < lineCount; i++)
             {
-                if ((TextFindIndex(exListUpdated, exListLines[i]) == -1) ||  (exListLines[i][0] == '#'))
+                if ((TextFindIndex(exListUpdated, exListLines[i]) == -1) || (exListLines[i][0] == '#'))
                     exListUpdatedOffset += sprintf(exListUpdated + exListUpdatedOffset, "%s\n", exListLines[i]);
                 else listUpdated = true;
             }
@@ -2328,7 +2329,7 @@ static rlExampleInfo *LoadExampleInfo(const char *exFileName)
         // Example found in collection
         exInfo = (rlExampleInfo *)RL_CALLOC(1, sizeof(rlExampleInfo));
 
-        strcpy(exInfo->name, GetFileNameWithoutExt(exFileName));
+        strncpy(exInfo->name, GetFileNameWithoutExt(exFileName), 128 - 1);
         strncpy(exInfo->category, exInfo->name, TextFindIndex(exInfo->name, "_"));
 
         char *exText = LoadFileText(exFileName);
@@ -2511,7 +2512,7 @@ static char **LoadExampleResourcePaths(const char *filePath, int *resPathCount)
             if (!end) break;
 
             // WARNING: Some paths could be for saving files, not loading, those "resource" files must be omitted
-            // HACK: Just check previous position from pointer for function name including the string and the index "distance"
+            // TODO: HACK: Just check previous position from pointer for function name including the string and the index "distance"
             // This is a quick solution, the good one would be getting the data loading function names...
             int functionIndex01 = TextFindIndex(ptr - 40, "ExportImage");       // Check ExportImage()
             int functionIndex02 = TextFindIndex(ptr - 10, "TraceLog");          // Check TraceLog()
@@ -2869,8 +2870,8 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
 
         // Get example name: replace underscore by spaces
-        strcpy(exName, GetFileNameWithoutExt(exHtmlPathCopy));
-        strcpy(exTitle, exName);
+        strncpy(exName, GetFileNameWithoutExt(exHtmlPathCopy), 64 - 1);
+        strncpy(exTitle, exName, 64 - 1);
         for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
 
         // Get example category from exName: copy until first underscore
