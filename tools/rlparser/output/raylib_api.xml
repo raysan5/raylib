@@ -1111,7 +1111,7 @@
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
-            <Param type="const char *" name="dir" desc="" />
+            <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if a given path is a file or a directory">
             <Param type="const char *" name="path" desc="" />

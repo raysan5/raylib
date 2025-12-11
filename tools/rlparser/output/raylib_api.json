@@ -4646,7 +4646,7 @@
       "params": [
         {
           "type": "const char *",
-          "name": "dir"
+          "name": "dirPath"
         }
       ]
     },

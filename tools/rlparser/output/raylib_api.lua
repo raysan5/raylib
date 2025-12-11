@@ -4167,7 +4167,7 @@ return {
       description = "Change working directory, return true on success",
       returnType = "bool",
       params = {
-        {type = "const char *", name = "dir"}
+        {type = "const char *", name = "dirPath"}
       }
     },
     {
