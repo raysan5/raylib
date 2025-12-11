@@ -127,13 +127,12 @@
 //----------------------------------------------------------------------------------
 // Global variables
 //----------------------------------------------------------------------------------
-extern bool isGpuReady;
 #if defined(SUPPORT_DEFAULT_FONT)
 // Default font provided by raylib
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
 #endif
-static int textLineSpacing = 2;                 // Text vertical line spacing in pixels (between lines)
+static int textLineSpacing = 2; // Text vertical line spacing in pixels (between lines)
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -164,8 +163,8 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
-    // Check to see if we have allready allocated the font for an image, and if we don't need to upload, then just return
-    if ((defaultFont.glyphs != NULL) && !isGpuReady) return;
+    // Check to see if we have already allocated the font for an image, and if we don't need to upload, then just return
+    if (defaultFont.glyphs != NULL) return;
 
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
@@ -263,17 +262,14 @@ extern void LoadFontDefault(void)
         counter++;
     }
 
-    if (isGpuReady)
-    {
-        defaultFont.texture = LoadTextureFromImage(imFont);
+    defaultFont.texture = LoadTextureFromImage(imFont);
 
-        // we have already loaded the font glyph data an image, and the GPU is ready, we are done
-        // if we don't do this, we will leak memory by reallocating the glyphs and rects
-        if (defaultFont.glyphs != NULL)
-        {
-            UnloadImage(imFont);
-            return;
-        }
+    // we have already loaded the font glyph data an image, and the GPU is ready, we are done
+    // if we don't do this, we will leak memory by reallocating the glyphs and rects
+    if (defaultFont.glyphs != NULL)
+    {
+        UnloadImage(imFont);
+        return;
     }
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, glyphCount
@@ -330,7 +326,7 @@ extern void LoadFontDefault(void)
 extern void UnloadFontDefault(void)
 {
     for (int i = 0; i < defaultFont.glyphCount; i++) UnloadImage(defaultFont.glyphs[i].image);
-    if (isGpuReady) UnloadTexture(defaultFont.texture);
+    UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.glyphs);
     RL_FREE(defaultFont.recs);
     defaultFont.glyphCount = 0;
@@ -384,17 +380,15 @@ Font LoadFont(const char *fileName)
     {
         Image image = LoadImage(fileName);
         if (image.data != NULL) font = LoadFontFromImage(image, MAGENTA, FONT_TTF_DEFAULT_FIRST_CHAR);
+        else font = GetFontDefault();
         UnloadImage(image);
     }
 
-    if (isGpuReady)
+    if (font.texture.id == 0) TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
+    else
     {
-        if (font.texture.id == 0) TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
-        else
-        {
-            SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default, we set point filter (the best performance)
-            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
-        }
+        SetTextureFilter(font.texture, TEXTURE_FILTER_POINT); // By default, we set point filter (the best performance)
+        TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
 
     return font;
@@ -515,7 +509,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     };
 
     // Set font with all data parsed from image
-    if (isGpuReady) font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
+    font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     font.glyphCount = index;
     font.glyphPadding = 0;
 
@@ -584,7 +578,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
         font.glyphPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
 
         Image atlas = GenImageFontAtlas(font.glyphs, &font.recs, font.glyphCount, font.baseSize, font.glyphPadding, 0);
-        if (isGpuReady) font.texture = LoadTextureFromImage(atlas);
+        font.texture = LoadTextureFromImage(atlas);
 
         // Update glyphs[i].image to use alpha, required to be used on ImageDrawText()
         for (int i = 0; i < font.glyphCount; i++)
@@ -1008,7 +1002,7 @@ void UnloadFont(Font font)
     if (font.texture.id != GetFontDefault().texture.id)
     {
         UnloadFontData(font.glyphs, font.glyphCount);
-        if (isGpuReady) UnloadTexture(font.texture);
+        UnloadTexture(font.texture);
         RL_FREE(font.recs);
 
         TRACELOGD("FONT: Unloaded font data from RAM and VRAM");
@@ -1339,8 +1333,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 {
     Vector2 textSize = { 0 };
 
-    if ((isGpuReady && (font.texture.id == 0)) ||
-        (text == NULL) || (text[0] == '\0')) return textSize; // Security check
+    if ((font.texture.id == 0) || (text == NULL) || (text[0] == '\0')) return textSize; // Security check
 
     int size = TextLength(text);    // Get size in bytes of text
     int tempByteCounter = 0;        // Used to count longer text line num chars
@@ -2481,7 +2474,7 @@ static Font LoadBMFont(const char *fileName)
 
     RL_FREE(imFonts);
 
-    if (isGpuReady) font.texture = LoadTextureFromImage(fullFont);
+    font.texture = LoadTextureFromImage(fullFont);
 
     // Fill font characters info data
     font.baseSize = fontSize;
@@ -2523,7 +2516,7 @@ static Font LoadBMFont(const char *fileName)
     UnloadImage(fullFont);
     UnloadFileText(fileText);
 
-    if (isGpuReady && (font.texture.id == 0))
+    if (font.texture.id == 0)
     {
         UnloadFont(font);
         font = GetFontDefault();

@@ -387,11 +387,6 @@ RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported s
 
 CoreData CORE = { 0 };                      // Global CORE state context
 
-// Flag to note GPU acceleration is available,
-// referenced from other modules to support GPU data loading
-// NOTE: Useful to allow Texture, RenderTexture, Font.texture, Mesh.vaoId/vboId, Shader loading
-bool isGpuReady = false;
-
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -697,7 +692,6 @@ void InitWindow(int width, int height, const char *title)
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: Current fbo size stored as globals in rlgl for convenience
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-    isGpuReady = true; // Flag to note GPU has been initialized successfully
 
     // Setup default viewport
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -1266,7 +1260,14 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 
     shader.id = rlLoadShaderCode(vsCode, fsCode);
 
-    if (shader.id == rlGetShaderIdDefault()) shader.locs = rlGetShaderLocsDefault();
+    if (shader.id == 0)
+    {
+        // Shader could not be loaded but we still load the location points to avoid potential crashes
+        // NOTE: All locations set to -1 (no location)
+        shader.locs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
+        for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
+    }
+    else if (shader.id == rlGetShaderIdDefault()) shader.locs = rlGetShaderLocsDefault();
     else if (shader.id > 0)
     {
         // After custom shader loading, we TRY to set default location names
@@ -1282,9 +1283,9 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 
         // NOTE: If any location is not found, loc point becomes -1
 
+        // Load shader locations array
+        // NOTE: All locations set to -1 (no location)
         shader.locs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
-
-        // All locations reset to -1 (no location)
         for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
         // Get handles to GLSL input attribute locations

@@ -1282,6 +1282,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
+    if (mesh->vaoId == 0) return;
+
     rlEnableVertexArray(mesh->vaoId);
 
     // NOTE: Vertex attributes must be uploaded considering default locations points and available vertex data
@@ -1469,6 +1471,8 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Bind shader program
     rlEnableShader(material.shader.id);
+
+    if (material.shader.locs == NULL) return;
 
     // Send required data to shader (matrices, values)
     //-----------------------------------------------------
