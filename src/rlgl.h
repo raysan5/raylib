@@ -3914,7 +3914,7 @@ void rlUnloadFramebuffer(unsigned int id)
 
     // TODO: Review warning retrieving object name in WebGL
     // WARNING: WebGL: INVALID_ENUM: getFramebufferAttachmentParameter: invalid parameter name
-    // Ref: https://registry.khronos.org/webgl/specs/latest/1.0/
+    // REF: https://registry.khronos.org/webgl/specs/latest/1.0/
     glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depthId);
 
     unsigned int depthIdU = (unsigned int)depthId;
@@ -4485,7 +4485,7 @@ void rlSetUniformMatrices(int locIndex, const Matrix *matrices, int count)
     glUniformMatrix4fv(locIndex, count, true, (const float *)matrices);
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // WARNING: WebGL does not support Matrix transpose ("true" parameter)
-    // Ref: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/uniformMatrix
+    // REF: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/uniformMatrix
     glUniformMatrix4fv(locIndex, count, false, (const float *)matrices);
 #endif
 }

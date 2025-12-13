@@ -131,7 +131,7 @@ static void MouseEnterCallback(GLFWwindow *window, int enter);                  
 
 // Emscripten window callback events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
-// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+//static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
@@ -165,7 +165,7 @@ EM_JS(void, SetCanvasIdJs, (char *out, int outSize), {
 bool WindowShouldClose(void)
 {
     // Emscripten Asyncify is required to run synchronous code in asynchronous JS
-    // Ref: https://emscripten.org/docs/porting/asyncify.html
+    // REF: https://emscripten.org/docs/porting/asyncify.html
 
     // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
     // and encapsulating one frame execution on a UpdateDrawFrame() function,
@@ -243,7 +243,7 @@ void ToggleFullscreen(void)
 
             // Option 2: Request fullscreen for the canvas element with strategy
             // This option does not seem to work at all
-            // Ref: https://github.com/emscripten-core/emscripten/issues/5124
+            // REF: https://github.com/emscripten-core/emscripten/issues/5124
             // EmscriptenFullscreenStrategy strategy = {
                 // .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
                 // .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
@@ -1520,8 +1520,8 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
 
     // NOTE: Registers any key down considering OS keyboard layout but
     // does not detect action events, those should be managed by user...
-    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
-    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
+    // REF: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // REF: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)

@@ -4203,7 +4203,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         /*else if (layout == CUBEMAP_LAYOUT_PANORAMA)
         {
             // TODO: Implement panorama by converting image to square faces...
-            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
+            // REF: https://github.com/denivip/panorama/blob/master/panorama.cpp
         } */
         else
         {
@@ -5410,7 +5410,7 @@ int GetPixelDataSize(int width, int height, int format)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Convert half-float (stored as unsigned short) to float
-// Ref: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
+// REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
 static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;

@@ -167,7 +167,7 @@ extern void LoadFontDefault(void)
     if (defaultFont.glyphs != NULL) return;
 
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
-    // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
+    // REF: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
     defaultFont.glyphCount = 224;   // Number of glyphs included in our default font
     defaultFont.glyphPadding = 0;   // Characters padding

@@ -1122,7 +1122,7 @@ double GetTime(void)
 // NOTE: This function is only safe to use if you control the URL given
 // A user could craft a malicious string performing another action
 // Only call this function yourself not with user input or make sure to check the string yourself
-// Ref: https://github.com/raysan5/raylib/issues/686
+// REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
@@ -1234,8 +1234,8 @@ void PollInputEvents(void)
     // Map touch position to mouse position for convenience
     // WARNING: If the target desktop device supports touch screen, this behaviour should be reviewed!
     // TODO: GLFW does not support multi-touch input yet
-    // Ref: https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // Ref: https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    // REF: https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // REF: https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Check if gamepads are ready
@@ -1347,7 +1347,7 @@ void PollInputEvents(void)
 // Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
 // We need to provide these because GLFWallocator expects function pointers with specific signatures
 // Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch
-// Ref: https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
+// REF: https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
 static void *AllocateWrapper(size_t size, void *user)
 {
     (void)user;
@@ -1945,8 +1945,8 @@ static void CharCallback(GLFWwindow *window, unsigned int codepoint)
 {
     // NOTE: Registers any key down considering OS keyboard layout but
     // does not detect action events, those should be managed by user...
-    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
-    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
+    // REF: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // REF: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)

@@ -1129,7 +1129,7 @@ Vector2 GetWindowScaleDPI(void)
 
 #ifndef USING_VERSION_SDL3
     // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
-    // Ref: https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
+    // REF: https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
     // TODO: Implement the window scale factor calculation manually
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #else
@@ -1279,7 +1279,7 @@ double GetTime(void)
 // NOTE: This function is only safe to use if you control the URL given
 // A user could craft a malicious string performing another action
 // Only call this function yourself not with user input or make sure to check the string yourself
-// Ref: https://github.com/raysan5/raylib/issues/686
+// REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code

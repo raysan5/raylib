@@ -446,7 +446,7 @@ void InitAssetManager(AAssetManager *manager, const char *dataPath)
 }
 
 // Replacement for fopen()
-// Ref: https://developer.android.com/ndk/reference/group/asset
+// REF: https://developer.android.com/ndk/reference/group/asset
 FILE *android_fopen(const char *fileName, const char *mode)
 {
     if (mode[0] == 'w')
@@ -454,7 +454,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
         // NOTE: fopen() is mapped to android_fopen() that only grants read access to
         // assets directory through AAssetManager but we want to also be able to
         // write data when required using the standard stdio FILE access functions
-        // Ref: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
+        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
         #undef fopen
         return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
         #define fopen(name, mode) android_fopen(name, mode)

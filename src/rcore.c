@@ -1660,8 +1660,8 @@ float GetFrameTime(void)
 // Wait for some time (stop program execution)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
-// Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
-// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
+// REF: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
+// REF: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
 void WaitTime(double seconds)
 {
     if (seconds < 0) return;    // Security check

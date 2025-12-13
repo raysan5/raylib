@@ -5998,8 +5998,8 @@ static Model LoadGLTF(const char *fileName)
         //----------------------------------------------------------------------------------------------------
 
         // Load animation data
-        // Ref: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
-        // Ref: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
+        // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
+        // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
         //
         // LIMITATIONS:
         //  - Only supports 1 armature per file, and skips loading it if there are multiple armatures
