@@ -78,6 +78,11 @@ typedef struct {
     int unmaximizedHeight;              // Internal var to store the unmaximized window (canvas) height
     
     char canvasId[64];                  // Keep current canvas id where wasm app is running
+                                        // NOTE: Useful when trying to run multiple wasms in different canvases in same webpage
+    
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    unsigned int *pixels;               // Pointer to pixel data buffer (RGBA 32bit format)
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -264,7 +269,8 @@ void ToggleFullscreen(void)
             };
             emscripten_enter_soft_fullscreen(platform.canvasId, &strategy);
 
-            int width, height;
+            int width = 0;
+            int height = 0;
             emscripten_get_canvas_element_size(platform.canvasId, &width, &height);
             TRACELOG(LOG_WARNING, "Emscripten: Enter fullscreen: Canvas size: %i x %i", width, height);
 
@@ -883,7 +889,32 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Update framebuffer
+    rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
+    
+    // Copy framebuffer data into canvas
+    EM_ASM({
+        const width = $0;
+        const height = $1;
+        const ptr = $2;
+
+        // Get canvas and 2d context created
+        const canvas = Module.canvas;
+        const ctx = canvas.getContext('2d');
+
+        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height)) {
+            Module.__img = ctx.createImageData(width, height);
+        }
+
+        const src = HEAPU8.subarray(ptr, ptr + width*height*4); // RGBA (4 bytes)
+        Module.__img.data.set(src);
+        ctx.putImageData(Module.__img, 0, 0);
+
+    }, CORE.Window.screen.width, CORE.Window.screen.height, platform.pixels);
+#else
     glfwSwapBuffers(platform.handle);
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -974,7 +1005,7 @@ void SetMouseCursor(int cursor)
     }
 }
 
-// Get physical key name.
+// Get physical key name
 const char *GetKeyName(int key)
 {
     TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
@@ -1214,7 +1245,21 @@ int InitPlatform(void)
 
     // Init fullscreen toggle required var:
     platform.ourFullscreen = false;
-
+    
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Avoid creating a WebGL canvas, avoid calling glfwCreateWindow()
+    emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
+    EM_ASM({
+        const canvas = document.getElementById("canvas");
+        Module.canvas = canvas;
+    });
+    
+    // Load memory framebuffer with desired screen size
+    // NOTE: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
+    // but it is not being used, on SwapScreenBuffer() the pure software renderer is used
+    // TODO: Consider requesting another type of canvas, not a WebGL one --> Replace GLFW-web by Emscripten?
+    platform.pixels = (unsigned int *)RL_CALLOC(CORE.Window.screen.width*CORE.Window.screen.height, sizeof(unsigned int));
+#else
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
@@ -1289,6 +1334,7 @@ int InitPlatform(void)
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
         return -1;
     }
+#endif
 
     // WARNING: glfwCreateWindow() title doesn't work with emscripten
     emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
