@@ -894,7 +894,8 @@ Vector2 GetMonitorPosition(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int x, y;
+        int x = 0; 
+        int y = 0;
         glfwGetMonitorPos(monitors[monitor], &x, &y);
 
         return (Vector2){ (float)x, (float)y };

@@ -3655,7 +3655,7 @@ void GenMeshTangents(Mesh *mesh)
     for (int t = 0; t < mesh->triangleCount; t++)
     {
         // Get triangle vertex indices
-        int i0, i1, i2;
+        int i0 = 0, i1 = 0, i2 = 0;
 
         if (mesh->indices != NULL)
         {
@@ -4150,7 +4150,7 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
         // Test against all triangles in mesh
         for (int i = 0; i < triangleCount; i++)
         {
-            Vector3 a, b, c;
+            Vector3 a = 0, b = 0, c = 0;
             Vector3 *vertdata = (Vector3 *)mesh.vertices;
 
             if (mesh.indices)
@@ -4193,8 +4193,8 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     RayCollision collision = { 0 };
     Vector3 edge1 = { 0 };
     Vector3 edge2 = { 0 };
-    Vector3 p, q, tv;
-    float det, invDet, u, v, t;
+    Vector3 p = 0, q = 0, tv = 0;
+    float det = 0.0f, invDet = 0.0f, u = 0.0f, v = 0.0f, t = 0.0f;
 
     // Find vectors for two edges sharing V1
     edge1 = Vector3Subtract(p2, p1);
