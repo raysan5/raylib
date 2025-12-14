@@ -155,9 +155,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         );
     }
 
-    // Sets a flag indicating the use of a custom `config.h`
-    try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
     if (options.config.len > 0) {
+        // Sets a flag indicating the use of a custom `config.h`
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
         // Splits a space-separated list of config flags into multiple flags
         //
         // Note: This means certain flags like `-x c++` won't be processed properly.
