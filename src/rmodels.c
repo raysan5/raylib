@@ -4150,7 +4150,9 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
         // Test against all triangles in mesh
         for (int i = 0; i < triangleCount; i++)
         {
-            Vector3 a = 0, b = 0, c = 0;
+            Vector3 a = { 0 }; 
+            Vector3 b = { 0 };
+            Vector3 c = { 0 };
             Vector3 *vertdata = (Vector3 *)mesh.vertices;
 
             if (mesh.indices)
@@ -4193,7 +4195,9 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     RayCollision collision = { 0 };
     Vector3 edge1 = { 0 };
     Vector3 edge2 = { 0 };
-    Vector3 p = 0, q = 0, tv = 0;
+    Vector3 p = { 0 };
+    Vector3 q = { 0 };
+    Vector3 tv = { 0 };
     float det = 0.0f, invDet = 0.0f, u = 0.0f, v = 0.0f, t = 0.0f;
 
     // Find vectors for two edges sharing V1
