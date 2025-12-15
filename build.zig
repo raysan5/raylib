@@ -106,9 +106,9 @@ const config_h_flags = outer: {
         if (std.mem.startsWith(u8, line, "//")) continue;
         if (std.mem.startsWith(u8, line, "#if")) continue;
 
-        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+        var flag = std.mem.trimStart(u8, line, " \t"); // Trim whitespace
         flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+        flag = std.mem.trimStart(u8, flag, " \t"); // Trim whitespace
         flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
         flag = "-D" ++ flag; // Prepend with -D
 
@@ -156,7 +156,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     // Sets a flag indicating the use of a custom `config.h`
-    try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
     if (options.config.len > 0) {
         // Splits a space-separated list of config flags into multiple flags
         //
@@ -193,7 +192,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
-        raylib.addIncludePath(b.path("src/external/glfw/include"));
+        raylib.root_module.addIncludePath(b.path("src/external/glfw/include"));
     }
 
     var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
@@ -224,7 +223,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "");
     }
 
-    raylib.addIncludePath(b.path("src/platforms"));
+    raylib.root_module.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
             switch (options.platform) {
