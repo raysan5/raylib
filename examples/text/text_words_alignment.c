@@ -19,6 +19,8 @@
 
 #include "raymath.h"    // Required for: Lerp()
 
+#include <stdio.h>
+
 typedef enum TextAlignment {
     TEXT_ALIGN_LEFT   = 0,
     TEXT_ALIGN_TOP    = 0,
@@ -58,7 +60,7 @@ int main(void)
     // And of course the font...
     Font font = GetFontDefault();
 
-    // Intialize the alignment variables
+    // Initialize the alignment variables
     TextAlignment hAlign = TEXT_ALIGN_CENTRE;
     TextAlignment vAlign = TEXT_ALIGN_MIDDLE;
 
@@ -72,8 +74,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_LEFT))
         {
-            hAlign = hAlign - 1;
-            if (hAlign < 0) hAlign = 0;
+            if (hAlign > 0) hAlign = hAlign - 1;
         }
 
         if (IsKeyPressed(KEY_RIGHT))
@@ -84,8 +85,7 @@ int main(void)
 
         if (IsKeyPressed(KEY_UP))
         {
-            vAlign = vAlign - 1;
-            if (vAlign < 0) vAlign = 0;
+            if (vAlign > 0) vAlign = vAlign - 1;
         }
 
         if (IsKeyPressed(KEY_DOWN))
@@ -95,7 +95,8 @@ int main(void)
         }
 
         // One word per second
-        wordIndex = (int)GetTime()%wordCount;
+        if (wordCount > 0)  wordIndex = (int)GetTime()%wordCount;
+        else  wordIndex = 0;
         //----------------------------------------------------------------------------------
 
         // Draw
