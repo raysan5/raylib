@@ -649,7 +649,9 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
             // Calculate font basic metrics
             // NOTE: ascent is equivalent to font baseline
-            int ascent, descent, lineGap;
+            int ascent = 0;
+            int descent = 0;
+            int lineGap = 0;
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
 
             // In case no chars count provided, default to 95
@@ -2483,7 +2485,15 @@ static Font LoadBMFont(const char *fileName)
     font.glyphs = (GlyphInfo *)RL_MALLOC(glyphCount*sizeof(GlyphInfo));
     font.recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
 
-    int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX, pageID;
+    int charId = 0;
+    int charX = 0;
+    int charY = 0;
+    int charWidth = 0; 
+    int charHeight = 0;
+    int charOffsetX = 0;
+    int charOffsetY = 0;
+    int charAdvanceX = 0;
+    int pageID = 0;
 
     for (int i = 0; i < glyphCount; i++)
     {

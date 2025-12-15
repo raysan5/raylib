@@ -2217,7 +2217,7 @@ static inline bool sw_triangle_face_culling(void)
     const float *h2 = RLSW.vertexBuffer[2].homogeneous;
 
     // Compute a value proportional to the signed area in the projected 2D plane,
-    // calculated directly using homogeneous coordinates BEFORE division by w.
+    // calculated directly using homogeneous coordinates BEFORE division by w
     // This is the determinant of the matrix formed by the (x, y, w) components
     // of the vertices, which correctly captures the winding order in homogeneous
     // space and its relationship to the projected 2D winding order, even with
@@ -2235,13 +2235,13 @@ static inline bool sw_triangle_face_culling(void)
     // Discard the triangle if its winding order (determined by the sign
     // of the homogeneous area/determinant) matches the culled direction
     // A positive hSgnArea typically corresponds to a counter-clockwise
-    // winding in the projected space when all w > 0.
+    // winding in the projected space when all w > 0
     // This test is robust for points with w > 0 or w < 0, correctly
     // capturing the change in orientation when crossing the w=0 plane
 
     // The culling logic remains the same based on the signed area/determinant
     // A value of 0 for hSgnArea means the points are collinear in (x, y, w)
-    // space, which corresponds to a degenerate triangle projection.
+    // space, which corresponds to a degenerate triangle projection
     // Such triangles are typically not culled by this test (0 < 0 is false, 0 > 0 is false)
     // and should be handled by the clipper if necessary
     return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0) : (hSgnArea > 0); // Cull if winding is "clockwise" : "counter-clockwise"
@@ -2602,7 +2602,7 @@ static inline bool sw_quad_face_culling(void)
     // space, which corresponds to a degenerate triangle projection
     // Such quads might also be degenerate or non-planar. They are typically
     // not culled by this test (0 < 0 is false, 0 > 0 is false)
-    // and should be handled by the clipper if necessary.
+    // and should be handled by the clipper if necessary
 
     return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0.0f) : (hSgnArea > 0.0f); // Cull if winding is "clockwise" : "counter-clockwise"
 }
