@@ -48,11 +48,6 @@
 *
 **********************************************************************************************/
 
-#ifndef RAYLIB_H /* this should never actually happen, it's only here for IDEs */
-#include "raylib.h"
-#include "../rcore.c"
-#endif
-
 #if defined(PLATFORM_WEB_RGFW)
 #define RGFW_NO_GL_HEADER
 #endif
