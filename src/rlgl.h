@@ -1762,11 +1762,6 @@ void rlTextureParameters(unsigned int id, int param, int value)
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
-#if !defined(GRAPHICS_API_OPENGL_11)
-    // Reset anisotropy filter, in case it was set
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-#endif
-
     switch (param)
     {
         case RL_TEXTURE_WRAP_S:
@@ -1786,6 +1781,9 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_FILTER_ANISOTROPIC:
         {
 #if !defined(GRAPHICS_API_OPENGL_11)
+            // Reset anisotropy filter, in case it was set
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+
             if (value <= RLGL.ExtSupported.maxAnisotropyLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (RLGL.ExtSupported.maxAnisotropyLevel > 0.0f)
             {
