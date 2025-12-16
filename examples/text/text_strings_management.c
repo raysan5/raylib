@@ -316,7 +316,7 @@ void SliceTextParticle(TextParticle *tp, int particlePos, int sliceLength, TextP
 void SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *tps, int *particleCount)
 {
     int tokenCount = 0;
-    const char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
+    char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
     
     if (tokenCount > 1)
     {
