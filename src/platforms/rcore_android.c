@@ -358,124 +358,16 @@ void RestoreWindow(void)
 void SetWindowState(unsigned int flags)
 {
     if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
-
+    
     // State change: FLAG_WINDOW_ALWAYS_RUN
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
-    {
-        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
-    }
-
-    // Setting other window flags is not supported on android
-
-    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_VSYNC_HINT) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_FULLSCREEN_MODE) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
-    {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_INTERLACED_HINT) not available on target platform");
-    }
+    if (!FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
     // State change: FLAG_WINDOW_ALWAYS_RUN
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
-    {
-        FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
-    }
-
-    // Clearing other window flags is not supported on android
-
-    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_VSYNC_HINT) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_FULLSCREEN_MODE) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
-    }
-    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
-    {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_INTERLACED_HINT) not available on target platform");
-    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN)) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
 }
 
 // Set icon for window
@@ -713,13 +605,7 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    if (platform.surface == EGL_NO_SURFACE)
-    {
-        TRACELOG(LOG_WARNING, "SwapScreenBuffer() called with no window, skipping frame");
-        return;
-    }
-
-    eglSwapBuffers(platform.device, platform.surface);
+    if (platform.surface != EGL_NO_SURFACE) eglSwapBuffers(platform.device, platform.surface);
 }
 
 //----------------------------------------------------------------------------------
