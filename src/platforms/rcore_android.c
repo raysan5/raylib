@@ -357,13 +357,125 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "SetWindowState() not available on target platform");
+    if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
+    }
+
+    // Setting other window flags is not supported on android
+
+    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_FULLSCREEN_MODE) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
+    {
+        FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
+    }
+
+    // Clearing other window flags is not supported on android
+
+    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_FULLSCREEN_MODE) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Set icon for window
@@ -601,6 +713,12 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
+    if (platform.surface == EGL_NO_SURFACE)
+    {
+        TRACELOG(LOG_WARNING, "SwapScreenBuffer() called with no window, skipping frame");
+        return;
+    }
+
     eglSwapBuffers(platform.device, platform.surface);
 }
 
@@ -740,8 +858,8 @@ void PollInputEvents(void)
     int pollEvents = 0;
 
     // Poll Events (registered events) until we reach TIMEOUT which indicates there are no events left to poll
-    // NOTE: Activity is paused if not enabled (platform.appEnabled)
-    while ((pollResult = ALooper_pollOnce(platform.appEnabled? 0 : -1, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
+    // NOTE: Activity is paused if not enabled (platform.appEnabled) and always run flag is not set (FLAG_WINDOW_ALWAYS_RUN)
+    while ((pollResult = ALooper_pollOnce((platform.appEnabled || FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN))? 0 : -1, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
     {
         // Process this event
         if (platform.source != NULL) platform.source->process(platform.app, platform.source);
