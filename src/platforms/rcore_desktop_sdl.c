@@ -57,7 +57,7 @@
 // SDL base library (window/rendered, input, timing... functionality)
 #ifdef USING_SDL3_PROJECT
     #include "SDL3/SDL.h"
-#elif USING_SDL2_PROJECT
+#elif defined(USING_SDL2_PROJECT)
     #include "SDL2/SDL.h"
 #else
     #include "SDL.h"
@@ -71,7 +71,7 @@
       // SDL OpenGL functionality (if required, instead of internal renderer)
       #ifdef USING_SDL3_PROJECT
           #include "SDL3/SDL_opengl.h"
-      #elif USING_SDL2_PROJECT
+      #elif defined(USING_SDL2_PROJECT)
           #include "SDL2/SDL_opengl.h"
       #else
           #include "SDL_opengl.h"
@@ -1041,7 +1041,7 @@ int GetMonitorPhysicalWidth(int monitor)
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         // Calculate size on inches, then convert to millimeter
-        if (ddpi > 0.0f) width = (mode.w/ddpi)*25.4f;
+        if (ddpi > 0.0f) width = (int)((mode.w/ddpi)*25.4f);
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
@@ -1065,7 +1065,7 @@ int GetMonitorPhysicalHeight(int monitor)
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         // Calculate size on inches, then convert to millimeter
-        if (ddpi > 0.0f) height = (mode.h/ddpi)*25.4f;
+        if (ddpi > 0.0f) height = (int)((mode.h/ddpi)*25.4f);
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
@@ -1127,14 +1127,15 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
 
-#ifndef USING_VERSION_SDL3
-    // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
+#if defined(USING_VERSION_SDL3)
+    // NOTE: SDL_GetWindowDisplayScale added on SDL3
     // REF: https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
-    // TODO: Implement the window scale factor calculation manually
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-#else
     scale.x = SDL_GetWindowDisplayScale(platform.window);
     scale.y = scale.x;
+#else
+    // NOTE: SDL_GetWindowDisplayScale not available on SDL2
+    // TODO: Implement the window scale factor calculation manually
+    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #endif
 
     return scale;
@@ -1195,7 +1196,7 @@ Image GetClipboardImage(void)
 
         if (fileData)
         {
-            image = LoadImageFromMemory(imageExtensions[i], fileData, dataSize);
+            image = LoadImageFromMemory(imageExtensions[i], fileData, (int)dataSize);
             if (IsImageValid(image))
             {
                 TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
@@ -1454,7 +1455,7 @@ void PollInputEvents(void)
 
             } break;
 
-            // Window events are also polled (Minimized, maximized, close...)
+            // Window events are also polled (minimized, maximized, close...)
 
             #ifndef USING_VERSION_SDL3
             // SDL3 states:
@@ -1488,7 +1489,8 @@ void PollInputEvents(void)
                         CORE.Window.resizedLastFrame = true;
 
                         #ifndef USING_VERSION_SDL3
-                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
+                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) 
+                        // to remove the FLAG_WINDOW_MAXIMIZED accordingly
                         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))
                         {
                             int borderTop = 0;
@@ -1504,14 +1506,8 @@ void PollInputEvents(void)
                         #endif
                     } break;
 
-                    case SDL_WINDOWEVENT_ENTER:
-                    {
-                        CORE.Input.Mouse.cursorOnScreen = true;
-                    } break;
-                    case SDL_WINDOWEVENT_LEAVE:
-                    {
-                        CORE.Input.Mouse.cursorOnScreen = false;
-                    } break;
+                    case SDL_WINDOWEVENT_ENTER: CORE.Input.Mouse.cursorOnScreen = true; break;
+                    case SDL_WINDOWEVENT_LEAVE: CORE.Input.Mouse.cursorOnScreen = false; break;
 
                     case SDL_WINDOWEVENT_MINIMIZED:
                     {
@@ -1750,7 +1746,11 @@ void PollInputEvents(void)
             {
                 int button = -1;
 
+            #if defined(USING_VERSION_SDL3)
                 switch (event.gbutton.button)
+            #else
+                switch (event.jbutton.button)
+            #endif
                 {
                     case SDL_CONTROLLER_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
                     case SDL_CONTROLLER_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
@@ -1778,7 +1778,11 @@ void PollInputEvents(void)
                 {
                     for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
+                    #if defined(USING_VERSION_SDL3)
                         if (platform.gamepadId[i] == event.gbutton.which)
+                    #else
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                    #endif
                         {
                             CORE.Input.Gamepad.currentButtonState[i][button] = 1;
                             CORE.Input.Gamepad.lastButtonPressed = button;
@@ -1791,7 +1795,11 @@ void PollInputEvents(void)
             {
                 int button = -1;
 
+            #if defined(USING_VERSION_SDL3)
                 switch (event.gbutton.button)
+            #else
+                switch (event.jbutton.button)
+            #endif
                 {
                     case SDL_CONTROLLER_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
                     case SDL_CONTROLLER_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
@@ -1819,7 +1827,11 @@ void PollInputEvents(void)
                 {
                     for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
+                    #if defined(USING_VERSION_SDL3)
                         if (platform.gamepadId[i] == event.gbutton.which)
+                    #else
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                    #endif
                         {
                             CORE.Input.Gamepad.currentButtonState[i][button] = 0;
                             if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
@@ -2054,28 +2066,23 @@ int InitPlatform(void)
         platform.gamepadId[i] = -1; // Set all gamepad initial instance ids as invalid to not conflict with instance id zero
     }
 
-    int numJoysticks = 0;
-    SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks); // array of joystick IDs, they do not start from 0
+    int numJoysticks = SDL_NumJoysticks();
 
-    if (joysticks)
+    for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++)
     {
-        for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++)
-        {
-            platform.gamepad[i] = SDL_GameControllerOpen(joysticks[i]);
-            platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+        platform.gamepad[i] = SDL_GameControllerOpen(i);
+        platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
 
-            if (platform.gamepad[i])
-            {
-                CORE.Input.Gamepad.ready[i] = true;
-                CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
-                CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
-                CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-                strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
-                CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
-            }
-            else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
+        if (platform.gamepad[i])
+        {
+            CORE.Input.Gamepad.ready[i] = true;
+            CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+            CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+            CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+            strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+            CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
         }
-        SDL_free(joysticks);
+        else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
     }
 
     // Disable mouse events being interpreted as touch events
@@ -2196,7 +2203,7 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
     for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
     {
         SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
-        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.pointId[i] = (int)finger->id;
         CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
         CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
