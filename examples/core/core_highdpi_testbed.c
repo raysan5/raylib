@@ -47,6 +47,8 @@ int main(void)
         mousePos = GetMousePosition();
         currentMonitor = GetCurrentMonitor();
         scaleDpi = GetWindowScaleDPI();
+
+        if (IsKeyPressed(KEY_SPACE)) ToggleBorderlessWindowed();
         //----------------------------------------------------------------------------------
 
         // Draw

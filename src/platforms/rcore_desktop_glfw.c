@@ -246,7 +246,7 @@ void ToggleBorderlessWindowed(void)
 
         if (mode != NULL)
         {
-             if (!FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
+            if (!FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
             {
                 // Store screen position and size
                 // NOTE: If it was on fullscreen, screen position was already stored, so skip setting it here
@@ -286,6 +286,7 @@ void ToggleBorderlessWindowed(void)
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
                 FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
 
+            #if !defined(__APPLE__)
                 // Make sure to restore size to HighDPI 
                 if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                 {
@@ -293,6 +294,7 @@ void ToggleBorderlessWindowed(void)
                     CORE.Window.previousScreen.width *= scaleDpi.x;
                     CORE.Window.previousScreen.height *= scaleDpi.y;
                 }
+            #endif
 
                 // Return previous screen size and position
                 // NOTE: The order matters here, it must set size first, then set position, otherwise the screen will be positioned incorrectly
@@ -1443,22 +1445,14 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
     else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
 
-    // HACK: Most of this was written before GLFW_SCALE_FRAMEBUFFER existed and
-    // was enabled by default. Disabling it gets back the old behavior. A
-    // complete fix will require removing a lot of CORE.Window.render manipulation code
-    // NOTE: This currently doesn't work on macOS(see #5185), so we skip it there
-    // when FLAG_WINDOW_HIGHDPI is *unset*
-#if !defined(__APPLE__)
-    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
-#endif
-
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
         // Resize window content area based on the monitor content scale
-        // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11
+        // NOTE: This hint only has an effect on platforms where screen coordinates and 
+        // pixels always map 1:1 such as Windows and X11
         // On platforms like macOS the resolution of the framebuffer is changed independently of the window size
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Scale content area based on the monitor content scale where window is placed on
 #if defined(__APPLE__)
@@ -1674,7 +1668,6 @@ int InitPlatform(void)
         int fbWidth = CORE.Window.screen.width;
         int fbHeight = CORE.Window.screen.height;
 
-    #if !defined(__APPLE__)
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
             // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
@@ -1683,11 +1676,11 @@ int InitPlatform(void)
 
             // Screen scaling matrix is required in case desired screen area is different from display area
             CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
-
+#if !defined(__APPLE__)
             // Mouse input scaling for the new screen size
             SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+#endif
         }
-    #endif
 
         CORE.Window.render.width = fbWidth;
         CORE.Window.render.height = fbHeight;
@@ -1834,11 +1827,14 @@ static void ErrorCallback(int error, const char *description)
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // Nothing to do for now on window resize...
+    //TRACELOG(LOG_INFO, "GLFW3: Window size callback called [%i,%i]", width, height);
 }
 
 // GLFW3: Framebuffer size change callback, runs when framebuffer is resized
 static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
+    //TRACELOG(LOG_INFO, "GLFW3: Window framebuffer size callback called [%i,%i]", width, height);
+
     // WARNING: On window minimization, callback is called,
     // but we don't want to change internal screen values, it breaks things
     if ((width == 0) || (height == 0)) return;
@@ -1880,6 +1876,8 @@ static void WindowPosCallback(GLFWwindow *window, int x, int y)
 // GLFW3: Window content scale callback, runs on monitor content scale change detected
 static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
 {
+    TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
+
     float fbWidth = (float)CORE.Window.screen.width*scalex;
     float fbHeight = (float)CORE.Window.screen.height*scaley;
 
