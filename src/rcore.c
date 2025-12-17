@@ -816,30 +816,22 @@ int GetScreenHeight(void)
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
-
     int width = 0;
-#if defined(__APPLE__)
-    Vector2 scale = GetWindowScaleDPI();
-    width = (int)((float)CORE.Window.render.width*scale.x);
-#else
-    width = CORE.Window.render.width;
-#endif
+    
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+    else width = CORE.Window.render.width;
+
     return width;
 }
 
 // Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
-
     int height = 0;
-#if defined(__APPLE__)
-    Vector2 scale = GetWindowScaleDPI();
-    height = (int)((float)CORE.Window.render.height*scale.y);
-#else
-    height = CORE.Window.render.height;
-#endif
+
+    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+    else height = CORE.Window.render.height;
+
     return height;
 }
 
@@ -1833,7 +1825,7 @@ void TakeScreenshot(const char *fileName)
 
     // Apply a scale if we are doing HIGHDPI auto-scaling
     Vector2 scale = { 1.0f, 1.0f };
-    if (IsWindowState(FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
 
     unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
