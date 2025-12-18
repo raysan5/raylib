@@ -5224,24 +5224,36 @@ static int rlGetPixelDataSize(int width, int height, int format)
         case RL_PIXELFORMAT_COMPRESSED_ETC1_RGB:
         case RL_PIXELFORMAT_COMPRESSED_ETC2_RGB:
         case RL_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-        case RL_PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case RL_PIXELFORMAT_COMPRESSED_PVRT_RGBA: // 8 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            dataSize = blockWidth*blockHeight*8;
+        } break;
         case RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-        case RL_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case RL_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: // 16 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            dataSize = blockWidth*blockHeight*16;
+        } break;
+        case RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: // 4 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            dataSize = blockWidth*blockHeight*4;
+        } break;
         default: break;
     }
 
-    double bytesPerPixel = (double)bpp/8.0;
-    dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
-
-    // Most compressed formats works on 4x4 blocks,
-    // if texture is smaller, minimum dataSize is 8 or 16
-    if ((width <= 4) && (height <= 4))
+    // Compute dataSize for uncompressed texture data (no blocks)
+    if ((format >= RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
+        (format <= RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
     {
-        if ((format >= RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
-        else if ((format >= RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        double bytesPerPixel = (double)bpp/8.0;
+        dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
     }
 
     return dataSize;
