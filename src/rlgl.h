@@ -3353,8 +3353,8 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
         mipWidth /= 2;
         mipHeight /= 2;
-        mipOffset += mipSize;       // Increment offset position to next mipmap
-        if (data != NULL) dataPtr += mipSize;         // Increment data pointer to next mipmap
+        mipOffset += mipSize; // Increment offset position to next mipmap
+        if (data != NULL) dataPtr += mipSize; // Increment data pointer to next mipmap
 
         // Security check for NPOT textures
         if (mipWidth < 1) mipWidth = 1;
@@ -3392,8 +3392,14 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         
-        // Define thee maximum number of mipmap levels to be used, 0 is default texture size
+        // Define the maximum number of mipmap levels to be used, 0 is base texture size
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapCount - 1);
+
+        // Check if the loaded texture with mipmaps is complete,
+        // uncomplete textures will draw in black if mipmap filtering is required
+        //GLint complete = 0;
+        //glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_IMMUTABLE_FORMAT, &complete);
     }
 #endif
 
@@ -5232,7 +5238,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
 
     // Most compressed formats works on 4x4 blocks,
     // if texture is smaller, minimum dataSize is 8 or 16
-    if ((width < 4) && (height < 4))
+    if ((width <= 4) && (height <= 4))
     {
         if ((format >= RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
         else if ((format >= RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
