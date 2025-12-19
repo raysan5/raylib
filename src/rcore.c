@@ -1093,17 +1093,21 @@ void BeginScissorMode(int x, int y, int width, int height)
 
     rlEnableScissorTest();
 
-#if defined(__APPLE__)
-    if (!CORE.Window.usingFbo)
+#if !defined(__APPLE__)
+    if (!CORE.Window.usingFbo &&
+        (CORE.Window.screen.width > 0) && (CORE.Window.screen.height > 0))
     {
-        Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
-    }
-#else
-    if (!CORE.Window.usingFbo && (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)))
-    {
-        Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        const float sx = (float)CORE.Window.currentFbo.width/(float)CORE.Window.screen.width;
+        const float sy = (float)CORE.Window.currentFbo.height/(float)CORE.Window.screen.height;
+
+        if ((sx != 1.0f) || (sy != 1.0f))
+        {
+            rlScissor((int)(x*sx),
+                      (int)(CORE.Window.currentFbo.height - (y + height)*sy),
+                      (int)(width*sx),
+                      (int)(height*sy));
+        }
+        else rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
     }
 #endif
     else
@@ -1823,12 +1827,11 @@ void TakeScreenshot(const char *fileName)
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    // Apply a scale if we are doing HIGHDPI auto-scaling
-    Vector2 scale = { 1.0f, 1.0f };
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
+    const int w = CORE.Window.usingFbo ? CORE.Window.currentFbo.width : CORE.Window.render.width;
+    const int h = CORE.Window.usingFbo ? CORE.Window.currentFbo.height : CORE.Window.render.height;
 
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    unsigned char *imgData = rlReadScreenPixels(w, h);
+    Image image = { imgData, w, h, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     strncpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName), MAX_FILEPATH_LENGTH - 1);
