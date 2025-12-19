@@ -679,6 +679,7 @@ void ClearWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
     }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
     {
         // NOTE: There also doesn't seem to be a feature to disable high DPI once enabled
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
@@ -1474,7 +1475,7 @@ void PollInputEvents(void)
                         const int height = event.window.data2;
                         SetupViewport(width, height);
                         // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
-                        if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+                        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                         {
                             CORE.Window.screen.width = (int)(width/GetWindowScaleDPI().x);
                             CORE.Window.screen.height = (int)(height/GetWindowScaleDPI().y);
