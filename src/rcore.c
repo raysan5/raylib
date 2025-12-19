@@ -1093,27 +1093,40 @@ void BeginScissorMode(int x, int y, int width, int height)
 
     rlEnableScissorTest();
 
-#if !defined(__APPLE__)
-    if (!CORE.Window.usingFbo &&
-        (CORE.Window.screen.width > 0) && (CORE.Window.screen.height > 0))
+#if defined(__APPLE__)
+    // macOS: keep existing behavior (native scaling behavior differs)
+    if (!CORE.Window.usingFbo)
     {
-        const float sx = (float)CORE.Window.currentFbo.width/(float)CORE.Window.screen.width;
-        const float sy = (float)CORE.Window.currentFbo.height/(float)CORE.Window.screen.height;
-
-        if ((sx != 1.0f) || (sy != 1.0f))
-        {
-            rlScissor((int)(x*sx),
-                      (int)(CORE.Window.currentFbo.height - (y + height)*sy),
-                      (int)(width*sx),
-                      (int)(height*sy));
-        }
-        else rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+        Vector2 scale = GetWindowScaleDPI();
+        rlScissor((int)(x*scale.x),
+                  (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))),
+                  (int)(width*scale.x),
+                  (int)(height*scale.y));
     }
-#endif
     else
     {
         rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
     }
+#else
+    // Non-Apple: scissor is in framebuffer pixels, but API coords are logical screen coords.
+    // Use the actual framebuffer-to-window ratio (works for Wayland fractional scaling even when HIGHDPI flag is off).
+    if (!CORE.Window.usingFbo &&
+        (CORE.Window.screen.width > 0) && (CORE.Window.screen.height > 0) &&
+        (CORE.Window.currentFbo.width > 0) && (CORE.Window.currentFbo.height > 0))
+    {
+        const float sx = (float)CORE.Window.currentFbo.width/(float)CORE.Window.screen.width;
+        const float sy = (float)CORE.Window.currentFbo.height/(float)CORE.Window.screen.height;
+
+        rlScissor((int)(x*sx),
+                  (int)(CORE.Window.currentFbo.height - (y + height)*sy),
+                  (int)(width*sx),
+                  (int)(height*sy));
+    }
+    else
+    {
+        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+    }
+#endif
 }
 
 // End scissor mode
