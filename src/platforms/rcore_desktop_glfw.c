@@ -1880,7 +1880,8 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
     // Update scaling/mouse mapping based on actual framebuffer-to-window ratio
     // (this avoids blurry scaling by rendering at framebuffer resolution while
     // keeping logical coordinates stable).
-    if ((CORE.Window.screen.width > 0) && (CORE.Window.screen.height > 0))
+    if ((CORE.Window.screen.width > 0) && (CORE.Window.screen.height > 0) &&
+        (CORE.Window.render.width > 0) && (CORE.Window.render.height > 0))
     {
         const float sx = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
         const float sy = (float)CORE.Window.render.height/(float)CORE.Window.screen.height;
