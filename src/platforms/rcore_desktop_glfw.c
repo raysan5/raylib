@@ -1076,7 +1076,7 @@ Image GetClipboardImage(void)
 }
 
 // Show mouse cursor
-void rlShowCursor(void)
+void ShowCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
