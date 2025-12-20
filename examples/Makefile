@@ -531,7 +531,7 @@ CORE = \
     core/core_delta_time \
     core/core_directory_files \
     core/core_drop_files \
-    core/core_high_dpi \
+    core/core_highdpi_demo \
     core/core_highdpi_testbed \
     core/core_input_actions \
     core/core_input_gamepad \

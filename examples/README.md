@@ -61,7 +61,7 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_smooth_pixelperfect](core/core_smooth_pixelperfect.c) | <img src="core/core_smooth_pixelperfect.png" alt="core_smooth_pixelperfect" width="80"> | ⭐⭐⭐☆ | 3.7 | 4.0 | [Giancamillo Alessandroni](https://github.com/NotManyIdeasDev) |
 | [core_random_sequence](core/core_random_sequence.c) | <img src="core/core_random_sequence.png" alt="core_random_sequence" width="80"> | ⭐☆☆☆ | 5.0 | 5.0 | [Dalton Overmyer](https://github.com/REDl3east) |
 | [core_automation_events](core/core_automation_events.c) | <img src="core/core_automation_events.png" alt="core_automation_events" width="80"> | ⭐⭐⭐☆ | 5.0 | 5.0 | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_high_dpi](core/core_high_dpi.c) | <img src="core/core_high_dpi.png" alt="core_high_dpi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.5 | [Jonathan Marler](https://github.com/marler8997) |
+| [core_highdpi_demo](core/core_highdpi_demo.c) | <img src="core/core_highdpi_demo.png" alt="core_highdpi_demo" width="80"> | ⭐⭐☆☆ | 5.0 | 5.5 | [Jonathan Marler](https://github.com/marler8997) |
 | [core_render_texture](core/core_render_texture.c) | <img src="core/core_render_texture.png" alt="core_render_texture" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_undo_redo](core/core_undo_redo.c) | <img src="core/core_undo_redo.png" alt="core_undo_redo" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_viewport_scaling](core/core_viewport_scaling.c) | <img src="core/core_viewport_scaling.png" alt="core_viewport_scaling" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Agnis Aldiņš](https://github.com/nezvers) |
