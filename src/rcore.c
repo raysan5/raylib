@@ -853,6 +853,12 @@ bool IsCursorHidden(void)
     return CORE.Input.Mouse.cursorHidden;
 }
 
+// Check if cursor is enabled (unlocked)
+bool IsCursorEnabled(void)
+{
+    return !CORE.Input.Mouse.cursorLocked;
+}
+
 // Check if cursor is on the current screen
 bool IsCursorOnScreen(void)
 {
