@@ -308,7 +308,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                         unsigned char alpha = 0;
 
                         // NOTE: Data comes as A1R5G5B5, it must be reordered to R5G5B5A1
-                        for (int i = 0; i < image_pixel_size; i++)
+                        for (int i = 0; i < data_size/sizeof(unsigned short); i++)
                         {
                             alpha = ((unsigned short *)image_data)[i] >> 15;
                             ((unsigned short *)image_data)[i] = ((unsigned short *)image_data)[i] << 1;
@@ -328,7 +328,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                         unsigned char alpha = 0;
 
                         // NOTE: Data comes as A4R4G4B4, it must be reordered R4G4B4A4
-                        for (int i = 0; i < image_pixel_size; i++)
+                        for (int i = 0; i < data_size/sizeof(unsigned short); i++)
                         {
                             alpha = ((unsigned short *)image_data)[i] >> 12;
                             ((unsigned short *)image_data)[i] = ((unsigned short *)image_data)[i] << 4;
