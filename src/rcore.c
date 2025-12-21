@@ -3689,16 +3689,15 @@ Vector2 GetMousePosition(void)
 Vector2 GetMousePositionDesktop(void)
 {
     Vector2 position = { 0 };
-	#ifndef PLATFORM_ANDROID
+	#if defined(PLATFORM_DESKTOP_GLFW)
 	int wxpos, wypos;
 	
-	glfwGetWindowPos(GetWindowHandle(), &wxpos, &wypos);
+	glfwGetWindowPos(platform.handle, &wxpos, &wypos);
 
 	double xpos, ypos;
-	glfwGetCursorPos(GetWindowHandle(), &xpos, &ypos);
+	glfwGetCursorPos(platform.handle, &xpos, &ypos);
 	position.x = wxpos + (floor(xpos));
 	position.y = wypos + (floor(ypos));
-	
 	#else
 	return GetMousePosition();
 	#endif
