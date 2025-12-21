@@ -3684,7 +3684,26 @@ Vector2 GetMousePosition(void)
 
     return position;
 }
+#include<math.h>
 
+Vector2 GetMousePositionDesktop(void)
+{
+    Vector2 position = { 0 };
+	#ifndef PLATFORM_ANDROID
+	int wxpos, wypos;
+	
+	glfwGetWindowPos(GetWindowHandle(), &wxpos, &wypos);
+
+	double xpos, ypos;
+	glfwGetCursorPos(GetWindowHandle(), &xpos, &ypos);
+	position.x = wxpos + (floor(xpos));
+	position.y = wypos + (floor(ypos));
+	
+	#else
+	return GetMousePosition();
+	#endif
+	return position;
+}
 // Get mouse delta between frames
 Vector2 GetMouseDelta(void)
 {

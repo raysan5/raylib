@@ -1211,6 +1211,7 @@ RLAPI bool IsMouseButtonUp(int button);                       // Check if a mous
 RLAPI int GetMouseX(void);                                    // Get mouse position X
 RLAPI int GetMouseY(void);                                    // Get mouse position Y
 RLAPI Vector2 GetMousePosition(void);                         // Get mouse position XY
+RLAPI Vector2 GetMousePositionDesktop(void);                  // Get mouse position XY
 RLAPI Vector2 GetMouseDelta(void);                            // Get mouse delta between frames
 RLAPI void SetMousePosition(int x, int y);                    // Set mouse position XY
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
