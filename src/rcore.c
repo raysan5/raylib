@@ -3684,8 +3684,6 @@ Vector2 GetMousePosition(void)
 
     return position;
 }
-#include<math.h>
-
 Vector2 GetMousePositionDesktop(void)
 {
     Vector2 position = { 0 };
