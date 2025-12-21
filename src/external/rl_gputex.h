@@ -362,7 +362,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 // NOTE: Data comes as A8R8G8B8, it must be reordered R8G8B8A8 (view next comment)
                 // DirecX understand ARGB as a 32bit DWORD but the actual memory byte alignment is BGRA
                 // So, we must realign B8G8R8A8 to R8G8B8A8
-                for (int i = 0; i < image_pixel_size*4; i += 4)
+                for (int i = 0; i < data_size; i += 4)
                 {
                     blue = ((unsigned char *)image_data)[i];
                     ((unsigned char *)image_data)[i] = ((unsigned char *)image_data)[i + 2];
