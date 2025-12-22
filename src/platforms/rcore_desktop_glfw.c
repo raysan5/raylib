@@ -1913,8 +1913,6 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 // GLFW3: Window position callback, runs when window position changes
 static void WindowPosCallback(GLFWwindow *window, int x, int y)
 {
-    TRACELOG(LOG_INFO, "GLFW3: Window position changed");
-
     // Set current window position
     CORE.Window.position.x = x;
     CORE.Window.position.y = y;
