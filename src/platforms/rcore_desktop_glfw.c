@@ -156,8 +156,6 @@ static void *AllocateWrapper(size_t size, void *user);                          
 static void *ReallocateWrapper(void *block, size_t size, void *user);                   // GLFW3 GLFWreallocatefun, wrapps around RL_REALLOC macro
 static void DeallocateWrapper(void *block, void *user);                                 // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
 
-static void SetDimensionsFromMonitor(GLFWmonitor *monitor);     // Set screen dimensions from monitor/display dimensions
-
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
@@ -1535,11 +1533,20 @@ int InitPlatform(void)
         monitor = glfwGetPrimaryMonitor();
         if (!monitor)
         {
-          TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-          return -1;
+            TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+            return -1;
         }
 
-        SetDimensionsFromMonitor(monitor);
+        // Set dimensions from monitor
+        GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+        // Default display resolution to that of the current mode
+        CORE.Window.display.width = mode->width;
+        CORE.Window.display.height = mode->height;
+
+        // Set screen width/height to the display width/height if they are 0
+        if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+        if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 
         // Remember center for switching from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
@@ -1628,7 +1635,15 @@ int InitPlatform(void)
         if (monitorIndex < monitorCount)
         {
             monitor = monitors[monitorIndex];
-            SetDimensionsFromMonitor(monitor);
+            GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+            // Default display resolution to that of the current mode
+            CORE.Window.display.width = mode->width;
+            CORE.Window.display.height = mode->height;
+
+            // Set screen width/height to the display width/height if they are 0
+            if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+            if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 
             if (requestWindowedFullscreen) glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
         }
@@ -2083,20 +2098,6 @@ static void JoystickCallback(int jid, int event)
     {
         memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
     }
-}
-
-// Set screen dimensions from monitor/display dimensions
-static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
-{
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
-    // Default display resolution to that of the current mode
-    CORE.Window.display.width = mode->width;
-    CORE.Window.display.height = mode->height;
-
-    // Set screen width/height to the display width/height if they are 0
-    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 }
 
 #ifdef _WIN32
