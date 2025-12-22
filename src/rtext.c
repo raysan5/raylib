@@ -700,7 +700,11 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     switch (type)
                     {
                         case FONT_DEFAULT:
-                        case FONT_BITMAP: glyphs[k].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, cp, &cpWidth, &cpHeight, &glyphs[k].offsetX, &glyphs[k].offsetY); break;
+                        case FONT_BITMAP: 
+                        {
+                            glyphs[k].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, cp, 
+                                &cpWidth, &cpHeight, &glyphs[k].offsetX, &glyphs[k].offsetY);
+                        } break;
                         case FONT_SDF:
                         {
                             if (cp != 32)
