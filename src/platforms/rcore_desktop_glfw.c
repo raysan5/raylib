@@ -135,12 +135,12 @@ static void ErrorCallback(int error, const char *description);                  
 // Window callbacks events
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);              // GLFW3 WindowSize Callback, runs when window is resized
 static void FramebufferSizeCallback(GLFWwindow *window, int width, int height);         // GLFW3 FramebufferSize Callback, runs when window is resized
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 static void WindowPosCallback(GLFWwindow *window, int x, int y);                        // GLFW3 WindowPos Callback, runs when window is moved
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                  // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);      // GLFW3 Window Drop Callback, runs when drop files into window
-static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
@@ -1024,8 +1024,8 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    Vector2 scale = { 0 };
-    glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
+    Vector2 scale = { 1.0f, 1.0f };
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
 
@@ -1452,12 +1452,18 @@ int InitPlatform(void)
         // NOTE: This hint only has an effect on platforms where screen coordinates and 
         // pixels always map 1:1 such as Windows and X11
         // On platforms like macOS the resolution of the framebuffer is changed independently of the window size
-        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Scale content area based on the monitor content scale where window is placed on
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
 #endif
     }
-    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+    else 
+    {
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+#if defined(__APPLE__)
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+#endif
+    }
 
     // Mouse passthrough
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MOUSE_PASSTHROUGH)) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
@@ -1527,9 +1533,7 @@ int InitPlatform(void)
     GLFWmonitor *monitor = NULL;
     if (CORE.Window.fullscreen)
     {
-        // According to glfwCreateWindow(), if the user does not have a choice, fullscreen applications
-        // should default to the primary monitor
-
+        // NOTE: Fullscreen applications default to the primary monitor
         monitor = glfwGetPrimaryMonitor();
         if (!monitor)
         {
@@ -1538,7 +1542,7 @@ int InitPlatform(void)
         }
 
         // Set dimensions from monitor
-        GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
         // Default display resolution to that of the current mode
         CORE.Window.display.width = mode->width;
@@ -1635,7 +1639,7 @@ int InitPlatform(void)
         if (monitorIndex < monitorCount)
         {
             monitor = monitors[monitorIndex];
-            GLFWvidmode *mode = glfwGetVideoMode(monitor);
+            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
             // Default display resolution to that of the current mode
             CORE.Window.display.width = mode->width;
@@ -1846,6 +1850,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 }
 
 // GLFW3: Framebuffer size change callback, runs when framebuffer is resized
+// WARNING: If FLAG_WINDOW_HIGHDPI is set, WindowContentScaleCallback() is called before this function
 static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     //TRACELOG(LOG_INFO, "GLFW3: Window framebuffer size callback called [%i,%i]", width, height);
@@ -1863,32 +1868,26 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-    if (IsWindowFullscreen()) return;
-
     // Check if render size was actually scaled for high-dpi
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
+        // Set screen size to logical pixel size, considering content scaling
         Vector2 scaleDpi = GetWindowScaleDPI();
-        width = (int)((float)width/scaleDpi.x);
-        height = (int)((float)height/scaleDpi.y);
+        CORE.Window.screen.width = (int)((float)width/scaleDpi.x);
+        CORE.Window.screen.height = (int)((float)height/scaleDpi.y);
     }
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    else
+    {
+        // Set screen size to render size (physical pixel size)
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
 
     // WARNING: If using a render texture, it is not scaled to new size
 }
 
-// GLFW3: Window position callback, runs when window position changes
-static void WindowPosCallback(GLFWwindow *window, int x, int y)
-{
-    // Set current window position
-    CORE.Window.position.x = x;
-    CORE.Window.position.y = y;
-}
-
 // GLFW3: Window content scale callback, runs on monitor content scale change detected
+// WARNING: If FLAG_WINDOW_HIGHDPI is not set, this function is not called
 static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
 {
     TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
@@ -1896,19 +1895,29 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
     float fbWidth = (float)CORE.Window.screen.width*scalex;
     float fbHeight = (float)CORE.Window.screen.height*scaley;
 
-#if !defined(__APPLE__)
     // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
     // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
     CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
 
+#if !defined(__APPLE__)
     // Mouse input scaling for the new screen size
-    SetMouseScale(1.0f/scalex, 1.0f/scaley);
+    SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
 #endif
 
     CORE.Window.render.width = (int)fbWidth;
     CORE.Window.render.height = (int)fbHeight;
     CORE.Window.currentFbo.width = (int)fbWidth;
     CORE.Window.currentFbo.height = (int)fbHeight;
+}
+
+// GLFW3: Window position callback, runs when window position changes
+static void WindowPosCallback(GLFWwindow *window, int x, int y)
+{
+    TRACELOG(LOG_INFO, "GLFW3: Window position changed");
+
+    // Set current window position
+    CORE.Window.position.x = x;
+    CORE.Window.position.y = y;
 }
 
 // GLFW3: Window iconify callback, runs when window is minimized/restored
