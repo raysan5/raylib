@@ -771,7 +771,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
@@ -1125,17 +1125,19 @@ Image GenImageCellular(int width, int height, int tileSize)
 Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
-
-    int textLength = (int)strlen(text);
-    int imageViewSize = width*height;
-
+    
+    int imageSize = width*height;
     image.width = width;
     image.height = height;
     image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-    image.data = RL_CALLOC(imageViewSize, 1);
+    image.data = RL_CALLOC(imageSize, 1);
     image.mipmaps = 1;
 
-    memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
+    if (text != NULL)
+    {
+        int textLength = (int)strlen(text);
+        memcpy(image.data, text, (textLength > imageSize)? imageSize : textLength);
+    }
 
     return image;
 }
@@ -1484,8 +1486,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 {
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
-    int size = (int)strlen(text);   // Get size in bytes of text
-
+    if (text == NULL) return imText;
+    
+    int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
 
@@ -1496,7 +1499,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Create image to store text
     imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
 
-    for (int i = 0; i < size;)
+    for (int i = 0; i < textLength;)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
@@ -1724,7 +1727,8 @@ void ImageResizeNN(Image *image, int newWidth, int newHeight)
     int xRatio = (int)((image->width << 16)/newWidth) + 1;
     int yRatio = (int)((image->height << 16)/newHeight) + 1;
 
-    int x2, y2;
+    int x2 = 0;
+    int y2 = 0;
     for (int y = 0; y < newHeight; y++)
     {
         for (int x = 0; x < newWidth; x++)
@@ -2485,8 +2489,13 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
         Color oldPixel = WHITE;
         Color newPixel = WHITE;
 
-        int rError, gError, bError;
-        unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
+        int rError = 0;
+        int gError = 0;
+        int bError = 0;
+        unsigned short rPixel = 0;   // Used for 16bit pixel composition
+        unsigned short gPixel = 0;
+        unsigned short bPixel = 0;
+        unsigned short aPixel = 0;
 
         #define MIN(a,b) (((a)<(b))?(a):(b))
 
@@ -4003,7 +4012,9 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         //    [-] GetPixelColor(): Get Vector4 instead of Color, easier for ColorAlphaBlend()
         //    [ ] TODO: Support 16bit and 32bit (float) channels drawing
 
-        Color colSrc, colDst, blend;
+        Color colSrc = { 0 };
+        Color colDst = { 0 };
+        Color blend = { 0 };
         bool blendRequired = true;
 
         // Fast path: Avoid blend if source has no alpha to blend
@@ -4200,7 +4211,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         /*else if (layout == CUBEMAP_LAYOUT_PANORAMA)
         {
             // TODO: Implement panorama by converting image to square faces...
-            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
+            // REF: https://github.com/denivip/panorama/blob/master/panorama.cpp
         } */
         else
         {
@@ -4678,17 +4689,23 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
             bottomBorder = patchHeight - topBorder;
         }
 
-        Vector2 vertA, vertB, vertC, vertD;
-        vertA.x = 0.0f;                             // outer left
-        vertA.y = 0.0f;                             // outer top
-        vertB.x = leftBorder;                       // inner left
-        vertB.y = topBorder;                        // inner top
-        vertC.x = patchWidth  - rightBorder;        // inner right
-        vertC.y = patchHeight - bottomBorder;       // inner bottom
-        vertD.x = patchWidth;                       // outer right
-        vertD.y = patchHeight;                      // outer bottom
+        Vector2 vertA = { 0 };
+        Vector2 vertB = { 0 };
+        Vector2 vertC = { 0 };
+        Vector2 vertD = { 0 };
+        vertA.x = 0.0f;                             // Outer left
+        vertA.y = 0.0f;                             // Outer top
+        vertB.x = leftBorder;                       // Inner left
+        vertB.y = topBorder;                        // Inner top
+        vertC.x = patchWidth  - rightBorder;        // Inner right
+        vertC.y = patchHeight - bottomBorder;       // Inner bottom
+        vertD.x = patchWidth;                       // Outer right
+        vertD.y = patchHeight;                      // Outer bottom
 
-        Vector2 coordA, coordB, coordC, coordD;
+        Vector2 coordA = { 0 };
+        Vector2 coordB = { 0 };
+        Vector2 coordC = { 0 };
+        Vector2 coordD = { 0 };
         coordA.x = nPatchInfo.source.x/width;
         coordA.y = nPatchInfo.source.y/height;
         coordB.x = (nPatchInfo.source.x + leftBorder)/width;
@@ -4904,7 +4921,9 @@ Vector3 ColorToHSV(Color color)
 {
     Vector3 hsv = { 0 };
     Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-    float min, max, delta;
+    float min = 0.0f;
+    float max = 0.0f;
+    float delta = 0.0f;
 
     min = rgb.x < rgb.y? rgb.x : rgb.y;
     min = min  < rgb.z? min  : rgb.z;
@@ -5407,7 +5426,7 @@ int GetPixelDataSize(int width, int height, int format)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Convert half-float (stored as unsigned short) to float
-// Ref: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
+// REF: https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
 static float HalfToFloat(unsigned short x)
 {
     float result = 0.0f;
