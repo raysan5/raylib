@@ -406,7 +406,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
         CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     endif
     ifeq ($(ANDROID_ARCH),arm64)
-        CFLAGS += -target aarch64 -mfix-cortex-a53-835769
+        CFLAGS += -mfix-cortex-a53-835769
     endif
     ifeq ($(ANDROID_ARCH),x86)
         CFLAGS += -march=i686

@@ -42,7 +42,7 @@ int main(void)
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - double pendulum");
 
-    // Simulation Paramters
+    // Simulation Parameters
     float l1 = 15.0f, m1 = 0.2f, theta1 = DEG2RAD*170, w1 = 0;
     float l2 = 15.0f, m2 = 0.1f, theta2 = DEG2RAD*0, w2 = 0;
     float lengthScaler = 0.1f;

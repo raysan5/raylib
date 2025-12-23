@@ -134,12 +134,13 @@ static void ErrorCallback(int error, const char *description);                  
 
 // Window callbacks events
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);              // GLFW3 WindowSize Callback, runs when window is resized
-static void WindowPosCallback(GLFWwindow* window, int x, int y);                        // GLFW3 WindowPos Callback, runs when window is moved
+static void FramebufferSizeCallback(GLFWwindow *window, int width, int height);         // GLFW3 FramebufferSize Callback, runs when window is resized
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
+static void WindowPosCallback(GLFWwindow *window, int x, int y);                        // GLFW3 WindowPos Callback, runs when window is moved
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                  // GLFW3 Window Maximize Callback, runs when window is maximized
+static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                  // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);      // GLFW3 Window Drop Callback, runs when drop files into window
-static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
@@ -154,8 +155,6 @@ static void JoystickCallback(int jid, int event);                               
 static void *AllocateWrapper(size_t size, void *user);                                  // GLFW3 GLFWallocatefun, wrapps around RL_CALLOC macro
 static void *ReallocateWrapper(void *block, size_t size, void *user);                   // GLFW3 GLFWreallocatefun, wrapps around RL_REALLOC macro
 static void DeallocateWrapper(void *block, void *user);                                 // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
-
-static void SetDimensionsFromMonitor(GLFWmonitor *monitor);     // Set screen dimensions from monitor/display dimensions
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -205,7 +204,6 @@ void ToggleFullscreen(void)
 
             glfwSetWindowMonitor(platform.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         }
-
     }
     else
     {
@@ -231,22 +229,22 @@ void ToggleBorderlessWindowed(void)
     bool wasOnFullscreen = false;
     if (CORE.Window.fullscreen)
     {
-        // fullscreen already saves the previous position so it does not need to be set here again
+        // Fullscreen already saves the previous position so it does not need to be set here again
         ToggleFullscreen();
         wasOnFullscreen = true;
     }
 
-    const int monitor = GetCurrentMonitor();
-    int monitorCount;
+    int monitorCount = 0;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+    const int monitor = GetCurrentMonitor();
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
 
-        if (mode)
+        if (mode != NULL)
         {
-            if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+            if (!FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
             {
                 // Store screen position and size
                 // NOTE: If it was on fullscreen, screen position was already stored, so skip setting it here
@@ -265,8 +263,15 @@ void ToggleBorderlessWindowed(void)
                 const int monitorHeight = mode->height;
 
                 // Set screen position and size
-                glfwSetWindowPos(platform.handle, monitorPosX, monitorPosY);
-                glfwSetWindowSize(platform.handle, monitorWidth, monitorHeight);
+                glfwSetWindowMonitor(
+                    platform.handle,
+                    monitors[monitor],
+                    monitorPosX,
+                    monitorPosY,
+                    monitorWidth,
+                    monitorHeight,
+                    mode->refreshRate
+                );
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -279,10 +284,27 @@ void ToggleBorderlessWindowed(void)
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
                 FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
 
+            #if !defined(__APPLE__)
+                // Make sure to restore size to HighDPI 
+                if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+                {
+                    Vector2 scaleDpi = GetWindowScaleDPI();
+                    CORE.Window.previousScreen.width *= scaleDpi.x;
+                    CORE.Window.previousScreen.height *= scaleDpi.y;
+                }
+            #endif
+
                 // Return previous screen size and position
                 // NOTE: The order matters here, it must set size first, then set position, otherwise the screen will be positioned incorrectly
-                glfwSetWindowSize(platform.handle,  CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
-                glfwSetWindowPos(platform.handle, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y);
+                glfwSetWindowMonitor(
+                    platform.handle,
+                    NULL,
+                    CORE.Window.previousPosition.x,
+                    CORE.Window.previousPosition.y,
+                    CORE.Window.previousScreen.width,
+                    CORE.Window.previousScreen.height,
+            	    mode->refreshRate
+            	);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -461,13 +483,13 @@ void ClearWindowState(unsigned int flags)
     // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
     if ((FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE)) && (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE)))
     {
-        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+        ToggleBorderlessWindowed(); // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_FULLSCREEN_MODE
     if ((FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) && (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE)))
     {
-        ToggleFullscreen();     // NOTE: Window state flag updated inside function
+        ToggleFullscreen(); // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
@@ -884,7 +906,8 @@ Vector2 GetMonitorPosition(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int x, y;
+        int x = 0; 
+        int y = 0;
         glfwGetMonitorPos(monitors[monitor], &x, &y);
 
         return (Vector2){ (float)x, (float)y };
@@ -1005,8 +1028,8 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    Vector2 scale = { 0 };
-    glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
+    Vector2 scale = { 1.0f, 1.0f };
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
 
@@ -1112,7 +1135,7 @@ double GetTime(void)
 // NOTE: This function is only safe to use if you control the URL given
 // A user could craft a malicious string performing another action
 // Only call this function yourself not with user input or make sure to check the string yourself
-// Ref: https://github.com/raysan5/raylib/issues/686
+// REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
@@ -1224,8 +1247,8 @@ void PollInputEvents(void)
     // Map touch position to mouse position for convenience
     // WARNING: If the target desktop device supports touch screen, this behaviour should be reviewed!
     // TODO: GLFW does not support multi-touch input yet
-    // Ref: https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // Ref: https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    // REF: https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // REF: https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Check if gamepads are ready
@@ -1318,7 +1341,8 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
+    if ((CORE.Window.eventWaiting) || 
+        (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) && !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN)))
     {
         glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
         CORE.Time.previous = GetTime();
@@ -1337,7 +1361,7 @@ void PollInputEvents(void)
 // Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
 // We need to provide these because GLFWallocator expects function pointers with specific signatures
 // Similar wrappers exist in utils.c but we cannot reuse them here due to declaration mismatch
-// Ref: https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
+// REF: https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
 static void *AllocateWrapper(size_t size, void *user)
 {
     (void)user;
@@ -1423,31 +1447,27 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
     else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
 
-    // HACK: Most of this was written before GLFW_SCALE_FRAMEBUFFER existed and
-    // was enabled by default. Disabling it gets back the old behavior. A
-    // complete fix will require removing a lot of CORE.Window.render
-    // manipulation code
-    // NOTE: This currently doesn't work on macOS(see #5185), so we skip it there
-    // when FLAG_WINDOW_HIGHDPI is *unset*
-#if !defined(__APPLE__)
-        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
-#endif
-
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
-        // since we skipped it before, now make sure to set this on macOS
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
         // Resize window content area based on the monitor content scale
-        // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11
+        // NOTE: This hint only has an effect on platforms where screen coordinates and 
+        // pixels always map 1:1 such as Windows and X11
         // On platforms like macOS the resolution of the framebuffer is changed independently of the window size
-        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Scale content area based on the monitor content scale where window is placed on
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
 #endif
     }
-    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+    else 
+    {
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+#if defined(__APPLE__)
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+#endif
+    }
 
     // Mouse passthrough
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MOUSE_PASSTHROUGH)) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
@@ -1517,17 +1537,24 @@ int InitPlatform(void)
     GLFWmonitor *monitor = NULL;
     if (CORE.Window.fullscreen)
     {
-        // According to glfwCreateWindow(), if the user does not have a choice, fullscreen applications
-        // should default to the primary monitor
-
+        // NOTE: Fullscreen applications default to the primary monitor
         monitor = glfwGetPrimaryMonitor();
         if (!monitor)
         {
-          TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-          return -1;
+            TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+            return -1;
         }
 
-        SetDimensionsFromMonitor(monitor);
+        // Set dimensions from monitor
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+        // Default display resolution to that of the current mode
+        CORE.Window.display.width = mode->width;
+        CORE.Window.display.height = mode->height;
+
+        // Set screen width/height to the display width/height if they are 0
+        if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+        if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 
         // Remember center for switching from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
@@ -1616,7 +1643,15 @@ int InitPlatform(void)
         if (monitorIndex < monitorCount)
         {
             monitor = monitors[monitorIndex];
-            SetDimensionsFromMonitor(monitor);
+            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+            // Default display resolution to that of the current mode
+            CORE.Window.display.width = mode->width;
+            CORE.Window.display.height = mode->height;
+
+            // Set screen width/height to the display width/height if they are 0
+            if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+            if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 
             if (requestWindowedFullscreen) glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
         }
@@ -1628,6 +1663,7 @@ int InitPlatform(void)
             return -1;
         }
 
+        // NOTE: Not considering scale factor now, considered below
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
     }
@@ -1658,16 +1694,15 @@ int InitPlatform(void)
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
             // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
-            // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
-    #if !defined(__APPLE__)
+            // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
             glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
 
             // Screen scaling matrix is required in case desired screen area is different from display area
             CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
-
+#if !defined(__APPLE__)
             // Mouse input scaling for the new screen size
             SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
-    #endif
+#endif
         }
 
         CORE.Window.render.width = fbWidth;
@@ -1724,28 +1759,24 @@ int InitPlatform(void)
     // Initialize input events callbacks
     //----------------------------------------------------------------------------
     // Set window callback events
-    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
+    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback); // NOTE: Resizing is not enabled by default
+    glfwSetFramebufferSizeCallback(platform.handle, FramebufferSizeCallback);
     glfwSetWindowPosCallback(platform.handle, WindowPosCallback);
     glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
     glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
     glfwSetDropCallback(platform.handle, WindowDropCallback);
-
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
-    {
-       glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
-    }
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
 
     // Set input callback events
     glfwSetKeyCallback(platform.handle, KeyCallback);
     glfwSetCharCallback(platform.handle, CharCallback);
     glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
-    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);   // Track mouse position changes
+    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback); // Track mouse position changes
     glfwSetScrollCallback(platform.handle, MouseScrollCallback);
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
     glfwSetJoystickCallback(JoystickCallback);
-
-    glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
+    glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE); // Enable lock keys modifiers (CAPS, NUM)
 
     // Retrieve gamepad names
     for (int i = 0; i < MAX_GAMEPADS; i++)
@@ -1803,79 +1834,116 @@ void ClosePlatform(void)
 #endif
 }
 
-// GLFW3 Error Callback, runs on GLFW3 error
+//----------------------------------------------------------------------------------
+// Module Internal Functions Definition
+// NOTE: Those functions are only required for current platform
+//----------------------------------------------------------------------------------
+
+// GLFW3: Error callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
 }
 
-// GLFW3 WindowSize Callback, runs when window is resizedLastFrame
+// GLFW3: Window size change callback, runs when window is resized
 // NOTE: Window resizing not enabled by default, use SetConfigFlags()
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
+    // Nothing to do for now on window resize...
+    //TRACELOG(LOG_INFO, "GLFW3: Window size callback called [%i,%i]", width, height);
+}
+
+// GLFW3: Framebuffer size change callback, runs when framebuffer is resized
+// WARNING: If FLAG_WINDOW_HIGHDPI is set, WindowContentScaleCallback() is called before this function
+static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
+{
+    //TRACELOG(LOG_INFO, "GLFW3: Window framebuffer size callback called [%i,%i]", width, height);
+
     // WARNING: On window minimization, callback is called,
     // but we don't want to change internal screen values, it breaks things
     if ((width == 0) || (height == 0)) return;
 
     // Reset viewport and projection matrix for new size
+    // NOTE: Stores current render size: CORE.Window.render
     SetupViewport(width, height);
 
+    // Set render size
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-    if (IsWindowFullscreen()) return;
-
-    // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
-    if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+    // Check if render size was actually scaled for high-dpi
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
-        width = (int)(width/GetWindowScaleDPI().x);
-        height = (int)(height/GetWindowScaleDPI().y);
+        // Set screen size to logical pixel size, considering content scaling
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        CORE.Window.screen.width = (int)((float)width/scaleDpi.x);
+        CORE.Window.screen.height = (int)((float)height/scaleDpi.y);
     }
-
-    // Set render size
-    CORE.Window.render.width = width;
-    CORE.Window.render.height = height;
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    else
+    {
+        // Set screen size to render size (physical pixel size)
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
 
     // WARNING: If using a render texture, it is not scaled to new size
 }
-static void WindowPosCallback(GLFWwindow* window, int x, int y)
+
+// GLFW3: Window content scale callback, runs on monitor content scale change detected
+// WARNING: If FLAG_WINDOW_HIGHDPI is not set, this function is not called
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
+{
+    TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
+
+    float fbWidth = (float)CORE.Window.screen.width*scalex;
+    float fbHeight = (float)CORE.Window.screen.height*scaley;
+
+    // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
+    // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+    CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
+
+#if !defined(__APPLE__)
+    // Mouse input scaling for the new screen size
+    SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+#endif
+
+    CORE.Window.render.width = (int)fbWidth;
+    CORE.Window.render.height = (int)fbHeight;
+    CORE.Window.currentFbo.width = (int)fbWidth;
+    CORE.Window.currentFbo.height = (int)fbHeight;
+}
+
+// GLFW3: Window position callback, runs when window position changes
+static void WindowPosCallback(GLFWwindow *window, int x, int y)
 {
     // Set current window position
     CORE.Window.position.x = x;
     CORE.Window.position.y = y;
 }
-static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
-{
-    CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
-}
 
-// GLFW3 WindowIconify Callback, runs when window is minimized/restored
+// GLFW3: Window iconify callback, runs when window is minimized/restored
 static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
     if (iconified) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);   // The window was iconified
     else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);           // The window was restored
 }
 
-// GLFW3 WindowMaximize Callback, runs when window is maximized/restored
+// GLFW3: Window maximize callback, runs when window is maximized/restored
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
     if (maximized) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);  // The window was maximized
     else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);          // The window was restored
 }
 
-// GLFW3 WindowFocus Callback, runs when window get/lose focus
+// GLFW3: Window focus callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
     if (focused) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);    // The window was focused
     else FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);          // The window lost focus
 }
 
-// GLFW3 Window Drop Callback, runs when drop files into window
+// GLFW3: Window drop callback, runs when files are dropped into window
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
     if (count > 0)
@@ -1903,7 +1971,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
     }
 }
 
-// GLFW3 Keyboard Callback, runs on key pressed
+// GLFW3: Keyboard callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
@@ -1930,13 +1998,13 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(platform.handle, GLFW_TRUE);
 }
 
-// GLFW3 Char Callback, get unicode codepoint value
+// GLFW3: Char callback, runs on key pressed to get unicode codepoint value
 static void CharCallback(GLFWwindow *window, unsigned int codepoint)
 {
     // NOTE: Registers any key down considering OS keyboard layout but
     // does not detect action events, those should be managed by user...
-    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
-    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
+    // REF: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // REF: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
@@ -1947,7 +2015,7 @@ static void CharCallback(GLFWwindow *window, unsigned int codepoint)
     }
 }
 
-// GLFW3 Mouse Button Callback, runs on mouse button pressed
+// GLFW3: Mouse button callback, runs on mouse button pressed
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
@@ -1983,7 +2051,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 #endif
 }
 
-// GLFW3 Cursor Position Callback, runs on mouse move
+// GLFW3: Cursor position callback, runs on mouse movement
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
     CORE.Input.Mouse.currentPosition.x = (float)x;
@@ -2014,20 +2082,20 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 #endif
 }
 
-// GLFW3 Scrolling Callback, runs on mouse wheel
+// GLFW3: Mouse wheel scroll callback, runs on mouse wheel changes
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
     CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
 }
 
-// GLFW3 CursorEnter Callback, when cursor enters the window
+// GLFW3: Cursor ennter callback, when cursor enters the window
 static void CursorEnterCallback(GLFWwindow *window, int enter)
 {
     if (enter) CORE.Input.Mouse.cursorOnScreen = true;
     else CORE.Input.Mouse.cursorOnScreen = false;
 }
 
-// GLFW3 Joystick Connected/Disconnected Callback
+// GLFW3: Joystick connected/disconnected callback
 static void JoystickCallback(int jid, int event)
 {
     if (event == GLFW_CONNECTED)
@@ -2041,20 +2109,6 @@ static void JoystickCallback(int jid, int event)
     {
         memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
     }
-}
-
-// Set screen dimensions from monitor/display dimensions
-static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
-{
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
-    // Default display resolution to that of the current mode
-    CORE.Window.display.width = mode->width;
-    CORE.Window.display.height = mode->height;
-
-    // Set screen width/height to the display width/height if they are 0
-    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 }
 
 #ifdef _WIN32

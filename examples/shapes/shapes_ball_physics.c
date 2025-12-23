@@ -83,7 +83,7 @@ int main(void)
                 pressOffset.y = mousePos.y - ball->pos.y;
 
                 // If the distance between the ball position and the mouse press position
-                // is less or equal the ball radius, the event occured inside the ball
+                // is less than or equal to the ball radius, the event occurred inside the ball
                 if (hypot(pressOffset.x, pressOffset.y) <= ball->radius)
                 {
                     ball->grabbed = true;
