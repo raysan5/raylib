@@ -106,9 +106,9 @@ const config_h_flags = outer: {
         if (std.mem.startsWith(u8, line, "//")) continue;
         if (std.mem.startsWith(u8, line, "#if")) continue;
 
-        var flag = std.mem.trimLeft(u8, line, " \t"); // Trim whitespace
+        var flag = std.mem.trimStart(u8, line, " \t"); // Trim whitespace
         flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimLeft(u8, flag, " \t"); // Trim whitespace
+        flag = std.mem.trimStart(u8, flag, " \t"); // Trim whitespace
         flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
         flag = "-D" ++ flag; // Prepend with -D
 
@@ -155,9 +155,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         );
     }
 
-    // Sets a flag indiciating the use of a custom `config.h`
-    try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
     if (options.config.len > 0) {
+        // Sets a flag indicating the use of a custom `config.h`
+        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
         // Splits a space-separated list of config flags into multiple flags
         //
         // Note: This means certain flags like `-x c++` won't be processed properly.
@@ -187,13 +187,13 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             try raylib_flags_arr.append(b.allocator, flag);
         }
     } else {
-        // Set default config if no custome config got set
+        // Set default config if no custom config got set
         try raylib_flags_arr.appendSlice(b.allocator, &config_h_flags);
     }
 
     // No GLFW required on PLATFORM_DRM
     if (options.platform != .drm) {
-        raylib.addIncludePath(b.path("src/external/glfw/include"));
+        raylib.root_module.addIncludePath(b.path("src/external/glfw/include"));
     }
 
     var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
@@ -224,7 +224,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "");
     }
 
-    raylib.addIncludePath(b.path("src/platforms"));
+    raylib.root_module.addIncludePath(b.path("src/platforms"));
     switch (target.result.os.tag) {
         .windows => {
             switch (options.platform) {
@@ -438,7 +438,7 @@ pub const Options = struct {
 
     pub fn getOptions(b: *std.Build) Options {
         return .{
-            .platform = b.option(PlatformBackend, "platform", "Choose the platform backedn for desktop target") orelse defaults.platform,
+            .platform = b.option(PlatformBackend, "platform", "Choose the platform backend for desktop target") orelse defaults.platform,
             .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
             .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
             .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,

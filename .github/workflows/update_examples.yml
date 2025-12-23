@@ -29,8 +29,9 @@ jobs:
       shell: bash
 
     - name: Build and run rexm tool (requires GNU Makefile)
-      # "rexm update" validates and updates all required examples in raylib and even raylib.com repos,
-      # note that it calls examples/Makefile.Web internally, so it requires [make] tool available
+      # "rexm validate" validates examples collection, looking for inconsistencies, it does not rebuild examples
+      # "rexm update" validates and updates all examples with inconsistencies, pushing fixes to raylib and raylib.com repos
+      # note that rexm calls examples/Makefile.Web internally, so it requires [make] tool available
       run: |
         sudo apt-get update && sudo apt-get install -y libopengl0 libglu1-mesa libx11-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev
         cd "${{ github.workspace }}/src"
@@ -47,7 +48,7 @@ jobs:
         export REXM_EXAMPLES_COLLECTION_FILE_PATH="${{ github.workspace }}/examples/examples_list.txt"
         export REXM_EXAMPLES_VS2022_SLN_FILE="${{ github.workspace }}/projects/VS2022/raylib.sln"
         export EMSDK_PATH="${{ github.workspace }}/emsdk-cache/emsdk-main"
-        ./rexm update
+        ./rexm validate
       shell: bash
 
     - name: Commit changes to raylib repo (DISABLED)

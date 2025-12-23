@@ -155,10 +155,10 @@
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
-            <Field type="Vector2" name="offset" desc="Camera offset (displacement from target)" />
-            <Field type="Vector2" name="target" desc="Camera target (rotation and zoom origin)" />
-            <Field type="float" name="rotation" desc="Camera rotation in degrees" />
-            <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
+            <Field type="Vector2" name="offset" desc="Camera offset (screen space offset from window origin)" />
+            <Field type="Vector2" name="target" desc="Camera target (world space target point that is mapped to screen space offset)" />
+            <Field type="float" name="rotation" desc="Camera rotation in degrees (pivots around target)" />
+            <Field type="float" name="zoom" desc="Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale" />
         </Struct>
         <Struct name="Mesh" fieldCount="17" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
@@ -1111,7 +1111,7 @@
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
-            <Param type="const char *" name="dir" desc="" />
+            <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if a given path is a file or a directory">
             <Param type="const char *" name="path" desc="" />

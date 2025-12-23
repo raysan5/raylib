@@ -565,7 +565,7 @@ Detailed changes:
 [rtext] ADDED: SetTextLineSpacing() to define line breaks text drawing spacing by @raysan5
 [rtext] RENAMED: LoadFont*() parameter names for consistency and coherence by @raysan5
 [rtext] REVIEWED: GetCodepointCount(), ignore unused return value of GetCodepointNext by @ashn-dot-dev
-[rtext] REVIEWED: TextFormat() warn user if buffer overflow occured (#3399) by @Murlocohol
+[rtext] REVIEWED: TextFormat() warn user if buffer overflow occurred (#3399) by @Murlocohol
 [rtext] REVIEWED: TextFormat(), added "..." for truncation (#3366) by @raysan5
 [rtext] REVIEWED: GetGlyphIndex() (#3000) by @raysan5
 [rtext] REVIEWED: GetCodepointNext() to return default value by @chocolate42

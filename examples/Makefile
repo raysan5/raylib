@@ -531,7 +531,7 @@ CORE = \
     core/core_delta_time \
     core/core_directory_files \
     core/core_drop_files \
-    core/core_high_dpi \
+    core/core_highdpi_demo \
     core/core_highdpi_testbed \
     core/core_input_actions \
     core/core_input_gamepad \
@@ -583,6 +583,7 @@ SHAPES = \
     shapes/shapes_math_angle_rotation \
     shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
+    shapes/shapes_penrose_tile \
     shapes/shapes_pie_chart \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
@@ -602,6 +603,7 @@ TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
+    textures/textures_cellular_automata \
     textures/textures_fog_of_war \
     textures/textures_gif_player \
     textures/textures_image_channel \
@@ -640,6 +642,7 @@ TEXT = \
     text/text_input_box \
     text/text_rectangle_bounds \
     text/text_sprite_fonts \
+    text/text_strings_management \
     text/text_unicode_emojis \
     text/text_unicode_ranges \
     text/text_words_alignment \
@@ -685,6 +688,7 @@ SHADERS = \
     shaders/shaders_depth_writing \
     shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
+    shaders/shaders_game_of_life \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \

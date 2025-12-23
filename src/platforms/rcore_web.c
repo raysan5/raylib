@@ -76,6 +76,13 @@ typedef struct {
     bool ourFullscreen;                 // Internal var to filter our handling of fullscreen vs the user handling of fullscreen
     int unmaximizedWidth;               // Internal var to store the unmaximized window (canvas) width
     int unmaximizedHeight;              // Internal var to store the unmaximized window (canvas) height
+    
+    char canvasId[64];                  // Keep current canvas id where wasm app is running
+                                        // NOTE: Useful when trying to run multiple wasms in different canvases in same webpage
+    
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    unsigned int *pixels;               // Pointer to pixel data buffer (RGBA 32bit format)
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -129,7 +136,7 @@ static void MouseEnterCallback(GLFWwindow *window, int enter);                  
 
 // Emscripten window callback events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
-// static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+//static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
@@ -142,7 +149,11 @@ static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPoin
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 
-static const char *GetCanvasId(void);
+// JS: Set the canvas id provided by the module configuration
+EM_JS(void, SetCanvasIdJs, (char *out, int outSize), {
+    var canvasId = "#" + Module.canvas.id;
+    stringToUTF8(canvasId, out, outSize);
+});
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -159,7 +170,7 @@ static const char *GetCanvasId(void);
 bool WindowShouldClose(void)
 {
     // Emscripten Asyncify is required to run synchronous code in asynchronous JS
-    // Ref: https://emscripten.org/docs/porting/asyncify.html
+    // REF: https://emscripten.org/docs/porting/asyncify.html
 
     // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
     // and encapsulating one frame execution on a UpdateDrawFrame() function,
@@ -233,11 +244,11 @@ void ToggleFullscreen(void)
             // This option does not seem to work at all:
             // emscripten_request_pointerlock() and emscripten_request_fullscreen() are affected by web security,
             // the user must click once on the canvas to hide the pointer or transition to full screen
-            //emscripten_request_fullscreen("#canvas", false);
+            //emscripten_request_fullscreen(platform.canvasId, false);
 
             // Option 2: Request fullscreen for the canvas element with strategy
             // This option does not seem to work at all
-            // Ref: https://github.com/emscripten-core/emscripten/issues/5124
+            // REF: https://github.com/emscripten-core/emscripten/issues/5124
             // EmscriptenFullscreenStrategy strategy = {
                 // .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
                 // .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
@@ -245,7 +256,7 @@ void ToggleFullscreen(void)
                 // .canvasResizedCallback = EmscriptenWindowResizedCallback,
                 // .canvasResizedCallbackUserData = NULL
             // };
-            //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
+            //emscripten_request_fullscreen_strategy(platform.canvasId, EM_FALSE, &strategy);
 
             // Option 3: Request fullscreen for the canvas element with strategy
             // It works as expected but only inside the browser (client area)
@@ -256,10 +267,11 @@ void ToggleFullscreen(void)
                 .canvasResizedCallback = EmscriptenWindowResizedCallback,
                 .canvasResizedCallbackUserData = NULL
             };
-            emscripten_enter_soft_fullscreen("#canvas", &strategy);
+            emscripten_enter_soft_fullscreen(platform.canvasId, &strategy);
 
-            int width, height;
-            emscripten_get_canvas_element_size("#canvas", &width, &height);
+            int width = 0;
+            int height = 0;
+            emscripten_get_canvas_element_size(platform.canvasId, &width, &height);
             TRACELOG(LOG_WARNING, "Emscripten: Enter fullscreen: Canvas size: %i x %i", width, height);
 
             CORE.Window.fullscreen = true;          // Toggle fullscreen flag
@@ -271,7 +283,7 @@ void ToggleFullscreen(void)
             //emscripten_exit_soft_fullscreen();
 
             int width, height;
-            emscripten_get_canvas_element_size("#canvas", &width, &height);
+            emscripten_get_canvas_element_size(platform.canvasId, &width, &height);
             TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);
 
             CORE.Window.fullscreen = false;          // Toggle fullscreen flag
@@ -866,7 +878,7 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    emscripten_request_pointerlock(GetCanvasId(), 1);
+    emscripten_request_pointerlock(platform.canvasId, 1);
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
@@ -877,7 +889,32 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Update framebuffer
+    rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
+    
+    // Copy framebuffer data into canvas
+    EM_ASM({
+        const width = $0;
+        const height = $1;
+        const ptr = $2;
+
+        // Get canvas and 2d context created
+        const canvas = Module.canvas;
+        const ctx = canvas.getContext('2d');
+
+        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height)) {
+            Module.__img = ctx.createImageData(width, height);
+        }
+
+        const src = HEAPU8.subarray(ptr, ptr + width*height*4); // RGBA (4 bytes)
+        Module.__img.data.set(src);
+        ctx.putImageData(Module.__img, 0, 0);
+
+    }, CORE.Window.screen.width, CORE.Window.screen.height, platform.pixels);
+#else
     glfwSwapBuffers(platform.handle);
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -968,7 +1005,7 @@ void SetMouseCursor(int cursor)
     }
 }
 
-// Get physical key name.
+// Get physical key name
 const char *GetKeyName(int key)
 {
     TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
@@ -1097,6 +1134,8 @@ void PollInputEvents(void)
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
+    SetCanvasIdJs(platform.canvasId, 64); // Get the current canvas id
+    
     glfwSetErrorCallback(ErrorCallback);
 
     // Initialize GLFW internal global state
@@ -1206,7 +1245,21 @@ int InitPlatform(void)
 
     // Init fullscreen toggle required var:
     platform.ourFullscreen = false;
-
+    
+#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // Avoid creating a WebGL canvas, avoid calling glfwCreateWindow()
+    emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
+    EM_ASM({
+        const canvas = document.getElementById("canvas");
+        Module.canvas = canvas;
+    });
+    
+    // Load memory framebuffer with desired screen size
+    // NOTE: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
+    // but it is not being used, on SwapScreenBuffer() the pure software renderer is used
+    // TODO: Consider requesting another type of canvas, not a WebGL one --> Replace GLFW-web by Emscripten?
+    platform.pixels = (unsigned int *)RL_CALLOC(CORE.Window.screen.width*CORE.Window.screen.height, sizeof(unsigned int));
+#else
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
@@ -1281,6 +1334,7 @@ int InitPlatform(void)
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
         return -1;
     }
+#endif
 
     // WARNING: glfwCreateWindow() title doesn't work with emscripten
     emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
@@ -1347,14 +1401,14 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     // Setup window events callbacks
     emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenFullscreenChangeCallback);
-    emscripten_set_blur_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
-    emscripten_set_focus_callback(GetCanvasId(), platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_blur_callback(platform.canvasId, platform.handle, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback(platform.canvasId, platform.handle, 1, EmscriptenFocusCallback);
     emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
 
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
-    // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
+    // Check fullscreen change events(note this is done on the window since most browsers don't support this on canvas)
     // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-    // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
+    // Check Resize event (note this is done on the window since most browsers don't support this on canvas)
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
 
     // Trigger resize callback to force initial size
@@ -1362,15 +1416,15 @@ int InitPlatform(void)
 
     // Setup input events
     // NOTE: Keyboard callbacks only used to consume some events, libglfw.js takes care of the actual input
-    //emscripten_set_keypress_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback); // WRNING: Breaks input
-    //emscripten_set_keydown_callback(GetCanvasId(), NULL, 1, EmscriptenKeyboardCallback);
-    emscripten_set_click_callback(GetCanvasId(), NULL, 1, EmscriptenMouseCallback);
+    //emscripten_set_keypress_callback(platform.canvasId, NULL, 1, EmscriptenKeyboardCallback); // WRNING: Breaks input
+    //emscripten_set_keydown_callback(platform.canvasId, NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_click_callback(platform.canvasId, NULL, 1, EmscriptenMouseCallback);
     emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
-    emscripten_set_mousemove_callback(GetCanvasId(), NULL, 1, EmscriptenMouseMoveCallback);
-    emscripten_set_touchstart_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchend_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchmove_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchcancel_callback(GetCanvasId(), NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_mousemove_callback(platform.canvasId, NULL, 1, EmscriptenMouseMoveCallback);
+    emscripten_set_touchstart_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     //----------------------------------------------------------------------------
@@ -1512,8 +1566,8 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
 
     // NOTE: Registers any key down considering OS keyboard layout but
     // does not detect action events, those should be managed by user...
-    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
-    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
+    // REF: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // REF: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
@@ -1691,7 +1745,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
     // we are looking for actual CSS size: canvas.style.width and canvas.style.height
     // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
-    emscripten_get_element_css_size(GetCanvasId(), &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size(platform.canvasId, &canvasWidth, &canvasHeight);
 
     for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
@@ -1802,7 +1856,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
     else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
 
-    emscripten_set_canvas_element_size(GetCanvasId(), width, height);
+    emscripten_set_canvas_element_size(platform.canvasId, width, height);
 
     SetupViewport(width, height); // Reset viewport and projection matrix for new size
 
@@ -1844,22 +1898,5 @@ static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const Emscripte
     return 1; // The event was consumed by the callback handler
 }
 //-------------------------------------------------------------------------------------------------------
-
-// JS: Get the canvas id provided by the module configuration
-EM_JS(char *, GetCanvasIdJs, (), {
-    var canvasId = "#" + Module.canvas.id;
-    var lengthBytes = lengthBytesUTF8(canvasId) + 1;
-    var stringOnWasmHeap = _malloc(lengthBytes);
-    stringToUTF8(canvasId, stringOnWasmHeap, lengthBytes);
-    return stringOnWasmHeap;
-});
-
-// Get canvas id (using embedded JS function)
-static const char *GetCanvasId(void)
-{
-    static char *canvasId = NULL;
-    if (canvasId == NULL) canvasId = GetCanvasIdJs();
-    return canvasId;
-}
 
 // EOF
