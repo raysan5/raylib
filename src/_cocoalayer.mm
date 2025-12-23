@@ -1,3 +1,8 @@
+/*
+raylib Objective-C++ Layer.
+Copyright Annes Widow (annes12345678910) - zlib like license.
+*/
+
 #if defined(__APPLE__)
 
 #import <Cocoa/Cocoa.h>
