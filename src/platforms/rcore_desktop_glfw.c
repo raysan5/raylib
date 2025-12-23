@@ -101,7 +101,7 @@
 #endif
 #if defined(__APPLE__)
     #include <unistd.h>                 // Required for: usleep()
-    #include "_cocoalayer.h"
+    #include "../_cocoalayer.h"
     //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
     void *glfwGetCocoaWindow(GLFWwindow* handle);
     #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
