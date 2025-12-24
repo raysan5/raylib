@@ -2090,7 +2090,7 @@ int *LoadCodepoints(const char *text, int *count)
         int textLength = TextLength(text);
 
         // Allocate a big enough buffer to store as many codepoints as text bytes
-        int *codepoints = (int *)RL_CALLOC(textLength, sizeof(int));
+        codepoints = (int *)RL_CALLOC(textLength, sizeof(int));
 
         int codepointSize = 0;
         for (int i = 0; i < textLength; codepointCount++)
