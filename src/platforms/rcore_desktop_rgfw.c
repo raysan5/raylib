@@ -527,46 +527,15 @@ void ClearWindowState(unsigned int flags)
     }
 }
 
-int RGFW_formatToChannels(int format)
-{
-    switch (format)
-    {
-        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
-        case PIXELFORMAT_UNCOMPRESSED_R16:           // 16 bpp (1 channel - half float)
-        case PIXELFORMAT_UNCOMPRESSED_R32:           // 32 bpp (1 channel - float)
-            return 1;
-        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:    // 8*2 bpp (2 channels)
-        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:        // 16 bpp
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:        // 24 bpp
-        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:      // 16 bpp (1 bit alpha)
-        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:      // 16 bpp (4 bit alpha)
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:      // 32 bpp
-            return 2;
-        case PIXELFORMAT_UNCOMPRESSED_R32G32B32:     // 32*3 bpp (3 channels - float)
-        case PIXELFORMAT_UNCOMPRESSED_R16G16B16:     // 16*3 bpp (3 channels - half float)
-        case PIXELFORMAT_COMPRESSED_DXT1_RGB:        // 4 bpp (no alpha)
-        case PIXELFORMAT_COMPRESSED_ETC1_RGB:        // 4 bpp
-        case PIXELFORMAT_COMPRESSED_ETC2_RGB:        // 4 bpp
-        case PIXELFORMAT_COMPRESSED_PVRT_RGB:        // 4 bpp
-            return 3;
-        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:  // 32*4 bpp (4 channels - float)
-        case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:  // 16*4 bpp (4 channels - half float)
-        case PIXELFORMAT_COMPRESSED_DXT1_RGBA:       // 4 bpp (1 bit alpha)
-        case PIXELFORMAT_COMPRESSED_DXT3_RGBA:       // 8 bpp
-        case PIXELFORMAT_COMPRESSED_DXT5_RGBA:       // 8 bpp
-        case PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:   // 8 bpp
-        case PIXELFORMAT_COMPRESSED_PVRT_RGBA:       // 4 bpp
-        case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:   // 8 bpp
-        case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA:   // 2 bpp
-            return 4;
-        default: return 4;
-    }
-}
-
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    RGFW_window_setIcon(platform.window, (u8 *)image.data, RGFW_AREA(image.width, image.height), RGFW_formatToChannels(image.format));
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+    {
+        TRACELOG(LOG_WARNING, "RGFW: Window icon image must be in R8G8B8A8 pixel format");
+        return;
+    }
+    RGFW_window_setIcon(platform.window, (u8 *)image.data, RGFW_AREA(image.width, image.height), 4);
 }
 
 // Set icon for window
@@ -583,12 +552,17 @@ void SetWindowIcons(Image *images, int count)
 
         for (int i = 0; i < count; i++)
         {
+            if (images[i].format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+            {
+                TRACELOG(LOG_WARNING, "RGFW: Window icon image must be in R8G8B8A8 pixel format");
+                continue;
+            }
             if ((bigIcon == NULL) || ((images[i].width > bigIcon->width) && (images[i].height > bigIcon->height))) bigIcon = &images[i];
             if ((smallIcon == NULL) || ((images[i].width < smallIcon->width) && (images[i].height > smallIcon->height))) smallIcon = &images[i];
         }
 
-        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), RGFW_formatToChannels(smallIcon->format), RGFW_iconWindow);
-        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), RGFW_formatToChannels(bigIcon->format), RGFW_iconTaskbar);
+        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, RGFW_AREA(smallIcon->width, smallIcon->height), 4, RGFW_iconWindow);
+        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, RGFW_AREA(bigIcon->width, bigIcon->height), 4, RGFW_iconTaskbar);
     }
 }
 
