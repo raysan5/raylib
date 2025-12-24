@@ -273,7 +273,7 @@
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
-#define FLAG_IS_SET(n, f) (((n) & (f)) > 0)
+#define FLAG_IS_SET(n, f) (((n) & (f)) == (f))
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
