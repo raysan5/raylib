@@ -34,14 +34,23 @@ extern "C" {
 
 void CocoaSetDockIcon(unsigned char* data, int width, int height)
 {
+    // Create an empty NSImage
     NSImage *dockIcon = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+
+    // Create a CGImage
     CGDataProviderRef provider = CGDataProviderCreateWithData(nullptr, data, width*height*4, nullptr);
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGImageRef cgImage = CGImageCreate(width, height, 8, 32, width*4, colorSpace,
                                        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big,
                                        provider, nullptr, false, kCGRenderingIntentDefault);
+
+    // Keep the Icon Alive?
     [dockIcon addRepresentation:[[NSBitmapImageRep alloc] initWithCGImage:cgImage]];
+
+    // set the app icon
     [NSApp setApplicationIconImage:dockIcon];
+
+    // Free the garbage
     CGImageRelease(cgImage);
     CGColorSpaceRelease(colorSpace);
     CGDataProviderRelease(provider);
