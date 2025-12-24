@@ -60,7 +60,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - strings management");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - strings management");
 
     TextParticle textParticles[MAX_TEXT_PARTICLES] = { 0 };
     int particleCount = 0;
@@ -316,7 +316,7 @@ void SliceTextParticle(TextParticle *tp, int particlePos, int sliceLength, TextP
 void SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *tps, int *particleCount)
 {
     int tokenCount = 0;
-    const char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
+    char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
     
     if (tokenCount > 1)
     {

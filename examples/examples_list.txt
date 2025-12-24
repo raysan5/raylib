@@ -43,7 +43,7 @@ core;core_custom_frame_control;★★★★;4.0;4.0;2021;2025;"Ramon Santamaria"
 core;core_smooth_pixelperfect;★★★☆;3.7;4.0;2021;2025;"Giancamillo Alessandroni";@NotManyIdeasDev
 core;core_random_sequence;★☆☆☆;5.0;5.0;2023;2025;"Dalton Overmyer";@REDl3east
 core;core_automation_events;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
-core;core_high_dpi;★★☆☆;5.0;5.5;2025;2025;"Jonathan Marler";@marler8997
+core;core_highdpi_demo;★★☆☆;5.0;5.5;2025;2025;"Jonathan Marler";@marler8997
 core;core_render_texture;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
 core;core_viewport_scaling;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
@@ -51,7 +51,7 @@ core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoo
 core;core_directory_files;★☆☆☆;5.5;5.6;2025;2025;"Hugo ARNAL";@hugoarnal
 core;core_highdpi_testbed;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_screen_recording;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
-core;core_clipboard_text;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ananth S";@Ananth1839
+core;core_clipboard_text;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ananth S";@Ananth1839
 core;core_text_file_loading;★☆☆☆;5.5;5.6;0;0;"Aanjishnu Bhattacharyya";@NimComPoo-04
 core;core_compute_hash;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
@@ -91,6 +91,7 @@ shapes;shapes_math_angle_rotation;★☆☆☆;5.6-dev;5.6;2025;2025;"Kris";@kri
 shapes;shapes_rlgl_color_wheel;★★★☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
 shapes;shapes_rlgl_triangle;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
 shapes;shapes_ball_physics;★★☆☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
+shapes;shapes_penrose_tile;★★★★;5.5;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -119,6 +120,7 @@ textures;textures_image_rotate;★★☆☆;1.0;1.0;2014;2025;"Ramon Santamaria"
 textures;textures_screen_buffer;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
 textures;textures_textured_curve;★★★☆;4.5;4.5;2022;2025;"Jeffery Myers";@JeffM2501
 textures;textures_sprite_stacking;★★☆☆;5.6-dev;6.0;2025;2025;"Robin";@RobinsAviary
+textures;textures_cellular_automata;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 text;text_sprite_fonts;★☆☆☆;1.7;3.7;2017;2025;"Ramon Santamaria";@raysan5
 text;text_font_spritefont;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 text;text_font_filters;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
@@ -134,6 +136,7 @@ text;text_3d_drawing;★★★★;3.5;4.0;2021;2025;"Vlad Adrian";@demizdor
 text;text_codepoints_loading;★★★☆;4.2;4.2;2022;2025;"Ramon Santamaria";@raysan5
 text;text_inline_styling;★★★☆;5.6-dev;5.6-dev;2025;2025;"Wagner Barongello";@SultansOfCode
 text;text_words_alignment;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
+text;text_strings_management;★★★☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 models;models_animation_playing;★★☆☆;2.5;3.5;2019;2025;"Culacant";@culacant
 models;models_billboard_rendering;★★★☆;1.3;3.5;2015;2025;"Ramon Santamaria";@raysan5
 models;models_box_collisions;★☆☆☆;1.3;3.5;2015;2025;"Ramon Santamaria";@raysan5
@@ -193,6 +196,7 @@ shaders;shaders_basic_pbr;★★★★;5.0;5.5;2023;2025;"Afan OLOVCIC";@_DevDad
 shaders;shaders_lightmap_rendering;★★★☆;4.5;4.5;2019;2025;"Jussi Viitala";@nullstare
 shaders;shaders_rounded_rectangle;★★★☆;5.5;5.5;2025;2025;"Anstro Pleuton";@anstropleuton
 shaders;shaders_depth_rendering;★★★☆;5.6-dev;5.6-dev;2025;2025;"Luís Almeida";@luis605
+shaders;shaders_game_of_life;★★★☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 audio;audio_module_playing;★☆☆☆;1.5;3.5;2016;2025;"Ramon Santamaria";@raysan5
 audio;audio_music_stream;★☆☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
 audio;audio_raw_stream;★★★☆;1.6;4.2;2015;2025;"Ramon Santamaria";@raysan5
