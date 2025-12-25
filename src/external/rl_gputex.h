@@ -339,7 +339,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     }
                 }
             }
-            else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24))   // DDS_RGB, no compressed
+            else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24)) // DDS_RGB, no compressed
             {
                 int data_size = image_pixel_size*3*sizeof(unsigned char);
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;

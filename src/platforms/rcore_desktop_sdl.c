@@ -1431,9 +1431,9 @@ void PollInputEvents(void)
                     // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, 
                     // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, 
                     // you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
                     SDL_free(event.drop.file);
                 #endif
 
@@ -1444,9 +1444,9 @@ void PollInputEvents(void)
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
                 #if defined(USING_VERSION_SDL3)
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
                     SDL_free(event.drop.file);
                 #endif
 

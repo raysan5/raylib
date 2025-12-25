@@ -1597,14 +1597,13 @@ float TextToFloat(const char *text)
 
 #if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
+// NOTE: Alternative implementation to strcpy(dst, src) from C standard library
 int TextCopy(char *dst, const char *src)
 {
     int bytes = 0;
 
     if ((src != NULL) && (dst != NULL))
     {
-        // NOTE: Alternative: use strcpy(dst, src)
-
         while (*src != '\0')
         {
             *dst = *src;
@@ -1717,11 +1716,13 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
     {
         char *insertPoint = NULL;   // Next insert point
         char *temp = NULL;          // Temp pointer
+        int textLen = 0;            // Text string length
         int searchLen = 0;          // Search string length of (the string to remove)
         int replaceLen = 0;         // Replacement length (the string to replace by)
         int lastReplacePos = 0;     // Distance between next search and end of last replace
         int count = 0;              // Number of replacements
 
+        textLen = TextLength(text);
         searchLen = TextLength(search);
         if (searchLen == 0) return NULL;  // Empty search causes infinite loop during count
 
@@ -1732,7 +1733,8 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         for (count = 0; (temp = strstr(insertPoint, search)); count++) insertPoint = temp + searchLen;
 
         // Allocate returning string and point temp to it
-        temp = result = (char *)RL_MALLOC(TextLength(text) + (replaceLen - searchLen)*count + 1);
+        int tempLen = textLen + (replaceLen - searchLen)*count + 1;
+        temp = result = (char *)RL_MALLOC(tempLen);
 
         if (!result) return NULL;   // Memory could not be allocated
 
@@ -1744,13 +1746,16 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         {
             insertPoint = (char *)strstr(text, search);
             lastReplacePos = (int)(insertPoint - text);
-            temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
-            temp = strcpy(temp, replacement) + replaceLen;
+            temp = strncpy(temp, text, tempLen - 1) + lastReplacePos;
+            tempLen -= lastReplacePos;
+            temp = strncpy(temp, replacement, tempLen - 1) + replaceLen;
+            tempLen -= replaceLen;
+            
             text += lastReplacePos + searchLen; // Move to next "end of replace"
         }
 
         // Copy remaind text part after replacement to result (pointed by moving temp)
-        strcpy(temp, text);
+        strncpy(temp, text, tempLen - 1);
     }
 
     return result;
