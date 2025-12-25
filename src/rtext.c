@@ -743,8 +743,14 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                         stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
                         glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
 
+                        // [Security Fix] Prevent integer overflow/negative allocation
+                        // Issue #5436: Malicious font files may contain negative advanceX,
+                        // causing calloc overflow or crash
+                        if (glyphs[k].advanceX < 0) glyphs[k].advanceX = 0;
+
                         Image imSpace = {
-                            .data = RL_CALLOC(glyphs[k].advanceX*fontSize, 2),
+                            // Only allocate memory if width > 0, otherwise set to NULL
+                            .data = (glyphs[k].advanceX > 0) ? RL_CALLOC(glyphs[k].advanceX*fontSize, 2) : NULL,
                             .width = glyphs[k].advanceX,
                             .height = fontSize,
                             .mipmaps = 1,
