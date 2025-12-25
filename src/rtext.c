@@ -853,7 +853,8 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     }
 #endif
 
-    atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);   // Create a bitmap to store characters (8 bpp)
+    int atlasDataSize = atlas.width * atlas.height; // Save total size for bounds checking
+    atlas.data = (unsigned char *)RL_CALLOC(1, atlasDataSize);   // Create a bitmap to store characters (8 bpp)
     atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
 
@@ -898,7 +899,17 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
             {
                 for (int x = 0; x < glyphs[i].image.width; x++)
                 {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
+                    int destX = offsetX + x;
+                    int destY = offsetY + y;
+
+                    // Security fix: check both lower and upper bounds
+                    // destX >= 0: prevent heap underflow (#5434)
+                    // destX < atlas.width: prevent heap overflow (#5433)
+                    if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
+                    {
+                        ((unsigned char *)atlas.data)[destY * atlas.width + destX] =
+                            ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
+                    }
                 }
             }
 
@@ -946,7 +957,15 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 {
                     for (int x = 0; x < glyphs[i].image.width; x++)
                     {
-                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
+                        int destX = rects[i].x + padding + x;
+                        int destY = rects[i].y + padding + y;
+
+                        // Security fix: check both lower and upper bounds
+                        if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
+                        {
+                            ((unsigned char *)atlas.data)[destY * atlas.width + destX] =
+                                ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
+                        }
                     }
                 }
             }
@@ -960,14 +979,18 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 
 #if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
-    // useful to use as the white texture to draw shapes with raylib, using this rectangle
-    // shapes and text can be backed into a single draw call: SetShapesTexture()
-    for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
+    // useful to use as the white texture to draw shapes with raylib.
+    // [Security Fix] Ensure the atlas is large enough to hold a 3x3 rectangle.
+    // This prevents heap underflow when width < 3 or height < 3 (Fixes #5434 variant)
+    if (atlas.width >= 3 && atlas.height >= 3)
     {
-        ((unsigned char *)atlas.data)[k - 0] = 255;
-        ((unsigned char *)atlas.data)[k - 1] = 255;
-        ((unsigned char *)atlas.data)[k - 2] = 255;
-        k -= atlas.width;
+        for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
+        {
+            ((unsigned char *)atlas.data)[k - 0] = 255;
+            ((unsigned char *)atlas.data)[k - 1] = 255;
+            ((unsigned char *)atlas.data)[k - 2] = 255;
+            k -= atlas.width;
+        }
     }
 #endif
 
@@ -1597,13 +1620,14 @@ float TextToFloat(const char *text)
 
 #if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
-// NOTE: Alternative implementation to strcpy(dst, src) from C standard library
 int TextCopy(char *dst, const char *src)
 {
     int bytes = 0;
 
     if ((src != NULL) && (dst != NULL))
     {
+        // NOTE: Alternative: use strcpy(dst, src)
+
         while (*src != '\0')
         {
             *dst = *src;
@@ -1716,13 +1740,11 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
     {
         char *insertPoint = NULL;   // Next insert point
         char *temp = NULL;          // Temp pointer
-        int textLen = 0;            // Text string length
         int searchLen = 0;          // Search string length of (the string to remove)
         int replaceLen = 0;         // Replacement length (the string to replace by)
         int lastReplacePos = 0;     // Distance between next search and end of last replace
         int count = 0;              // Number of replacements
 
-        textLen = TextLength(text);
         searchLen = TextLength(search);
         if (searchLen == 0) return NULL;  // Empty search causes infinite loop during count
 
@@ -1733,8 +1755,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         for (count = 0; (temp = strstr(insertPoint, search)); count++) insertPoint = temp + searchLen;
 
         // Allocate returning string and point temp to it
-        int tempLen = textLen + (replaceLen - searchLen)*count + 1;
-        temp = result = (char *)RL_MALLOC(tempLen);
+        temp = result = (char *)RL_MALLOC(TextLength(text) + (replaceLen - searchLen)*count + 1);
 
         if (!result) return NULL;   // Memory could not be allocated
 
@@ -1746,16 +1767,13 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         {
             insertPoint = (char *)strstr(text, search);
             lastReplacePos = (int)(insertPoint - text);
-            temp = strncpy(temp, text, tempLen - 1) + lastReplacePos;
-            tempLen -= lastReplacePos;
-            temp = strncpy(temp, replacement, tempLen - 1) + replaceLen;
-            tempLen -= replaceLen;
-            
+            temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
+            temp = strcpy(temp, replacement) + replaceLen;
             text += lastReplacePos + searchLen; // Move to next "end of replace"
         }
 
         // Copy remaind text part after replacement to result (pointed by moving temp)
-        strncpy(temp, text, tempLen - 1);
+        strcpy(temp, text);
     }
 
     return result;
@@ -2095,7 +2113,7 @@ int *LoadCodepoints(const char *text, int *count)
         int textLength = TextLength(text);
 
         // Allocate a big enough buffer to store as many codepoints as text bytes
-        codepoints = (int *)RL_CALLOC(textLength, sizeof(int));
+        int *codepoints = (int *)RL_CALLOC(textLength, sizeof(int));
 
         int codepointSize = 0;
         for (int i = 0; i < textLength; codepointCount++)
