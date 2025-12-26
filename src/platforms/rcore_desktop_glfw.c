@@ -1266,8 +1266,14 @@ void PollInputEvents(void)
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
             GLFWgamepadstate state = { 0 };
-            glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
-
+            int isGamepadConnected = glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
+            if (!isGamepadConnected)
+            {
+                // setting axes to expected resting value instead of GLFW's 0.0f default when gamepad isnt connected
+                state.axes[GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+                state.axes[GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+            }
+          
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < MAX_GAMEPAD_BUTTONS); k++)
