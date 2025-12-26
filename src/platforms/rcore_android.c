@@ -1238,8 +1238,11 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //int32_t AKeyEvent_getMetaState(event);
 
         // Handle gamepad button presses and releases
-        if (FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) ||
-            FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD))
+        // NOTE: Skip gamepad handling if this is a keyboard event, as some devices
+        // report both AINPUT_SOURCE_KEYBOARD and AINPUT_SOURCE_GAMEPAD flags
+        if ((FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) ||
+             FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD)) &&
+            !FLAG_IS_SET(source, AINPUT_SOURCE_KEYBOARD))
         {
             // For now we'll assume a single gamepad which we "detect" on its input event
             CORE.Input.Gamepad.ready[0] = true;
