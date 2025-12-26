@@ -1269,7 +1269,7 @@ void PollInputEvents(void)
             int isGamepadConnected = glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
             if (!isGamepadConnected)
             {
-                // setting axes to expected value instead of GLFW's 0.0f default when gamepad isnt connected
+                // setting axes to expected resting value instead of GLFW's 0.0f default when gamepad isnt connected
                 state.axes[GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                 state.axes[GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
             }
