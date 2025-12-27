@@ -140,7 +140,7 @@ contributors
 ------------
 
 <a href="https://github.com/raysan5/raylib/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=raysan5/raylib&max=500&columns=20&anon=1" />
+  <img src="https://contrib.rocks/image?repo=raysan5/raylib&max=800&columns=20&anon=1" />
 </a>
 
 license
