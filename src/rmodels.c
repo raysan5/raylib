@@ -6353,7 +6353,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
     return true;
 }
 
-#define GLTF_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
+#define GLTF_FRAMERATE 60.0f    // glTF animation framerate (frames per second)
 
 static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount)
 {
@@ -6473,13 +6473,13 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                 if (animData.name != NULL) strncpy(animations[i].name, animData.name, sizeof(animations[i].name) - 1);
 
-                animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY) + 1;
+                animations[i].frameCount = (int)(animDuration*GLTF_FRAMERATE) + 1;
                 animations[i].framePoses = (Transform **)RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
 
                 for (int j = 0; j < animations[i].frameCount; j++)
                 {
                     animations[i].framePoses[j] = (Transform *)RL_MALLOC(animations[i].boneCount*sizeof(Transform));
-                    float time = ((float) j*GLTF_ANIMDELAY)/1000.0f;
+                    float time = (float)j / GLTF_FRAMERATE;
 
                     for (int k = 0; k < animations[i].boneCount; k++)
                     {
